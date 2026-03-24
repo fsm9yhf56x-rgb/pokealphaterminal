@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   label?:  string
   error?:  string
   hint?:   string

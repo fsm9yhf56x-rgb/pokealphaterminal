@@ -15,13 +15,13 @@ const ITEMS: TickerItem[] = [
 export function TickerBar() {
   return (
     <div style={{
-      height: '36px',
+      height: '38px',
       background: '#fff',
       borderBottom: '1px solid #EBEBEB',
       display: 'flex',
       alignItems: 'center',
       padding: '0 16px',
-      flexShrink: 0,
+      width: '100%',
     }}>
       <Ticker items={ITEMS} />
     </div>

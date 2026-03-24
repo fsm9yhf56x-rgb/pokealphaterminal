@@ -79,3 +79,18 @@ body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.2; }
 }
+
+/* ── RESPONSIVE GLOBAL ───────────────────────────── */
+html, body { width: 100%; }
+
+/* Padding réduit sur mobile */
+@media (max-width: 768px) {
+  main { padding: 16px !important; }
+}
+
+/* Grids adaptatifs par défaut */
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}

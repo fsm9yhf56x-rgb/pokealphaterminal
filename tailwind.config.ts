@@ -9,45 +9,119 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        // Couleurs principales — seront affinées en Phase DA
-        brand: {
-          50:  '#EEEDFE',
-          100: '#CECBF6',
-          200: '#AFA9EC',
-          400: '#7F77DD',
-          600: '#534AB7',
-          800: '#3C3489',
-          900: '#26215C',
-        },
-        surface: {
-          // Dark terminal base
-          bg:      '#0D0E14',
-          card:    '#13141C',
-          border:  '#1F2133',
-          hover:   '#1A1B27',
-        },
-        signal: {
-          s: '#EF9F27',  // Tier S — Or
-          a: '#7F77DD',  // Tier A — Violet
-          b: '#1D9E75',  // Tier B — Vert
-        },
-      },
+      // ─── TYPOGRAPHY ────────────────────────────────
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-jetbrains)', 'monospace'],
+        sans:    ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-space)', 'system-ui', 'sans-serif'],
+        mono:    ['var(--font-mono)', 'monospace'],
       },
-      fontSize: {
-        'ticker': ['13px', { lineHeight: '1', letterSpacing: '0.02em' }],
+
+      // ─── COLORS ────────────────────────────────────
+      colors: {
+        // Surfaces
+        bg:      '#FAFAFA',
+        surface: '#FFFFFF',
+        // Borders
+        border: {
+          DEFAULT: '#EBEBEB',
+          strong:  '#D4D4D4',
+          focus:   '#111111',
+        },
+        // Text
+        ink: {
+          DEFAULT: '#111111',
+          muted:   '#888888',
+          faint:   '#BBBBBB',
+        },
+        // Brand
+        red: {
+          DEFAULT: '#E03020',
+          light:   '#FFF0EE',
+          border:  '#FFD8D0',
+          hover:   '#C82010',
+        },
+        // Semantic
+        green: {
+          DEFAULT: '#2E9E6A',
+          light:   '#F0FFF6',
+          border:  '#AAEEC8',
+        },
+        // TCG Signal tiers
+        tier: {
+          s:      '#FFD700',
+          s_bg:   '#FFFDE0',
+          a:      '#C855D4',
+          a_bg:   '#F5EAFF',
+          b:      '#2E9E6A',
+          b_bg:   '#F0FFF6',
+        },
+        // TCG Type energy colors
+        energy: {
+          fire:     '#FF6B35',
+          water:    '#42A5F5',
+          psychic:  '#C855D4',
+          dark:     '#7E57C2',
+          electric: '#FFD700',
+          grass:    '#66BB6A',
+          fighting: '#EF5350',
+          steel:    '#90A4AE',
+        },
       },
+
+      // ─── SPACING ───────────────────────────────────
+      borderRadius: {
+        DEFAULT: '8px',
+        sm:      '4px',
+        md:      '8px',
+        lg:      '12px',
+        xl:      '16px',
+        '2xl':   '20px',
+        full:    '9999px',
+      },
+
+      // ─── SHADOWS ───────────────────────────────────
+      boxShadow: {
+        card:    '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        raised:  '0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+        signal:  '0 4px 20px rgba(224,48,32,0.08)',
+        tier_s:  '0 2px 10px rgba(255,215,0,0.35)',
+        focus:   '0 0 0 2px #111111',
+        none:    'none',
+      },
+
+      // ─── ANIMATIONS ────────────────────────────────
       animation: {
-        'ticker-scroll': 'ticker 30s linear infinite',
-        'pulse-soft': 'pulse 3s ease-in-out infinite',
+        'ticker':      'ticker 30s linear infinite',
+        'float':       'float 3s ease-in-out infinite',
+        'fade-in':     'fadeIn 0.2s ease-out',
+        'slide-up':    'slideUp 0.25s ease-out',
+        'pulse-soft':  'pulseSoft 2s ease-in-out infinite',
+        'blink':       'blink 2.5s ease-in-out infinite',
       },
       keyframes: {
         ticker: {
           '0%':   { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        float: {
+          '0%,100%': { transform: 'translateY(0px)' },
+          '50%':     { transform: 'translateY(-4px)' },
+        },
+        fadeIn: {
+          from: { opacity: '0' },
+          to:   { opacity: '1' },
+        },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseSoft: {
+          '0%,100%': { opacity: '1' },
+          '50%':     { opacity: '0.6' },
+        },
+        blink: {
+          '0%,100%': { opacity: '1' },
+          '50%':     { opacity: '0.2' },
         },
       },
     },

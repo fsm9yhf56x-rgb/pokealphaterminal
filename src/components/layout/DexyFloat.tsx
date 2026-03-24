@@ -3,69 +3,73 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 
-type Msg = { id: number; text: string; type: 'tip'|'alert'|'signal'|'streak'; urgent?: boolean }
+type Msg = { id: number; text: string; type: 'tip'|'alert'|'signal'|'streak' }
 
 const PAGE_MSGS: Record<string, Msg[]> = {
-  '/home': [
-    { id:1, text:"Signal Charizard Alt Art — sous-évalué de 26%. Expire dans 3h 42min.", type:'signal', urgent:true },
-    { id:2, text:"Ton streak est en danger ! Il te reste 2 missions à compléter aujourd'hui.", type:'streak', urgent:true },
-    { id:3, text:"Gengar VMAX vient de prendre +8% en 2h. Momentum détecté.", type:'alert' },
-    { id:4, text:"Ton portfolio a gagné €340 depuis ce matin. Belle journée.", type:'tip' },
-  ],
   '/portfolio': [
-    { id:5, text:"Tu es surexposé en cartes Fire — 68% du portfolio. Pense à diversifier.", type:'alert' },
-    { id:6, text:"Performance +14.2% ce mois. Tu bats l'index Cards de 11 points.", type:'tip' },
+    { id:1, text:"Tu es surexposé en cartes Fire — 68% du portfolio. Pense à diversifier vers Water ou Electric.", type:'alert' },
+    { id:2, text:"Portfolio +14.2% ce mois. Tu bats l'index Cards de 11 points — excellente performance.", type:'tip' },
+    { id:3, text:"Umbreon VMAX Alt a progressé de 24% depuis ton achat. Bonne prise ?", type:'signal' },
   ],
   '/cartes': [
-    { id:7, text:"Les SV151 sont en forte demande. Bonne période pour vendre.", type:'tip' },
-    { id:8, text:"PSA Pop mis à jour. Charizard 151 PSA 10 : seulement 312 exemplaires.", type:'signal' },
+    { id:4, text:"Les SV151 sont en forte demande cette semaine. Moment intéressant pour vendre.", type:'tip' },
+    { id:5, text:"PSA Pop mis à jour ce matin. Charizard 151 PSA 10 : seulement 312 exemplaires.", type:'signal' },
+    { id:6, text:"Les cartes JP précèdent le marché EN de 2-3 semaines historiquement.", type:'tip' },
   ],
   '/market': [
-    { id:9, text:"Le sealed est en correction -3.2% cette semaine. Opportunité d'achat ?", type:'alert' },
-    { id:10, text:"Vintage +6.8% ce mois. Lugia Neo et Base Set en tête.", type:'tip' },
+    { id:7, text:"Le sealed est en correction -3.2% cette semaine. Potentielle opportunité d'achat.", type:'alert' },
+    { id:8, text:"Vintage +6.8% ce mois. Lugia Neo et Base Set en tête du mouvement.", type:'tip' },
+    { id:9, text:"Momentum haussier détecté sur les Alt Art Psychic. Gengar VMAX en tête.", type:'signal' },
   ],
   '/alpha': [
-    { id:11, text:"3 nouveaux signaux Tier S ce matin. Umbreon et Mewtwo en tête.", type:'signal', urgent:true },
-    { id:12, text:"RedDragonKai vient d'acheter €12,400 de Charizard Alt. Whale alert.", type:'alert', urgent:true },
+    { id:10, text:"3 nouveaux signaux Tier S détectés ce matin. Umbreon et Mewtwo en tête.", type:'signal' },
+    { id:11, text:"RedDragonKai vient d'acheter €12,400 de Charizard Alt Art. Whale alert active.", type:'alert' },
+    { id:12, text:"5 deals eBay sous valeur marché détectés dans les 2 dernières heures.", type:'tip' },
   ],
 }
 
 const TYPE_STYLE: Record<string, { bg:string; border:string; accent:string; label:string }> = {
-  tip:    { bg:'#F8F8F8', border:'#E0E0E0', accent:'#888',    label:'Conseil'  },
-  alert:  { bg:'#FFF8F0', border:'#FFCC88', accent:'#E08000', label:'Alerte'   },
-  signal: { bg:'#FFF0EE', border:'#FFBFB8', accent:'#E03020', label:'Signal'   },
-  streak: { bg:'#FFFDE0', border:'#FFE060', accent:'#C8A000', label:'Streak'   },
+  tip:    { bg:'#F8F8F8', border:'#E0E0E0', accent:'#888',    label:'Conseil' },
+  alert:  { bg:'#FFF8F0', border:'#FFCC88', accent:'#E08000', label:'Alerte'  },
+  signal: { bg:'#FFF0EE', border:'#FFBFB8', accent:'#E03020', label:'Signal'  },
+  streak: { bg:'#FFFDE0', border:'#FFE060', accent:'#C8A000', label:'Streak'  },
 }
 
-// Smart positions — never top-center (blocks nav), never bottom-right on mobile
-const POSITIONS = [
-  { bottom:'88px', right:'24px',  label:'br' },
-  { bottom:'88px', left:'24px',   label:'bl' },
-  { top:'110px',   right:'24px',  label:'tr' },
-]
+// Position fixe — toujours en bas à droite
+const FIXED_POS = { bottom: '24px', right: '24px' }
 
 export function DexyFloat() {
   const pathname = usePathname()
+
   const [visible, setVisible]     = useState(false)
   const [expanded, setExpanded]   = useState(false)
   const [msgIdx, setMsgIdx]       = useState(0)
-  const [posIdx, setPosIdx]       = useState(0)
   const [dismissed, setDismissed] = useState(false)
   const [inputVal, setInputVal]   = useState('')
-  const [chat, setChat]           = useState<{role:'dexy'|'user';text:string}[]>([])
+  const [chat, setChat]           = useState<{ role:'dexy'|'user'; text:string }[]>([])
   const [typing, setTyping]       = useState(false)
   const [entering, setEntering]   = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
 
-  const msgs = PAGE_MSGS['/' + pathname.split('/')[1]] ?? PAGE_MSGS['/home']
-  const msg  = msgs[msgIdx % msgs.length]
-  const pos  = POSITIONS[posIdx]
+  // Section active
+  const section = '/' + pathname.split('/')[1]
 
-  // Pop automatiquement après 2s, change de position selon page
+  // Ne pas afficher sur /home
+  const isHome = section === '/home' || pathname === '/'
+
+  // Messages contextuels de la page courante
+  const msgs = PAGE_MSGS[section] ?? []
+
+  // Pop après 2s — reset à chaque changement de page
   useEffect(() => {
-    setDismissed(false)
+    setVisible(false)
     setExpanded(false)
+    setDismissed(false)
     setMsgIdx(0)
+    setEntering(false)
+
+    if (isHome || msgs.length === 0) return
+
     const t = setTimeout(() => {
       setEntering(true)
       setVisible(true)
@@ -73,22 +77,17 @@ export function DexyFloat() {
     return () => clearTimeout(t)
   }, [pathname])
 
-  // Change de position toutes les 3 pages visitées pour ne pas être prévisible
+  // Rotation messages toutes les 14s
   useEffect(() => {
-    setPosIdx(p => (p + 1) % POSITIONS.length)
-  }, [pathname])
-
-  // Auto-rotate messages toutes les 12s
-  useEffect(() => {
-    if (!visible || expanded) return
+    if (!visible || expanded || msgs.length <= 1) return
     const t = setInterval(() => {
       setEntering(false)
-      setTimeout(() => { setMsgIdx(i => i + 1); setEntering(true) }, 200)
-    }, 12000)
+      setTimeout(() => { setMsgIdx(i => (i + 1) % msgs.length); setEntering(true) }, 200)
+    }, 14000)
     return () => clearInterval(t)
-  }, [visible, expanded])
+  }, [visible, expanded, msgs.length])
 
-  // Scroll chat en bas
+  // Scroll chat
   useEffect(() => {
     chatRef.current?.scrollTo({ top: 9999, behavior: 'smooth' })
   }, [chat])
@@ -101,55 +100,49 @@ export function DexyFloat() {
     setTyping(true)
     setTimeout(() => {
       setTyping(false)
-      setChat(prev => [...prev, { role:'dexy', text:"Bonne question ! En me basant sur les données marché actuelles, je te recommande de consulter les Alpha Signals pour une analyse détaillée. Je travaille sur ta réponse complète." }])
-    }, 1200)
+      setChat(prev => [...prev, { role:'dexy', text:"Bonne question ! En me basant sur les données marché actuelles, je te recommande de consulter les Alpha Signals pour une analyse détaillée." }])
+    }, 1100)
   }, [inputVal])
 
-  if (!visible || dismissed) return null
+  if (isHome || !visible || dismissed || msgs.length === 0) return null
 
-  const s = TYPE_STYLE[msg.type]
-  const posStyle: React.CSSProperties = {
-    position: 'fixed',
-    zIndex: 999,
-    ...(pos.bottom ? { bottom: pos.bottom } : {}),
-    ...(pos.top    ? { top:    pos.top    } : {}),
-    ...(pos.right  ? { right:  pos.right  } : {}),
-    ...(pos.left   ? { left:   pos.left   } : {}),
-  }
+  const msg = msgs[msgIdx]
+  const s   = TYPE_STYLE[msg.type]
 
   return (
     <>
       <style>{`
         @keyframes dexy-pop  { 0%{opacity:0;transform:translateY(10px) scale(0.92)} 60%{transform:translateY(-3px) scale(1.02)} 100%{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes dexy-out  { to{opacity:0;transform:translateY(8px) scale(0.9)} }
         @keyframes msg-slide { from{opacity:0;transform:translateX(6px)} to{opacity:1;transform:translateX(0)} }
         @keyframes blink2    { 0%,100%{opacity:1} 50%{opacity:0.25} }
-        @keyframes wiggle    { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-4deg)} 75%{transform:rotate(4deg)} }
-        .dexy-entering { animation: dexy-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .dexy-entering { animation: dexy-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
         .dexy-msg-in   { animation: msg-slide 0.2s ease-out; }
         .dexy-dismiss:hover { opacity:0.7; }
         .dexy-next:hover    { background:#F0F0F0 !important; }
         .dexy-send:hover    { background:#C82010 !important; }
-        .dexy-expand:hover  { background:#F5F5F5 !important; }
-        .dexy-chat-bubble   { transition: all 0.15s; }
       `}</style>
 
-      <div style={{ ...posStyle, display:'flex', flexDirection:'column', alignItems: pos.right ? 'flex-end' : 'flex-start', gap:'8px', maxWidth:'300px' }}>
+      <div style={{
+        position: 'fixed',
+        bottom: FIXED_POS.bottom,
+        right:  FIXED_POS.right,
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '8px',
+      }}>
 
         {/* PANEL ÉTENDU */}
         {expanded && (
-          <div className="dexy-entering" style={{
-            width:'290px', background:'#fff',
-            border:'1px solid #E8E8E8', borderRadius:'14px',
-            boxShadow:'0 12px 40px rgba(0,0,0,0.13), 0 3px 10px rgba(0,0,0,0.06)',
-            overflow:'hidden',
-          }}>
+          <div className="dexy-entering" style={{ width:'290px', background:'#fff', border:'1px solid #E8E8E8', borderRadius:'14px', boxShadow:'0 12px 40px rgba(0,0,0,0.13), 0 3px 10px rgba(0,0,0,0.06)', overflow:'hidden' }}>
+
             {/* Header */}
             <div style={{ background:'#111', padding:'10px 13px', display:'flex', alignItems:'center', gap:'9px' }}>
               <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'12px', fontWeight:700, flexShrink:0 }}>D</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:'12px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Dexy AI</div>
-                <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.45)', marginTop:'1px' }}>Analyste TCG</div>
+                <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.4)', marginTop:'1px' }}>Analyste TCG</div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
                 <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#34C77B', animation:'blink2 2s ease-in-out infinite' }} />
@@ -168,8 +161,8 @@ export function DexyFloat() {
               </div>
               {msgs.length > 1 && (
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'7px' }}>
-                  <span style={{ fontSize:'10px', color:'#CCC' }}>{msgIdx % msgs.length + 1}/{msgs.length}</span>
-                  <button className="dexy-next" onClick={() => { setEntering(false); setTimeout(() => { setMsgIdx(i=>i+1); setEntering(true) }, 150) }} style={{ fontSize:'10px', color:'#888', background:'transparent', border:'1px solid #E8E8E8', padding:'2px 8px', borderRadius:'5px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'background 0.1s' }}>Suivant →</button>
+                  <span style={{ fontSize:'10px', color:'#CCC' }}>{msgIdx + 1}/{msgs.length}</span>
+                  <button className="dexy-next" onClick={() => { setEntering(false); setTimeout(() => { setMsgIdx(i => (i+1)%msgs.length); setEntering(true) }, 150) }} style={{ fontSize:'10px', color:'#888', background:'transparent', border:'1px solid #E8E8E8', padding:'2px 8px', borderRadius:'5px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'background 0.1s' }}>Suivant →</button>
                 </div>
               )}
             </div>
@@ -196,37 +189,44 @@ export function DexyFloat() {
 
             {/* Input */}
             <div style={{ padding:'9px 12px', display:'flex', gap:'7px', alignItems:'center' }}>
-              <input value={inputVal} onChange={e=>setInputVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSend()} placeholder="Pose une question..." style={{ flex:1, height:'32px', padding:'0 9px', border:'1px solid #E8E8E8', borderRadius:'7px', fontSize:'11px', color:'#111', fontFamily:'var(--font-sans)', outline:'none', background:'#FAFAFA' }} />
+              <input
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Pose une question..."
+                style={{ flex:1, height:'32px', padding:'0 9px', border:'1px solid #E8E8E8', borderRadius:'7px', fontSize:'11px', color:'#111', fontFamily:'var(--font-sans)', outline:'none', background:'#FAFAFA' }}
+              />
               <button className="dexy-send" onClick={handleSend} style={{ width:'32px', height:'32px', borderRadius:'7px', background:'#E03020', border:'none', color:'#fff', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'background 0.15s' }}>↑</button>
             </div>
           </div>
         )}
 
-        {/* BUBBLE COMPACTE — toujours visible */}
-        <div className={entering ? 'dexy-entering' : ''} style={{ display:'flex', alignItems:'center', gap:'10px', flexDirection: pos.right ? 'row-reverse' : 'row' }}>
+        {/* BUBBLE COMPACTE */}
+        <div className={entering ? 'dexy-entering' : ''} style={{ display:'flex', alignItems:'center', gap:'10px', flexDirection:'row-reverse' }}>
 
-          {/* Message flottant condensé */}
+          {/* Message flottant */}
           {!expanded && (
-            <div className="dexy-msg-in" style={{
-              background:s.bg, border:`1px solid ${s.border}`,
-              borderRadius:'10px', padding:'8px 11px',
-              maxWidth:'200px', cursor:'pointer',
-              boxShadow:'0 4px 14px rgba(0,0,0,0.08)',
-            }}
-            onClick={() => setExpanded(true)}
+            <div className="dexy-msg-in" style={{ background:s.bg, border:`1px solid ${s.border}`, borderRadius:'10px', padding:'8px 11px', maxWidth:'210px', cursor:'pointer', boxShadow:'0 4px 14px rgba(0,0,0,0.08)' }}
+              onClick={() => setExpanded(true)}
             >
               <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'3px' }}>
                 <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:s.accent, flexShrink:0 }} />
                 <span style={{ fontSize:'9px', fontWeight:600, color:s.accent, textTransform:'uppercase' as const, letterSpacing:'0.06em', fontFamily:'var(--font-display)' }}>{s.label}</span>
               </div>
-              <p style={{ fontSize:'11px', color:'#333', lineHeight:1.5, margin:0, fontFamily:'var(--font-sans)',
-                display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const, overflow:'hidden' }}>
+              <p style={{
+                fontSize:'11px', color:'#333', lineHeight:1.5, margin:0,
+                fontFamily:'var(--font-sans)',
+                display:'-webkit-box',
+                WebkitLineClamp:2,
+                WebkitBoxOrient:'vertical' as const,
+                overflow:'hidden',
+              }}>
                 {msg.text}
               </p>
             </div>
           )}
 
-          {/* Avatar Dexy */}
+          {/* Avatar */}
           <div style={{ position:'relative', flexShrink:0 }}>
             <button
               onClick={() => setExpanded(e => !e)}
@@ -243,9 +243,12 @@ export function DexyFloat() {
             >
               {expanded ? '×' : 'D'}
             </button>
-            {/* Dismiss */}
             {!expanded && (
-              <button className="dexy-dismiss" onClick={() => setDismissed(true)} style={{ position:'absolute', top:'-4px', right:'-4px', width:'16px', height:'16px', borderRadius:'50%', background:'#888', border:'2px solid #fff', color:'#fff', fontSize:'9px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1, fontWeight:700, transition:'opacity 0.15s', padding:0 }}>×</button>
+              <button
+                className="dexy-dismiss"
+                onClick={() => setDismissed(true)}
+                style={{ position:'absolute', top:'-3px', right:'-3px', width:'16px', height:'16px', borderRadius:'50%', background:'#999', border:'2px solid #fff', color:'#fff', fontSize:'9px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, transition:'opacity 0.15s', padding:0, lineHeight:1 }}
+              >×</button>
             )}
           </div>
         </div>

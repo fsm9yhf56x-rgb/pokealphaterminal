@@ -44,7 +44,6 @@ const TIER_BG: Record<string,string> = {
   B:'linear-gradient(135deg,#2E9E6A,#1A7A4A)',
 }
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
-
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
 const tiltCard = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -77,6 +76,7 @@ export function Holdings() {
   const [emptySlots,  setEmptySlots]  = useState(EMPTY_SLOTS)
   const [sliding,     setSliding]     = useState<string|null>(null)
   const [removing,    setRemoving]    = useState<string|null>(null)
+  const [pendingCard, setPendingCard] = useState<{slotId:string;card:CardItem}|null>(null)
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
   const [setComplete, setSetComplete] = useState(false)
@@ -102,13 +102,15 @@ export function Holdings() {
   }
 
   const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
+    if (sliding) return
     const newCard: CardItem = {
       id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    // Option B — 1.4s
-    // Step 1: pochette s'ouvre
+    // Rend le contenu visible AVANT l'animation clip-path
+    setPendingCard({ slotId:slot.id, card:newCard })
+    // Step 1 : pochette s'ouvre
     const el = document.getElementById('pocket-'+slot.id)
     if (el) {
       el.style.transition = 'transform 0.25s ease-out'
@@ -116,34 +118,34 @@ export function Holdings() {
       el.style.transform = 'scaleY(1.025)'
       setTimeout(()=>{ el.style.transform='scaleY(1)' }, 150)
     }
-    // Step 2: carte glisse dans la pochette (clip-path reveal)
-    setSliding(slot.id)
-    // Step 3: flash border au moment du contact
+    // Step 2 : clip-path reveal (30ms pour que React rende le contenu d'abord)
+    setTimeout(()=>{ setSliding(slot.id) }, 30)
+    // Step 3 : flash border au contact
     setTimeout(()=>{
       if (el) {
         el.style.transition = 'border-color 0.12s ease-out'
         el.style.borderColor = 'rgba(255,255,255,.6)'
         setTimeout(()=>{ el.style.transition='border-color 0.4s ease-out'; el.style.borderColor='' }, 200)
       }
-    }, 550)
-    // Step 4: state update
+    }, 580)
+    // Step 4 : finalise le state
     setTimeout(()=>{
       setFilled(prev=>[...prev, newCard])
       setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
       setSliding(null)
+      setPendingCard(null)
       if (emptySlots.length === 1) {
         setSetComplete(true)
         showToast('SET COMPLET · Eeveelutions +500 XP débloqués !')
       } else {
         showToast(slot.name + ' insérée dans le binder ✓')
       }
-    }, 860)
+    }, 920)
   }
 
   const removeCard = (card: CardItem, e: React.MouseEvent) => {
     e.stopPropagation()
     if (removing) return
-    // Step 1: pochette s'ouvre légèrement
     const el = document.getElementById('pocket-'+card.id)
     if (el) {
       el.style.transition = 'transform 0.2s ease-out'
@@ -151,9 +153,7 @@ export function Holdings() {
       el.style.transform = 'scaleY(1.02)'
       setTimeout(()=>{ el.style.transform='scaleY(1)' }, 200)
     }
-    // Step 2: carte remonte (inverse de l'insertion)
     setRemoving(card.id)
-    // Step 3: state update — redevient emplacement vide
     setTimeout(()=>{
       const emptySlot = { id:card.id+'_e', name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice }
       setFilled(prev=>prev.filter(c=>c.id!==card.id))
@@ -175,36 +175,34 @@ export function Holdings() {
   return (
     <>
       <style>{`
-        @keyframes fadeUp     { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn     { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        @keyframes holoShift  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes breatheS   { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
-        @keyframes breatheA   { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
-        @keyframes ptcl       { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
-        @keyframes shimGlow   { 0%,100%{opacity:.5} 50%{opacity:1} }
-        @keyframes toastIn    { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        @keyframes progGold   { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
-        @keyframes complBadge { from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
-        @keyframes wrappedIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
+        @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
+        @keyframes ptcl      { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
+        @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
+        @keyframes toastIn   { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+        @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
+        @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
+        @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
 
-        /* ── INSERTION option B 1.4s ── */
         @keyframes cardInsert {
           0%   { transform:translateY(-32px); clip-path:inset(0 0 100% 0); }
           10%  { transform:translateY(-32px); clip-path:inset(0 0 100% 0); }
           12%  { clip-path:inset(0 0 62% 0); }
-          65%  { transform:translateY(4px);  clip-path:inset(0 0 0% 0); }
+          65%  { transform:translateY(4px);   clip-path:inset(0 0 0% 0); }
           80%  { transform:translateY(2px); }
           90%  { transform:translateY(-1px); }
           96%  { transform:translateY(0.5px); }
           100% { transform:translateY(0); }
         }
-        /* ── RETRAIT inverse symétrique ── */
         @keyframes cardRemove {
-          0%   { transform:translateY(0);    clip-path:inset(0 0 0% 0);   opacity:1; }
-          15%  { transform:translateY(-3px); clip-path:inset(0 0 0% 0); }
+          0%   { transform:translateY(0);     clip-path:inset(0 0 0% 0);   opacity:1; }
+          15%  { transform:translateY(-3px);  clip-path:inset(0 0 0% 0); }
           20%  { clip-path:inset(0 0 8% 0); }
-          80%  { transform:translateY(-36px);clip-path:inset(0 0 100% 0); opacity:1; }
-          100% { transform:translateY(-40px);clip-path:inset(0 0 100% 0); opacity:0; }
+          80%  { transform:translateY(-36px); clip-path:inset(0 0 100% 0); opacity:1; }
+          100% { transform:translateY(-40px); clip-path:inset(0 0 100% 0); opacity:0; }
         }
 
         .gem           { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
@@ -231,7 +229,6 @@ export function Holdings() {
       `}</style>
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
-
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
         {toast && (
@@ -406,7 +403,6 @@ export function Holdings() {
               <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 20% 30%,rgba(255,107,53,.06) 0%,transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(126,87,194,.06) 0%,transparent 45%)', pointerEvents:'none' }}/>
               <div style={{ position:'relative', padding:'22px 22px 18px' }}>
 
-                {/* Header */}
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'18px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
@@ -432,7 +428,6 @@ export function Holdings() {
                   </div>
                 </div>
 
-                {/* Grid */}
                 <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
                   {pageItems.map((item, idx) => {
                     const isEmpty   = 'isEmpty' in item
@@ -447,25 +442,63 @@ export function Holdings() {
                     const fsPx      = binderCols<=3?'12px':'11px'
                     const isVintage = card && card.year < 2002
 
-                    if (isEmpty && empty) return (
-                      <div
-                        key={item.id}
-                        id={`pocket-${empty.id}`}
-                        className={`pocket empty${sliding===item.id?' inserting':''}`}
-                        style={{ aspectRatio:'2/3', border:'1.5px dashed rgba(255,255,255,.12)', background:'rgba(255,255,255,.02)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', cursor:'pointer' }}
-                        onClick={()=>insertCard(empty)}
-                      >
-                        <div style={{ position:'absolute', top:0, left:0, right:0, height:'4px', background:'linear-gradient(180deg,rgba(255,255,255,.07),transparent)', borderRadius:'9px 9px 0 0', pointerEvents:'none' }}/>
-                        <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                          <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
+                    if (isEmpty && empty) {
+                      const pCard = pendingCard?.slotId === empty.id ? pendingCard.card : null
+                      const pec   = pCard ? (EC[pCard.type]??'#888') : ec
+                      const peg   = pCard ? (EG[pCard.type]??'rgba(128,128,128,.4)') : eg
+                      const proi  = pCard ? Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100) : 0
+                      const pHolo = pCard ? HOLO_RARITIES.includes(pCard.rarity) : false
+                      return (
+                        <div
+                          key={item.id}
+                          id={`pocket-${empty.id}`}
+                          className={`pocket${pCard?' gem':' empty'}${sliding===item.id?' inserting':''}`}
+                          style={{
+                            aspectRatio:'2/3',
+                            border: pCard ? `1.5px solid ${pec}45` : '1.5px dashed rgba(255,255,255,.12)',
+                            background: pCard ? `linear-gradient(145deg,${pec}20,${pec}08)` : 'rgba(255,255,255,.02)',
+                            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px',
+                            cursor: pCard ? 'default' : 'pointer',
+                          }}
+                          onClick={()=>{ if (!pCard) insertCard(empty) }}
+                        >
+                          {pCard ? (
+                            <>
+                              {pHolo && <div className="holo"/>}
+                              <div className="ptcl" style={{ background:pec, bottom:'22%', left:'20%' }}/>
+                              <div className="ptcl" style={{ background:pec, bottom:'35%', left:'62%' }}/>
+                              <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${pec},${pec}44)`, zIndex:4 }}/>
+                              <div style={{ position:'absolute', top:0, left:0, right:0, height:'5px', background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)', borderRadius:'9px 9px 0 0', zIndex:3, pointerEvents:'none' }}/>
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'6px', background:'linear-gradient(0deg,rgba(0,0,0,.4),transparent)', zIndex:3, pointerEvents:'none' }}/>
+                              <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${pec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                                <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:peg, filter:'blur(14px)', opacity:.6 }}/>
+                                <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${pec}CC,${pec}77)`, boxShadow:`0 0 16px ${peg}`, position:'relative', zIndex:1 }}/>
+                                {pCard.signal && <div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[pCard.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{pCard.signal}</div>}
+                              </div>
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
+                                <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{pCard.name}</div>
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                  <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)' }}>€ {pCard.curPrice}</div>
+                                  <div style={{ fontSize:'10px', fontWeight:600, color:proi>=0?'#4ECCA3':'#FF6B8A' }}>{proi>=0?'+':''}{proi}%</div>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ position:'absolute', top:0, left:0, right:0, height:'4px', background:'linear-gradient(180deg,rgba(255,255,255,.07),transparent)', borderRadius:'9px 9px 0 0', pointerEvents:'none' }}/>
+                              <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
+                              </div>
+                              <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
+                                {empty.name}<br/>
+                                <span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
+                              </div>
+                              <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
+                            </>
+                          )}
                         </div>
-                        <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
-                          {empty.name}<br/>
-                          <span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
-                        </div>
-                        <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
-                      </div>
-                    )
+                      )
+                    }
 
                     if (card) return (
                       <div
@@ -486,7 +519,6 @@ export function Holdings() {
                         <div style={{ position:'absolute', top:0, left:0, right:0, height:'5px', background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)', borderRadius:'9px 9px 0 0', zIndex:3, pointerEvents:'none' }}/>
                         {isVintage  && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.55),transparent)', zIndex:3, pointerEvents:'none' }}/>}
                         {!isVintage && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'6px',  background:'linear-gradient(0deg,rgba(0,0,0,.4),transparent)',  zIndex:3, pointerEvents:'none' }}/>}
-
                         <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
                           <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
                           <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
@@ -495,7 +527,6 @@ export function Holdings() {
                           {card.graded && <div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
                           {card.hot && <div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
                         </div>
-
                         <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
                           <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -503,8 +534,6 @@ export function Holdings() {
                             <div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>
                           </div>
                         </div>
-
-                        {/* Bouton retirer — visible au hover */}
                         <button
                           className="remove-btn"
                           onClick={e=>removeCard(card,e)}
@@ -620,7 +649,7 @@ export function Holdings() {
               <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                 {[...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
                   const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100); const ec=EC[card.type]??'#888'
-                  return(
+                  return (
                     <div key={card.id} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
                       <div style={{ fontSize:'20px', flexShrink:0 }}>{['🥇','🥈','🥉'][i]}</div>
                       <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>

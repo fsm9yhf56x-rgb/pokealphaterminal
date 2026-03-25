@@ -27,8 +27,8 @@ const CARDS: CardItem[] = [
 ]
 
 const EMPTY_SLOTS = [
-  { id:'e1', name:'Sylveon VMAX Alt',   set:'Evolving Skies', type:'psychic', estPrice:'€ 250–310' },
-  { id:'e2', name:'Énergie Alt Art',    set:'Evolving Skies', type:'electric', estPrice:'€ 40–60'  },
+  { id:'e1', name:'Sylveon VMAX Alt',  set:'Evolving Skies', type:'psychic',  estPrice:'€ 250–310' },
+  { id:'e2', name:'Énergie Alt Art',   set:'Evolving Skies', type:'electric', estPrice:'€ 40–60'   },
 ]
 
 const EC: Record<string,string> = { fire:'#FF6B35',water:'#42A5F5',psychic:'#C855D4',dark:'#7E57C2',electric:'#D4A800',grass:'#3DA85A' }
@@ -70,17 +70,18 @@ const resetCard = (e: React.MouseEvent<HTMLDivElement>) => {
 
 export function Holdings() {
   const router = useRouter()
-  const [view,         setView]         = useState<ViewMode>('binder')
-  const [binderCols,   setBinderCols]   = useState(3)
-  const [binderPage,   setBinderPage]   = useState(0)
-  const [filled,       setFilled]       = useState<CardItem[]>(CARDS)
-  const [emptySlots,   setEmptySlots]   = useState(EMPTY_SLOTS)
-  const [sliding,      setSliding]      = useState<string|null>(null)
-  const [spotCard,     setSpotCard]     = useState<CardItem|null>(null)
-  const [favs,         setFavs]         = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
-  const [setComplete,  setSetComplete]  = useState(false)
-  const [shareOpen,    setShareOpen]    = useState(false)
-  const [toast,        setToast]        = useState<string|null>(null)
+  const [view,        setView]        = useState<ViewMode>('binder')
+  const [binderCols,  setBinderCols]  = useState(3)
+  const [binderPage,  setBinderPage]  = useState(0)
+  const [filled,      setFilled]      = useState<CardItem[]>(CARDS)
+  const [emptySlots,  setEmptySlots]  = useState(EMPTY_SLOTS)
+  const [sliding,     setSliding]     = useState<string|null>(null)
+  const [removing,    setRemoving]    = useState<string|null>(null)
+  const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
+  const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
+  const [setComplete, setSetComplete] = useState(false)
+  const [shareOpen,   setShareOpen]   = useState(false)
+  const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
   const totalBuy  = CARDS.reduce((s,c)=>s+c.buyPrice*c.qty,0)
@@ -102,79 +103,135 @@ export function Holdings() {
 
   const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
     const newCard: CardItem = {
-      id: slot.id, name: slot.name, set: slot.set, year: 2021, number:'???',
-      rarity:'Alt Art', type: slot.type, lang:'EN', condition:'Raw',
+      id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
+      rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    // Étape 1 : la pochette s'ouvre
-    setSliding('open-' + slot.id)
-    setTimeout(() => {
-      // Étape 2 : la carte glisse dans la pochette (clip-path reveal)
-      setSliding(slot.id)
-      setTimeout(() => {
-        // Étape 3 : flash de réception
-        setSliding('receive-' + slot.id)
-        setTimeout(() => {
-          // Étape 4 : settle + update state
-          setFilled(prev=>[...prev, newCard])
-          setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
-          setSliding(null)
-          if (emptySlots.length === 1) {
-            setSetComplete(true)
-            showToast('SET COMPLET · Eeveelutions +500 XP débloqués !')
-          } else {
-            showToast(slot.name + ' insérée dans le binder ✓')
-          }
-        }, 450)
-      }, 80)
-    }, 50)
+    // Option B — 1.4s
+    // Step 1: pochette s'ouvre
+    const el = document.getElementById('pocket-'+slot.id)
+    if (el) {
+      el.style.transition = 'transform 0.25s ease-out'
+      el.style.transformOrigin = 'top center'
+      el.style.transform = 'scaleY(1.025)'
+      setTimeout(()=>{ el.style.transform='scaleY(1)' }, 150)
+    }
+    // Step 2: carte glisse dans la pochette (clip-path reveal)
+    setSliding(slot.id)
+    // Step 3: flash border au moment du contact
+    setTimeout(()=>{
+      if (el) {
+        el.style.transition = 'border-color 0.12s ease-out'
+        el.style.borderColor = 'rgba(255,255,255,.6)'
+        setTimeout(()=>{ el.style.transition='border-color 0.4s ease-out'; el.style.borderColor='' }, 200)
+      }
+    }, 550)
+    // Step 4: state update
+    setTimeout(()=>{
+      setFilled(prev=>[...prev, newCard])
+      setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
+      setSliding(null)
+      if (emptySlots.length === 1) {
+        setSetComplete(true)
+        showToast('SET COMPLET · Eeveelutions +500 XP débloqués !')
+      } else {
+        showToast(slot.name + ' insérée dans le binder ✓')
+      }
+    }, 860)
   }
 
-  const slotsPer    = binderCols * 3
-  const allSlots    = [...filled, ...emptySlots.map(e=>({...e,id:e.id,isEmpty:true}))]
-  const totalSlots  = filled.length + emptySlots.length
-  const binderPages = Math.max(1, Math.ceil(totalSlots/slotsPer))
-  const pageItems   = allSlots.slice(binderPage*slotsPer, (binderPage+1)*slotsPer)
-  const phantomCount= Math.max(0, slotsPer - pageItems.length)
-  const pct         = Math.round(filled.length/totalSlots*100)
+  const removeCard = (card: CardItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (removing) return
+    // Step 1: pochette s'ouvre légèrement
+    const el = document.getElementById('pocket-'+card.id)
+    if (el) {
+      el.style.transition = 'transform 0.2s ease-out'
+      el.style.transformOrigin = 'top center'
+      el.style.transform = 'scaleY(1.02)'
+      setTimeout(()=>{ el.style.transform='scaleY(1)' }, 200)
+    }
+    // Step 2: carte remonte (inverse de l'insertion)
+    setRemoving(card.id)
+    // Step 3: state update — redevient emplacement vide
+    setTimeout(()=>{
+      const emptySlot = { id:card.id+'_e', name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice }
+      setFilled(prev=>prev.filter(c=>c.id!==card.id))
+      setEmptySlots(prev=>[...prev, emptySlot])
+      setSetComplete(false)
+      setRemoving(null)
+      showToast(card.name + ' retirée du binder')
+    }, 750)
+  }
+
+  const slotsPer     = binderCols * 3
+  const allSlots     = [...filled, ...emptySlots.map(e=>({...e, isEmpty:true}))]
+  const totalSlots   = filled.length + emptySlots.length
+  const binderPages  = Math.max(1, Math.ceil(totalSlots/slotsPer))
+  const pageItems    = allSlots.slice(binderPage*slotsPer, (binderPage+1)*slotsPer)
+  const phantomCount = Math.max(0, slotsPer - pageItems.length)
+  const pct          = Math.round(filled.length/totalSlots*100)
 
   return (
     <>
       <style>{`
-        @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
-        @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
-        @keyframes ptcl      { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
-        @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
-        @keyframes pocketOpen { 0%{transform:scaleY(1)} 15%{transform:scaleY(1.03)} 100%{transform:scaleY(1)} } @keyframes cardInsert { 0%{transform:translateY(-28px);clip-path:inset(0 0 100% 0)} 18%{transform:translateY(-28px);clip-path:inset(0 0 100% 0)} 19%{clip-path:inset(0 0 72% 0)} 55%{transform:translateY(4px);clip-path:inset(0 0 0% 0)} 70%{transform:translateY(2px)} 82%{transform:translateY(-1px)} 92%{transform:translateY(0.5px)} 100%{transform:translateY(0)} } @keyframes pocketReceive { 0%{border-color:rgba(255,255,255,.15)} 30%{border-color:rgba(255,255,255,.5)} 100%{border-color:rgba(126,87,194,.45)} } @keyframes pocketSettle { 0%{transform:translateY(0)} 25%{transform:translateY(-1.5px)} 50%{transform:translateY(0.5px)} 75%{transform:translateY(-0.5px)} 100%{transform:translateY(0)} }
-        @keyframes toastIn   { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
-        @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
-        @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        .gem          { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
-        .gem .holo    { position:absolute;inset:0;border-radius:14px;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
-        .gem .hm      { position:absolute;inset:0;border-radius:14px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
+        @keyframes fadeUp     { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn     { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes holoShift  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes breatheS   { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
+        @keyframes breatheA   { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
+        @keyframes ptcl       { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
+        @keyframes shimGlow   { 0%,100%{opacity:.5} 50%{opacity:1} }
+        @keyframes toastIn    { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+        @keyframes progGold   { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
+        @keyframes complBadge { from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
+        @keyframes wrappedIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+
+        /* ── INSERTION option B 1.4s ── */
+        @keyframes cardInsert {
+          0%   { transform:translateY(-32px); clip-path:inset(0 0 100% 0); }
+          10%  { transform:translateY(-32px); clip-path:inset(0 0 100% 0); }
+          12%  { clip-path:inset(0 0 62% 0); }
+          65%  { transform:translateY(4px);  clip-path:inset(0 0 0% 0); }
+          80%  { transform:translateY(2px); }
+          90%  { transform:translateY(-1px); }
+          96%  { transform:translateY(0.5px); }
+          100% { transform:translateY(0); }
+        }
+        /* ── RETRAIT inverse symétrique ── */
+        @keyframes cardRemove {
+          0%   { transform:translateY(0);    clip-path:inset(0 0 0% 0);   opacity:1; }
+          15%  { transform:translateY(-3px); clip-path:inset(0 0 0% 0); }
+          20%  { clip-path:inset(0 0 8% 0); }
+          80%  { transform:translateY(-36px);clip-path:inset(0 0 100% 0); opacity:1; }
+          100% { transform:translateY(-40px);clip-path:inset(0 0 100% 0); opacity:0; }
+        }
+
+        .gem           { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
+        .gem .holo     { position:absolute;inset:0;border-radius:14px;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
+        .gem .hm       { position:absolute;inset:0;border-radius:14px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
-        .gem .ptcl    { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
+        .gem .ptcl     { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
         .gem:hover .ptcl:nth-child(2){ animation:ptcl 2.4s .5s ease-out infinite; }
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
-        .breathe-S    { animation:breatheS 2.4s ease-in-out infinite; }
-        .breathe-A    { animation:breatheA 3s ease-in-out infinite; }
-        .pocket       { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
-        .pocket:hover { transform:translateY(-5px) scale(1.04) !important; }
-        .pocket.sliding { animation:cardInsert .55s cubic-bezier(.25,.46,.45,.94) forwards; overflow:hidden; } .pocket.opening { animation:pocketOpen .25s ease-out forwards; transform-origin:top center; } .pocket.receiving { animation:pocketReceive .45s ease-out forwards; } .pocket.settling { animation:pocketSettle .3s ease-out forwards; }
+        .breathe-S     { animation:breatheS 2.4s ease-in-out infinite; }
+        .breathe-A     { animation:breatheA 3s ease-in-out infinite; }
+        .pocket        { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
+        .pocket:hover  { transform:translateY(-5px) scale(1.04) !important; }
+        .pocket.inserting { animation:cardInsert .85s cubic-bezier(.22,.58,.36,1) forwards; overflow:hidden; }
+        .pocket.removing  { animation:cardRemove .75s cubic-bezier(.22,.58,.36,1) forwards; overflow:hidden; pointer-events:none; }
         .pocket.empty:hover { border-color:rgba(255,255,255,.28) !important; }
-        .vtab         { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .vtab.on      { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
-        .colbtn       { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .share-fmt    { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
+        .vtab          { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .vtab.on       { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
+        .colbtn        { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .share-fmt     { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
         .share-fmt:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.25); }
+        .remove-btn    { pointer-events:all !important; }
       `}</style>
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
+
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
         {toast && (
@@ -184,10 +241,10 @@ export function Holdings() {
         )}
 
         {spotCard && (() => {
-          const ec  = EC[spotCard.type]??'#888'
-          const eg  = EG[spotCard.type]??'rgba(128,128,128,.4)'
-          const roi = Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
-          const gain= (spotCard.curPrice-spotCard.buyPrice)*spotCard.qty
+          const ec   = EC[spotCard.type]??'#888'
+          const eg   = EG[spotCard.type]??'rgba(128,128,128,.4)'
+          const roi  = Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
+          const gain = (spotCard.curPrice-spotCard.buyPrice)*spotCard.qty
           const isHolo = HOLO_RARITIES.includes(spotCard.rarity)
           return (
             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.82)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>setSpotCard(null)}>
@@ -235,7 +292,7 @@ export function Holdings() {
                     <div style={{ display:'flex', gap:'8px' }}>
                       <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal →</button>
                       <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
-                      <button onClick={e=>{toggleFav(spotCard.id,e)}} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
+                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
                     </div>
                   </div>
                 </div>
@@ -280,9 +337,15 @@ export function Holdings() {
                         <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
                         <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
                         <div style={{ position:'relative', padding:'10px 12px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                          <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div><div style={{ fontSize:'18px', fontWeight:500, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div></div>
+                          <div>
+                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div>
+                            <div style={{ fontSize:'18px', fontWeight:500, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+                          </div>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                            <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>ROI TOTAL</div><div style={{ fontSize:'12px', fontWeight:500, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div></div>
+                            <div>
+                              <div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>ROI TOTAL</div>
+                              <div style={{ fontSize:'12px', fontWeight:500, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
+                            </div>
                             <div style={{ fontSize:'7px', color:'rgba(255,255,255,.2)' }}>POKÉ ALPHA</div>
                           </div>
                         </div>
@@ -307,6 +370,7 @@ export function Holdings() {
           </div>
         )}
 
+        {/* HEADER */}
         <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'16px', marginBottom:'22px' }}>
             <div>
@@ -334,12 +398,15 @@ export function Holdings() {
           </div>
         </div>
 
+        {/* ── VUE BINDER ── */}
         {view==='binder' && (
           <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ background:'linear-gradient(160deg,#1C1008 0%,#130C05 50%,#1C1008 100%)', borderRadius:'18px', boxShadow:'0 24px 60px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.05)', position:'relative', overflow:'hidden' }}>
               <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px)', pointerEvents:'none' }}/>
               <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 20% 30%,rgba(255,107,53,.06) 0%,transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(126,87,194,.06) 0%,transparent 45%)', pointerEvents:'none' }}/>
               <div style={{ position:'relative', padding:'22px 22px 18px' }}>
+
+                {/* Header */}
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'18px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
@@ -365,51 +432,50 @@ export function Holdings() {
                   </div>
                 </div>
 
+                {/* Grid */}
                 <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
                   {pageItems.map((item, idx) => {
-                    const isEmpty = 'isEmpty' in item
-                    const card   = isEmpty ? null : item as CardItem
-                    const empty  = isEmpty ? item as typeof EMPTY_SLOTS[number]&{isEmpty:true} : null
-                    const isSliding = sliding === item.id
-                    const ec    = EC[(isEmpty?empty!.type:card!.type)??'fire']??'#888'
-                    const eg    = EG[(isEmpty?empty!.type:card!.type)??'fire']??'rgba(128,128,128,.4)'
-                    const isHolo= card ? HOLO_RARITIES.includes(card.rarity) : false
-                    const roi   = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
-                    const orbSz = binderCols<=3?'36px':binderCols===4?'28px':'24px'
-                    const fsName= binderCols<=3?'10px':binderCols===4?'9px':'8px'
-                    const fsPx  = binderCols<=3?'12px':'11px'
+                    const isEmpty   = 'isEmpty' in item
+                    const card      = isEmpty ? null : item as CardItem
+                    const empty     = isEmpty ? item as typeof EMPTY_SLOTS[number]&{isEmpty:true} : null
+                    const ec        = EC[(isEmpty?empty!.type:card!.type)??'fire']??'#888'
+                    const eg        = EG[(isEmpty?empty!.type:card!.type)??'fire']??'rgba(128,128,128,.4)'
+                    const isHolo    = card ? HOLO_RARITIES.includes(card.rarity) : false
+                    const roi       = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
+                    const orbSz     = binderCols<=3?'36px':binderCols===4?'28px':'24px'
+                    const fsName    = binderCols<=3?'10px':binderCols===4?'9px':'8px'
+                    const fsPx      = binderCols<=3?'12px':'11px'
                     const isVintage = card && card.year < 2002
 
-                    if (isEmpty && empty) {
-                      return (
-                        <div
-                          key={item.id}
-                          className={`pocket empty${sliding==='open-'+item.id?' opening':sliding===item.id?' sliding':sliding==='receive-'+item.id?' receiving':''}`}
-                          style={{ aspectRatio:'2/3', border:'1.5px dashed rgba(255,255,255,.12)', background:'rgba(255,255,255,.02)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', cursor:'pointer' }}
-                          onClick={()=>insertCard(empty)}
-                        >
-                          <div style={{ position:'absolute', top:0, left:0, right:0, height:'4px', background:'linear-gradient(180deg,rgba(255,255,255,.07),transparent)', borderRadius:'9px 9px 0 0', pointerEvents:'none' }}/>
-                          <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
-                          </div>
-                          <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
-                            {empty.name}<br/>
-                            <span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
-                          </div>
-                          <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>
-                            Cliquer pour insérer
-                          </div>
+                    if (isEmpty && empty) return (
+                      <div
+                        key={item.id}
+                        id={`pocket-${empty.id}`}
+                        className={`pocket empty${sliding===item.id?' inserting':''}`}
+                        style={{ aspectRatio:'2/3', border:'1.5px dashed rgba(255,255,255,.12)', background:'rgba(255,255,255,.02)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', cursor:'pointer' }}
+                        onClick={()=>insertCard(empty)}
+                      >
+                        <div style={{ position:'absolute', top:0, left:0, right:0, height:'4px', background:'linear-gradient(180deg,rgba(255,255,255,.07),transparent)', borderRadius:'9px 9px 0 0', pointerEvents:'none' }}/>
+                        <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
                         </div>
-                      )
-                    }
+                        <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
+                          {empty.name}<br/>
+                          <span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
+                        </div>
+                        <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
+                      </div>
+                    )
 
                     if (card) return (
                       <div
                         key={card.id}
-                        className={`pocket gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`}
+                        id={`pocket-${card.id}`}
+                        className={`pocket gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}${removing===card.id?' removing':''}`}
                         style={{ aspectRatio:'2/3', background:`linear-gradient(145deg,${ec}20,${ec}08)`, border:`1.5px solid ${ec}45`, boxShadow:'0 4px 14px rgba(0,0,0,.5)', animation:`cardIn .3s ${Math.min(idx,8)*.04}s ease-out both` }}
                         onMouseMove={tiltCard}
-                        onMouseLeave={resetCard}
+                        onMouseLeave={e=>{ resetCard(e); const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
+                        onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                         onClick={()=>setSpotCard(card)}
                       >
                         {isHolo && <div className="holo"/>}
@@ -418,8 +484,9 @@ export function Holdings() {
                         <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                         <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
                         <div style={{ position:'absolute', top:0, left:0, right:0, height:'5px', background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)', borderRadius:'9px 9px 0 0', zIndex:3, pointerEvents:'none' }}/>
-                        {isVintage && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.55),transparent)', zIndex:3, pointerEvents:'none' }}/>}
-                        {!isVintage && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'6px', background:'linear-gradient(0deg,rgba(0,0,0,.4),transparent)', zIndex:3, pointerEvents:'none' }}/>}
+                        {isVintage  && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.55),transparent)', zIndex:3, pointerEvents:'none' }}/>}
+                        {!isVintage && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'6px',  background:'linear-gradient(0deg,rgba(0,0,0,.4),transparent)',  zIndex:3, pointerEvents:'none' }}/>}
+
                         <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
                           <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
                           <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
@@ -428,6 +495,7 @@ export function Holdings() {
                           {card.graded && <div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
                           {card.hot && <div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
                         </div>
+
                         <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
                           <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -435,6 +503,13 @@ export function Holdings() {
                             <div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>
                           </div>
                         </div>
+
+                        {/* Bouton retirer — visible au hover */}
+                        <button
+                          className="remove-btn"
+                          onClick={e=>removeCard(card,e)}
+                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:10, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}
+                        >↑ Retirer</button>
                       </div>
                     )
                     return null
@@ -458,7 +533,7 @@ export function Holdings() {
                     <span style={{ fontSize:'9px', color:setComplete?'#FFD700':'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
                   </div>
                   <div style={{ height:'4px', borderRadius:'99px', background:'rgba(255,255,255,.07)', overflow:'hidden' }}>
-                    <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)', animation:setComplete?'progGold .6s ease forwards':'' }}/>
+                    <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)' }}/>
                   </div>
                 </div>
                 <div style={{ position:'absolute', bottom:'14px', right:'18px', fontSize:'9px', color:'rgba(255,255,255,.05)', letterSpacing:'.2em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>PokéAlpha Terminal</div>
@@ -467,6 +542,7 @@ export function Holdings() {
           </div>
         )}
 
+        {/* ── VUE VITRINE ── */}
         {view==='showcase' && (
           <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'18px' }}>
@@ -476,20 +552,11 @@ export function Holdings() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:'14px' }}>
               {CARDS.map((card,idx)=>{
-                const ec=EC[card.type]??'#888'
-                const eg=EG[card.type]??'rgba(128,128,128,.4)'
+                const ec=EC[card.type]??'#888'; const eg=EG[card.type]??'rgba(128,128,128,.4)'
                 const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)
-                const isHolo=HOLO_RARITIES.includes(card.rarity)
-                const ls=LS[card.lang]
+                const isHolo=HOLO_RARITIES.includes(card.rarity); const ls=LS[card.lang]
                 return (
-                  <div
-                    key={card.id}
-                    className={`gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`}
-                    style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${ec}35`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both` }}
-                    onMouseMove={tiltCard}
-                    onMouseLeave={resetCard}
-                    onClick={()=>setSpotCard(card)}
-                  >
+                  <div key={card.id} className={`gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`} style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${ec}35`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both` }} onMouseMove={tiltCard} onMouseLeave={resetCard} onClick={()=>setSpotCard(card)}>
                     {isHolo && <div className="holo"/>}
                     {isHolo && <div className="hm"/>}
                     <div className="ptcl" style={{ background:ec, bottom:'20%', left:'20%' }}/>
@@ -528,6 +595,7 @@ export function Holdings() {
           </div>
         )}
 
+        {/* ── VUE WRAPPED ── */}
         {view==='wrapped' && (
           <div style={{ position:'relative', zIndex:1, animation:'wrappedIn .35s ease-out' }}>
             <div style={{ padding:'40px 28px 28px', textAlign:'center', position:'relative', overflow:'hidden' }}>
@@ -551,8 +619,7 @@ export function Holdings() {
               <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
               <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                 {[...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
-                  const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)
-                  const ec=EC[card.type]??'#888'
+                  const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100); const ec=EC[card.type]??'#888'
                   return(
                     <div key={card.id} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
                       <div style={{ fontSize:'20px', flexShrink:0 }}>{['🥇','🥈','🥉'][i]}</div>

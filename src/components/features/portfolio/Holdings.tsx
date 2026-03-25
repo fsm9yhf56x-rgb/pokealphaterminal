@@ -77,6 +77,7 @@ export function Holdings() {
   const [shareOpen, setShareOpen] = useState(false)
   const [filterType,setFilterType]= useState('all')
   const [binderPage,setBinderPage]= useState(0)
+  const [binderCols,setBinderCols]= useState(3)
 
   const toggleFav = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
@@ -95,7 +96,7 @@ export function Holdings() {
 
   const selCard = selected ? CARDS.find(c=>c.id===selected) : null
 
-  const BINDER_SLOTS = 9
+  const BINDER_SLOTS = binderCols * 3
   const binderPages  = Math.ceil(CARDS.length / BINDER_SLOTS)
   const binderCards  = CARDS.slice(binderPage*BINDER_SLOTS, (binderPage+1)*BINDER_SLOTS)
 
@@ -431,9 +432,14 @@ export function Holdings() {
                 <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'36px', height:'36px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage===0?'default':'pointer', fontSize:'14px', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
                 <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'36px', height:'36px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'14px', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
               </div>
+              <div style={{ display:'flex', gap:'4px' }}>
+                {[3,4,5].map(n=>(
+                  <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} style={{ width:'32px', height:'32px', borderRadius:'8px', background:binderCols===n?'rgba(255,255,255,.18)':'rgba(255,255,255,.05)', border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'}`, color:binderCols===n?'#fff':'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'11px', fontWeight:500, fontFamily:'var(--font-display)', transition:'all .15s' }}>{n}</button>
+                ))}
+              </div>
             </div>
 
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', animation:'pageIn .25s ease-out' }}>
+            <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'12px', animation:'pageIn .25s ease-out' }}>
               {binderCards.map((card,idx)=>{
                 const ec = EC[card.type]??'#888'
                 const roi= Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)

@@ -300,7 +300,6 @@ export function Holdings() {
           </button>
           {activeFilters>0 && <button onClick={resetFilters} style={{ height:'38px', padding:'0 14px', borderRadius:'9px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', flexShrink:0 }}>Effacer</button>}
           <div style={{ display:'flex', gap:'3px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
-            {(['roi','ROI'],['curPrice','Valeur'],['gain','Gain'],['favorite','❤️'],['year','Année'],['name','A–Z']).map(()=>null)}
             {([['roi','ROI'],['curPrice','Valeur'],['gain','Gain'],['favorite','❤️'],['year','Année'],['name','A–Z']] as [SortKey,string][]).map(([k,l])=>(
               <button key={k} onClick={()=>setSort(k)} className={`srt${sort===k?' act':''}`} style={{ padding:'5px 11px', borderRadius:'6px', border:'none', background:sort===k?'#111':'transparent', color:sort===k?'#fff':'#666', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all 0.12s' }}>{l}</button>
             ))}

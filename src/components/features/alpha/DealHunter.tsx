@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { ProGate } from './ProGate'
 
 type Deal = {
   id:        string
@@ -39,90 +40,33 @@ const LS: Record<string,{flag:string;bg:string;color:string;border:string}> = {
   FR: { flag:'🇫🇷', bg:'#F0FFF5', color:'#00660A', border:'#A0DDAA' },
 }
 
-function ProGate() {
+function DealPreview() {
   return (
-    <>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom:'28px' }}>
-          <p style={{ fontSize:'10px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Alpha</p>
-          <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', margin:0 }}>Deal Hunter</h1>
-        </div>
-
-        {/* Upsell hero */}
-        <div style={{ background:'linear-gradient(135deg,#111 0%,#1C1208 100%)', borderRadius:'20px', padding:'36px 40px', marginBottom:'24px', position:'relative', overflow:'hidden', textAlign:'center' }}>
-          <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle at 30% 50%, rgba(255,107,53,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(224,48,32,0.08) 0%, transparent 50%)', pointerEvents:'none' }} />
-          <div style={{ fontSize:'40px', marginBottom:'14px' }}>🔍</div>
-          <div style={{ fontSize:'24px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', marginBottom:'10px' }}>Deal Hunter</div>
-          <p style={{ fontSize:'14px', color:'rgba(255,255,255,0.55)', maxWidth:'420px', margin:'0 auto 24px', lineHeight:1.7, fontFamily:'var(--font-sans)' }}>
-            Scanne eBay et Cardmarket en temps réel pour détecter automatiquement les cartes listées sous leur valeur marché.
-          </p>
-          <div style={{ display:'flex', justifyContent:'center', gap:'28px', marginBottom:'28px', flexWrap:'wrap' }}>
-            {[
-              { icon:'⚡', label:'Scan toutes les 15 min' },
-              { icon:'🎯', label:'Score de confiance IA' },
-              { icon:'🌐', label:'eBay · Cardmarket · TCGPlayer' },
-              { icon:'❤️', label:'Sauvegarde tes deals' },
-            ].map(f=>(
-              <div key={f.label} style={{ display:'flex', alignItems:'center', gap:'7px' }}>
-                <span style={{ fontSize:'16px' }}>{f.icon}</span>
-                <span style={{ fontSize:'13px', color:'rgba(255,255,255,0.65)', fontFamily:'var(--font-display)' }}>{f.label}</span>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'14px' }}>
+      {DEALS.slice(0,4).map(deal => {
+        const ec = EC[deal.type]??'#888'
+        const potential = deal.fair - deal.listed
+        return (
+          <div key={deal.id} style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
+            <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)` }} />
+            <div style={{ padding:'16px' }}>
+              <div style={{ fontSize:'13px', fontWeight:600, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{deal.name}</div>
+              <div style={{ fontSize:'10px', color:'#CCC', marginBottom:'12px' }}>{deal.set} · {deal.source}</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                <div style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px' }}>
+                  <div style={{ fontSize:'9px', color:'#CCC', marginBottom:'3px' }}>Listé</div>
+                  <div style={{ fontSize:'15px', fontWeight:700, color:'#CCC' }}>€ {deal.listed.toLocaleString('fr-FR')}</div>
+                </div>
+                <div style={{ background:'#F0FFF6', borderRadius:'8px', padding:'8px 10px' }}>
+                  <div style={{ fontSize:'9px', color:'#AAEEC8', marginBottom:'3px' }}>Potentiel</div>
+                  <div style={{ fontSize:'15px', fontWeight:700, color:'#AAEEC8' }}>+€ {potential.toLocaleString('fr-FR')}</div>
+                </div>
               </div>
-            ))}
-          </div>
-          <button style={{ padding:'14px 36px', borderRadius:'14px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'15px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,0.45)', letterSpacing:'-0.2px' }}>
-            Passer Pro — €9,99 / mois
-          </button>
-          <div style={{ marginTop:'12px', fontSize:'11px', color:'rgba(255,255,255,0.25)', fontFamily:'var(--font-display)' }}>Sans engagement · Annulation à tout moment</div>
-        </div>
-
-        {/* Preview floutée — grille complète */}
-        <div style={{ position:'relative' }}>
-          <div style={{ fontSize:'11px', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.09em', fontFamily:'var(--font-display)', marginBottom:'14px', display:'flex', alignItems:'center', gap:'8px' }}>
-            <div style={{ width:'3px', height:'16px', borderRadius:'2px', background:'#EBEBEB' }} />
-            Aperçu — {DEALS.length} deals détectés maintenant
-          </div>
-          <div style={{ filter:'blur(4px)', pointerEvents:'none', userSelect:'none' as const }}>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'14px' }}>
-              {DEALS.map((deal,idx)=>{
-                const ec = EC[deal.type]??'#888'
-                const potential = deal.fair - deal.listed
-                return (
-                  <div key={deal.id} style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' }}>
-                    <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)` }} />
-                    <div style={{ padding:'16px' }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px' }}>
-                        <div>
-                          <div style={{ fontSize:'13px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{deal.name}</div>
-                          <div style={{ fontSize:'10px', color:'#BBB' }}>{deal.set} · {deal.source}</div>
-                        </div>
-                        <div style={{ fontSize:'22px', fontWeight:800, color:'#2E9E6A', fontFamily:'var(--font-display)' }}>-{deal.gap}%</div>
-                      </div>
-                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
-                        <div style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px' }}>
-                          <div style={{ fontSize:'9px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.06em', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Listé</div>
-                          <div style={{ fontSize:'15px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>€ {deal.listed.toLocaleString('fr-FR')}</div>
-                        </div>
-                        <div style={{ background:'#F0FFF6', borderRadius:'8px', padding:'8px 10px' }}>
-                          <div style={{ fontSize:'9px', color:'#1A7A4A', textTransform:'uppercase', letterSpacing:'0.06em', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Potentiel</div>
-                          <div style={{ fontSize:'15px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-display)' }}>+€ {potential.toLocaleString('fr-FR')}</div>
-                        </div>
-                      </div>
-                      <div style={{ height:'38px', borderRadius:'9px', background:'#F0F0F0' }} />
-                    </div>
-                  </div>
-                )
-              })}
             </div>
           </div>
-          {/* Overlay gradient */}
-          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'160px', background:'linear-gradient(to bottom, transparent, #FAFAFA)', pointerEvents:'none' }} />
-        </div>
-
-      </div>
-    </>
+        )
+      })}
+    </div>
   )
 }
 
@@ -134,8 +78,7 @@ export function DealHunter({ isPro = false }: { isPro?: boolean }) {
   const [minGap,    setMinGap]    = useState(0)
   const [sort,      setSort]      = useState<'gap'|'conf'|'listed'>('gap')
 
-  if (!isPro) return <ProGate />
-
+  // ⚠️ tous les hooks AVANT le early return
   const toggleSave = (id: string) => setSaved(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
 
   const filtered = useMemo(() => DEALS
@@ -145,6 +88,12 @@ export function DealHunter({ isPro = false }: { isPro?: boolean }) {
     .filter(d => d.gap >= minGap)
     .sort((a,b) => sort==='gap'?b.gap-a.gap:sort==='conf'?b.conf-a.conf:a.listed-b.listed)
   , [filSource,filLang,filGraded,minGap,sort])
+
+  if (!isPro) return (
+    <ProGate page="deals">
+      <DealPreview />
+    </ProGate>
+  )
 
   return (
     <>
@@ -179,7 +128,6 @@ export function DealHunter({ isPro = false }: { isPro?: boolean }) {
           </div>
         </div>
 
-        {/* Filtres */}
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'16px', alignItems:'center' }}>
           {[{v:'all',l:'Toutes sources'},{v:'eBay',l:'eBay'},{v:'CM',l:'Cardmarket'},{v:'TCGPlayer',l:'TCGPlayer'}].map(o=>(
             <button key={o.v} onClick={()=>setFilSource(o.v)} className={`pill${filSource===o.v?' on':''}`}>{o.l}</button>

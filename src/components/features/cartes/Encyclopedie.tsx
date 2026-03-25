@@ -204,7 +204,7 @@ export function Encyclopedie() {
                       )}
                       {card.trend>0 && <div style={{ position:'absolute', top:'7px', left:'7px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'pulse 1.5s ease-in-out infinite' }} />}
                       <div style={{ position:'absolute', bottom:'6px', left:'7px', fontSize:'8px', fontWeight:700, background:ls.bg, color:ls.color, border:`1px solid ${ls.border}`, padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
-                      {card.graded && <div style={{ position:'absolute', bottom:'6px', right:'7px', fontSize:'8px', fontWeight:700, background:'#111', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>PSA</div>}
+                      {card.psa && <div style={{ position:'absolute', bottom:'6px', right:'7px', fontSize:'8px', fontWeight:700, background:'#111', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>PSA</div>}
                     </div>
                     <div style={{ padding:'12px' }}>
                       <div style={{ fontSize:'13px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>

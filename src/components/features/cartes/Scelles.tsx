@@ -143,7 +143,7 @@ export function Scelles() {
               <div key={item.id} className="sc" style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', transition:'all 0.2s', cursor:'pointer', animation:`cardIn 0.2s ${Math.min(idx,10)*0.03}s ease-out both` }}>
                 {/* Gradient header */}
                 <div style={{ height:'80px', background:'linear-gradient(135deg,#F8F8F8,#F0F0F0)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                  <div style={{ fontSize:'28px', opacity:0.15, position:'absolute', fontSize:'72px' as any, fontWeight:700, color:'#888', letterSpacing:'-4px', userSelect:'none' as const }}>
+                  <div style={{ fontSize:'72px', opacity:0.15, position:'absolute', fontWeight:700, color:'#888', letterSpacing:'-4px', userSelect:'none' as const }}>
                     {TYPE_LABELS[item.type].slice(0,2).toUpperCase()}
                   </div>
                   <div style={{ fontSize:'13px', fontWeight:700, color:'#555', fontFamily:'var(--font-display)', zIndex:1, textAlign:'center', padding:'0 16px' }}>

@@ -98,58 +98,56 @@ export function Holdings() {
   }
 
   const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
-    if (inserting) return
+    if (inserting || removing) return
     const newCard: CardItem = {
       id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    // Rend le contenu visible dans le slot AVANT de lancer clip-path
-    setPendingCard({ slotId:slot.id, card:newCard })
-    // Step 1 : le SHELL de la pochette s'ouvre légèrement
+    // Step 1 : shell s'ouvre
     const shell = document.getElementById('shell-'+slot.id)
     if (shell) {
-      shell.style.transition = 'transform 0.25s ease-out'
       shell.style.transformOrigin = 'top center'
+      shell.style.transition = 'transform 0.25s ease-out'
       shell.style.transform = 'scaleY(1.025)'
-      setTimeout(()=>{ shell.style.transform='scaleY(1)' }, 150)
+      setTimeout(()=>{ if(shell) shell.style.transform='' }, 200)
     }
-    // Step 2 : 30ms pour que React rende le contenu, puis lance l'anim sur l'inner wrapper
+    // Step 2 : rend le contenu carte visible (translateY part de -100%)
+    setPendingCard({ slotId:slot.id, card:newCard })
+    // Step 3 : 30ms pour React, puis lance slideDown
     setTimeout(()=>{ setInserting(slot.id) }, 30)
-    // Step 3 : flash border
+    // Step 4 : flash border
     setTimeout(()=>{
-      if (shell) {
-        shell.style.transition = 'border-color 0.12s ease-out'
-        shell.style.borderColor = 'rgba(255,255,255,.65)'
-        setTimeout(()=>{ shell.style.transition='border-color 0.4s ease-out'; shell.style.borderColor='' }, 200)
+      if(shell){
+        shell.style.transition='border-color 0.1s ease-out'
+        shell.style.borderColor='rgba(255,255,255,.7)'
+        setTimeout(()=>{ if(shell){shell.style.transition='border-color 0.4s ease-out';shell.style.borderColor=''} },150)
       }
-    }, 580)
-    // Step 4 : finalise
+    }, 500)
+    // Step 5 : done
     setTimeout(()=>{
       setFilled(prev=>[...prev, newCard])
       setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
       setInserting(null)
       setPendingCard(null)
       if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · Eeveelutions +500 XP !') }
-      else showToast(slot.name+' insérée dans le binder ✓')
-    }, 920)
+      else showToast(slot.name+' insérée ✓')
+    }, 880)
   }
 
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
-    if (removing) return
-    // Step 1 : le shell s'ouvre légèrement
+    if (removing || inserting) return
     const shell = document.getElementById('shell-'+card.id)
     if (shell) {
-      shell.style.transition = 'transform 0.2s ease-out'
       shell.style.transformOrigin = 'top center'
+      shell.style.transition = 'transform 0.2s ease-out'
       shell.style.transform = 'scaleY(1.02)'
-      setTimeout(()=>{ shell.style.transform='scaleY(1)' }, 200)
+      setTimeout(()=>{ if(shell) shell.style.transform='' }, 200)
     }
-    // Step 2 : anime l'inner wrapper (la carte remonte)
+    // Lance slideUp sur le card-body inner
     setRemoving(card.id)
-    // Step 3 : le shell reste en place → pas de jump de layout
-    //          On swap l'inner content par "empty" après l'animation
+    // Quand terminé : swap vers slot vide (shell reste en place)
     setTimeout(()=>{
       const emptySlot = { id:card.id+'_e', name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice }
       setFilled(prev=>prev.filter(c=>c.id!==card.id))
@@ -157,7 +155,7 @@ export function Holdings() {
       setSetComplete(false)
       setRemoving(null)
       showToast(card.name+' retirée du binder')
-    }, 700)
+    }, 560)
   }
 
   const slotsPer     = binderCols * 3
@@ -167,6 +165,44 @@ export function Holdings() {
   const pageItems    = allSlots.slice(binderPage*slotsPer, (binderPage+1)*slotsPer)
   const phantomCount = Math.max(0, slotsPer - pageItems.length)
   const pct          = Math.round(filled.length/totalSlots*100)
+
+  // Helpers card render
+  const orbSz  = (cols:number) => cols<=3?'36px':cols===4?'28px':'24px'
+  const fsName = (cols:number) => cols<=3?'10px':cols===4?'9px':'8px'
+  const fsPx   = (cols:number) => cols<=3?'12px':'11px'
+
+  const CardBodyContent = ({ card, cols }: { card:CardItem; cols:number }) => {
+    const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
+    const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)
+    const isHolo=HOLO_RARITIES.includes(card.rarity)
+    const isVintage=card.year<2002
+    return (
+      <>
+        {isHolo&&<div className="holo"/>}
+        {isHolo&&<div className="hm"/>}
+        <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
+        <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
+        <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+          <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
+          <div style={{ width:orbSz(cols), height:orbSz(cols), borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
+          {card.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
+          {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>❤️</div>}
+          {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
+          {card.hot&&<div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
+        </div>
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
+          <div style={{ fontSize:fsName(cols), fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ fontSize:fsPx(cols), fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>€ {card.curPrice}</div>
+            <div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>
+          </div>
+        </div>
+        {/* Usure vintage */}
+        {isVintage&&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.5),transparent)', zIndex:3, pointerEvents:'none' }}/>}
+      </>
+    )
+  }
 
   return (
     <>
@@ -179,33 +215,27 @@ export function Holdings() {
         @keyframes ptcl       { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
         @keyframes shimGlow   { 0%,100%{opacity:.5} 50%{opacity:1} }
         @keyframes toastIn    { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        @keyframes progGold   { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
         @keyframes complBadge { from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
         @keyframes wrappedIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        @keyframes emptyFadeIn{ from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+        @keyframes emptyIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
 
-        /* ── INSERTION : anime l'INNER wrapper, pas le shell ── */
-        @keyframes innerInsert {
-          0%   { clip-path:inset(0 0 100% 0); transform:translateY(-20px); }
-          8%   { clip-path:inset(0 0 100% 0); transform:translateY(-20px); }
-          10%  { clip-path:inset(0 0 55% 0); }
-          68%  { clip-path:inset(0 0 0% 0); transform:translateY(3px); }
-          82%  { transform:translateY(1.5px); }
-          91%  { transform:translateY(-0.5px); }
-          100% { clip-path:inset(0 0 0% 0); transform:translateY(0); }
+        /* ── INSERTION : translateY -100% → 0, clippé par overflow:hidden du shell ── */
+        @keyframes slideDown {
+          0%   { transform: translateY(-100%); }
+          60%  { transform: translateY(4px); }
+          78%  { transform: translateY(1.5px); }
+          90%  { transform: translateY(-0.5px); }
+          100% { transform: translateY(0); }
         }
-        /* ── RETRAIT : inverse symétrique sur l'INNER ── */
-        @keyframes innerRemove {
-          0%   { clip-path:inset(0 0 0% 0);   transform:translateY(0);     opacity:1; }
-          12%  { clip-path:inset(0 0 0% 0);   transform:translateY(-2px); }
-          16%  { clip-path:inset(0 0 6% 0); }
-          75%  { clip-path:inset(0 0 100% 0); transform:translateY(-24px); opacity:1; }
-          100% { clip-path:inset(0 0 100% 0); transform:translateY(-28px); opacity:0; }
+        /* ── RETRAIT : translateY 0 → -102%, clippé par overflow:hidden ── */
+        @keyframes slideUp {
+          0%   { transform: translateY(0); }
+          100% { transform: translateY(-102%); }
         }
 
         .gem           { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
-        .gem .holo     { position:absolute;inset:0;border-radius:14px;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
-        .gem .hm       { position:absolute;inset:0;border-radius:14px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
+        .gem .holo     { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
+        .gem .hm       { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
         .gem .ptcl     { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
@@ -214,16 +244,20 @@ export function Holdings() {
         .breathe-S     { animation:breatheS 2.4s ease-in-out infinite; }
         .breathe-A     { animation:breatheA 3s ease-in-out infinite; }
 
-        /* Le SHELL ne bouge pas — overflow:hidden pour clipper l'inner */
+        /* Shell : overflow:hidden est essentiel pour clipper le translateY */
         .pocket-shell  { position:relative; border-radius:9px; overflow:hidden; cursor:pointer; transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
-        .pocket-shell:hover { transform:translateY(-5px) scale(1.04) !important; }
+        .pocket-shell:hover  { transform:translateY(-5px) scale(1.04) !important; }
         .pocket-shell.empty:hover { border-color:rgba(255,255,255,.28) !important; }
 
-        /* L'INNER wrapper est ce qui s'anime */
-        .card-inner    { position:absolute; inset:0; }
-        .card-inner.inserting { animation:innerInsert .85s cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-inner.removing  { animation:innerRemove .7s  cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-inner.empty-in  { animation:emptyFadeIn .3s ease-out forwards; }
+        /* Reflets fixes collés au shell — au-dessus de tout */
+        .pocket-shell::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(180deg,rgba(255,255,255,.12),transparent); border-radius:9px 9px 0 0; z-index:10; pointer-events:none; }
+        .pocket-shell::after  { content:''; position:absolute; bottom:0; left:0; right:0; height:8px; background:linear-gradient(0deg,rgba(0,0,0,.5),transparent); z-index:10; pointer-events:none; }
+
+        /* Card body : couvre tout le shell, s'anime en translateY */
+        .card-body     { position:absolute; inset:0; }
+        .card-body.inserting { animation:slideDown .8s cubic-bezier(.22,.58,.36,1) forwards; }
+        .card-body.removing  { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+        .card-body.empty-in  { animation:emptyIn .25s ease-out forwards; }
 
         .vtab          { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .vtab.on       { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
@@ -236,18 +270,18 @@ export function Holdings() {
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
-        {toast && (
+        {toast&&(
           <div style={{ position:'absolute', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(10,6,2,.95)', color:'rgba(255,255,255,.85)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1px solid rgba(255,255,255,.12)', whiteSpace:'nowrap', zIndex:50, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
             {setComplete?'🏆 ':'✓ '}{toast}
           </div>
         )}
 
-        {spotCard && (() => {
+        {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
           const gain=(spotCard.curPrice-spotCard.buyPrice)*spotCard.qty
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
-          return (
+          return(
             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.82)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>setSpotCard(null)}>
               <div style={{ background:'#0F0A04', borderRadius:'20px', border:`1px solid ${ec}40`, boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.8)`, padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
                 <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'24px', alignItems:'start' }}>
@@ -282,10 +316,10 @@ export function Holdings() {
                       <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px' }}>
                           <div style={{ width:'24px', height:'24px', borderRadius:'7px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700 }}>D</div>
-                          <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>Dexy IA · Analyse Tier {spotCard.signal}</span>
+                          <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>Dexy IA · Tier {spotCard.signal}</span>
                         </div>
                         <p style={{ fontSize:'12px', color:'rgba(255,255,255,.45)', lineHeight:1.7, margin:0 }}>
-                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu — accumulation recommandée.`:`Signal ${spotCard.signal} actif — progression attendue dans les 2–4 semaines.`}
+                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu.`:`Signal ${spotCard.signal} actif — progression attendue 2–4 semaines.`}
                         </p>
                       </div>
                     )}
@@ -313,7 +347,7 @@ export function Holdings() {
                   {title:'Story Instagram',sub:'9:16 · TikTok · Reels',preview:(
                     <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
                       <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
-                      <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', position:'relative' }}>
+                      <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                         <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em' }}>POKÉ ALPHA</div>
                         <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
                         <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.7)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
@@ -357,7 +391,7 @@ export function Holdings() {
                 ))}
               </div>
               <div style={{ display:'flex', gap:'8px' }}>
-                <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>Générer les 3 formats · PNG HD</button>
+                <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Générer les 3 formats · PNG HD</button>
                 <button style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
               </div>
             </div>
@@ -405,7 +439,7 @@ export function Holdings() {
                     <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
                     <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
-                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
+                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{filled.length}/{totalSlots} · page {binderPage+1}/{binderPages}</span>
                       {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
                     </div>
                   </div>
@@ -417,7 +451,7 @@ export function Holdings() {
                     </div>
                     <div style={{ display:'flex', gap:'4px', alignItems:'center' }}>
                       <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
-                      <span style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', minWidth:'36px', textAlign:'center', fontFamily:'var(--font-display)' }}>{binderPage+1} / {binderPages}</span>
+                      <span style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', minWidth:'36px', textAlign:'center' }}>{binderPage+1}/{binderPages}</span>
                       <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
                     </div>
                   </div>
@@ -429,20 +463,10 @@ export function Holdings() {
                     const card      = isEmpty ? null : item as CardItem
                     const empty     = isEmpty ? item as typeof EMPTY_SLOTS[number]&{isEmpty:true} : null
                     const ec        = EC[(isEmpty?empty!.type:card!.type)??'fire']??'#888'
-                    const eg        = EG[(isEmpty?empty!.type:card!.type)??'fire']??'rgba(128,128,128,.4)'
-                    const isHolo    = card ? HOLO_RARITIES.includes(card.rarity) : false
-                    const roi       = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
-                    const orbSz     = binderCols<=3?'36px':binderCols===4?'28px':'24px'
-                    const fsName    = binderCols<=3?'10px':binderCols===4?'9px':'8px'
-                    const fsPx      = binderCols<=3?'12px':'11px'
-                    const isVintage = card&&card.year<2002
+                    const pCard     = pendingCard?.slotId===(isEmpty?empty!.id:'') ? pendingCard.card : null
 
-                    if (isEmpty&&empty) {
-                      const pCard = pendingCard?.slotId===empty.id ? pendingCard.card : null
-                      const pec   = pCard ? (EC[pCard.type]??'#888') : ec
-                      const peg   = pCard ? (EG[pCard.type]??'rgba(128,128,128,.4)') : eg
-                      const proi  = pCard ? Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100) : 0
-                      const pHolo = pCard ? HOLO_RARITIES.includes(pCard.rarity) : false
+                    if (isEmpty && empty) {
+                      const pec = pCard ? (EC[pCard.type]??'#888') : ec
                       return (
                         <div
                           key={item.id}
@@ -456,38 +480,18 @@ export function Holdings() {
                           }}
                           onClick={()=>{ if(!pCard) insertCard(empty) }}
                         >
-                          {/* Reflet plastique haut */}
-                          <div style={{ position:'absolute', top:0, left:0, right:0, height:'5px', background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)', borderRadius:'9px 9px 0 0', zIndex:5, pointerEvents:'none' }}/>
-                          {/* Ombre bas */}
-                          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'8px', background:'linear-gradient(0deg,rgba(0,0,0,.45),transparent)', zIndex:5, pointerEvents:'none' }}/>
-
                           {pCard ? (
-                            /* Inner wrapper animé — clip-path sur lui, pas sur le shell */
-                            <div className={`card-inner${inserting===empty.id?' inserting':''}`}>
-                              {pHolo&&<div className="holo"/>}
-                              <div className="ptcl" style={{ background:pec, bottom:'22%', left:'20%' }}/>
-                              <div className="ptcl" style={{ background:pec, bottom:'35%', left:'62%' }}/>
-                              <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${pec},${pec}44)`, zIndex:4 }}/>
-                              <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${pec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-                                <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:peg, filter:'blur(14px)', opacity:.6 }}/>
-                                <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${pec}CC,${pec}77)`, boxShadow:`0 0 16px ${peg}`, position:'relative', zIndex:1 }}/>
-                                {pCard.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[pCard.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{pCard.signal}</div>}
-                              </div>
-                              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
-                                <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{pCard.name}</div>
-                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                  <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)' }}>€ {pCard.curPrice}</div>
-                                  <div style={{ fontSize:'10px', fontWeight:600, color:proi>=0?'#4ECCA3':'#FF6B8A' }}>{proi>=0?'+':''}{proi}%</div>
-                                </div>
-                              </div>
+                            /* card-body avec translateY(-100%) au départ → slideDown l'amène à 0 */
+                            <div className={`card-body${inserting===empty.id?' inserting':''}`}>
+                              <CardBodyContent card={pCard} cols={binderCols}/>
                             </div>
                           ) : (
-                            <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
+                            <div className="card-body" style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
                               <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                                 <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
                               </div>
                               <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
-                                {empty.name}<br/><span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
+                                {empty.name}<br/><span style={{ color:'rgba(255,255,255,.2)' }}>{empty.estPrice}</span>
                               </div>
                               <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
                             </div>
@@ -507,40 +511,15 @@ export function Holdings() {
                         onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                         onClick={()=>setSpotCard(card)}
                       >
-                        {/* Reflet plastique */}
-                        <div style={{ position:'absolute', top:0, left:0, right:0, height:'5px', background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)', borderRadius:'9px 9px 0 0', zIndex:5, pointerEvents:'none' }}/>
-                        {isVintage  &&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.55),transparent)', zIndex:5, pointerEvents:'none' }}/>}
-                        {!isVintage &&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'6px',  background:'linear-gradient(0deg,rgba(0,0,0,.4),transparent)',  zIndex:5, pointerEvents:'none' }}/>}
-
-                        {/* Inner wrapper — s'anime au retrait */}
-                        <div className={`card-inner${removing===card.id?' removing':''}`}>
-                          {isHolo&&<div className="holo"/>}
-                          {isHolo&&<div className="hm"/>}
-                          <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
-                          <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
-                          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
-                          <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-                            <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
-                            <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
-                            {card.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
-                            {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>❤️</div>}
-                            {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
-                            {card.hot&&<div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
-                          </div>
-                          <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
-                            <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
-                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                              <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>€ {card.curPrice}</div>
-                              <div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>
-                            </div>
-                          </div>
+                        {/* card-body : s'anime avec slideUp au retrait */}
+                        <div className={`card-body${removing===card.id?' removing':''}`}>
+                          <CardBodyContent card={card} cols={binderCols}/>
                         </div>
-
-                        {/* Bouton retirer — par-dessus l'inner */}
+                        {/* Bouton retirer au-dessus de tout */}
                         <button
                           className="remove-btn"
                           onClick={e=>removeCard(card,e)}
-                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:10, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}
+                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}
                         >↑ Retirer</button>
                       </div>
                     )
@@ -561,7 +540,7 @@ export function Holdings() {
 
                 <div style={{ marginTop:'16px', paddingTop:'14px', borderTop:'1px solid rgba(255,255,255,.05)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
-                    <span style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
+                    <span style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion</span>
                     <span style={{ fontSize:'9px', color:setComplete?'#FFD700':'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
                   </div>
                   <div style={{ height:'4px', borderRadius:'99px', background:'rgba(255,255,255,.07)', overflow:'hidden' }}>
@@ -593,9 +572,8 @@ export function Holdings() {
                     {isHolo&&<div className="hm"/>}
                     <div className="ptcl" style={{ background:ec, bottom:'20%', left:'20%' }}/>
                     <div className="ptcl" style={{ background:ec, bottom:'30%', left:'60%' }}/>
-                    <div className="ptcl" style={{ background:ec, bottom:'25%', left:'42%' }}/>
                     <div style={{ height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
-                    {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)', boxShadow:`0 2px 8px ${eg}` }}>{card.signal}</div>}
+                    {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
                     <div style={{ height:'120px', margin:'6px 6px 0', borderRadius:'9px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
                       <div style={{ position:'absolute', width:'70%', height:'70%', borderRadius:'50%', background:eg, filter:'blur(20px)', opacity:.55 }}/>
                       <div style={{ width:'44px', height:'44px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
@@ -652,7 +630,7 @@ export function Holdings() {
               <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                 {[...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
                   const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100), ec=EC[card.type]??'#888'
-                  return (
+                  return(
                     <div key={card.id} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
                       <div style={{ fontSize:'20px', flexShrink:0 }}>{['🥇','🥈','🥉'][i]}</div>
                       <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>

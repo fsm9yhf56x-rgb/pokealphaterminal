@@ -77,7 +77,6 @@ export function Holdings() {
   const [sliding,     setSliding]     = useState<string|null>(null)
   const [removing,    setRemoving]    = useState<string|null>(null)
   const [pendingCard, setPendingCard] = useState<{slotId:string;card:CardItem}|null>(null)
-  const [justSettled, setJustSettled] = useState<Map<string,CardItem>>(new Map())
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
   const [setComplete, setSetComplete] = useState(false)
@@ -108,7 +107,6 @@ export function Holdings() {
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    // Affiche le contenu avant l'anim (translateY part de -100%, il y a quelque chose à révéler)
     setPendingCard({ slotId:slot.id, card:newCard })
     const el = document.getElementById('shell-'+slot.id)
     if (el) {
@@ -125,18 +123,13 @@ export function Holdings() {
         setTimeout(()=>{ if(el){ el.style.transition='border-color 0.4s'; el.style.borderColor='' } }, 150)
       }
     }, 670)
-    // Settled : garde le contenu visible sans animation pendant le swap React (évite le blink)
     setTimeout(()=>{
-      setJustSettled(prev=>new Map([...prev, [slot.id, newCard]]))
+      setFilled(prev=>[...prev, newCard])
+      setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
       setSliding(null)
       setPendingCard(null)
-      setTimeout(()=>{
-        setFilled(prev=>[...prev, newCard])
-        setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
-        setJustSettled(prev=>{ const n=new Map(prev); n.delete(slot.id); return n })
-        if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · Eeveelutions +500 XP !') }
-        else showToast(slot.name+' insérée dans le binder ✓')
-      }, 60)
+      if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · Eeveelutions +500 XP !') }
+      else showToast(slot.name+' insérée dans le binder ✓')
     }, 920)
   }
 
@@ -184,7 +177,6 @@ export function Holdings() {
         @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
         @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
 
-        /* ── INSERT : translateY -100%→0, clipé par overflow:hidden du shell ── */
         @keyframes slideDown {
           0%   { transform:translateY(-100%); }
           62%  { transform:translateY(4px); }
@@ -192,7 +184,6 @@ export function Holdings() {
           91%  { transform:translateY(-0.5px); }
           100% { transform:translateY(0); }
         }
-        /* ── RETRAIT : translateY 0→-102% ── */
         @keyframes slideUp {
           0%   { transform:translateY(0); }
           100% { transform:translateY(-102%); }
@@ -208,21 +199,14 @@ export function Holdings() {
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
         .breathe-S    { animation:breatheS 2.4s ease-in-out infinite; }
         .breathe-A    { animation:breatheA 3s ease-in-out infinite; }
-
-        /* Shell : overflow:hidden clipe le translateY du card-body */
         .pocket-shell  { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
         .pocket-shell:hover  { transform:translateY(-5px) scale(1.04) !important; }
         .pocket-shell.empty:hover { border-color:rgba(255,255,255,.28) !important; }
         .pocket-shell::before { content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);border-radius:9px 9px 0 0;z-index:10;pointer-events:none; }
         .pocket-shell::after  { content:'';position:absolute;bottom:0;left:0;right:0;height:8px;background:linear-gradient(0deg,rgba(0,0,0,.45),transparent);z-index:10;pointer-events:none; }
-
-        /* card-body : couvre tout le shell, s'anime en translateY */
-        .card-body         { position:absolute;inset:0; }
-        .card-body.ins     { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-body.rem     { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
-        /* settled : aucune animation — transition invisible pendant le swap React */
-        .card-body.settled { animation:none !important; opacity:1 !important; transform:translateY(0) !important; }
-
+        .card-body     { position:absolute;inset:0; }
+        .card-body.ins { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
+        .card-body.rem { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
         .vtab         { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .vtab.on      { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
         .colbtn       { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
@@ -240,7 +224,6 @@ export function Holdings() {
           </div>
         )}
 
-        {/* SPOTLIGHT */}
         {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
@@ -268,11 +251,11 @@ export function Holdings() {
                   </div>
                   <div>
                     <div style={{ fontSize:'40px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'6px' }}>€ {spotCard.curPrice.toLocaleString('fr-FR')}</div>
-                    <div style={{ fontSize:'16px', color:'#5EFFD5', fontWeight:500, marginBottom:'20px' }}>▲ +{roi}% · +€ {gain.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'20px' }}>▲ +{roi}% · +€ {gain.toLocaleString('fr-FR')}</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'16px' }}>
-                      {[{l:'Achat',v:`€ ${spotCard.buyPrice.toLocaleString('fr-FR')}`,c:'rgba(255,255,255,.55)'},{l:'Marché',v:`€ ${spotCard.curPrice.toLocaleString('fr-FR')}`,c:'#fff'},{l:'ROI',v:`+${roi}%`,c:'#5EFFD5'},{l:'Quantité',v:`×${spotCard.qty}`,c:'rgba(255,255,255,.7)'},{l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'—',c:'rgba(255,255,255,.7)'},{l:'Gain',v:`+€ ${Math.abs(gain).toLocaleString('fr-FR')}`,c:'#5EFFD5'}].map(s=>(
-                        <div key={s.l} style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.09)', borderRadius:'9px', padding:'10px 12px' }}>
-                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
+                      {[{l:'Achat',v:`€ ${spotCard.buyPrice.toLocaleString('fr-FR')}`,c:'rgba(255,255,255,.5)'},{l:'Marché',v:`€ ${spotCard.curPrice.toLocaleString('fr-FR')}`,c:'#fff'},{l:'ROI',v:`+${roi}%`,c:'#4ECCA3'},{l:'Quantité',v:`×${spotCard.qty}`,c:'rgba(255,255,255,.7)'},{l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'—',c:'rgba(255,255,255,.7)'},{l:'Gain',v:`+€ ${Math.abs(gain).toLocaleString('fr-FR')}`,c:'#4ECCA3'}].map(s=>(
+                        <div key={s.l} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px' }}>
+                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
                           <div style={{ fontSize:'15px', fontWeight:600, color:s.c, fontFamily:'var(--font-display)' }}>{s.v}</div>
                         </div>
                       ))}
@@ -281,16 +264,16 @@ export function Holdings() {
                       <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px' }}>
                           <div style={{ width:'24px', height:'24px', borderRadius:'7px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700 }}>D</div>
-                          <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.75)', fontFamily:'var(--font-display)' }}>Dexy IA · Tier {spotCard.signal}</span>
+                          <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>Dexy IA · Tier {spotCard.signal}</span>
                         </div>
-                        <p style={{ fontSize:'12px', color:'rgba(255,255,255,.5)', lineHeight:1.7, margin:0 }}>
-                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu — accumulation recommandée.`:`Signal ${spotCard.signal} actif — progression attendue dans les 2–4 semaines.`}
+                        <p style={{ fontSize:'12px', color:'rgba(255,255,255,.45)', lineHeight:1.7, margin:0 }}>
+                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu.`:`Signal ${spotCard.signal} actif — progression attendue 2–4 semaines.`}
                         </p>
                       </div>
                     )}
                     <div style={{ display:'flex', gap:'8px' }}>
                       <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal →</button>
-                      <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.08)', color:'rgba(255,255,255,.8)', border:'1px solid rgba(255,255,255,.15)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                      <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
                       <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
                     </div>
                   </div>
@@ -300,13 +283,13 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — EN HAUT */}
+        {/* SHARE SHEET */}
         {shareOpen&&(
-          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-start', borderRadius:'16px' }} onClick={()=>setShareOpen(false)}>
-            <div style={{ width:'100%', background:'#0F0B07', borderBottom:'1px solid rgba(255,255,255,.1)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end', borderRadius:'16px' }} onClick={()=>setShareOpen(false)}>
+            <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.1)', borderRadius:'0 0 16px 16px', padding:'24px 28px', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
-                <div style={{ fontSize:'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
-                <button onClick={()=>setShareOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.45)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
+                <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
+                <button onClick={()=>setShareOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', marginBottom:'16px' }}>
                 {[
@@ -316,9 +299,9 @@ export function Holdings() {
                       <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                         <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em' }}>POKÉ ALPHA</div>
                         <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
-                        <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.75)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
-                        <div style={{ fontSize:'10px', fontWeight:600, color:'#fff' }}>€ 920</div>
-                        <div style={{ fontSize:'7px', color:'#5EFFD5' }}>+53% ROI</div>
+                        <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.7)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
+                        <div style={{ fontSize:'10px', fontWeight:500, color:'#fff' }}>€ 920</div>
+                        <div style={{ fontSize:'7px', color:'#4ECCA3' }}>+53% ROI</div>
                       </div>
                     </div>
                   )},
@@ -337,16 +320,10 @@ export function Holdings() {
                         <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
                         <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
                         <div style={{ position:'relative', padding:'10px 12px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                          <div>
-                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div>
-                            <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
-                          </div>
+                          <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div><div style={{ fontSize:'18px', fontWeight:500, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div></div>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                            <div>
-                              <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
-                              <div style={{ fontSize:'12px', fontWeight:600, color:'#5EFFD5', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
-                            </div>
-                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>POKÉ ALPHA</div>
+                            <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>ROI TOTAL</div><div style={{ fontSize:'12px', fontWeight:500, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div></div>
+                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.2)' }}>POKÉ ALPHA</div>
                           </div>
                         </div>
                       </div>
@@ -356,15 +333,15 @@ export function Holdings() {
                   <div key={f.title} className="share-fmt">
                     {f.preview}
                     <div style={{ padding:'10px 12px', background:'rgba(255,255,255,.03)', borderTop:'1px solid rgba(255,255,255,.06)' }}>
-                      <div style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>{f.title}</div>
-                      <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', marginTop:'2px' }}>{f.sub}</div>
+                      <div style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>{f.title}</div>
+                      <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'2px' }}>{f.sub}</div>
                     </div>
                   </div>
                 ))}
               </div>
               <div style={{ display:'flex', gap:'8px' }}>
                 <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>Générer les 3 formats · PNG HD</button>
-                <button style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.65)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
+                <button style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
               </div>
             </div>
           </div>
@@ -374,19 +351,19 @@ export function Holdings() {
         <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'16px', marginBottom:'22px' }}>
             <div>
-              <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Portfolio</div>
+              <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Portfolio</div>
               <div style={{ fontSize:'38px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>€ {totalCur.toLocaleString('fr-FR')}</div>
               <div style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'6px' }}>
-                <span style={{ fontSize:'14px', fontWeight:600, color:'#5EFFD5' }}>▲ +{totalROI}% · +€ {totalGain.toLocaleString('fr-FR')}</span>
+                <span style={{ fontSize:'14px', fontWeight:500, color:'#4ECCA3' }}>▲ +{totalROI}% · +€ {totalGain.toLocaleString('fr-FR')}</span>
                 <span style={{ width:'4px', height:'4px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'inline-block' }}/>
-                <span style={{ fontSize:'13px', color:'rgba(255,255,255,.4)' }}>{CARDS.length} cartes · {CARDS.reduce((s,c)=>s+c.qty,0)} exemplaires</span>
+                <span style={{ fontSize:'13px', color:'rgba(255,255,255,.35)' }}>{CARDS.length} cartes · {CARDS.reduce((s,c)=>s+c.qty,0)} exemplaires</span>
               </div>
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
-              <div style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.09)', borderRadius:'12px', padding:'12px 16px' }}>
-                <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
+              <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px' }}>
+                <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
                 <div style={{ fontSize:'18px', fontWeight:600, color:'#FFD700', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
-                <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)' }}>{bestCard.name}</div>
+                <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{bestCard.name}</div>
               </div>
               <button onClick={()=>setShareOpen(true)} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.45)' }}>Partager →</button>
             </div>
@@ -408,10 +385,10 @@ export function Holdings() {
 
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'18px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
-                    <div style={{ fontSize:'15px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
+                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
+                    <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
-                      <span style={{ fontSize:'12px', color:'rgba(255,255,255,.4)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
+                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
                       {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
                     </div>
                   </div>
@@ -422,9 +399,9 @@ export function Holdings() {
                       ))}
                     </div>
                     <div style={{ display:'flex', gap:'4px', alignItems:'center' }}>
-                      <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
-                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.4)', minWidth:'36px', textAlign:'center', fontFamily:'var(--font-display)' }}>{binderPage+1} / {binderPages}</span>
-                      <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+                      <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+                      <span style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', minWidth:'36px', textAlign:'center', fontFamily:'var(--font-display)' }}>{binderPage+1} / {binderPages}</span>
+                      <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
                     </div>
                   </div>
                 </div>
@@ -439,18 +416,16 @@ export function Holdings() {
                     const isHolo    = card ? HOLO_RARITIES.includes(card.rarity) : false
                     const roi       = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
                     const orbSz     = binderCols<=3?'36px':binderCols===4?'28px':'24px'
-                    const fsName    = binderCols<=3?'11px':binderCols===4?'10px':'9px'
-                    const fsPx      = binderCols<=3?'13px':binderCols===4?'12px':'11px'
+                    const fsName    = binderCols<=3?'10px':binderCols===4?'9px':'8px'
+                    const fsPx      = binderCols<=3?'12px':binderCols===4?'11px':'10px'
                     const isVintage = card&&card.year<2002
 
                     if (isEmpty&&empty) {
-                      const pCard = pendingCard?.slotId===empty.id ? pendingCard.card : (justSettled.get(empty.id)??null)
+                      const pCard = pendingCard?.slotId===empty.id ? pendingCard.card : null
                       const pec   = pCard ? (EC[pCard.type]??'#888') : ec
                       const peg   = pCard ? (EG[pCard.type]??'rgba(128,128,128,.4)') : eg
                       const proi  = pCard ? Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100) : 0
                       const pHolo = pCard ? HOLO_RARITIES.includes(pCard.rarity) : false
-                      const isIns = sliding===empty.id
-                      const isSel = justSettled.has(empty.id)
                       return (
                         <div key={item.id} id={`shell-${empty.id}`}
                           className={`pocket-shell${pCard?' gem':' empty'}`}
@@ -458,7 +433,7 @@ export function Holdings() {
                           onClick={()=>{ if(!pCard) insertCard(empty) }}
                         >
                           {pCard ? (
-                            <div className={`card-body${isIns?' ins':isSel?' settled':''}`}>
+                            <div className={`card-body${sliding===empty.id?' ins':''}`}>
                               {pHolo&&<div className="holo"/>}
                               <div className="ptcl" style={{ background:pec, bottom:'22%', left:'20%' }}/>
                               <div className="ptcl" style={{ background:pec, bottom:'35%', left:'62%' }}/>
@@ -469,22 +444,22 @@ export function Holdings() {
                                 {pCard.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[pCard.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{pCard.signal}</div>}
                               </div>
                               <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
-                                <div style={{ fontSize:fsName, fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{pCard.name}</div>
+                                <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{pCard.name}</div>
                                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                  <div style={{ fontSize:fsPx, fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>€ {pCard.curPrice}</div>
-                                  <div style={{ fontSize:'11px', fontWeight:600, color:proi>=0?'#5EFFD5':'#FF7A96' }}>{proi>=0?'+':''}{proi}%</div>
+                                  <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)' }}>€ {pCard.curPrice}</div>
+                                  <div style={{ fontSize:'10px', fontWeight:600, color:proi>=0?'#4ECCA3':'#FF6B8A' }}>{proi>=0?'+':''}{proi}%</div>
                                 </div>
                               </div>
                             </div>
                           ) : (
                             <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
-                              <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.18)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                                <span style={{ fontSize:'14px', color:'rgba(255,255,255,.15)', lineHeight:1 }}>+</span>
+                              <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
                               </div>
-                              <div style={{ fontSize:'9px', color:'rgba(255,120,100,.6)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
-                                {empty.name}<br/><span style={{ color:'rgba(255,255,255,.28)', fontSize:'9px' }}>{empty.estPrice}</span>
+                              <div style={{ fontSize:'8px', color:'rgba(255,100,100,.5)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
+                                {empty.name}<br/><span style={{ color:'rgba(255,255,255,.2)', fontSize:'8px' }}>{empty.estPrice}</span>
                               </div>
-                              <div style={{ fontSize:'8px', background:'rgba(224,48,32,.18)', color:'rgba(224,48,32,.7)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
+                              <div style={{ fontSize:'7px', background:'rgba(224,48,32,.15)', color:'rgba(224,48,32,.6)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
                             </div>
                           )}
                         </div>
@@ -511,20 +486,20 @@ export function Holdings() {
                             <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
                             {card.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
                             {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>❤️</div>}
-                            {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
+                            {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
                             {card.hot&&<div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
                             {isVintage&&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.5),transparent)', zIndex:3, pointerEvents:'none' }}/>}
                           </div>
                           <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
-                            <div style={{ fontSize:fsName, fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
+                            <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
                             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                              <div style={{ fontSize:fsPx, fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>€ {card.curPrice}</div>
-                              <div style={{ fontSize:'11px', fontWeight:600, color:roi>=0?'#5EFFD5':'#FF7A96' }}>{roi>=0?'+':''}{roi}%</div>
+                              <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>€ {card.curPrice}</div>
+                              <div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>
                             </div>
                           </div>
                         </div>
                         <button className="remove-btn" onClick={e=>removeCard(card,e)}
-                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.82)', border:'1px solid rgba(255,255,255,.22)', color:'rgba(255,255,255,.9)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
+                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
                       </div>
@@ -539,15 +514,15 @@ export function Holdings() {
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(255,255,255,.6)':'rgba(255,255,255,.15)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
+                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(255,255,255,.55)':'rgba(255,255,255,.15)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
                     ))}
                   </div>
                 )}
 
-                <div style={{ marginTop:'16px', paddingTop:'14px', borderTop:'1px solid rgba(255,255,255,.06)' }}>
+                <div style={{ marginTop:'16px', paddingTop:'14px', borderTop:'1px solid rgba(255,255,255,.05)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
-                    <span style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
-                    <span style={{ fontSize:'10px', color:setComplete?'#FFD700':'rgba(255,255,255,.4)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
+                    <span style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
+                    <span style={{ fontSize:'9px', color:setComplete?'#FFD700':'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
                   </div>
                   <div style={{ height:'4px', borderRadius:'99px', background:'rgba(255,255,255,.07)', overflow:'hidden' }}>
                     <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)' }}/>
@@ -564,7 +539,7 @@ export function Holdings() {
           <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'18px' }}>
               {[{v:'all',l:'Toutes'},{v:'fav',l:'♥ Favoris'},{v:'fire',l:'🔥'},{v:'water',l:'💧'},{v:'psychic',l:'🔮'},{v:'dark',l:'🌑'},{v:'electric',l:'⚡'}].map(o=>(
-                <button key={o.v} style={{ padding:'5px 12px', borderRadius:'7px', border:'1px solid rgba(255,255,255,.1)', background:'transparent', color:'rgba(255,255,255,.45)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)' }}>{o.l}</button>
+                <button key={o.v} style={{ padding:'5px 12px', borderRadius:'7px', border:'1px solid rgba(255,255,255,.1)', background:'transparent', color:'rgba(255,255,255,.4)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)' }}>{o.l}</button>
               ))}
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:'14px' }}>
@@ -587,22 +562,22 @@ export function Holdings() {
                       <div style={{ width:'44px', height:'44px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
                       {card.hot&&<div style={{ position:'absolute', top:'6px', left:'6px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.5s ease-in-out infinite' }}/>}
                       <div style={{ position:'absolute', bottom:'6px', left:'6px', fontSize:'9px', fontWeight:700, background:ls.bg, color:ls.color, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
-                      {card.graded&&<div style={{ position:'absolute', bottom:'6px', right:'6px', fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.85)', color:'#fff', padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.condition}</div>}
+                      {card.graded&&<div style={{ position:'absolute', bottom:'6px', right:'6px', fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'rgba(255,255,255,.9)', padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.condition}</div>}
                     </div>
                     <div style={{ padding:'12px' }}>
                       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'6px', marginBottom:'4px' }}>
-                        <div style={{ fontSize:'13px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1.25, flex:1 }}>{card.name}</div>
+                        <div style={{ fontSize:'13px', fontWeight:600, color:'rgba(255,255,255,.88)', fontFamily:'var(--font-display)', lineHeight:1.25, flex:1 }}>{card.name}</div>
                         <button onClick={e=>toggleFav(card.id,e)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', padding:0, flexShrink:0 }}>{favs.has(card.id)?'❤️':'🤍'}</button>
                       </div>
-                      <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)', marginBottom:'10px' }}>{card.set}</div>
+                      <div style={{ fontSize:'10px', color:'rgba(255,255,255,.25)', marginBottom:'10px' }}>{card.set}</div>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
                         <div>
                           <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1 }}>€ {card.curPrice.toLocaleString('fr-FR')}</div>
-                          <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'2px' }}>Achat € {card.buyPrice}</div>
+                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', marginTop:'2px' }}>Achat € {card.buyPrice}</div>
                         </div>
                         <div style={{ textAlign:'right' }}>
-                          <div style={{ fontSize:'14px', fontWeight:600, color:roi>=0?'#5EFFD5':'#FF7A96', fontFamily:'var(--font-display)' }}>{roi>=0?'+':''}{roi}%</div>
-                          {card.psa&&<div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)' }}>Pop {card.psa.toLocaleString()}</div>}
+                          <div style={{ fontSize:'14px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A', fontFamily:'var(--font-display)' }}>{roi>=0?'+':''}{roi}%</div>
+                          {card.psa&&<div style={{ fontSize:'9px', color:'rgba(255,255,255,.22)' }}>Pop {card.psa.toLocaleString()}</div>}
                         </div>
                       </div>
                     </div>
@@ -620,37 +595,37 @@ export function Holdings() {
               <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 50% 60%,rgba(255,107,53,.12) 0%,transparent 55%)', pointerEvents:'none' }}/>
               <div style={{ fontSize:'120px', fontWeight:700, color:'rgba(255,255,255,.04)', position:'absolute', top:'10px', left:'50%', transform:'translateX(-50%)', letterSpacing:'-6px', lineHeight:1, pointerEvents:'none', userSelect:'none' as const }}>2026</div>
               <div style={{ position:'relative' }}>
-                <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
+                <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
                 <div style={{ fontSize:'52px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>€ {totalCur.toLocaleString('fr-FR')}</div>
-                <div style={{ fontSize:'16px', color:'#5EFFD5', marginTop:'8px', fontWeight:600 }}>+{totalROI}% depuis janvier · +€ {totalGain.toLocaleString('fr-FR')}</div>
+                <div style={{ fontSize:'16px', color:'#4ECCA3', marginTop:'8px', fontWeight:500 }}>+{totalROI}% depuis janvier · +€ {totalGain.toLocaleString('fr-FR')}</div>
               </div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', borderTop:'1px solid rgba(255,255,255,.07)', borderBottom:'1px solid rgba(255,255,255,.07)' }}>
               {[{l:'Cartes',v:String(CARDS.length)},{l:'Meilleur ROI',v:`+${Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%`,c:'#FFD700'},{l:'Signaux S',v:String(CARDS.filter(c=>c.signal==='S').length)},{l:'Favoris',v:String(favs.size)}].map((s,i)=>(
                 <div key={s.l} style={{ padding:'18px', borderRight:i<3?'1px solid rgba(255,255,255,.07)':'none', textAlign:'center' }}>
                   <div style={{ fontSize:'28px', fontWeight:600, color:s.c??'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px' }}>{s.v}</div>
-                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
                 </div>
               ))}
             </div>
             <div style={{ padding:'24px 28px' }}>
-              <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
+              <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
               <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                 {[...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
                   const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100), ec=EC[card.type]??'#888'
                   return(
-                    <div key={card.id} style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
+                    <div key={card.id} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
                       <div style={{ fontSize:'20px', flexShrink:0 }}>{['🥇','🥈','🥉'][i]}</div>
                       <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                         <div style={{ width:'14px', height:'14px', borderRadius:'50%', background:ec, opacity:.7 }}/>
                       </div>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:'13px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>{card.name}</div>
-                        <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)' }}>{card.set} · {card.year}</div>
+                        <div style={{ fontSize:'13px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                        <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{card.set} · {card.year}</div>
                       </div>
                       <div style={{ textAlign:'right' }}>
-                        <div style={{ fontSize:'16px', fontWeight:600, color:'#5EFFD5', fontFamily:'var(--font-display)' }}>+{roi}%</div>
-                        <div style={{ fontSize:'12px', color:'rgba(255,255,255,.45)' }}>€ {card.curPrice}</div>
+                        <div style={{ fontSize:'16px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{roi}%</div>
+                        <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)' }}>€ {card.curPrice}</div>
                       </div>
                     </div>
                   )
@@ -659,7 +634,7 @@ export function Holdings() {
             </div>
             <div style={{ padding:'0 28px 28px', display:'flex', gap:'8px' }}>
               <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,.45)' }}>Partager mon Wrapped 2026 →</button>
-              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.65)', border:'1px solid rgba(255,255,255,.12)', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
+              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
             </div>
           </div>
         )}

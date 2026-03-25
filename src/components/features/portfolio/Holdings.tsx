@@ -4,17 +4,12 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 type CardItem = {
-  id:string; name:string; set:string; year:number; number:string
-  rarity:string; type:string; lang:'EN'|'JP'|'FR'
-  condition:string; graded:boolean
-  buyPrice:number; curPrice:number; qty:number
-  psa?:number; signal?:'S'|'A'|'B'; hot?:boolean; favorite?:boolean
+  id: string; name: string; set: string; year: number; number: string
+  rarity: string; type: string; lang: 'EN'|'JP'|'FR'
+  condition: string; graded: boolean
+  buyPrice: number; curPrice: number; qty: number
+  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean
 }
-type BinderSlot =
-  | { kind:'filled'; slotId:string; card:CardItem }
-  | { kind:'empty';  slotId:string; name:string; set:string; type:string; estPrice:string }
-type BinderType = 'libre'|'set'|'preset'
-type BinderData = { id:string; name:string; binderType:BinderType; theme:string; cols:number; slots:BinderSlot[] }
 
 const CARDS: CardItem[] = [
   { id:'1',  name:'Charizard Alt Art',    set:'SV151',            year:2023, number:'006', rarity:'Alt Art',     type:'fire',     lang:'EN', condition:'PSA 9',  graded:true,  buyPrice:620, curPrice:920,  qty:1, psa:312,  signal:'S', hot:true,  favorite:true  },
@@ -31,12 +26,17 @@ const CARDS: CardItem[] = [
   { id:'12', name:'Miraidon ex SAR',      set:'Scarlet & Violet', year:2023, number:'254', rarity:'Secret Rare', type:'electric', lang:'FR', condition:'Raw',    graded:false, buyPrice:45,  curPrice:72,   qty:3,                                favorite:false },
 ]
 
+const EMPTY_SLOTS = [
+  { id:'e1', name:'Sylveon VMAX Alt',  set:'Evolving Skies', type:'psychic',  estPrice:'€ 250–310' },
+  { id:'e2', name:'Énergie Alt Art',   set:'Evolving Skies', type:'electric', estPrice:'€ 40–60'   },
+]
+
 const EC: Record<string,string> = { fire:'#FF6B35',water:'#42A5F5',psychic:'#C855D4',dark:'#7E57C2',electric:'#D4A800',grass:'#3DA85A' }
 const EG: Record<string,string> = { fire:'rgba(255,107,53,.55)',water:'rgba(66,165,245,.55)',psychic:'rgba(200,85,212,.55)',dark:'rgba(126,87,194,.55)',electric:'rgba(212,168,0,.55)',grass:'rgba(61,168,90,.55)' }
 const LS: Record<string,{flag:string;bg:string;color:string}> = {
-  EN:{flag:'🇺🇸',bg:'#FFF5F0',color:'#C84B00'},
-  JP:{flag:'🇯🇵',bg:'#F0F5FF',color:'#003DAA'},
-  FR:{flag:'🇫🇷',bg:'#F0FFF5',color:'#00660A'},
+  EN:{ flag:'🇺🇸', bg:'#FFF5F0', color:'#C84B00' },
+  JP:{ flag:'🇯🇵', bg:'#F0F5FF', color:'#003DAA' },
+  FR:{ flag:'🇫🇷', bg:'#F0FFF5', color:'#00660A' },
 }
 const TIER_BG: Record<string,string> = {
   S:'linear-gradient(135deg,#FFD700,#FF8C00)',
@@ -46,84 +46,44 @@ const TIER_BG: Record<string,string> = {
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
-const f = (card:CardItem, i:number): BinderSlot => ({ kind:'filled', slotId:'s'+i, card })
-const e = (id:string, name:string, set:string, type:string, estPrice:string): BinderSlot =>
-  ({ kind:'empty', slotId:id, name, set, type, estPrice })
-
-// Binders initiaux — slots ordonnés, empty slots à leur position exacte
-const INITIAL_BINDERS: BinderData[] = [
-  {
-    id:'b1', name:'Eeveelutions', binderType:'preset', theme:'dark', cols:3,
-    slots:[
-      f(CARDS[0],1), f(CARDS[1],2),
-      e('e1','Sylveon VMAX Alt','Evolving Skies','psychic','€ 250–310'),
-      f(CARDS[2],3), f(CARDS[3],4),
-      e('e2','Énergie Alt Art','Evolving Skies','electric','€ 40–60'),
-      f(CARDS[4],5),  f(CARDS[5],6),  f(CARDS[6],7),
-      f(CARDS[7],8),  f(CARDS[8],9),  f(CARDS[9],10),
-      f(CARDS[10],11), f(CARDS[11],12),
-    ]
-  },
-  {
-    id:'b2', name:'Ma Collection', binderType:'libre', theme:'fire', cols:3,
-    slots: CARDS.map((card,i) => f(card,i+100))
+const tiltCard = (e: React.MouseEvent<HTMLDivElement>) => {
+  const el = e.currentTarget
+  const r  = el.getBoundingClientRect()
+  const x  = ((e.clientX-r.left)/r.width -.5)*24
+  const y  = ((e.clientY-r.top) /r.height-.5)*-24
+  el.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
+  const shine = el.querySelector('.hm') as HTMLElement|null
+  if (shine) {
+    shine.style.backgroundPosition = `${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`
+    shine.style.opacity = '0.35'
   }
-]
-
-const CARD_SETS = [...new Set(CARDS.map(c=>c.set))]
-const THEMES = ['fire','water','psychic','dark','electric','grass']
-const PRESET_TEMPLATES = [
-  { id:'eeveelutions', name:'Eeveelutions', icon:'🌈', desc:'8 Eeveelutions · 24 slots' },
-  { id:'charizards',   name:'Charizards',   icon:'🔥', desc:'Tous les Charizard · 18 slots' },
-  { id:'legendaries',  name:'Légendaires',  icon:'✨', desc:'Pokémon légendaires · 20 slots' },
-  { id:'starters',     name:'Starters',     icon:'🌿', desc:'Starters Gen 1–9 · 27 slots' },
-]
-
-const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
-  const el=e.currentTarget, r=el.getBoundingClientRect()
-  const x=((e.clientX-r.left)/r.width-.5)*24, y=((e.clientY-r.top)/r.height-.5)*-24
-  el.style.transform=`perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
-  const s=el.querySelector('.hm') as HTMLElement|null
-  if(s){s.style.backgroundPosition=`${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`;s.style.opacity='0.35'}
 }
-const resetCard = (e:React.MouseEvent<HTMLDivElement>) => {
-  const el=e.currentTarget
-  el.style.transition='transform 0.6s cubic-bezier(.23,1,.32,1)'
-  el.style.transform=''
-  const s=el.querySelector('.hm') as HTMLElement|null
-  if(s) s.style.opacity='0'
-  setTimeout(()=>{el.style.transition=''},600)
+const resetCard = (e: React.MouseEvent<HTMLDivElement>) => {
+  const el = e.currentTarget
+  el.style.transition = 'transform 0.6s cubic-bezier(.23,1,.32,1)'
+  el.style.transform  = ''
+  const shine = el.querySelector('.hm') as HTMLElement|null
+  if (shine) shine.style.opacity = '0'
+  setTimeout(()=>{ el.style.transition='' }, 600)
 }
 
 export function Holdings() {
   const router = useRouter()
-  const [view,          setView]         = useState<ViewMode>('binder')
-  const [binders,       setBinders]      = useState<BinderData[]>(INITIAL_BINDERS)
-  const [activeBinder,  setActiveBinder] = useState('b1')
-  const [binderPage,    setBinderPage]   = useState(0)
-  const [showCreate,    setShowCreate]   = useState(false)
-  const [newName,       setNewName]      = useState('')
-  const [newType,       setNewType]      = useState<BinderType>('libre')
-  const [newTheme,      setNewTheme]     = useState('fire')
-  const [newSet,        setNewSet]       = useState(CARD_SETS[0])
-  const [newPreset,     setNewPreset]    = useState('eeveelutions')
-  const [inserting,     setInserting]    = useState<string|null>(null)
-  const [removing,      setRemoving]     = useState<string|null>(null)
-  const [pendingIns,    setPendingIns]   = useState<{slotId:string;card:CardItem}|null>(null)
-  const [spotCard,      setSpotCard]     = useState<CardItem|null>(null)
-  const [favs,          setFavs]         = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
-  const [shareOpen,     setShareOpen]    = useState(false)
-  const [toast,         setToast]        = useState<string|null>(null)
+  const [view,        setView]        = useState<ViewMode>('binder')
+  const [binderCols,  setBinderCols]  = useState(3)
+  const [binderPage,  setBinderPage]  = useState(0)
+  const [filled,      setFilled]      = useState<CardItem[]>(CARDS)
+  const [emptySlots,  setEmptySlots]  = useState(EMPTY_SLOTS)
+  const [sliding,     setSliding]     = useState<string|null>(null)
+  const [removing,    setRemoving]    = useState<string|null>(null)
+  const [pendingCard, setPendingCard] = useState<{slotId:string;card:CardItem}|null>(null)
+  const [justSettled, setJustSettled] = useState<Map<string,CardItem>>(new Map())
+  const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
+  const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
+  const [setComplete, setSetComplete] = useState(false)
+  const [shareOpen,   setShareOpen]   = useState(false)
+  const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
-
-  const binder = binders.find(b=>b.id===activeBinder) ?? binders[0]
-
-  const openBinder = (id:string) => { setActiveBinder(id); setBinderPage(0) }
-
-  const setBinderCols = (n:number) => {
-    setBinders(prev=>prev.map(b=>b.id===activeBinder?{...b,cols:n}:b))
-    setBinderPage(0)
-  }
 
   const totalBuy  = CARDS.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = CARDS.reduce((s,c)=>s+c.curPrice*c.qty,0)
@@ -133,168 +93,98 @@ export function Holdings() {
 
   const showToast = (msg:string) => {
     setToast(msg)
-    if(toastRef.current) clearTimeout(toastRef.current)
-    toastRef.current = setTimeout(()=>setToast(null),2400)
+    if (toastRef.current) clearTimeout(toastRef.current)
+    toastRef.current = setTimeout(()=>setToast(null), 2400)
   }
   const toggleFav = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
-    setFavs(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n})
+    setFavs(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
   }
 
-  const insertCard = (slot:Extract<BinderSlot,{kind:'empty'}>) => {
-    if(inserting||removing) return
+  const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
+    if (sliding || removing) return
     const newCard: CardItem = {
-      id:slot.slotId+'_card', name:slot.name, set:slot.set, year:2021, number:'???',
+      id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    // Rend le contenu visible dans le slot avant l'anim
-    setPendingIns({ slotId:slot.slotId, card:newCard })
-    const shell = document.getElementById('shell-'+slot.slotId)
-    if(shell){
-      shell.style.transformOrigin='top center'
-      shell.style.transition='transform 0.25s ease-out'
-      shell.style.transform='scaleY(1.025)'
-      setTimeout(()=>{if(shell)shell.style.transform=''},200)
+    // Affiche le contenu avant l'anim (translateY part de -100%, il y a quelque chose à révéler)
+    setPendingCard({ slotId:slot.id, card:newCard })
+    const el = document.getElementById('shell-'+slot.id)
+    if (el) {
+      el.style.transformOrigin = 'top center'
+      el.style.transition = 'transform 0.25s ease-out'
+      el.style.transform = 'scaleY(1.025)'
+      setTimeout(()=>{ if(el) el.style.transform='' }, 200)
     }
-    setTimeout(()=>{ setInserting(slot.slotId) },30)
+    setTimeout(()=>{ setSliding(slot.id) }, 30)
     setTimeout(()=>{
-      if(shell){
-        shell.style.transition='border-color 0.1s'
-        shell.style.borderColor='rgba(255,255,255,.7)'
-        setTimeout(()=>{if(shell){shell.style.transition='border-color 0.4s';shell.style.borderColor=''}},150)
+      if (el) {
+        el.style.transition = 'border-color 0.1s'
+        el.style.borderColor = 'rgba(255,255,255,.7)'
+        setTimeout(()=>{ if(el){ el.style.transition='border-color 0.4s'; el.style.borderColor='' } }, 150)
       }
-    },670)
+    }, 670)
+    // Settled : garde le contenu visible sans animation pendant le swap React (évite le blink)
     setTimeout(()=>{
-      const emptyLeft = binder.slots.filter(s=>s.kind==='empty').length
-      // Remplace le slot EN PLACE — position préservée
-      setBinders(prev=>prev.map(b=>b.id!==activeBinder?b:{
-        ...b, slots:b.slots.map(s=>s.slotId===slot.slotId
-          ? {kind:'filled' as const, slotId:slot.slotId, card:newCard}
-          : s
-        )
-      }))
-      setInserting(null); setPendingIns(null)
-      if(emptyLeft===1) showToast('SET COMPLET 🏆 · +500 XP !')
-      else showToast(slot.name+' insérée ✓')
-    },1080)
+      setJustSettled(prev=>new Map([...prev, [slot.id, newCard]]))
+      setSliding(null)
+      setPendingCard(null)
+      setTimeout(()=>{
+        setFilled(prev=>[...prev, newCard])
+        setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
+        setJustSettled(prev=>{ const n=new Map(prev); n.delete(slot.id); return n })
+        if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · Eeveelutions +500 XP !') }
+        else showToast(slot.name+' insérée dans le binder ✓')
+      }, 60)
+    }, 920)
   }
 
-  const removeCard = (slotId:string, card:CardItem, e:React.MouseEvent) => {
+  const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
-    if(removing||inserting) return
-    const shell = document.getElementById('shell-'+slotId)
-    if(shell){
-      shell.style.transformOrigin='top center'
-      shell.style.transition='transform 0.2s ease-out'
-      shell.style.transform='scaleY(1.02)'
-      setTimeout(()=>{if(shell)shell.style.transform=''},200)
+    if (removing || sliding) return
+    const el = document.getElementById('shell-'+card.id)
+    if (el) {
+      el.style.transformOrigin = 'top center'
+      el.style.transition = 'transform 0.2s ease-out'
+      el.style.transform = 'scaleY(1.02)'
+      setTimeout(()=>{ if(el) el.style.transform='' }, 200)
     }
-    setRemoving(slotId)
+    setRemoving(card.id)
     setTimeout(()=>{
-      setBinders(prev=>prev.map(b=>b.id!==activeBinder?b:{
-        ...b,
-        slots: b.binderType==='libre'
-          // Libre : supprime le slot
-          ? b.slots.filter(s=>s.slotId!==slotId)
-          // Preset/set : replace par slot vide en place
-          : b.slots.map(s=>s.slotId!==slotId?s:{
-              kind:'empty' as const, slotId,
-              name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice
-            })
-      }))
+      const emptySlot = { id:card.id+'_e', name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice }
+      setFilled(prev=>prev.filter(c=>c.id!==card.id))
+      setEmptySlots(prev=>[...prev, emptySlot])
+      setSetComplete(false)
       setRemoving(null)
       showToast(card.name+' retirée du binder')
-    },560)
+    }, 560)
   }
 
-  const createBinder = () => {
-    if(!newName.trim()) return
-    const newId = 'b'+Date.now()
-    let slots: BinderSlot[] = []
-    if(newType==='libre'){
-      slots = CARDS.map((card,i)=>({kind:'filled' as const,slotId:newId+'s'+i,card}))
-    } else if(newType==='set'){
-      const sc = CARDS.filter(c=>c.set===newSet)
-      slots = sc.map((card,i)=>({kind:'filled' as const,slotId:newId+'s'+i,card}))
-      for(let i=0;i<3;i++) slots.push({kind:'empty',slotId:newId+'e'+i,name:'Carte manquante '+(i+1),set:newSet,type:'fire',estPrice:'€ ???'})
-    } else {
-      for(let i=0;i<12;i++) slots.push({kind:'empty',slotId:newId+'e'+i,name:'Emplacement '+(i+1),set:'Preset',type:'psychic',estPrice:'€ ???'})
-    }
-    const nb: BinderData = {id:newId,name:newName.trim(),binderType:newType,theme:newTheme,cols:3,slots}
-    setBinders(prev=>[...prev,nb])
-    openBinder(newId)
-    setShowCreate(false); setNewName(''); setNewType('libre')
-    showToast(newName.trim()+' créé ✓')
-  }
-
-  const deleteBinder = (id:string, e:React.MouseEvent) => {
-    e.stopPropagation()
-    if(binders.length<=1) return
-    const nb = binders.filter(b=>b.id!==id)
-    setBinders(nb)
-    if(activeBinder===id) openBinder(nb[0].id)
-  }
-
-  const slotsPer    = binder.cols * 3
-  const slots       = binder.slots
-  const totalSlots  = slots.length
-  const binderPages = Math.max(1,Math.ceil(totalSlots/slotsPer))
-  const pageSlots   = slots.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
-  const phantomCount= Math.max(0,slotsPer-pageSlots.length)
-  const filledCount = slots.filter(s=>s.kind==='filled').length
-  const pct         = totalSlots>0 ? Math.round(filledCount/totalSlots*100) : 100
-  const setComplete = pct===100
-
-  const CardBodyContent = ({card,cols}:{card:CardItem;cols:number}) => {
-    const ec=EC[card.type]??'#888',eg=EG[card.type]??'rgba(128,128,128,.4)'
-    const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)
-    const isHolo=HOLO_RARITIES.includes(card.rarity),isVintage=card.year<2002
-    const orbSz=cols<=3?'36px':cols===4?'28px':'24px'
-    const fsName=cols<=3?'10px':cols===4?'9px':'8px'
-    const fsPx=cols<=3?'12px':'11px'
-    return (<>
-      {isHolo&&<div className="holo"/>}
-      {isHolo&&<div className="hm"/>}
-      <div className="ptcl" style={{background:ec,bottom:'22%',left:'20%'}}/>
-      <div className="ptcl" style={{background:ec,bottom:'35%',left:'62%'}}/>
-      <div style={{position:'absolute',top:0,left:0,right:0,height:'2.5px',background:`linear-gradient(90deg,${ec},${ec}44)`,zIndex:4}}/>
-      <div style={{position:'absolute',top:'8px',left:'8px',right:'8px',bottom:'54px',borderRadius:'7px',background:`${ec}12`,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-        <div style={{position:'absolute',width:'65%',height:'65%',borderRadius:'50%',background:eg,filter:'blur(14px)',opacity:.6}}/>
-        <div style={{width:orbSz,height:orbSz,borderRadius:'50%',background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`,boxShadow:`0 0 16px ${eg}`,position:'relative',zIndex:1}}/>
-        {card.signal&&<div style={{position:'absolute',top:'4px',right:'4px',fontSize:'7px',fontWeight:700,background:TIER_BG[card.signal],color:'#fff',padding:'1px 5px',borderRadius:'3px',fontFamily:'var(--font-display)',zIndex:2}}>{card.signal}</div>}
-        {favs.has(card.id)&&<div style={{position:'absolute',top:'4px',left:'4px',fontSize:'10px',zIndex:2}}>❤️</div>}
-        {card.graded&&<div style={{position:'absolute',bottom:'4px',right:'4px',fontSize:'7px',fontWeight:700,background:'rgba(0,0,0,.75)',color:'rgba(255,255,255,.9)',padding:'1px 5px',borderRadius:'3px',fontFamily:'var(--font-display)',zIndex:2}}>{card.condition}</div>}
-        {card.hot&&<div style={{position:'absolute',top:'4px',left:'4px',width:'6px',height:'6px',borderRadius:'50%',background:'#E03020',animation:'shimGlow 1.4s ease-in-out infinite',zIndex:3}}/>}
-      </div>
-      <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 8px 8px'}}>
-        <div style={{fontSize:fsName,fontWeight:600,color:'rgba(255,255,255,.85)',fontFamily:'var(--font-display)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:'2px'}}>{card.name}</div>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontSize:fsPx,fontWeight:700,color:'rgba(255,255,255,.9)',fontFamily:'var(--font-display)',letterSpacing:'-0.3px'}}>€ {card.curPrice}</div>
-          <div style={{fontSize:'10px',fontWeight:600,color:roi>=0?'#4ECCA3':'#FF6B8A'}}>{roi>=0?'+':''}{roi}%</div>
-        </div>
-      </div>
-      {isVintage&&<div style={{position:'absolute',bottom:0,left:0,right:0,height:'10px',background:'linear-gradient(0deg,rgba(0,0,0,.5),transparent)',zIndex:3,pointerEvents:'none'}}/>}
-    </>)
-  }
+  const slotsPer     = binderCols * 3
+  const allSlots     = [...filled, ...emptySlots.map(e=>({...e, isEmpty:true}))]
+  const totalSlots   = filled.length + emptySlots.length
+  const binderPages  = Math.max(1, Math.ceil(totalSlots/slotsPer))
+  const pageItems    = allSlots.slice(binderPage*slotsPer, (binderPage+1)*slotsPer)
+  const phantomCount = Math.max(0, slotsPer - pageItems.length)
+  const pct          = Math.round(filled.length/totalSlots*100)
 
   return (
     <>
       <style>{`
-        @keyframes fadeUp     { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn     { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        @keyframes holoShift  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes breatheS   { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
-        @keyframes breatheA   { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
-        @keyframes ptcl       { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
-        @keyframes shimGlow   { 0%,100%{opacity:.5} 50%{opacity:1} }
-        @keyframes toastIn    { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        @keyframes complBadge { from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
-        @keyframes wrappedIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        @keyframes emptyIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-        @keyframes modalIn    { from{opacity:0;transform:translateY(24px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
+        @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
+        @keyframes ptcl      { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
+        @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
+        @keyframes toastIn   { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+        @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
+        @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
+        @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
 
-        /* ── INSERTION : translateY -100%→0, clippé par overflow:hidden du shell ── */
+        /* ── INSERT : translateY -100%→0, clipé par overflow:hidden du shell ── */
         @keyframes slideDown {
           0%   { transform:translateY(-100%); }
           62%  { transform:translateY(4px); }
@@ -308,7 +198,7 @@ export function Holdings() {
           100% { transform:translateY(-102%); }
         }
 
-        .gem          { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
+        .gem          { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
         .gem .holo    { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
         .gem .hm      { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
@@ -321,167 +211,87 @@ export function Holdings() {
 
         /* Shell : overflow:hidden clipe le translateY du card-body */
         .pocket-shell  { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
-        .pocket-shell:hover { transform:translateY(-5px) scale(1.04) !important; }
+        .pocket-shell:hover  { transform:translateY(-5px) scale(1.04) !important; }
         .pocket-shell.empty:hover { border-color:rgba(255,255,255,.28) !important; }
         .pocket-shell::before { content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);border-radius:9px 9px 0 0;z-index:10;pointer-events:none; }
         .pocket-shell::after  { content:'';position:absolute;bottom:0;left:0;right:0;height:8px;background:linear-gradient(0deg,rgba(0,0,0,.45),transparent);z-index:10;pointer-events:none; }
 
         /* card-body : couvre tout le shell, s'anime en translateY */
-        .card-body      { position:absolute;inset:0; }
-        .card-body.ins  { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-body.rem  { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards;pointer-events:none; }
-        .card-body.ein  { animation:emptyIn .25s ease-out forwards; }
+        .card-body         { position:absolute;inset:0; }
+        .card-body.ins     { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
+        .card-body.rem     { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+        /* settled : aucune animation — transition invisible pendant le swap React */
+        .card-body.settled { animation:none !important; opacity:1 !important; transform:translateY(0) !important; }
 
-        .vtab    { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
-        .colbtn  { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .share-fmt { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
+        .vtab         { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .vtab.on      { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
+        .colbtn       { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .share-fmt    { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
         .share-fmt:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.25); }
-        .remove-btn { pointer-events:all !important; }
-        .btab    { padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px; }
-        .btab.on { background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff; }
-        .btab:hover { background:rgba(255,255,255,.08); }
-        .theme-dot { width:14px;height:14px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s; }
-        .theme-dot.sel { border-color:#fff;transform:scale(1.2); }
+        .remove-btn   { pointer-events:all !important; }
       `}</style>
 
-      <div style={{background:'#070503',minHeight:'100vh',borderRadius:'16px',overflow:'hidden',position:'relative'}}>
-        <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)',pointerEvents:'none',zIndex:0}}/>
+      <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
+        <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
         {toast&&(
-          <div style={{position:'absolute',bottom:'24px',left:'50%',transform:'translateX(-50%)',background:'rgba(10,6,2,.95)',color:'rgba(255,255,255,.85)',padding:'9px 20px',borderRadius:'22px',fontSize:'12px',fontWeight:500,border:'1px solid rgba(255,255,255,.12)',whiteSpace:'nowrap',zIndex:50,animation:'toastIn .3s ease-out',fontFamily:'var(--font-display)'}}>
+          <div style={{ position:'absolute', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(10,6,2,.95)', color:'rgba(255,255,255,.85)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1px solid rgba(255,255,255,.12)', whiteSpace:'nowrap', zIndex:50, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
             {setComplete?'🏆 ':'✓ '}{toast}
-          </div>
-        )}
-
-        {/* MODAL CRÉER BINDER */}
-        {showCreate&&(
-          <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.75)',zIndex:48,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px'}} onClick={()=>setShowCreate(false)}>
-            <div style={{background:'#0F0A04',borderRadius:'20px',border:'1px solid rgba(255,255,255,.1)',padding:'28px',maxWidth:'480px',width:'100%',animation:'modalIn .25s ease-out'}} onClick={e=>e.stopPropagation()}>
-              <div style={{fontSize:'16px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',marginBottom:'20px'}}>Nouveau binder</div>
-
-              {/* Nom */}
-              <div style={{marginBottom:'16px'}}>
-                <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',textTransform:'uppercase' as const,letterSpacing:'.1em',fontFamily:'var(--font-display)',marginBottom:'6px'}}>Nom</div>
-                <input
-                  value={newName} onChange={e=>setNewName(e.target.value)}
-                  placeholder="Mon binder..."
-                  style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'9px',padding:'10px 14px',color:'#fff',fontSize:'13px',outline:'none',fontFamily:'var(--font-display)'}}
-                />
-              </div>
-
-              {/* Type */}
-              <div style={{marginBottom:'16px'}}>
-                <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',textTransform:'uppercase' as const,letterSpacing:'.1em',fontFamily:'var(--font-display)',marginBottom:'8px'}}>Type</div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px'}}>
-                  {([['libre','📚','Libre','Toute ta collection, sans emplacement dédié'],['set','🃏','Par set','Un binder par extension complète'],['preset','✨','Preset','Thème préconstruit (Eeveelutions, etc.)']] as [BinderType,string,string,string][]).map(([t,icon,label,desc])=>(
-                    <div key={t} onClick={()=>setNewType(t)} style={{padding:'12px',borderRadius:'10px',border:`1px solid ${newType===t?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`,background:newType===t?'rgba(255,255,255,.1)':'rgba(255,255,255,.03)',cursor:'pointer',transition:'all .15s'}}>
-                      <div style={{fontSize:'18px',marginBottom:'4px'}}>{icon}</div>
-                      <div style={{fontSize:'12px',fontWeight:600,color:newType===t?'#fff':'rgba(255,255,255,.6)',fontFamily:'var(--font-display)'}}>{label}</div>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)',marginTop:'2px',lineHeight:1.4}}>{desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Set picker */}
-              {newType==='set'&&(
-                <div style={{marginBottom:'16px'}}>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',textTransform:'uppercase' as const,letterSpacing:'.1em',fontFamily:'var(--font-display)',marginBottom:'6px'}}>Extension</div>
-                  <select value={newSet} onChange={e=>setNewSet(e.target.value)} style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:'9px',padding:'10px 14px',color:'#fff',fontSize:'13px',outline:'none',fontFamily:'var(--font-display)'}}>
-                    {CARD_SETS.map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
-                  </select>
-                </div>
-              )}
-
-              {/* Preset picker */}
-              {newType==='preset'&&(
-                <div style={{marginBottom:'16px'}}>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',textTransform:'uppercase' as const,letterSpacing:'.1em',fontFamily:'var(--font-display)',marginBottom:'8px'}}>Thème</div>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'6px'}}>
-                    {PRESET_TEMPLATES.map(p=>(
-                      <div key={p.id} onClick={()=>setNewPreset(p.id)} style={{padding:'10px 12px',borderRadius:'8px',border:`1px solid ${newPreset===p.id?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`,background:newPreset===p.id?'rgba(255,255,255,.09)':'rgba(255,255,255,.02)',cursor:'pointer',display:'flex',gap:'8px',alignItems:'center'}}>
-                        <span style={{fontSize:'16px'}}>{p.icon}</span>
-                        <div>
-                          <div style={{fontSize:'12px',fontWeight:500,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)'}}>{p.name}</div>
-                          <div style={{fontSize:'9px',color:'rgba(255,255,255,.3)'}}>{p.desc}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Theme couleur */}
-              <div style={{marginBottom:'22px'}}>
-                <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',textTransform:'uppercase' as const,letterSpacing:'.1em',fontFamily:'var(--font-display)',marginBottom:'8px'}}>Couleur</div>
-                <div style={{display:'flex',gap:'8px'}}>
-                  {THEMES.map(t=>(
-                    <div key={t} onClick={()=>setNewTheme(t)} className={`theme-dot${newTheme===t?' sel':''}`} style={{background:EC[t]??'#888'}}/>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{display:'flex',gap:'8px'}}>
-                <button onClick={createBinder} style={{flex:1,padding:'12px',borderRadius:'10px',background:'linear-gradient(135deg,#E03020,#FF4433)',color:'#fff',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>Créer le binder →</button>
-                <button onClick={()=>setShowCreate(false)} style={{padding:'12px 18px',borderRadius:'10px',background:'rgba(255,255,255,.06)',color:'rgba(255,255,255,.5)',border:'1px solid rgba(255,255,255,.1)',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)'}}>Annuler</button>
-              </div>
-            </div>
           </div>
         )}
 
         {/* SPOTLIGHT */}
         {spotCard&&(()=>{
-          const ec=EC[spotCard.type]??'#888',eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
+          const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
           const gain=(spotCard.curPrice-spotCard.buyPrice)*spotCard.qty
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
           return(
-            <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.82)',zIndex:40,display:'flex',alignItems:'center',justifyContent:'center',padding:'32px'}} onClick={()=>setSpotCard(null)}>
-              <div style={{background:'#0F0A04',borderRadius:'20px',border:`1px solid ${ec}40`,boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.8)`,padding:'28px',maxWidth:'680px',width:'100%',animation:'fadeUp .25s ease-out'}} onClick={e=>e.stopPropagation()}>
-                <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'24px',alignItems:'start'}}>
-                  <div className="gem" style={{background:`linear-gradient(160deg,${ec}22,${ec}08)`,border:`2px solid ${ec}50`,boxShadow:`0 0 40px ${eg},0 12px 40px rgba(0,0,0,.7)`}} onMouseMove={tiltCard} onMouseLeave={resetCard}>
+            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.82)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>setSpotCard(null)}>
+              <div style={{ background:'#0F0A04', borderRadius:'20px', border:`1px solid ${ec}40`, boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.8)`, padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+                <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'24px', alignItems:'start' }}>
+                  <div className="gem" style={{ background:`linear-gradient(160deg,${ec}22,${ec}08)`, border:`2px solid ${ec}50`, boxShadow:`0 0 40px ${eg},0 12px 40px rgba(0,0,0,.7)` }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
                     {isHolo&&<div className="holo"/>}
                     <div className="hm"/>
-                    <div className="ptcl" style={{background:ec,bottom:'22%',left:'20%'}}/>
-                    <div className="ptcl" style={{background:ec,bottom:'35%',left:'65%'}}/>
-                    <div style={{height:'3px',background:`linear-gradient(90deg,${ec},${ec}55)`,position:'absolute',top:0,left:0,right:0}}/>
-                    {spotCard.signal&&<div style={{position:'absolute',top:'10px',right:'10px',zIndex:3,fontSize:'10px',fontWeight:700,background:TIER_BG[spotCard.signal],color:'#fff',padding:'3px 9px',borderRadius:'6px',fontFamily:'var(--font-display)'}}>Tier {spotCard.signal}</div>}
-                    <div style={{height:'200px',margin:'6px 6px 0',borderRadius:'10px',background:`${ec}14`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
-                      <div style={{position:'absolute',width:'75%',height:'75%',borderRadius:'50%',background:eg,filter:'blur(28px)',opacity:.65}}/>
-                      <div style={{width:'64px',height:'64px',borderRadius:'50%',background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}77)`,boxShadow:`0 0 28px ${eg}`,zIndex:1}}/>
+                    <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
+                    <div className="ptcl" style={{ background:ec, bottom:'35%', left:'65%' }}/>
+                    <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
+                    {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#fff', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
+                    <div style={{ height:'200px', margin:'6px 6px 0', borderRadius:'10px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                      <div style={{ position:'absolute', width:'75%', height:'75%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.65 }}/>
+                      <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}77)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
                     </div>
-                    <div style={{padding:'14px'}}>
-                      <div style={{fontSize:'16px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',marginBottom:'3px'}}>{spotCard.name}</div>
-                      <div style={{fontSize:'11px',color:'rgba(255,255,255,.3)'}}>{spotCard.set} · #{spotCard.number} · {spotCard.year}</div>
+                    <div style={{ padding:'14px' }}>
+                      <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
+                      <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{spotCard.set} · #{spotCard.number} · {spotCard.year}</div>
                     </div>
                   </div>
                   <div>
-                    <div style={{fontSize:'40px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1.5px',lineHeight:1,marginBottom:'6px'}}>€ {spotCard.curPrice.toLocaleString('fr-FR')}</div>
-                    <div style={{fontSize:'16px',color:'#4ECCA3',fontWeight:500,marginBottom:'20px'}}>▲ +{roi}% · +€ {gain.toLocaleString('fr-FR')}</div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px',marginBottom:'16px'}}>
-                      {[{l:'Achat',v:`€ ${spotCard.buyPrice.toLocaleString('fr-FR')}`,c:'rgba(255,255,255,.5)'},{l:'Marché',v:`€ ${spotCard.curPrice.toLocaleString('fr-FR')}`,c:'#fff'},{l:'ROI',v:`+${roi}%`,c:'#4ECCA3'},{l:'Quantité',v:`×${spotCard.qty}`,c:'rgba(255,255,255,.7)'},{l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'—',c:'rgba(255,255,255,.7)'},{l:'Gain',v:`+€ ${Math.abs(gain).toLocaleString('fr-FR')}`,c:'#4ECCA3'}].map(s=>(
-                        <div key={s.l} style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:'9px',padding:'10px 12px'}}>
-                          <div style={{fontSize:'9px',color:'rgba(255,255,255,.3)',textTransform:'uppercase' as const,letterSpacing:'.08em',fontFamily:'var(--font-display)',marginBottom:'4px'}}>{s.l}</div>
-                          <div style={{fontSize:'15px',fontWeight:600,color:s.c,fontFamily:'var(--font-display)'}}>{s.v}</div>
+                    <div style={{ fontSize:'40px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'6px' }}>€ {spotCard.curPrice.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'16px', color:'#5EFFD5', fontWeight:500, marginBottom:'20px' }}>▲ +{roi}% · +€ {gain.toLocaleString('fr-FR')}</div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'16px' }}>
+                      {[{l:'Achat',v:`€ ${spotCard.buyPrice.toLocaleString('fr-FR')}`,c:'rgba(255,255,255,.55)'},{l:'Marché',v:`€ ${spotCard.curPrice.toLocaleString('fr-FR')}`,c:'#fff'},{l:'ROI',v:`+${roi}%`,c:'#5EFFD5'},{l:'Quantité',v:`×${spotCard.qty}`,c:'rgba(255,255,255,.7)'},{l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'—',c:'rgba(255,255,255,.7)'},{l:'Gain',v:`+€ ${Math.abs(gain).toLocaleString('fr-FR')}`,c:'#5EFFD5'}].map(s=>(
+                        <div key={s.l} style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.09)', borderRadius:'9px', padding:'10px 12px' }}>
+                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
+                          <div style={{ fontSize:'15px', fontWeight:600, color:s.c, fontFamily:'var(--font-display)' }}>{s.v}</div>
                         </div>
                       ))}
                     </div>
                     {spotCard.signal&&(
-                      <div style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.08)',borderRadius:'10px',padding:'12px 14px',marginBottom:'14px'}}>
-                        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
-                          <div style={{width:'24px',height:'24px',borderRadius:'7px',background:'linear-gradient(135deg,#FF7A5A,#E03020)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:700}}>D</div>
-                          <span style={{fontSize:'12px',fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'var(--font-display)'}}>Dexy IA · Tier {spotCard.signal}</span>
+                      <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'12px 14px', marginBottom:'14px' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px' }}>
+                          <div style={{ width:'24px', height:'24px', borderRadius:'7px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'11px', fontWeight:700 }}>D</div>
+                          <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.75)', fontFamily:'var(--font-display)' }}>Dexy IA · Tier {spotCard.signal}</span>
                         </div>
-                        <p style={{fontSize:'12px',color:'rgba(255,255,255,.45)',lineHeight:1.7,margin:0}}>
-                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu.`:`Signal ${spotCard.signal} actif — progression attendue 2–4 semaines.`}
+                        <p style={{ fontSize:'12px', color:'rgba(255,255,255,.5)', lineHeight:1.7, margin:0 }}>
+                          {spotCard.signal==='S'?`PSA Pop de seulement ${spotCard.psa||'?'} exemplaires. Signal S maintenu — accumulation recommandée.`:`Signal ${spotCard.signal} actif — progression attendue dans les 2–4 semaines.`}
                         </p>
                       </div>
                     )}
-                    <div style={{display:'flex',gap:'8px'}}>
-                      <button onClick={()=>router.push('/alpha')} style={{flex:2,padding:'11px',borderRadius:'9px',background:'linear-gradient(135deg,#E03020,#FF4433)',color:'#fff',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>Voir signal →</button>
-                      <button onClick={()=>setShareOpen(true)} style={{flex:1,padding:'11px',borderRadius:'9px',background:'rgba(255,255,255,.07)',color:'rgba(255,255,255,.7)',border:'1px solid rgba(255,255,255,.12)',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)'}}>Partager</button>
-                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{width:'44px',borderRadius:'9px',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',fontSize:'18px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
+                    <div style={{ display:'flex', gap:'8px' }}>
+                      <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal →</button>
+                      <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.08)', color:'rgba(255,255,255,.8)', border:'1px solid rgba(255,255,255,.15)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
                     </div>
                   </div>
                 </div>
@@ -490,53 +300,98 @@ export function Holdings() {
           )
         })()}
 
+        {/* SHARE SHEET — EN HAUT */}
         {shareOpen&&(
-          <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.75)',zIndex:45,display:'flex',alignItems:'flex-end',borderRadius:'16px'}} onClick={()=>setShareOpen(false)}>
-            <div style={{width:'100%',background:'#0F0B07',borderTop:'1px solid rgba(255,255,255,.1)',borderRadius:'0 0 16px 16px',padding:'24px 28px',animation:'fadeUp .25s ease-out'}} onClick={e=>e.stopPropagation()}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'18px'}}>
-                <div style={{fontSize:'14px',fontWeight:500,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)'}}>Partager ma collection</div>
-                <button onClick={()=>setShareOpen(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:'20px',padding:0,lineHeight:1}}>×</button>
+          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-start', borderRadius:'16px' }} onClick={()=>setShareOpen(false)}>
+            <div style={{ width:'100%', background:'#0F0B07', borderBottom:'1px solid rgba(255,255,255,.1)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
+                <div style={{ fontSize:'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
+                <button onClick={()=>setShareOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.45)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'16px'}}>
-                {[{title:'Story Instagram',sub:'9:16 · TikTok'},{title:'Grille Top 4',sub:'1:1 · Feed'},{title:'Carte investisseur',sub:'Portfolio · ROI'}].map(f=>(
-                  <div key={f.title} className="share-fmt">
-                    <div style={{height:'90px',background:'rgba(255,255,255,.04)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'linear-gradient(135deg,#E03020,#FF4433)',opacity:.6}}/>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', marginBottom:'16px' }}>
+                {[
+                  { title:'Story Instagram', sub:'9:16 · TikTok · Reels', preview:(
+                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                      <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
+                      <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em' }}>POKÉ ALPHA</div>
+                        <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
+                        <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.75)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
+                        <div style={{ fontSize:'10px', fontWeight:600, color:'#fff' }}>€ 920</div>
+                        <div style={{ fontSize:'7px', color:'#5EFFD5' }}>+53% ROI</div>
+                      </div>
                     </div>
-                    <div style={{padding:'10px 12px',background:'rgba(255,255,255,.03)',borderTop:'1px solid rgba(255,255,255,.06)'}}>
-                      <div style={{fontSize:'12px',fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'var(--font-display)'}}>{f.title}</div>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)',marginTop:'2px'}}>{f.sub}</div>
+                  )},
+                  { title:'Grille Top 4', sub:'1:1 · Feed · Twitter', preview:(
+                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <div style={{ width:'108px', height:'108px', borderRadius:'10px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'3px', padding:'3px' }}>
+                        {[EC.fire,EC.dark,EC.water,EC.psychic].map((c,i)=>(
+                          <div key={i} style={{ borderRadius:'5px', background:`linear-gradient(145deg,${c}40,${c}18)`, border:`1px solid ${c}50` }}/>
+                        ))}
+                      </div>
+                    </div>
+                  )},
+                  { title:'Carte investisseur', sub:'Portfolio · ROI branding', preview:(
+                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <div style={{ width:'160px', height:'88px', borderRadius:'10px', overflow:'hidden', position:'relative' }}>
+                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
+                        <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
+                        <div style={{ position:'relative', padding:'10px 12px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+                          <div>
+                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div>
+                            <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+                          </div>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                            <div>
+                              <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
+                              <div style={{ fontSize:'12px', fontWeight:600, color:'#5EFFD5', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
+                            </div>
+                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>POKÉ ALPHA</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )},
+                ].map(f=>(
+                  <div key={f.title} className="share-fmt">
+                    {f.preview}
+                    <div style={{ padding:'10px 12px', background:'rgba(255,255,255,.03)', borderTop:'1px solid rgba(255,255,255,.06)' }}>
+                      <div style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>{f.title}</div>
+                      <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', marginTop:'2px' }}>{f.sub}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <button style={{width:'100%',padding:'12px',borderRadius:'10px',background:'linear-gradient(135deg,#E03020,#FF4433)',color:'#fff',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>Générer les 3 formats · PNG HD</button>
+              <div style={{ display:'flex', gap:'8px' }}>
+                <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>Générer les 3 formats · PNG HD</button>
+                <button style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.65)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
+              </div>
             </div>
           </div>
         )}
 
         {/* HEADER */}
-        <div style={{position:'relative',zIndex:1,padding:'28px 28px 20px'}}>
-          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap' as const,gap:'16px',marginBottom:'22px'}}>
+        <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'16px', marginBottom:'22px' }}>
             <div>
-              <div style={{fontSize:'10px',fontWeight:500,color:'rgba(255,255,255,.25)',textTransform:'uppercase' as const,letterSpacing:'.15em',fontFamily:'var(--font-display)',marginBottom:'6px'}}>Portfolio</div>
-              <div style={{fontSize:'38px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1.5px',lineHeight:1}}>€ {totalCur.toLocaleString('fr-FR')}</div>
-              <div style={{display:'flex',alignItems:'center',gap:'10px',marginTop:'6px'}}>
-                <span style={{fontSize:'14px',fontWeight:500,color:'#4ECCA3'}}>▲ +{totalROI}% · +€ {totalGain.toLocaleString('fr-FR')}</span>
-                <span style={{width:'4px',height:'4px',borderRadius:'50%',background:'rgba(255,255,255,.2)',display:'inline-block'}}/>
-                <span style={{fontSize:'13px',color:'rgba(255,255,255,.35)'}}>{CARDS.length} cartes · {CARDS.reduce((s,c)=>s+c.qty,0)} ex.</span>
+              <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Portfolio</div>
+              <div style={{ fontSize:'38px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+              <div style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'6px' }}>
+                <span style={{ fontSize:'14px', fontWeight:600, color:'#5EFFD5' }}>▲ +{totalROI}% · +€ {totalGain.toLocaleString('fr-FR')}</span>
+                <span style={{ width:'4px', height:'4px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'inline-block' }}/>
+                <span style={{ fontSize:'13px', color:'rgba(255,255,255,.4)' }}>{CARDS.length} cartes · {CARDS.reduce((s,c)=>s+c.qty,0)} exemplaires</span>
               </div>
             </div>
-            <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-              <div style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'12px 16px'}}>
-                <div style={{fontSize:'9px',color:'rgba(255,255,255,.3)',textTransform:'uppercase' as const,letterSpacing:'.08em',fontFamily:'var(--font-display)',marginBottom:'4px'}}>Meilleure perf.</div>
-                <div style={{fontSize:'18px',fontWeight:600,color:'#FFD700',fontFamily:'var(--font-display)'}}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
-                <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)'}}>{bestCard.name}</div>
+            <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
+              <div style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.09)', borderRadius:'12px', padding:'12px 16px' }}>
+                <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
+                <div style={{ fontSize:'18px', fontWeight:600, color:'#FFD700', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
+                <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)' }}>{bestCard.name}</div>
               </div>
-              <button onClick={()=>setShareOpen(true)} style={{padding:'10px 18px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF4433)',color:'#fff',border:'none',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 4px 16px rgba(224,48,32,.45)'}}>Partager →</button>
+              <button onClick={()=>setShareOpen(true)} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.45)' }}>Partager →</button>
             </div>
           </div>
-          <div style={{display:'flex',gap:'6px'}}>
+          <div style={{ display:'flex', gap:'6px' }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as [ViewMode,string][]).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={`vtab${view===v?' on':''}`}>{l}</button>
             ))}
@@ -545,142 +400,160 @@ export function Holdings() {
 
         {/* ── VUE BINDER ── */}
         {view==='binder'&&(
-          <div style={{position:'relative',zIndex:1,padding:'0 24px 28px',animation:'fadeUp .3s ease-out'}}>
+          <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
+            <div style={{ background:'linear-gradient(160deg,#1C1008 0%,#130C05 50%,#1C1008 100%)', borderRadius:'18px', boxShadow:'0 24px 60px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.05)', position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px)', pointerEvents:'none' }}/>
+              <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 20% 30%,rgba(255,107,53,.06) 0%,transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(126,87,194,.06) 0%,transparent 45%)', pointerEvents:'none' }}/>
+              <div style={{ position:'relative', padding:'22px 22px 18px' }}>
 
-            {/* Binder tabs */}
-            <div style={{display:'flex',gap:'6px',marginBottom:'14px',overflowX:'auto' as const,paddingBottom:'2px'}}>
-              {binders.map(b=>{
-                const tc = EC[b.theme]??'#888'
-                return (
-                  <button key={b.id} onClick={()=>openBinder(b.id)} className={`btab${activeBinder===b.id?' on':''}`}
-                    style={{borderColor:activeBinder===b.id?`${tc}55`:'rgba(255,255,255,.1)'}}>
-                    <div style={{width:'8px',height:'8px',borderRadius:'50%',background:tc,flexShrink:0,opacity:activeBinder===b.id?1:.5}}/>
-                    <span>{b.name}</span>
-                    <span style={{fontSize:'9px',color:'rgba(255,255,255,.25)',marginLeft:'2px'}}>
-                      {b.binderType==='libre'?'📚':b.binderType==='set'?'🃏':'✨'}
-                    </span>
-                    {binders.length>1&&(
-                      <span onClick={e=>deleteBinder(b.id,e)} style={{marginLeft:'2px',opacity:.4,fontSize:'13px',lineHeight:1,transition:'opacity .15s'}}
-                        onMouseEnter={e=>(e.currentTarget.style.opacity='1')} onMouseLeave={e=>(e.currentTarget.style.opacity='.4')}>×</span>
-                    )}
-                  </button>
-                )
-              })}
-              <button onClick={()=>setShowCreate(true)} className="btab" style={{borderStyle:'dashed'}}>+ Nouveau</button>
-            </div>
-
-            {/* Binder content */}
-            <div style={{background:'linear-gradient(160deg,#1C1008 0%,#130C05 50%,#1C1008 100%)',borderRadius:'18px',boxShadow:'0 24px 60px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.05)',position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px)',pointerEvents:'none'}}/>
-              <div style={{position:'absolute',inset:0,backgroundImage:`radial-gradient(ellipse at 20% 30%,${EC[binder.theme]??'#888'}0A 0%,transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(126,87,194,.05) 0%,transparent 45%)`,pointerEvents:'none'}}/>
-
-              <div style={{position:'relative',padding:'22px 22px 18px'}}>
-                {/* Header binder */}
-                <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'18px'}}>
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'18px' }}>
                   <div>
-                    <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                      <div style={{width:'8px',height:'8px',borderRadius:'50%',background:EC[binder.theme]??'#888'}}/>
-                      <div style={{fontSize:'14px',fontWeight:500,color:'rgba(255,255,255,.7)',fontFamily:'var(--font-display)'}}>{binder.name}</div>
-                      <div style={{fontSize:'9px',color:'rgba(255,255,255,.25)',background:'rgba(255,255,255,.06)',padding:'2px 8px',borderRadius:'20px',fontFamily:'var(--font-display)'}}>
-                        {binder.binderType==='libre'?'Libre':binder.binderType==='set'?'Par set':'Preset'}
-                      </div>
-                    </div>
-                    <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'4px'}}>
-                      <span style={{fontSize:'11px',color:'rgba(255,255,255,.3)'}}>{filledCount}/{totalSlots} · page {binderPage+1}/{binderPages}</span>
-                      {setComplete&&<span style={{fontSize:'10px',fontWeight:600,background:'linear-gradient(135deg,#FFD700,#FF8C00)',color:'#fff',padding:'2px 10px',borderRadius:'12px',boxShadow:'0 2px 8px rgba(255,215,0,.5)',animation:'complBadge .4s ease-out',fontFamily:'var(--font-display)'}}>SET COMPLET 🏆</span>}
+                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
+                    <div style={{ fontSize:'15px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
+                      <span style={{ fontSize:'12px', color:'rgba(255,255,255,.4)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
+                      {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
                     </div>
                   </div>
-                  <div style={{display:'flex',flexDirection:'column' as const,alignItems:'flex-end',gap:'8px'}}>
-                    <div style={{display:'flex',gap:'4px'}}>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px' }}>
+                    <div style={{ display:'flex', gap:'4px' }}>
                       {[3,4,5].map(n=>(
-                        <button key={n} onClick={()=>setBinderCols(n)} className="colbtn" style={{border:`1px solid ${binder.cols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`,background:binder.cols===n?'rgba(255,255,255,.12)':'transparent',color:binder.cols===n?'#fff':'rgba(255,255,255,.35)'}}>{n}</button>
+                        <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
                       ))}
                     </div>
-                    <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
-                      <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{width:'28px',height:'28px',borderRadius:'7px',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.08)',color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)',cursor:binderPage===0?'default':'pointer',fontSize:'13px',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                      <span style={{fontSize:'10px',color:'rgba(255,255,255,.3)',minWidth:'36px',textAlign:'center' as const,fontFamily:'var(--font-display)'}}>{binderPage+1}/{binderPages}</span>
-                      <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{width:'28px',height:'28px',borderRadius:'7px',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.08)',color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)',cursor:binderPage>=binderPages-1?'default':'pointer',fontSize:'13px',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                    <div style={{ display:'flex', gap:'4px', alignItems:'center' }}>
+                      <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.4)', minWidth:'36px', textAlign:'center', fontFamily:'var(--font-display)' }}>{binderPage+1} / {binderPages}</span>
+                      <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.6)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
                     </div>
                   </div>
                 </div>
 
-                {/* Grid */}
-                <div style={{display:'grid',gridTemplateColumns:`repeat(${binder.cols},1fr)`,gap:'10px'}}>
-                  {pageSlots.map((slot, idx) => {
-                    if(slot.kind==='empty'){
-                      const pCard = pendingIns?.slotId===slot.slotId ? pendingIns.card : null
-                      const pec   = pCard ? (EC[pCard.type]??'#888') : (EC[slot.type]??'#888')
+                <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
+                  {pageItems.map((item, idx) => {
+                    const isEmpty   = 'isEmpty' in item
+                    const card      = isEmpty ? null : item as CardItem
+                    const empty     = isEmpty ? item as typeof EMPTY_SLOTS[number]&{isEmpty:true} : null
+                    const ec        = EC[(isEmpty?empty!.type:card!.type)??'fire']??'#888'
+                    const eg        = EG[(isEmpty?empty!.type:card!.type)??'fire']??'rgba(128,128,128,.4)'
+                    const isHolo    = card ? HOLO_RARITIES.includes(card.rarity) : false
+                    const roi       = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
+                    const orbSz     = binderCols<=3?'36px':binderCols===4?'28px':'24px'
+                    const fsName    = binderCols<=3?'11px':binderCols===4?'10px':'9px'
+                    const fsPx      = binderCols<=3?'13px':binderCols===4?'12px':'11px'
+                    const isVintage = card&&card.year<2002
+
+                    if (isEmpty&&empty) {
+                      const pCard = pendingCard?.slotId===empty.id ? pendingCard.card : (justSettled.get(empty.id)??null)
+                      const pec   = pCard ? (EC[pCard.type]??'#888') : ec
+                      const peg   = pCard ? (EG[pCard.type]??'rgba(128,128,128,.4)') : eg
+                      const proi  = pCard ? Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100) : 0
+                      const pHolo = pCard ? HOLO_RARITIES.includes(pCard.rarity) : false
+                      const isIns = sliding===empty.id
+                      const isSel = justSettled.has(empty.id)
                       return (
-                        <div key={slot.slotId} id={`shell-${slot.slotId}`}
-                          className={`pocket-shell${pCard?` gem`:' empty'}`}
-                          style={{aspectRatio:'2/3',border:pCard?`1.5px solid ${pec}45`:'1.5px dashed rgba(255,255,255,.12)',background:pCard?`linear-gradient(145deg,${pec}20,${pec}08)`:'rgba(255,255,255,.02)',cursor:pCard?'default':'pointer'}}
-                          onClick={()=>{ if(!pCard) insertCard(slot) }}
+                        <div key={item.id} id={`shell-${empty.id}`}
+                          className={`pocket-shell${pCard?' gem':' empty'}`}
+                          style={{ aspectRatio:'2/3', border:pCard?`1.5px solid ${pec}45`:'1.5px dashed rgba(255,255,255,.12)', background:pCard?`linear-gradient(145deg,${pec}20,${pec}08)`:'rgba(255,255,255,.02)', cursor:pCard?'default':'pointer' }}
+                          onClick={()=>{ if(!pCard) insertCard(empty) }}
                         >
                           {pCard ? (
-                            <div className={`card-body${inserting===slot.slotId?' ins':''}`}>
-                              <CardBodyContent card={pCard} cols={binder.cols}/>
+                            <div className={`card-body${isIns?' ins':isSel?' settled':''}`}>
+                              {pHolo&&<div className="holo"/>}
+                              <div className="ptcl" style={{ background:pec, bottom:'22%', left:'20%' }}/>
+                              <div className="ptcl" style={{ background:pec, bottom:'35%', left:'62%' }}/>
+                              <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${pec},${pec}44)`, zIndex:4 }}/>
+                              <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${pec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                                <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:peg, filter:'blur(14px)', opacity:.6 }}/>
+                                <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${pec}CC,${pec}77)`, boxShadow:`0 0 16px ${peg}`, position:'relative', zIndex:1 }}/>
+                                {pCard.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[pCard.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{pCard.signal}</div>}
+                              </div>
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
+                                <div style={{ fontSize:fsName, fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{pCard.name}</div>
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                  <div style={{ fontSize:fsPx, fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>€ {pCard.curPrice}</div>
+                                  <div style={{ fontSize:'11px', fontWeight:600, color:proi>=0?'#5EFFD5':'#FF7A96' }}>{proi>=0?'+':''}{proi}%</div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
-                            <div className="card-body" style={{display:'flex',flexDirection:'column' as const,alignItems:'center',justifyContent:'center',gap:'5px'}}>
-                              <div style={{width:'26px',height:'26px',borderRadius:'50%',border:'1.5px dashed rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                                <span style={{fontSize:'14px',color:'rgba(255,255,255,.12)',lineHeight:1}}>+</span>
+                            <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
+                              <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.18)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <span style={{ fontSize:'14px', color:'rgba(255,255,255,.15)', lineHeight:1 }}>+</span>
                               </div>
-                              <div style={{fontSize:'8px',color:'rgba(255,100,100,.5)',textAlign:'center' as const,lineHeight:1.6,padding:'0 6px'}}>
-                                {slot.name}<br/><span style={{color:'rgba(255,255,255,.2)',fontSize:'8px'}}>{slot.estPrice}</span>
+                              <div style={{ fontSize:'9px', color:'rgba(255,120,100,.6)', textAlign:'center', lineHeight:1.6, padding:'0 6px' }}>
+                                {empty.name}<br/><span style={{ color:'rgba(255,255,255,.28)', fontSize:'9px' }}>{empty.estPrice}</span>
                               </div>
-                              <div style={{fontSize:'7px',background:'rgba(224,48,32,.15)',color:'rgba(224,48,32,.6)',padding:'2px 8px',borderRadius:'10px',fontFamily:'var(--font-display)'}}>Cliquer pour insérer</div>
+                              <div style={{ fontSize:'8px', background:'rgba(224,48,32,.18)', color:'rgba(224,48,32,.7)', padding:'2px 8px', borderRadius:'10px', fontFamily:'var(--font-display)' }}>Cliquer pour insérer</div>
                             </div>
                           )}
                         </div>
                       )
                     }
-                    // filled
-                    const {card} = slot
-                    const ec = EC[card.type]??'#888'
-                    return (
-                      <div key={slot.slotId} id={`shell-${slot.slotId}`}
+
+                    if (card) return (
+                      <div key={card.id} id={`shell-${card.id}`}
                         className={`pocket-shell gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`}
-                        style={{aspectRatio:'2/3',background:`linear-gradient(145deg,${ec}20,${ec}08)`,border:`1.5px solid ${ec}45`,boxShadow:'0 4px 14px rgba(0,0,0,.5)',animation:`cardIn .3s ${Math.min(idx,8)*.04}s ease-out both`}}
+                        style={{ aspectRatio:'2/3', background:`linear-gradient(145deg,${ec}20,${ec}08)`, border:`1.5px solid ${ec}45`, boxShadow:'0 4px 14px rgba(0,0,0,.5)', animation:`cardIn .3s ${Math.min(idx,8)*.04}s ease-out both` }}
                         onMouseMove={tiltCard}
-                        onMouseLeave={e=>{resetCard(e);const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null;if(rb)rb.style.opacity='0'}}
-                        onMouseEnter={e=>{const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null;if(rb)rb.style.opacity='1'}}
+                        onMouseLeave={e=>{ resetCard(e); const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
+                        onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                         onClick={()=>setSpotCard(card)}
                       >
-                        <div className={`card-body${removing===slot.slotId?' rem':''}`}>
-                          <CardBodyContent card={card} cols={binder.cols}/>
+                        <div className={`card-body${removing===card.id?' rem':''}`}>
+                          {isHolo&&<div className="holo"/>}
+                          {isHolo&&<div className="hm"/>}
+                          <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
+                          <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
+                          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
+                          <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                            <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
+                            <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
+                            {card.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
+                            {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>❤️</div>}
+                            {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
+                            {card.hot&&<div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
+                            {isVintage&&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.5),transparent)', zIndex:3, pointerEvents:'none' }}/>}
+                          </div>
+                          <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
+                            <div style={{ fontSize:fsName, fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                              <div style={{ fontSize:fsPx, fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>€ {card.curPrice}</div>
+                              <div style={{ fontSize:'11px', fontWeight:600, color:roi>=0?'#5EFFD5':'#FF7A96' }}>{roi>=0?'+':''}{roi}%</div>
+                            </div>
+                          </div>
                         </div>
-                        <button className="remove-btn" onClick={e=>removeCard(slot.slotId,card,e)}
-                          style={{position:'absolute',top:'6px',left:'50%',transform:'translateX(-50%)',zIndex:20,background:'rgba(0,0,0,.8)',border:'1px solid rgba(255,255,255,.2)',color:'rgba(255,255,255,.85)',borderRadius:'20px',padding:'3px 10px',fontSize:'9px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',opacity:0,transition:'opacity .2s',whiteSpace:'nowrap',backdropFilter:'blur(4px)'}}>
+                        <button className="remove-btn" onClick={e=>removeCard(card,e)}
+                          style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.82)', border:'1px solid rgba(255,255,255,.22)', color:'rgba(255,255,255,.9)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
                       </div>
                     )
+                    return null
                   })}
                   {Array.from({length:phantomCount}).map((_,i)=>(
-                    <div key={`ph-${i}`} style={{aspectRatio:'2/3',borderRadius:'9px',border:'1px solid rgba(255,255,255,.04)',background:'rgba(255,255,255,.01)',opacity:.4}}/>
+                    <div key={`ph-${i}`} style={{ aspectRatio:'2/3', borderRadius:'9px', border:'1px solid rgba(255,255,255,.04)', background:'rgba(255,255,255,.01)', opacity:.4 }}/>
                   ))}
                 </div>
 
                 {binderPages>1&&(
-                  <div style={{display:'flex',justifyContent:'center',gap:'6px',marginTop:'16px'}}>
+                  <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{height:'4px',borderRadius:'2px',background:i===binderPage?'rgba(255,255,255,.55)':'rgba(255,255,255,.15)',cursor:'pointer',transition:'all .2s',width:i===binderPage?'18px':'6px'}}/>
+                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(255,255,255,.6)':'rgba(255,255,255,.15)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
                     ))}
                   </div>
                 )}
 
-                {binder.binderType!=='libre'&&(
-                  <div style={{marginTop:'16px',paddingTop:'14px',borderTop:'1px solid rgba(255,255,255,.05)'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
-                      <span style={{fontSize:'9px',color:'rgba(255,255,255,.2)',letterSpacing:'.08em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>Complétion</span>
-                      <span style={{fontSize:'9px',color:setComplete?'#FFD700':'rgba(255,255,255,.3)',fontFamily:'var(--font-display)',fontWeight:setComplete?600:400}}>{pct}%</span>
-                    </div>
-                    <div style={{height:'4px',borderRadius:'99px',background:'rgba(255,255,255,.07)',overflow:'hidden'}}>
-                      <div style={{height:'100%',width:`${pct}%`,borderRadius:'99px',background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':`linear-gradient(90deg,${EC[binder.theme]??'#7E57C2'},${EC[binder.theme]??'#C855D4'})`,transition:'width .8s cubic-bezier(.23,1,.32,1)'}}/>
-                    </div>
+                <div style={{ marginTop:'16px', paddingTop:'14px', borderTop:'1px solid rgba(255,255,255,.06)' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
+                    <span style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
+                    <span style={{ fontSize:'10px', color:setComplete?'#FFD700':'rgba(255,255,255,.4)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
                   </div>
-                )}
-                <div style={{position:'absolute',bottom:'14px',right:'18px',fontSize:'9px',color:'rgba(255,255,255,.05)',letterSpacing:'.2em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>PokéAlpha Terminal</div>
+                  <div style={{ height:'4px', borderRadius:'99px', background:'rgba(255,255,255,.07)', overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)' }}/>
+                  </div>
+                </div>
+                <div style={{ position:'absolute', bottom:'14px', right:'18px', fontSize:'9px', color:'rgba(255,255,255,.05)', letterSpacing:'.2em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>PokéAlpha Terminal</div>
               </div>
             </div>
           </div>
@@ -688,48 +561,48 @@ export function Holdings() {
 
         {/* ── VUE VITRINE ── */}
         {view==='showcase'&&(
-          <div style={{position:'relative',zIndex:1,padding:'0 24px 28px',animation:'fadeUp .3s ease-out'}}>
-            <div style={{display:'flex',gap:'6px',flexWrap:'wrap' as const,marginBottom:'18px'}}>
+          <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
+            <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'18px' }}>
               {[{v:'all',l:'Toutes'},{v:'fav',l:'♥ Favoris'},{v:'fire',l:'🔥'},{v:'water',l:'💧'},{v:'psychic',l:'🔮'},{v:'dark',l:'🌑'},{v:'electric',l:'⚡'}].map(o=>(
-                <button key={o.v} style={{padding:'5px 12px',borderRadius:'7px',border:'1px solid rgba(255,255,255,.1)',background:'transparent',color:'rgba(255,255,255,.4)',fontSize:'12px',cursor:'pointer',fontFamily:'var(--font-display)'}}>{o.l}</button>
+                <button key={o.v} style={{ padding:'5px 12px', borderRadius:'7px', border:'1px solid rgba(255,255,255,.1)', background:'transparent', color:'rgba(255,255,255,.45)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)' }}>{o.l}</button>
               ))}
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))',gap:'14px'}}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:'14px' }}>
               {CARDS.map((card,idx)=>{
-                const ec=EC[card.type]??'#888',eg=EG[card.type]??'rgba(128,128,128,.4)'
+                const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                 const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100)
-                const isHolo=HOLO_RARITIES.includes(card.rarity),ls=LS[card.lang]
+                const isHolo=HOLO_RARITIES.includes(card.rarity), ls=LS[card.lang]
                 return (
                   <div key={card.id} className={`gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`}
-                    style={{background:`linear-gradient(160deg,${ec}18,${ec}06)`,border:`1.5px solid ${ec}35`,animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both`}}
+                    style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${ec}35`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both` }}
                     onMouseMove={tiltCard} onMouseLeave={resetCard} onClick={()=>setSpotCard(card)}>
                     {isHolo&&<div className="holo"/>}
                     {isHolo&&<div className="hm"/>}
-                    <div className="ptcl" style={{background:ec,bottom:'20%',left:'20%'}}/>
-                    <div className="ptcl" style={{background:ec,bottom:'30%',left:'60%'}}/>
-                    <div style={{height:'2.5px',background:`linear-gradient(90deg,${ec},${ec}55)`,position:'absolute',top:0,left:0,right:0}}/>
-                    {card.signal&&<div style={{position:'absolute',top:'8px',right:'8px',zIndex:3,fontSize:'9px',fontWeight:700,background:TIER_BG[card.signal],color:'#fff',padding:'3px 8px',borderRadius:'6px',fontFamily:'var(--font-display)'}}>{card.signal}</div>}
-                    <div style={{height:'120px',margin:'6px 6px 0',borderRadius:'9px',background:`${ec}14`,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
-                      <div style={{position:'absolute',width:'70%',height:'70%',borderRadius:'50%',background:eg,filter:'blur(20px)',opacity:.55}}/>
-                      <div style={{width:'44px',height:'44px',borderRadius:'50%',background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`,boxShadow:`0 0 18px ${eg}`,zIndex:1}}/>
-                      {card.hot&&<div style={{position:'absolute',top:'6px',left:'6px',width:'6px',height:'6px',borderRadius:'50%',background:'#E03020',animation:'shimGlow 1.5s ease-in-out infinite'}}/>}
-                      <div style={{position:'absolute',bottom:'6px',left:'6px',fontSize:'9px',fontWeight:700,background:ls.bg,color:ls.color,padding:'1px 6px',borderRadius:'4px',fontFamily:'var(--font-display)'}}>{ls.flag} {card.lang}</div>
-                      {card.graded&&<div style={{position:'absolute',bottom:'6px',right:'6px',fontSize:'8px',fontWeight:700,background:'rgba(0,0,0,.8)',color:'rgba(255,255,255,.9)',padding:'1px 6px',borderRadius:'4px',fontFamily:'var(--font-display)'}}>{card.condition}</div>}
+                    <div className="ptcl" style={{ background:ec, bottom:'20%', left:'20%' }}/>
+                    <div className="ptcl" style={{ background:ec, bottom:'30%', left:'60%' }}/>
+                    <div style={{ height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
+                    {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
+                    <div style={{ height:'120px', margin:'6px 6px 0', borderRadius:'9px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                      <div style={{ position:'absolute', width:'70%', height:'70%', borderRadius:'50%', background:eg, filter:'blur(20px)', opacity:.55 }}/>
+                      <div style={{ width:'44px', height:'44px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
+                      {card.hot&&<div style={{ position:'absolute', top:'6px', left:'6px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.5s ease-in-out infinite' }}/>}
+                      <div style={{ position:'absolute', bottom:'6px', left:'6px', fontSize:'9px', fontWeight:700, background:ls.bg, color:ls.color, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
+                      {card.graded&&<div style={{ position:'absolute', bottom:'6px', right:'6px', fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.85)', color:'#fff', padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.condition}</div>}
                     </div>
-                    <div style={{padding:'12px'}}>
-                      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'6px',marginBottom:'4px'}}>
-                        <div style={{fontSize:'13px',fontWeight:600,color:'rgba(255,255,255,.88)',fontFamily:'var(--font-display)',lineHeight:1.25,flex:1}}>{card.name}</div>
-                        <button onClick={e=>toggleFav(card.id,e)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'14px',padding:0,flexShrink:0}}>{favs.has(card.id)?'❤️':'🤍'}</button>
+                    <div style={{ padding:'12px' }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'6px', marginBottom:'4px' }}>
+                        <div style={{ fontSize:'13px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1.25, flex:1 }}>{card.name}</div>
+                        <button onClick={e=>toggleFav(card.id,e)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', padding:0, flexShrink:0 }}>{favs.has(card.id)?'❤️':'🤍'}</button>
                       </div>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,.25)',marginBottom:'10px'}}>{card.set}</div>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+                      <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)', marginBottom:'10px' }}>{card.set}</div>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
                         <div>
-                          <div style={{fontSize:'18px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-0.5px',lineHeight:1}}>€ {card.curPrice.toLocaleString('fr-FR')}</div>
-                          <div style={{fontSize:'9px',color:'rgba(255,255,255,.2)',marginTop:'2px'}}>Achat € {card.buyPrice}</div>
+                          <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1 }}>€ {card.curPrice.toLocaleString('fr-FR')}</div>
+                          <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'2px' }}>Achat € {card.buyPrice}</div>
                         </div>
-                        <div style={{textAlign:'right' as const}}>
-                          <div style={{fontSize:'14px',fontWeight:600,color:roi>=0?'#4ECCA3':'#FF6B8A',fontFamily:'var(--font-display)'}}>{roi>=0?'+':''}{roi}%</div>
-                          {card.psa&&<div style={{fontSize:'9px',color:'rgba(255,255,255,.22)'}}>Pop {card.psa.toLocaleString()}</div>}
+                        <div style={{ textAlign:'right' }}>
+                          <div style={{ fontSize:'14px', fontWeight:600, color:roi>=0?'#5EFFD5':'#FF7A96', fontFamily:'var(--font-display)' }}>{roi>=0?'+':''}{roi}%</div>
+                          {card.psa&&<div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)' }}>Pop {card.psa.toLocaleString()}</div>}
                         </div>
                       </div>
                     </div>
@@ -742,51 +615,51 @@ export function Holdings() {
 
         {/* ── VUE WRAPPED ── */}
         {view==='wrapped'&&(
-          <div style={{position:'relative',zIndex:1,animation:'wrappedIn .35s ease-out'}}>
-            <div style={{padding:'40px 28px 28px',textAlign:'center' as const,position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(ellipse at 50% 60%,rgba(255,107,53,.12) 0%,transparent 55%)',pointerEvents:'none'}}/>
-              <div style={{fontSize:'120px',fontWeight:700,color:'rgba(255,255,255,.04)',position:'absolute',top:'10px',left:'50%',transform:'translateX(-50%)',letterSpacing:'-6px',lineHeight:1,pointerEvents:'none',userSelect:'none' as const}}>2026</div>
-              <div style={{position:'relative'}}>
-                <div style={{fontSize:'11px',fontWeight:500,color:'rgba(255,255,255,.25)',textTransform:'uppercase' as const,letterSpacing:'.18em',fontFamily:'var(--font-display)',marginBottom:'12px'}}>Ta collection en chiffres</div>
-                <div style={{fontSize:'52px',fontWeight:600,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-2px',lineHeight:1}}>€ {totalCur.toLocaleString('fr-FR')}</div>
-                <div style={{fontSize:'16px',color:'#4ECCA3',marginTop:'8px',fontWeight:500}}>+{totalROI}% depuis janvier · +€ {totalGain.toLocaleString('fr-FR')}</div>
+          <div style={{ position:'relative', zIndex:1, animation:'wrappedIn .35s ease-out' }}>
+            <div style={{ padding:'40px 28px 28px', textAlign:'center', position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 50% 60%,rgba(255,107,53,.12) 0%,transparent 55%)', pointerEvents:'none' }}/>
+              <div style={{ fontSize:'120px', fontWeight:700, color:'rgba(255,255,255,.04)', position:'absolute', top:'10px', left:'50%', transform:'translateX(-50%)', letterSpacing:'-6px', lineHeight:1, pointerEvents:'none', userSelect:'none' as const }}>2026</div>
+              <div style={{ position:'relative' }}>
+                <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
+                <div style={{ fontSize:'52px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+                <div style={{ fontSize:'16px', color:'#5EFFD5', marginTop:'8px', fontWeight:600 }}>+{totalROI}% depuis janvier · +€ {totalGain.toLocaleString('fr-FR')}</div>
               </div>
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',borderTop:'1px solid rgba(255,255,255,.07)',borderBottom:'1px solid rgba(255,255,255,.07)'}}>
-              {[{l:'Cartes',v:String(CARDS.length)},{l:'Meilleur ROI',v:`+${Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%`,c:'#FFD700'},{l:'Binders',v:String(binders.length)},{l:'Favoris',v:String(favs.size)}].map((s,i)=>(
-                <div key={s.l} style={{padding:'18px',borderRight:i<3?'1px solid rgba(255,255,255,.07)':'none',textAlign:'center' as const}}>
-                  <div style={{fontSize:'28px',fontWeight:600,color:s.c??'#fff',fontFamily:'var(--font-display)',letterSpacing:'-0.5px'}}>{s.v}</div>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)',marginTop:'4px',textTransform:'uppercase' as const,letterSpacing:'.08em',fontFamily:'var(--font-display)'}}>{s.l}</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', borderTop:'1px solid rgba(255,255,255,.07)', borderBottom:'1px solid rgba(255,255,255,.07)' }}>
+              {[{l:'Cartes',v:String(CARDS.length)},{l:'Meilleur ROI',v:`+${Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%`,c:'#FFD700'},{l:'Signaux S',v:String(CARDS.filter(c=>c.signal==='S').length)},{l:'Favoris',v:String(favs.size)}].map((s,i)=>(
+                <div key={s.l} style={{ padding:'18px', borderRight:i<3?'1px solid rgba(255,255,255,.07)':'none', textAlign:'center' }}>
+                  <div style={{ fontSize:'28px', fontWeight:600, color:s.c??'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px' }}>{s.v}</div>
+                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
                 </div>
               ))}
             </div>
-            <div style={{padding:'24px 28px'}}>
-              <div style={{fontSize:'10px',fontWeight:500,color:'rgba(255,255,255,.25)',textTransform:'uppercase' as const,letterSpacing:'.12em',fontFamily:'var(--font-display)',marginBottom:'14px'}}>Tes cartes les plus performantes</div>
-              <div style={{display:'flex',flexDirection:'column' as const,gap:'8px'}}>
+            <div style={{ padding:'24px 28px' }}>
+              <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.35)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                 {[...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
-                  const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100),ec=EC[card.type]??'#888'
+                  const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100), ec=EC[card.type]??'#888'
                   return(
-                    <div key={card.id} style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:'12px',padding:'12px 16px',display:'flex',alignItems:'center',gap:'12px'}}>
-                      <div style={{fontSize:'20px',flexShrink:0}}>{['🥇','🥈','🥉'][i]}</div>
-                      <div style={{width:'36px',height:'36px',borderRadius:'9px',background:`linear-gradient(145deg,${ec}25,${ec}10)`,border:`1px solid ${ec}35`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                        <div style={{width:'14px',height:'14px',borderRadius:'50%',background:ec,opacity:.7}}/>
+                    <div key={card.id} style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
+                      <div style={{ fontSize:'20px', flexShrink:0 }}>{['🥇','🥈','🥉'][i]}</div>
+                      <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <div style={{ width:'14px', height:'14px', borderRadius:'50%', background:ec, opacity:.7 }}/>
                       </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:'13px',fontWeight:500,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)'}}>{card.name}</div>
-                        <div style={{fontSize:'10px',color:'rgba(255,255,255,.3)'}}>{card.set} · {card.year}</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:'13px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                        <div style={{ fontSize:'11px', color:'rgba(255,255,255,.4)' }}>{card.set} · {card.year}</div>
                       </div>
-                      <div style={{textAlign:'right' as const}}>
-                        <div style={{fontSize:'16px',fontWeight:600,color:'#4ECCA3',fontFamily:'var(--font-display)'}}>+{roi}%</div>
-                        <div style={{fontSize:'11px',color:'rgba(255,255,255,.35)'}}>€ {card.curPrice}</div>
+                      <div style={{ textAlign:'right' }}>
+                        <div style={{ fontSize:'16px', fontWeight:600, color:'#5EFFD5', fontFamily:'var(--font-display)' }}>+{roi}%</div>
+                        <div style={{ fontSize:'12px', color:'rgba(255,255,255,.45)' }}>€ {card.curPrice}</div>
                       </div>
                     </div>
                   )
                 })}
               </div>
             </div>
-            <div style={{padding:'0 28px 28px',display:'flex',gap:'8px'}}>
-              <button onClick={()=>setShareOpen(true)} style={{flex:1,padding:'14px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF4433)',color:'#fff',border:'none',fontSize:'14px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 6px 20px rgba(224,48,32,.45)'}}>Partager mon Wrapped 2026 →</button>
-              <button style={{padding:'14px 20px',borderRadius:'12px',background:'rgba(255,255,255,.06)',color:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.1)',fontSize:'14px',fontWeight:500,cursor:'pointer',fontFamily:'var(--font-display)'}}>Sauvegarder</button>
+            <div style={{ padding:'0 28px 28px', display:'flex', gap:'8px' }}>
+              <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,.45)' }}>Partager mon Wrapped 2026 →</button>
+              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.65)', border:'1px solid rgba(255,255,255,.12)', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
             </div>
           </div>
         )}

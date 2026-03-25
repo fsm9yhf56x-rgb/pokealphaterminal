@@ -106,18 +106,28 @@ export function Holdings() {
       rarity:'Alt Art', type: slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    setSliding(slot.id)
-    setTimeout(()=>{
-      setFilled(prev=>[...prev, newCard])
-      setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
-      setSliding(null)
-      if (emptySlots.length === 1) {
-        setSetComplete(true)
-        showToast('SET COMPLET · Eeveelutions +500 XP débloqués !')
-      } else {
-        showToast(slot.name + ' insérée dans le binder ✓')
-      }
-    }, 580)
+    // Étape 1 : la pochette s'ouvre
+    setSliding('open-' + slot.id)
+    setTimeout(() => {
+      // Étape 2 : la carte glisse dans la pochette (clip-path reveal)
+      setSliding(slot.id)
+      setTimeout(() => {
+        // Étape 3 : flash de réception
+        setSliding('receive-' + slot.id)
+        setTimeout(() => {
+          // Étape 4 : settle + update state
+          setFilled(prev=>[...prev, newCard])
+          setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
+          setSliding(null)
+          if (emptySlots.length === 1) {
+            setSetComplete(true)
+            showToast('SET COMPLET · Eeveelutions +500 XP débloqués !')
+          } else {
+            showToast(slot.name + ' insérée dans le binder ✓')
+          }
+        }, 450)
+      }, 80)
+    }, 50)
   }
 
   const slotsPer    = binderCols * 3
@@ -138,7 +148,7 @@ export function Holdings() {
         @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
         @keyframes ptcl      { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
         @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
-        @keyframes slideIntoSlot { 0%{transform:translateY(-180px) rotate(-12deg) scale(1.25);opacity:.7} 55%{transform:translateY(14px) rotate(2deg) scale(1.04);opacity:1} 75%{transform:translateY(-5px) rotate(-1deg)} 100%{transform:translateY(0) rotate(0deg) scale(1)} }
+        @keyframes pocketOpen { 0%{transform:scaleY(1)} 15%{transform:scaleY(1.03)} 100%{transform:scaleY(1)} } @keyframes cardInsert { 0%{transform:translateY(-28px);clip-path:inset(0 0 100% 0)} 18%{transform:translateY(-28px);clip-path:inset(0 0 100% 0)} 19%{clip-path:inset(0 0 72% 0)} 55%{transform:translateY(4px);clip-path:inset(0 0 0% 0)} 70%{transform:translateY(2px)} 82%{transform:translateY(-1px)} 92%{transform:translateY(0.5px)} 100%{transform:translateY(0)} } @keyframes pocketReceive { 0%{border-color:rgba(255,255,255,.15)} 30%{border-color:rgba(255,255,255,.5)} 100%{border-color:rgba(126,87,194,.45)} } @keyframes pocketSettle { 0%{transform:translateY(0)} 25%{transform:translateY(-1.5px)} 50%{transform:translateY(0.5px)} 75%{transform:translateY(-0.5px)} 100%{transform:translateY(0)} }
         @keyframes toastIn   { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
         @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
         @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
@@ -155,7 +165,7 @@ export function Holdings() {
         .breathe-A    { animation:breatheA 3s ease-in-out infinite; }
         .pocket       { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
         .pocket:hover { transform:translateY(-5px) scale(1.04) !important; }
-        .pocket.sliding { animation:slideIntoSlot .58s cubic-bezier(.23,1,.32,1) forwards; }
+        .pocket.sliding { animation:cardInsert .55s cubic-bezier(.25,.46,.45,.94) forwards; overflow:hidden; } .pocket.opening { animation:pocketOpen .25s ease-out forwards; transform-origin:top center; } .pocket.receiving { animation:pocketReceive .45s ease-out forwards; } .pocket.settling { animation:pocketSettle .3s ease-out forwards; }
         .pocket.empty:hover { border-color:rgba(255,255,255,.28) !important; }
         .vtab         { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .vtab.on      { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
@@ -374,7 +384,7 @@ export function Holdings() {
                       return (
                         <div
                           key={item.id}
-                          className={`pocket empty${isSliding?' sliding':''}`}
+                          className={`pocket empty${sliding==='open-'+item.id?' opening':sliding===item.id?' sliding':sliding==='receive-'+item.id?' receiving':''}`}
                           style={{ aspectRatio:'2/3', border:'1.5px dashed rgba(255,255,255,.12)', background:'rgba(255,255,255,.02)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', cursor:'pointer' }}
                           onClick={()=>insertCard(empty)}
                         >

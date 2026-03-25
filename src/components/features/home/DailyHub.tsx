@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card }  from '@/components/ui/Card'
@@ -165,6 +166,7 @@ function Toast({ msg, onClose }: { msg:string; onClose:()=>void }) {
 
 export function DailyHub() {
   const [done, setDone]           = useState<number[]>(MISSIONS.filter(m=>m.done).map(m=>m.id))
+  const router = useRouter()
   const [dismissed, setDismissed] = useState(false)
   const [xpAnim, setXpAnim]       = useState(false)
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])

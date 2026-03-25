@@ -196,8 +196,8 @@ export function Scelles() {
                     </div>
                   )}
 
-                  <button style={{ width:'100%', padding:'9px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                    Voir les offres
+                  <button onClick={()=>window.open('https://www.cardmarket.com','_blank')} style={{ width:'100%', padding:'9px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    Voir les offres →
                   </button>
                 </div>
               </div>

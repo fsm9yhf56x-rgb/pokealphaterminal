@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 
 type TCGCard = {
   id:       string
@@ -71,6 +72,7 @@ type ViewMode = 'grid'|'list'
 type SortKey  = 'price'|'trend'|'name'|'year'|'psa'
 
 export function Encyclopedie() {
+  const router = useRouter()
   const [search,    setSearch]    = useState('')
   const [filType,   setFilType]   = useState('all')
   const [filRarity, setFilRarity] = useState('all')
@@ -327,14 +329,14 @@ export function Encyclopedie() {
 
                 {/* Actions */}
                 <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
-                  <button style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  <button onClick={()=>router.push('/portfolio')} style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     + Ajouter au portfolio
                   </button>
                   <button style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#F5F5F5', color:'#555', border:'1px solid #E8E8E8', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     🔔 Alerte de prix
                   </button>
                   {sel.signal && (
-                    <button style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#FFF0EE', color:'#E03020', border:'1px solid #FFD8D0', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    <button onClick={()=>router.push('/alpha')} style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#FFF0EE', color:'#E03020', border:'1px solid #FFD8D0', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                       Voir le signal Tier {sel.signal}
                     </button>
                   )}

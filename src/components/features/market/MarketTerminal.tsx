@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 const INDICES = [
   { id:'cards',   label:'Cards Index',  value:2841, prev:2748, change:3.8,  color:'#FF6B35', desc:'Toutes cartes raw & gradées' },
@@ -303,7 +304,7 @@ export function MarketTerminal({ isPro = false, defaultTab = 'movers' }: { isPro
                     <div style={{ fontSize:'16px' }}>🔒</div>
                     <div style={{ fontSize:'14px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Réservé Pro</div>
                     <div style={{ fontSize:'12px', color:'#888', maxWidth:'200px', lineHeight:1.5 }}>{UNDERVALUED.length} deals sous valeur marché détectés maintenant</div>
-                    <button style={{ padding:'8px 20px', borderRadius:'20px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>Passer Pro →</button>
+                    <button onClick={()=>window.location.href='/signup'} style={{ padding:'8px 20px', borderRadius:'20px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>Passer Pro →</button>
                   </div>
                 </div>
               )

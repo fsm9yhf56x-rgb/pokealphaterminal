@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 
 type CardItem = {
   id:        string
@@ -107,6 +108,7 @@ function GroupHeader({ groupKey, cards, groupBy, collapsed, onToggle }: {
 }
 
 export function Holdings() {
+  const router = useRouter()
   const [view,        setView]        = useState<ViewMode>('showcase')
   const [sort,        setSort]        = useState<SortKey>('roi')
   const [search,      setSearch]      = useState('')
@@ -418,7 +420,7 @@ export function Holdings() {
                               <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}><span style={{ color:'#888' }}>Gain total</span><span style={{ fontWeight:600, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-display)' }}>{roi>=0?'+':''}€ {Math.abs((card.curPrice-card.buyPrice)*card.qty).toLocaleString('fr-FR')}</span></div>
                               <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}><span style={{ color:'#888' }}>Quantité</span><span style={{ fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>×{card.qty}</span></div>
                               <div style={{ display:'flex', gap:'6px', marginTop:'4px' }}>
-                                {card.signal && <button style={{ flex:1, padding:'7px', borderRadius:'7px', background:'#111', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal {card.signal}</button>}
+                                {card.signal && <button onClick={()=>router.push('/alpha')} style={{ flex:1, padding:'7px', borderRadius:'7px', background:'#111', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal {card.signal}</button>}
                                 <button onClick={e=>{e.stopPropagation();setSelected(null)}} style={{ padding:'7px 12px', borderRadius:'7px', background:'transparent', color:'#888', border:'1px solid #E8E8E8', fontSize:'11px', cursor:'pointer' }}>×</button>
                               </div>
                             </div>

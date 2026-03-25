@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Feature = { icon: string; label: string }
 
@@ -52,7 +53,8 @@ const CFG: Record<string, { title:string; desc:string; preview:string; features:
 }
 
 export function ProGate({ page, children }: { page: keyof typeof CFG; children: ReactNode }) {
-  const cfg = CFG[page]
+  const cfg    = CFG[page]
+  const router = useRouter()
 
   return (
     <>
@@ -87,7 +89,10 @@ export function ProGate({ page, children }: { page: keyof typeof CFG; children: 
             ))}
           </div>
 
-          <button className="pro-cta" style={{ padding:'15px 40px', borderRadius:'14px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'15px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,0.45)', letterSpacing:'-0.2px', transition:'all 0.15s' }}>
+          <button
+            className="pro-cta"
+            onClick={() => router.push('/signup')}
+            style={{ padding:'15px 40px', borderRadius:'14px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'15px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,0.45)', letterSpacing:'-0.2px', transition:'all 0.15s' }}>
             Passer Pro — €9,99 / mois
           </button>
           <div style={{ marginTop:'10px', fontSize:'11px', color:'rgba(255,255,255,0.2)', fontFamily:'var(--font-display)' }}>Sans engagement · Annulation à tout moment</div>

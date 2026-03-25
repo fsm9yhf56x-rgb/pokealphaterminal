@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const INSIGHTS = [
   {
@@ -12,7 +13,7 @@ const INSIGHTS = [
   },
   {
     id:'2', tier:'A', title:'Neo Genesis en forte réévaluation — momentum vintage',
-    body:"Lugia Neo Genesis PSA 8 a progressé de +15% cette semaine. Le marché vintage connait un regain d'intérêt structurel. Les sets Neo sont les derniers sous-évalués de l'ère pré-EX.",
+    body:"Lugia Neo Genesis PSA 8 a progressé de +15% cette semaine. Le marché vintage connaît un regain d'intérêt structurel. Les sets Neo sont les derniers sous-évalués de l'ère pré-EX.",
     tags:['Vintage','Neo Genesis','Lugia','PSA 8+'],
     type:'market', time:'Il y a 5h', read:false, saved:false,
     metrics:[{label:'Tendance',value:'+15%'},{label:'Sets concernés',value:'3'},{label:'Profil',value:'Vintage'}],
@@ -62,6 +63,7 @@ const TIER_STYLE: Record<string,{bg:string;color:string}> = {
 }
 
 export function DexyInsights() {
+  const router = useRouter()
   const [insights, setInsights] = useState(INSIGHTS)
   const [filter,   setFilter]   = useState('all')
   const [expanded, setExpanded] = useState<string|null>('1')
@@ -101,7 +103,6 @@ export function DexyInsights() {
           </button>
         </div>
 
-        {/* Filtres */}
         <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'18px' }}>
           {[{v:'all',l:'Tous'},{v:'unread',l:`Non lus (${unread})`},{v:'saved',l:'Sauvegardés'},{v:'signal',l:'⚡ Signaux'},{v:'market',l:'📊 Marché'},{v:'whale',l:'🐋 Whales'},{v:'arb',l:'🔄 Arbitrage'},{v:'report',l:'📈 Rapports'}].map(o=>(
             <button key={o.v} onClick={()=>setFilter(o.v)} className={`pill${filter===o.v?' on':''}`}>{o.l}</button>
@@ -116,16 +117,10 @@ export function DexyInsights() {
             return (
               <div key={ins.id} style={{ background:'#fff', border:`1px solid ${isX?'#E0E0E0':'#EBEBEB'}`, borderRadius:'14px', overflow:'hidden', transition:'all 0.2s', opacity:ins.read&&!isX?0.75:1 }}>
                 <div className="ins-row" onClick={()=>{setExpanded(isX?null:ins.id); if(!ins.read) toggle(ins.id,'read')}} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'14px 18px', cursor:'pointer', transition:'background 0.1s' }}>
-
-                  {/* Tier */}
                   <div style={{ width:'32px', height:'32px', borderRadius:'9px', background:ts.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <span style={{ fontSize:'12px', fontWeight:800, color:'#fff', fontFamily:'var(--font-display)' }}>{ins.tier}</span>
                   </div>
-
-                  {/* Type badge */}
                   <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:tc.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', flexShrink:0 }}>{tc.icon}</div>
-
-                  {/* Title */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:'7px', marginBottom:'3px' }}>
                       {!ins.read && <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#E03020', flexShrink:0 }} />}
@@ -133,8 +128,6 @@ export function DexyInsights() {
                     </div>
                     <div style={{ fontSize:'10px', color:'#AAA' }}>{tc.label} · {ins.time}</div>
                   </div>
-
-                  {/* Metrics preview */}
                   <div style={{ display:'flex', gap:'12px', flexShrink:0 }}>
                     {ins.metrics.slice(0,2).map(m=>(
                       <div key={m.label} style={{ textAlign:'right' }}>
@@ -143,15 +136,12 @@ export function DexyInsights() {
                       </div>
                     ))}
                   </div>
-
-                  {/* Save + chevron */}
                   <button onClick={e=>{e.stopPropagation();toggle(ins.id,'saved')}} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', padding:'0 4px', flexShrink:0 }}>
                     {ins.saved ? '❤️' : '🤍'}
                   </button>
                   <div style={{ fontSize:'11px', color:'#CCC', transform:isX?'rotate(180deg)':'none', transition:'transform 0.2s', flexShrink:0 }}>▼</div>
                 </div>
 
-                {/* Expanded */}
                 {isX && (
                   <div style={{ borderTop:'1px solid #F5F5F5', padding:'16px 18px', animation:'expand 0.18s ease-out', background:'#FAFAFA' }}>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'16px', alignItems:'start' }}>
@@ -170,7 +160,9 @@ export function DexyInsights() {
                             <span style={{ fontSize:'13px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>{m.value}</span>
                           </div>
                         ))}
-                        <button style={{ padding:'9px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>
+                        <button
+                          onClick={() => ins.type==='signal'||ins.type==='whale' ? router.push('/alpha') : ins.type==='market'||ins.type==='report' ? router.push('/market') : router.push('/alpha/deals')}
+                          style={{ padding:'9px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>
                           Voir le détail →
                         </button>
                       </div>

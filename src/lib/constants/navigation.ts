@@ -1,69 +1,57 @@
-export type SubItem = {
-  href:     string
-  label:    string
-  premium?: boolean
-}
-
 export type NavItem = {
-  href:     string
   label:    string
-  icon:     string
-  sub:      SubItem[]
-  premium?: boolean
+  href:     string
+  pro?:     boolean
+  children?: { label: string; href: string; pro?: boolean }[]
 }
 
 export const NAV: NavItem[] = [
   {
-    href:  '/home',
     label: 'Home',
-    icon:  '⌂',
-    sub: [
-      { href: '/home',          label: 'Daily Hub'     },
-      { href: '/home/dexy',     label: 'Dexy Insights' },
-      { href: '/home/alpha',    label: 'Daily Alpha'   },
-      { href: '/home/missions', label: 'Missions'      },
+    href:  '/home',
+    children: [
+      { label:'Daily Hub',      href:'/home'           },
+      { label:'Dexy Insights',  href:'/home/insights'  },
+      { label:'Missions',       href:'/home/missions'  },
     ],
   },
   {
-    href:  '/portfolio',
     label: 'Portfolio',
-    icon:  '◈',
-    sub: [
-      { href: '/portfolio',             label: 'Holdings'    },
-      { href: '/portfolio/objectifs',   label: 'Objectifs'   },
-      { href: '/portfolio/allocation',  label: 'Allocations' },
-      { href: '/portfolio/performance', label: 'Performance' },
+    href:  '/portfolio',
+    children: [
+      { label:'Holdings',     href:'/portfolio'             },
+      { label:'Performance',  href:'/portfolio/performance' },
+      { label:'Allocations',  href:'/portfolio/allocation'  },
+      { label:'Objectifs',    href:'/portfolio/objectifs'   },
     ],
   },
   {
-    href:  '/cartes',
     label: 'Cartes',
-    icon:  '◆',
-    sub: [
-      { href: '/cartes',         label: 'Cartes'  },
-      { href: '/cartes/scelles', label: 'Scellés' },
+    href:  '/cartes',
+    children: [
+      { label:'Encyclopédie', href:'/cartes'        },
+      { label:'Scellés',      href:'/cartes/scelles'},
     ],
   },
   {
-    href:  '/market',
     label: 'Market',
-    icon:  '◉',
-    sub: [
-      { href: '/market',              label: 'Tendances'    },
-      { href: '/market/movers',       label: 'Movers'       },
-      { href: '/market/sous-evalues', label: 'Sous-évalués', premium: true },
+    href:  '/market',
+    children: [
+      { label:'Terminal',       href:'/market'              },
+      { label:'Tendances',      href:'/market/tendances'    },
+      { label:'Movers',         href:'/market/movers'       },
+      { label:'Sous-évalués',   href:'/market/sous-evalues', pro: true },
     ],
   },
   {
-    href:  '/alpha',
     label: 'Alpha',
-    icon:  '✦',
-    premium: true,
-    sub: [
-      { href: '/alpha',        label: 'Signals' },
-      { href: '/alpha/deals',  label: 'Deals'   },
-      { href: '/alpha/whales', label: 'Whales'  },
-      { href: '/alpha/dexy',   label: 'Dexy AI' },
+    href:  '/alpha',
+    pro:   true,
+    children: [
+      { label:'Signals',    href:'/alpha'           },
+      { label:'Deal Hunter',href:'/alpha/deals'     },
+      { label:'Whale Tracker',href:'/alpha/whales'  },
+      { label:'Dexy AI',    href:'/alpha/dexy', pro: true },
     ],
   },
 ]

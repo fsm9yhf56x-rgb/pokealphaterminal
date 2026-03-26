@@ -106,6 +106,7 @@ export function Holdings() {
   const [newSet,       setNewSet]       = useState(CARD_SETS[0])
   const [newPreset,    setNewPreset]    = useState('eeveelutions')
   const [inserting,    setInserting]    = useState<string|null>(null)
+  const [justInserted, setJustInserted]  = useState<string|null>(null)
   const [removing,     setRemoving]     = useState<string|null>(null)
   const [pendingIns,   setPendingIns]   = useState<{slotId:string;card:CardItem}|null>(null)
   const [spotCard,     setSpotCard]     = useState<CardItem|null>(null)
@@ -171,6 +172,8 @@ export function Holdings() {
         )
       }))
       setInserting(null); setPendingIns(null)
+      setJustInserted(slot.slotId)
+      setTimeout(()=>setJustInserted(null), 80)
       if(emptyLeft===1) showToast('SET COMPLET 🏆 · +500 XP !')
       else showToast(slot.name+' insérée ✓')
     },1080)
@@ -643,7 +646,7 @@ export function Holdings() {
                     return (
                       <div key={slot.slotId} id={`shell-${slot.slotId}`}
                         className={`pocket-shell gem${card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':''}`}
-                        style={{aspectRatio:'2/3',background:`linear-gradient(145deg,${ec}20,${ec}08)`,border:`1.5px solid ${ec}45`,boxShadow:'0 4px 14px rgba(0,0,0,.5)',animation:`cardIn .3s ${Math.min(idx,8)*.04}s ease-out both`}}
+                        style={{aspectRatio:'2/3',background:`linear-gradient(145deg,${ec}20,${ec}08)`,border:`1.5px solid ${ec}45`,boxShadow:'0 4px 14px rgba(0,0,0,.5)',animation:justInserted===slot.slotId?'none':`cardIn .3s ${Math.min(idx,8)*.04}s ease-out both`}}
                         onMouseMove={tiltCard}
                         onMouseLeave={e=>{resetCard(e);const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null;if(rb)rb.style.opacity='0'}}
                         onMouseEnter={e=>{const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null;if(rb)rb.style.opacity='1'}}

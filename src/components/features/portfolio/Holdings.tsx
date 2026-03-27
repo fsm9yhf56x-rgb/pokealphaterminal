@@ -93,7 +93,6 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = Math.round((totalGain/totalBuy)*100)
   const bestCard  = [...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice))[0]
-
   const filteredCards = activeSet==='Toutes' ? CARDS : CARDS.filter(c=>c.set===activeSet)
 
   const showToast = (msg:string) => {
@@ -197,7 +196,6 @@ export function Holdings() {
           0%   { transform:translateY(0); }
           100% { transform:translateY(-102%); }
         }
-
         .gem          { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
         .gem .holo    { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
         .gem .hm      { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
@@ -234,7 +232,7 @@ export function Holdings() {
           </div>
         )}
 
-        {/* SPOTLIGHT — position:fixed pour centrage parfait */}
+        {/* SPOTLIGHT — position:fixed centré */}
         {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
@@ -294,7 +292,7 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — position:fixed + en haut */}
+        {/* SHARE SHEET — position:fixed en haut */}
         {shareOpen&&(
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-start' }} onClick={()=>setShareOpen(false)}>
             <div style={{ width:'100%', background:'#0F0B07', borderBottom:'1px solid rgba(255,255,255,.1)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
@@ -380,24 +378,27 @@ export function Holdings() {
             </div>
           </div>
 
-          {/* View tabs + menu série */}
-          <div style={{ display:'flex', gap:'6px', alignItems:'center', flexWrap:'wrap' }}>
+          {/* Onglets Binder / Vitrine / Wrapped */}
+          <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as [ViewMode,string][]).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={`vtab${view===v?' on':''}`}>{l}</button>
             ))}
-            {(view==='binder'||view==='showcase')&&(
-              <div style={{ marginLeft:'auto', position:'relative' }}>
-                <select
-                  value={activeSet}
-                  onChange={e=>setActiveSet(e.target.value)}
-                  style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'99px', padding:'6px 32px 6px 14px', color:'rgba(255,255,255,.7)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none' }}
-                >
-                  {CARD_SETS_ALL.map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
-                </select>
-                <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
-              </div>
-            )}
           </div>
+
+          {/* Menu déroulant séries — sous les onglets */}
+          {(view==='binder'||view==='showcase')&&(
+            <div style={{ marginTop:'10px', position:'relative', display:'inline-block' }}>
+              <select
+                value={activeSet}
+                onChange={e=>setActiveSet(e.target.value)}
+                style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.85)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
+              >
+                <option value="Toutes" style={{background:'#111', color:'rgba(255,255,255,.4)'}}>Sélectionnez votre série</option>
+                {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
+              </select>
+              <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
+            </div>
+          )}
         </div>
 
         {/* ── VUE BINDER ── */}
@@ -414,9 +415,7 @@ export function Holdings() {
                     <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
                       <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
-                      {setComplete&&(
-                        <span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>
-                      )}
+                      {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
                     </div>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px' }}>
@@ -539,13 +538,12 @@ export function Holdings() {
                             </div>
                           </div>
                         </div>
-                        {/* Bouton retirer au hover */}
                         <button className="remove-btn" onClick={e=>removeCard(card,e)}
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        {/* Icône info — indique qu'on peut cliquer */}
-                        <div style={{ position:'absolute', bottom:'6px', right:'6px', zIndex:11, width:'16px', height:'16px', borderRadius:'50%', background:'rgba(255,255,255,.18)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'rgba(255,255,255,.7)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
+                        {/* Icône + info — sous le badge signal, pas sur le % */}
+                        <div style={{ position:'absolute', top:'26px', right:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )
                     return null

@@ -27,18 +27,16 @@ const CARDS: CardItem[] = [
 ]
 
 const CARD_SETS_ALL = ['Toutes', ...new Set(CARDS.map(c=>c.set))]
-
 const EMPTY_SLOTS = [
   { id:'e1', name:'Sylveon VMAX Alt',  set:'Evolving Skies', type:'psychic',  estPrice:'€ 250–310' },
   { id:'e2', name:'Énergie Alt Art',   set:'Evolving Skies', type:'electric', estPrice:'€ 40–60'   },
 ]
-
 const EC: Record<string,string> = { fire:'#FF6B35',water:'#42A5F5',psychic:'#C855D4',dark:'#7E57C2',electric:'#D4A800',grass:'#3DA85A' }
 const EG: Record<string,string> = { fire:'rgba(255,107,53,.55)',water:'rgba(66,165,245,.55)',psychic:'rgba(200,85,212,.55)',dark:'rgba(126,87,194,.55)',electric:'rgba(212,168,0,.55)',grass:'rgba(61,168,90,.55)' }
 const LS: Record<string,{flag:string;bg:string;color:string}> = {
-  EN:{ flag:'🇺🇸', bg:'#FFF5F0', color:'#C84B00' },
-  JP:{ flag:'🇯🇵', bg:'#F0F5FF', color:'#003DAA' },
-  FR:{ flag:'🇫🇷', bg:'#F0FFF5', color:'#00660A' },
+  EN:{flag:'🇺🇸',bg:'#FFF5F0',color:'#C84B00'},
+  JP:{flag:'🇯🇵',bg:'#F0F5FF',color:'#003DAA'},
+  FR:{flag:'🇫🇷',bg:'#F0FFF5',color:'#00660A'},
 }
 const TIER_BG: Record<string,string> = {
   S:'linear-gradient(135deg,#FFD700,#FF8C00)',
@@ -48,19 +46,19 @@ const TIER_BG: Record<string,string> = {
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
-const tiltCard = (e: React.MouseEvent<HTMLDivElement>) => {
-  const el = e.currentTarget, r = el.getBoundingClientRect()
-  const x = ((e.clientX-r.left)/r.width-.5)*24, y = ((e.clientY-r.top)/r.height-.5)*-24
-  el.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
-  const s = el.querySelector('.hm') as HTMLElement|null
-  if (s) { s.style.backgroundPosition=`${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`; s.style.opacity='0.35' }
+const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
+  const el=e.currentTarget, r=el.getBoundingClientRect()
+  const x=((e.clientX-r.left)/r.width-.5)*24, y=((e.clientY-r.top)/r.height-.5)*-24
+  el.style.transform=`perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
+  const s=el.querySelector('.hm') as HTMLElement|null
+  if(s){s.style.backgroundPosition=`${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`;s.style.opacity='0.35'}
 }
-const resetCard = (e: React.MouseEvent<HTMLDivElement>) => {
-  const el = e.currentTarget
+const resetCard = (e:React.MouseEvent<HTMLDivElement>) => {
+  const el=e.currentTarget
   el.style.transition='transform 0.6s cubic-bezier(.23,1,.32,1)'; el.style.transform=''
-  const s = el.querySelector('.hm') as HTMLElement|null
-  if (s) s.style.opacity='0'
-  setTimeout(()=>{ el.style.transition='' },600)
+  const s=el.querySelector('.hm') as HTMLElement|null
+  if(s) s.style.opacity='0'
+  setTimeout(()=>{el.style.transition=''},600)
 }
 
 export function Holdings() {
@@ -79,6 +77,7 @@ export function Holdings() {
   const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
   const [setComplete, setSetComplete] = useState(false)
   const [shareOpen,   setShareOpen]   = useState(false)
+  const [refCopied,   setRefCopied]   = useState(false)
   const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
@@ -88,56 +87,48 @@ export function Holdings() {
   const totalROI  = Math.round((totalGain/totalBuy)*100)
   const bestCard  = [...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice))[0]
 
-  // Filtre binder + vitrine par série sélectionnée
-  const binderFilled  = activeSet==='Toutes' ? filled       : filled.filter(c=>c.set===activeSet)
-  const binderEmpty   = activeSet==='Toutes' ? emptySlots   : emptySlots.filter(e=>e.set===activeSet)
-  const filteredCards = activeSet==='Toutes' ? CARDS        : CARDS.filter(c=>c.set===activeSet)
-
-  const slotsPer     = binderCols * 3
-  const allSlots     = [...binderFilled, ...binderEmpty.map(e=>({...e,isEmpty:true}))]
-  const totalSlots   = allSlots.length
-  const binderPages  = Math.max(1, Math.ceil(totalSlots/slotsPer))
-  const pageItems    = allSlots.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
-  const phantomCount = Math.max(0, slotsPer-pageItems.length)
-  const pct          = totalSlots>0 ? Math.round(binderFilled.length/totalSlots*100) : 100
+  const binderFilled  = activeSet==='Toutes' ? filled      : filled.filter(c=>c.set===activeSet)
+  const binderEmpty   = activeSet==='Toutes' ? emptySlots  : emptySlots.filter(e=>e.set===activeSet)
+  const filteredCards = activeSet==='Toutes' ? CARDS       : CARDS.filter(c=>c.set===activeSet)
+  const slotsPer      = binderCols * 3
+  const allSlots      = [...binderFilled, ...binderEmpty.map(e=>({...e,isEmpty:true}))]
+  const totalSlots    = allSlots.length
+  const binderPages   = Math.max(1,Math.ceil(totalSlots/slotsPer))
+  const pageItems     = allSlots.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
+  const phantomCount  = Math.max(0,slotsPer-pageItems.length)
+  const pct           = totalSlots>0 ? Math.round(binderFilled.length/totalSlots*100) : 100
 
   const showToast = (msg:string) => {
     setToast(msg)
-    if (toastRef.current) clearTimeout(toastRef.current)
+    if(toastRef.current) clearTimeout(toastRef.current)
     toastRef.current = setTimeout(()=>setToast(null),2400)
   }
   const toggleFav = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
-    setFavs(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
+    setFavs(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n})
   }
+  const handleSetChange = (s:string) => { setActiveSet(s); setBinderPage(0); setView('binder') }
 
-  // Sélection série → bascule sur binder filtré
-  const handleSetChange = (s:string) => {
-    setActiveSet(s)
-    setBinderPage(0)
-    setView('binder')
-  }
-
-  const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
-    if (sliding||removing) return
-    const newCard: CardItem = {
+  const insertCard = (slot:typeof EMPTY_SLOTS[number]) => {
+    if(sliding||removing) return
+    const newCard:CardItem = {
       id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
     setPendingCard({slotId:slot.id,card:newCard})
-    const el = document.getElementById('shell-'+slot.id)
-    if (el) { el.style.transformOrigin='top center'; el.style.transition='transform 0.25s ease-out'; el.style.transform='scaleY(1.025)'; setTimeout(()=>{if(el)el.style.transform=''},200) }
-    setTimeout(()=>{ setSliding(slot.id) },30)
-    setTimeout(()=>{ if(el){el.style.transition='border-color 0.1s';el.style.borderColor='rgba(255,255,255,.7)';setTimeout(()=>{if(el){el.style.transition='border-color 0.4s';el.style.borderColor=''}},150)} },670)
+    const el=document.getElementById('shell-'+slot.id)
+    if(el){el.style.transformOrigin='top center';el.style.transition='transform 0.25s ease-out';el.style.transform='scaleY(1.025)';setTimeout(()=>{if(el)el.style.transform=''},200)}
+    setTimeout(()=>{setSliding(slot.id)},30)
+    setTimeout(()=>{if(el){el.style.transition='border-color 0.1s';el.style.borderColor='rgba(255,255,255,.7)';setTimeout(()=>{if(el){el.style.transition='border-color 0.4s';el.style.borderColor=''}},150)}},670)
     setTimeout(()=>{
       setJustSettled(prev=>new Map([...prev,[slot.id,newCard]]))
       setSliding(null); setPendingCard(null)
       setTimeout(()=>{
         setFilled(prev=>[...prev,newCard])
         setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
-        setJustSettled(prev=>{ const n=new Map(prev); n.delete(slot.id); return n })
-        if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · +500 XP !') }
+        setJustSettled(prev=>{const n=new Map(prev);n.delete(slot.id);return n})
+        if(emptySlots.length===1){setSetComplete(true);showToast('SET COMPLET · +500 XP !')}
         else showToast(slot.name+' insérée ✓')
       },60)
     },920)
@@ -145,9 +136,9 @@ export function Holdings() {
 
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
-    if (removing||sliding) return
-    const el = document.getElementById('shell-'+card.id)
-    if (el) { el.style.transformOrigin='top center'; el.style.transition='transform 0.2s ease-out'; el.style.transform='scaleY(1.02)'; setTimeout(()=>{if(el)el.style.transform=''},200) }
+    if(removing||sliding) return
+    const el=document.getElementById('shell-'+card.id)
+    if(el){el.style.transformOrigin='top center';el.style.transition='transform 0.2s ease-out';el.style.transform='scaleY(1.02)';setTimeout(()=>{if(el)el.style.transform=''},200)}
     setRemoving(card.id)
     setTimeout(()=>{
       setFilled(prev=>prev.filter(c=>c.id!==card.id))
@@ -171,13 +162,15 @@ export function Holdings() {
         @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
         @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
         @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes shareUp   { from{opacity:0;transform:translateY(100%)} to{opacity:1;transform:translateY(0)} }
         @keyframes slideDown { 0%{transform:translateY(-100%)} 62%{transform:translateY(4px)} 80%{transform:translateY(1.5px)} 91%{transform:translateY(-.5px)} 100%{transform:translateY(0)} }
-        @keyframes slideUp   { 0%{transform:translateY(0)} 100%{transform:translateY(-102%)} }
-        .gem          { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
-        .gem .holo    { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
-        .gem .hm      { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
+        @keyframes slideUp2  { 0%{transform:translateY(0)} 100%{transform:translateY(-102%)} }
+
+        .gem { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
+        .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
+        .gem .hm { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
-        .gem .ptcl    { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
+        .gem .ptcl { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
         .gem:hover .ptcl:nth-child(2){ animation:ptcl 2.4s .5s ease-out infinite; }
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
@@ -188,13 +181,13 @@ export function Holdings() {
         .pocket-shell.empty:hover { border-color:rgba(255,255,255,.28) !important; }
         .pocket-shell::before { content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);border-radius:9px 9px 0 0;z-index:10;pointer-events:none; }
         .pocket-shell::after  { content:'';position:absolute;bottom:0;left:0;right:0;height:8px;background:linear-gradient(0deg,rgba(0,0,0,.45),transparent);z-index:10;pointer-events:none; }
-        .card-body         { position:absolute;inset:0; }
-        .card-body.ins     { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-body.rem     { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards;pointer-events:none; }
+        .card-body { position:absolute;inset:0; }
+        .card-body.ins { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
+        .card-body.rem { animation:slideUp2 .55s cubic-bezier(.4,0,.6,1) forwards;pointer-events:none; }
         .card-body.settled { animation:none !important;opacity:1 !important;transform:translateY(0) !important; }
-        .vtab    { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .vtab { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
-        .colbtn  { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .share-fmt { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
         .share-fmt:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.25); }
         .remove-btn { pointer-events:all !important; }
@@ -209,7 +202,7 @@ export function Holdings() {
           </div>
         )}
 
-        {/* SPOTLIGHT — position:fixed centré viewport */}
+        {/* SPOTLIGHT — centré viewport */}
         {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
@@ -269,12 +262,12 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — position:fixed en haut */}
+        {/* SHARE SHEET — slide depuis le bas */}
         {shareOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-start' }} onClick={()=>setShareOpen(false)}>
-            <div style={{ width:'100%', background:'#0F0B07', borderBottom:'1px solid rgba(255,255,255,.1)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>setShareOpen(false)}>
+            <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
-                <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
+                <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
                 <button onClick={()=>setShareOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', marginBottom:'16px' }}>
@@ -283,11 +276,11 @@ export function Holdings() {
                     <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
                       <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
                       <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em' }}>POKÉ ALPHA</div>
+                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>POKÉALPHA TERMINAL</div>
                         <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
                         <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.7)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
-                        <div style={{ fontSize:'10px', fontWeight:500, color:'#fff' }}>€ 920</div>
-                        <div style={{ fontSize:'7px', color:'#4ECCA3' }}>+53% ROI</div>
+                        <div style={{ fontSize:'10px', fontWeight:700, color:'#fff' }}>€ 920</div>
+                        <div style={{ fontSize:'7px', color:'#4ECCA3', fontWeight:600 }}>+53% ROI</div>
                       </div>
                     </div>
                   )},
@@ -304,10 +297,16 @@ export function Holdings() {
                         <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
                         <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
                         <div style={{ position:'relative', padding:'10px 12px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                          <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)', letterSpacing:'.1em', textTransform:'uppercase' as const }}>Ma Collection</div><div style={{ fontSize:'18px', fontWeight:500, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div></div>
+                          <div>
+                            <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Ma Collection</div>
+                            <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+                          </div>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                            <div><div style={{ fontSize:'7px', color:'rgba(255,255,255,.25)' }}>ROI TOTAL</div><div style={{ fontSize:'12px', fontWeight:500, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div></div>
-                            <div style={{ fontSize:'7px', color:'rgba(255,255,255,.2)' }}>POKÉ ALPHA</div>
+                            <div>
+                              <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
+                              <div style={{ fontSize:'12px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
+                            </div>
+                            <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>POKÉALPHA TERMINAL</div>
                           </div>
                         </div>
                       </div>
@@ -323,9 +322,31 @@ export function Holdings() {
                   </div>
                 ))}
               </div>
+
+              {/* Lien referral */}
+              <div style={{ display:'flex', gap:'8px', marginBottom:'12px', alignItems:'center', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'10px 14px' }}>
+                <div style={{ flex:1, overflow:'hidden' }}>
+                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:'3px' }}>Ton lien de parrainage · gagne 1 mois Pro</div>
+                  <div style={{ fontSize:'12px', color:'rgba(255,255,255,.6)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>pokealphaterminal.io/ref/DEMO2026</div>
+                </div>
+                <button
+                  onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/ref/DEMO2026'); setRefCopied(true); setTimeout(()=>setRefCopied(false),2000) }}
+                  style={{ padding:'7px 14px', borderRadius:'8px', background:refCopied?'rgba(78,204,163,.15)':'rgba(255,255,255,.1)', border:`1px solid ${refCopied?'rgba(78,204,163,.4)':'rgba(255,255,255,.18)'}`, color:refCopied?'#4ECCA3':'rgba(255,255,255,.7)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', flexShrink:0, transition:'all .2s', whiteSpace:'nowrap' as const }}
+                >{refCopied?'✓ Copié !':'Copier'}</button>
+              </div>
+
+              {/* Branding viral */}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px', padding:'0 2px' }}>
+                <div style={{ width:'20px', height:'20px', borderRadius:'6px', background:'linear-gradient(135deg,#E03020,#FF4433)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', flexShrink:0 }}>▲</div>
+                <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)' }}>
+                  Partagé depuis <span style={{ color:'rgba(255,255,255,.7)', fontWeight:600 }}>PokéAlpha Terminal</span> <span style={{ color:'rgba(255,255,255,.2)' }}>— le Bloomberg des cartes Pokémon</span>
+                </div>
+              </div>
+
               <div style={{ display:'flex', gap:'8px' }}>
                 <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>Générer les 3 formats · PNG HD</button>
-                <button style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
+                <button onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/share/collection-demo'); showToast('Lien copié ✓') }}
+                  style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
               </div>
             </div>
           </div>
@@ -360,20 +381,23 @@ export function Holdings() {
             ))}
           </div>
 
-          {/* ── Dropdown série — sélection ouvre le binder filtré ── */}
-          <div style={{ marginTop:'10px', position:'relative', display:'inline-block' }}>
-            <select
-              value={activeSet}
-              onChange={e=>handleSetChange(e.target.value)}
-              style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
-            >
-              <option value="Toutes" style={{background:'#111'}}>Sélectionnez votre série</option>
-              {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
-            </select>
-            <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
-            {activeSet!=='Toutes'&&(
-              <button onClick={()=>handleSetChange('Toutes')} style={{ position:'absolute', right:'30px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,.35)', cursor:'pointer', fontSize:'14px', lineHeight:1, padding:0 }}>×</button>
-            )}
+          {/* Dropdown série + Toute ma collection */}
+          <div style={{ marginTop:'10px', display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+            <div style={{ position:'relative', display:'inline-block' }}>
+              <select
+                value={activeSet}
+                onChange={e=>handleSetChange(e.target.value)}
+                style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
+              >
+                <option value="Toutes" style={{background:'#111'}}>Sélectionnez votre série</option>
+                {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
+              </select>
+              <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
+            </div>
+            <button
+              onClick={()=>handleSetChange('Toutes')}
+              style={{ padding:'7px 14px', borderRadius:'10px', border:`1px solid ${activeSet==='Toutes'?'rgba(255,107,53,.5)':'rgba(255,255,255,.14)'}`, background:activeSet==='Toutes'?'rgba(255,107,53,.12)':'rgba(255,255,255,.07)', color:activeSet==='Toutes'?'#FF9060':'rgba(255,255,255,.6)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}
+            >🗂 Toute ma collection</button>
           </div>
         </div>
 
@@ -387,12 +411,8 @@ export function Holdings() {
 
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'12px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>
-                      {activeSet==='Toutes'?'Collection complète':'Série sélectionnée'}
-                    </div>
-                    <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>
-                      {activeSet==='Toutes'?'Tous les binders':activeSet}
-                    </div>
+                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>{activeSet==='Toutes'?'Collection complète':'Série sélectionnée'}</div>
+                    <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>{activeSet==='Toutes'?'Tous les binders':activeSet}</div>
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
                       <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{binderFilled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
                       {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
@@ -522,8 +542,8 @@ export function Holdings() {
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        {/* Icône + info sous le badge signal */}
-                        <div style={{ position:'absolute', top:'26px', right:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
+                        {/* Icône + info — bas gauche, hors zone ROI et signal */}
+                        <div style={{ position:'absolute', bottom:'34px', left:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )
                     return null

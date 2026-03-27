@@ -78,6 +78,7 @@ export function Holdings() {
   const [setComplete, setSetComplete] = useState(false)
   const [shareOpen,   setShareOpen]   = useState(false)
   const [refCopied,   setRefCopied]   = useState(false)
+  const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
   const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
@@ -90,8 +91,8 @@ export function Holdings() {
   const binderFilled  = activeSet==='Toutes' ? filled      : filled.filter(c=>c.set===activeSet)
   const binderEmpty   = activeSet==='Toutes' ? emptySlots  : emptySlots.filter(e=>e.set===activeSet)
   const filteredCards = activeSet==='Toutes' ? CARDS       : CARDS.filter(c=>c.set===activeSet)
-  const slotsPer      = binderCols * 3
-  const allSlots      = [...binderFilled, ...binderEmpty.map(e=>({...e,isEmpty:true}))]
+  const slotsPer      = binderCols*3
+  const allSlots      = [...binderFilled,...binderEmpty.map(e=>({...e,isEmpty:true}))]
   const totalSlots    = allSlots.length
   const binderPages   = Math.max(1,Math.ceil(totalSlots/slotsPer))
   const pageItems     = allSlots.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
@@ -107,7 +108,6 @@ export function Holdings() {
     e.stopPropagation()
     setFavs(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n})
   }
-  const handleSetChange = (s:string) => { setActiveSet(s); setBinderPage(0); setView('binder') }
 
   const insertCard = (slot:typeof EMPTY_SLOTS[number]) => {
     if(sliding||removing) return
@@ -188,8 +188,6 @@ export function Holdings() {
         .vtab { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .share-fmt { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
-        .share-fmt:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.25); }
         .remove-btn { pointer-events:all !important; }
       `}</style>
 
@@ -202,7 +200,7 @@ export function Holdings() {
           </div>
         )}
 
-        {/* SPOTLIGHT — centré viewport */}
+        {/* SPOTLIGHT */}
         {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
@@ -262,95 +260,149 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — slide depuis le bas */}
-        {shareOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>setShareOpen(false)}>
-            <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'24px 28px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
-                <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
-                <button onClick={()=>setShareOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', marginBottom:'16px' }}>
-                {[
-                  { title:'Story Instagram', sub:'9:16 · TikTok · Reels', preview:(
-                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                      <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
-                      <div style={{ width:'60px', height:'104px', borderRadius:'8px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>POKÉALPHA TERMINAL</div>
-                        <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
-                        <div style={{ fontSize:'7px', fontWeight:500, color:'rgba(255,255,255,.7)', textAlign:'center', lineHeight:1.3 }}>Charizard Alt Art</div>
-                        <div style={{ fontSize:'10px', fontWeight:700, color:'#fff' }}>€ 920</div>
-                        <div style={{ fontSize:'7px', color:'#4ECCA3', fontWeight:600 }}>+53% ROI</div>
+        {/* SHARE SHEET — bottom sheet avec 4 formats cliquables */}
+        {shareOpen&&(()=>{
+          const shareUrl = 'https://pokealphaterminal.io/share/collection-demo'
+          const tweetText = encodeURIComponent(`Ma collection Pokémon TCG vaut € ${totalCur.toLocaleString('fr-FR')} avec un ROI de +${totalROI}% 🔥\n\nAnalysée sur PokéAlpha Terminal — le Bloomberg des cartes Pokémon\n`)
+          const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(shareUrl)}&via=PokeAlphaTerminal`
+          const formats = [
+            {
+              id:'story', title:'Story Instagram', sub:'9:16 · TikTok · Reels',
+              action:()=>{ showToast('Story générée ✓'); setShareOpen(false); setSelectedFmt(null) },
+              preview:(
+                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
+                  <div style={{ width:'52px', height:'92px', borderRadius:'7px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
+                    <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
+                    <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
+                    <div style={{ fontSize:'6px', fontWeight:600, color:'rgba(255,255,255,.7)', textAlign:'center' as const }}>Charizard</div>
+                    <div style={{ fontSize:'9px', fontWeight:700, color:'#fff' }}>€ 920</div>
+                    <div style={{ fontSize:'6px', color:'#4ECCA3', fontWeight:600 }}>+53% ROI</div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              id:'grid', title:'Grille Top 4', sub:'1:1 · Feed · Instagram',
+              action:()=>{ showToast('Grille générée ✓'); setShareOpen(false); setSelectedFmt(null) },
+              preview:(
+                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ width:'96px', height:'96px', borderRadius:'9px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px', padding:'2px' }}>
+                    {[EC.fire,EC.dark,EC.water,EC.psychic].map((col,i)=>(
+                      <div key={i} style={{ borderRadius:'4px', background:`linear-gradient(145deg,${col}40,${col}18)`, border:`1px solid ${col}50` }}/>
+                    ))}
+                  </div>
+                </div>
+              )
+            },
+            {
+              id:'card', title:'Carte investisseur', sub:'Portfolio · ROI',
+              action:()=>{ navigator.clipboard.writeText(shareUrl); showToast("Lien copié ✓"); setShareOpen(false); setSelectedFmt(null) },
+              preview:(
+                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ width:'144px', height:'80px', borderRadius:'9px', overflow:'hidden', position:'relative' }}>
+                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
+                    <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
+                    <div style={{ position:'relative', padding:'9px 11px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+                      <div>
+                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Ma Collection</div>
+                        <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
                       </div>
-                    </div>
-                  )},
-                  { title:'Grille Top 4', sub:'1:1 · Feed · Twitter', preview:(
-                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <div style={{ width:'108px', height:'108px', borderRadius:'10px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'3px', padding:'3px' }}>
-                        {[EC.fire,EC.dark,EC.water,EC.psychic].map((c,i)=>(<div key={i} style={{ borderRadius:'5px', background:`linear-gradient(145deg,${c}40,${c}18)`, border:`1px solid ${c}50` }}/>))}
-                      </div>
-                    </div>
-                  )},
-                  { title:'Carte investisseur', sub:'Portfolio · ROI branding', preview:(
-                    <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <div style={{ width:'160px', height:'88px', borderRadius:'10px', overflow:'hidden', position:'relative' }}>
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
-                        <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
-                        <div style={{ position:'relative', padding:'10px 12px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                          <div>
-                            <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Ma Collection</div>
-                            <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
-                          </div>
-                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                            <div>
-                              <div style={{ fontSize:'7px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
-                              <div style={{ fontSize:'12px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
-                            </div>
-                            <div style={{ fontSize:'6px', color:'rgba(255,255,255,.25)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>POKÉALPHA TERMINAL</div>
-                          </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                        <div>
+                          <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
+                          <div style={{ fontSize:'11px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
                         </div>
+                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>POKÉALPHA TERMINAL</div>
                       </div>
-                    </div>
-                  )},
-                ].map(f=>(
-                  <div key={f.title} className="share-fmt">
-                    {f.preview}
-                    <div style={{ padding:'10px 12px', background:'rgba(255,255,255,.03)', borderTop:'1px solid rgba(255,255,255,.06)' }}>
-                      <div style={{ fontSize:'12px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>{f.title}</div>
-                      <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'2px' }}>{f.sub}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Lien referral */}
-              <div style={{ display:'flex', gap:'8px', marginBottom:'12px', alignItems:'center', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'10px 14px' }}>
-                <div style={{ flex:1, overflow:'hidden' }}>
-                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:'3px' }}>Ton lien de parrainage · gagne 1 mois Pro</div>
-                  <div style={{ fontSize:'12px', color:'rgba(255,255,255,.6)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>pokealphaterminal.io/ref/DEMO2026</div>
                 </div>
-                <button
-                  onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/ref/DEMO2026'); setRefCopied(true); setTimeout(()=>setRefCopied(false),2000) }}
-                  style={{ padding:'7px 14px', borderRadius:'8px', background:refCopied?'rgba(78,204,163,.15)':'rgba(255,255,255,.1)', border:`1px solid ${refCopied?'rgba(78,204,163,.4)':'rgba(255,255,255,.18)'}`, color:refCopied?'#4ECCA3':'rgba(255,255,255,.7)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', flexShrink:0, transition:'all .2s', whiteSpace:'nowrap' as const }}
-                >{refCopied?'✓ Copié !':'Copier'}</button>
-              </div>
-
-              {/* Branding viral */}
-              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px', padding:'0 2px' }}>
-                <div style={{ width:'20px', height:'20px', borderRadius:'6px', background:'linear-gradient(135deg,#E03020,#FF4433)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', flexShrink:0 }}>▲</div>
-                <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)' }}>
-                  Partagé depuis <span style={{ color:'rgba(255,255,255,.7)', fontWeight:600 }}>PokéAlpha Terminal</span> <span style={{ color:'rgba(255,255,255,.2)' }}>— le Bloomberg des cartes Pokémon</span>
+              )
+            },
+            {
+              id:'twitter', title:'Tweet / X', sub:'Partage sur Twitter · X',
+              action:()=>{ window.open(tweetUrl,'_blank','noopener'); showToast('Ouverture Twitter / X ✓') },
+              preview:(
+                <div style={{ height:'120px', background:'#050810', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 50%,rgba(29,161,242,.12),transparent 60%)' }}/>
+                  <div style={{ maxWidth:'148px', padding:'10px', borderRadius:'9px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)' }}>
+                    <div style={{ fontSize:'8px', color:'rgba(255,255,255,.55)', lineHeight:1.5, fontFamily:'var(--font-display)' }}>
+                      Collection TCG: <span style={{ color:'#fff', fontWeight:600 }}>€ {totalCur.toLocaleString('fr-FR')}</span> · ROI <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</span> 🔥
+                    </div>
+                    <div style={{ marginTop:'6px', fontSize:'7px', color:'rgba(29,161,242,.7)', fontFamily:'var(--font-display)' }}>pokealphaterminal.io</div>
+                  </div>
+                  <div style={{ position:'absolute', top:'8px', right:'10px', fontSize:'15px', opacity:.5 }}>𝕏</div>
                 </div>
-              </div>
-
-              <div style={{ display:'flex', gap:'8px' }}>
-                <button style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>Générer les 3 formats · PNG HD</button>
-                <button onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/share/collection-demo'); showToast('Lien copié ✓') }}
-                  style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Copier le lien</button>
+              )
+            },
+          ]
+          return (
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }}>
+              <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'22px 26px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
+                  <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
+                  <button onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
+                </div>
+                {/* 4 formats sélectionnables */}
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'12px' }}>
+                  {formats.map(f=>{
+                    const isSel = selectedFmt===f.id
+                    return (
+                      <div key={f.id} onClick={()=>setSelectedFmt(isSel?null:f.id)}
+                        style={{ border:`1.5px solid ${isSel?'rgba(255,107,53,.7)':'rgba(255,255,255,.1)'}`, borderRadius:'12px', overflow:'hidden', cursor:'pointer', transition:'all .15s', transform:isSel?'translateY(-3px)':'none', boxShadow:isSel?'0 8px 24px rgba(255,107,53,.25)':'none', background:isSel?'rgba(255,107,53,.06)':'transparent' }}>
+                        {f.preview}
+                        <div style={{ padding:'8px 10px', background:isSel?'rgba(255,107,53,.08)':'rgba(255,255,255,.03)', borderTop:`1px solid ${isSel?'rgba(255,107,53,.25)':'rgba(255,255,255,.06)'}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                          <div>
+                            <div style={{ fontSize:'11px', fontWeight:600, color:isSel?'#FF9060':'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>{f.title}</div>
+                            <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', marginTop:'1px' }}>{f.sub}</div>
+                          </div>
+                          {isSel&&<div style={{ width:'16px', height:'16px', borderRadius:'50%', background:'#FF6B35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'#fff', flexShrink:0 }}>✓</div>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Referral */}
+                <div style={{ display:'flex', gap:'8px', marginBottom:'10px', alignItems:'center', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'9px 14px' }}>
+                  <div style={{ flex:1, overflow:'hidden' }}>
+                    <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:'2px' }}>Ton lien de parrainage · gagne 1 mois Pro</div>
+                    <div style={{ fontSize:'12px', color:'rgba(255,255,255,.6)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>pokealphaterminal.io/ref/DEMO2026</div>
+                  </div>
+                  <button onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/ref/DEMO2026'); setRefCopied(true); setTimeout(()=>setRefCopied(false),2000) }}
+                    style={{ padding:'6px 12px', borderRadius:'8px', background:refCopied?'rgba(78,204,163,.15)':'rgba(255,255,255,.1)', border:`1px solid ${refCopied?'rgba(78,204,163,.4)':'rgba(255,255,255,.18)'}`, color:refCopied?'#4ECCA3':'rgba(255,255,255,.7)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', flexShrink:0, transition:'all .2s', whiteSpace:'nowrap' as const }}>
+                    {refCopied?'✓ Copié !':'Copier'}
+                  </button>
+                </div>
+                {/* Branding */}
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
+                  <div style={{ width:'18px', height:'18px', borderRadius:'5px', background:'linear-gradient(135deg,#E03020,#FF4433)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', flexShrink:0 }}>▲</div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)' }}>
+                    Partagé depuis <span style={{ color:'rgba(255,255,255,.6)', fontWeight:600 }}>PokéAlpha Terminal</span> <span style={{ color:'rgba(255,255,255,.2)' }}>— le Bloomberg des cartes Pokémon</span>
+                  </div>
+                </div>
+                {/* CTA dynamique */}
+                <div style={{ display:'flex', gap:'8px' }}>
+                  {selectedFmt ? (
+                    <button onClick={()=>formats.find(f=>f.id===selectedFmt)?.action()}
+                      style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>
+                      {selectedFmt==='twitter'?'Ouvrir Twitter / X →':selectedFmt==='card'?"Copier le lien →":'Générer · PNG HD →'}
+                    </button>
+                  ) : (
+                    <button onClick={()=>{ showToast('4 formats générés ✓'); setShareOpen(false) }}
+                      style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>
+                      Générer les 4 formats · PNG HD
+                    </button>
+                  )}
+                  <button onClick={()=>{ navigator.clipboard.writeText(shareUrl); showToast('Lien copié ✓') }}
+                    style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    Copier le lien
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* HEADER */}
         <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
@@ -373,31 +425,24 @@ export function Holdings() {
               <button onClick={()=>setShareOpen(true)} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.45)' }}>Partager →</button>
             </div>
           </div>
-
-          {/* Onglets */}
           <div style={{ display:'flex', gap:'6px' }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as [ViewMode,string][]).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={`vtab${view===v?' on':''}`}>{l}</button>
             ))}
           </div>
-
-          {/* Dropdown série + Toute ma collection */}
           <div style={{ marginTop:'10px', display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
             <div style={{ position:'relative', display:'inline-block' }}>
-              <select
-                value={activeSet}
-                onChange={e=>handleSetChange(e.target.value)}
-                style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
-              >
+              <select value={activeSet} onChange={e=>{ const s=e.target.value; setActiveSet(s); setBinderPage(0); if(s!=='Toutes') setView('binder') }}
+                style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}>
                 <option value="Toutes" style={{background:'#111'}}>Sélectionnez votre série</option>
                 {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
               </select>
               <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
             </div>
-            <button
-              onClick={()=>handleSetChange('Toutes')}
-              style={{ padding:'7px 14px', borderRadius:'10px', border:`1px solid ${activeSet==='Toutes'?'rgba(255,107,53,.5)':'rgba(255,255,255,.14)'}`, background:activeSet==='Toutes'?'rgba(255,107,53,.12)':'rgba(255,255,255,.07)', color:activeSet==='Toutes'?'#FF9060':'rgba(255,255,255,.6)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}
-            >🗂 Toute ma collection</button>
+            <button onClick={()=>{ setActiveSet('Toutes'); setView('binder'); setBinderPage(0) }}
+              style={{ padding:'7px 14px', borderRadius:'10px', border:`1px solid ${activeSet==='Toutes'?'rgba(255,107,53,.5)':'rgba(255,255,255,.14)'}`, background:activeSet==='Toutes'?'rgba(255,107,53,.12)':'rgba(255,255,255,.07)', color:activeSet==='Toutes'?'#FF9060':'rgba(255,255,255,.6)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+              🗂 Toute ma collection
+            </button>
           </div>
         </div>
 
@@ -408,7 +453,6 @@ export function Holdings() {
               <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.018) 39px,rgba(255,255,255,.018) 40px)', pointerEvents:'none' }}/>
               <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 20% 30%,rgba(255,107,53,.06) 0%,transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(126,87,194,.06) 0%,transparent 45%)', pointerEvents:'none' }}/>
               <div style={{ position:'relative', padding:'22px 22px 18px' }}>
-
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'12px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>{activeSet==='Toutes'?'Collection complète':'Série sélectionnée'}</div>
@@ -432,7 +476,6 @@ export function Holdings() {
                   </div>
                 </div>
 
-                {/* Barre complétion EN HAUT */}
                 <div style={{ marginBottom:'16px' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
                     <span style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
@@ -443,7 +486,6 @@ export function Holdings() {
                   </div>
                 </div>
 
-                {/* Grid */}
                 <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
                   {pageItems.map((item,idx)=>{
                     const isEmpty   = 'isEmpty' in item
@@ -470,8 +512,7 @@ export function Holdings() {
                         <div key={item.id} id={`shell-${empty.id}`}
                           className={`pocket-shell${pCard?' gem':' empty'}`}
                           style={{ aspectRatio:'2/3', border:pCard?`1.5px solid ${pec}45`:'1.5px dashed rgba(255,255,255,.12)', background:pCard?`linear-gradient(145deg,${pec}20,${pec}08)`:'rgba(255,255,255,.02)', cursor:pCard?'default':'pointer' }}
-                          onClick={()=>{ if(!pCard) insertCard(empty) }}
-                        >
+                          onClick={()=>{ if(!pCard) insertCard(empty) }}>
                           {pCard?(
                             <div className={`card-body${isIns?' ins':isSel?' settled':''}`}>
                               {pHolo&&<div className="holo"/>}
@@ -513,8 +554,7 @@ export function Holdings() {
                         onMouseMove={tiltCard}
                         onMouseLeave={e=>{ resetCard(e); const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
                         onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
-                        onClick={()=>setSpotCard(card)}
-                      >
+                        onClick={()=>setSpotCard(card)}>
                         <div className={`card-body${removing===card.id?' rem':''}`}>
                           {isHolo&&<div className="holo"/>}
                           {isHolo&&<div className="hm"/>}
@@ -542,7 +582,6 @@ export function Holdings() {
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        {/* Icône + info — bas gauche, hors zone ROI et signal */}
                         <div style={{ position:'absolute', bottom:'34px', left:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )

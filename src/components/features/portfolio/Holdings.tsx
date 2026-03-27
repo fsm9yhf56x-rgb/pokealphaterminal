@@ -49,24 +49,18 @@ const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
 const tiltCard = (e: React.MouseEvent<HTMLDivElement>) => {
-  const el = e.currentTarget
-  const r  = el.getBoundingClientRect()
-  const x  = ((e.clientX-r.left)/r.width -.5)*24
-  const y  = ((e.clientY-r.top) /r.height-.5)*-24
+  const el = e.currentTarget, r = el.getBoundingClientRect()
+  const x = ((e.clientX-r.left)/r.width-.5)*24, y = ((e.clientY-r.top)/r.height-.5)*-24
   el.style.transform = `perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
-  const shine = el.querySelector('.hm') as HTMLElement|null
-  if (shine) {
-    shine.style.backgroundPosition = `${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`
-    shine.style.opacity = '0.35'
-  }
+  const s = el.querySelector('.hm') as HTMLElement|null
+  if (s) { s.style.backgroundPosition=`${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`; s.style.opacity='0.35' }
 }
 const resetCard = (e: React.MouseEvent<HTMLDivElement>) => {
   const el = e.currentTarget
-  el.style.transition = 'transform 0.6s cubic-bezier(.23,1,.32,1)'
-  el.style.transform  = ''
-  const shine = el.querySelector('.hm') as HTMLElement|null
-  if (shine) shine.style.opacity = '0'
-  setTimeout(()=>{ el.style.transition='' }, 600)
+  el.style.transition='transform 0.6s cubic-bezier(.23,1,.32,1)'; el.style.transform=''
+  const s = el.querySelector('.hm') as HTMLElement|null
+  if (s) s.style.opacity='0'
+  setTimeout(()=>{ el.style.transition='' },600)
 }
 
 export function Holdings() {
@@ -93,83 +87,75 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = Math.round((totalGain/totalBuy)*100)
   const bestCard  = [...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice))[0]
-  const filteredCards = activeSet==='Toutes' ? CARDS : CARDS.filter(c=>c.set===activeSet)
+
+  // Filtre binder + vitrine par série sélectionnée
+  const binderFilled  = activeSet==='Toutes' ? filled       : filled.filter(c=>c.set===activeSet)
+  const binderEmpty   = activeSet==='Toutes' ? emptySlots   : emptySlots.filter(e=>e.set===activeSet)
+  const filteredCards = activeSet==='Toutes' ? CARDS        : CARDS.filter(c=>c.set===activeSet)
+
+  const slotsPer     = binderCols * 3
+  const allSlots     = [...binderFilled, ...binderEmpty.map(e=>({...e,isEmpty:true}))]
+  const totalSlots   = allSlots.length
+  const binderPages  = Math.max(1, Math.ceil(totalSlots/slotsPer))
+  const pageItems    = allSlots.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
+  const phantomCount = Math.max(0, slotsPer-pageItems.length)
+  const pct          = totalSlots>0 ? Math.round(binderFilled.length/totalSlots*100) : 100
 
   const showToast = (msg:string) => {
     setToast(msg)
     if (toastRef.current) clearTimeout(toastRef.current)
-    toastRef.current = setTimeout(()=>setToast(null), 2400)
+    toastRef.current = setTimeout(()=>setToast(null),2400)
   }
   const toggleFav = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
     setFavs(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
   }
 
+  // Sélection série → bascule sur binder filtré
+  const handleSetChange = (s:string) => {
+    setActiveSet(s)
+    setBinderPage(0)
+    setView('binder')
+  }
+
   const insertCard = (slot: typeof EMPTY_SLOTS[number]) => {
-    if (sliding || removing) return
+    if (sliding||removing) return
     const newCard: CardItem = {
       id:slot.id, name:slot.name, set:slot.set, year:2021, number:'???',
       rarity:'Alt Art', type:slot.type, lang:'EN', condition:'Raw',
       graded:false, buyPrice:280, curPrice:290, qty:1, signal:'A',
     }
-    setPendingCard({ slotId:slot.id, card:newCard })
+    setPendingCard({slotId:slot.id,card:newCard})
     const el = document.getElementById('shell-'+slot.id)
-    if (el) {
-      el.style.transformOrigin = 'top center'
-      el.style.transition = 'transform 0.25s ease-out'
-      el.style.transform = 'scaleY(1.025)'
-      setTimeout(()=>{ if(el) el.style.transform='' }, 200)
-    }
-    setTimeout(()=>{ setSliding(slot.id) }, 30)
+    if (el) { el.style.transformOrigin='top center'; el.style.transition='transform 0.25s ease-out'; el.style.transform='scaleY(1.025)'; setTimeout(()=>{if(el)el.style.transform=''},200) }
+    setTimeout(()=>{ setSliding(slot.id) },30)
+    setTimeout(()=>{ if(el){el.style.transition='border-color 0.1s';el.style.borderColor='rgba(255,255,255,.7)';setTimeout(()=>{if(el){el.style.transition='border-color 0.4s';el.style.borderColor=''}},150)} },670)
     setTimeout(()=>{
-      if (el) {
-        el.style.transition = 'border-color 0.1s'
-        el.style.borderColor = 'rgba(255,255,255,.7)'
-        setTimeout(()=>{ if(el){ el.style.transition='border-color 0.4s'; el.style.borderColor='' } }, 150)
-      }
-    }, 670)
-    setTimeout(()=>{
-      setJustSettled(prev=>new Map([...prev, [slot.id, newCard]]))
-      setSliding(null)
-      setPendingCard(null)
+      setJustSettled(prev=>new Map([...prev,[slot.id,newCard]]))
+      setSliding(null); setPendingCard(null)
       setTimeout(()=>{
-        setFilled(prev=>[...prev, newCard])
+        setFilled(prev=>[...prev,newCard])
         setEmptySlots(prev=>prev.filter(s=>s.id!==slot.id))
         setJustSettled(prev=>{ const n=new Map(prev); n.delete(slot.id); return n })
         if (emptySlots.length===1) { setSetComplete(true); showToast('SET COMPLET · +500 XP !') }
-        else showToast(slot.name+' insérée dans le binder ✓')
-      }, 60)
-    }, 920)
+        else showToast(slot.name+' insérée ✓')
+      },60)
+    },920)
   }
 
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
-    if (removing || sliding) return
+    if (removing||sliding) return
     const el = document.getElementById('shell-'+card.id)
-    if (el) {
-      el.style.transformOrigin = 'top center'
-      el.style.transition = 'transform 0.2s ease-out'
-      el.style.transform = 'scaleY(1.02)'
-      setTimeout(()=>{ if(el) el.style.transform='' }, 200)
-    }
+    if (el) { el.style.transformOrigin='top center'; el.style.transition='transform 0.2s ease-out'; el.style.transform='scaleY(1.02)'; setTimeout(()=>{if(el)el.style.transform=''},200) }
     setRemoving(card.id)
     setTimeout(()=>{
-      const emptySlot = { id:card.id+'_e', name:card.name, set:card.set, type:card.type, estPrice:'€ '+card.curPrice }
       setFilled(prev=>prev.filter(c=>c.id!==card.id))
-      setEmptySlots(prev=>[...prev, emptySlot])
-      setSetComplete(false)
-      setRemoving(null)
+      setEmptySlots(prev=>[...prev,{id:card.id+'_e',name:card.name,set:card.set,type:card.type,estPrice:'€ '+card.curPrice}])
+      setSetComplete(false); setRemoving(null)
       showToast(card.name+' retirée du binder')
-    }, 560)
+    },560)
   }
-
-  const slotsPer     = binderCols * 3
-  const allSlots     = [...filled, ...emptySlots.map(e=>({...e, isEmpty:true}))]
-  const totalSlots   = filled.length + emptySlots.length
-  const binderPages  = Math.max(1, Math.ceil(totalSlots/slotsPer))
-  const pageItems    = allSlots.slice(binderPage*slotsPer, (binderPage+1)*slotsPer)
-  const phantomCount = Math.max(0, slotsPer - pageItems.length)
-  const pct          = Math.round(filled.length/totalSlots*100)
 
   return (
     <>
@@ -185,18 +171,9 @@ export function Holdings() {
         @keyframes progGold  { from{background:linear-gradient(90deg,#7E57C2,#C855D4)} to{background:linear-gradient(90deg,#FFD700,#FF8C00)} }
         @keyframes complBadge{ from{opacity:0;transform:scale(1.4)} to{opacity:1;transform:scale(1)} }
         @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        @keyframes slideDown {
-          0%   { transform:translateY(-100%); }
-          62%  { transform:translateY(4px); }
-          80%  { transform:translateY(1.5px); }
-          91%  { transform:translateY(-0.5px); }
-          100% { transform:translateY(0); }
-        }
-        @keyframes slideUp {
-          0%   { transform:translateY(0); }
-          100% { transform:translateY(-102%); }
-        }
-        .gem          { position:relative; border-radius:14px; overflow:hidden; cursor:pointer; will-change:transform; }
+        @keyframes slideDown { 0%{transform:translateY(-100%)} 62%{transform:translateY(4px)} 80%{transform:translateY(1.5px)} 91%{transform:translateY(-.5px)} 100%{transform:translateY(0)} }
+        @keyframes slideUp   { 0%{transform:translateY(0)} 100%{transform:translateY(-102%)} }
+        .gem          { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
         .gem .holo    { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
         .gem .hm      { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
@@ -204,23 +181,23 @@ export function Holdings() {
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
         .gem:hover .ptcl:nth-child(2){ animation:ptcl 2.4s .5s ease-out infinite; }
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
-        .breathe-S    { animation:breatheS 2.4s ease-in-out infinite; }
-        .breathe-A    { animation:breatheA 3s ease-in-out infinite; }
-        .pocket-shell  { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
-        .pocket-shell:hover  { transform:translateY(-5px) scale(1.04) !important; }
+        .breathe-S { animation:breatheS 2.4s ease-in-out infinite; }
+        .breathe-A { animation:breatheA 3s ease-in-out infinite; }
+        .pocket-shell { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
+        .pocket-shell:hover { transform:translateY(-5px) scale(1.04) !important; }
         .pocket-shell.empty:hover { border-color:rgba(255,255,255,.28) !important; }
         .pocket-shell::before { content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);border-radius:9px 9px 0 0;z-index:10;pointer-events:none; }
         .pocket-shell::after  { content:'';position:absolute;bottom:0;left:0;right:0;height:8px;background:linear-gradient(0deg,rgba(0,0,0,.45),transparent);z-index:10;pointer-events:none; }
         .card-body         { position:absolute;inset:0; }
         .card-body.ins     { animation:slideDown 1.05s cubic-bezier(.22,.58,.36,1) forwards; }
-        .card-body.rem     { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
-        .card-body.settled { animation:none !important; opacity:1 !important; transform:translateY(0) !important; }
-        .vtab         { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .vtab.on      { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
-        .colbtn       { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .share-fmt    { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
+        .card-body.rem     { animation:slideUp .55s cubic-bezier(.4,0,.6,1) forwards;pointer-events:none; }
+        .card-body.settled { animation:none !important;opacity:1 !important;transform:translateY(0) !important; }
+        .vtab    { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
+        .colbtn  { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .share-fmt { border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s; }
         .share-fmt:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.25); }
-        .remove-btn   { pointer-events:all !important; }
+        .remove-btn { pointer-events:all !important; }
       `}</style>
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
@@ -232,7 +209,7 @@ export function Holdings() {
           </div>
         )}
 
-        {/* SPOTLIGHT — position:fixed centré */}
+        {/* SPOTLIGHT — position:fixed centré viewport */}
         {spotCard&&(()=>{
           const ec=EC[spotCard.type]??'#888', eg=EG[spotCard.type]??'rgba(128,128,128,.4)'
           const roi=Math.round(((spotCard.curPrice-spotCard.buyPrice)/spotCard.buyPrice)*100)
@@ -317,9 +294,7 @@ export function Holdings() {
                   { title:'Grille Top 4', sub:'1:1 · Feed · Twitter', preview:(
                     <div style={{ height:'130px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <div style={{ width:'108px', height:'108px', borderRadius:'10px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'3px', padding:'3px' }}>
-                        {[EC.fire,EC.dark,EC.water,EC.psychic].map((c,i)=>(
-                          <div key={i} style={{ borderRadius:'5px', background:`linear-gradient(145deg,${c}40,${c}18)`, border:`1px solid ${c}50` }}/>
-                        ))}
+                        {[EC.fire,EC.dark,EC.water,EC.psychic].map((c,i)=>(<div key={i} style={{ borderRadius:'5px', background:`linear-gradient(145deg,${c}40,${c}18)`, border:`1px solid ${c}50` }}/>))}
                       </div>
                     </div>
                   )},
@@ -378,27 +353,28 @@ export function Holdings() {
             </div>
           </div>
 
-          {/* Onglets Binder / Vitrine / Wrapped */}
-          <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+          {/* Onglets */}
+          <div style={{ display:'flex', gap:'6px' }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as [ViewMode,string][]).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={`vtab${view===v?' on':''}`}>{l}</button>
             ))}
           </div>
 
-          {/* Menu déroulant séries — sous les onglets */}
-          {(view==='binder'||view==='showcase')&&(
-            <div style={{ marginTop:'10px', position:'relative', display:'inline-block' }}>
-              <select
-                value={activeSet}
-                onChange={e=>setActiveSet(e.target.value)}
-                style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.85)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
-              >
-                <option value="Toutes" style={{background:'#111', color:'rgba(255,255,255,.4)'}}>Sélectionnez votre série</option>
-                {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
-              </select>
-              <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
-            </div>
-          )}
+          {/* ── Dropdown série — sélection ouvre le binder filtré ── */}
+          <div style={{ marginTop:'10px', position:'relative', display:'inline-block' }}>
+            <select
+              value={activeSet}
+              onChange={e=>handleSetChange(e.target.value)}
+              style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}
+            >
+              <option value="Toutes" style={{background:'#111'}}>Sélectionnez votre série</option>
+              {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
+            </select>
+            <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
+            {activeSet!=='Toutes'&&(
+              <button onClick={()=>handleSetChange('Toutes')} style={{ position:'absolute', right:'30px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,.35)', cursor:'pointer', fontSize:'14px', lineHeight:1, padding:0 }}>×</button>
+            )}
+          </div>
         </div>
 
         {/* ── VUE BINDER ── */}
@@ -411,10 +387,14 @@ export function Holdings() {
 
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'12px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Collection privée</div>
-                    <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>Evolving Skies · Eeveelutions</div>
+                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>
+                      {activeSet==='Toutes'?'Collection complète':'Série sélectionnée'}
+                    </div>
+                    <div style={{ fontSize:'14px', fontWeight:500, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', marginTop:'3px' }}>
+                      {activeSet==='Toutes'?'Tous les binders':activeSet}
+                    </div>
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'4px' }}>
-                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{filled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
+                      <span style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{binderFilled.length}/{totalSlots} cartes · page {binderPage+1}/{binderPages}</span>
                       {setComplete&&<span style={{ fontSize:'10px', fontWeight:600, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 10px', borderRadius:'12px', boxShadow:'0 2px 8px rgba(255,215,0,.5)', animation:'complBadge .4s ease-out', fontFamily:'var(--font-display)' }}>SET COMPLET 🏆</span>}
                     </div>
                   </div>
@@ -439,31 +419,31 @@ export function Holdings() {
                     <span style={{ fontSize:'9px', color:setComplete?'#FFD700':'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', fontWeight:setComplete?600:400 }}>{pct}%</span>
                   </div>
                   <div style={{ height:'4px', borderRadius:'99px', background:'rgba(255,255,255,.07)', overflow:'hidden' }}>
-                    <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)', animation:setComplete?'progGold .6s ease forwards':'' }}/>
+                    <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)' }}/>
                   </div>
                 </div>
 
                 {/* Grid */}
                 <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
-                  {pageItems.map((item, idx) => {
+                  {pageItems.map((item,idx)=>{
                     const isEmpty   = 'isEmpty' in item
                     const card      = isEmpty ? null : item as CardItem
                     const empty     = isEmpty ? item as typeof EMPTY_SLOTS[number]&{isEmpty:true} : null
                     const ec        = EC[(isEmpty?empty!.type:card!.type)??'fire']??'#888'
                     const eg        = EG[(isEmpty?empty!.type:card!.type)??'fire']??'rgba(128,128,128,.4)'
-                    const isHolo    = card ? HOLO_RARITIES.includes(card.rarity) : false
-                    const roi       = card ? Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100) : 0
+                    const isHolo    = card?HOLO_RARITIES.includes(card.rarity):false
+                    const roi       = card?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
                     const orbSz     = binderCols<=3?'36px':binderCols===4?'28px':'24px'
                     const fsName    = binderCols<=3?'11px':binderCols===4?'10px':'9px'
                     const fsPx      = binderCols<=3?'13px':binderCols===4?'12px':'11px'
                     const isVintage = card&&card.year<2002
 
                     if (isEmpty&&empty) {
-                      const pCard = pendingCard?.slotId===empty.id ? pendingCard.card : (justSettled.get(empty.id)??null)
-                      const pec   = pCard ? (EC[pCard.type]??'#888') : ec
-                      const peg   = pCard ? (EG[pCard.type]??'rgba(128,128,128,.4)') : eg
-                      const proi  = pCard ? Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100) : 0
-                      const pHolo = pCard ? HOLO_RARITIES.includes(pCard.rarity) : false
+                      const pCard = pendingCard?.slotId===empty.id?pendingCard.card:(justSettled.get(empty.id)??null)
+                      const pec   = pCard?(EC[pCard.type]??'#888'):ec
+                      const peg   = pCard?(EG[pCard.type]??'rgba(128,128,128,.4)'):eg
+                      const proi  = pCard?Math.round(((pCard.curPrice-pCard.buyPrice)/pCard.buyPrice)*100):0
+                      const pHolo = pCard?HOLO_RARITIES.includes(pCard.rarity):false
                       const isIns = sliding===empty.id
                       const isSel = justSettled.has(empty.id)
                       return (
@@ -472,7 +452,7 @@ export function Holdings() {
                           style={{ aspectRatio:'2/3', border:pCard?`1.5px solid ${pec}45`:'1.5px dashed rgba(255,255,255,.12)', background:pCard?`linear-gradient(145deg,${pec}20,${pec}08)`:'rgba(255,255,255,.02)', cursor:pCard?'default':'pointer' }}
                           onClick={()=>{ if(!pCard) insertCard(empty) }}
                         >
-                          {pCard ? (
+                          {pCard?(
                             <div className={`card-body${isIns?' ins':isSel?' settled':''}`}>
                               {pHolo&&<div className="holo"/>}
                               <div className="ptcl" style={{ background:pec, bottom:'22%', left:'20%' }}/>
@@ -491,7 +471,7 @@ export function Holdings() {
                                 </div>
                               </div>
                             </div>
-                          ) : (
+                          ):(
                             <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
                               <div style={{ width:'26px', height:'26px', borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                                 <span style={{ fontSize:'14px', color:'rgba(255,255,255,.12)', lineHeight:1 }}>+</span>
@@ -542,7 +522,7 @@ export function Holdings() {
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        {/* Icône + info — sous le badge signal, pas sur le % */}
+                        {/* Icône + info sous le badge signal */}
                         <div style={{ position:'absolute', top:'26px', right:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )

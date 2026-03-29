@@ -81,6 +81,12 @@ export function Holdings() {
   const [shareCard,   setShareCard]   = useState<CardItem|null>(null)
   const [refCopied,   setRefCopied]   = useState(false)
   const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
+  const [addOpen,     setAddOpen]     = useState(false)
+  const [addForm,     setAddForm]     = useState<{
+    name:string; set:string; type:string; rarity:string; lang:'EN'|'JP'|'FR';
+    condition:string; graded:boolean; buyPrice:string; curPrice:string;
+    qty:number; year:number; signal:''|'S'|'A'|'B';
+  }>({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'EN',condition:'Raw',graded:false,buyPrice:'',curPrice:'',qty:1,year:new Date().getFullYear(),signal:''})
   const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
@@ -150,6 +156,22 @@ export function Holdings() {
     },560)
   }
 
+  const addCard = () => {
+    if(!addForm.name||!addForm.set||!addForm.buyPrice) return
+    const newCard:CardItem = {
+      id:'u'+Date.now(), name:addForm.name, set:addForm.set, year:addForm.year,
+      number:'???', rarity:addForm.rarity, type:addForm.type, lang:addForm.lang,
+      condition:addForm.graded?addForm.condition:'Raw', graded:addForm.graded,
+      buyPrice:parseFloat(addForm.buyPrice)||0,
+      curPrice:parseFloat(addForm.curPrice)||parseFloat(addForm.buyPrice)||0,
+      qty:addForm.qty, signal:addForm.signal||undefined,
+    }
+    setFilled(prev=>[...prev,newCard])
+    setAddOpen(false)
+    setAddForm({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'EN',condition:'Raw',graded:false,buyPrice:'',curPrice:'',qty:1,year:new Date().getFullYear(),signal:''})
+    showToast(newCard.name+(newCard.qty>1?` ×${newCard.qty}`:'')+' ajoutée ✓')
+  }
+
   return (
     <>
       <style>{`
@@ -190,6 +212,8 @@ export function Holdings() {
         .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
         .remove-btn { pointer-events:all !important; }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+        input::placeholder { color:rgba(255,255,255,.25) !important; }
       `}</style>
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
@@ -261,7 +285,7 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — contexte dynamique carte / portfolio / wrapped */}
+        {/* SHARE SHEET */}
         {shareOpen&&(()=>{
           const isCardCtx    = shareCtx==='card' && shareCard
           const isWrappedCtx = shareCtx==='wrapped'
@@ -269,103 +293,78 @@ export function Holdings() {
           const ctxRoi       = ctxCard2 ? Math.round(((ctxCard2.curPrice-ctxCard2.buyPrice)/ctxCard2.buyPrice)*100) : totalROI
           const ctxEc        = ctxCard2 ? (EC[ctxCard2.type]??'#888') : '#FF6B35'
           const shareUrl     = ctxCard2 ? `https://pokealphaterminal.io/share/card-${ctxCard2.id}` : 'https://pokealphaterminal.io/share/collection-demo'
-          const tweetText    = encodeURIComponent(
-            isCardCtx
-              ? `${ctxCard2!.name} vaut € ${ctxCard2!.curPrice.toLocaleString('fr-FR')} — ROI +${ctxRoi}% 🔥 Analysée sur PokéAlpha Terminal`
-              : isWrappedCtx
-              ? `Mon Wrapped 2026 Pokémon TCG : € ${totalCur.toLocaleString('fr-FR')}, ROI +${totalROI}% 🏆 via PokéAlpha Terminal`
-              : `Ma collection Pokémon TCG vaut € ${totalCur.toLocaleString('fr-FR')} avec +${totalROI}% ROI 🔥 via PokéAlpha Terminal`
-          )
+          const tweetText    = encodeURIComponent(isCardCtx
+            ? `${ctxCard2!.name} vaut € ${ctxCard2!.curPrice.toLocaleString('fr-FR')} — ROI +${ctxRoi}% 🔥 Analysée sur PokéAlpha Terminal`
+            : isWrappedCtx
+            ? `Mon Wrapped 2026 Pokémon TCG : € ${totalCur.toLocaleString('fr-FR')}, ROI +${totalROI}% 🏆 via PokéAlpha Terminal`
+            : `Ma collection Pokémon TCG vaut € ${totalCur.toLocaleString('fr-FR')} avec +${totalROI}% ROI 🔥 via PokéAlpha Terminal`)
           const tweetUrl     = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(shareUrl)}&via=PokeAlphaTerminal`
           const sheetTitle   = isCardCtx ? `Partager · ${ctxCard2!.name}` : isWrappedCtx ? 'Partager mon Wrapped' : 'Partager ma collection'
           const top4Colors   = isCardCtx
-            ? [ctxCard2!.type, ctxCard2!.type, 'dark', 'water'].map(t=>EC[t]??'#888')
+            ? [ctxCard2!.type,ctxCard2!.type,'dark','water'].map(t=>EC[t]??'#888')
             : [...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,4).map(cc=>EC[cc.type]??'#888')
-
           const formats = [
-            {
-              id:'story', title:'Story Instagram', sub:'9:16 · TikTok · Reels',
+            { id:'story', title:'Story Instagram', sub:'9:16 · TikTok · Reels',
               action:()=>{ showToast('Story générée ✓'); setShareOpen(false); setSelectedFmt(null) },
-              preview:(
-                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 50% 40%,${ctxEc}30,transparent 60%)` }}/>
-                  <div style={{ width:'52px', height:'90px', borderRadius:'7px', background:`linear-gradient(145deg,${ctxEc}22,${ctxEc}08)`, border:`1px solid ${ctxEc}45`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
-                    <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
-                    <div style={{ width:'18px', height:'18px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ctxEc}DD,${ctxEc}77)` }}/>
-                    <div style={{ fontSize:'6px', fontWeight:600, color:'rgba(255,255,255,.75)', textAlign:'center' as const, lineHeight:1.2, padding:'0 3px' }}>
-                      {isCardCtx ? ctxCard2!.name.split(' ').slice(0,2).join(' ') : 'Ma Collection'}
-                    </div>
-                    <div style={{ fontSize:'9px', fontWeight:700, color:'#fff' }}>
-                      {isCardCtx ? `€ ${ctxCard2!.curPrice}` : `€ ${totalCur.toLocaleString('fr-FR')}`}
-                    </div>
-                    <div style={{ fontSize:'6px', color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}% ROI</div>
-                  </div>
+              preview:(<div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 50% 40%,${ctxEc}30,transparent 60%)` }}/>
+                <div style={{ width:'52px', height:'90px', borderRadius:'7px', background:`linear-gradient(145deg,${ctxEc}22,${ctxEc}08)`, border:`1px solid ${ctxEc}45`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
+                  <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
+                  <div style={{ width:'18px', height:'18px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ctxEc}DD,${ctxEc}77)` }}/>
+                  <div style={{ fontSize:'6px', fontWeight:600, color:'rgba(255,255,255,.75)', textAlign:'center' as const, lineHeight:1.2, padding:'0 3px' }}>{isCardCtx?ctxCard2!.name.split(' ').slice(0,2).join(' '):'Ma Collection'}</div>
+                  <div style={{ fontSize:'9px', fontWeight:700, color:'#fff' }}>{isCardCtx?`€ ${ctxCard2!.curPrice}`:`€ ${totalCur.toLocaleString('fr-FR')}`}</div>
+                  <div style={{ fontSize:'6px', color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}% ROI</div>
                 </div>
-              )
+              </div>)
             },
-            {
-              id:'grid', title:'Grille Top 4', sub:'1:1 · Feed · Instagram',
+            { id:'grid', title:'Grille Top 4', sub:'1:1 · Feed · Instagram',
               action:()=>{ showToast('Grille générée ✓'); setShareOpen(false); setSelectedFmt(null) },
-              preview:(
-                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <div style={{ width:'96px', height:'96px', borderRadius:'9px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px', padding:'2px' }}>
-                    {top4Colors.map((col,i)=>(
-                      <div key={i} style={{ borderRadius:'4px', background:`linear-gradient(145deg,${col}40,${col}18)`, border:`1px solid ${col}50`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {isCardCtx&&i===0&&<div style={{ fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.7)' }}>×{ctxCard2!.qty}</div>}
-                      </div>
-                    ))}
-                  </div>
+              preview:(<div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ width:'96px', height:'96px', borderRadius:'9px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px', padding:'2px' }}>
+                  {top4Colors.map((col,i)=>(<div key={i} style={{ borderRadius:'4px', background:`linear-gradient(145deg,${col}40,${col}18)`, border:`1px solid ${col}50`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {isCardCtx&&i===0&&<div style={{ fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.7)' }}>×{ctxCard2!.qty}</div>}
+                  </div>))}
                 </div>
-              )
+              </div>)
             },
-            {
-              id:'card', title:isCardCtx?'Fiche carte':'Carte investisseur', sub:isCardCtx?ctxCard2!.rarity:'Portfolio · ROI',
+            { id:'card', title:isCardCtx?'Fiche carte':'Carte investisseur', sub:isCardCtx?ctxCard2!.rarity:'Portfolio · ROI',
               action:()=>{ navigator.clipboard.writeText(shareUrl); showToast('Lien copié ✓'); setShareOpen(false); setSelectedFmt(null) },
-              preview:(
-                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <div style={{ width:'140px', height:'76px', borderRadius:'9px', overflow:'hidden', position:'relative' }}>
-                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
-                    <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 80% 40%,${ctxEc}18,transparent 60%)` }}/>
-                    <div style={{ position:'relative', padding:'8px 10px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+              preview:(<div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ width:'140px', height:'76px', borderRadius:'9px', overflow:'hidden', position:'relative' }}>
+                  <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
+                  <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 80% 40%,${ctxEc}18,transparent 60%)` }}/>
+                  <div style={{ position:'relative', padding:'8px 10px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+                    <div>
+                      <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>{isCardCtx?ctxCard2!.rarity:'Ma Collection'}</div>
+                      <div style={{ fontSize:isCardCtx?'11px':'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{isCardCtx?ctxCard2!.name:`€ ${totalCur.toLocaleString('fr-FR')}`}</div>
+                      {isCardCtx&&<div style={{ fontSize:'12px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>€ {ctxCard2!.curPrice}</div>}
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
                       <div>
-                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>{isCardCtx?ctxCard2!.rarity:'Ma Collection'}</div>
-                        <div style={{ fontSize:isCardCtx?'11px':'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{isCardCtx?ctxCard2!.name:`€ ${totalCur.toLocaleString('fr-FR')}`}</div>
-                        {isCardCtx&&<div style={{ fontSize:'12px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>€ {ctxCard2!.curPrice}</div>}
+                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)' }}>{isCardCtx?'ROI':'ROI TOTAL'}</div>
+                        <div style={{ fontSize:'10px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{ctxRoi}%</div>
                       </div>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                        <div>
-                          <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)' }}>{isCardCtx?'ROI':'ROI TOTAL'}</div>
-                          <div style={{ fontSize:'10px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{ctxRoi}%</div>
-                        </div>
-                        {isCardCtx&&ctxCard2!.qty>1&&<div style={{ fontSize:'8px', fontWeight:600, color:'rgba(255,255,255,.5)' }}>×{ctxCard2!.qty}</div>}
-                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
-                      </div>
+                      {isCardCtx&&ctxCard2!.qty>1&&<div style={{ fontSize:'8px', fontWeight:600, color:'rgba(255,255,255,.5)' }}>×{ctxCard2!.qty}</div>}
+                      <div style={{ fontSize:'5px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
                     </div>
                   </div>
                 </div>
-              )
+              </div>)
             },
-            {
-              id:'twitter', title:'Tweet / X', sub:'Partage sur Twitter',
+            { id:'twitter', title:'Tweet / X', sub:'Partage sur Twitter',
               action:()=>{ window.open(tweetUrl,'_blank','noopener'); showToast('Ouverture Twitter / X ✓') },
-              preview:(
-                <div style={{ height:'120px', background:'#050810', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 50%,rgba(29,161,242,.12),transparent 60%)' }}/>
-                  <div style={{ maxWidth:'148px', padding:'10px', borderRadius:'9px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)' }}>
-                    <div style={{ fontSize:'8px', color:'rgba(255,255,255,.55)', lineHeight:1.5, fontFamily:'var(--font-display)' }}>
-                      {isCardCtx
-                        ? <>{ctxCard2!.name}: <span style={{ color:'#fff', fontWeight:600 }}>€ {ctxCard2!.curPrice}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}%</span> ROI</>
-                        : <>Collection: <span style={{ color:'#fff', fontWeight:600 }}>€ {totalCur.toLocaleString('fr-FR')}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</span></>
-                      }
-                    </div>
-                    <div style={{ marginTop:'6px', fontSize:'7px', color:'rgba(29,161,242,.7)', fontFamily:'var(--font-display)' }}>pokealphaterminal.io</div>
+              preview:(<div style={{ height:'120px', background:'#050810', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 50%,rgba(29,161,242,.12),transparent 60%)' }}/>
+                <div style={{ maxWidth:'148px', padding:'10px', borderRadius:'9px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)' }}>
+                  <div style={{ fontSize:'8px', color:'rgba(255,255,255,.55)', lineHeight:1.5, fontFamily:'var(--font-display)' }}>
+                    {isCardCtx?<>{ctxCard2!.name}: <span style={{ color:'#fff', fontWeight:600 }}>€ {ctxCard2!.curPrice}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}%</span> ROI</>:<>Collection: <span style={{ color:'#fff', fontWeight:600 }}>€ {totalCur.toLocaleString('fr-FR')}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</span></>}
                   </div>
-                  <div style={{ position:'absolute', top:'8px', right:'10px', fontSize:'15px', opacity:.5 }}>𝕏</div>
+                  <div style={{ marginTop:'6px', fontSize:'7px', color:'rgba(29,161,242,.7)', fontFamily:'var(--font-display)' }}>pokealphaterminal.io</div>
                 </div>
-              )
+                <div style={{ position:'absolute', top:'8px', right:'10px', fontSize:'15px', opacity:.5 }}>𝕏</div>
+              </div>)
             },
           ]
-
           return (
             <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }}>
               <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'22px 26px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
@@ -374,22 +373,19 @@ export function Holdings() {
                   <button onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'12px' }}>
-                  {formats.map(f=>{
-                    const isSel = selectedFmt===f.id
-                    return (
-                      <div key={f.id} onClick={()=>setSelectedFmt(isSel?null:f.id)}
-                        style={{ border:`1.5px solid ${isSel?'rgba(255,107,53,.7)':'rgba(255,255,255,.1)'}`, borderRadius:'12px', overflow:'hidden', cursor:'pointer', transition:'all .15s', transform:isSel?'translateY(-3px)':'none', boxShadow:isSel?'0 8px 24px rgba(255,107,53,.25)':'none', background:isSel?'rgba(255,107,53,.06)':'transparent' }}>
-                        {f.preview}
-                        <div style={{ padding:'8px 10px', background:isSel?'rgba(255,107,53,.08)':'rgba(255,255,255,.03)', borderTop:`1px solid ${isSel?'rgba(255,107,53,.25)':'rgba(255,255,255,.06)'}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                          <div>
-                            <div style={{ fontSize:'11px', fontWeight:600, color:isSel?'#FF9060':'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>{f.title}</div>
-                            <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', marginTop:'1px' }}>{f.sub}</div>
-                          </div>
-                          {isSel&&<div style={{ width:'16px', height:'16px', borderRadius:'50%', background:'#FF6B35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'#fff', flexShrink:0 }}>✓</div>}
+                  {formats.map(f=>{ const isSel=selectedFmt===f.id; return (
+                    <div key={f.id} onClick={()=>setSelectedFmt(isSel?null:f.id)}
+                      style={{ border:`1.5px solid ${isSel?'rgba(255,107,53,.7)':'rgba(255,255,255,.1)'}`, borderRadius:'12px', overflow:'hidden', cursor:'pointer', transition:'all .15s', transform:isSel?'translateY(-3px)':'none', boxShadow:isSel?'0 8px 24px rgba(255,107,53,.25)':'none', background:isSel?'rgba(255,107,53,.06)':'transparent' }}>
+                      {f.preview}
+                      <div style={{ padding:'8px 10px', background:isSel?'rgba(255,107,53,.08)':'rgba(255,255,255,.03)', borderTop:`1px solid ${isSel?'rgba(255,107,53,.25)':'rgba(255,255,255,.06)'}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <div>
+                          <div style={{ fontSize:'11px', fontWeight:600, color:isSel?'#FF9060':'rgba(255,255,255,.7)', fontFamily:'var(--font-display)' }}>{f.title}</div>
+                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', marginTop:'1px' }}>{f.sub}</div>
                         </div>
+                        {isSel&&<div style={{ width:'16px', height:'16px', borderRadius:'50%', background:'#FF6B35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'#fff', flexShrink:0 }}>✓</div>}
                       </div>
-                    )
-                  })}
+                    </div>
+                  )})}
                 </div>
                 <div style={{ display:'flex', gap:'8px', marginBottom:'10px', alignItems:'center', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'9px 14px' }}>
                   <div style={{ flex:1, overflow:'hidden' }}>
@@ -428,6 +424,122 @@ export function Holdings() {
             </div>
           )
         })()}
+
+        {/* ADD CARD MODAL */}
+        {addOpen&&(
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>setAddOpen(false)}>
+            <div style={{ background:'#0F0A04', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'28px', maxWidth:'560px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'90vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+                <div>
+                  <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
+                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)', marginTop:'3px' }}>Renseigne les infos de ta carte</div>
+                </div>
+                <button onClick={()=>setAddOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>×</button>
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Nom de la carte *</div>
+                  <input value={addForm.name} onChange={e=>setAddForm(p=>({...p,name:e.target.value}))} placeholder="ex: Charizard Alt Art"
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Série *</div>
+                  <input value={addForm.set} onChange={e=>setAddForm(p=>({...p,set:e.target.value}))} list="sets-list" placeholder="ex: SV151"
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                  <datalist id="sets-list">{CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s}/>)}</datalist>
+                </div>
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Type</div>
+                  <select value={addForm.type} onChange={e=>setAddForm(p=>({...p,type:e.target.value}))}
+                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    {['fire','water','psychic','dark','electric','grass'].map(t=><option key={t} value={t} style={{background:'#111'}}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Rareté</div>
+                  <select value={addForm.rarity} onChange={e=>setAddForm(p=>({...p,rarity:e.target.value}))}
+                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    {['Alt Art','Secret Rare','Holo Rare','Gold Star','Promo','Common','Uncommon'].map(r=><option key={r} value={r} style={{background:'#111'}}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Langue</div>
+                  <select value={addForm.lang} onChange={e=>setAddForm(p=>({...p,lang:e.target.value as 'EN'|'JP'|'FR'}))}
+                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    {(['EN','JP','FR'] as const).map(l=><option key={l} value={l} style={{background:'#111'}}>{l}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'10px', marginBottom:'10px', alignItems:'flex-end' }}>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>État / Grade</div>
+                  <select value={addForm.condition} onChange={e=>setAddForm(p=>({...p,condition:e.target.value}))}
+                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    {['Raw','PSA 7','PSA 8','PSA 9','PSA 10','BGS 9','BGS 9.5','CGC 9','CGC 9.5'].map(c=><option key={c} value={c} style={{background:'#111'}}>{c}</option>)}
+                  </select>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'9px 14px', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                  onClick={()=>setAddForm(p=>({...p,graded:!p.graded}))}>
+                  <div style={{ width:'16px', height:'16px', borderRadius:'4px', background:addForm.graded?'#FF6B35':'transparent', border:`2px solid ${addForm.graded?'#FF6B35':'rgba(255,255,255,.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', flexShrink:0 }}>{addForm.graded?'✓':''}</div>
+                  <span style={{ fontSize:'12px', color:'rgba(255,255,255,.6)', fontFamily:'var(--font-display)' }}>Gradée</span>
+                </div>
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Prix d'achat € *</div>
+                  <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))} placeholder="0"
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Prix marché actuel €</div>
+                  <input type="number" value={addForm.curPrice} onChange={e=>setAddForm(p=>({...p,curPrice:e.target.value}))} placeholder="= prix achat si vide"
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'rgba(255,255,255,.6)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                </div>
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'22px' }}>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Nombre d'exemplaires</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))}
+                      style={{ width:'36px', height:'36px', borderRadius:'8px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', color:'#fff', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>−</button>
+                    <div style={{ flex:1, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', textAlign:'center' as const, fontSize:'17px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
+                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.min(99,p.qty+1)}))}
+                      style={{ width:'36px', height:'36px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>+</button>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Signal Dexy (optionnel)</div>
+                  <div style={{ display:'flex', gap:'6px' }}>
+                    {(['','S','A','B'] as const).map(sig=>(
+                      <button key={sig} onClick={()=>setAddForm(p=>({...p,signal:sig}))}
+                        style={{ flex:1, padding:'9px 4px', borderRadius:'8px', border:`1px solid ${addForm.signal===sig?'rgba(255,107,53,.6)':'rgba(255,255,255,.12)'}`, background:addForm.signal===sig?'rgba(255,107,53,.15)':'rgba(255,255,255,.05)', color:addForm.signal===sig?'#FF9060':'rgba(255,255,255,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                        {sig||'—'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display:'flex', gap:'8px' }}>
+                <button onClick={addCard} disabled={!addForm.name||!addForm.set||!addForm.buyPrice}
+                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:(!addForm.name||!addForm.set||!addForm.buyPrice)?'rgba(255,255,255,.08)':'linear-gradient(135deg,#E03020,#FF4433)', color:(!addForm.name||!addForm.set||!addForm.buyPrice)?'rgba(255,255,255,.3)':'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:(!addForm.name||!addForm.set||!addForm.buyPrice)?'default':'pointer', fontFamily:'var(--font-display)', boxShadow:(!addForm.name||!addForm.set||!addForm.buyPrice)?'none':'0 4px 16px rgba(224,48,32,.4)', transition:'all .2s' }}>
+                  Ajouter {addForm.qty>1?`${addForm.qty} exemplaires`:'au portfolio'} →
+                </button>
+                <button onClick={()=>setAddOpen(false)}
+                  style={{ padding:'13px 20px', borderRadius:'11px', background:'rgba(255,255,255,.05)', color:'rgba(255,255,255,.5)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* HEADER */}
         <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
@@ -488,7 +600,11 @@ export function Holdings() {
                     </div>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px' }}>
-                    <div style={{ display:'flex', gap:'4px' }}>
+                    <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                      <button onClick={()=>setAddOpen(true)}
+                        style={{ padding:'5px 12px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                        + Ajouter
+                      </button>
                       {[3,4,5].map(n=>(
                         <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
                       ))}
@@ -584,6 +700,7 @@ export function Holdings() {
                           <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
                           <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                           <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
+                          {isVintage&&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.55),transparent)', zIndex:3, pointerEvents:'none' }}/>}
                           <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
                             <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
                             <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
@@ -591,7 +708,8 @@ export function Holdings() {
                             {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>❤️</div>}
                             {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
                             {card.hot&&<div style={{ position:'absolute', top:'4px', left:'4px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'shimGlow 1.4s ease-in-out infinite', zIndex:3 }}/>}
-                            {isVintage&&<div style={{ position:'absolute', bottom:0, left:0, right:0, height:'10px', background:'linear-gradient(0deg,rgba(0,0,0,.5),transparent)', zIndex:3, pointerEvents:'none' }}/>}
+                            {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'4px', zIndex:4, background:'rgba(0,0,0,.82)', border:'1px solid rgba(255,255,255,.25)', borderRadius:'10px', padding:'1px 5px', fontSize:'7px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', lineHeight:1.6 }}>×{card.qty}</div>}
+                            {!card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:4, width:'13px', height:'13px', borderRadius:'50%', background:'rgba(255,255,255,.18)', border:'1px solid rgba(255,255,255,.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'8px', color:'rgba(255,255,255,.8)', fontWeight:700, lineHeight:1 }}>+</div>}
                           </div>
                           <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
                             <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
@@ -605,8 +723,6 @@ export function Holdings() {
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        {card.qty>1&&<div style={{ position:'absolute', bottom:'28px', left:'6px', zIndex:11, background:'rgba(0,0,0,.72)', border:'1px solid rgba(255,255,255,.2)', borderRadius:'20px', padding:'1px 6px', fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.75)', fontFamily:'var(--font-display)', pointerEvents:'none', lineHeight:1.6 }}>×{card.qty}</div>}
-                        <div style={{ position:'absolute', bottom:'28px', right:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )
                     return null

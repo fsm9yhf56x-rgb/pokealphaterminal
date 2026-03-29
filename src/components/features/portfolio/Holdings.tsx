@@ -27,6 +27,90 @@ const CARDS: CardItem[] = [
 ]
 
 const CARD_SETS_ALL = ['Toutes', ...new Set(CARDS.map(c=>c.set))]
+
+// Encyclopédie locale (remplacer par API Pokémon TCG)
+type EncCard = { name:string; type:string; rarity:string; number:string }
+const ENCYCLOPEDIA: Record<string,EncCard[]> = {
+  'SV151': [
+    {name:'Charizard Alt Art',number:'006',type:'fire',rarity:'Alt Art'},
+    {name:'Mew ex Alt Art',number:'205',type:'psychic',rarity:'Alt Art'},
+    {name:'Pikachu ex',number:'172',type:'electric',rarity:'Alt Art'},
+    {name:'Venusaur ex',number:'182',type:'grass',rarity:'Alt Art'},
+    {name:'Blastoise ex',number:'172',type:'water',rarity:'Alt Art'},
+    {name:'Mewtwo ex',number:'193',type:'psychic',rarity:'Secret Rare'},
+    {name:'Alakazam ex',number:'065',type:'psychic',rarity:'Alt Art'},
+    {name:'Arcanine ex',number:'059',type:'fire',rarity:'Alt Art'},
+    {name:'Gengar ex',number:'094',type:'psychic',rarity:'Alt Art'},
+    {name:'Gyarados ex',number:'130',type:'water',rarity:'Alt Art'},
+  ],
+  'Evolving Skies': [
+    {name:'Umbreon VMAX Alt',number:'215',type:'dark',rarity:'Alt Art'},
+    {name:'Rayquaza VMAX Alt',number:'218',type:'electric',rarity:'Alt Art'},
+    {name:'Glaceon VMAX Alt',number:'209',type:'water',rarity:'Alt Art'},
+    {name:'Leafeon VMAX Alt',number:'211',type:'grass',rarity:'Alt Art'},
+    {name:'Espeon VMAX Alt',number:'214',type:'psychic',rarity:'Alt Art'},
+    {name:'Jolteon VMAX Alt',number:'213',type:'electric',rarity:'Alt Art'},
+    {name:'Flareon VMAX Alt',number:'212',type:'fire',rarity:'Alt Art'},
+    {name:'Vaporeon VMAX Alt',number:'210',type:'water',rarity:'Alt Art'},
+    {name:'Sylveon VMAX Alt',number:'216',type:'psychic',rarity:'Alt Art'},
+    {name:'Duraludon VMAX Alt',number:'219',type:'dark',rarity:'Alt Art'},
+    {name:'Dragonite V Alt',number:'191',type:'electric',rarity:'Alt Art'},
+    {name:'Noivern V Alt',number:'193',type:'electric',rarity:'Alt Art'},
+  ],
+  'Champion Path': [
+    {name:'Charizard VMAX',number:'074',type:'fire',rarity:'Secret Rare'},
+    {name:'Pikachu V Alt',number:'043',type:'electric',rarity:'Alt Art'},
+    {name:'Gardevoir V Alt',number:'061',type:'psychic',rarity:'Alt Art'},
+    {name:'Flygon V Alt',number:'069',type:'electric',rarity:'Alt Art'},
+    {name:'Coalossal VMAX',number:'099',type:'fire',rarity:'Secret Rare'},
+  ],
+  'Fusion Strike': [
+    {name:'Gengar VMAX Alt',number:'271',type:'psychic',rarity:'Alt Art'},
+    {name:'Mew VMAX Alt',number:'269',type:'psychic',rarity:'Alt Art'},
+    {name:'Espeon VMAX Alt',number:'270',type:'psychic',rarity:'Alt Art'},
+    {name:'Hoopa V Alt',number:'111',type:'psychic',rarity:'Alt Art'},
+  ],
+  'Vivid Voltage': [
+    {name:'Pikachu VMAX RR',number:'188',type:'electric',rarity:'Secret Rare'},
+    {name:'Togekiss VMAX Alt',number:'182',type:'psychic',rarity:'Alt Art'},
+    {name:'Galarian Darmanitan VMAX Alt',number:'183',type:'water',rarity:'Alt Art'},
+  ],
+  'Pokemon GO': [
+    {name:'Mewtwo V Alt',number:'071',type:'psychic',rarity:'Alt Art'},
+    {name:'Dragonite V Alt',number:'049',type:'electric',rarity:'Alt Art'},
+    {name:'Alolan Exeggutor V Alt',number:'015',type:'grass',rarity:'Alt Art'},
+    {name:'Blissey V Alt',number:'022',type:'psychic',rarity:'Alt Art'},
+  ],
+  'Base Set': [
+    {name:'Blastoise Base Set',number:'002',type:'water',rarity:'Holo Rare'},
+    {name:'Charizard Base Set',number:'004',type:'fire',rarity:'Holo Rare'},
+    {name:'Clefairy Base Set',number:'005',type:'psychic',rarity:'Holo Rare'},
+    {name:'Gyarados Base Set',number:'006',type:'water',rarity:'Holo Rare'},
+    {name:'Hitmonchan Base Set',number:'007',type:'dark',rarity:'Holo Rare'},
+    {name:'Machamp Base Set',number:'008',type:'dark',rarity:'Holo Rare'},
+    {name:'Mewtwo Base Set',number:'010',type:'psychic',rarity:'Holo Rare'},
+    {name:'Ninetales Base Set',number:'012',type:'fire',rarity:'Holo Rare'},
+    {name:'Raichu Base Set',number:'014',type:'electric',rarity:'Holo Rare'},
+    {name:'Venusaur Base Set',number:'015',type:'grass',rarity:'Holo Rare'},
+    {name:'Zapdos Base Set',number:'016',type:'electric',rarity:'Holo Rare'},
+  ],
+  'Neo Genesis': [
+    {name:'Lugia Neo Genesis',number:'009',type:'water',rarity:'Holo Rare'},
+    {name:'Feraligatr Neo Genesis',number:'004',type:'water',rarity:'Holo Rare'},
+    {name:'Meganium Neo Genesis',number:'008',type:'grass',rarity:'Holo Rare'},
+    {name:'Typhlosion Neo Genesis',number:'017',type:'fire',rarity:'Holo Rare'},
+    {name:'Ampharos Neo Genesis',number:'001',type:'electric',rarity:'Holo Rare'},
+    {name:'Togetic Neo Genesis',number:'016',type:'psychic',rarity:'Holo Rare'},
+  ],
+  'Scarlet & Violet': [
+    {name:'Gardevoir ex SAR',number:'245',type:'psychic',rarity:'Secret Rare'},
+    {name:'Miraidon ex SAR',number:'254',type:'electric',rarity:'Secret Rare'},
+    {name:'Koraidon ex SAR',number:'252',type:'fire',rarity:'Secret Rare'},
+    {name:'Arcanine ex SAR',number:'234',type:'fire',rarity:'Secret Rare'},
+    {name:'Gyarados ex SAR',number:'237',type:'water',rarity:'Secret Rare'},
+  ],
+}
+
 const EMPTY_SLOTS = [
   { id:'e1', name:'Sylveon VMAX Alt',  set:'Evolving Skies', type:'psychic',  estPrice:'€ 250–310' },
   { id:'e2', name:'Énergie Alt Art',   set:'Evolving Skies', type:'electric', estPrice:'€ 40–60'   },
@@ -82,11 +166,11 @@ export function Holdings() {
   const [refCopied,   setRefCopied]   = useState(false)
   const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
   const [addOpen,     setAddOpen]     = useState(false)
+  const [addSuggs,    setAddSuggs]    = useState<string[]>([])
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; type:string; rarity:string; lang:'EN'|'JP'|'FR';
-    condition:string; graded:boolean; buyPrice:string; curPrice:string;
-    qty:number; year:number; signal:''|'S'|'A'|'B';
-  }>({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'EN',condition:'Raw',graded:false,buyPrice:'',curPrice:'',qty:1,year:new Date().getFullYear(),signal:''})
+    condition:string; graded:boolean; buyPrice:string; qty:number; year:number;
+  }>({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
   const [toast,       setToast]       = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
@@ -116,6 +200,23 @@ export function Holdings() {
     e.stopPropagation()
     setFavs(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n})
   }
+
+  // Modal add — handlers
+  const handleSetChange = (s:string) => { setAddForm(p=>({...p,set:s,name:'',type:'fire',rarity:'Alt Art'})); setAddSuggs([]) }
+  const handleNameInput = (val:string) => {
+    setAddForm(p=>({...p,name:val}))
+    if(val.length<1){setAddSuggs([]);return}
+    const enc = addForm.set&&ENCYCLOPEDIA[addForm.set] ? ENCYCLOPEDIA[addForm.set] : []
+    const matches = enc.filter(e=>e.name.toLowerCase().includes(val.toLowerCase())).map(e=>e.name)
+    setAddSuggs([...new Set(matches)].slice(0,6))
+  }
+  const handleSuggSelect = (name:string) => {
+    const enc = addForm.set&&ENCYCLOPEDIA[addForm.set] ? ENCYCLOPEDIA[addForm.set] : []
+    const found = enc.find(e=>e.name===name)
+    setAddForm(p=>({...p,name, type:found?.type??p.type, rarity:found?.rarity??p.rarity}))
+    setAddSuggs([])
+  }
+  const handleConditionChange = (cond:string) => { setAddForm(p=>({...p,condition:cond,graded:cond!=='Raw'})) }
 
   const insertCard = (slot:typeof EMPTY_SLOTS[number]) => {
     if(sliding||removing) return
@@ -158,17 +259,15 @@ export function Holdings() {
 
   const addCard = () => {
     if(!addForm.name||!addForm.set||!addForm.buyPrice) return
+    const bp = parseFloat(addForm.buyPrice)||0
     const newCard:CardItem = {
       id:'u'+Date.now(), name:addForm.name, set:addForm.set, year:addForm.year,
       number:'???', rarity:addForm.rarity, type:addForm.type, lang:addForm.lang,
-      condition:addForm.graded?addForm.condition:'Raw', graded:addForm.graded,
-      buyPrice:parseFloat(addForm.buyPrice)||0,
-      curPrice:parseFloat(addForm.curPrice)||parseFloat(addForm.buyPrice)||0,
-      qty:addForm.qty, signal:addForm.signal||undefined,
+      condition:addForm.condition, graded:addForm.graded, buyPrice:bp, curPrice:bp, qty:addForm.qty,
     }
     setFilled(prev=>[...prev,newCard])
-    setAddOpen(false)
-    setAddForm({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'EN',condition:'Raw',graded:false,buyPrice:'',curPrice:'',qty:1,year:new Date().getFullYear(),signal:''})
+    setAddOpen(false); setAddSuggs([])
+    setAddForm({name:'',set:'',type:'fire',rarity:'Alt Art',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
     showToast(newCard.name+(newCard.qty>1?` ×${newCard.qty}`:'')+' ajoutée ✓')
   }
 
@@ -214,6 +313,7 @@ export function Holdings() {
         .remove-btn { pointer-events:all !important; }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
         input::placeholder { color:rgba(255,255,255,.25) !important; }
+        select option { background:#111 !important; }
       `}</style>
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
@@ -427,102 +527,127 @@ export function Holdings() {
 
         {/* ADD CARD MODAL */}
         {addOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>setAddOpen(false)}>
-            <div style={{ background:'#0F0A04', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'28px', maxWidth:'560px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'90vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}>
+            <div style={{ background:'#0F0A04', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'28px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'92vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
                 <div>
-                  <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
-                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)', marginTop:'3px' }}>Renseigne les infos de ta carte</div>
+                  <div style={{ fontSize:'17px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Ajouter une carte ou un item</div>
+                  <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)', marginTop:'3px' }}>Connecté à l'encyclopédie PokéAlpha</div>
                 </div>
-                <button onClick={()=>setAddOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>×</button>
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>×</button>
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Nom de la carte *</div>
-                  <input value={addForm.name} onChange={e=>setAddForm(p=>({...p,name:e.target.value}))} placeholder="ex: Charizard Alt Art"
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
-                </div>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Série *</div>
-                  <input value={addForm.set} onChange={e=>setAddForm(p=>({...p,set:e.target.value}))} list="sets-list" placeholder="ex: SV151"
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
-                  <datalist id="sets-list">{CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s}/>)}</datalist>
-                </div>
-              </div>
-
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px', marginBottom:'10px' }}>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Type</div>
-                  <select value={addForm.type} onChange={e=>setAddForm(p=>({...p,type:e.target.value}))}
-                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
-                    {['fire','water','psychic','dark','electric','grass'].map(t=><option key={t} value={t} style={{background:'#111'}}>{t}</option>)}
+              {/* 1. Série EN PREMIER */}
+              <div style={{ marginBottom:'10px' }}>
+                <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Série *</div>
+                <div style={{ position:'relative' }}>
+                  <select value={addForm.set} onChange={e=>handleSetChange(e.target.value)}
+                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:`1px solid ${addForm.set?'rgba(255,107,53,.4)':'rgba(255,255,255,.12)'}`, borderRadius:'9px', padding:'9px 36px 9px 12px', color:addForm.set?'#fff':'rgba(255,255,255,.35)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    <option value="">Sélectionner une série…</option>
+                    {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s}>{s}</option>)}
+                    <option value="__custom__">✎ Autre série (saisie libre)</option>
                   </select>
+                  <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
                 </div>
+                {addForm.set==='__custom__'&&(
+                  <input onChange={e=>setAddForm(p=>({...p,set:e.target.value}))} placeholder="Nom de la série…"
+                    style={{ width:'100%', marginTop:'6px', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,107,53,.35)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                )}
+              </div>
+
+              {/* 2. Nom avec autocomplete encyclopédie */}
+              <div style={{ marginBottom:'10px' }}>
+                <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>
+                  Nom de la carte *
+                  {addForm.set&&addForm.set!=='__custom__'&&ENCYCLOPEDIA[addForm.set]&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'rgba(255,107,53,.7)', fontWeight:500 }}>· {ENCYCLOPEDIA[addForm.set].length} cartes dans l'encyclopédie</span>}
+                </div>
+                <div style={{ position:'relative' }}>
+                  <input value={addForm.name}
+                    onChange={e=>handleNameInput(e.target.value)}
+                    onBlur={()=>setTimeout(()=>setAddSuggs([]),160)}
+                    placeholder={addForm.set&&addForm.set!=='__custom__'?`Chercher dans ${addForm.set}…`:'Sélectionne une série d\'abord'}
+                    disabled={!addForm.set||addForm.set==='__custom__'&&addForm.set.length<3}
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:`1px solid ${addForm.name?'rgba(78,204,163,.4)':'rgba(255,255,255,.12)'}`, borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, opacity:!addForm.set?.5:1, cursor:!addForm.set?'not-allowed':'text' }}/>
+                  {addSuggs.length>0&&(
+                    <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#1A0E06', border:'1px solid rgba(255,107,53,.3)', borderRadius:'10px', overflow:'hidden', zIndex:99, boxShadow:'0 8px 28px rgba(0,0,0,.7)' }}>
+                      {addSuggs.map((s,i)=>{
+                        const enc=ENCYCLOPEDIA[addForm.set]?.find(e=>e.name===s)
+                        return (
+                          <div key={i} onMouseDown={()=>handleSuggSelect(s)}
+                            style={{ padding:'10px 14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:i<addSuggs.length-1?'1px solid rgba(255,255,255,.05)':'none' }}
+                            onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,107,53,.1)')}
+                            onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                            <div>
+                              <div style={{ fontSize:'13px', fontWeight:500, color:'#fff', fontFamily:'var(--font-display)' }}>{s}</div>
+                              {enc&&<div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'1px' }}>{enc.rarity} · #{enc.number}</div>}
+                            </div>
+                            {enc&&<div style={{ width:'8px', height:'8px', borderRadius:'50%', background:EC[enc.type]??'#888', flexShrink:0 }}/>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 3. Rareté + Langue */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
                 <div>
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Rareté</div>
                   <select value={addForm.rarity} onChange={e=>setAddForm(p=>({...p,rarity:e.target.value}))}
                     style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
-                    {['Alt Art','Secret Rare','Holo Rare','Gold Star','Promo','Common','Uncommon'].map(r=><option key={r} value={r} style={{background:'#111'}}>{r}</option>)}
+                    {['Alt Art','Secret Rare','Holo Rare','Gold Star','Rainbow Rare','Reverse Holo','Promo','Common','Uncommon'].map(r=><option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Langue</div>
                   <select value={addForm.lang} onChange={e=>setAddForm(p=>({...p,lang:e.target.value as 'EN'|'JP'|'FR'}))}
                     style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
-                    {(['EN','JP','FR'] as const).map(l=><option key={l} value={l} style={{background:'#111'}}>{l}</option>)}
+                    {(['FR','EN','JP'] as const).map(l=><option key={l} value={l}>{l}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'10px', marginBottom:'10px', alignItems:'flex-end' }}>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>État / Grade</div>
-                  <select value={addForm.condition} onChange={e=>setAddForm(p=>({...p,condition:e.target.value}))}
-                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
-                    {['Raw','PSA 7','PSA 8','PSA 9','PSA 10','BGS 9','BGS 9.5','CGC 9','CGC 9.5'].map(c=><option key={c} value={c} style={{background:'#111'}}>{c}</option>)}
-                  </select>
+              {/* 4. État — cochage auto gradée si pas Raw */}
+              <div style={{ marginBottom:'10px' }}>
+                <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>
+                  État / Grade
+                  {addForm.graded&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'#4ECCA3', fontWeight:600 }}>· Gradée ✓</span>}
                 </div>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'9px 14px', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', cursor:'pointer', whiteSpace:'nowrap' as const }}
-                  onClick={()=>setAddForm(p=>({...p,graded:!p.graded}))}>
-                  <div style={{ width:'16px', height:'16px', borderRadius:'4px', background:addForm.graded?'#FF6B35':'transparent', border:`2px solid ${addForm.graded?'#FF6B35':'rgba(255,255,255,.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', flexShrink:0 }}>{addForm.graded?'✓':''}</div>
-                  <span style={{ fontSize:'12px', color:'rgba(255,255,255,.6)', fontFamily:'var(--font-display)' }}>Gradée</span>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'6px', marginBottom:'6px' }}>
+                  {['Raw','PSA 9','PSA 10','BGS 9.5'].map(cond=>(
+                    <button key={cond} onClick={()=>handleConditionChange(cond)}
+                      style={{ padding:'8px 4px', borderRadius:'8px', border:`1px solid ${addForm.condition===cond?'rgba(255,107,53,.6)':'rgba(255,255,255,.1)'}`, background:addForm.condition===cond?'rgba(255,107,53,.15)':'rgba(255,255,255,.04)', color:addForm.condition===cond?'#FF9060':'rgba(255,255,255,.5)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s' }}>
+                      {cond}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'6px' }}>
+                  {['PSA 7','PSA 8','BGS 9','CGC 9.5'].map(cond=>(
+                    <button key={cond} onClick={()=>handleConditionChange(cond)}
+                      style={{ padding:'8px 4px', borderRadius:'8px', border:`1px solid ${addForm.condition===cond?'rgba(255,107,53,.6)':'rgba(255,255,255,.1)'}`, background:addForm.condition===cond?'rgba(255,107,53,.15)':'rgba(255,255,255,.04)', color:addForm.condition===cond?'#FF9060':'rgba(255,255,255,.5)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s' }}>
+                      {cond}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+              {/* 5. Prix achat + Quantité */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'22px' }}>
                 <div>
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Prix d'achat € *</div>
                   <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))} placeholder="0"
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:`1px solid ${addForm.buyPrice?'rgba(78,204,163,.4)':'rgba(255,255,255,.12)'}`, borderRadius:'9px', padding:'9px 12px', color:'#fff', fontSize:'14px', fontWeight:600, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,.25)', marginTop:'4px', fontFamily:'var(--font-display)' }}>Prix marché calculé par PokéAlpha</div>
                 </div>
                 <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Prix marché actuel €</div>
-                  <input type="number" value={addForm.curPrice} onChange={e=>setAddForm(p=>({...p,curPrice:e.target.value}))} placeholder="= prix achat si vide"
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', color:'rgba(255,255,255,.6)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
-                </div>
-              </div>
-
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'22px' }}>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Nombre d'exemplaires</div>
+                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Exemplaires</div>
                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                     <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))}
                       style={{ width:'36px', height:'36px', borderRadius:'8px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', color:'#fff', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>−</button>
-                    <div style={{ flex:1, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 12px', textAlign:'center' as const, fontSize:'17px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
+                    <div style={{ flex:1, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 0', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
                     <button onClick={()=>setAddForm(p=>({...p,qty:Math.min(99,p.qty+1)}))}
                       style={{ width:'36px', height:'36px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>+</button>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px' }}>Signal Dexy (optionnel)</div>
-                  <div style={{ display:'flex', gap:'6px' }}>
-                    {(['','S','A','B'] as const).map(sig=>(
-                      <button key={sig} onClick={()=>setAddForm(p=>({...p,signal:sig}))}
-                        style={{ flex:1, padding:'9px 4px', borderRadius:'8px', border:`1px solid ${addForm.signal===sig?'rgba(255,107,53,.6)':'rgba(255,255,255,.12)'}`, background:addForm.signal===sig?'rgba(255,107,53,.15)':'rgba(255,255,255,.05)', color:addForm.signal===sig?'#FF9060':'rgba(255,255,255,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                        {sig||'—'}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -532,7 +657,7 @@ export function Holdings() {
                   style={{ flex:1, padding:'13px', borderRadius:'11px', background:(!addForm.name||!addForm.set||!addForm.buyPrice)?'rgba(255,255,255,.08)':'linear-gradient(135deg,#E03020,#FF4433)', color:(!addForm.name||!addForm.set||!addForm.buyPrice)?'rgba(255,255,255,.3)':'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:(!addForm.name||!addForm.set||!addForm.buyPrice)?'default':'pointer', fontFamily:'var(--font-display)', boxShadow:(!addForm.name||!addForm.set||!addForm.buyPrice)?'none':'0 4px 16px rgba(224,48,32,.4)', transition:'all .2s' }}>
                   Ajouter {addForm.qty>1?`${addForm.qty} exemplaires`:'au portfolio'} →
                 </button>
-                <button onClick={()=>setAddOpen(false)}
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}
                   style={{ padding:'13px 20px', borderRadius:'11px', background:'rgba(255,255,255,.05)', color:'rgba(255,255,255,.5)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
                   Annuler
                 </button>
@@ -571,8 +696,8 @@ export function Holdings() {
             <div style={{ position:'relative', display:'inline-block' }}>
               <select value={activeSet} onChange={e=>{ const s=e.target.value; setActiveSet(s); setBinderPage(0); if(s!=='Toutes') setView('binder') }}
                 style={{ appearance:'none' as const, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.14)', borderRadius:'10px', padding:'7px 36px 7px 14px', color:activeSet==='Toutes'?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', minWidth:'220px' }}>
-                <option value="Toutes" style={{background:'#111'}}>Sélectionnez votre série</option>
-                {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
+                <option value="Toutes">Sélectionnez votre série</option>
+                {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s}>{s}</option>)}
               </select>
               <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>▾</div>
             </div>
@@ -603,7 +728,7 @@ export function Holdings() {
                     <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
                       <button onClick={()=>setAddOpen(true)}
                         style={{ padding:'5px 12px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                        + Ajouter
+                        + Ajouter une carte ou un item
                       </button>
                       {[3,4,5].map(n=>(
                         <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>

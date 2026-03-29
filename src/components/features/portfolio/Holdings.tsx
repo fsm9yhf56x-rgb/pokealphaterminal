@@ -77,6 +77,8 @@ export function Holdings() {
   const [favs,        setFavs]        = useState<Set<string>>(new Set(CARDS.filter(c=>c.favorite).map(c=>c.id)))
   const [setComplete, setSetComplete] = useState(false)
   const [shareOpen,   setShareOpen]   = useState(false)
+  const [shareCtx,    setShareCtx]    = useState<'portfolio'|'card'|'wrapped'>('portfolio')
+  const [shareCard,   setShareCard]   = useState<CardItem|null>(null)
   const [refCopied,   setRefCopied]   = useState(false)
   const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
   const [toast,       setToast]       = useState<string|null>(null)
@@ -165,7 +167,6 @@ export function Holdings() {
         @keyframes shareUp   { from{opacity:0;transform:translateY(100%)} to{opacity:1;transform:translateY(0)} }
         @keyframes slideDown { 0%{transform:translateY(-100%)} 62%{transform:translateY(4px)} 80%{transform:translateY(1.5px)} 91%{transform:translateY(-.5px)} 100%{transform:translateY(0)} }
         @keyframes slideUp2  { 0%{transform:translateY(0)} 100%{transform:translateY(-102%)} }
-
         .gem { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
         .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
         .gem .hm { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
@@ -250,7 +251,7 @@ export function Holdings() {
                     )}
                     <div style={{ display:'flex', gap:'8px' }}>
                       <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal →</button>
-                      <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
                       <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'❤️':'🤍'}</button>
                     </div>
                   </div>
@@ -260,24 +261,44 @@ export function Holdings() {
           )
         })()}
 
-        {/* SHARE SHEET — bottom sheet avec 4 formats cliquables */}
+        {/* SHARE SHEET — contexte dynamique carte / portfolio / wrapped */}
         {shareOpen&&(()=>{
-          const shareUrl = 'https://pokealphaterminal.io/share/collection-demo'
-          const tweetText = encodeURIComponent(`Ma collection Pokémon TCG vaut € ${totalCur.toLocaleString('fr-FR')} avec un ROI de +${totalROI}% 🔥\n\nAnalysée sur PokéAlpha Terminal — le Bloomberg des cartes Pokémon\n`)
-          const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(shareUrl)}&via=PokeAlphaTerminal`
+          const isCardCtx    = shareCtx==='card' && shareCard
+          const isWrappedCtx = shareCtx==='wrapped'
+          const ctxCard2     = shareCard
+          const ctxRoi       = ctxCard2 ? Math.round(((ctxCard2.curPrice-ctxCard2.buyPrice)/ctxCard2.buyPrice)*100) : totalROI
+          const ctxEc        = ctxCard2 ? (EC[ctxCard2.type]??'#888') : '#FF6B35'
+          const shareUrl     = ctxCard2 ? `https://pokealphaterminal.io/share/card-${ctxCard2.id}` : 'https://pokealphaterminal.io/share/collection-demo'
+          const tweetText    = encodeURIComponent(
+            isCardCtx
+              ? `${ctxCard2!.name} vaut € ${ctxCard2!.curPrice.toLocaleString('fr-FR')} — ROI +${ctxRoi}% 🔥 Analysée sur PokéAlpha Terminal`
+              : isWrappedCtx
+              ? `Mon Wrapped 2026 Pokémon TCG : € ${totalCur.toLocaleString('fr-FR')}, ROI +${totalROI}% 🏆 via PokéAlpha Terminal`
+              : `Ma collection Pokémon TCG vaut € ${totalCur.toLocaleString('fr-FR')} avec +${totalROI}% ROI 🔥 via PokéAlpha Terminal`
+          )
+          const tweetUrl     = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(shareUrl)}&via=PokeAlphaTerminal`
+          const sheetTitle   = isCardCtx ? `Partager · ${ctxCard2!.name}` : isWrappedCtx ? 'Partager mon Wrapped' : 'Partager ma collection'
+          const top4Colors   = isCardCtx
+            ? [ctxCard2!.type, ctxCard2!.type, 'dark', 'water'].map(t=>EC[t]??'#888')
+            : [...CARDS].sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,4).map(cc=>EC[cc.type]??'#888')
+
           const formats = [
             {
               id:'story', title:'Story Instagram', sub:'9:16 · TikTok · Reels',
               action:()=>{ showToast('Story générée ✓'); setShareOpen(false); setSelectedFmt(null) },
               preview:(
-                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 40%,rgba(255,107,53,.2),transparent 60%)' }}/>
-                  <div style={{ width:'52px', height:'92px', borderRadius:'7px', background:'linear-gradient(145deg,rgba(255,107,53,.2),rgba(200,60,20,.08))', border:'1px solid rgba(255,107,53,.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px' }}>
+                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+                  <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 50% 40%,${ctxEc}30,transparent 60%)` }}/>
+                  <div style={{ width:'52px', height:'90px', borderRadius:'7px', background:`linear-gradient(145deg,${ctxEc}22,${ctxEc}08)`, border:`1px solid ${ctxEc}45`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
                     <div style={{ fontSize:'5px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
-                    <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#FF9050,#E03020)' }}/>
-                    <div style={{ fontSize:'6px', fontWeight:600, color:'rgba(255,255,255,.7)', textAlign:'center' as const }}>Charizard</div>
-                    <div style={{ fontSize:'9px', fontWeight:700, color:'#fff' }}>€ 920</div>
-                    <div style={{ fontSize:'6px', color:'#4ECCA3', fontWeight:600 }}>+53% ROI</div>
+                    <div style={{ width:'18px', height:'18px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ctxEc}DD,${ctxEc}77)` }}/>
+                    <div style={{ fontSize:'6px', fontWeight:600, color:'rgba(255,255,255,.75)', textAlign:'center' as const, lineHeight:1.2, padding:'0 3px' }}>
+                      {isCardCtx ? ctxCard2!.name.split(' ').slice(0,2).join(' ') : 'Ma Collection'}
+                    </div>
+                    <div style={{ fontSize:'9px', fontWeight:700, color:'#fff' }}>
+                      {isCardCtx ? `€ ${ctxCard2!.curPrice}` : `€ ${totalCur.toLocaleString('fr-FR')}`}
+                    </div>
+                    <div style={{ fontSize:'6px', color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}% ROI</div>
                   </div>
                 </div>
               )
@@ -286,34 +307,38 @@ export function Holdings() {
               id:'grid', title:'Grille Top 4', sub:'1:1 · Feed · Instagram',
               action:()=>{ showToast('Grille générée ✓'); setShareOpen(false); setSelectedFmt(null) },
               preview:(
-                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <div style={{ width:'96px', height:'96px', borderRadius:'9px', background:'#111', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px', padding:'2px' }}>
-                    {[EC.fire,EC.dark,EC.water,EC.psychic].map((col,i)=>(
-                      <div key={i} style={{ borderRadius:'4px', background:`linear-gradient(145deg,${col}40,${col}18)`, border:`1px solid ${col}50` }}/>
+                    {top4Colors.map((col,i)=>(
+                      <div key={i} style={{ borderRadius:'4px', background:`linear-gradient(145deg,${col}40,${col}18)`, border:`1px solid ${col}50`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        {isCardCtx&&i===0&&<div style={{ fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.7)' }}>×{ctxCard2!.qty}</div>}
+                      </div>
                     ))}
                   </div>
                 </div>
               )
             },
             {
-              id:'card', title:'Carte investisseur', sub:'Portfolio · ROI',
-              action:()=>{ navigator.clipboard.writeText(shareUrl); showToast("Lien copié ✓"); setShareOpen(false); setSelectedFmt(null) },
+              id:'card', title:isCardCtx?'Fiche carte':'Carte investisseur', sub:isCardCtx?ctxCard2!.rarity:'Portfolio · ROI',
+              action:()=>{ navigator.clipboard.writeText(shareUrl); showToast('Lien copié ✓'); setShareOpen(false); setSelectedFmt(null) },
               preview:(
-                <div style={{ height:'120px', background:'#1A0A05', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <div style={{ width:'144px', height:'80px', borderRadius:'9px', overflow:'hidden', position:'relative' }}>
+                <div style={{ height:'120px', background:'#0D0804', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ width:'140px', height:'76px', borderRadius:'9px', overflow:'hidden', position:'relative' }}>
                     <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,#111,#1A1208)' }}/>
-                    <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 80% 40%,rgba(255,107,53,.12),transparent 60%)' }}/>
-                    <div style={{ position:'relative', padding:'9px 11px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+                    <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 80% 40%,${ctxEc}18,transparent 60%)` }}/>
+                    <div style={{ position:'relative', padding:'8px 10px', height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
                       <div>
-                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Ma Collection</div>
-                        <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', letterSpacing:'-0.5px', fontFamily:'var(--font-display)' }}>€ {totalCur.toLocaleString('fr-FR')}</div>
+                        <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>{isCardCtx?ctxCard2!.rarity:'Ma Collection'}</div>
+                        <div style={{ fontSize:isCardCtx?'11px':'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{isCardCtx?ctxCard2!.name:`€ ${totalCur.toLocaleString('fr-FR')}`}</div>
+                        {isCardCtx&&<div style={{ fontSize:'12px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>€ {ctxCard2!.curPrice}</div>}
                       </div>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
                         <div>
-                          <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)' }}>ROI TOTAL</div>
-                          <div style={{ fontSize:'11px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{totalROI}%</div>
+                          <div style={{ fontSize:'6px', color:'rgba(255,255,255,.3)' }}>{isCardCtx?'ROI':'ROI TOTAL'}</div>
+                          <div style={{ fontSize:'10px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{ctxRoi}%</div>
                         </div>
-                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>POKÉALPHA TERMINAL</div>
+                        {isCardCtx&&ctxCard2!.qty>1&&<div style={{ fontSize:'8px', fontWeight:600, color:'rgba(255,255,255,.5)' }}>×{ctxCard2!.qty}</div>}
+                        <div style={{ fontSize:'5px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)' }}>POKÉALPHA</div>
                       </div>
                     </div>
                   </div>
@@ -321,14 +346,17 @@ export function Holdings() {
               )
             },
             {
-              id:'twitter', title:'Tweet / X', sub:'Partage sur Twitter · X',
+              id:'twitter', title:'Tweet / X', sub:'Partage sur Twitter',
               action:()=>{ window.open(tweetUrl,'_blank','noopener'); showToast('Ouverture Twitter / X ✓') },
               preview:(
                 <div style={{ height:'120px', background:'#050810', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
                   <div style={{ position:'absolute', inset:0, background:'radial-gradient(circle at 50% 50%,rgba(29,161,242,.12),transparent 60%)' }}/>
                   <div style={{ maxWidth:'148px', padding:'10px', borderRadius:'9px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)' }}>
                     <div style={{ fontSize:'8px', color:'rgba(255,255,255,.55)', lineHeight:1.5, fontFamily:'var(--font-display)' }}>
-                      Collection TCG: <span style={{ color:'#fff', fontWeight:600 }}>€ {totalCur.toLocaleString('fr-FR')}</span> · ROI <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</span> 🔥
+                      {isCardCtx
+                        ? <>{ctxCard2!.name}: <span style={{ color:'#fff', fontWeight:600 }}>€ {ctxCard2!.curPrice}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{ctxRoi}%</span> ROI</>
+                        : <>Collection: <span style={{ color:'#fff', fontWeight:600 }}>€ {totalCur.toLocaleString('fr-FR')}</span> · <span style={{ color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</span></>
+                      }
                     </div>
                     <div style={{ marginTop:'6px', fontSize:'7px', color:'rgba(29,161,242,.7)', fontFamily:'var(--font-display)' }}>pokealphaterminal.io</div>
                   </div>
@@ -337,14 +365,14 @@ export function Holdings() {
               )
             },
           ]
+
           return (
             <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }}>
               <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'22px 26px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
-                  <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager ma collection</div>
+                  <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>{sheetTitle}</div>
                   <button onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0, lineHeight:1 }}>×</button>
                 </div>
-                {/* 4 formats sélectionnables */}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', marginBottom:'12px' }}>
                   {formats.map(f=>{
                     const isSel = selectedFmt===f.id
@@ -363,7 +391,6 @@ export function Holdings() {
                     )
                   })}
                 </div>
-                {/* Referral */}
                 <div style={{ display:'flex', gap:'8px', marginBottom:'10px', alignItems:'center', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'9px 14px' }}>
                   <div style={{ flex:1, overflow:'hidden' }}>
                     <div style={{ fontSize:'9px', color:'rgba(255,255,255,.35)', letterSpacing:'.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:'2px' }}>Ton lien de parrainage · gagne 1 mois Pro</div>
@@ -374,19 +401,17 @@ export function Holdings() {
                     {refCopied?'✓ Copié !':'Copier'}
                   </button>
                 </div>
-                {/* Branding */}
                 <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
                   <div style={{ width:'18px', height:'18px', borderRadius:'5px', background:'linear-gradient(135deg,#E03020,#FF4433)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', flexShrink:0 }}>▲</div>
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)' }}>
                     Partagé depuis <span style={{ color:'rgba(255,255,255,.6)', fontWeight:600 }}>PokéAlpha Terminal</span> <span style={{ color:'rgba(255,255,255,.2)' }}>— le Bloomberg des cartes Pokémon</span>
                   </div>
                 </div>
-                {/* CTA dynamique */}
                 <div style={{ display:'flex', gap:'8px' }}>
                   {selectedFmt ? (
                     <button onClick={()=>formats.find(f=>f.id===selectedFmt)?.action()}
                       style={{ flex:1, padding:'12px', borderRadius:'10px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.4)' }}>
-                      {selectedFmt==='twitter'?'Ouvrir Twitter / X →':selectedFmt==='card'?"Copier le lien →":'Générer · PNG HD →'}
+                      {selectedFmt==='twitter'?'Ouvrir Twitter / X →':selectedFmt==='card'?'Copier le lien →':'Générer · PNG HD →'}
                     </button>
                   ) : (
                     <button onClick={()=>{ showToast('4 formats générés ✓'); setShareOpen(false) }}
@@ -422,7 +447,7 @@ export function Holdings() {
                 <div style={{ fontSize:'18px', fontWeight:600, color:'#FFD700', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
                 <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{bestCard.name}</div>
               </div>
-              <button onClick={()=>setShareOpen(true)} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.45)' }}>Partager →</button>
+              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 4px 16px rgba(224,48,32,.45)' }}>Partager →</button>
             </div>
           </div>
           <div style={{ display:'flex', gap:'6px' }}>
@@ -475,7 +500,6 @@ export function Holdings() {
                     </div>
                   </div>
                 </div>
-
                 <div style={{ marginBottom:'16px' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
                     <span style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', letterSpacing:'.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Complétion du set</span>
@@ -485,7 +509,6 @@ export function Holdings() {
                     <div style={{ height:'100%', width:`${pct}%`, borderRadius:'99px', background:setComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#7E57C2,#C855D4)', transition:'width .8s cubic-bezier(.23,1,.32,1)' }}/>
                   </div>
                 </div>
-
                 <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
                   {pageItems.map((item,idx)=>{
                     const isEmpty   = 'isEmpty' in item
@@ -582,7 +605,8 @@ export function Holdings() {
                           style={{ position:'absolute', top:'6px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.8)', border:'1px solid rgba(255,255,255,.2)', color:'rgba(255,255,255,.85)', borderRadius:'20px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                           ↑ Retirer
                         </button>
-                        <div style={{ position:'absolute', bottom:'34px', left:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
+                        {card.qty>1&&<div style={{ position:'absolute', bottom:'28px', left:'6px', zIndex:11, background:'rgba(0,0,0,.72)', border:'1px solid rgba(255,255,255,.2)', borderRadius:'20px', padding:'1px 6px', fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.75)', fontFamily:'var(--font-display)', pointerEvents:'none', lineHeight:1.6 }}>×{card.qty}</div>}
+                        <div style={{ position:'absolute', bottom:'28px', right:'6px', zIndex:11, width:'14px', height:'14px', borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', color:'rgba(255,255,255,.8)', fontWeight:700, pointerEvents:'none', lineHeight:1 }}>+</div>
                       </div>
                     )
                     return null
@@ -591,7 +615,6 @@ export function Holdings() {
                     <div key={`ph-${i}`} style={{ aspectRatio:'2/3', borderRadius:'9px', border:'1px solid rgba(255,255,255,.04)', background:'rgba(255,255,255,.01)', opacity:.4 }}/>
                   ))}
                 </div>
-
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
@@ -599,7 +622,6 @@ export function Holdings() {
                     ))}
                   </div>
                 )}
-
                 <div style={{ position:'absolute', bottom:'14px', right:'18px', fontSize:'9px', color:'rgba(255,255,255,.05)', letterSpacing:'.2em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>PokéAlpha Terminal</div>
               </div>
             </div>
@@ -705,7 +727,7 @@ export function Holdings() {
               </div>
             </div>
             <div style={{ padding:'0 28px 28px', display:'flex', gap:'8px' }}>
-              <button onClick={()=>setShareOpen(true)} style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,.45)' }}>Partager mon Wrapped 2026 →</button>
+              <button onClick={()=>{ setShareCtx('wrapped'); setShareCard(null); setShareOpen(true) }} style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,.45)' }}>Partager mon Wrapped 2026 →</button>
               <button style={{ padding:'14px 20px', borderRadius:'12px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
             </div>
           </div>

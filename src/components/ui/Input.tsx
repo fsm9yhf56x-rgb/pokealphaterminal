@@ -1,58 +1,61 @@
-'use client'
+import { forwardRef, type InputHTMLAttributes } from 'react'
+import { cn } from '@/lib/utils/cn'
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
-
-interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
-  label?:  string
-  error?:  string
-  hint?:   string
-  prefix?: ReactNode
-  suffix?: ReactNode
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'suffix'> {
+  label?:   string
+  error?:   string
+  hint?:    string
+  prefix?:  React.ReactNode
+  suffix?:  React.ReactNode
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, prefix, suffix, style, ...props }, ref) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      {label && (
-        <label style={{ fontSize: '12px', fontWeight: 500, color: '#111', fontFamily: 'var(--font-space, system-ui)', letterSpacing: '0.02em' }}>
-          {label}
-        </label>
-      )}
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        {prefix && (
-          <span style={{ position: 'absolute', left: '10px', color: '#888', fontSize: '13px', pointerEvents: 'none' }}>
-            {prefix}
-          </span>
+  ({ label, error, hint, prefix, suffix, className, ...props }, ref) => {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label && (
+          <label className="font-display font-medium text-ink text-xs tracking-wide">
+            {label}
+          </label>
         )}
-        <input
-          ref={ref}
-          style={{
-            width: '100%',
-            height: '36px',
-            padding: `0 ${suffix ? '32px' : '12px'} 0 ${prefix ? '28px' : '12px'}`,
-            background: '#fff',
-            border: `1px solid ${error ? '#E03020' : '#EBEBEB'}`,
-            borderRadius: '8px',
-            fontSize: '13px',
-            color: '#111',
-            fontFamily: 'var(--font-sans, system-ui)',
-            outline: 'none',
-            transition: 'border-color 0.15s',
-            ...style,
-          }}
-          onFocus={e => { e.currentTarget.style.borderColor = error ? '#E03020' : '#111' }}
-          onBlur={e  => { e.currentTarget.style.borderColor = error ? '#E03020' : '#EBEBEB' }}
-          {...props}
-        />
-        {suffix && (
-          <span style={{ position: 'absolute', right: '10px', color: '#888', fontSize: '13px', pointerEvents: 'none' }}>
-            {suffix}
-          </span>
+        <div className="relative flex items-center">
+          {prefix && (
+            <div className="absolute left-3 text-ink-muted text-sm">
+              {prefix}
+            </div>
+          )}
+          <input
+            ref={ref}
+            className={cn(
+              'w-full bg-surface border rounded-lg font-sans text-sm text-ink',
+              'placeholder:text-ink-faint',
+              'transition-colors duration-150',
+              'focus:outline-none focus:border-border-focus',
+              error
+                ? 'border-red focus:border-red'
+                : 'border-border hover:border-border-strong',
+              prefix ? 'pl-9' : 'pl-3',
+              suffix ? 'pr-9' : 'pr-3',
+              'py-2 h-9',
+              className
+            )}
+            {...props}
+          />
+          {suffix && (
+            <div className="absolute right-3 text-ink-muted text-sm">
+              {suffix}
+            </div>
+          )}
+        </div>
+        {error && (
+          <p className="text-red text-xs font-sans">{error}</p>
+        )}
+        {hint && !error && (
+          <p className="text-ink-muted text-xs font-sans">{hint}</p>
         )}
       </div>
-      {error && <p style={{ fontSize: '11px', color: '#E03020', margin: 0 }}>{error}</p>}
-      {hint && !error && <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>{hint}</p>}
-    </div>
-  )
+    )
+  }
 )
+
 Input.displayName = 'Input'

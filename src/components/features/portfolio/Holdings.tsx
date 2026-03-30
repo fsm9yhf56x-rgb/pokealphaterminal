@@ -512,7 +512,7 @@ export function Holdings() {
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
-                      + Ajouter une carte
+                      + Ajouter une carte ou un item
                     </button>
                     {[3,4,5].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
@@ -527,7 +527,7 @@ export function Holdings() {
                     <div style={{ fontSize:'14px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)' }}>Collection vide</div>
                     <div style={{ fontSize:'12px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre premiere carte pour commencer</div>
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'11px 24px', borderRadius:'11px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                      + Ajouter ma premiere carte
+                      + Ajouter ma première carte
                     </button>
                   </div>
                 ):(

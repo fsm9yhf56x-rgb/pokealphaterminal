@@ -144,24 +144,69 @@ export function Encyclopedie() {
   return (
     <>
       <style>{`
-        @keyframes fadeIn  { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        @keyframes slideIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes spin    { to{transform:rotate(360deg)} }
-        @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-        .enc-card { transition:all .18s; border-radius:12px; overflow:hidden; cursor:pointer; }
-        .enc-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,.1) !important; }
-        .enc-card.sel { border-color:#111 !important; box-shadow:0 8px 24px rgba(0,0,0,.1) !important; }
+        @keyframes fadeIn    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn    { from{opacity:0;transform:scale(.93) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes slideIn   { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes spin      { to{transform:rotate(360deg)} }
+        @keyframes shimmer   { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+        @keyframes imgReveal { from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:scale(1)} }
+        @keyframes panelIn   { from{opacity:0;transform:translateX(14px) scale(.98)} to{opacity:1;transform:translateX(0) scale(1)} }
+        @keyframes holoMove  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes selPulse  { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.12)} 50%{box-shadow:0 0 0 3px rgba(0,0,0,.22),0 8px 28px rgba(0,0,0,.12)} }
+        @keyframes langBounce{ 0%{transform:scale(1)} 40%{transform:scale(1.18)} 70%{transform:scale(.95)} 100%{transform:scale(1)} }
+
+        .enc-card {
+          transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s ease, border-color .18s ease;
+          border-radius: 12px; overflow: hidden; cursor: pointer; position: relative;
+        }
+        .enc-card::after {
+          content:''; position:absolute; inset:0; border-radius:12px; pointer-events:none;
+          background: linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 60%);
+          opacity: 0; transition: opacity .25s;
+        }
+        .enc-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 32px rgba(0,0,0,.13) !important; }
+        .enc-card:hover::after { opacity: 1; }
+        .enc-card:hover .card-img { transform: scale(1.06); }
+        .enc-card.sel { animation: selPulse 2s ease-in-out infinite; border-color: #111 !important; }
+        .enc-card.sel::before {
+          content:''; position:absolute; inset:0; border-radius:12px; pointer-events:none; z-index:1;
+          background: linear-gradient(135deg,rgba(255,220,100,.13),rgba(160,100,255,.1),rgba(100,200,255,.12));
+          background-size:300% 300%; animation: holoMove 4s ease infinite;
+        }
+        .card-img { transition: transform .35s cubic-bezier(.34,1.2,.64,1); will-change:transform; }
+        .card-img-loaded { animation: imgReveal .3s ease-out; }
+
+        .enc-card .card-name {
+          transition: color .15s;
+        }
+        .enc-card:hover .card-name { color: #000 !important; }
+
         .srt { padding:5px 10px; border-radius:6px; border:none; background:transparent; color:#666; font-size:11px; font-weight:500; cursor:pointer; transition:all .12s; font-family:var(--font-display); }
         .srt:hover { background:#EBEBEB; }
         .srt.on { background:#111 !important; color:#fff !important; }
-        .rh:hover { background:#F8F8F8 !important; cursor:pointer; }
-        .shimmer { background:linear-gradient(90deg,#F0F0F0 25%,#E8E8E8 50%,#F0F0F0 75%); background-size:800px 100%; animation:shimmer 1.5s infinite; }
-        .pgbtn { padding:6px 12px; border-radius:7px; border:1px solid #E8E8E8; background:#fff; color:#555; font-size:12px; cursor:pointer; font-family:var(--font-display); }
-        .pgbtn:disabled { color:#CCC; cursor:default; }
-        .pgbtn:not(:disabled):hover { background:#F5F5F5; }
-        .fsel { height:34px; padding:0 10px; border:1px solid #EBEBEB; border-radius:7px; font-size:12px; outline:none; background:#fff; cursor:pointer; font-family:var(--font-display); color:#555; }
-        .fsel:focus { border-color:#999; }
+        .rh { transition: background .12s; cursor:pointer; }
+        .rh:hover { background:#F7F7F7 !important; }
+        .rh:hover .rh-name { font-weight:600 !important; }
+
+        .shimmer { background:linear-gradient(90deg,#F2F2F2 25%,#E8E8E8 50%,#F2F2F2 75%); background-size:800px 100%; animation:shimmer 1.4s infinite; }
+
+        .pgbtn { padding:6px 12px; border-radius:7px; border:1px solid #E8E8E8; background:#fff; color:#555; font-size:12px; cursor:pointer; font-family:var(--font-display); transition:all .12s; }
+        .pgbtn:disabled { color:#DDD; cursor:default; border-color:#F0F0F0; }
+        .pgbtn:not(:disabled):hover { background:#F5F5F5; transform:scale(1.04); }
+
+        .fsel { height:34px; padding:0 10px; border:1px solid #EBEBEB; border-radius:7px; font-size:12px; outline:none; background:#fff; cursor:pointer; font-family:var(--font-display); color:#555; transition:border-color .15s; }
+        .fsel:focus, .fsel:hover { border-color:#BBBBBB; }
+
+        .lang-btn { transition: all .2s cubic-bezier(.34,1.4,.64,1) !important; }
+        .lang-btn:active { animation: langBounce .35s ease-out; }
+
+        .detail-panel { animation: panelIn .28s cubic-bezier(.34,1.2,.64,1); }
+        .attack-row { transition: background .12s; border-radius:8px; }
+        .attack-row:hover { background:#F0F0F0 !important; }
+
+        .add-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1) !important; }
+        .add-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow:0 4px 14px rgba(0,0,0,.18) !important; }
+        .add-btn:active { transform: scale(.97) !important; }
       `}</style>
 
       <div style={{ animation:'fadeIn .25s ease-out', width:'100%', display:'flex', gap:'20px' }}>
@@ -177,7 +222,10 @@ export function Encyclopedie() {
               <div style={{ fontSize:'12px', color:'#888', minHeight:'18px', display:'flex', alignItems:'center', gap:'6px' }}>
                 {loading ? (
                   <>
-                    <div style={{ width:'12px', height:'12px', border:'1.5px solid #DDD', borderTop:'1.5px solid #888', borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+                    <div style={{ position:'relative', width:'14px', height:'14px', flexShrink:0 }}>
+                      <div style={{ position:'absolute', inset:0, border:'1.5px solid #EEE', borderTop:'1.5px solid #555', borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
+                      <div style={{ position:'absolute', inset:'3px', borderRadius:'50%', background:'#999' }}/>
+                    </div>
                     <span style={{ color:'#AAA' }}>{loadMsg}</span>
                   </>
                 ) : loadErr ? (
@@ -194,8 +242,8 @@ export function Encyclopedie() {
             {/* Language selector */}
             <div style={{ background:'#F5F5F5', borderRadius:'12px', padding:'4px', display:'flex', gap:'3px', flexShrink:0 }}>
               {(['EN','FR','JP'] as Lang[]).map(l => (
-                <button key={l} onClick={()=>setLang(l)}
-                  style={{ padding:'8px 14px', borderRadius:'9px', border:'none', background:lang===l?'#fff':'transparent', color:lang===l?'#111':'#888', fontFamily:'var(--font-display)', fontWeight:lang===l?700:500, fontSize:'13px', cursor:'pointer', boxShadow:lang===l?'0 1px 4px rgba(0,0,0,.08)':'none', transition:'all .15s', display:'flex', alignItems:'center', gap:'6px', flexShrink:0 }}>
+                <button key={l} onClick={()=>setLang(l)} className="lang-btn"
+                  style={{ padding:'8px 14px', borderRadius:'9px', border:'none', background:lang===l?'#fff':'transparent', color:lang===l?'#111':'#888', fontFamily:'var(--font-display)', fontWeight:lang===l?700:500, fontSize:'13px', cursor:'pointer', boxShadow:lang===l?'0 2px 8px rgba(0,0,0,.1)':'none', display:'flex', alignItems:'center', gap:'6px', flexShrink:0 }}>
                   <span>{flag(l)}</span>
                   <span>{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
                 </button>
@@ -258,9 +306,13 @@ export function Encyclopedie() {
           {/* Loading */}
           {loading && (
             <div style={{ textAlign:'center', padding:'80px 20px' }}>
-              <div style={{ width:'28px', height:'28px', border:'2.5px solid #EBEBEB', borderTop:'2.5px solid #111', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 14px' }}/>
-              <div style={{ fontSize:'13px', color:'#888', fontFamily:'var(--font-display)', marginBottom:'6px' }}>{loadMsg}</div>
-              <div style={{ fontSize:'11px', color:'#CCC' }}>Mise en cache automatique pour les prochaines visites</div>
+              <div style={{ position:'relative', width:'44px', height:'44px', margin:'0 auto 16px' }}>
+                <div style={{ position:'absolute', inset:0, border:'3px solid #F0F0F0', borderTop:'3px solid #111', borderRadius:'50%', animation:'spin .8s linear infinite' }}/>
+                <div style={{ position:'absolute', inset:'5px', border:'2px solid #F5F5F5', borderBottom:'2px solid #CCCCCC', borderRadius:'50%', animation:'spin 1.4s linear infinite reverse' }}/>
+                <div style={{ position:'absolute', inset:'10px', borderRadius:'50%', background:'#111' }}/>
+              </div>
+              <div style={{ fontSize:'13px', color:'#666', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'5px' }}>{loadMsg}</div>
+              <div style={{ fontSize:'11px', color:'#CCC' }}>Mise en cache pour les prochaines visites</div>
             </div>
           )}
 
@@ -275,23 +327,25 @@ export function Encyclopedie() {
                     className={`enc-card${isSel?' sel':''}`}
                     onClick={()=>handleCardClick(card.id)}
                     style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:'0 2px 6px rgba(0,0,0,.04)', animation:`cardIn .2s ${Math.min(idx,20)*.02}s ease-out both` }}>
-                    <div style={{ height:'128px', background:'#F7F7F7', position:'relative', overflow:'hidden' }}>
+                    <div style={{ height:'128px', background:'linear-gradient(145deg,#F5F5F5,#EFEFEF)', position:'relative', overflow:'hidden' }}>
                       {img ? (
                         <img src={img} alt={card.name}
+                          className="card-img"
                           style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
+                          onLoad={e=>{ (e.target as HTMLImageElement).classList.add('card-img-loaded') }}
                           onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.png')) t.src=`${card.image}/low.png`; else t.style.display='none' }}/>
                       ) : (
                         <div className="shimmer" style={{ position:'absolute', inset:0 }}/>
                       )}
-                      <div style={{ position:'absolute', bottom:'4px', right:'5px', fontSize:'12px', background:'rgba(255,255,255,.85)', borderRadius:'4px', padding:'1px 4px' }}>
+                      <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize:'11px', background:'rgba(255,255,255,.9)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)', letterSpacing:'-.2px' }}>
                         {flag(lang)}
                       </div>
                     </div>
                     <div style={{ padding:'9px 10px 10px' }}>
-                      <div style={{ fontSize:'12px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                      <div className="card-name" style={{ fontSize:'12px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
                         {card.name}
                       </div>
-                      <div style={{ fontSize:'10px', color:'#BBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                      <div style={{ fontSize:'10px', color:'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
                         {card.setName} · <span style={{ fontFamily:'monospace' }}>#{card.localId}</span>
                       </div>
                     </div>
@@ -365,8 +419,8 @@ export function Encyclopedie() {
 
         {/* ── DETAIL PANEL ── */}
         {selId && (
-          <div style={{ width:'285px', flexShrink:0, animation:'slideIn .2s ease-out' }}>
-            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', position:'sticky', top:'20px', maxHeight:'90vh', overflowY:'auto' as const }}>
+          <div className="detail-panel" style={{ width:'285px', flexShrink:0 }}>
+            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', position:'sticky', top:'20px', maxHeight:'90vh', overflowY:'auto' as const, boxShadow:'0 8px 32px rgba(0,0,0,.07)' }}>
 
               {detLoading ? (
                 <div style={{ padding:'50px 20px', textAlign:'center' }}>
@@ -441,7 +495,7 @@ export function Encyclopedie() {
                       <div style={{ marginBottom:'14px' }}>
                         <div style={{ fontSize:'9px', fontWeight:700, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.1em', fontFamily:'var(--font-display)', marginBottom:'7px' }}>Attaques</div>
                         {detail.attacks.slice(0,3).map((a,i)=>(
-                          <div key={i} style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px', marginBottom:'5px' }}>
+                          <div key={i} className="attack-row" style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px', marginBottom:'5px' }}>
                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'3px' }}>
                               <span style={{ fontSize:'11px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>{a.name}</span>
                               {a.damage!=null && <span style={{ fontSize:'12px', fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)' }}>{a.damage}</span>}
@@ -473,8 +527,8 @@ export function Encyclopedie() {
                       </div>
                     )}
 
-                    <button onClick={()=>router.push('/portfolio')}
-                      style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    <button onClick={()=>router.push('/portfolio')} className="add-btn"
+                      style={{ width:'100%', padding:'11px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>
                       + Ajouter au portfolio
                     </button>
                   </div>

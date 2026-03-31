@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { fetchSets, fetchCardsForSet, type TCGSet, type TCGCard as TCGApiCard } from '@/lib/tcgApi'
 import { useRouter } from 'next/navigation'
 
 type TCGCard = {
@@ -83,8 +84,55 @@ export function Encyclopedie() {
   const [sort,      setSort]      = useState<SortKey>('price')
   const [view,      setView]      = useState<ViewMode>('grid')
   const [selected,  setSelected]  = useState<string|null>(null)
+  const [liveMode,   setLiveMode]   = useState(false)
+  const [liveLang,   setLiveLang]   = useState<'EN'|'FR'|'JP'>('EN')
+  const [liveSets,   setLiveSets]   = useState<TCGSet[]>([])
+  const [liveSetId,  setLiveSetId]  = useState('')
+  const [apiCards,   setApiCards]   = useState<TCGCard[]>([])
+  const [apiLoading, setApiLoading] = useState(false)
+  const [setsLoading,setSetsLoading]= useState(false)
 
-  const filtered = useMemo(() => CARDS
+  useEffect(() => {
+    if (!liveMode) { setLiveSets([]); setLiveSetId(''); setApiCards([]); return }
+    setSetsLoading(true)
+    fetchSets(liveLang)
+      .then(sets => { setLiveSets(sets); setSetsLoading(false) })
+      .catch(() => setSetsLoading(false))
+  }, [liveMode, liveLang])
+
+  useEffect(() => {
+    if (!liveSetId || !liveMode) return
+    setApiLoading(true)
+    setApiCards([])
+    const found = liveSets.find(x => x.id === liveSetId)
+    fetchCardsForSet(liveLang, liveSetId)
+      .then((raw: TCGApiCard[]) => {
+        const year = parseInt(found?.releaseDate?.slice(0,4) ?? '2000') || 2000
+        setApiCards(raw.map(c => ({
+          id:      'api_'+c.id,
+          name:    c.name,
+          set:     found?.name ?? liveSetId,
+          setCode: liveSetId,
+          number:  c.localId,
+          rarity:  '—',
+          type:    'normal',
+          hp:      undefined,
+          year,
+          era:     '—',
+          lang:    liveLang,
+          price:   0,
+          trend:   0,
+          psa:     undefined,
+          legal:   false,
+          reprint: 'none' as const,
+          signal:  undefined,
+        })))
+        setApiLoading(false)
+      })
+      .catch(() => setApiLoading(false))
+  }, [liveSetId, liveLang, liveMode])
+
+  const filtered = useMemo(() => (liveMode ? apiCards : CARDS)
     .filter(c => filType   ==='all' || c.type===filType)
     .filter(c => filRarity ==='all' || c.rarity===filRarity)
     .filter(c => filEra    ==='all' || c.era===filEra)
@@ -99,7 +147,7 @@ export function Encyclopedie() {
       if (sort==='psa')   return (b.psa??0)-(a.psa??0)
       return a.name.localeCompare(b.name)
     })
-  , [search,filType,filRarity,filEra,filLang,filLegal,filSignal,sort])
+  , [search,filType,filRarity,filEra,filLang,filLegal,filSignal,sort,liveMode,apiCards])
 
   const sel = selected ? CARDS.find(c=>c.id===selected) : null
 
@@ -128,7 +176,8 @@ export function Encyclopedie() {
             <p style={{ fontSize:'10px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Cartes</p>
             <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', margin:'0 0 5px' }}>Encyclopédie</h1>
             <div style={{ fontSize:'12px', color:'#888' }}>
-              <span style={{ fontWeight:600, color:'#111' }}>{filtered.length}</span> cartes · base de données PokéAlpha
+              <span style={{ fontWeight:600, color:'#111' }}>{filtered.length}</span>{' '}
+              {liveMode ? <><span style={{ color:'#10b981', fontWeight:600 }}>cartes · TCGDex Live</span>{liveSetId && liveSets.find(x=>x.id===liveSetId) ? <span style={{ color:'#AAA' }}> · {liveSets.find(x=>x.id===liveSetId)?.name}</span> : null}</> : 'cartes · base de données PokéAlpha'}
             </div>
           </div>
 
@@ -151,6 +200,33 @@ export function Encyclopedie() {
                 <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'#111':'transparent', color:view===v?'#fff':'#888', fontSize:'15px', cursor:'pointer', transition:'all 0.12s', display:'flex', alignItems:'center', justifyContent:'center' }}>{icon}</button>
               ))}
             </div>
+          </div>
+
+          {/* Live controls */}
+          <div style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'14px' }}>
+            <button onClick={()=>{ setLiveMode(m=>!m); setLiveSetId(''); setApiCards([]) }}
+              style={{ padding:'6px 14px', borderRadius:'8px', border:`1px solid ${liveMode?'#1A7A4A':'#EBEBEB'}`, background:liveMode?'#1A7A4A':'#fff', color:liveMode?'#fff':'#888', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, flexShrink:0, transition:'all .15s' }}>
+              🌐 Live{liveMode?' ON':''}
+            </button>
+            {liveMode && (
+              <>
+                <div style={{ display:'flex', gap:'4px', flexShrink:0 }}>
+                  {(['EN','FR','JP'] as const).map(l=>(
+                    <button key={l} onClick={()=>{ setLiveLang(l); setLiveSetId(''); setApiCards([]) }}
+                      style={{ padding:'4px 10px', borderRadius:'6px', border:`1px solid ${liveLang===l?'#1A7A4A':'#DDD'}`, background:liveLang===l?'#1A7A4A':'#fff', color:liveLang===l?'#fff':'#666', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                      {l==='EN'?'🇺🇸':l==='FR'?'🇫🇷':'🇯🇵'} {l}
+                    </button>
+                  ))}
+                </div>
+                <select value={liveSetId} onChange={e=>setLiveSetId(e.target.value)}
+                  style={{ flex:1, height:'32px', padding:'0 10px', border:'1px solid #C8E8D0', borderRadius:'8px', fontSize:'12px', color:liveSetId?'#111':'#888', outline:'none', background:'#fff', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
+                  {liveSets.map(x=><option key={x.id} value={x.id}>{x.name}{x.total?' ('+x.total+')':''}</option>)}
+                </select>
+                {apiLoading && <span style={{ fontSize:'11px', color:'#1A7A4A', whiteSpace:'nowrap' as const, flexShrink:0 }}>⟳ Chargement…</span>}
+                {apiCards.length>0 && !apiLoading && <span style={{ fontSize:'11px', color:'#1A7A4A', fontWeight:600, whiteSpace:'nowrap' as const, flexShrink:0 }}>{apiCards.length} cartes chargées</span>}
+              </>
+            )}
           </div>
 
           {/* Filtres pills */}
@@ -186,6 +262,21 @@ export function Encyclopedie() {
               <button key={o.v} onClick={()=>setFilLegal(o.v)} className={`pill${filLegal===o.v?' on':''}`}>{o.l}</button>
             ))}
           </div>
+
+          {/* Live states */}
+          {apiLoading && (
+            <div style={{ textAlign:'center', padding:'60px 20px' }}>
+              <div style={{ fontSize:'28px', marginBottom:'12px', display:'inline-block', animation:'pulse 1s ease-in-out infinite' }}>⟳</div>
+              <div style={{ fontSize:'13px', fontFamily:'var(--font-display)', color:'#888' }}>Chargement des cartes TCGDex…</div>
+            </div>
+          )}
+          {liveMode && !liveSetId && !setsLoading && !apiLoading && (
+            <div style={{ textAlign:'center', padding:'60px 20px' }}>
+              <div style={{ fontSize:'36px', marginBottom:'14px' }}>🌐</div>
+              <div style={{ fontSize:'14px', fontFamily:'var(--font-display)', color:'#555', marginBottom:'6px', fontWeight:600 }}>Mode Live activé</div>
+              <div style={{ fontSize:'12px', color:'#BBB' }}>Sélectionnez une série ci-dessus pour charger les vraies cartes</div>
+            </div>
+          )}
 
           {/* VUE GRILLE */}
           {view==='grid' && (

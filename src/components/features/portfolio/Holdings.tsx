@@ -488,20 +488,27 @@ export function Holdings() {
                 )}
               </div>
 
+              {/* Prix + Quantité */}
+              {addForm.name && !addForm.buyPrice && (
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', borderRadius:'10px', background:'rgba(255,107,53,.07)', border:'1px solid rgba(255,107,53,.18)', marginBottom:'10px', animation:'fadeUp .25s ease-out' }}>
+                  <span style={{ fontSize:'16px' }}>💰</span>
+                  <div>
+                    <div style={{ fontSize:'11px', fontWeight:700, color:'#FF9060', fontFamily:'var(--font-display)' }}>Dernière étape — indiquez votre prix d'achat</div>
+                    <div style={{ fontSize:'10px', color:'rgba(255,107,53,.5)', marginTop:'1px' }}>Nécessaire pour calculer votre ROI</div>
+                  </div>
+                </div>
+              )}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'14px' }}>
                 <div>
-                  <div className="req-label" style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                    Prix d'achat EUR *
-                    {!addForm.buyPrice && addForm.name && (
-                      <span style={{ fontSize:'9px', background:'rgba(255,107,53,.2)', color:'#FF9060', padding:'2px 7px', borderRadius:'10px', fontWeight:700, animation:'fadeUp .3s ease-out' }}>
-                        ← requis pour ajouter
-                      </span>
-                    )}
+                  <div className="req-label">Prix d'achat EUR *</div>
+                  <div style={{ position:'relative' }}>
+                    <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', pointerEvents:'none' }}>€</span>
+                    <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))}
+                      placeholder="0.00"
+                      autoFocus={!!(addForm.name && !addForm.buyPrice)}
+                      className={addForm.buyPrice?'req-field-ok':'req-field'}
+                      style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.06)' : 'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px 10px 26px', color:'#fff', fontSize:'18px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .2s' }}/>
                   </div>
-                  <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))} placeholder="0.00"
-                    autoFocus={!!(addForm.name && !addForm.buyPrice)}
-                    className={addForm.buyPrice?'req-field-ok':'req-field'}
-                    style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.08)' : 'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px', color:'#fff', fontSize:'16px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'background .2s' }}/>
                 </div>
                 <div>
                   <div className="opt-label">Exemplaires</div>

@@ -1,438 +1,472 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { fetchSets, fetchCardsForSet, type TCGSet, type TCGCard as TCGApiCard } from '@/lib/tcgApi'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 
-type TCGCard = {
-  id:       string
-  name:     string
-  set:      string
-  setCode:  string
-  number:   string
-  rarity:   string
-  type:     string
-  hp?:      number
-  year:     number
-  era:      string
-  lang:     'EN'|'JP'|'FR'
-  price:    number
-  trend:    number
-  psa?:     number
-  legal:    boolean
-  reprint:  'none'|'low'|'high'
-  signal?:  'S'|'A'|'B'
+const TC: Record<string,string> = {
+  Fire:'#FF6B35', Water:'#42A5F5', Psychic:'#C855D4', Darkness:'#7E57C2',
+  Lightning:'#D4A800', Grass:'#3DA85A', Colorless:'#AAAAAA', Fighting:'#C97840',
+  Metal:'#8090A8', Dragon:'#9060A0', Fairy:'#FF88AA',
 }
 
-const CARDS: TCGCard[] = [
-  { id:'1',  name:'Charizard Alt Art',       set:'SV151',           setCode:'SV151', number:'006', rarity:'Alt Art',     type:'fire',     hp:180, year:2023, era:'Scarlet & Violet', lang:'EN', price:920,  trend:21.3, psa:312,  legal:true,  reprint:'low',  signal:'S' },
-  { id:'2',  name:'Umbreon VMAX Alt Art',    set:'Evolving Skies',  setCode:'EVS',   number:'215', rarity:'Alt Art',     type:'dark',     hp:340, year:2021, era:'Sword & Shield',   lang:'EN', price:880,  trend:24.1, psa:2840, legal:false, reprint:'none', signal:'A' },
-  { id:'3',  name:'Charizard VMAX',          set:'Champion Path',   setCode:'CPA',   number:'074', rarity:'Secret Rare', type:'fire',     hp:330, year:2020, era:'Sword & Shield',   lang:'EN', price:420,  trend:5.2,  psa:1240, legal:false, reprint:'low'  },
-  { id:'4',  name:'Gengar VMAX Alt Art',     set:'Fusion Strike',   setCode:'FST',   number:'271', rarity:'Alt Art',     type:'psychic',  hp:310, year:2021, era:'Sword & Shield',   lang:'EN', price:340,  trend:18.4,           legal:false, reprint:'none' },
-  { id:'5',  name:'Pikachu VMAX RR',         set:'Vivid Voltage',   setCode:'VIV',   number:'188', rarity:'Secret Rare', type:'electric', hp:310, year:2020, era:'Sword & Shield',   lang:'JP', price:110,  trend:-3.8, psa:4200, legal:false, reprint:'high' },
-  { id:'6',  name:'Rayquaza VMAX Alt Art',   set:'Evolving Skies',  setCode:'EVS',   number:'218', rarity:'Alt Art',     type:'electric', hp:320, year:2021, era:'Sword & Shield',   lang:'EN', price:740,  trend:31.2,           legal:false, reprint:'none', signal:'A' },
-  { id:'7',  name:'Mewtwo V Alt Art',        set:'Pokemon GO',      setCode:'PGO',   number:'071', rarity:'Alt Art',     type:'psychic',  hp:220, year:2022, era:'Sword & Shield',   lang:'JP', price:280,  trend:12.1,           legal:false, reprint:'low',  signal:'B' },
-  { id:'8',  name:'Blastoise Base Set Holo', set:'Base Set',        setCode:'BS',    number:'002', rarity:'Holo Rare',   type:'water',    hp:100, year:1999, era:'Original',         lang:'EN', price:620,  trend:-4.2, psa:890,  legal:false, reprint:'high' },
-  { id:'9',  name:'Lugia Neo Genesis Holo',  set:'Neo Genesis',     setCode:'N1',    number:'009', rarity:'Holo Rare',   type:'water',    hp:90,  year:2000, era:'Neo',              lang:'EN', price:580,  trend:15.2, psa:2100, legal:false, reprint:'none' },
-  { id:'10', name:'Mew ex Alt Art',          set:'SV151',           setCode:'SV151', number:'205', rarity:'Alt Art',     type:'psychic',  hp:200, year:2023, era:'Scarlet & Violet', lang:'JP', price:140,  trend:9.1,            legal:true,  reprint:'low'  },
-  { id:'11', name:'Gardevoir ex SAR',        set:'Scarlet & Violet',setCode:'SVI',   number:'245', rarity:'Secret Rare', type:'psychic',  hp:310, year:2023, era:'Scarlet & Violet', lang:'FR', price:95,   trend:4.8,            legal:true,  reprint:'low'  },
-  { id:'12', name:'Miraidon ex SAR',         set:'Scarlet & Violet',setCode:'SVI',   number:'254', rarity:'Secret Rare', type:'electric', hp:220, year:2023, era:'Scarlet & Violet', lang:'FR', price:72,   trend:2.1,            legal:true,  reprint:'low'  },
-  { id:'13', name:'Charizard Base Set Holo', set:'Base Set',        setCode:'BS',    number:'004', rarity:'Holo Rare',   type:'fire',     hp:120, year:1999, era:'Original',         lang:'EN', price:2400, trend:8.4,  psa:1840, legal:false, reprint:'high' },
-  { id:'14', name:'Pikachu Illustrator',     set:'CoroCoro',        setCode:'PROMO', number:'001', rarity:'Promo',       type:'electric', hp:60,  year:1998, era:'Original',         lang:'JP', price:450000, trend:12.8, psa:24, legal:false, reprint:'none' },
-  { id:'15', name:'Rayquaza Gold Star',      set:'EX Deoxys',       setCode:'DX',    number:'107', rarity:'Gold Star',   type:'electric', hp:90,  year:2005, era:'EX',               lang:'EN', price:740,  trend:31.2, psa:880,  legal:false, reprint:'none', signal:'A' },
-  { id:'16', name:'Umbreon Gold Star',       set:'POP Series 5',    setCode:'POP5',  number:'017', rarity:'Gold Star',   type:'dark',     hp:70,  year:2006, era:'EX',               lang:'EN', price:3200, trend:14.2, psa:420,  legal:false, reprint:'none' },
-  { id:'17', name:'Espeon VMAX Alt Art',     set:'Evolving Skies',  setCode:'EVS',   number:'214', rarity:'Alt Art',     type:'psychic',  hp:340, year:2021, era:'Sword & Shield',   lang:'EN', price:320,  trend:8.8,  psa:1240, legal:false, reprint:'none' },
-  { id:'18', name:'Glaceon VMAX Alt Art',    set:'Evolving Skies',  setCode:'EVS',   number:'209', rarity:'Alt Art',     type:'water',    hp:320, year:2021, era:'Sword & Shield',   lang:'EN', price:198,  trend:5.4,            legal:false, reprint:'none' },
-]
+const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','—']
 
-const EC: Record<string,string> = {
-  fire:'#FF6B35', water:'#42A5F5', psychic:'#C855D4',
-  dark:'#7E57C2', electric:'#D4A800', grass:'#3DA85A',
-  normal:'#888888',
+function yearToEra(y:number): string {
+  if (!y)   return '—'
+  if (y<=2003) return 'Original (WotC)'
+  if (y<=2006) return 'EX'
+  if (y<=2010) return 'DP / Platinum'
+  if (y<=2013) return 'Black & White'
+  if (y<=2016) return 'XY'
+  if (y<=2019) return 'Sun & Moon'
+  if (y<=2022) return 'Sword & Shield'
+  return 'Scarlet & Violet'
 }
 
-const RS: Record<string,{bg:string;color:string;border:string}> = {
-  'Alt Art':     { bg:'#FFFDE0', color:'#8B6E00', border:'#FFE87A' },
-  'Secret Rare': { bg:'#F5EAFF', color:'#7B2D8B', border:'#D8B8FF' },
-  'Gold Star':   { bg:'#FFFAEB', color:'#8B6E00', border:'#FFD700' },
-  'Holo Rare':   { bg:'#F0FFF6', color:'#1A7A4A', border:'#AAEEC8' },
-  'Promo':       { bg:'#F0F5FF', color:'#003DAA', border:'#C0D0FF' },
-}
-
-const LS: Record<string,{flag:string;bg:string;color:string;border:string}> = {
-  EN: { flag:'🇺🇸', bg:'#FFF5F0', color:'#C84B00', border:'#FFD0B0' },
-  JP: { flag:'🇯🇵', bg:'#F0F5FF', color:'#003DAA', border:'#C0D0FF' },
-  FR: { flag:'🇫🇷', bg:'#F0FFF5', color:'#00660A', border:'#A0DDAA' },
-}
-
-const ERAS    = [...new Set(CARDS.map(c=>c.era))]
-const SETS    = [...new Set(CARDS.map(c=>c.set))]
-const YEARS   = [...new Set(CARDS.map(c=>c.year))].sort((a,b)=>b-a)
-
+type Lang     = 'EN'|'FR'|'JP'
+type SortKey  = 'set'|'name'
 type ViewMode = 'grid'|'list'
-type SortKey  = 'price'|'trend'|'name'|'year'|'psa'
+
+interface EnrichedCard extends TCGCard {
+  setId:string; setName:string; year:number; era:string
+}
+
+const PER_PAGE = 60
 
 export function Encyclopedie() {
   const router = useRouter()
-  const [search,    setSearch]    = useState('')
-  const [filType,   setFilType]   = useState('all')
-  const [filRarity, setFilRarity] = useState('all')
-  const [filEra,    setFilEra]    = useState('all')
-  const [filLang,   setFilLang]   = useState('all')
-  const [filLegal,  setFilLegal]  = useState('all')
-  const [filSignal, setFilSignal] = useState('all')
-  const [sort,      setSort]      = useState<SortKey>('price')
-  const [view,      setView]      = useState<ViewMode>('grid')
-  const [selected,  setSelected]  = useState<string|null>(null)
-  const [liveMode,   setLiveMode]   = useState(false)
-  const [liveLang,   setLiveLang]   = useState<'EN'|'FR'|'JP'>('EN')
-  const [liveSets,   setLiveSets]   = useState<TCGSet[]>([])
-  const [liveSetId,  setLiveSetId]  = useState('')
-  const [apiCards,   setApiCards]   = useState<TCGCard[]>([])
-  const [apiLoading, setApiLoading] = useState(false)
-  const [setsLoading,setSetsLoading]= useState(false)
+
+  const [lang,       setLang]        = useState<Lang>('FR')
+  const [allCards,   setAllCards]    = useState<EnrichedCard[]>([])
+  const [loading,    setLoading]     = useState(false)
+  const [loadErr,    setLoadErr]     = useState(false)
+  const [loadMsg,    setLoadMsg]     = useState('')
+
+  const [search,     setSearch]      = useState('')
+  const [filEra,     setFilEra]      = useState('all')
+  const [filSet,     setFilSet]      = useState('all')
+  const [sort,       setSort]        = useState<SortKey>('set')
+  const [view,       setView]        = useState<ViewMode>('grid')
+  const [page,       setPage]        = useState(0)
+
+  const [selId,      setSelId]       = useState<string|null>(null)
+  const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
+  const [detLoading, setDetLoading]  = useState(false)
+  const [enDetail,   setEnDetail]    = useState<TCGCardFull|null>(null)
 
   useEffect(() => {
-    if (!liveMode) { setLiveSets([]); setLiveSetId(''); setApiCards([]); return }
-    setSetsLoading(true)
-    fetchSets(liveLang)
-      .then(sets => { setLiveSets(sets); setSetsLoading(false) })
-      .catch(() => setSetsLoading(false))
-  }, [liveMode, liveLang])
+    setLoading(true); setLoadErr(false); setLoadMsg('Chargement des séries…')
+    setAllCards([]); setFilSet('all'); setFilEra('all')
+    setPage(0); setSelId(null); setDetail(null); setEnDetail(null)
 
-  useEffect(() => {
-    if (!liveSetId || !liveMode) return
-    setApiLoading(true)
-    setApiCards([])
-    const found = liveSets.find(x => x.id === liveSetId)
-    fetchCardsForSet(liveLang, liveSetId)
-      .then((raw: TCGApiCard[]) => {
-        const year = parseInt(found?.releaseDate?.slice(0,4) ?? '2000') || 2000
-        setApiCards(raw.map(c => ({
-          id:      'api_'+c.id,
-          name:    c.name,
-          set:     found?.name ?? liveSetId,
-          setCode: liveSetId,
-          number:  c.localId,
-          rarity:  '—',
-          type:    'normal',
-          hp:      undefined,
-          year,
-          era:     '—',
-          lang:    liveLang,
-          price:   0,
-          trend:   0,
-          psa:     undefined,
-          legal:   false,
-          reprint: 'none' as const,
-          signal:  undefined,
-        })))
-        setApiLoading(false)
+    Promise.all([fetchSets(lang), fetchAllCards(lang)])
+      .then(([sets, cards]) => {
+        const setMap = new Map(sets.map(s=>[s.id,s]))
+        const enriched: EnrichedCard[] = cards.map(c => {
+          const setId  = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
+          const set    = setMap.get(setId)
+          const year   = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
+          return { ...c, setId, setName: set?.name ?? setId, year, era: yearToEra(year) }
+        })
+        setAllCards(enriched); setLoadMsg(''); setLoading(false)
       })
-      .catch(() => setApiLoading(false))
-  }, [liveSetId, liveLang, liveMode])
+      .catch(() => { setLoadErr(true); setLoading(false) })
+  }, [lang])
 
-  const filtered = useMemo(() => (liveMode ? apiCards : CARDS)
-    .filter(c => filType   ==='all' || c.type===filType)
-    .filter(c => filRarity ==='all' || c.rarity===filRarity)
-    .filter(c => filEra    ==='all' || c.era===filEra)
-    .filter(c => filLang   ==='all' || c.lang===filLang)
-    .filter(c => filLegal  ==='all' || (filLegal==='legal'?c.legal:!c.legal))
-    .filter(c => filSignal ==='all' || (filSignal==='active'?!!c.signal:false))
-    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.set.toLowerCase().includes(search.toLowerCase()))
-    .sort((a,b) => {
-      if (sort==='price') return b.price-a.price
-      if (sort==='trend') return b.trend-a.trend
-      if (sort==='year')  return a.year-b.year
-      if (sort==='psa')   return (b.psa??0)-(a.psa??0)
-      return a.name.localeCompare(b.name)
+  const eras = useMemo(() =>
+    [...new Set(allCards.map(c=>c.era))].sort((a,b)=>ERA_ORDER.indexOf(a)-ERA_ORDER.indexOf(b))
+  , [allCards])
+
+  const sets = useMemo(() => {
+    const base = filEra==='all' ? allCards : allCards.filter(c=>c.era===filEra)
+    const map  = new Map<string,{id:string;name:string;count:number}>()
+    base.forEach(c => {
+      if (!map.has(c.setId)) map.set(c.setId,{id:c.setId,name:c.setName,count:0})
+      map.get(c.setId)!.count++
     })
-  , [search,filType,filRarity,filEra,filLang,filLegal,filSignal,sort,liveMode,apiCards])
+    return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))
+  }, [allCards, filEra])
 
-  const sel = selected ? CARDS.find(c=>c.id===selected) : null
+  useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
+  useEffect(() => { setPage(0) }, [search, filSet, sort])
+
+  const filtered = useMemo(() => {
+    let r = allCards
+    if (filEra!=='all') r = r.filter(c=>c.era===filEra)
+    if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
+    if (search) {
+      const q=search.toLowerCase()
+      r = r.filter(c=>c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q)
+    }
+    return sort==='name'
+      ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
+      : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
+  }, [allCards, filEra, filSet, search, sort])
+
+  const pageCount = Math.ceil(filtered.length/PER_PAGE)||1
+  const pageCards = filtered.slice(page*PER_PAGE, (page+1)*PER_PAGE)
+
+  const handleCardClick = useCallback(async (id:string) => {
+    if (selId===id) { setSelId(null); setDetail(null); setEnDetail(null); return }
+    setSelId(id); setDetail(null); setEnDetail(null); setDetLoading(true)
+    const d = await fetchCardDetail(lang, id)
+    setDetail(d); setDetLoading(false)
+    if (lang==='JP') fetchCardDetail('EN', id).then(d=>{ if(d) setEnDetail(d) }).catch(()=>{})
+  }, [selId, lang])
+
+  const selCard = allCards.find(c=>c.id===selId)
+  const flag = (l:Lang) => l==='EN'?'🇺🇸':l==='FR'?'🇫🇷':'🇯🇵'
 
   return (
     <>
       <style>{`
         @keyframes fadeIn  { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn  { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes cardIn  { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
         @keyframes slideIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .card-h:hover    { transform:translateY(-4px) !important; box-shadow:0 10px 28px rgba(0,0,0,0.12) !important; }
-        .rh:hover        { background:#F8F8F8 !important; cursor:pointer; }
-        .pill            { padding:5px 12px; border-radius:7px; border:1px solid #E8E8E8; background:#fff; color:#555; font-size:12px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; white-space:nowrap; }
-        .pill:hover      { border-color:#999; }
-        .pill.on         { background:#111 !important; color:#fff !important; border-color:#111 !important; }
-        .srt             { padding:5px 11px; border-radius:6px; border:none; background:transparent; color:#666; font-size:11px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; }
-        .srt:hover       { background:#EBEBEB; }
-        .srt.on          { background:#111 !important; color:#fff !important; }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+        @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+        .enc-card { transition:all .18s; border-radius:12px; overflow:hidden; cursor:pointer; }
+        .enc-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,.1) !important; }
+        .enc-card.sel { border-color:#111 !important; box-shadow:0 8px 24px rgba(0,0,0,.1) !important; }
+        .srt { padding:5px 10px; border-radius:6px; border:none; background:transparent; color:#666; font-size:11px; font-weight:500; cursor:pointer; transition:all .12s; font-family:var(--font-display); }
+        .srt:hover { background:#EBEBEB; }
+        .srt.on { background:#111 !important; color:#fff !important; }
+        .rh:hover { background:#F8F8F8 !important; cursor:pointer; }
+        .shimmer { background:linear-gradient(90deg,#F0F0F0 25%,#E8E8E8 50%,#F0F0F0 75%); background-size:800px 100%; animation:shimmer 1.5s infinite; }
+        .pgbtn { padding:6px 12px; border-radius:7px; border:1px solid #E8E8E8; background:#fff; color:#555; font-size:12px; cursor:pointer; font-family:var(--font-display); }
+        .pgbtn:disabled { color:#CCC; cursor:default; }
+        .pgbtn:not(:disabled):hover { background:#F5F5F5; }
+        .fsel { height:34px; padding:0 10px; border:1px solid #EBEBEB; border-radius:7px; font-size:12px; outline:none; background:#fff; cursor:pointer; font-family:var(--font-display); color:#555; }
+        .fsel:focus { border-color:#999; }
       `}</style>
 
-      <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%', display:'flex', gap:'20px' }}>
+      <div style={{ animation:'fadeIn .25s ease-out', width:'100%', display:'flex', gap:'20px' }}>
 
-        {/* MAIN */}
+        {/* ── MAIN ── */}
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ marginBottom:'20px' }}>
-            <p style={{ fontSize:'10px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Cartes</p>
-            <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', margin:'0 0 5px' }}>Encyclopédie</h1>
-            <div style={{ fontSize:'12px', color:'#888' }}>
-              <span style={{ fontWeight:600, color:'#111' }}>{filtered.length}</span>{' '}
-              {liveMode ? <><span style={{ color:'#10b981', fontWeight:600 }}>cartes · TCGDex Live</span>{liveSetId && liveSets.find(x=>x.id===liveSetId) ? <span style={{ color:'#AAA' }}> · {liveSets.find(x=>x.id===liveSetId)?.name}</span> : null}</> : 'cartes · base de données PokéAlpha'}
+
+          {/* Header */}
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'12px', marginBottom:'20px', flexWrap:'wrap' }}>
+            <div>
+              <p style={{ fontSize:'10px', color:'#AAA', textTransform:'uppercase', letterSpacing:'.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Cartes</p>
+              <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-.5px', margin:'0 0 5px' }}>Encyclopédie</h1>
+              <div style={{ fontSize:'12px', color:'#888', minHeight:'18px', display:'flex', alignItems:'center', gap:'6px' }}>
+                {loading ? (
+                  <>
+                    <div style={{ width:'12px', height:'12px', border:'1.5px solid #DDD', borderTop:'1.5px solid #888', borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+                    <span style={{ color:'#AAA' }}>{loadMsg}</span>
+                  </>
+                ) : loadErr ? (
+                  <span style={{ color:'#E03020' }}>
+                    Erreur de chargement —{' '}
+                    <button onClick={()=>setLang(l=>l)} style={{ color:'#E03020', textDecoration:'underline', background:'none', border:'none', cursor:'pointer', fontSize:'12px', padding:0 }}>Réessayer</button>
+                  </span>
+                ) : (
+                  <span><strong style={{ color:'#111' }}>{filtered.length.toLocaleString('fr-FR')}</strong> cartes · <strong style={{ color:'#111' }}>{allCards.length.toLocaleString('fr-FR')}</strong> au total</span>
+                )}
+              </div>
+            </div>
+
+            {/* Language selector */}
+            <div style={{ background:'#F5F5F5', borderRadius:'12px', padding:'4px', display:'flex', gap:'3px', flexShrink:0 }}>
+              {(['EN','FR','JP'] as Lang[]).map(l => (
+                <button key={l} onClick={()=>setLang(l)}
+                  style={{ padding:'8px 14px', borderRadius:'9px', border:'none', background:lang===l?'#fff':'transparent', color:lang===l?'#111':'#888', fontFamily:'var(--font-display)', fontWeight:lang===l?700:500, fontSize:'13px', cursor:'pointer', boxShadow:lang===l?'0 1px 4px rgba(0,0,0,.08)':'none', transition:'all .15s', display:'flex', alignItems:'center', gap:'6px', flexShrink:0 }}>
+                  <span>{flag(l)}</span>
+                  <span>{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Barre recherche + contrôles */}
-          <div style={{ display:'flex', gap:'10px', marginBottom:'14px', flexWrap:'wrap', alignItems:'center' }}>
-            <div style={{ position:'relative', flex:1, minWidth:'220px' }}>
+          {/* Search + sort + view */}
+          <div style={{ display:'flex', gap:'8px', marginBottom:'12px', flexWrap:'wrap' }}>
+            <div style={{ position:'relative', flex:1, minWidth:'200px' }}>
               <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', color:'#CCC', fontSize:'15px', pointerEvents:'none' }}>⌕</span>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher une carte, un set..."
-                style={{ width:'100%', height:'38px', padding:'0 12px 0 32px', border:'1px solid #EBEBEB', borderRadius:'9px', fontSize:'13px', color:'#111', outline:'none', background:'#fff', fontFamily:'var(--font-sans)', boxSizing:'border-box' as const }} />
+              <input value={search} onChange={e=>setSearch(e.target.value)}
+                placeholder={lang==='JP' ? 'Nom de la carte (japonais)…' : 'Rechercher une carte, un set…'}
+                style={{ width:'100%', height:'38px', padding:'0 32px', border:'1px solid #EBEBEB', borderRadius:'9px', fontSize:'13px', color:'#111', outline:'none', background:'#fff', boxSizing:'border-box' as const, fontFamily:'var(--font-sans)' }}/>
+              {search && (
+                <button onClick={()=>setSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#CCC', cursor:'pointer', fontSize:'16px', padding:0, lineHeight:1 }}>×</button>
+              )}
             </div>
-            {/* Tri */}
             <div style={{ display:'flex', gap:'3px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
-              {([['price','Prix'],['trend','Trend'],['name','A–Z'],['year','Année'],['psa','PSA Pop']] as [SortKey,string][]).map(([k,l])=>(
+              {([['set','Par série'],['name','A–Z']] as [SortKey,string][]).map(([k,l])=>(
                 <button key={k} onClick={()=>setSort(k)} className={`srt${sort===k?' on':''}`}>{l}</button>
               ))}
             </div>
-            {/* Vue */}
-            <div style={{ display:'flex', background:'#F5F5F5', borderRadius:'9px', padding:'3px', gap:'2px', flexShrink:0 }}>
-              {([['grid','⊞'],['list','☰']] as [ViewMode,string][]).map(([v,icon])=>(
-                <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'#111':'transparent', color:view===v?'#fff':'#888', fontSize:'15px', cursor:'pointer', transition:'all 0.12s', display:'flex', alignItems:'center', justifyContent:'center' }}>{icon}</button>
+            <div style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
+              {(['grid','list'] as ViewMode[]).map(v=>(
+                <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'#111':'transparent', color:view===v?'#fff':'#888', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .12s' }}>
+                  {v==='grid'?'⊞':'☰'}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Live controls */}
-          <div style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'14px' }}>
-            <button onClick={()=>{ setLiveMode(m=>!m); setLiveSetId(''); setApiCards([]) }}
-              style={{ padding:'6px 14px', borderRadius:'8px', border:`1px solid ${liveMode?'#1A7A4A':'#EBEBEB'}`, background:liveMode?'#1A7A4A':'#fff', color:liveMode?'#fff':'#888', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, flexShrink:0, transition:'all .15s' }}>
-              🌐 Live{liveMode?' ON':''}
-            </button>
-            {liveMode && (
-              <>
-                <div style={{ display:'flex', gap:'4px', flexShrink:0 }}>
-                  {(['EN','FR','JP'] as const).map(l=>(
-                    <button key={l} onClick={()=>{ setLiveLang(l); setLiveSetId(''); setApiCards([]) }}
-                      style={{ padding:'4px 10px', borderRadius:'6px', border:`1px solid ${liveLang===l?'#1A7A4A':'#DDD'}`, background:liveLang===l?'#1A7A4A':'#fff', color:liveLang===l?'#fff':'#666', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                      {l==='EN'?'🇺🇸':l==='FR'?'🇫🇷':'🇯🇵'} {l}
-                    </button>
-                  ))}
-                </div>
-                <select value={liveSetId} onChange={e=>setLiveSetId(e.target.value)}
-                  style={{ flex:1, height:'32px', padding:'0 10px', border:'1px solid #C8E8D0', borderRadius:'8px', fontSize:'12px', color:liveSetId?'#111':'#888', outline:'none', background:'#fff', cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                  <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
-                  {liveSets.map(x=><option key={x.id} value={x.id}>{x.name}{x.total?' ('+x.total+')':''}</option>)}
-                </select>
-                {apiLoading && <span style={{ fontSize:'11px', color:'#1A7A4A', whiteSpace:'nowrap' as const, flexShrink:0 }}>⟳ Chargement…</span>}
-                {apiCards.length>0 && !apiLoading && <span style={{ fontSize:'11px', color:'#1A7A4A', fontWeight:600, whiteSpace:'nowrap' as const, flexShrink:0 }}>{apiCards.length} cartes chargées</span>}
-              </>
+          {/* Filters */}
+          <div style={{ display:'flex', gap:'8px', marginBottom:'18px', flexWrap:'wrap', alignItems:'center' }}>
+            <select className="fsel" value={filEra} onChange={e=>setFilEra(e.target.value)}>
+              <option value="all">Toutes les ères</option>
+              {eras.map(e=><option key={e} value={e}>{e}</option>)}
+            </select>
+
+            <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} disabled={loading}
+              style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
+              <option value="all">Toutes les séries{sets.length>0?` (${sets.length})`:''}</option>
+              {sets.map(s=><option key={s.id} value={s.id}>{s.name} ({s.count})</option>)}
+            </select>
+
+            {(filEra!=='all'||filSet!=='all'||search) && (
+              <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setSearch(''); setPage(0) }}
+                style={{ height:'34px', padding:'0 12px', borderRadius:'7px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
+                ✕ Effacer
+              </button>
+            )}
+
+            {!loading && filtered.length>0 && (
+              <span style={{ fontSize:'11px', color:'#CCC', marginLeft:'auto' }}>
+                Page {page+1} / {pageCount}
+              </span>
             )}
           </div>
 
-          {/* Filtres pills */}
-          <div style={{ display:'flex', flexWrap:'wrap', gap:'12px', marginBottom:'18px' }}>
-            {/* Type */}
-            <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' }}>
-              {[{v:'all',l:'Tous',c:'#555'},{v:'fire',l:'🔥',c:EC.fire},{v:'water',l:'💧',c:EC.water},{v:'psychic',l:'🔮',c:EC.psychic},{v:'dark',l:'🌑',c:EC.dark},{v:'electric',l:'⚡',c:EC.electric},{v:'grass',l:'🌿',c:EC.grass}].map(o=>(
-                <button key={o.v} onClick={()=>setFilType(o.v)} className={`pill${filType===o.v?' on':''}`} style={{ color:filType===o.v?'#fff':o.c }}>{o.l}</button>
-              ))}
-            </div>
-            <div style={{ width:'1px', background:'#EBEBEB', alignSelf:'stretch' }} />
-            {/* Langue */}
-            {[{v:'all',l:'Toutes'},{v:'EN',l:'🇺🇸 EN'},{v:'JP',l:'🇯🇵 JP'},{v:'FR',l:'🇫🇷 FR'}].map(o=>(
-              <button key={o.v} onClick={()=>setFilLang(o.v)} className={`pill${filLang===o.v?' on':''}`}>{o.l}</button>
-            ))}
-            <div style={{ width:'1px', background:'#EBEBEB', alignSelf:'stretch' }} />
-            {/* Rareté */}
-            {[{v:'all',l:'Rareté'},{v:'Alt Art',l:'✦ Alt Art'},{v:'Secret Rare',l:'◈ Secret'},{v:'Gold Star',l:'★ Gold Star'},{v:'Holo Rare',l:'◇ Holo'}].map(o=>(
-              <button key={o.v} onClick={()=>setFilRarity(o.v)} className={`pill${filRarity===o.v?' on':''}`}>{o.l}</button>
-            ))}
-            <div style={{ width:'1px', background:'#EBEBEB', alignSelf:'stretch' }} />
-            {/* Ère */}
-            <select value={filEra} onChange={e=>setFilEra(e.target.value)} style={{ height:'34px', padding:'0 10px', border:'1px solid #EBEBEB', borderRadius:'7px', fontSize:'12px', color:'#555', outline:'none', background:'#fff', cursor:'pointer', fontFamily:'var(--font-display)' }}>
-              <option value="all">Toutes les ères</option>
-              {ERAS.map(e=><option key={e} value={e}>{e}</option>)}
-            </select>
-            {/* Signal */}
-            {[{v:'all',l:'Tous'},{v:'active',l:'⚡ Signal actif'}].map(o=>(
-              <button key={o.v} onClick={()=>setFilSignal(o.v)} className={`pill${filSignal===o.v?' on':''}`}>{o.l}</button>
-            ))}
-            {/* Standard */}
-            {[{v:'all',l:'Format'},{v:'legal',l:'Standard'},{v:'not',l:'Non-standard'}].map(o=>(
-              <button key={o.v} onClick={()=>setFilLegal(o.v)} className={`pill${filLegal===o.v?' on':''}`}>{o.l}</button>
-            ))}
-          </div>
-
-          {/* Live states */}
-          {apiLoading && (
-            <div style={{ textAlign:'center', padding:'60px 20px' }}>
-              <div style={{ fontSize:'28px', marginBottom:'12px', display:'inline-block', animation:'pulse 1s ease-in-out infinite' }}>⟳</div>
-              <div style={{ fontSize:'13px', fontFamily:'var(--font-display)', color:'#888' }}>Chargement des cartes TCGDex…</div>
-            </div>
-          )}
-          {liveMode && !liveSetId && !setsLoading && !apiLoading && (
-            <div style={{ textAlign:'center', padding:'60px 20px' }}>
-              <div style={{ fontSize:'36px', marginBottom:'14px' }}>🌐</div>
-              <div style={{ fontSize:'14px', fontFamily:'var(--font-display)', color:'#555', marginBottom:'6px', fontWeight:600 }}>Mode Live activé</div>
-              <div style={{ fontSize:'12px', color:'#BBB' }}>Sélectionnez une série ci-dessus pour charger les vraies cartes</div>
+          {/* Loading */}
+          {loading && (
+            <div style={{ textAlign:'center', padding:'80px 20px' }}>
+              <div style={{ width:'28px', height:'28px', border:'2.5px solid #EBEBEB', borderTop:'2.5px solid #111', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 14px' }}/>
+              <div style={{ fontSize:'13px', color:'#888', fontFamily:'var(--font-display)', marginBottom:'6px' }}>{loadMsg}</div>
+              <div style={{ fontSize:'11px', color:'#CCC' }}>Mise en cache automatique pour les prochaines visites</div>
             </div>
           )}
 
-          {/* VUE GRILLE */}
-          {view==='grid' && (
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:'14px' }}>
-              {filtered.map((card,idx)=>{
-                const ec = EC[card.type]??'#888'
-                const rs = RS[card.rarity]
-                const ls = LS[card.lang]
-                const isSel = selected===card.id
+          {/* GRID */}
+          {!loading && !loadErr && view==='grid' && (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))', gap:'12px' }}>
+              {pageCards.map((card,idx) => {
+                const isSel = selId===card.id
+                const img   = card.image ? `${card.image}/low.webp` : null
                 return (
-                  <div key={card.id} className="card-h" onClick={()=>setSelected(isSel?null:card.id)} style={{ background:'#fff', border:`1.5px solid ${isSel?ec:'#EBEBEB'}`, borderRadius:'14px', overflow:'hidden', boxShadow:isSel?`0 8px 24px ${ec}30`:'0 2px 8px rgba(0,0,0,0.05)', transition:'all 0.2s', cursor:'pointer', animation:`cardIn 0.2s ${Math.min(idx,10)*0.03}s ease-out both` }}>
-                    <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)` }} />
-                    {/* Art placeholder */}
-                    <div style={{ height:'100px', background:`linear-gradient(145deg,${ec}18,${ec}08)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
-                      <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}55)`, boxShadow:`0 0 16px ${ec}66` }} />
-                      {card.signal && (
-                        <div style={{ position:'absolute', top:'7px', right:'7px', fontSize:'8px', fontWeight:700, background:card.signal==='S'?'linear-gradient(135deg,#FFD700,#FF8C00)':card.signal==='A'?'#C855D4':'#2E9E6A', color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.signal}</div>
+                  <div key={card.id}
+                    className={`enc-card${isSel?' sel':''}`}
+                    onClick={()=>handleCardClick(card.id)}
+                    style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:'0 2px 6px rgba(0,0,0,.04)', animation:`cardIn .2s ${Math.min(idx,20)*.02}s ease-out both` }}>
+                    <div style={{ height:'128px', background:'#F7F7F7', position:'relative', overflow:'hidden' }}>
+                      {img ? (
+                        <img src={img} alt={card.name}
+                          style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
+                          onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.png')) t.src=`${card.image}/low.png`; else t.style.display='none' }}/>
+                      ) : (
+                        <div className="shimmer" style={{ position:'absolute', inset:0 }}/>
                       )}
-                      {card.trend>0 && <div style={{ position:'absolute', top:'7px', left:'7px', width:'6px', height:'6px', borderRadius:'50%', background:'#E03020', animation:'pulse 1.5s ease-in-out infinite' }} />}
-                      <div style={{ position:'absolute', bottom:'6px', left:'7px', fontSize:'8px', fontWeight:700, background:ls.bg, color:ls.color, border:`1px solid ${ls.border}`, padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
-                      {card.psa && <div style={{ position:'absolute', bottom:'6px', right:'7px', fontSize:'8px', fontWeight:700, background:'#111', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>PSA</div>}
+                      <div style={{ position:'absolute', bottom:'4px', right:'5px', fontSize:'12px', background:'rgba(255,255,255,.85)', borderRadius:'4px', padding:'1px 4px' }}>
+                        {flag(lang)}
+                      </div>
                     </div>
-                    <div style={{ padding:'12px' }}>
-                      <div style={{ fontSize:'13px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
-                      <div style={{ fontSize:'10px', color:'#BBB', marginBottom:'8px' }}>{card.set} · #{card.number}</div>
-                      {rs && <div style={{ marginBottom:'8px' }}><span style={{ fontSize:'9px', background:rs.bg, color:rs.color, border:`1px solid ${rs.border}`, padding:'2px 6px', borderRadius:'4px', fontWeight:600, fontFamily:'var(--font-display)' }}>{card.rarity}</span></div>}
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                        <div>
-                          <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.3px', lineHeight:1 }}>
-                            {card.price >= 1000 ? `€ ${(card.price/1000).toFixed(0)}k` : `€ ${card.price}`}
-                          </div>
-                          <div style={{ fontSize:'9px', color:'#CCC', marginTop:'2px' }}>Marché actuel</div>
-                        </div>
-                        <div style={{ fontSize:'13px', fontWeight:700, color:card.trend>=0?'#2E9E6A':'#E03020' }}>
-                          {card.trend>=0?'▲':'▼'} {Math.abs(card.trend)}%
-                        </div>
+                    <div style={{ padding:'9px 10px 10px' }}>
+                      <div style={{ fontSize:'12px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                        {card.name}
+                      </div>
+                      <div style={{ fontSize:'10px', color:'#BBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                        {card.setName} · <span style={{ fontFamily:'monospace' }}>#{card.localId}</span>
                       </div>
                     </div>
                   </div>
                 )
               })}
+              {pageCards.length===0 && (
+                <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'60px', color:'#AAA', fontSize:'13px', fontFamily:'var(--font-display)' }}>
+                  Aucune carte ne correspond à votre recherche
+                </div>
+              )}
             </div>
           )}
 
-          {/* VUE LISTE */}
-          {view==='list' && (
+          {/* LIST */}
+          {!loading && !loadErr && view==='list' && (
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
-              <div style={{ display:'grid', gridTemplateColumns:'2.2fr 1fr 0.8fr 0.8fr 0.8fr 0.7fr', padding:'10px 16px', borderBottom:'1px solid #F0F0F0', background:'#FAFAFA' }}>
-                {['Carte','Prix','Trend','PSA Pop','Rareté',''].map((h,i)=>(
-                  <div key={i} style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'0.07em', fontFamily:'var(--font-display)', textAlign:i>=1&&i<=4?'right' as const:'left' as const }}>{h}</div>
+              <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) minmax(0,1.5fr) 60px', padding:'9px 16px', background:'#FAFAFA', borderBottom:'1px solid #F0F0F0' }}>
+                {['Carte','Série','N°'].map((h,i)=>(
+                  <div key={i} style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.07em', fontFamily:'var(--font-display)', textAlign:i===2?'right' as const:'left' as const }}>{h}</div>
                 ))}
               </div>
-              {filtered.map((card,i)=>{
-                const ec = EC[card.type]??'#888'
-                const rs = RS[card.rarity]
-                const ls = LS[card.lang]
-                const isSel = selected===card.id
+              {pageCards.map((card,i) => {
+                const isSel = selId===card.id
+                const img   = card.image ? `${card.image}/low.webp` : null
                 return (
-                  <div key={card.id} className="rh" onClick={()=>setSelected(isSel?null:card.id)} style={{ display:'grid', gridTemplateColumns:'2.2fr 1fr 0.8fr 0.8fr 0.8fr 0.7fr', padding:'12px 16px', borderBottom:i<filtered.length-1?'1px solid #F8F8F8':'none', alignItems:'center', background:isSel?'#FFFDE0':'transparent', borderLeft:isSel?`3px solid ${ec}`:'3px solid transparent', transition:'all 0.1s' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                      <div style={{ width:'32px', height:'44px', borderRadius:'6px', background:`linear-gradient(145deg,${ec}20,${ec}08)`, border:`1.5px solid ${ec}28`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        <div style={{ width:'11px', height:'11px', borderRadius:'50%', background:ec, opacity:0.6 }} />
+                  <div key={card.id} className="rh"
+                    onClick={()=>handleCardClick(card.id)}
+                    style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) minmax(0,1.5fr) 60px', padding:'10px 16px', borderBottom:i<pageCards.length-1?'1px solid #F8F8F8':'none', alignItems:'center', background:isSel?'#F8F8F8':'transparent', borderLeft:isSel?'3px solid #111':'3px solid transparent', transition:'all .1s' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', minWidth:0 }}>
+                      <div style={{ width:'30px', height:'42px', flexShrink:0, borderRadius:'4px', overflow:'hidden', background:'#F5F5F5' }}>
+                        {img && <img src={img} alt={card.name} style={{ width:'100%', height:'100%', objectFit:'contain' }} onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>}
                       </div>
                       <div style={{ minWidth:0 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'3px' }}>
-                          <span style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</span>
-                          {card.signal && <span style={{ fontSize:'8px', fontWeight:700, background:card.signal==='S'?'linear-gradient(135deg,#FFD700,#FF8C00)':card.signal==='A'?'#C855D4':'#2E9E6A', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', flexShrink:0 }}>{card.signal}</span>}
-                        </div>
-                        <div style={{ display:'flex', gap:'4px', alignItems:'center' }}>
-                          <span style={{ fontSize:'10px', color:'#BBB' }}>{card.set} · #{card.number} · {card.year}</span>
-                          <span style={{ fontSize:'8px', background:ls.bg, color:ls.color, border:`1px solid ${ls.border}`, padding:'1px 4px', borderRadius:'3px', fontWeight:600, fontFamily:'var(--font-display)' }}>{ls.flag}</span>
-                          {card.legal && <span style={{ fontSize:'8px', background:'#F0FFF6', color:'#1A7A4A', border:'1px solid #AAEEC8', padding:'1px 4px', borderRadius:'3px', fontFamily:'var(--font-display)' }}>Standard</span>}
-                        </div>
+                        <div style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{card.name}</div>
+                        <div style={{ fontSize:'10px', color:'#CCC' }}>{flag(lang)} {lang}</div>
                       </div>
                     </div>
-                    <div style={{ textAlign:'right', fontSize:'14px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>
-                      {card.price>=1000?`€ ${(card.price/1000).toFixed(1)}k`:`€ ${card.price}`}
-                    </div>
-                    <div style={{ textAlign:'right', fontSize:'13px', fontWeight:700, color:card.trend>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-display)' }}>
-                      {card.trend>=0?'▲':'▼'} {Math.abs(card.trend)}%
-                    </div>
-                    <div style={{ textAlign:'right', fontSize:'12px', color:'#888', fontFamily:'var(--font-display)' }}>
-                      {card.psa ? card.psa.toLocaleString('fr-FR') : '—'}
-                    </div>
-                    <div style={{ textAlign:'right' }}>
-                      {rs && <span style={{ fontSize:'9px', background:rs.bg, color:rs.color, border:`1px solid ${rs.border}`, padding:'2px 6px', borderRadius:'4px', fontWeight:500, fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>{card.rarity}</span>}
-                    </div>
-                    <div style={{ display:'flex', gap:'4px', justifyContent:'flex-end' }}>
-                      <button onClick={e=>{e.stopPropagation()}} style={{ padding:'4px 8px', borderRadius:'5px', background:'#F5F5F5', border:'1px solid #E8E8E8', color:'#888', fontSize:'10px', cursor:'pointer', fontFamily:'var(--font-display)' }}>+</button>
-                    </div>
+                    <div style={{ fontSize:'11px', color:'#888', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{card.setName}</div>
+                    <div style={{ fontSize:'11px', color:'#AAA', fontFamily:'monospace', textAlign:'right' as const }}>#{card.localId}</div>
                   </div>
                 )
               })}
+              {pageCards.length===0 && (
+                <div style={{ padding:'40px', textAlign:'center', color:'#AAA', fontSize:'13px', fontFamily:'var(--font-display)' }}>Aucune carte trouvée</div>
+              )}
             </div>
           )}
+
+          {/* Pagination */}
+          {!loading && !loadErr && pageCount>1 && (
+            <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:'5px', marginTop:'24px' }}>
+              <button className="pgbtn" disabled={page===0} onClick={()=>setPage(0)}>«</button>
+              <button className="pgbtn" disabled={page===0} onClick={()=>setPage(p=>p-1)}>‹</button>
+              {Array.from({length:Math.min(7,pageCount)}, (_,i) => {
+                const mid = Math.min(Math.max(page,3), pageCount-4)
+                const p   = pageCount<=7 ? i : Math.max(0, mid-3+i)
+                return p<pageCount ? (
+                  <button key={p} onClick={()=>setPage(p)}
+                    style={{ width:'32px', height:'32px', borderRadius:'7px', border:`1px solid ${p===page?'#111':'#E8E8E8'}`, background:p===page?'#111':'#fff', color:p===page?'#fff':'#555', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', transition:'all .1s' }}>
+                    {p+1}
+                  </button>
+                ) : null
+              })}
+              <button className="pgbtn" disabled={page>=pageCount-1} onClick={()=>setPage(p=>p+1)}>›</button>
+              <button className="pgbtn" disabled={page>=pageCount-1} onClick={()=>setPage(pageCount-1)}>»</button>
+            </div>
+          )}
+
         </div>
 
-        {/* PANEL DETAIL */}
-        {sel && (
-          <div style={{ width:'300px', flexShrink:0, animation:'slideIn 0.2s ease-out' }}>
-            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', position:'sticky', top:'20px' }}>
-              {/* Art */}
-              <div style={{ height:'140px', background:`linear-gradient(145deg,${EC[sel.type]??'#888'}25,${EC[sel.type]??'#888'}10)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
-                <div style={{ width:'60px', height:'60px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${EC[sel.type]??'#888'}CC,${EC[sel.type]??'#888'}55)`, boxShadow:`0 0 24px ${EC[sel.type]??'#888'}88` }} />
-                {sel.signal && (
-                  <div style={{ position:'absolute', top:'10px', right:'10px', fontSize:'10px', fontWeight:700, background:sel.signal==='S'?'linear-gradient(135deg,#FFD700,#FF8C00)':sel.signal==='A'?'#C855D4':'#2E9E6A', color:'#fff', padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>Signal Tier {sel.signal}</div>
-                )}
-                <button onClick={()=>setSelected(null)} style={{ position:'absolute', top:'10px', left:'10px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,0.8)', border:'1px solid rgba(0,0,0,0.1)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}>×</button>
-              </div>
-              <div style={{ padding:'16px' }}>
-                <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', marginBottom:'4px', lineHeight:1.2 }}>{sel.name}</div>
-                <div style={{ fontSize:'11px', color:'#AAA', marginBottom:'14px' }}>{sel.set} · #{sel.number} · {sel.year}</div>
+        {/* ── DETAIL PANEL ── */}
+        {selId && (
+          <div style={{ width:'285px', flexShrink:0, animation:'slideIn .2s ease-out' }}>
+            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', position:'sticky', top:'20px', maxHeight:'90vh', overflowY:'auto' as const }}>
 
-                {/* Prix */}
-                <div style={{ background:'#FAFAFA', borderRadius:'10px', padding:'12px', marginBottom:'14px', textAlign:'center' }}>
-                  <div style={{ fontSize:'28px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', lineHeight:1 }}>
-                    {sel.price>=1000?`€ ${(sel.price/1000).toFixed(sel.price>=100000?0:1)}k`:`€ ${sel.price}`}
-                  </div>
-                  <div style={{ fontSize:'13px', fontWeight:600, color:sel.trend>=0?'#2E9E6A':'#E03020', marginTop:'4px' }}>
-                    {sel.trend>=0?'▲ +':'▼ '}{Math.abs(sel.trend)}% · 24h
-                  </div>
+              {detLoading ? (
+                <div style={{ padding:'50px 20px', textAlign:'center' }}>
+                  <div style={{ width:'20px', height:'20px', border:'2px solid #EBEBEB', borderTop:'2px solid #111', borderRadius:'50%', animation:'spin .7s linear infinite', margin:'0 auto 10px' }}/>
+                  <div style={{ fontSize:'12px', color:'#AAA', fontFamily:'var(--font-display)' }}>Chargement de la carte…</div>
                 </div>
 
-                {/* Infos */}
-                <div style={{ display:'flex', flexDirection:'column', gap:'8px', marginBottom:'14px' }}>
-                  {[
-                    { label:'Rareté',      value: RS[sel.rarity] ? <span style={{ fontSize:'11px', background:RS[sel.rarity].bg, color:RS[sel.rarity].color, border:`1px solid ${RS[sel.rarity].border}`, padding:'2px 7px', borderRadius:'4px', fontWeight:600, fontFamily:'var(--font-display)' }}>{sel.rarity}</span> : sel.rarity },
-                    { label:'Ère',         value: sel.era },
-                    { label:'Langue',      value: <span style={{ fontSize:'11px', background:LS[sel.lang].bg, color:LS[sel.lang].color, border:`1px solid ${LS[sel.lang].border}`, padding:'2px 7px', borderRadius:'4px', fontWeight:600, fontFamily:'var(--font-display)' }}>{LS[sel.lang].flag} {sel.lang}</span> },
-                    { label:'HP',          value: sel.hp ? `${sel.hp} HP` : '—' },
-                    { label:'PSA Pop',     value: sel.psa ? sel.psa.toLocaleString('fr-FR') + ' ex.' : '—' },
-                    { label:'Format',      value: sel.legal ? <span style={{ fontSize:'11px', color:'#1A7A4A', fontFamily:'var(--font-display)' }}>✓ Standard</span> : <span style={{ fontSize:'11px', color:'#888' }}>Non-standard</span> },
-                    { label:'Reprint risk',value: sel.reprint==='none' ? <span style={{ fontSize:'11px', color:'#2E9E6A', fontFamily:'var(--font-display)' }}>Faible</span> : sel.reprint==='low' ? <span style={{ fontSize:'11px', color:'#FF8C00', fontFamily:'var(--font-display)' }}>Moyen</span> : <span style={{ fontSize:'11px', color:'#E03020', fontFamily:'var(--font-display)' }}>Élevé</span> },
-                  ].map(row=>(
-                    <div key={String(row.label)} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <span style={{ fontSize:'11px', color:'#888', fontFamily:'var(--font-display)' }}>{row.label}</span>
-                      <span style={{ fontSize:'12px', color:'#111', fontFamily:'var(--font-display)', fontWeight:500 }}>{row.value as React.ReactNode}</span>
+              ) : detail ? (
+                <>
+                  {/* Image haute résolution */}
+                  <div style={{ background:'#F8F8F8', padding:'14px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' }}>
+                    {detail.image ? (
+                      <img
+                        src={`${detail.image}/high.webp`}
+                        alt={detail.name}
+                        style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}
+                        onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
+                      />
+                    ) : (
+                      <div className="shimmer" style={{ width:'120px', height:'168px', borderRadius:'8px' }}/>
+                    )}
+                    <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
+                      style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}>×</button>
+                  </div>
+
+                  <div style={{ padding:'14px' }}>
+                    <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2, marginBottom:'2px' }}>{detail.name}</div>
+
+                    {/* Traduction JP → EN */}
+                    {lang==='JP' && enDetail && (
+                      <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'6px', padding:'5px 8px', background:'#FFF5F0', borderRadius:'6px', border:'1px solid #FFE0D0' }}>
+                        <span>🇺🇸</span>
+                        <span style={{ fontSize:'12px', fontWeight:500, color:'#C84B00', fontFamily:'var(--font-display)' }}>{enDetail.name}</span>
+                      </div>
+                    )}
+
+                    <div style={{ fontSize:'11px', color:'#AAA', marginBottom:'14px' }}>
+                      {detail.set?.name}{detail.localId ? ` · #${detail.localId}` : ''}
+                      {detail.set?.releaseDate && ` · ${detail.set.releaseDate.slice(0,4)}`}
                     </div>
-                  ))}
-                </div>
 
-                {/* Actions */}
-                <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
-                  <button onClick={()=>router.push('/portfolio')} style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                    + Ajouter au portfolio
-                  </button>
-                  <button style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#F5F5F5', color:'#555', border:'1px solid #E8E8E8', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                    🔔 Alerte de prix
-                  </button>
-                  {sel.signal && (
-                    <button onClick={()=>router.push('/alpha')} style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#FFF0EE', color:'#E03020', border:'1px solid #FFD8D0', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                      Voir le signal Tier {sel.signal}
+                    {/* Types + HP */}
+                    {(detail.types?.length || detail.hp) && (
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:'5px', marginBottom:'14px' }}>
+                        {detail.types?.map(t=>(
+                          <span key={t} style={{ fontSize:'10px', fontWeight:600, background:`${TC[t]??'#888'}18`, color:TC[t]??'#888', border:`1px solid ${TC[t]??'#888'}30`, padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>{t}</span>
+                        ))}
+                        {detail.hp && (
+                          <span style={{ fontSize:'10px', fontWeight:600, background:'#F5F5F5', color:'#555', border:'1px solid #E8E8E8', padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>{detail.hp} HP</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Infos */}
+                    <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
+                      {([
+                        ['Rareté',      detail.rarity],
+                        ['Catégorie',   detail.category],
+                        ['Stade',       detail.stage],
+                        ['Évolue de',   detail.evolveFrom],
+                        ['Illustrateur',detail.illustrator],
+                      ] as [string,string|undefined][]).filter(([,v])=>v).map(([l,v])=>(
+                        <div key={l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px' }}>
+                          <span style={{ fontSize:'10px', color:'#AAA', fontFamily:'var(--font-display)', flexShrink:0 }}>{l}</span>
+                          <span style={{ fontSize:'11px', color:'#111', fontFamily:'var(--font-display)', fontWeight:500, textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Attaques */}
+                    {detail.attacks && detail.attacks.length>0 && (
+                      <div style={{ marginBottom:'14px' }}>
+                        <div style={{ fontSize:'9px', fontWeight:700, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.1em', fontFamily:'var(--font-display)', marginBottom:'7px' }}>Attaques</div>
+                        {detail.attacks.slice(0,3).map((a,i)=>(
+                          <div key={i} style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px', marginBottom:'5px' }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'3px' }}>
+                              <span style={{ fontSize:'11px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>{a.name}</span>
+                              {a.damage!=null && <span style={{ fontSize:'12px', fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)' }}>{a.damage}</span>}
+                            </div>
+                            {a.cost.length>0 && (
+                              <div style={{ display:'flex', gap:'3px', marginBottom: a.effect?'4px':'0' }}>
+                                {a.cost.slice(0,6).map((c,ci)=>(
+                                  <span key={ci} style={{ width:'14px', height:'14px', borderRadius:'50%', background:`${TC[c]??'#AAA'}35`, border:`1px solid ${TC[c]??'#AAA'}70`, display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'7px' }}>●</span>
+                                ))}
+                              </div>
+                            )}
+                            {a.effect && <div style={{ fontSize:'9px', color:'#888', lineHeight:1.5 }}>{a.effect.slice(0,100)}{a.effect.length>100?'…':''}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Faiblesses */}
+                    {detail.weaknesses && detail.weaknesses.length>0 && (
+                      <div style={{ marginBottom:'14px' }}>
+                        <div style={{ fontSize:'9px', fontWeight:700, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.1em', fontFamily:'var(--font-display)', marginBottom:'5px' }}>Faiblesses</div>
+                        <div style={{ display:'flex', gap:'5px', flexWrap:'wrap' }}>
+                          {detail.weaknesses.map((w,i)=>(
+                            <span key={i} style={{ fontSize:'11px', fontWeight:600, background:`${TC[w.type]??'#888'}18`, color:TC[w.type]??'#888', border:`1px solid ${TC[w.type]??'#888'}30`, padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>
+                              {w.type} {w.value}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button onClick={()=>router.push('/portfolio')}
+                      style={{ width:'100%', padding:'10px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                      + Ajouter au portfolio
                     </button>
+                  </div>
+                </>
+
+              ) : selCard && (
+                <div style={{ padding:'30px 20px', textAlign:'center' }}>
+                  {selCard.image && (
+                    <img src={`${selCard.image}/low.webp`} alt={selCard.name} style={{ maxHeight:'120px', marginBottom:'10px', objectFit:'contain' }}/>
                   )}
+                  <div style={{ fontSize:'13px', color:'#888', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{selCard.name}</div>
+                  <div style={{ fontSize:'11px', color:'#CCC' }}>{selCard.setName}</div>
                 </div>
-              </div>
+              )}
+
             </div>
           </div>
         )}

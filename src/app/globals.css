@@ -81,6 +81,7 @@ body {
 }
 
 /* ── RESPONSIVE GLOBAL ───────────────────────────── */
+html { zoom: 1.1; }
 html, body { width: 100%; }
 
 /* Padding réduit sur mobile */

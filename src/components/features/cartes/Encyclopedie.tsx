@@ -81,6 +81,7 @@ export function Encyclopedie() {
   const [page,       setPage]        = useState(0)
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
+  const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
   const [detLoading, setDetLoading]  = useState(false)
@@ -174,6 +175,15 @@ export function Encyclopedie() {
         @keyframes holoMove  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes selPulse  { 0%,100%{box-shadow:0 0 0 2px rgba(0,0,0,.12)} 50%{box-shadow:0 0 0 3px rgba(0,0,0,.22),0 8px 28px rgba(0,0,0,.12)} }
         @keyframes langBounce{ 0%{transform:scale(1)} 40%{transform:scale(1.18)} 70%{transform:scale(.95)} 100%{transform:scale(1)} }
+        @keyframes lbIn  { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes lbBg  { from{opacity:0} to{opacity:1} }
+        .lb-card { animation: lbIn .32s cubic-bezier(.34,1.2,.64,1); }
+        .lb-bg   { animation: lbBg .22s ease-out; }
+        .lb-close { transition: all .15s; border-radius:50%; }
+        .lb-close:hover { background:rgba(255,255,255,.15) !important; transform:scale(1.1); }
+        .zoom-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1); }
+        .zoom-btn:hover { transform: scale(1.08); opacity:1 !important; }
+        .zoom-btn:active { transform: scale(.95); }
 
         .enc-card {
           transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s ease, border-color .18s ease;
@@ -185,6 +195,7 @@ export function Encyclopedie() {
           opacity: 0; transition: opacity .25s;
         }
         .enc-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 32px rgba(0,0,0,.13) !important; }
+        .enc-card:hover .zoom-btn { opacity: 1 !important; }
         .enc-card:hover::after { opacity: 1; }
         .enc-card:hover .card-img { transform: scale(1.06); }
         .enc-card.sel { animation: selPulse 2s ease-in-out infinite; border-color: #111 !important; }
@@ -377,6 +388,12 @@ export function Encyclopedie() {
                         <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize: cardSize==='S'?'10px':'11px', background:'rgba(255,255,255,.92)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}>
                           {flag(lang)}
                         </div>
+                        <button className="zoom-btn" onClick={e=>{ e.stopPropagation(); setLightbox(card) }}
+                          style={{ position:'absolute', top:'6px', left:'6px', width:'26px', height:'26px', borderRadius:'7px', background:'rgba(0,0,0,.45)', border:'none', color:'#fff', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, transition:'opacity .15s', backdropFilter:'blur(4px)' }}
+                          onMouseEnter={e=>(e.currentTarget.style.opacity='1')}
+                          onMouseLeave={e=>(e.currentTarget.style.opacity='0')}>
+                          🔍
+                        </button>
                         {cardSize==='L' && isSel && (
                           <div style={{ position:'absolute', top:'7px', left:'7px', width:'8px', height:'8px', borderRadius:'50%', background:'#111', boxShadow:'0 0 0 2px #fff' }}/>
                         )}
@@ -500,6 +517,12 @@ export function Encyclopedie() {
                     )}
                     <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
                       style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}>×</button>
+                    {selCard && (
+                      <button className="zoom-btn" onClick={()=>setLightbox(selCard)}
+                        style={{ position:'absolute', top:'8px', right:'8px', width:'30px', height:'30px', borderRadius:'50%', background:'rgba(0,0,0,.55)', border:'none', color:'#fff', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }}>
+                        🔍
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ padding:'14px' }}>
@@ -605,6 +628,67 @@ export function Encyclopedie() {
         )}
 
       </div>
+
+      {/* LIGHTBOX */}
+      {lightbox && (()=>{
+        const base = cardImageUrl(lightbox, lang)
+        const imgHd = base ? `${base}/high.webp` : null
+        return (
+          <div className="lb-bg" onClick={()=>setLightbox(null)}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(8px)', padding:'24px' }}>
+            <div className="lb-card" onClick={e=>e.stopPropagation()}
+              style={{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px', maxWidth:'360px', width:'100%' }}>
+
+              {/* Image */}
+              <div style={{ position:'relative', width:'100%' }}>
+                {imgHd ? (
+                  <img src={imgHd} alt={lightbox.name}
+                    style={{ width:'100%', borderRadius:'16px', boxShadow:'0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06)', display:'block' }}
+                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${base}/high.jpg`; else if(t.src.includes('.jpg')) t.src=`${base}/high.png`; }}
+                  />
+                ) : (
+                  <div style={{ width:'100%', aspectRatio:'2.5/3.5', borderRadius:'16px', background:'#1a1a1a' }}/>
+                )}
+                {/* Reflet subtil */}
+                <div style={{ position:'absolute', inset:0, borderRadius:'16px', background:'linear-gradient(135deg,rgba(255,255,255,.08) 0%,transparent 50%)', pointerEvents:'none' }}/>
+              </div>
+
+              {/* Infos sous la carte */}
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontSize:'18px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px', letterSpacing:'-.3px' }}>
+                  {lightbox.name}
+                </div>
+                {lang==='JP' && lightbox.enName && (
+                  <div style={{ fontSize:'12px', color:'rgba(255,255,255,.45)', fontStyle:'italic', marginBottom:'6px' }}>
+                    🇺🇸 {lightbox.enName}
+                  </div>
+                )}
+                <div style={{ fontSize:'12px', color:'rgba(255,255,255,.4)', fontFamily:'var(--font-display)' }}>
+                  {lightbox.setName} · <span style={{ fontFamily:'monospace' }}>#{lightbox.localId}</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display:'flex', gap:'8px' }}>
+                <button className="add-btn" onClick={()=>{ setLightbox(null); handleCardClick(lightbox.id) }}
+                  style={{ padding:'9px 20px', borderRadius:'9px', background:'#fff', color:'#111', border:'none', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  Voir les détails
+                </button>
+                <button className="add-btn" onClick={()=>setLightbox(null)}
+                  style={{ padding:'9px 20px', borderRadius:'9px', background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.15)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  Fermer
+                </button>
+              </div>
+            </div>
+
+            {/* Bouton fermer coin */}
+            <button className="lb-close" onClick={()=>setLightbox(null)}
+              style={{ position:'fixed', top:'18px', right:'18px', width:'38px', height:'38px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px' }}>
+              ×
+            </button>
+          </div>
+        )
+      })()}
     </>
   )
 }

@@ -51,10 +51,18 @@ type SortKey  = 'set'|'name'
 type ViewMode = 'grid'|'list'
 
 interface EnrichedCard extends TCGCard {
-  setId:string; setName:string; year:number; era:string
+  setId:string; setName:string; year:number; era:string; enName?:string
 }
 
 const PER_PAGE = 60
+const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
+
+function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
+  if (card.image) return card.image
+  if (card.setId && card.localId)
+    return `https://assets.tcgdex.net/${LC_MAP[lang]}/${card.setId}/${card.localId}`
+  return null
+}
 
 export function Encyclopedie() {
   const router = useRouter()
@@ -72,6 +80,7 @@ export function Encyclopedie() {
   const [view,       setView]        = useState<ViewMode>('grid')
   const [page,       setPage]        = useState(0)
 
+  const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
   const [detLoading, setDetLoading]  = useState(false)
@@ -82,15 +91,26 @@ export function Encyclopedie() {
     setAllCards([]); setFilSet('all'); setFilEra('all')
     setPage(0); setSelId(null); setDetail(null); setEnDetail(null)
 
-    Promise.all([fetchSets(lang), fetchAllCards(lang)])
-      .then(([sets, cards]) => {
-        const setMap = new Map(sets.map(s=>[s.id,s]))
+    const setsP = fetchSets(lang)
+    const cardsP = fetchAllCards(lang)
+    const enCardsP = lang==='JP' ? fetchAllCards('EN').catch(()=>[]) : Promise.resolve([])
+
+    Promise.all([setsP, cardsP, enCardsP])
+      .then(([sets, cards, enCards]) => {
+        const setMap   = new Map(sets.map(s=>[s.id,s]))
+        // Map EN par localId+setId pour la traduction
+        const enMap    = new Map<string, string>()
+        enCards.forEach(c => {
+          const sid = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
+          enMap.set(`${sid}-${c.localId}`, c.name)
+        })
         const enriched: EnrichedCard[] = cards.map(c => {
           const setId  = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
           const set    = setMap.get(setId)
           const year   = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
           const era    = setIdToEra(setId) !== 'Autre' ? setIdToEra(setId) : yearToEra(year)
-          return { ...c, setId, setName: set?.name ?? setId, year, era }
+          const enName = lang==='JP' ? enMap.get(`${setId}-${c.localId}`) : undefined
+          return { ...c, setId, setName: set?.name ?? setId, year, era, enName }
         })
         setAllCards(enriched); setLoadMsg(''); setLoading(false)
       })
@@ -274,6 +294,16 @@ export function Encyclopedie() {
                 </button>
               ))}
             </div>
+            {view==='grid' && (
+              <div style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
+                {(['S','M','L'] as const).map(sz=>(
+                  <button key={sz} onClick={()=>setCardSize(sz)}
+                    style={{ width:'30px', height:'32px', borderRadius:'7px', border:'none', background:cardSize===sz?'#111':'transparent', color:cardSize===sz?'#fff':'#888', fontSize:'10px', fontWeight:700, cursor:'pointer', transition:'all .12s', fontFamily:'var(--font-display)', letterSpacing:'.05em' }}>
+                    {sz}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Filters */}
@@ -317,48 +347,74 @@ export function Encyclopedie() {
           )}
 
           {/* GRID */}
-          {!loading && !loadErr && view==='grid' && (
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))', gap:'12px' }}>
-              {pageCards.map((card,idx) => {
-                const isSel = selId===card.id
-                const img   = card.image ? `${card.image}/low.webp` : null
-                return (
-                  <div key={card.id}
-                    className={`enc-card${isSel?' sel':''}`}
-                    onClick={()=>handleCardClick(card.id)}
-                    style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:'0 2px 6px rgba(0,0,0,.04)', animation:`cardIn .2s ${Math.min(idx,20)*.02}s ease-out both` }}>
-                    <div style={{ height:'128px', background:'linear-gradient(145deg,#F5F5F5,#EFEFEF)', position:'relative', overflow:'hidden' }}>
-                      {img ? (
-                        <img src={img} alt={card.name}
-                          className="card-img"
-                          style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
-                          onLoad={e=>{ (e.target as HTMLImageElement).classList.add('card-img-loaded') }}
-                          onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.png')) t.src=`${card.image}/low.png`; else t.style.display='none' }}/>
-                      ) : (
-                        <div className="shimmer" style={{ position:'absolute', inset:0 }}/>
-                      )}
-                      <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize:'11px', background:'rgba(255,255,255,.9)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)', letterSpacing:'-.2px' }}>
-                        {flag(lang)}
+          {!loading && !loadErr && view==='grid' && (()=>{
+            const cfg = {
+              S:{ col:'repeat(auto-fill,minmax(130px,1fr))', imgH:'108px', nameSize:'11px', subSize:'9px',  pad:'8px 9px 9px'  },
+              M:{ col:'repeat(auto-fill,minmax(185px,1fr))', imgH:'160px', nameSize:'13px', subSize:'10px', pad:'10px 12px 12px'},
+              L:{ col:'repeat(auto-fill,minmax(240px,1fr))', imgH:'220px', nameSize:'14px', subSize:'11px', pad:'12px 14px 14px'},
+            }[cardSize]
+            return (
+              <div style={{ display:'grid', gridTemplateColumns:cfg.col, gap: cardSize==='L'?'16px':'12px' }}>
+                {pageCards.map((card,idx) => {
+                  const isSel = selId===card.id
+                  const base  = cardImageUrl(card, lang)
+                  const img   = base ? `${base}/low.webp` : null
+                  return (
+                    <div key={card.id}
+                      className={`enc-card${isSel?' sel':''}`}
+                      onClick={()=>handleCardClick(card.id)}
+                      style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .22s ${Math.min(idx,24)*.018}s ease-out both` }}>
+                      <div style={{ height:cfg.imgH, background:'linear-gradient(145deg,#F6F6F6,#EEEEEE)', position:'relative', overflow:'hidden' }}>
+                        {img ? (
+                          <img src={img} alt={card.name}
+                            className="card-img"
+                            style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', padding: cardSize==='L'?'6px':'3px', boxSizing:'border-box' as const }}
+                            onLoad={e=>{ (e.target as HTMLImageElement).classList.add('card-img-loaded') }}
+                            onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')){ t.src=`${base}/low.jpg` } else if(t.src.includes('.jpg')){ t.src=`${base}/low.png` } else { t.closest('.enc-card-img-wrap')?.classList.add('img-failed'); t.style.display='none' } }}/>
+                        ) : (
+                          <div className="shimmer" style={{ position:'absolute', inset:0 }}/>
+                        )}
+                        <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize: cardSize==='S'?'10px':'11px', background:'rgba(255,255,255,.92)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}>
+                          {flag(lang)}
+                        </div>
+                        {cardSize==='L' && isSel && (
+                          <div style={{ position:'absolute', top:'7px', left:'7px', width:'8px', height:'8px', borderRadius:'50%', background:'#111', boxShadow:'0 0 0 2px #fff' }}/>
+                        )}
+                      </div>
+                      <div style={{ padding:cfg.pad }}>
+                        <div className="card-name" style={{ fontSize:cfg.nameSize, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.3 }}>
+                          {card.name}
+                        </div>
+                        <div style={{ fontSize:cfg.subSize, color:'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                          {card.setName}
+                          {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
+                        </div>
+                        {lang==='JP' && card.enName && cardSize!=='S' && (
+                          <div style={{ fontSize:'9px', color:'#BBBBBB', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, fontStyle:'italic', display:'flex', alignItems:'center', gap:'3px' }}>
+                            <span style={{ fontSize:'8px' }}>🇺🇸</span>
+                            <span>{card.enName}</span>
+                          </div>
+                        )}
+                        {cardSize==='L' && (
+                          <button
+                            onClick={e=>{ e.stopPropagation(); handleCardClick(card.id) }}
+                            className="add-btn"
+                            style={{ marginTop:'10px', width:'100%', padding:'7px', borderRadius:'7px', background:isSel?'#111':'#F5F5F5', color:isSel?'#fff':'#555', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                            {isSel ? '✓ Sélectionnée' : 'Voir la carte'}
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div style={{ padding:'9px 10px 10px' }}>
-                      <div className="card-name" style={{ fontSize:'12px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
-                        {card.name}
-                      </div>
-                      <div style={{ fontSize:'10px', color:'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
-                        {card.setName} · <span style={{ fontFamily:'monospace' }}>#{card.localId}</span>
-                      </div>
-                    </div>
+                  )
+                })}
+                {pageCards.length===0 && (
+                  <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'60px', color:'#AAA', fontSize:'13px', fontFamily:'var(--font-display)' }}>
+                    Aucune carte ne correspond à votre recherche
                   </div>
-                )
-              })}
-              {pageCards.length===0 && (
-                <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'60px', color:'#AAA', fontSize:'13px', fontFamily:'var(--font-display)' }}>
-                  Aucune carte ne correspond à votre recherche
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )
+          })()}
 
           {/* LIST */}
           {!loading && !loadErr && view==='list' && (

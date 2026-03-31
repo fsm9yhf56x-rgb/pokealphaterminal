@@ -51,7 +51,7 @@ type SortKey  = 'set'|'name'
 type ViewMode = 'grid'|'list'
 
 interface EnrichedCard extends TCGCard {
-  setId:string; setName:string; year:number; era:string; enName?:string
+  setId:string; setName:string; year:number; era:string; enName?:string; enImage?:string
 }
 
 const PER_PAGE = 60
@@ -59,8 +59,7 @@ const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
 
 function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
   if (card.image) return card.image
-  if (card.setId && card.localId)
-    return `https://assets.tcgdex.net/${LC_MAP[lang]}/${card.setId}/${card.localId}`
+  if (lang === 'JP' && card.enImage) return card.enImage
   return null
 }
 
@@ -105,13 +104,16 @@ export function Encyclopedie() {
           const sid = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
           enMap.set(`${sid}-${c.localId}`, c.name)
         })
+        const enImgMap = new Map<string, string>()
+        enCards.forEach(c => { const sid = c.id.substring(0, c.id.lastIndexOf('-')) || c.id; if (c.image) enImgMap.set(`${sid}-${c.localId}`, c.image) })
         const enriched: EnrichedCard[] = cards.map(c => {
           const setId  = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
           const set    = setMap.get(setId)
           const year   = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
           const era    = setIdToEra(setId) !== 'Autre' ? setIdToEra(setId) : yearToEra(year)
-          const enName = lang==='JP' ? enMap.get(`${setId}-${c.localId}`) : undefined
-          return { ...c, setId, setName: set?.name ?? setId, year, era, enName }
+          const enName  = lang==='JP' ? enMap.get(`${setId}-${c.localId}`) : undefined
+          const enImage = lang==='JP' ? enImgMap.get(`${setId}-${c.localId}`) : undefined
+          return { ...c, setId, setName: set?.name ?? setId, year, era, enName, enImage }
         })
         setAllCards(enriched); setLoadMsg(''); setLoading(false)
       })
@@ -383,7 +385,10 @@ export function Encyclopedie() {
                             onLoad={e=>{ (e.target as HTMLImageElement).classList.add('card-img-loaded') }}
                             onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')){ t.src=`${base}/low.jpg` } else if(t.src.includes('.jpg')){ t.src=`${base}/low.png` } else { t.closest('.enc-card-img-wrap')?.classList.add('img-failed'); t.style.display='none' } }}/>
                         ) : (
-                          <div className="shimmer" style={{ position:'absolute', inset:0 }}/>
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#F5F5F5,#EEEEEE)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
+                            <div style={{ fontSize:cardSize==='S'?'18px':'24px', opacity:.2 }}>🎴</div>
+                            {lang==='JP' && cardSize!=='S' && <div style={{ fontSize:'8px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.4 }}>Image JP{String.fromCharCode(10)}non disponible</div>}
+                          </div>
                         )}
                         <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize: cardSize==='S'?'10px':'11px', background:'rgba(255,255,255,.92)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}>
                           {flag(lang)}
@@ -513,7 +518,10 @@ export function Encyclopedie() {
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
                       />
                     ) : (
-                      <div className="shimmer" style={{ width:'120px', height:'168px', borderRadius:'8px' }}/>
+                      <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+                        <div style={{ fontSize:'32px', opacity:.18 }}>🎴</div>
+                        {lang==='JP' && <div style={{ fontSize:'10px', color:'#CCC', textAlign:'center' as const, fontFamily:'var(--font-display)', lineHeight:1.5 }}>Image JP<br/>non disponible</div>}
+                      </div>
                     )}
                     <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
                       style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}>×</button>
@@ -606,7 +614,26 @@ export function Encyclopedie() {
                       </div>
                     )}
 
-                    <button onClick={()=>router.push('/portfolio')} className="add-btn"
+                    <button onClick={()=>{
+                      if (detail && selCard) {
+                        const toAdd = {
+                          id: 'enc_'+Date.now(),
+                          name: detail.name,
+                          set: selCard.setName,
+                          setId: selCard.setId,
+                          number: detail.localId ?? selCard.localId,
+                          rarity: detail.rarity ?? '',
+                          type: detail.types?.[0] ?? 'normal',
+                          hp: detail.hp,
+                          year: selCard.year,
+                          lang,
+                          image: detail.image ?? selCard.enImage,
+                          enName: selCard.enName,
+                        }
+                        localStorage.setItem('pka_add_card', JSON.stringify(toAdd))
+                      }
+                      router.push('/portfolio')
+                    }} className="add-btn"
                       style={{ width:'100%', padding:'11px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>
                       + Ajouter au portfolio
                     </button>

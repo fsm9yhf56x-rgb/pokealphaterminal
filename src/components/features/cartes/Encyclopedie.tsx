@@ -630,7 +630,8 @@ export function Encyclopedie() {
                           image: detail.image ?? selCard.enImage,
                           enName: selCard.enName,
                         }
-                        localStorage.setItem('pka_add_card', JSON.stringify(toAdd))
+                        const setTotal = allCards.filter(c=>c.setId===selCard?.setId).length
+                        localStorage.setItem('pka_add_card', JSON.stringify({...toAdd, setTotal}))
                       }
                       router.push('/portfolio')
                     }} className="add-btn"

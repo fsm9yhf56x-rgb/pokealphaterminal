@@ -11,6 +11,7 @@ type CardItem = {
   condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
   psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean
+  image?: string; setTotal?: number
 }
 
 const ENCYCLOPEDIA: CardItem[] = [
@@ -93,7 +94,12 @@ export function Holdings() {
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number;
   }>({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
   const [toast, setToast] = useState<string|null>(null)
-  const [importOpen, setImportOpen] = useState(false)
+  const [importOpen,   setImportOpen]   = useState(false)
+  const [scannerOpen,  setScannerOpen]  = useState(false)
+  const [scannerLoad,  setScannerLoad]  = useState(false)
+  const [scannerImg,   setScannerImg]   = useState<string|null>(null)
+  const [showWelcome,  setShowWelcome]  = useState(false)
+  const [celebSet,     setCelebSet]     = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
   // ── Card from Encyclopedie ──
@@ -265,6 +271,15 @@ export function Holdings() {
         .req-field { border:2px solid rgba(255,107,53,.35) !important; }
         .req-field-ok { border:2px solid rgba(78,204,163,.4) !important; }
         select { color-scheme:dark; }
+        @keyframes binderOpen { 0%{transform:perspective(800px) rotateY(-90deg) translateX(-60px);opacity:0} 60%{transform:perspective(800px) rotateY(8deg);opacity:1} 100%{transform:perspective(800px) rotateY(0deg);opacity:1} }
+        @keyframes welcomeIn  { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+        @keyframes burst      { 0%{transform:scale(0) rotate(0deg);opacity:1} 60%{transform:scale(1.3) rotate(20deg);opacity:1} 100%{transform:scale(1.1) rotate(15deg);opacity:1} }
+        @keyframes confettiF  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(120px) rotate(720deg);opacity:0} }
+        @keyframes shimmerG   { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        @keyframes scanPulse  { 0%,100%{border-color:rgba(16,185,129,.4)} 50%{border-color:rgba(16,185,129,.9)} }
+        @keyframes scanLine   { 0%{top:10%} 100%{top:90%} }
+        .scan-frame { animation:scanPulse 1.4s ease-in-out infinite; }
+        .scan-line  { animation:scanLine 1.8s ease-in-out infinite alternate; }
       `}} />
 
       <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative' }}>
@@ -632,8 +647,19 @@ export function Holdings() {
                           <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                           <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
                           <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-                            <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
-                            <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
+                            {card.image ? (
+                              <img src={`${card.image}/low.webp`} alt={card.name}
+                                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', transition:'transform .35s cubic-bezier(.34,1.2,.64,1)' }}
+                                onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${card.image}/low.jpg`; else { t.style.display='none' } }}
+                                onMouseEnter={e=>{ (e.target as HTMLImageElement).style.transform='scale(1.06)' }}
+                                onMouseLeave={e=>{ (e.target as HTMLImageElement).style.transform='scale(1)' }}
+                              />
+                            ) : (
+                              <>
+                                <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
+                                <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
+                              </>
+                            )}
                             {card.signal&&<div style={{ position:'absolute', top:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
                             {favs.has(card.id)&&<div style={{ position:'absolute', top:'4px', left:'4px', fontSize:'10px', zIndex:2 }}>H</div>}
                             {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
@@ -836,6 +862,149 @@ export function Holdings() {
         )}
 
       </div>
+      {/* ── WELCOME ── */}
+      {showWelcome&&(
+        <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.96)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(12px)' }}>
+          <div style={{ maxWidth:'420px',width:'100%',textAlign:'center',animation:'welcomeIn .5s cubic-bezier(.34,1.2,.64,1)' }}>
+            <div style={{ fontSize:'64px',marginBottom:'20px',animation:'burst .6s .2s cubic-bezier(.34,1.4,.64,1) both' }}>📖</div>
+            <div style={{ fontSize:'11px',fontWeight:700,color:'rgba(255,107,53,.8)',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur PokéAlpha Terminal</div>
+            <h2 style={{ fontSize:'28px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.15,marginBottom:'14px' }}>
+              Votre collection mérite<br/>
+              <span style={{ background:'linear-gradient(135deg,#FF6B35,#FFD700,#FF6B35)',backgroundSize:'200% 200%',animation:'shimmerG 3s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>d'être célébrée.</span>
+            </h2>
+            <p style={{ fontSize:'14px',color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)',lineHeight:1.7,marginBottom:'28px' }}>
+              Ajoutez vos premières cartes et regardez votre binder prendre vie.
+              Chaque carte est un souvenir, une victoire, une passion.
+            </p>
+            <button onClick={()=>setShowWelcome(false)}
+              style={{ padding:'14px 36px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF6B35)',color:'#fff',border:'none',fontSize:'14px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 8px 32px rgba(224,48,32,.45)',letterSpacing:'.03em' }}>
+              Ouvrir mon binder →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── CELEBRATION ── */}
+      {celebSet&&(()=>{
+        const confetti = Array.from({length:48},(_,i)=>({
+          left:(i*37+13)%100, top:(i*19+5)%100, size:4+(i*3)%10,
+          round:i%3!==0, delay:(i*0.08)%2.5, dur:1.8+(i*0.09)%1.5,
+          color:['#FFD700','#FF6B35','#C855D4','#42A5F5','#4ECCA3','#FF6B8A','#fff'][i%7],
+        }))
+        return (
+          <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.92)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',backdropFilter:'blur(8px)' }}
+            onClick={()=>setCelebSet(null)}>
+            {/* Confetti */}
+            {confetti.map((c,i)=>(
+              <div key={i} style={{ position:'absolute',left:`${c.left}%`,top:'-5%',width:`${c.size}px`,height:`${c.size}px`,borderRadius:c.round?'50%':'2px',background:c.color,animation:`confettiF ${c.dur}s ${c.delay}s ease-out forwards`,zIndex:1 }}/>
+            ))}
+            <div style={{ textAlign:'center',zIndex:2,animation:'welcomeIn .4s cubic-bezier(.34,1.2,.64,1)' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ fontSize:'72px',marginBottom:'8px',filter:'drop-shadow(0 0 32px rgba(255,215,0,.6))' }}>🏆</div>
+              <div style={{ fontSize:'11px',fontWeight:700,color:'#FFD700',letterSpacing:'.25em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'10px' }}>Set complété !</div>
+              <h2 style={{ fontSize:'32px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1px',marginBottom:'8px',lineHeight:1.2 }}>
+                {celebSet}
+              </h2>
+              <p style={{ fontSize:'14px',color:'rgba(255,255,255,.5)',fontFamily:'var(--font-display)',marginBottom:'28px' }}>
+                Vous avez complété ce set à 100%. Impressionnant.
+              </p>
+              <button onClick={()=>setCelebSet(null)}
+                style={{ padding:'12px 32px',borderRadius:'10px',background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',color:'#fff',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)' }}>
+                Continuer la collection
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── SCANNER ── */}
+      {scannerOpen&&(()=>{
+        const fileRef = { current: null as HTMLInputElement|null }
+        const handleScan = async (file: File) => {
+          setScannerLoad(true)
+          const reader = new FileReader()
+          reader.onload = async (e) => {
+            const b64 = (e.target?.result as string).split(',')[1]
+            setScannerImg(e.target?.result as string)
+            try {
+              const res = await fetch('https://api.anthropic.com/v1/messages',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                  model:'claude-sonnet-4-20250514', max_tokens:500,
+                  messages:[{role:'user',content:[
+                    {type:'image',source:{type:'base64',media_type:file.type as 'image/jpeg'|'image/png'|'image/webp',data:b64}},
+                    {type:'text',text:'Identifie cette carte Pokémon TCG. Réponds UNIQUEMENT en JSON valide sans markdown: {"name":"nom exact de la carte","set":"nom du set","lang":"EN ou FR ou JP","type":"fire ou water ou psychic ou dark ou electric ou grass ou normal","year":2023}'}
+                  ]}]
+                })
+              })
+              const data = await res.json()
+              const txt = data.content?.find((x:any)=>x.type==='text')?.text??''
+              const clean = txt.replace(/```json|```/g,'').trim()
+              const parsed = JSON.parse(clean)
+              setAddForm(p=>({...p,
+                name:parsed.name??'', set:parsed.set??'',
+                lang:(parsed.lang==='JP'?'JP':parsed.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
+                type:parsed.type??'fire', year:parsed.year??new Date().getFullYear(),
+                setId:'',image:'',setTotal:0,
+              }))
+              setScannerOpen(false); setScannerImg(null); setScannerLoad(false)
+              setAddOpen(true)
+              showToast('Carte identifiée — vérifiez et ajoutez')
+            } catch { setScannerLoad(false); showToast('Identification échouée — saisissez manuellement') }
+          }
+          reader.readAsDataURL(file)
+        }
+        return (
+          <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.9)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(10px)' }}
+            onClick={()=>{ if(!scannerLoad){ setScannerOpen(false); setScannerImg(null) } }}>
+            <div style={{ maxWidth:'340px',width:'100%',animation:'welcomeIn .3s ease-out' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
+                <div>
+                  <div style={{ fontSize:'16px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)' }}>📷 Scanner une carte</div>
+                  <div style={{ fontSize:'11px',color:'rgba(255,255,255,.35)',marginTop:'3px' }}>L'IA identifie automatiquement la carte</div>
+                </div>
+                {!scannerLoad&&<button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:'20px',padding:0 }}>×</button>}
+              </div>
+
+              {/* Frame */}
+              <div className="scan-frame" style={{ position:'relative',width:'100%',aspectRatio:'63/88',borderRadius:'14px',border:'2px solid rgba(16,185,129,.4)',background:'#0a0a0a',overflow:'hidden',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center' }}>
+                {scannerImg ? (
+                  <img src={scannerImg} alt="scan" style={{ width:'100%',height:'100%',objectFit:'contain' }}/>
+                ) : (
+                  <>
+                    <div style={{ textAlign:'center',color:'rgba(255,255,255,.2)' }}>
+                      <div style={{ fontSize:'40px',marginBottom:'8px' }}>🎴</div>
+                      <div style={{ fontSize:'11px',fontFamily:'var(--font-display)' }}>Photo de la carte</div>
+                    </div>
+                    {/* Scan line */}
+                    <div className="scan-line" style={{ position:'absolute',left:0,right:0,height:'2px',background:'linear-gradient(90deg,transparent,rgba(16,185,129,.8),transparent)',pointerEvents:'none' }}/>
+                    {/* Corner marks */}
+                    {[[0,0,'top','left'],[0,100,'top','right'],[100,0,'bottom','left'],[100,100,'bottom','right']].map(([t,l,tb,lr],ci)=>(
+                      <div key={ci} style={{ position:'absolute',[tb as string]:'-1px',[lr as string]:'-1px',width:'18px',height:'18px',borderTop:tb==='top'?'2px solid #10b981':'none',borderBottom:tb==='bottom'?'2px solid #10b981':'none',borderLeft:lr==='left'?'2px solid #10b981':'none',borderRight:lr==='right'?'2px solid #10b981':'none' }}/>
+                    ))}
+                  </>
+                )}
+                {scannerLoad&&(
+                  <div style={{ position:'absolute',inset:0,background:'rgba(0,0,0,.75)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
+                    <div style={{ width:'24px',height:'24px',border:'2px solid rgba(16,185,129,.3)',borderTop:'2px solid #10b981',borderRadius:'50%',animation:'spin .8s linear infinite' }}/>
+                    <div style={{ fontSize:'11px',color:'rgba(255,255,255,.6)',fontFamily:'var(--font-display)' }}>Identification en cours…</div>
+                  </div>
+                )}
+              </div>
+
+              <input type="file" accept="image/*" capture="environment" style={{ display:'none' }}
+                ref={el=>{ fileRef.current=el }}
+                onChange={e=>{ const f=e.target.files?.[0]; if(f) handleScan(f) }}/>
+              <button disabled={scannerLoad}
+                onClick={()=>fileRef.current?.click()}
+                style={{ width:'100%',padding:'13px',borderRadius:'10px',background:scannerLoad?'rgba(16,185,129,.15)':'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .2s' }}>
+                {scannerLoad ? 'Analyse…' : scannerImg ? 'Réanalyser' : 'Choisir une photo'}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
       <ImportPortfolioModal
         isOpen={importOpen}
         onClose={()=>setImportOpen(false)}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 
 type CardItem = {
@@ -91,6 +92,7 @@ export function Holdings() {
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number;
   }>({name:'',set:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
   const [toast, setToast] = useState<string|null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
@@ -514,6 +516,9 @@ export function Holdings() {
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                       + Ajouter une carte ou un item
                     </button>
+                    <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(66,165,245,.12)', border:'1px solid rgba(66,165,245,.35)', color:'#60aef7', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                      ↑ Importer
+                    </button>
                     {[3,4,5].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
                     ))}
@@ -757,6 +762,30 @@ export function Holdings() {
         )}
 
       </div>
+      <ImportPortfolioModal
+        isOpen={importOpen}
+        onClose={()=>setImportOpen(false)}
+        onImport={(imported)=>{
+          const mapped = imported.map(c=>({
+            id: c.id,
+            name: c.name,
+            set: c.set,
+            year: new Date().getFullYear(),
+            number: '???',
+            rarity: '',
+            type: 'fire',
+            lang: (c.language?.toUpperCase() === 'JP' ? 'JP' : c.language?.toUpperCase() === 'FR' ? 'FR' : 'EN') as 'EN'|'JP'|'FR',
+            condition: c.grade ?? c.condition ?? 'Raw',
+            graded: c.graded,
+            buyPrice: c.price,
+            curPrice: c.price,
+            qty: c.qty,
+          }))
+          setPortfolio(prev=>[...prev, ...mapped])
+          setImportOpen(false)
+          showToast(imported.length+' cartes importées')
+        }}
+      />
     </div>
   )
 }

@@ -38,7 +38,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 17.6px;
   line-height: 1.6;
 }
 
@@ -81,6 +81,7 @@ body {
 }
 
 /* ── RESPONSIVE GLOBAL ───────────────────────────── */
+
 html { zoom: 1.1; }
 html, body { width: 100%; }
 

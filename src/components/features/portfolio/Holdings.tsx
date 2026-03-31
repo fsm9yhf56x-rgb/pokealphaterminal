@@ -237,6 +237,7 @@ export function Holdings() {
   const canAdd = !!(addForm.name&&addForm.set&&addForm.buyPrice)
 
   return (
+    <>
     <div>
       <style dangerouslySetInnerHTML={{__html:`
         @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
@@ -1030,5 +1031,6 @@ export function Holdings() {
         }}
       />
     </div>
+    </>
   )
 }

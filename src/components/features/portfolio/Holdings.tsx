@@ -517,7 +517,7 @@ export function Holdings() {
                       + Ajouter une carte ou un item
                     </button>
                     <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(66,165,245,.12)', border:'1px solid rgba(66,165,245,.35)', color:'#60aef7', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
-                      ↑ Importer
+                      ↑ Importer votre collection
                     </button>
                     {[3,4,5].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>

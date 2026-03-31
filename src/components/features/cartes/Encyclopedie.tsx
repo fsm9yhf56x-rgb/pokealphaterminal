@@ -10,10 +10,32 @@ const TC: Record<string,string> = {
   Metal:'#8090A8', Dragon:'#9060A0', Fairy:'#FF88AA',
 }
 
-const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','—']
+const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Autre']
+
+const ERA_PREFIX: [string, string][] = [
+  ['base','Original (WotC)'],['jungle','Original (WotC)'],['fossil','Original (WotC)'],
+  ['teamrocket','Original (WotC)'],['gym','Original (WotC)'],['neo','Original (WotC)'],
+  ['si','Original (WotC)'],['lc','Original (WotC)'],['ecard','Original (WotC)'],
+  ['expedition','Original (WotC)'],['aquapolis','Original (WotC)'],['skyridge','Original (WotC)'],
+  ['ex','EX'],['pop','EX'],
+  ['dp','DP / Platinum'],['pl','DP / Platinum'],['pt','DP / Platinum'],['hgss','DP / Platinum'],
+  ['bw','Black & White'],['dv','Black & White'],
+  ['xy','XY'],['g1','XY'],['dc','XY'],
+  ['sm','Sun & Moon'],['det','Sun & Moon'],['tg','Sun & Moon'],
+  ['swsh','Sword & Shield'],['cel','Sword & Shield'],['pgo','Sword & Shield'],
+  ['sv','Scarlet & Violet'],
+]
+
+function setIdToEra(setId:string): string {
+  const low = setId.toLowerCase()
+  for (const [prefix, era] of ERA_PREFIX) {
+    if (low.startsWith(prefix)) return era
+  }
+  return 'Autre'
+}
 
 function yearToEra(y:number): string {
-  if (!y)   return '—'
+  if (!y)      return 'Autre'
   if (y<=2003) return 'Original (WotC)'
   if (y<=2006) return 'EX'
   if (y<=2010) return 'DP / Platinum'
@@ -67,7 +89,8 @@ export function Encyclopedie() {
           const setId  = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
           const set    = setMap.get(setId)
           const year   = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
-          return { ...c, setId, setName: set?.name ?? setId, year, era: yearToEra(year) }
+          const era    = setIdToEra(setId) !== 'Autre' ? setIdToEra(setId) : yearToEra(year)
+          return { ...c, setId, setName: set?.name ?? setId, year, era }
         })
         setAllCards(enriched); setLoadMsg(''); setLoading(false)
       })

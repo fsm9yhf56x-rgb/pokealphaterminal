@@ -490,10 +490,18 @@ export function Holdings() {
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'14px' }}>
                 <div>
-                  <div className="req-label">Prix d'achat EUR *</div>
-                  <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))} placeholder="0"
+                  <div className="req-label" style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                    Prix d'achat EUR *
+                    {!addForm.buyPrice && addForm.name && (
+                      <span style={{ fontSize:'9px', background:'rgba(255,107,53,.2)', color:'#FF9060', padding:'2px 7px', borderRadius:'10px', fontWeight:700, animation:'fadeUp .3s ease-out' }}>
+                        ← requis pour ajouter
+                      </span>
+                    )}
+                  </div>
+                  <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))} placeholder="0.00"
+                    autoFocus={!!(addForm.name && !addForm.buyPrice)}
                     className={addForm.buyPrice?'req-field-ok':'req-field'}
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px', color:'#fff', fontSize:'16px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                    style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.08)' : 'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px', color:'#fff', fontSize:'16px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'background .2s' }}/>
                 </div>
                 <div>
                   <div className="opt-label">Exemplaires</div>

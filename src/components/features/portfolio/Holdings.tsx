@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { fetchSets, fetchCardsForSet, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 
@@ -88,12 +89,26 @@ export function Holdings() {
   const [addOpen,     setAddOpen]     = useState(false)
   const [addSuggs,    setAddSuggs]    = useState<string[]>([])
   const [addForm,     setAddForm]     = useState<{
-    name:string; set:string; type:string; lang:'EN'|'JP'|'FR';
+    name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number;
-  }>({name:'',set:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
+  }>({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
+
+  // ── Live TCG data ──
+  const [liveSets,    setLiveSets]    = useState<TCGSet[]>([])
+  const [liveCards,   setLiveCards]   = useState<TCGCard[]>([])
+  const [setsLoading, setSetsLoading] = useState(false)
+  const [cardsLoading,setCardsLoading]= useState(false)
+
+  useEffect(() => {
+    setSetsLoading(true)
+    setLiveSets([])
+    fetchSets(addForm.lang)
+      .then(sets => { setLiveSets(sets); setSetsLoading(false) })
+      .catch(() => setSetsLoading(false))
+  }, [addForm.lang])
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
@@ -125,13 +140,30 @@ export function Holdings() {
     if(found) return { type:found.type, year:found.year, number:found.number, psa:found.psa, curPrice:found.curPrice, signal:found.signal }
     return {}
   }
-  const handleSetChange = (s:string) => { setAddForm(p=>({...p,set:s,name:''})); setAddSuggs([]) }
+  const handleSetChange = (id:string, name:string) => {
+    setAddForm(p=>({...p, set:name, setId:id, name:''}))
+    setAddSuggs([])
+    setLiveCards([])
+    if (id) {
+      setCardsLoading(true)
+      fetchCardsForSet(addForm.lang, id)
+        .then(cards => { setLiveCards(cards); setCardsLoading(false) })
+        .catch(() => setCardsLoading(false))
+    }
+  }
   const handleNameInput = (val:string) => {
     setAddForm(p=>({...p,name:val}))
     if(val.length<2){setAddSuggs([]);return}
-    const pool = addForm.set?ENCYCLOPEDIA.filter(cc=>cc.set===addForm.set):ENCYCLOPEDIA
-    const matches = pool.filter(cc=>cc.name.toLowerCase().includes(val.toLowerCase())).map(cc=>cc.name)
-    setAddSuggs([...new Set(matches)].slice(0,6))
+    if (liveCards.length > 0) {
+      const matches = liveCards
+        .filter(c=>c.name.toLowerCase().includes(val.toLowerCase()))
+        .map(c=>c.name)
+      setAddSuggs([...new Set(matches)].slice(0,8))
+    } else {
+      const pool = addForm.set?ENCYCLOPEDIA.filter(cc=>cc.set===addForm.set):ENCYCLOPEDIA
+      const matches = pool.filter(cc=>cc.name.toLowerCase().includes(val.toLowerCase())).map(cc=>cc.name)
+      setAddSuggs([...new Set(matches)].slice(0,6))
+    }
   }
   const handleSuggSelect = (name:string) => {
     const extra = encyclopediaLookup(name, addForm.set)
@@ -161,7 +193,7 @@ export function Holdings() {
     }
     setPortfolio(prev=>[...prev,newCard])
     setAddOpen(false); setAddSuggs([])
-    setAddForm({name:'',set:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
+    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
@@ -343,11 +375,16 @@ export function Holdings() {
               <div style={{ marginBottom:'12px' }}>
                 <div className="req-label">Serie *</div>
                 <div style={{ position:'relative' }}>
-                  <select value={addForm.set} onChange={e=>handleSetChange(e.target.value)}
+                  <select value={addForm.setId}
+                    onChange={e=>{ const found=liveSets.find(x=>x.id===e.target.value); if(found) handleSetChange(found.id,found.name) }}
                     className={addForm.set?'req-field-ok':'req-field'}
                     style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 36px 10px 12px', color:addForm.set?'#fff':'rgba(255,255,255,.35)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
-                    <option value="">Selectionner une serie...</option>
-                    {CARD_SETS_ALL.filter(s=>s!=='Toutes').map(s=><option key={s} value={s} style={{background:'#111'}}>{s}</option>)}
+                    <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
+                    {liveSets.map(s=>(
+                      <option key={s.id} value={s.id} style={{background:'#111'}}>
+                        {s.name}{s.total?' ('+s.total+')':''}
+                      </option>
+                    ))}
                   </select>
                   <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>v</div>
                 </div>
@@ -356,11 +393,11 @@ export function Holdings() {
               <div style={{ marginBottom:'12px' }}>
                 <div className="req-label">
                   Nom de la carte ou de l'item *
-                  {addForm.set&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'rgba(255,107,53,.5)', fontWeight:400 }}>encyclopedie {addForm.set}</span>}
+                  {addForm.set&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'rgba(255,107,53,.5)', fontWeight:400 }}>{cardsLoading?'chargement…':liveCards.length>0?liveCards.length+' cartes':'encyclopédie'}</span>}
                 </div>
                 <div style={{ position:'relative' }}>
                   <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
-                    placeholder={addForm.set ? 'Chercher dans '+addForm.set+'...' : 'Nom de la carte ou item...'}
+                    placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte ou item…'}
                     className={addForm.name?'req-field-ok':'req-field'}
                     style={{ width:'100%', background:'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
                   {addSuggs.length>0&&(

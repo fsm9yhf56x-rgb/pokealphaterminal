@@ -96,6 +96,28 @@ export function Holdings() {
   const [importOpen, setImportOpen] = useState(false)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
 
+  // ── Card from Encyclopedie ──
+  useEffect(() => {
+    const raw = localStorage.getItem('pka_add_card')
+    if (!raw) return
+    try {
+      const c = JSON.parse(raw)
+      localStorage.removeItem('pka_add_card')
+      const typeMap: Record<string,string> = {
+        Fire:'fire',Water:'water',Psychic:'psychic',Darkness:'dark',
+        Lightning:'electric',Grass:'grass',Colorless:'normal',Fighting:'fighting',Metal:'metal',Dragon:'dragon',
+      }
+      setAddForm({
+        name:c.name??'', set:c.set??'', setId:c.setId??'',
+        type:typeMap[c.type]??'fire',
+        lang:(c.lang==='JP'?'JP':c.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
+        condition:'Raw', graded:false, buyPrice:'', qty:1,
+        year:c.year??new Date().getFullYear(),
+      })
+      setAddOpen(true)
+    } catch {}
+  }, [])
+
   // ── Live TCG data ──
   const [liveSets,    setLiveSets]    = useState<TCGSet[]>([])
   const [liveCards,   setLiveCards]   = useState<TCGCard[]>([])

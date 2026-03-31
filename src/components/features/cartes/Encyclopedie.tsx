@@ -627,7 +627,7 @@ export function Encyclopedie() {
                           hp: detail.hp,
                           year: selCard.year,
                           lang,
-                          image: detail.image ?? selCard.enImage,
+                          image: detail.image ?? selCard.image ?? selCard.enImage ?? '',
                           enName: selCard.enName,
                         }
                         const setTotal = allCards.filter(c=>c.setId===selCard?.setId).length

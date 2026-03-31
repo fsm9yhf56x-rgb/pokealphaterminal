@@ -250,7 +250,7 @@ export function DailyHub() {
             </h1>
             <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
               <span style={{ fontSize:'12px', fontWeight:500, color:'#2E9E6A', background:'#F0FFF6', border:'1px solid #AAEEC8', padding:'3px 10px', borderRadius:'20px', fontFamily:'var(--font-display)' }}>
-                Portfolio +€ {USER.portfolioGain.toLocaleString('fr-FR')} depuis hier
+                Portfolio +€ {USER.portfolioGain.toLocaleString('en-US')} depuis hier
               </span>
               {!isPro && (
                 <div style={{ display:'inline-flex', alignItems:'center', gap:'8px', background:'#FFF5F0', border:'1.5px solid #FFCBB0', borderRadius:'20px', padding:'4px 6px 4px 12px' }}>
@@ -351,10 +351,10 @@ export function DailyHub() {
                 <div style={{ display:'flex', flexDirection:'column', gap:'12px', alignItems:'flex-end', flexShrink:0 }}>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ display:'flex', alignItems:'baseline', gap:'8px', justifyContent:'flex-end', marginBottom:'3px' }}>
-                      <span style={{ fontSize:'36px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>€ {DAILY_ALPHA.price.toLocaleString('fr-FR')}</span>
+                      <span style={{ fontSize:'36px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>€ {DAILY_ALPHA.price.toLocaleString('en-US')}</span>
                       <span style={{ fontSize:'18px', fontWeight:700, color:'#2E9E6A' }}>+{DAILY_ALPHA.pct}%</span>
                     </div>
-                    <div style={{ fontSize:'12px', color:'#AAA' }}>Marché € {DAILY_ALPHA.market.toLocaleString('fr-FR')} · Cible € {DAILY_ALPHA.target.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'12px', color:'#AAA' }}>Marché € {DAILY_ALPHA.market.toLocaleString('en-US')} · Cible € {DAILY_ALPHA.target.toLocaleString('en-US')}</div>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', gap:'5px', width:'190px' }}>
                     {[

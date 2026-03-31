@@ -76,8 +76,12 @@ export function Holdings() {
   const [view,        setView]        = useState<ViewMode>('binder')
   const [binderCols,  setBinderCols]  = useState(4)
   const [binderPage,  setBinderPage]  = useState(0)
-  const [portfolio,   setPortfolio]   = useState<CardItem[]>([])
-  const [showcase,    setShowcase]    = useState<CardItem[]>([])
+  const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
+    try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
+  })
+  const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
+    try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
+  })
   const [showPickerForShowcase, setShowPickerForShowcase] = useState(false)
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   const [editQty,     setEditQty]     = useState<number|null>(null)
@@ -91,8 +95,8 @@ export function Holdings() {
   const [addSuggs,    setAddSuggs]    = useState<string[]>([])
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
-    condition:string; graded:boolean; buyPrice:string; qty:number; year:number;
-  }>({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
+    condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string;
+  }>({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [scannerOpen,  setScannerOpen]  = useState(false)
@@ -101,6 +105,17 @@ export function Holdings() {
   const [showWelcome,  setShowWelcome]  = useState(false)
   const [celebSet,     setCelebSet]     = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
+
+  useEffect(()=>{ try { localStorage.setItem('pka_portfolio', JSON.stringify(portfolio)) } catch {} }, [portfolio])
+  useEffect(()=>{ try { localStorage.setItem('pka_showcase', JSON.stringify(showcase)) } catch {} }, [showcase])
+
+  // ── Welcome first visit ──
+  useEffect(()=>{
+    if(!localStorage.getItem('pka_binder_seen')){
+      setShowWelcome(true)
+      localStorage.setItem('pka_binder_seen','1')
+    }
+  },[])
 
   // ── Card from Encyclopedie ──
   useEffect(() => {
@@ -119,6 +134,8 @@ export function Holdings() {
         lang:(c.lang==='JP'?'JP':c.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
         condition:'Raw', graded:false, buyPrice:'', qty:1,
         year:c.year??new Date().getFullYear(),
+        image:c.image??'', setTotal:c.setTotal??0,
+        number:c.number??'', rarity:c.rarity??'',
       })
       setAddOpen(true)
     } catch {}
@@ -195,7 +212,9 @@ export function Holdings() {
   }
   const handleSuggSelect = (name:string) => {
     const extra = encyclopediaLookup(name, addForm.set)
-    setAddForm(p=>({...p,name,type:extra.type??p.type,year:extra.year??p.year}))
+    const liveCard = liveCards.find(c=>c.name===name)
+    const img = liveCard?.image ?? ''
+    setAddForm(p=>({...p,name,type:extra.type??p.type,year:extra.year??p.year,image:img}))
     setAddSuggs([])
   }
   const handleConditionChange = (cond:string) => {
@@ -211,17 +230,25 @@ export function Holdings() {
     if(!addForm.name||!addForm.set||!addForm.buyPrice) return
     const extra = encyclopediaLookup(addForm.name, addForm.set)
     const bp = parseFloat(addForm.buyPrice)||0
+    const liveMatch = liveCards.find(c=>c.name.toLowerCase()===addForm.name.toLowerCase())
+    const resolvedImage = addForm.image || liveMatch?.image || ''
     const newCard:CardItem = {
       id:'u'+Date.now(), name:addForm.name, set:addForm.set,
-      year:extra.year??addForm.year, number:extra.number??'???',
-      rarity:'', type:addForm.type, lang:addForm.lang,
+      year:extra.year??addForm.year,
+      number:extra.number||(addForm.number||'???'),
+      rarity:extra.rarity||(addForm.rarity||''),
+      type:addForm.type, lang:addForm.lang,
       condition:addForm.condition, graded:addForm.graded,
       buyPrice:bp, curPrice:extra.curPrice??bp, qty:addForm.qty,
       psa:extra.psa, signal:extra.signal,
+      image:resolvedImage||undefined,
     }
-    setPortfolio(prev=>[...prev,newCard])
+    setPortfolio(prev=>{
+      const next=[...prev,newCard]
+      return next
+    })
     setAddOpen(false); setAddSuggs([])
-    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear()})
+    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
@@ -310,9 +337,17 @@ export function Holdings() {
                     <div className="ptcl" style={{ background:ec, bottom:'35%', left:'65%' }}/>
                     <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
                     {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#fff', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
-                    <div style={{ height:'200px', margin:'6px 6px 0', borderRadius:'10px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                      <div style={{ position:'absolute', width:'75%', height:'75%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.65 }}/>
-                      <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}77)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
+                    <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
+                      {spotCard.image ? (
+                        <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
+                          style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1 }}
+                          onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else t.style.display='none' }}/>
+                      ) : (
+                        <>
+                          <div style={{ position:'absolute', width:'75%', height:'75%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.65 }}/>
+                          <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}77)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
+                        </>
+                      )}
                     </div>
                     <div style={{ padding:'14px' }}>
                       <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
@@ -609,6 +644,9 @@ export function Holdings() {
                     <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(66,165,245,.12)', border:'1px solid rgba(66,165,245,.35)', color:'#60aef7', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                       ↑ Importer votre collection
                     </button>
+                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(16,185,129,.1)', border:'1px solid rgba(16,185,129,.3)', color:'#10b981', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                      📷 Scanner
+                    </button>
                     {[3,4,5].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
                     ))}
@@ -648,14 +686,13 @@ export function Holdings() {
                           <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                           <div style={{ position:'absolute', top:0, left:0, right:0, height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}44)`, zIndex:4 }}/>
                           <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', bottom:'54px', borderRadius:'7px', background:`${ec}12`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-                            {card.image ? (
-                              <img src={`${card.image}/low.webp`} alt={card.name}
-                                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', transition:'transform .35s cubic-bezier(.34,1.2,.64,1)' }}
-                                onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${card.image}/low.jpg`; else { t.style.display='none' } }}
-                                onMouseEnter={e=>{ (e.target as HTMLImageElement).style.transform='scale(1.06)' }}
-                                onMouseLeave={e=>{ (e.target as HTMLImageElement).style.transform='scale(1)' }}
+                            {card.image ? (()=>{
+                              const imgBase = card.image.replace(/\/low\.(webp|jpg|png)$/, '')
+                              return <img src={`${imgBase}/low.webp`} alt={card.name}
+                                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
+                                onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${imgBase}/low.jpg`; else t.style.display='none' }}
                               />
-                            ) : (
+                            })() : (
                               <>
                                 <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(14px)', opacity:.6 }}/>
                                 <div style={{ width:orbSz, height:orbSz, borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
@@ -666,11 +703,27 @@ export function Holdings() {
                             {card.graded&&<div style={{ position:'absolute', bottom:'4px', right:'4px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.75)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.condition}</div>}
                             {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'4px', zIndex:4, background:'rgba(0,0,0,.82)', border:'1px solid rgba(255,255,255,.25)', borderRadius:'10px', padding:'1px 5px', fontSize:'7px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', lineHeight:1.6 }}>x{card.qty}</div>}
                           </div>
-                          <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 8px' }}>
-                            <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'2px' }}>{card.name}</div>
-                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                              <div style={{ fontSize:fsPx, fontWeight:700, color:'rgba(255,255,255,.9)', fontFamily:'var(--font-display)' }}>EUR {card.curPrice}</div>
-                              {card.buyPrice>0&&<div style={{ fontSize:'10px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</div>}
+                          <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.85) 60%, rgba(0,0,0,.4) 100%)', backdropFilter:'blur(10px)', padding:'10px 10px 9px' }}>
+                            {/* Nom + ROI */}
+                            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'4px', marginBottom:'5px' }}>
+                              <div style={{ fontSize:fsName, fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', lineHeight:1.2, flex:1 }}>{card.name}</div>
+                              {card.buyPrice>0&&<div style={{ fontSize:'10px', fontWeight:800, color:roi>=0?'#4ECCA3':'#FF6B8A', flexShrink:0, lineHeight:1.2 }}>{roi>=0?'+':''}{roi}%</div>}
+                            </div>
+                            {/* Langue · numéro · année */}
+                            <div style={{ display:'flex', alignItems:'center', gap:'4px', marginBottom:'4px' }}>
+                              <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                              {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.6)', fontFamily:'monospace', fontWeight:600 }}>#{card.number}</span>}
+                              {card.year>0&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.35)' }}>· {card.year}</span>}
+                            </div>
+                            {/* Rareté + grade + set */}
+                            <div style={{ display:'flex', alignItems:'center', gap:'3px', flexWrap:'nowrap', overflow:'hidden' }}>
+                              {card.rarity&&card.rarity!==''&&(
+                                <span style={{ fontSize:'8px', fontWeight:700, color:'rgba(255,215,0,.9)', background:'rgba(255,215,0,.12)', border:'1px solid rgba(255,215,0,.25)', borderRadius:'4px', padding:'1px 5px', fontFamily:'var(--font-display)', flexShrink:0, whiteSpace:'nowrap' }}>{card.rarity}</span>
+                              )}
+                              {card.graded&&(
+                                <span style={{ fontSize:'8px', fontWeight:700, color:'rgba(255,255,255,.9)', background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.2)', borderRadius:'4px', padding:'1px 5px', fontFamily:'var(--font-display)', flexShrink:0 }}>⭐ {card.condition}</span>
+                              )}
+                              <span style={{ fontSize:'8px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.set}</span>
                             </div>
                           </div>
                           <button className="remove-btn" onClick={e=>removeCard(card,e)}

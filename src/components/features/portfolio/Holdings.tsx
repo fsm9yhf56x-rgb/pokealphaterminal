@@ -163,7 +163,7 @@ export function Holdings() {
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = binderCols*3
-  const binderFiltered = binderSet ? portfolio.filter(c=>c.set===binderSet) : portfolio
+  const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   const binderPages = Math.max(1,Math.ceil(binderFiltered.length/slotsPer))
   const pageItems   = binderFiltered.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
   const phantomCount = binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
@@ -643,6 +643,11 @@ export function Holdings() {
                     ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Tous les sets</button>
                     : <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
                   }
+                  {binderSet && (
+                    <button onClick={()=>setBinderSet('__all__')} style={{ background:'none', border:'none', color:'rgba(255,255,255,.3)', cursor:'pointer', fontSize:'11px', fontFamily:'var(--font-display)', padding:'0 0 0 10px', textDecoration:'underline' }}>
+                      Toute ma collection
+                    </button>
+                  )}
                 </div>
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
@@ -671,7 +676,7 @@ export function Holdings() {
                       + Ajouter ma première carte
                     </button>
                   </div>
-                ) : !binderSet ? (
+                ) : (!binderSet || binderSet==='__all__') && binderSet!=='__all__' ? (
                   /* VUE SETS */
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'12px' }}>
                     {[...new Set(portfolio.map(c=>c.set))].map(setName => {

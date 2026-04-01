@@ -76,6 +76,8 @@ export function Holdings() {
   const [view,        setView]        = useState<ViewMode>('binder')
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
+  const [showInfo,    setShowInfo]    = useState(true)
+  const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
   const [binderCols,  setBinderCols]  = useState(4)
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
@@ -303,6 +305,7 @@ export function Holdings() {
         .req-field-ok { border:2px solid rgba(78,204,163,.4) !important; }
         select { color-scheme:dark; }
         @keyframes binderOpen { 0%{transform:perspective(800px) rotateY(-90deg) translateX(-60px);opacity:0} 60%{transform:perspective(800px) rotateY(8deg);opacity:1} 100%{transform:perspective(800px) rotateY(0deg);opacity:1} }
+        @keyframes floatCard { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-5px)} }
         @keyframes welcomeIn  { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
         @keyframes burst      { 0%{transform:scale(0) rotate(0deg);opacity:1} 60%{transform:scale(1.3) rotate(20deg);opacity:1} 100%{transform:scale(1.1) rotate(15deg);opacity:1} }
         @keyframes confettiF  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(120px) rotate(720deg);opacity:0} }
@@ -861,10 +864,26 @@ export function Holdings() {
                 <div style={{ fontSize:'10px', color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Vitrine</div>
                 <div style={{ fontSize:'13px', color:'rgba(255,255,255,.45)', fontFamily:'var(--font-display)' }}>{showcase.length===0?'Exposez vos plus belles pieces':showcase.length+' piece'+(showcase.length!==1?'s':'')+' exposee'+(showcase.length!==1?'s':'')}</div>
               </div>
-              <button onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else{ setShowPickerForShowcase(true) } }}
-                style={{ padding:'9px 18px', borderRadius:'10px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
-                + Ajouter une carte de ma collection
-              </button>
+              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                <select value={showcaseBg} onChange={e=>setShowcaseBg(e.target.value)}
+                  style={{ height:'38px', padding:'0 10px', borderRadius:'10px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', fontSize:'11px', cursor:'pointer', fontFamily:'var(--font-display)', outline:'none' }}>
+                  <option value="obsidienne" style={{background:'#111'}}>⬛ Obsidienne & Or</option>
+                  <option value="nuit"       style={{background:'#111'}}>🌌 Nuit Étoilée</option>
+                  <option value="jade"       style={{background:'#111'}}>🟢 Jade Impérial</option>
+                  <option value="pokedex"    style={{background:'#111'}}>📱 Interface Pokédex</option>
+                  <option value="holodex"    style={{background:'#111'}}>🔵 Pokédex Holo</option>
+                  <option value="centre"     style={{background:'#111'}}>🏥 Centre Pokémon</option>
+                  <option value="labo"       style={{background:'#111'}}>🔬 Labo Pr. Chen</option>
+                </select>
+                <button onClick={()=>setShowInfo(v=>!v)}
+                  style={{ padding:'9px 14px', borderRadius:'10px', background:showInfo?'rgba(255,255,255,.08)':'transparent', border:'1px solid rgba(255,255,255,.12)', color:showInfo?'rgba(255,255,255,.7)':'rgba(255,255,255,.3)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', whiteSpace:'nowrap' as const }}>
+                  {showInfo ? '👁 Masquer les infos' : '🙈 Afficher les infos'}
+                </button>
+                <button onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else if(showcase.length>=5){ showToast('La vitrine est limitée à 5 pièces') }else{ setShowPickerForShowcase(true) } }}
+                  style={{ padding:'9px 18px', borderRadius:'10px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                  + Ajouter une carte
+                </button>
+              </div>
             </div>
             {showcase.length===0?(
               <div style={{ textAlign:'center', padding:'80px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'18px' }}>
@@ -877,74 +896,159 @@ export function Holdings() {
                 )}
               </div>
             ):(
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:'16px' }}>
-                {showcase.map((card,idx)=>{
-                  const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
-                  const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
-                  const isHolo=HOLO_RARITIES.includes(card.rarity)
-                  const ls=LS[card.lang]
-                  return (
-                    <div key={card.id}
-                      draggable
-                      onDragStart={()=>setDragIdx(idx)}
-                      onDragOver={e=>{ e.preventDefault() }}
-                      onDrop={()=>{
-                        if(dragIdx===null||dragIdx===idx) return
-                        setShowcase(prev=>{ const a=[...prev]; const [item]=a.splice(dragIdx,1); a.splice(idx,0,item); return a })
-                        setDragIdx(null)
-                      }}
-                      onDragEnd={()=>setDragIdx(null)}
-                      className={'gem'+(card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':'')}
-                      style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${dragIdx===idx?'rgba(255,107,53,.6)':ec+'35'}`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both`, opacity:dragIdx===idx?.5:1, cursor:'grab' }}
-                      onMouseMove={tiltCard} onMouseLeave={resetCard} onClick={()=>{ setSpotCard(card); setEditQty(null) }}>
-                      {isHolo&&<div className="holo"/>}
-                      {isHolo&&<div className="hm"/>}
-                      <div className="ptcl" style={{ background:ec, bottom:'20%', left:'20%' }}/>
-                      <div className="ptcl" style={{ background:ec, bottom:'30%', left:'60%' }}/>
-                      <div style={{ height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
-                      {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
-                      {/* FULL ART — image seule */}
-                      <div style={{ aspectRatio:'63/88', position:'relative', overflow:'hidden', borderRadius:'inherit', background:'#050505' }}>
-                        {card.image ? (
-                          <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
-                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform .6s cubic-bezier(.34,1.15,.64,1)' }}
-                            onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.06)')}
-                            onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
-                            onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
-                        ) : (
-                          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:`linear-gradient(145deg,${ec}18,${ec}06)` }}>
-                            <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.5 }}/>
-                            <div style={{ width:'72px', height:'72px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
-                          </div>
-                        )}
-                        {/* Gradient overlay bas */}
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.1) 45%, transparent 100%)', pointerEvents:'none' }}/>
-                        {/* Drag handle */}
-                        <div style={{ position:'absolute', top:'8px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'3px', opacity:.35, pointerEvents:'none' }}>
-                          {[0,1,2].map(i=><div key={i} style={{ width:'3px', height:'3px', borderRadius:'50%', background:'#fff' }}/>)}
-                        </div>
-                        {/* Signal */}
-                        {card.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
-                        {/* Infos bas overlay */}
-                        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px 12px', pointerEvents:'none' }}>
-                          <div style={{ fontSize:'13px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 6px rgba(0,0,0,.8)' }}>{card.name}</div>
-                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
-                              <span style={{ fontSize:'10px' }}>{ls.flag}</span>
-                              <span style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>{card.set}</span>
+              /* ── VITRINE LUXE ── */
+              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 40px 44px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.6)' }}>
+                {showcaseBg==='obsidienne'&&<>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(201,168,76,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.05) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.06) 0%,transparent 60%)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, left:'10%', right:'10%', height:'1px', background:'linear-gradient(90deg,transparent,rgba(201,168,76,.5),transparent)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, left:0, width:'60px', height:'60px', borderTop:'1px solid rgba(201,168,76,.4)', borderLeft:'1px solid rgba(201,168,76,.4)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, right:0, width:'60px', height:'60px', borderTop:'1px solid rgba(201,168,76,.4)', borderRight:'1px solid rgba(201,168,76,.4)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', bottom:0, left:0, width:'60px', height:'60px', borderBottom:'1px solid rgba(201,168,76,.4)', borderLeft:'1px solid rgba(201,168,76,.4)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', bottom:0, right:0, width:'60px', height:'60px', borderBottom:'1px solid rgba(201,168,76,.4)', borderRight:'1px solid rgba(201,168,76,.4)', pointerEvents:'none' }}/>
+                </>}
+                {showcaseBg==='nuit'&&<div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 25% 40%,rgba(100,40,200,.15) 0%,transparent 40%),radial-gradient(ellipse at 75% 30%,rgba(255,180,0,.08) 0%,transparent 35%),radial-gradient(ellipse at 50% 20%,rgba(200,80,255,.1) 0%,transparent 30%)', pointerEvents:'none' }}/>}
+                {showcaseBg==='jade'&&<>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(30deg,transparent,transparent 14px,rgba(16,185,80,.022) 14px,rgba(16,185,80,.022) 15px),repeating-linear-gradient(-30deg,transparent,transparent 14px,rgba(16,185,80,.022) 14px,rgba(16,185,80,.022) 15px)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(16,185,100,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,100,.04) 1px,transparent 1px)', backgroundSize:'24px 24px', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', bottom:0, left:'10%', right:'10%', height:'1px', background:'linear-gradient(90deg,transparent,rgba(16,185,80,.5),transparent)', pointerEvents:'none' }}/>
+                </>}
+                {(showcaseBg==='pokedex'||showcaseBg==='holodex')&&<>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,180,255,.018) 3px,rgba(0,180,255,.018) 4px)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(0,160,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,160,255,.05) 1px,transparent 1px)', backgroundSize:'30px 30px', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, left:0, width:'18px', height:'18px', borderTop:'1.5px solid rgba(0,200,255,.5)', borderLeft:'1.5px solid rgba(0,200,255,.5)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, right:0, width:'18px', height:'18px', borderTop:'1.5px solid rgba(0,200,255,.5)', borderRight:'1.5px solid rgba(0,200,255,.5)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(0,200,255,.5),transparent)', pointerEvents:'none' }}/>
+                </>}
+                {showcaseBg==='centre'&&<>
+                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 55% 40%,rgba(255,80,160,.07) 0%,transparent 55%),radial-gradient(ellipse at 20% 60%,rgba(255,120,200,.04) 0%,transparent 40%)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:'12px', left:'50%', transform:'translateX(-50%)', fontSize:'9px', fontWeight:700, letterSpacing:'.18em', color:'rgba(255,160,210,.2)', whiteSpace:'nowrap' as const, pointerEvents:'none' }}>✚ CENTRE POKÉMON ✚</div>
+                  <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(255,120,200,.5),transparent)', pointerEvents:'none' }}/>
+                </>}
+                {showcaseBg==='labo'&&<>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(175deg,transparent,transparent 40px,rgba(120,80,40,.04) 40px,rgba(120,80,40,.04) 41px)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 0%,rgba(200,140,40,.07) 0%,transparent 50%)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'200px', height:'60px', background:'radial-gradient(ellipse at 50% 0%,rgba(255,240,180,.07) 0%,transparent 70%)', pointerEvents:'none' }}/>
+                  <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(200,160,80,.4),transparent)', pointerEvents:'none' }}/>
+                </>}
+                <div style={{ display:'flex', gap:'28px', flexWrap:'wrap' as const, justifyContent:'center', alignItems:'flex-end', position:'relative' }}>
+                  {showcase.slice(0,5).map((card,idx)=>{
+                    const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
+                    const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
+                    const ls=LS[card.lang]
+                    const isGold=card.rarity?.includes('Gold')
+                    const borderCol=isGold?'rgba(255,215,0,.45)':ec+'50'
+                    const glowCol=isGold?'rgba(255,215,0,.18)':ec+'22'
+                    const priceCol=isGold?'#FFD740':'#C9A84C'
+                    const metalTop=isGold?'rgba(255,215,0,.5)':ec+'60'
+                    const shimDelay=idx*0.9
+                    const isFeat = showcase.length>1 && idx===Math.floor((showcase.length-1)/2)
+                    return (
+                      <div key={card.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', position:'relative', zIndex:1 }}>
+                        {/* Spotlight cone */}
+                        <div style={{ position:'absolute', top:'-80px', left:'50%', transform:'translateX(-50%)', width:'200px', height:'160px', background:`radial-gradient(ellipse at 50% 0%,${isGold?'rgba(255,240,150,.18)':isFeat?`${ec}28`:'rgba(255,255,255,.06)'} 0%,transparent 60%)`, pointerEvents:'none' }}/>
+
+                        {/* Card slot */}
+                        <div
+                          draggable
+                          onDragStart={()=>setDragIdx(idx)}
+                          onDragOver={e=>e.preventDefault()}
+                          onDrop={()=>{ if(dragIdx===null||dragIdx===idx) return; setShowcase(prev=>{ const a=[...prev]; const [item]=a.splice(dragIdx,1); a.splice(idx,0,item); return a }); setDragIdx(null) }}
+                          onDragEnd={()=>setDragIdx(null)}
+                          onClick={()=>{ setSpotCard(card); setEditQty(null) }}
+                          style={{ width:'220px', aspectRatio:'63/88', borderRadius:'14px', position:'relative', overflow:'hidden', cursor:'grab', border:`1.5px solid ${dragIdx===idx?'rgba(255,107,53,.8)':borderCol}`, boxShadow:dragIdx===idx?`0 0 0 2px rgba(255,107,53,.4)`:`0 12px 40px ${glowCol}`, opacity:dragIdx===idx?.4:1, transition:'box-shadow .45s ease', background:'#040302', animation:`floatCard ${6+idx*.6}s ${idx*1.2}s ease-in-out infinite` }}
+                          onMouseMove={e=>{
+                            const el=e.currentTarget as HTMLElement
+                            if (!el.dataset.hovered) return
+                            const r=el.getBoundingClientRect()
+                            const x=((e.clientX-r.left)/r.width-.5)*16
+                            const y=((e.clientY-r.top)/r.height-.5)*-20
+                            el.style.transform=`perspective(700px) rotateY(${x}deg) rotateX(${y}deg) translateY(-20px) scale(1.05)`
+                            el.style.boxShadow=`0 ${28+Math.abs(y)*1.5}px 50px rgba(0,0,0,.65), 0 0 0 1px ${borderCol}`
+                          }}
+                          onMouseEnter={e=>{
+                            const el=e.currentTarget as HTMLElement
+                            el.dataset.hovered='1'
+                            el.style.animation='none'
+                            el.style.transition='transform .35s cubic-bezier(.34,1.3,.64,1),box-shadow .35s ease'
+                            el.style.transform='perspective(700px) translateY(-20px) scale(1.05)'
+                            el.style.boxShadow=`0 32px 50px rgba(0,0,0,.65), 0 0 0 1px ${borderCol}`
+                            setTimeout(()=>{ if(el.dataset.hovered) el.style.transition='none' }, 350)
+                          }}
+                          onMouseLeave={e=>{
+                            const el=e.currentTarget as HTMLElement
+                            delete el.dataset.hovered
+                            el.style.transition='transform .55s cubic-bezier(.34,1.1,.64,1),box-shadow .55s ease'
+                            el.style.transform=''
+                            el.style.boxShadow=`0 12px 40px ${glowCol}`
+                            setTimeout(()=>{ if(!el.dataset.hovered) el.style.animation=`floatCard ${6+idx*.6}s ${idx*1.2}s ease-in-out infinite` }, 560)
+                          }}>
+                          {/* BG */}
+                          <div style={{ position:'absolute', inset:0, background:`linear-gradient(145deg,${ec}18,${ec}06)` }}/>
+                          {/* Image */}
+                          {card.image ? (
+                            <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
+                              style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                              onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
+                          ) : (
+                            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(24px)', opacity:.5 }}/>
+                              <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 24px ${eg}`, zIndex:1 }}/>
                             </div>
-                            {card.graded&&<span style={{ fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.7)', color:'rgba(255,255,255,.9)', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>⭐ {card.condition}</span>}
+                          )}
+                          {/* Shimmer */}
+                          <div style={{ position:'absolute', top:0, left:'-80px', width:'50px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)', transform:'skewX(-12deg)', animation:`shim ${3+idx*.4}s ${shimDelay}s ease-in-out infinite` }}/>
+                          {/* Metal lines */}
+                          <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:`linear-gradient(90deg,transparent,${metalTop},transparent)` }}/>
+                          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:`linear-gradient(90deg,transparent,${ec}40,transparent)` }}/>
+                          {/* Gradient overlay bas — discret */}
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,.35) 0%,transparent 35%)', pointerEvents:'none' }}/>
+                          {/* Drag dots */}
+                          <div style={{ position:'absolute', top:'7px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'3px', opacity:.3, pointerEvents:'none' }}>
+                            {[0,1,2].map(i=><div key={i} style={{ width:'3px', height:'3px', borderRadius:'50%', background:'#fff' }}/>)}
+                          </div>
+                          {/* Signal */}
+                          {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'8px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
+                          {/* Gold badge */}
+                          {isGold&&<div style={{ position:'absolute', top:'8px', right:'8px', fontSize:'8px', fontWeight:800, background:'rgba(255,215,0,.15)', border:'1px solid rgba(255,215,0,.4)', color:'#FFD740', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>★ Gold</div>}
+
+                          {/* Retirer */}
+                          <button className="remove-btn" onClick={e=>removeFromShowcase(card.id,e)}
+                            style={{ position:'absolute', top:'7px', left:'7px', zIndex:10, background:'rgba(0,0,0,.8)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.8)', borderRadius:'7px', padding:'3px 9px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
+                            Retirer
+                          </button>
+                        </div>
+                        {/* Socle métal */}
+                        <div style={{ width:'180px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.5)':ec+'50'},transparent)`, marginTop:'14px', transition:'width .4s' }}/>
+                        <div style={{ width:'140px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.2)':ec+'20'},transparent)`, marginTop:'2px', transition:'width .4s' }}/>
+                        {/* Ombre sol */}
+                        <div style={{ width:'160px', height:'16px', background:`radial-gradient(ellipse at 50% 100%,rgba(0,0,0,.9) 0%,transparent 70%)`, marginTop:'4px', transition:'width .4s' }}/>
+                        {/* Étiquette luxe */}
+                        <div style={{ marginTop:'18px', textAlign:'center', opacity:showInfo?1:0, transition:'opacity .4s ease', minWidth:'180px', maxWidth:'220px' }}>
+                          {/* Ligne décorative */}
+                          <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px', justifyContent:'center' }}>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to right,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(255,255,255,.1)'})` }}/>
+                            <div style={{ width:'4px', height:'4px', borderRadius:'50%', background:isGold?'rgba(255,215,0,.6)':'rgba(255,255,255,.2)' }}/>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to left,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(255,255,255,.1)'})` }}/>
+                          </div>
+                          {/* Nom */}
+                          <div style={{ fontSize:'12px', fontWeight:600, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
+                          {/* Prix */}
+                          <div style={{ fontSize:'20px', fontWeight:700, color:priceCol, fontFamily:'var(--font-display)', letterSpacing:'.04em', lineHeight:1, marginBottom:'6px' }}>
+                            {card.curPrice>0?card.curPrice.toLocaleString('fr-FR')+' €':'—'}
+                          </div>
+                          {/* Meta */}
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                            <span style={{ fontSize:'12px' }}>{ls.flag}</span>
+                            {card.rarity&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.22)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>{card.rarity}</span>}
+                            {card.graded&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.4)', fontFamily:'var(--font-display)', fontWeight:600 }}>⭐ {card.condition}</span>}
+                            {roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'9px', fontWeight:700, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</span>}
                           </div>
                         </div>
-                        {/* Bouton retirer au hover */}
-                        <button className="remove-btn" onClick={e=>removeFromShowcase(card.id,e)}
-                          style={{ position:'absolute', top:'8px', left:'8px', zIndex:10, background:'rgba(0,0,0,.75)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.8)', borderRadius:'8px', padding:'4px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
-                          Retirer
-                        </button>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>

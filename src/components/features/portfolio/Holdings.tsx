@@ -680,47 +680,69 @@ export function Holdings() {
                   /* VUE SETS */
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'12px' }}>
                     {/* Tuile "Toute ma collection" */}
-                    <div onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
-                      style={{ background:'rgba(255,107,53,.08)', border:'1px solid rgba(255,107,53,.25)', borderRadius:'14px', overflow:'hidden', cursor:'pointer', transition:'all .18s', display:'flex', flexDirection:'column' }}
-                      onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,107,53,.15)'; e.currentTarget.style.transform='translateY(-3px)' }}
-                      onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,107,53,.08)'; e.currentTarget.style.transform='' }}>
-                      <div style={{ height:'90px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px' }}>📚</div>
-                      <div style={{ padding:'10px 12px' }}>
-                        <div style={{ fontSize:'12px', fontWeight:700, color:'#FF9060', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Toute ma collection</div>
-                        <div style={{ fontSize:'10px', color:'rgba(255,255,255,.4)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} sets</div>
-                      </div>
-                    </div>
+                    {(()=>{
+                      const allPreviews = portfolio.filter(c=>c.image).slice(0,3)
+                      return (
+                        <div onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
+                          style={{ aspectRatio:'63/88', borderRadius:'14px', overflow:'hidden', cursor:'pointer', position:'relative', background:'linear-gradient(145deg,rgba(255,107,53,.18),rgba(255,107,53,.06))', border:'1.5px solid rgba(255,107,53,.3)', transition:'all .22s cubic-bezier(.34,1.2,.64,1)', boxShadow:'0 4px 20px rgba(0,0,0,.4)' }}
+                          onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px) scale(1.03)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(255,107,53,.2)' }}
+                          onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,.4)' }}>
+                          <div style={{ position:'absolute', inset:0, display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'1fr 1fr', gap:'3px', padding:'3px', opacity:.35 }}>
+                            {allPreviews.map((c,i)=>(
+                              <div key={i} style={{ borderRadius:'4px', overflow:'hidden', background:'rgba(255,255,255,.05)' }}>
+                                {c.image&&<img src={`${c.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>}
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.3) 60%, transparent 100%)', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'12px 10px' }}>
+                            <div style={{ fontSize:'10px', fontWeight:800, color:'#FF9060', fontFamily:'var(--font-display)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'4px' }}>📚 Collection</div>
+                            <div style={{ fontSize:'13px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px', lineHeight:1.2 }}>Toutes mes cartes</div>
+                            <div style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>{portfolio.length} cartes · {[...new Set(portfolio.map(c=>c.set))].length} sets</div>
+                          </div>
+                        </div>
+                      )
+                    })()}
                     {[...new Set(portfolio.map(c=>c.set))].map(setName => {
                       const setCards = portfolio.filter(c=>c.set===setName)
                       const total    = setCards[0]?.setTotal || 0
                       const pct      = total>0 ? Math.round((setCards.length/total)*100) : null
                       const preview  = setCards.find(c=>c.image)
                       const ec2      = EC[setCards[0]?.type??'fire']??'#888'
+                      const isComplete = pct===100
                       return (
                         <div key={setName} onClick={()=>{ setBinderSet(setName); setBinderPage(0) }}
-                          style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'14px', overflow:'hidden', cursor:'pointer', transition:'all .18s' }}
-                          onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,255,255,.08)'; e.currentTarget.style.transform='translateY(-3px)' }}
-                          onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,.04)'; e.currentTarget.style.transform='' }}>
-                          {/* Preview image */}
-                          <div style={{ height:'90px', background:`linear-gradient(145deg,${ec2}20,${ec2}08)`, position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            {preview?.image ? (
-                              <img src={`${preview.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={setName}
-                                style={{ height:'100%', objectFit:'contain' }}
-                                onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>
-                            ) : (
-                              <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
-                            )}
-                            {pct!==null && (
-                              <div style={{ position:'absolute', top:'6px', right:'6px', fontSize:'9px', fontWeight:700, background:pct===100?'linear-gradient(135deg,#FFD700,#FF8C00)':'rgba(0,0,0,.7)', color:'#fff', padding:'2px 6px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>
-                                {pct===100?'✓ Complet':pct+'%'}
-                              </div>
-                            )}
-                          </div>
-                          <div style={{ padding:'10px 12px' }}>
-                            <div style={{ fontSize:'12px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{setName}</div>
-                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                              <span style={{ fontSize:'10px', color:'rgba(255,255,255,.4)' }}>{setCards.length}{total>0?' / '+total:''} carte{setCards.length!==1?'s':''}</span>
-                              {pct!==null&&<div style={{ width:'40px', height:'3px', borderRadius:'2px', background:'rgba(255,255,255,.1)', overflow:'hidden' }}><div style={{ width:pct+'%', height:'100%', background:pct===100?'#FFD700':'#4ECCA3', borderRadius:'2px' }}/></div>}
+                          style={{ aspectRatio:'63/88', borderRadius:'14px', overflow:'hidden', cursor:'pointer', position:'relative', background:`linear-gradient(145deg,${ec2}22,${ec2}08)`, border:`1.5px solid ${isComplete?'rgba(255,215,0,.5)':ec2+'30'}`, transition:'all .22s cubic-bezier(.34,1.2,.64,1)', boxShadow:isComplete?'0 4px 20px rgba(255,215,0,.15)':'0 4px 16px rgba(0,0,0,.4)' }}
+                          onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px) scale(1.03)'; e.currentTarget.style.boxShadow=isComplete?'0 12px 36px rgba(255,215,0,.25)':`0 12px 32px ${ec2}40` }}
+                          onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=isComplete?'0 4px 20px rgba(255,215,0,.15)':'0 4px 16px rgba(0,0,0,.4)' }}>
+                          {/* Image preview plein format */}
+                          {preview?.image ? (
+                            <img src={`${preview.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={setName}
+                              style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:.7 }}
+                              onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                          ) : (
+                            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}44)`, boxShadow:`0 0 24px ${ec2}66` }}/>
+                            </div>
+                          )}
+                          {/* Gradient + infos */}
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 50%, rgba(0,0,0,.1) 100%)' }}/>
+                          {/* Badge completion */}
+                          {pct!==null&&(
+                            <div style={{ position:'absolute', top:'8px', right:'8px', fontSize:'9px', fontWeight:800, background:isComplete?'linear-gradient(135deg,#FFD700,#FF8C00)':'rgba(0,0,0,.75)', backdropFilter:'blur(4px)', color:'#fff', padding:'3px 8px', borderRadius:'8px', fontFamily:'var(--font-display)', boxShadow:isComplete?'0 2px 8px rgba(255,215,0,.4)':'none' }}>
+                              {isComplete?'✓ Complet':pct+'%'}
+                            </div>
+                          )}
+                          {/* Barre de progression */}
+                          {pct!==null&&!isComplete&&(
+                            <div style={{ position:'absolute', top:'8px', left:'8px', right:'8px', height:'2px', background:'rgba(255,255,255,.1)', borderRadius:'2px', overflow:'hidden' }}>
+                              <div style={{ width:pct+'%', height:'100%', background:'#4ECCA3', borderRadius:'2px', transition:'width .3s' }}/>
+                            </div>
+                          )}
+                          {/* Infos bas */}
+                          <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'10px 10px 10px' }}>
+                            <div style={{ fontSize:'11px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'3px', textShadow:'0 1px 4px rgba(0,0,0,.8)' }}>{setName}</div>
+                            <div style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>
+                              {setCards.length}{total>0?' / '+total:''} carte{setCards.length!==1?'s':''}
                             </div>
                           </div>
                         </div>

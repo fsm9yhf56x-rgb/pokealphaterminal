@@ -679,6 +679,17 @@ export function Holdings() {
                 ) : (!binderSet || binderSet==='__all__') && binderSet!=='__all__' ? (
                   /* VUE SETS */
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'12px' }}>
+                    {/* Tuile "Toute ma collection" */}
+                    <div onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
+                      style={{ background:'rgba(255,107,53,.08)', border:'1px solid rgba(255,107,53,.25)', borderRadius:'14px', overflow:'hidden', cursor:'pointer', transition:'all .18s', display:'flex', flexDirection:'column' }}
+                      onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,107,53,.15)'; e.currentTarget.style.transform='translateY(-3px)' }}
+                      onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,107,53,.08)'; e.currentTarget.style.transform='' }}>
+                      <div style={{ height:'90px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px' }}>📚</div>
+                      <div style={{ padding:'10px 12px' }}>
+                        <div style={{ fontSize:'12px', fontWeight:700, color:'#FF9060', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Toute ma collection</div>
+                        <div style={{ fontSize:'10px', color:'rgba(255,255,255,.4)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} sets</div>
+                      </div>
+                    </div>
                     {[...new Set(portfolio.map(c=>c.set))].map(setName => {
                       const setCards = portfolio.filter(c=>c.set===setName)
                       const total    = setCards[0]?.setTotal || 0

@@ -74,6 +74,8 @@ const GRADE_COMPANIES = [
 export function Holdings() {
   const router = useRouter()
   const [view,        setView]        = useState<ViewMode>('binder')
+  const [binderSet,   setBinderSet]   = useState<string|null>(null)
+  const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [binderCols,  setBinderCols]  = useState(4)
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
@@ -96,7 +98,7 @@ export function Holdings() {
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string;
-  }>({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
+  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [scannerOpen,  setScannerOpen]  = useState(false)
@@ -161,9 +163,10 @@ export function Holdings() {
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = binderCols*3
-  const binderPages = Math.max(1,Math.ceil(portfolio.length/slotsPer))
-  const pageItems   = portfolio.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
-  const phantomCount = Math.max(0,slotsPer-pageItems.length)
+  const binderFiltered = binderSet ? portfolio.filter(c=>c.set===binderSet) : portfolio
+  const binderPages = Math.max(1,Math.ceil(binderFiltered.length/slotsPer))
+  const pageItems   = binderFiltered.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
+  const phantomCount = binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
 
   const showToast = (msg:string) => {
     setToast(msg)
@@ -261,7 +264,7 @@ export function Holdings() {
     e.stopPropagation()
     setShowcase(prev=>prev.filter(c=>c.id!==id))
   }
-  const canAdd = !!(addForm.name&&addForm.set&&addForm.buyPrice)
+  const canAdd = !!(addForm.name&&addForm.set)
 
   return (
     <>
@@ -635,7 +638,12 @@ export function Holdings() {
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
-                    <div style={{ fontSize:'13px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)', marginTop:'2px' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} - page {binderPage+1}/{binderPages}</div>
+                    <div style={{ fontSize:'13px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)', marginTop:'2px' }}>
+                  {binderSet
+                    ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Tous les sets</button>
+                    : <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
+                  }
+                </div>
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
@@ -662,6 +670,46 @@ export function Holdings() {
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'11px 24px', borderRadius:'11px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                       + Ajouter ma première carte
                     </button>
+                  </div>
+                ) : !binderSet ? (
+                  /* VUE SETS */
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:'12px' }}>
+                    {[...new Set(portfolio.map(c=>c.set))].map(setName => {
+                      const setCards = portfolio.filter(c=>c.set===setName)
+                      const total    = setCards[0]?.setTotal || 0
+                      const pct      = total>0 ? Math.round((setCards.length/total)*100) : null
+                      const preview  = setCards.find(c=>c.image)
+                      const ec2      = EC[setCards[0]?.type??'fire']??'#888'
+                      return (
+                        <div key={setName} onClick={()=>{ setBinderSet(setName); setBinderPage(0) }}
+                          style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'14px', overflow:'hidden', cursor:'pointer', transition:'all .18s' }}
+                          onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,255,255,.08)'; e.currentTarget.style.transform='translateY(-3px)' }}
+                          onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,.04)'; e.currentTarget.style.transform='' }}>
+                          {/* Preview image */}
+                          <div style={{ height:'90px', background:`linear-gradient(145deg,${ec2}20,${ec2}08)`, position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            {preview?.image ? (
+                              <img src={`${preview.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={setName}
+                                style={{ height:'100%', objectFit:'contain' }}
+                                onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                            ) : (
+                              <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
+                            )}
+                            {pct!==null && (
+                              <div style={{ position:'absolute', top:'6px', right:'6px', fontSize:'9px', fontWeight:700, background:pct===100?'linear-gradient(135deg,#FFD700,#FF8C00)':'rgba(0,0,0,.7)', color:'#fff', padding:'2px 6px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>
+                                {pct===100?'✓ Complet':pct+'%'}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ padding:'10px 12px' }}>
+                            <div style={{ fontSize:'12px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{setName}</div>
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                              <span style={{ fontSize:'10px', color:'rgba(255,255,255,.4)' }}>{setCards.length}{total>0?' / '+total:''} carte{setCards.length!==1?'s':''}</span>
+                              {pct!==null&&<div style={{ width:'40px', height:'3px', borderRadius:'2px', background:'rgba(255,255,255,.1)', overflow:'hidden' }}><div style={{ width:pct+'%', height:'100%', background:pct===100?'#FFD700':'#4ECCA3', borderRadius:'2px' }}/></div>}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 ):(
                   <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
@@ -786,8 +834,18 @@ export function Holdings() {
                   const isHolo=HOLO_RARITIES.includes(card.rarity)
                   const ls=LS[card.lang]
                   return (
-                    <div key={card.id} className={'gem'+(card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':'')}
-                      style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${ec}35`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both` }}
+                    <div key={card.id}
+                      draggable
+                      onDragStart={()=>setDragIdx(idx)}
+                      onDragOver={e=>{ e.preventDefault() }}
+                      onDrop={()=>{
+                        if(dragIdx===null||dragIdx===idx) return
+                        setShowcase(prev=>{ const a=[...prev]; const [item]=a.splice(dragIdx,1); a.splice(idx,0,item); return a })
+                        setDragIdx(null)
+                      }}
+                      onDragEnd={()=>setDragIdx(null)}
+                      className={'gem'+(card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':'')}
+                      style={{ background:`linear-gradient(160deg,${ec}18,${ec}06)`, border:`1.5px solid ${dragIdx===idx?'rgba(255,107,53,.6)':ec+'35'}`, animation:`cardIn .35s ${Math.min(idx,10)*.04}s ease-out both`, opacity:dragIdx===idx?.5:1, cursor:'grab' }}
                       onMouseMove={tiltCard} onMouseLeave={resetCard} onClick={()=>{ setSpotCard(card); setEditQty(null) }}>
                       {isHolo&&<div className="holo"/>}
                       {isHolo&&<div className="hm"/>}
@@ -795,10 +853,22 @@ export function Holdings() {
                       <div className="ptcl" style={{ background:ec, bottom:'30%', left:'60%' }}/>
                       <div style={{ height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
                       {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
-                      <div style={{ height:'130px', margin:'6px 6px 0', borderRadius:'9px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
-                        <div style={{ position:'absolute', width:'70%', height:'70%', borderRadius:'50%', background:eg, filter:'blur(20px)', opacity:.55 }}/>
-                        <div style={{ width:'48px', height:'48px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
-                        <div style={{ position:'absolute', bottom:'6px', left:'6px', fontSize:'9px', fontWeight:700, background:ls.bg, color:ls.color, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
+                      <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'9px', background:`${ec}14`, position:'relative', overflow:'hidden' }}>
+                        {card.image ? (
+                          <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
+                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform .4s cubic-bezier(.34,1.2,.64,1)' }}
+                            onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.04)')}
+                            onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
+                            onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
+                        ) : (
+                          <>
+                            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <div style={{ position:'absolute', width:'70%', height:'70%', borderRadius:'50%', background:eg, filter:'blur(20px)', opacity:.55 }}/>
+                              <div style={{ width:'56px', height:'56px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
+                            </div>
+                          </>
+                        )}
+                        <div style={{ position:'absolute', bottom:'6px', left:'6px', fontSize:'9px', fontWeight:700, background:'rgba(0,0,0,.7)', backdropFilter:'blur(4px)', color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
                         {card.graded&&<div style={{ position:'absolute', bottom:'6px', right:'6px', fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'rgba(255,255,255,.9)', padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.condition}</div>}
                       </div>
                       <div style={{ padding:'12px' }}>

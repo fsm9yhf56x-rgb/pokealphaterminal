@@ -230,7 +230,7 @@ export function Holdings() {
     }
   }
   const addCard = () => {
-    if(!addForm.name||!addForm.set||!addForm.buyPrice) return
+    if(!addForm.name||!addForm.set) return
     const extra = encyclopediaLookup(addForm.name, addForm.set)
     const bp = parseFloat(addForm.buyPrice)||0
     const liveMatch = liveCards.find(c=>c.name.toLowerCase()===addForm.name.toLowerCase())
@@ -577,7 +577,7 @@ export function Holdings() {
               {!canAdd&&(
                 <div style={{ display:'flex', alignItems:'center', gap:'7px', padding:'9px 12px', borderRadius:'9px', background:'rgba(255,107,53,.07)', border:'1px solid rgba(255,107,53,.2)', marginBottom:'12px' }}>
                   <span style={{ fontSize:'11px', color:'rgba(255,107,53,.85)', fontFamily:'var(--font-display)' }}>
-                    {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':!addForm.buyPrice?'Renseignez le prix':''}
+                    {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':''}
                     {' '}pour activer le bouton
                   </span>
                 </div>
@@ -622,11 +622,23 @@ export function Holdings() {
               <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
             </div>
           </div>
-          <div style={{ display:'flex', gap:'6px' }}>
+          <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as Array<[ViewMode,string]>).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={'vtab'+(view===v?' on':'')}>{l}</button>
             ))}
           </div>
+          {view==='binder' && portfolio.length>0 && (
+            <div style={{ display:'flex', gap:'4px', marginTop:'10px' }}>
+              <button onClick={()=>{ setBinderSet(null); setBinderPage(0) }}
+                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${!binderSet?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:!binderSet?'rgba(255,255,255,.1)':'transparent', color:!binderSet?'#fff':'rgba(255,255,255,.4)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                Par sets
+              </button>
+              <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
+                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderSet==='__all__'?'rgba(255,255,255,.1)':'transparent', color:binderSet==='__all__'?'#fff':'rgba(255,255,255,.4)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                Toute ma collection
+              </button>
+            </div>
+          )}
         </div>
 
         {/* BINDER */}
@@ -694,7 +706,7 @@ export function Holdings() {
                               </div>
                             ))}
                           </div>
-                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.3) 60%, transparent 100%)', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'12px 10px' }}>
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.15) 60%, transparent 100%)', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'12px 10px' }}>
                             <div style={{ fontSize:'10px', fontWeight:800, color:'#FF9060', fontFamily:'var(--font-display)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'4px' }}>📚 Collection</div>
                             <div style={{ fontSize:'13px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px', lineHeight:1.2 }}>Toutes mes cartes</div>
                             <div style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>{portfolio.length} cartes · {[...new Set(portfolio.map(c=>c.set))].length} sets</div>
@@ -725,7 +737,7 @@ export function Holdings() {
                             </div>
                           )}
                           {/* Gradient + infos */}
-                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 50%, rgba(0,0,0,.1) 100%)' }}/>
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.2) 55%, rgba(0,0,0,.0) 100%)' }}/>
                           {/* Badge completion */}
                           {pct!==null&&(
                             <div style={{ position:'absolute', top:'8px', right:'8px', fontSize:'9px', fontWeight:800, background:isComplete?'linear-gradient(135deg,#FFD700,#FF8C00)':'rgba(0,0,0,.75)', backdropFilter:'blur(4px)', color:'#fff', padding:'3px 8px', borderRadius:'8px', fontFamily:'var(--font-display)', boxShadow:isComplete?'0 2px 8px rgba(255,215,0,.4)':'none' }}>
@@ -891,43 +903,43 @@ export function Holdings() {
                       <div className="ptcl" style={{ background:ec, bottom:'30%', left:'60%' }}/>
                       <div style={{ height:'2.5px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
                       {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
-                      <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'9px', background:`${ec}14`, position:'relative', overflow:'hidden' }}>
+                      {/* FULL ART — image seule */}
+                      <div style={{ aspectRatio:'63/88', position:'relative', overflow:'hidden', borderRadius:'inherit', background:'#050505' }}>
                         {card.image ? (
                           <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
-                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform .4s cubic-bezier(.34,1.2,.64,1)' }}
-                            onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.04)')}
+                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform .6s cubic-bezier(.34,1.15,.64,1)' }}
+                            onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.06)')}
                             onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
                             onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
                         ) : (
-                          <>
-                            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              <div style={{ position:'absolute', width:'70%', height:'70%', borderRadius:'50%', background:eg, filter:'blur(20px)', opacity:.55 }}/>
-                              <div style={{ width:'56px', height:'56px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 18px ${eg}`, zIndex:1 }}/>
-                            </div>
-                          </>
+                          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:`linear-gradient(145deg,${ec}18,${ec}06)` }}>
+                            <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.5 }}/>
+                            <div style={{ width:'72px', height:'72px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}88)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
+                          </div>
                         )}
-                        <div style={{ position:'absolute', bottom:'6px', left:'6px', fontSize:'9px', fontWeight:700, background:'rgba(0,0,0,.7)', backdropFilter:'blur(4px)', color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{ls.flag} {card.lang}</div>
-                        {card.graded&&<div style={{ position:'absolute', bottom:'6px', right:'6px', fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'rgba(255,255,255,.9)', padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.condition}</div>}
-                      </div>
-                      <div style={{ padding:'12px' }}>
-                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'6px', marginBottom:'4px' }}>
-                          <div style={{ fontSize:'13px', fontWeight:600, color:'rgba(255,255,255,.88)', fontFamily:'var(--font-display)', lineHeight:1.25, flex:1 }}>{card.name}</div>
-                          <button onClick={e=>{ e.stopPropagation(); toggleFav(card.id,e) }} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', padding:0, flexShrink:0 }}>{favs.has(card.id)?'H':'O'}</button>
+                        {/* Gradient overlay bas */}
+                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.1) 45%, transparent 100%)', pointerEvents:'none' }}/>
+                        {/* Drag handle */}
+                        <div style={{ position:'absolute', top:'8px', left:'50%', transform:'translateX(-50%)', display:'flex', gap:'3px', opacity:.35, pointerEvents:'none' }}>
+                          {[0,1,2].map(i=><div key={i} style={{ width:'3px', height:'3px', borderRadius:'50%', background:'#fff' }}/>)}
                         </div>
-                        <div style={{ fontSize:'10px', color:'rgba(255,255,255,.25)', marginBottom:'10px' }}>{card.set}</div>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                          <div>
-                            <div style={{ fontSize:'18px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1 }}>EUR {card.curPrice.toLocaleString('fr-FR')}</div>
-                            {card.buyPrice>0&&<div style={{ fontSize:'9px', color:'rgba(255,255,255,.2)', marginTop:'2px' }}>Achat EUR {card.buyPrice}</div>}
-                          </div>
-                          <div style={{ textAlign:'right' }}>
-                            {card.buyPrice>0&&<div style={{ fontSize:'14px', fontWeight:600, color:roi>=0?'#4ECCA3':'#FF6B8A', fontFamily:'var(--font-display)' }}>{roi>=0?'+':''}{roi}%</div>}
-                            {card.psa&&<div style={{ fontSize:'9px', color:'rgba(255,255,255,.22)' }}>Pop {card.psa.toLocaleString()}</div>}
+                        {/* Signal */}
+                        {card.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', fontSize:'9px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'3px 8px', borderRadius:'6px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
+                        {/* Infos bas overlay */}
+                        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px 12px', pointerEvents:'none' }}>
+                          <div style={{ fontSize:'13px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 6px rgba(0,0,0,.8)' }}>{card.name}</div>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
+                              <span style={{ fontSize:'10px' }}>{ls.flag}</span>
+                              <span style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>{card.set}</span>
+                            </div>
+                            {card.graded&&<span style={{ fontSize:'8px', fontWeight:700, background:'rgba(0,0,0,.7)', color:'rgba(255,255,255,.9)', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>⭐ {card.condition}</span>}
                           </div>
                         </div>
-                        <button onClick={e=>removeFromShowcase(card.id,e)}
-                          style={{ marginTop:'10px', width:'100%', padding:'6px', borderRadius:'7px', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', color:'rgba(255,255,255,.3)', fontSize:'10px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                          Retirer de la vitrine
+                        {/* Bouton retirer au hover */}
+                        <button className="remove-btn" onClick={e=>removeFromShowcase(card.id,e)}
+                          style={{ position:'absolute', top:'8px', left:'8px', zIndex:10, background:'rgba(0,0,0,.75)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.8)', borderRadius:'8px', padding:'4px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
+                          Retirer
                         </button>
                       </div>
                     </div>

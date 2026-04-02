@@ -1,18 +1,25 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Sora, DM_Sans, Space_Mono } from 'next/font/google'
 import { AuthProvider } from '@/lib/auth/AuthContext'
 import './globals.css'
 
-const inter = Inter({
+const sora = Sora({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-sora',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 })
-
-const jetbrainsMono = JetBrains_Mono({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-jetbrains',
+  variable: '--font-dm',
   display: 'swap',
+  weight: ['400', '500', '700'],
+})
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '700'],
 })
 
 export const metadata: Metadata = {
@@ -36,10 +43,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${jetbrainsMono.variable} dark`}
+      className={`${sora.variable} ${dmSans.variable} ${spaceMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-surface-bg font-sans">
+      <body className="min-h-screen bg-bg font-sans">
         <AuthProvider>
           {children}
         </AuthProvider>

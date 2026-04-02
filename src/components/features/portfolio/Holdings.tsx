@@ -49,7 +49,7 @@ type ViewMode = 'binder'|'showcase'|'wrapped'
 
 const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
   const el=e.currentTarget, r=el.getBoundingClientRect()
-  const x=((e.clientX-r.left)/r.width-.5)*24, y=((e.clientY-r.top)/r.height-.5)*-24
+  const x=((e.clientX-r.left)/r.width-.5)*16, y=((e.clientY-r.top)/r.height-.5)*-16
   el.style.transform=`perspective(600px) rotateY(${x}deg) rotateX(${y}deg) translateZ(12px) scale(1.04)`
   const s=el.querySelector('.hm') as HTMLElement|null
   if(s){s.style.backgroundPosition=`${Math.round((e.clientX-r.left)/r.width*100)}% ${Math.round((e.clientY-r.top)/r.height*100)}%`;s.style.opacity='0.35'}
@@ -80,7 +80,7 @@ export function Holdings() {
   const [setSearch,   setSetSearch]   = useState('')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
-  const [binderCols,  setBinderCols]  = useState(4)
+  const [binderCols,  setBinderCols]  = useState(5)
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
@@ -296,24 +296,39 @@ export function Holdings() {
     <>
     <div>
       <style dangerouslySetInnerHTML={{__html:`
-        @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp    { 0%{opacity:0;transform:translateY(24px) scale(.97)} 60%{opacity:1;transform:translateY(-4px) scale(1.005)} 100%{opacity:1;transform:translateY(0) scale(1)} }
         @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes slotIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-        @keyframes illuminate{ 0%{opacity:0;transform:scale(.95)} 40%{opacity:1;transform:scale(1.04)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes illuminate{ 0%{opacity:0;transform:scale(.93) translateY(12px)} 50%{opacity:1;transform:scale(1.02) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
         .pocket-shell:hover .card-plastic { opacity:.12 !important; }
-        .pocket-shell .card-plastic { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,0) 45%,rgba(255,255,255,.03) 100%);pointer-events:none;z-index:5;transition:opacity .2s; }
+        .pocket-shell .card-plastic { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(29,29,31,.06) 0%,rgba(29,29,31,0) 45%,rgba(29,29,31,.025) 100%);pointer-events:none;z-index:5;transition:opacity .2s; }
         @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.4),0 4px 24px rgba(0,0,0,.6)} 50%{box-shadow:0 0 44px rgba(255,107,53,.7),0 8px 40px rgba(0,0,0,.7)} }
-        @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.35),0 4px 18px rgba(0,0,0,.5)} 50%{box-shadow:0 0 28px rgba(200,85,212,.6),0 6px 28px rgba(0,0,0,.6)} }
+        @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.2),0 4px 16px rgba(0,0,0,.08)} 50%{box-shadow:0 0 36px rgba(255,107,53,.35),0 8px 28px rgba(0,0,0,.12)} }
+        @keyframes breatheA  { 0%,100%{box-shadow:0 0 12px rgba(200,85,212,.15),0 4px 12px rgba(0,0,0,.06)} 50%{box-shadow:0 0 24px rgba(200,85,212,.3),0 6px 20px rgba(0,0,0,.1)} }
         @keyframes ptcl      { 0%{transform:translateY(0) scale(1);opacity:.8} 100%{transform:translateY(-28px) scale(0);opacity:0} }
         @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
         @keyframes shim { 0%{left:-100%} 100%{left:200%} }
-        @keyframes toastIn   { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        @keyframes wrappedIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        @keyframes shareUp   { from{opacity:0;transform:translateY(100%)} to{opacity:1;transform:translateY(0)} }
+        @keyframes toastIn   { 0%{opacity:0;transform:translateX(-50%) translateY(12px) scale(.95)} 60%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1.01)} 100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} }
+        @keyframes wrappedIn { 0%{opacity:0;transform:scale(.94) translateY(20px)} 60%{opacity:1;transform:scale(1.01) translateY(-3px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes shareUp   { 0%{opacity:0;transform:translateY(100%)} 60%{opacity:1;transform:translateY(-8px)} 100%{opacity:1;transform:translateY(0)} }
         .gem { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
+
+        /* ── MICRO-INTERACTIONS ───────── */
+        button { transition:transform .15s cubic-bezier(.25,.46,.45,.94),opacity .15s,box-shadow .25s; }
+        button:active:not(:disabled) { transform:scale(.97) !important;transition-duration:.06s !important; }
+        input:focus { box-shadow:0 0 0 3px rgba(224,48,32,.12) !important;border-color:#E03020 !important;transition:box-shadow .2s,border-color .2s; }
+        /* ── CARD IMAGE SHINE ON HOVER ── */
+        .pocket-shell .card-plastic { transition:opacity .35s cubic-bezier(.25,.46,.45,.94); }
+        .pocket-shell:hover img { transform:scale(1.06) !important; }
+        .pocket-shell:hover .holo { opacity:.35 !important; }
+        /* ── RARE CARD GLOW ── */
+        .pocket-shell.gem .holo { animation:holoShift 8s ease infinite,holoPulse 4s ease-in-out infinite; }
+        @keyframes holoPulse { 0%,100%{opacity:.08} 50%{opacity:.18} }
+        /* ── SMOOTH REVEAL FOR ALL CARDS ── */
+        @keyframes cardReveal { 0%{opacity:0;transform:translateY(20px) scale(.94) rotateX(8deg)} 50%{opacity:1;transform:translateY(-4px) scale(1.01) rotateX(-1deg)} 100%{opacity:1;transform:translateY(0) scale(1) rotateX(0deg)} }
+        .pocket-shell { animation:cardReveal .5s cubic-bezier(.22,.68,0,1.1) both; }
         .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
-        .gem .hm { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.4),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
+        .gem .hm { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(29,29,31,.3),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
         .gem:hover .holo { opacity:.28; }
         .gem .ptcl { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
@@ -321,15 +336,23 @@ export function Holdings() {
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
         .breathe-S { animation:breatheS 2.4s ease-in-out infinite; }
         .breathe-A { animation:breatheA 3s ease-in-out infinite; }
-        .pocket-shell { position:relative;border-radius:9px;overflow:hidden;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.2,.64,1); }
-        .pocket-shell:hover { transform:translateY(-5px) scale(1.04) !important; }
-        .vtab { padding:7px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.4);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
-        .vtab.on { background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.3) !important;color:#fff !important; }
-        .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .15s; }
+        .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .35s cubic-bezier(.22,.68,0,1.4),box-shadow .4s cubic-bezier(.25,.46,.45,.94);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.03); }
+        .pocket-shell:hover { transform:translateY(-6px) scale(1.03) !important;box-shadow:0 12px 28px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.06) !important; }
+        .pocket-shell:active { transform:translateY(-2px) scale(1.01) !important;transition-duration:.1s !important; }
+        @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 6px rgba(224,48,32,.06)} }
+        .empty-pocket { animation:slotPulse 3s ease-in-out infinite; }
+        .empty-pocket:hover { animation:none !important; }
+        .vtab { padding:7px 18px;border-radius:99px;border:1px solid #D2D2D7;background:transparent;color:#86868B;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .25s cubic-bezier(.25,.46,.45,.94); }
+        .vtab:hover:not(.on) { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
+        .vtab:active { transform:scale(.96);transition-duration:.08s; }
+        .vtab.on { background:#1D1D1F !important;border-color:#1D1D1F !important;color:#fff !important; }
+        .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .2s cubic-bezier(.25,.46,.45,.94);color:#86868B;border:1px solid #D2D2D7;background:#fff; }
+        .colbtn:hover { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
+        .colbtn:active { transform:scale(.92);transition-duration:.06s; }
         .remove-btn { pointer-events:all !important; }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
         .req-label { font-size:10px;font-weight:700;color:rgba(255,107,53,.9);font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
-        .opt-label { font-size:10px;color:rgba(255,255,255,.35);font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
+        .opt-label { font-size:10px;color:rgba(29,29,31,.28);font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
         .req-field { border:2px solid rgba(255,107,53,.35) !important; }
         .req-field-ok { border:2px solid rgba(78,204,163,.4) !important; }
         select { color-scheme:dark; }
@@ -345,11 +368,11 @@ export function Holdings() {
         .scan-line  { animation:scanLine 1.8s ease-in-out infinite alternate; }
       `}} />
 
-      <div style={{ background:'#070503', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative', paddingBottom:'40px' }}>
-        <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.07) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.07) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ background:'#F5F5F7', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative', paddingBottom:'40px' }}>
+        <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.04) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.04) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
         {toast&&(
-          <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(10,6,2,.95)', color:'rgba(255,255,255,.85)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1px solid rgba(255,255,255,.12)', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
+          <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(29,29,31,.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', color:'rgba(255,255,255,.95)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
             {toast}
           </div>
         )}
@@ -363,7 +386,7 @@ export function Holdings() {
           const curQty=editQty??spotCard.qty
           return(
             <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.82)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null) }}>
-              <div style={{ background:'#0F0A04', borderRadius:'20px', border:`1px solid ${ec}40`, boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.8)`, padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ background:'#FFFFFF', borderRadius:'20px', border:`1px solid ${ec}40`, boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.8)`, padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
                 <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'24px', alignItems:'start' }}>
                   <div className="gem" style={{ background:`linear-gradient(160deg,${ec}22,${ec}08)`, border:`2px solid ${ec}50`, boxShadow:`0 0 40px ${eg},0 12px 40px rgba(0,0,0,.7)` }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
                     {isHolo&&<div className="holo"/>}
@@ -371,7 +394,7 @@ export function Holdings() {
                     <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
                     <div className="ptcl" style={{ background:ec, bottom:'35%', left:'65%' }}/>
                     <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
-                    {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#fff', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
+                    {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#1D1D1F', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
                     <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
                       {spotCard.image ? (
                         <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
@@ -385,33 +408,33 @@ export function Holdings() {
                       )}
                     </div>
                     <div style={{ padding:'14px' }}>
-                      <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
-                      <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)' }}>{spotCard.set} - {spotCard.year} - {spotCard.condition}</div>
+                      <div style={{ fontSize:'16px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
+                      <div style={{ fontSize:'11px', color:'#48484A' }}>{spotCard.set} - {spotCard.year} - {spotCard.condition}</div>
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize:'40px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'6px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'40px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'6px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
                     {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'14px' }}>
                       {[
-                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'rgba(255,255,255,.5)'},
+                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'rgba(29,29,31,.4)'},
                         {l:'Marche',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#fff'},
                         {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:'#4ECCA3'},
-                        {l:'Langue',v:spotCard.lang,c:'rgba(255,255,255,.7)'},
-                        {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'rgba(255,255,255,.7)'},
+                        {l:'Langue',v:spotCard.lang,c:'rgba(29,29,31,.6)'},
+                        {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'rgba(29,29,31,.6)'},
                         {l:'Gain',v:spotCard.buyPrice>0?'+EUR '+Math.abs(gain).toLocaleString('fr-FR'):'---',c:'#4ECCA3'},
                       ].map(s=>(
-                        <div key={s.l} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px' }}>
-                          <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
+                        <div key={s.l} style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'9px', padding:'10px 12px' }}>
+                          <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
                           <div style={{ fontSize:'15px', fontWeight:600, color:s.c, fontFamily:'var(--font-display)' }}>{s.v}</div>
                         </div>
                       ))}
                     </div>
-                    <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'10px', padding:'12px 14px', marginBottom:'12px' }}>
-                      <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'8px' }}>Quantite dans la collection</div>
+                    <div style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'10px', padding:'12px 14px', marginBottom:'12px' }}>
+                      <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'8px' }}>Quantite dans la collection</div>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', color:'#fff', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
-                        <div style={{ flex:1, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'8px', padding:'7px', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>{curQty}</div>
+                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'#F0F0F5', border:'1px solid #D2D2D7', color:'#1D1D1F', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
+                        <div style={{ flex:1, background:'#E8E8ED', border:'1.5px solid #D1CEC9', borderRadius:'8px', padding:'7px', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{curQty}</div>
                         <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
                         {editQty!==null&&editQty!==spotCard.qty&&(
                           <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantite mise a jour') }} style={{ padding:'7px 12px', borderRadius:'8px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
@@ -422,8 +445,8 @@ export function Holdings() {
                     </div>
                     <div style={{ display:'flex', gap:'8px' }}>
                       <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal</button>
-                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'rgba(255,255,255,.07)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.12)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
-                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'X':'O'}</button>
+                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#E8E8ED', color:'#48484A', border:'1.5px solid #D1CEC9', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'#E8E8ED', border:'1px solid #E5E5EA', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'X':'O'}</button>
                     </div>
                   </div>
                 </div>
@@ -434,31 +457,31 @@ export function Holdings() {
 
         {/* SHOWCASE PICKER */}
         {showPickerForShowcase&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>setShowPickerForShowcase(false)}>
-            <div style={{ background:'#0F0A04', borderRadius:'20px', border:'1px solid rgba(255,107,53,.2)', padding:'24px', maxWidth:'480px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'85vh', display:'flex', flexDirection:'column' }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(250,251,252,.94)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>setShowPickerForShowcase(false)}>
+            <div style={{ background:'#FFFFFF', borderRadius:'20px', border:'1px solid rgba(255,107,53,.2)', padding:'24px', maxWidth:'480px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'85vh', display:'flex', flexDirection:'column' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexShrink:0 }}>
-                <div style={{ fontSize:'15px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Choisir une carte</div>
-                <button onClick={()=>setShowPickerForShowcase(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0 }}>x</button>
+                <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Choisir une carte</div>
+                <button onClick={()=>setShowPickerForShowcase(false)} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'20px', padding:0 }}>x</button>
               </div>
               {portfolio.filter(c=>!showcase.find(s=>s.id===c.id)).length===0?(
-                <div style={{ textAlign:'center', padding:'32px 0', color:'rgba(255,255,255,.3)', fontSize:'13px' }}>Toutes vos cartes sont dans la vitrine.</div>
+                <div style={{ textAlign:'center', padding:'32px 0', color:'#48484A', fontSize:'13px' }}>Toutes vos cartes sont dans la vitrine.</div>
               ):(
                 <div style={{ display:'flex', flexDirection:'column', gap:'8px', overflowY:'auto' as const }}>
                   {portfolio.filter(c=>!showcase.find(s=>s.id===c.id)).map(card=>{
                     const ec2=EC[card.type]??'#888'
                     return (
                       <div key={card.id} onClick={()=>addToShowcase(card)}
-                        style={{ display:'flex', alignItems:'center', gap:'12px', padding:'10px 14px', borderRadius:'10px', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', cursor:'pointer' }}
-                        onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,107,53,.08)')}
-                        onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,.04)')}>
+                        style={{ display:'flex', alignItems:'center', gap:'12px', padding:'10px 14px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', cursor:'pointer' }}
+                        onMouseEnter={e=>(e.currentTarget.style.background='#F0F0F5')}
+                        onMouseLeave={e=>(e.currentTarget.style.background='#F5F5F7')}>
                         <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:`linear-gradient(145deg,${ec2}25,${ec2}10)`, border:`1px solid ${ec2}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                           <div style={{ width:'12px', height:'12px', borderRadius:'50%', background:ec2, opacity:.8 }}/>
                         </div>
                         <div style={{ flex:1 }}>
-                          <div style={{ fontSize:'13px', fontWeight:500, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)' }}>{card.name}</div>
-                          <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{card.set} - {card.condition}</div>
+                          <div style={{ fontSize:'13px', fontWeight:500, color:'#3A3A3C', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                          <div style={{ fontSize:'10px', color:'#48484A' }}>{card.set} - {card.condition}</div>
                         </div>
-                        <div style={{ fontSize:'13px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>EUR {card.curPrice}</div>
+                        <div style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>EUR {card.curPrice}</div>
                       </div>
                     )
                   })}
@@ -471,13 +494,13 @@ export function Holdings() {
         {/* ADD CARD MODAL */}
         {addOpen&&(
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}>
-            <div style={{ background:'#0F0A04', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
+            <div style={{ background:'#FFFFFF', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
-                  <div style={{ fontSize:'17px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Ajouter une carte ou un item</div>
+                  <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte ou un item</div>
                   <div style={{ fontSize:'11px', marginTop:'3px', color:'rgba(255,107,53,.7)', fontWeight:600 }}>* champs obligatoires</div>
                 </div>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>x</button>
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>x</button>
               </div>
 
               <div style={{ marginBottom:'12px' }}>
@@ -486,7 +509,7 @@ export function Holdings() {
                   <select value={addForm.setId}
                     onChange={e=>{ const found=liveSets.find(x=>x.id===e.target.value); if(found) handleSetChange(found.id,found.name) }}
                     className={addForm.set?'req-field-ok':'req-field'}
-                    style={{ width:'100%', appearance:'none' as const, background:'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 36px 10px 12px', color:addForm.set?'#fff':'rgba(255,255,255,.35)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    style={{ width:'100%', appearance:'none' as const, background:'#E8E8ED', borderRadius:'9px', padding:'10px 36px 10px 12px', color:addForm.set?'#fff':'rgba(29,29,31,.28)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
                     {liveSets.map(s=>(
                       <option key={s.id} value={s.id} style={{background:'#111'}}>
@@ -494,7 +517,7 @@ export function Holdings() {
                       </option>
                     ))}
                   </select>
-                  <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'rgba(255,255,255,.45)' }}>v</div>
+                  <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'#48484A' }}>v</div>
                 </div>
               </div>
 
@@ -507,13 +530,13 @@ export function Holdings() {
                   <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
                     placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte ou item…'}
                     className={addForm.name?'req-field-ok':'req-field'}
-                    style={{ width:'100%', background:'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px', color:'#fff', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                    style={{ width:'100%', background:'#E8E8ED', borderRadius:'9px', padding:'10px 12px', color:'#1D1D1F', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
                   {addSuggs.length>0&&(
                     <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#1A0E06', border:'1px solid rgba(255,107,53,.3)', borderRadius:'10px', overflow:'hidden', zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,.6)' }}>
                       {addSuggs.map((s,i)=>(
                         <div key={i} onMouseDown={()=>handleSuggSelect(s)}
-                          style={{ padding:'9px 14px', fontSize:'13px', color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', cursor:'pointer', borderBottom:i<addSuggs.length-1?'1px solid rgba(255,255,255,.06)':'none' }}
-                          onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,107,53,.1)')}
+                          style={{ padding:'9px 14px', fontSize:'13px', color:'#3A3A3C', fontFamily:'var(--font-display)', cursor:'pointer', borderBottom:i<addSuggs.length-1?'1px solid rgba(29,29,31,.05)':'none' }}
+                          onMouseEnter={e=>(e.currentTarget.style.background='#F0F0F5')}
                           onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
                           {s}
                         </div>
@@ -528,7 +551,7 @@ export function Holdings() {
                 <div style={{ display:'flex', gap:'8px' }}>
                   {(['EN','JP','FR'] as const).map(l=>(
                     <button key={l} onClick={()=>setAddForm(p=>({...p,lang:l}))}
-                      style={{ flex:1, padding:'9px', borderRadius:'8px', border:`1px solid ${addForm.lang===l?'rgba(255,107,53,.6)':'rgba(255,255,255,.1)'}`, background:addForm.lang===l?'rgba(255,107,53,.15)':'rgba(255,255,255,.04)', color:addForm.lang===l?'#FF9060':'rgba(255,255,255,.5)', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                      style={{ flex:1, padding:'9px', borderRadius:'8px', border:`1px solid ${addForm.lang===l?'rgba(255,107,53,.6)':'rgba(29,29,31,.07)'}`, background:addForm.lang===l?'rgba(255,107,53,.15)':'rgba(29,29,31,.03)', color:addForm.lang===l?'#FF9060':'rgba(29,29,31,.4)', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                       {l}
                     </button>
                   ))}
@@ -539,15 +562,15 @@ export function Holdings() {
                 <div className="opt-label">Etat / Grade</div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'6px', marginBottom:'10px' }}>
                   <button onClick={()=>handleConditionChange('Raw')}
-                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.7)':'rgba(255,255,255,.12)'}`, background:!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.18)':'rgba(255,255,255,.04)', color:!addForm.graded&&addForm.condition==='Raw'?'#FF9060':'rgba(255,255,255,.5)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:!addForm.graded&&addForm.condition==='Raw'?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     Raw
                   </button>
                   <button onClick={()=>handleConditionChange('__graded__')}
-                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${addForm.graded?'rgba(255,107,53,.7)':'rgba(255,255,255,.12)'}`, background:addForm.graded?'rgba(255,107,53,.18)':'rgba(255,255,255,.04)', color:addForm.graded?'#FF9060':'rgba(255,255,255,.5)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${addForm.graded?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:addForm.graded?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:addForm.graded?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     Grade
                   </button>
                   <button onClick={()=>handleConditionChange('Scelle')}
-                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.7)':'rgba(255,255,255,.12)'}`, background:!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.18)':'rgba(255,255,255,.04)', color:!addForm.graded&&addForm.condition==='Scelle'?'#FF9060':'rgba(255,255,255,.5)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:!addForm.graded&&addForm.condition==='Scelle'?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     Scelle
                   </button>
                 </div>
@@ -558,9 +581,9 @@ export function Holdings() {
                       const curVal = isActive ? addForm.condition.replace(company.label+' ','') : ''
                       return (
                         <div key={company.label}>
-                          <div style={{ fontSize:'9px', color:isActive?'#FF9060':'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', marginBottom:'5px', fontWeight:isActive?700:400, textAlign:'center' as const }}>{company.label}</div>
+                          <div style={{ fontSize:'9px', color:isActive?'#FF9060':'rgba(29,29,31,.24)', fontFamily:'var(--font-display)', marginBottom:'5px', fontWeight:isActive?700:400, textAlign:'center' as const }}>{company.label}</div>
                           <select value={curVal} onChange={e=>{ if(e.target.value) handleConditionChange(company.label+' '+e.target.value) }}
-                            style={{ width:'100%', appearance:'none' as const, background:isActive?'rgba(255,107,53,.15)':'rgba(255,255,255,.05)', border:`1px solid ${isActive?'rgba(255,107,53,.5)':'rgba(255,255,255,.1)'}`, borderRadius:'7px', padding:'7px 4px', color:isActive?'#FF9060':'rgba(255,255,255,.45)', fontSize:'11px', fontWeight:600, fontFamily:'var(--font-display)', outline:'none', cursor:'pointer', textAlign:'center' as const }}>
+                            style={{ width:'100%', appearance:'none' as const, background:isActive?'rgba(255,107,53,.15)':'rgba(29,29,31,.04)', border:`1px solid ${isActive?'rgba(255,107,53,.5)':'rgba(29,29,31,.07)'}`, borderRadius:'7px', padding:'7px 4px', color:isActive?'#FF9060':'rgba(29,29,31,.35)', fontSize:'11px', fontWeight:600, fontFamily:'var(--font-display)', outline:'none', cursor:'pointer', textAlign:'center' as const }}>
                             <option value="">-</option>
                             {company.grades.map(g=>{
                               const shortG = g.replace(company.label+' ','')
@@ -576,7 +599,7 @@ export function Holdings() {
 
               {/* Prix + Quantité */}
               {addForm.name && !addForm.buyPrice && (
-                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', borderRadius:'10px', background:'rgba(255,107,53,.07)', border:'1px solid rgba(255,107,53,.18)', marginBottom:'10px', animation:'fadeUp .25s ease-out' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', borderRadius:'10px', background:'rgba(0,0,0,.012)', border:'1px solid rgba(255,107,53,.18)', marginBottom:'10px', animation:'fadeUp .25s ease-out' }}>
                   <span style={{ fontSize:'16px' }}>💰</span>
                   <div>
                     <div style={{ fontSize:'11px', fontWeight:700, color:'#FF9060', fontFamily:'var(--font-display)' }}>Dernière étape — indiquez votre prix d'achat</div>
@@ -588,27 +611,27 @@ export function Holdings() {
                 <div>
                   <div className="req-label">Prix d'achat EUR *</div>
                   <div style={{ position:'relative' }}>
-                    <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)', pointerEvents:'none' }}>€</span>
+                    <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)', pointerEvents:'none' }}>€</span>
                     <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))}
                       placeholder="0.00"
                       autoFocus={!!(addForm.name && !addForm.buyPrice)}
                       className={addForm.buyPrice?'req-field-ok':'req-field'}
-                      style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.06)' : 'rgba(255,255,255,.07)', borderRadius:'9px', padding:'10px 12px 10px 26px', color:'#fff', fontSize:'18px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .2s' }}/>
+                      style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.06)' : 'rgba(29,29,31,.05)', borderRadius:'9px', padding:'10px 12px 10px 26px', color:'#1D1D1F', fontSize:'18px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .2s' }}/>
                   </div>
                 </div>
                 <div>
                   <div className="opt-label">Exemplaires</div>
                   <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))} style={{ width:'38px', height:'38px', borderRadius:'8px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', color:'#fff', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>-</button>
-                    <div style={{ flex:1, background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', borderRadius:'9px', padding:'9px 0', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
+                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))} style={{ width:'38px', height:'38px', borderRadius:'8px', background:'#F0F0F5', border:'1px solid #D2D2D7', color:'#1D1D1F', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>-</button>
+                    <div style={{ flex:1, background:'#E8E8ED', border:'1.5px solid #D1CEC9', borderRadius:'9px', padding:'9px 0', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
                     <button onClick={()=>setAddForm(p=>({...p,qty:Math.min(99,p.qty+1)}))} style={{ width:'38px', height:'38px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>+</button>
                   </div>
                 </div>
               </div>
 
               {!canAdd&&(
-                <div style={{ display:'flex', alignItems:'center', gap:'7px', padding:'9px 12px', borderRadius:'9px', background:'rgba(255,107,53,.07)', border:'1px solid rgba(255,107,53,.2)', marginBottom:'12px' }}>
-                  <span style={{ fontSize:'11px', color:'rgba(255,107,53,.85)', fontFamily:'var(--font-display)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'7px', padding:'9px 12px', borderRadius:'9px', background:'rgba(0,0,0,.012)', border:'1px solid rgba(255,107,53,.2)', marginBottom:'12px' }}>
+                  <span style={{ fontSize:'11px', color:'#EA580C', fontFamily:'var(--font-display)' }}>
                     {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':''}
                     {' '}pour activer le bouton
                   </span>
@@ -617,11 +640,11 @@ export function Holdings() {
 
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={addCard} disabled={!canAdd}
-                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:canAdd?'linear-gradient(135deg,#E03020,#FF4433)':'rgba(255,255,255,.06)', color:canAdd?'#fff':'rgba(255,255,255,.2)', border:'none', fontSize:'14px', fontWeight:600, cursor:canAdd?'pointer':'default', fontFamily:'var(--font-display)', boxShadow:canAdd?'0 4px 16px rgba(224,48,32,.4)':'none', transition:'all .2s' }}>
+                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:canAdd?'linear-gradient(135deg,#E03020,#FF4433)':'rgba(29,29,31,.05)', color:canAdd?'#fff':'rgba(29,29,31,.16)', border:'none', fontSize:'14px', fontWeight:600, cursor:canAdd?'pointer':'default', fontFamily:'var(--font-display)', boxShadow:canAdd?'0 4px 16px rgba(224,48,32,.4)':'none', transition:'all .2s' }}>
                   Ajouter {addForm.qty>1?addForm.qty+' exemplaires':'au portfolio'}
                 </button>
                 <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}
-                  style={{ padding:'13px 20px', borderRadius:'11px', background:'rgba(255,255,255,.05)', color:'rgba(255,255,255,.5)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  style={{ padding:'13px 20px', borderRadius:'11px', background:'#F5F5F7', color:'#6E6E73', border:'1px solid #E5E5EA', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
                   Annuler
                 </button>
               </div>
@@ -633,22 +656,22 @@ export function Holdings() {
         <div style={{ position:'relative', zIndex:1, padding:'28px 28px 20px' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'16px', marginBottom:'22px' }}>
             <div>
-              <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Portfolio</div>
-              <div style={{ fontSize:'38px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>
+              <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Portfolio</div>
+              <div style={{ fontSize:'38px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>
                 {portfolio.length>0?'EUR '+totalCur.toLocaleString('fr-FR'):'---'}
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'6px' }}>
                 {portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:500, color:'#4ECCA3' }}>+{totalROI}% | +EUR {totalGain.toLocaleString('fr-FR')}</span>}
-                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'rgba(255,255,255,.35)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''}</span>}
-                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'rgba(255,255,255,.25)' }}>Aucune carte - commencez votre collection</span>}
+                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#48484A' }}>{portfolio.length} carte{portfolio.length!==1?'s':''}</span>}
+                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#48484A' }}>Aucune carte - commencez votre collection</span>}
               </div>
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
               {bestCard&&bestCard.buyPrice>0&&(
-                <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px' }}>
-                  <div style={{ fontSize:'9px', color:'rgba(255,255,255,.3)', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
-                  <div style={{ fontSize:'18px', fontWeight:600, color:'#FFD700', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{bestCard.name}</div>
+                <div style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'12px', padding:'12px 16px' }}>
+                  <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
+                  <div style={{ fontSize:'18px', fontWeight:600, color:'#D97706', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
+                  <div style={{ fontSize:'10px', color:'#48484A' }}>{bestCard.name}</div>
                 </div>
               )}
               <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
@@ -662,11 +685,11 @@ export function Holdings() {
           {view==='binder' && portfolio.length>0 && (
             <div style={{ display:'flex', gap:'4px', marginTop:'10px' }}>
               <button onClick={()=>{ setBinderSet(null); setBinderPage(0) }}
-                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${!binderSet?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:!binderSet?'rgba(255,255,255,.1)':'transparent', color:!binderSet?'#fff':'rgba(255,255,255,.4)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${!binderSet?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:!binderSet?'#1D1D1F':'transparent', color:!binderSet?'#fff':'rgba(29,29,31,.45)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
                 Par sets
               </button>
               <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
-                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderSet==='__all__'?'rgba(255,255,255,.1)':'transparent', color:binderSet==='__all__'?'#fff':'rgba(255,255,255,.4)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:binderSet==='__all__'?'rgba(29,29,31,.07)':'transparent', color:binderSet==='__all__'?'#fff':'#86868B', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
                 Toute ma collection
               </button>
             </div>
@@ -681,41 +704,41 @@ export function Holdings() {
               <div style={{ position:'relative', padding:'22px 22px 18px' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'rgba(255,255,255,.22)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
-                    <div style={{ fontSize:'13px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)', marginTop:'2px' }}>
+                    <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
+                    <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)', marginTop:'2px' }}>
                   {binderSet
                     ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Tous les sets</button>
                     : <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
                   }
                   {binderSet && (
-                    <button onClick={()=>setBinderSet('__all__')} style={{ background:'none', border:'none', color:'rgba(255,255,255,.3)', cursor:'pointer', fontSize:'11px', fontFamily:'var(--font-display)', padding:'0 0 0 10px', textDecoration:'underline' }}>
+                    <button onClick={()=>setBinderSet('__all__')} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'11px', fontFamily:'var(--font-display)', padding:'0 0 0 10px', textDecoration:'underline' }}>
                       Toute ma collection
                     </button>
                   )}
                 </div>
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-                    <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                    <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                       + Ajouter une carte ou un item
                     </button>
-                    <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(66,165,245,.12)', border:'1px solid rgba(66,165,245,.35)', color:'#60aef7', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                    <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#EEF4FF', border:'1px solid rgba(30,100,200,.25)', color:'#1E5ABF', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                       ↑ Importer votre collection
                     </button>
-                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'rgba(16,185,129,.1)', border:'1px solid rgba(16,185,129,.3)', color:'#10b981', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#EDFAF4', border:'1px solid rgba(10,140,90,.25)', color:'#0A7850', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                       📷 Scanner
                     </button>
-                    {(binderSet!==null)&&[3,4,5].map(n=>(
-                      <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'rgba(255,255,255,.3)':'rgba(255,255,255,.08)'}`, background:binderCols===n?'rgba(255,255,255,.12)':'transparent', color:binderCols===n?'#fff':'rgba(255,255,255,.35)' }}>{n}</button>
+                    {(binderSet!==null)&&[3,4,5,6].map(n=>(
+                      <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
                     ))}
-                    <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage===0?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8249;</button>
-                    <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.08)', color:binderPage>=binderPages-1?'rgba(255,255,255,.2)':'rgba(255,255,255,.55)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8250;</button>
+                    <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage===0?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8249;</button>
+                    <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage>=binderPages-1?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8250;</button>
                   </div>
                 </div>
 
                 {portfolio.length===0?(
                   <div style={{ textAlign:'center', padding:'64px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px' }}>
-                    <div style={{ fontSize:'14px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)' }}>Collection vide</div>
-                    <div style={{ fontSize:'12px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre premiere carte pour commencer</div>
+                    <div style={{ fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)' }}>Collection vide</div>
+                    <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre premiere carte pour commencer</div>
                     <button onClick={()=>setAddOpen(true)} style={{ padding:'11px 24px', borderRadius:'11px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                       + Ajouter ma première carte
                     </button>
@@ -730,10 +753,10 @@ export function Holdings() {
                           placeholder="Rechercher un set..."
                           value={setSearch}
                           onChange={e=>setSetSearch(e.target.value)}
-                          style={{ width:'100%', padding:'9px 14px 9px 36px', borderRadius:'10px', background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)', color:'rgba(255,255,255,.7)', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
+                          style={{ width:'100%', padding:'9px 14px 9px 36px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
                         />
-                        <div style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'13px', color:'rgba(255,255,255,.25)', pointerEvents:'none' }}>🔍</div>
-                        {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,.3)', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
+                        <div style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'13px', color:'#48484A', pointerEvents:'none' }}>🔍</div>
+                        {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
                       </div>
                     )}
                     {[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
@@ -751,8 +774,8 @@ export function Holdings() {
                           {/* Header du set — XP Bar gamifiée exact artifact */}
                           {(()=>{
                             const p=pct??0
-                            const lvlColor = isComplete?'rgba(255,215,0,.9)':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'rgba(255,107,53,.85)'
-                            const lvlBg = isComplete?'rgba(255,215,0,.15)':p>=75?'rgba(52,211,153,.12)':p>=50?'rgba(96,165,250,.12)':p>=25?'rgba(96,165,250,.1)':'rgba(255,107,53,.12)'
+                            const lvlColor = isComplete?'rgba(255,215,0,.9)':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'#EA580C'
+                            const lvlBg = isComplete?'rgba(255,215,0,.15)':p>=75?'rgba(52,211,153,.22)':p>=50?'rgba(96,165,250,.22)':p>=25?'rgba(96,165,250,.2)':'rgba(255,107,53,.25)'
                             const lvlBorder = isComplete?'rgba(255,215,0,.4)':p>=75?'rgba(52,211,153,.3)':p>=50?'rgba(96,165,250,.3)':p>=25?'rgba(96,165,250,.25)':'rgba(255,107,53,.3)'
                             const lvl = isComplete?'★':String(si+1)
                             // Segments proportionnels exacts
@@ -766,34 +789,34 @@ export function Holdings() {
                             const s4col=isComplete?'linear-gradient(90deg,#FF8C00,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
                             const segs=[[s1pct,s1col],[s2pct,s2col],[s3pct,s3col],[s4pct,s4col]]
                             return (
-                              <div style={{ marginBottom:'12px', cursor:'pointer' }} onClick={()=>{ setBinderSet(setName); setBinderPage(0) }}>
+                              <div style={{ marginBottom:'12px', cursor:'pointer', transition:'transform .15s' }} onClick={()=>{ setBinderSet(setName); setBinderPage(0) }}>
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     {resolvedTotal>0&&<div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0 }}>{lvl}</div>}
-                                    <span style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#FFD740':'rgba(255,255,255,.82)', fontFamily:'var(--font-display)' }}>{setName}</span>
+                                    <span style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)' }}>{setName}</span>
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
-                                    {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#fff', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.05em' }}>MASTER SET</span>}
+                                    {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#1D1D1F', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.05em' }}>MASTER SET</span>}
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                    <span style={{ fontSize:'10px', color:'rgba(255,255,255,.25)', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'rgba(255,255,255,.15)' }}> / {resolvedTotal}</span>:''}</span>
-                                    <span style={{ fontSize:'13px', color:'rgba(255,255,255,.18)' }}>›</span>
+                                    <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:''}</span>
+                                    <span style={{ fontSize:'13px', color:'#6E6E73' }}>›</span>
                                   </div>
                                 </div>
                                 {resolvedTotal>0&&(
                                   <>
                                     <div style={{ display:'flex', gap:'3px' }}>
                                       {segs.map((seg,si2)=>(
-                                        <div key={si2} style={{ flex:1, height:'6px', borderRadius:'3px', overflow:'hidden', position:'relative', background:'rgba(255,255,255,.06)' }}>
+                                        <div key={si2} style={{ flex:1, height:'6px', borderRadius:'3px', overflow:'hidden', position:'relative', background:'#E8E8ED' }}>
                                           {(seg[0] as number)>0&&<div style={{ width:(seg[0] as number)+'%', height:'100%', background:seg[1] as string, borderRadius:'3px', position:'relative', overflow:'hidden', transition:'width .5s ease' }}>
-                                            <div style={{ position:'absolute', top:0, bottom:0, width:'24px', background:'linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent)', animation:`shim ${1.8+si*.3}s ${si2*.35}s linear infinite` }}/>
+                                            <div style={{ position:'absolute', top:0, bottom:0, width:'24px', background:'linear-gradient(90deg,transparent,rgba(29,29,31,.3),transparent)', animation:`shim ${1.8+si*.3}s ${si2*.35}s linear infinite` }}/>
                                           </div>}
                                         </div>
                                       ))}
                                     </div>
                                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:'3px', padding:'0 1px' }}>
                                       {(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
-                                        <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor+'99':'rgba(255,255,255,.1)', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
+                                        <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor+'99':'rgba(29,29,31,.07)', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
                                       ))}
                                     </div>
                                     {isComplete&&<div style={{ textAlign:'center', marginTop:'5px' }}><span style={{ fontSize:'8px', color:'rgba(255,215,0,.45)', letterSpacing:'.1em' }}>★ COLLECTION COMPLÈTE ★</span></div>}
@@ -802,8 +825,8 @@ export function Holdings() {
                                 {!resolvedTotal&&(
                                   <div style={{ display:'flex', gap:'3px', marginTop:'4px' }}>
                                     {[0,1,2,3].map(i=>(
-                                      <div key={i} style={{ flex:1, height:'6px', borderRadius:'3px', background:'rgba(255,255,255,.06)', overflow:'hidden', position:'relative' }}>
-                                        {i===0&&<div style={{ position:'absolute', inset:0, background:'rgba(255,107,53,.45)' }}><div style={{ position:'absolute', top:0, bottom:0, width:'20px', background:'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', animation:'shim 2s linear infinite' }}/></div>}
+                                      <div key={i} style={{ flex:1, height:'6px', borderRadius:'3px', background:'#E8E8ED', overflow:'hidden', position:'relative' }}>
+                                        {i===0&&<div style={{ position:'absolute', inset:0, background:'rgba(255,107,53,.45)' }}><div style={{ position:'absolute', top:0, bottom:0, width:'20px', background:'linear-gradient(90deg,transparent,rgba(29,29,31,.28),transparent)', animation:'shim 2s linear infinite' }}/></div>}
                                       </div>
                                     ))}
                                   </div>
@@ -816,10 +839,10 @@ export function Holdings() {
                             {cardImgs.map((card,ci)=>(
                               <div key={card.id}
                                 onClick={()=>{ setSpotCard(card); setEditQty(null) }}
-                                style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', border:`1px solid ${ec2}35`, boxShadow:`0 6px 0 rgba(0,0,0,.45),0 10px 20px rgba(0,0,0,.4)`, cursor:'pointer', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
+                                style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', border:`1px solid ${ec2}35`, boxShadow:`0 2px 8px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06)`, cursor:'pointer', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
                                 onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-5px)' }}
                                 onMouseLeave={e=>{ e.currentTarget.style.transform='' }}>
-                                <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
+                                <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
                                   <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
                                     style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
@@ -829,18 +852,26 @@ export function Holdings() {
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
                                   </div>
                                 )}
+                                <div style={{ padding:'6px 6px 4px' }}>
+                                  <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
+                                  <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
+                                    <span style={{ fontSize:'10px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                                    {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
+                                  </div>
+                                </div>
                               </div>
                             ))}
                             {/* Carte + ajout */}
                             <div onClick={()=>setAddOpen(true)}
-                              style={{ flexShrink:0, width:'149px', aspectRatio:'63/88', borderRadius:'12px', border:'1.5px dashed rgba(255,255,255,.07)', background:'rgba(255,255,255,.015)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .15s' }}
-                              onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,53,.25)'; e.currentTarget.style.background='rgba(255,107,53,.04)' }}
-                              onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,.07)'; e.currentTarget.style.background='rgba(255,255,255,.015)' }}>
-                              <span style={{ fontSize:'18px', color:'rgba(255,255,255,.12)' }}>+</span>
+                              style={{ flexShrink:0, width:'180px', aspectRatio:'63/88', borderRadius:'12px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .15s' }}
+                              onMouseEnter={e=>{ e.currentTarget.style.borderColor='#D2D2D7'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform='scale(1.03)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)' }}
+                              onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.background='#F5F5F7'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}>
+                              <span style={{ fontSize:'18px', color:'#48484A' }}>+</span>
                             </div>
                           </div>
                           {/* Séparateur */}
-                          {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'rgba(255,255,255,.05)', marginTop:'20px' }}/>}
+                          {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:'20px' }}/>}
                         </div>
                       )
                     })}
@@ -851,11 +882,11 @@ export function Holdings() {
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
-                      const fsName=binderCols<=3?'11px':binderCols===4?'10px':'9px'
+                      const fsName=binderCols<=3?'14px':binderCols===4?'13px':binderCols===5?'12px':'10px'
                       return (
                         <div key={card.id}
                           className={'pocket-shell gem'+(card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':'')}
-                          style={{ aspectRatio:'2/3', background:`linear-gradient(145deg,${ec}18,${ec}06)`, border:`1.5px solid ${ec}40`, boxShadow:`0 6px 0 rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.4)`, animation:`illuminate .35s ${Math.min(idx,8)*.045}s ease-out both`, position:'relative', borderRadius:'10px', overflow:'hidden', cursor:'pointer' }}
+                          style={{ background:'transparent', border:'none', boxShadow:'none', animation:`illuminate .35s ${Math.min(idx,12)*.06}s ease-out both`, position:'relative', borderRadius:'10px', overflow:'hidden', cursor:'pointer' }}
                           onMouseMove={tiltCard}
                           onMouseLeave={e=>{ resetCard(e); const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
                           onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
@@ -867,40 +898,40 @@ export function Holdings() {
                           <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
                           <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                           {/* Image pleine hauteur */}
-                          <div style={{ position:'absolute', top:0, left:0, right:0, bottom:'52px', overflow:'hidden' }}>
+                          <div style={{ position:'relative', width:'100%', overflow:'hidden', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04)' }}>
                             {card.image ? (()=>{
                               const imgBase = card.image.replace(/\/low\.(webp|jpg|png)$/, '').replace(/\/high\.(webp|jpg|png)$/, '')
                               return <img src={`${imgBase}/high.webp`} alt={card.name}
-                                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
+                                style={{ width:'100%', display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
                                 onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${imgBase}/high.jpg`; else if(t.src.includes('high')) t.src=`${imgBase}/low.webp`; else t.style.display='none' }}
                               />
                             })() : (
-                              <div style={{ width:'100%', height:'100%', background:`linear-gradient(145deg,${ec}15,${ec}06)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+                              <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec}15,${ec}06)`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
                                 <div style={{ position:'absolute', width:'60%', height:'60%', borderRadius:'50%', background:eg, filter:'blur(18px)', opacity:.5 }}/>
-                                <div style={{ width:binderCols<=3?'42px':binderCols===4?'32px':'26px', height:binderCols<=3?'42px':binderCols===4?'32px':'26px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
+                                <div style={{ width:binderCols<=3?'42px':binderCols===4?'32px':binderCols===5?'24px':'20px', height:binderCols<=3?'42px':binderCols===4?'32px':binderCols===5?'24px':'20px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
                               </div>
                             )}
                             {/* Gradient bas pour lire les infos */}
-                            <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'40px', background:'linear-gradient(to top,rgba(0,0,0,.7),transparent)', pointerEvents:'none' }}/>
+                            
                             {/* Badges positionnés sur l'image */}
-                            {card.signal&&<div style={{ position:'absolute', top:'5px', right:'5px', fontSize:'7px', fontWeight:800, background:TIER_BG[card.signal], color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
-                            {card.graded&&<div style={{ position:'absolute', top:'5px', left:'5px', fontSize:'7px', fontWeight:700, background:'rgba(0,0,0,.8)', color:'rgba(255,255,255,.9)', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>⭐ {card.condition}</div>}
-                            {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'5px', zIndex:2, background:'rgba(0,0,0,.85)', border:'1px solid rgba(255,255,255,.2)', borderRadius:'8px', padding:'1px 5px', fontSize:'7px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)' }}>×{card.qty}</div>}
+                            {card.signal&&<div style={{ position:'absolute', top:'5px', right:'5px', fontSize:'8px', fontWeight:800, background:TIER_BG[card.signal], color:'#1D1D1F', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
+                            {card.graded&&<div style={{ position:'absolute', top:'5px', left:'5px', fontSize:'8px', fontWeight:700, background:'rgba(250,251,252,.94)', color:'#1D1D1F', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>⭐ {card.condition}</div>}
+                            {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'5px', zIndex:2, background:'rgba(250,251,252,.94)', border:'1px solid rgba(29,29,31,.16)', borderRadius:'8px', padding:'1px 5px', fontSize:'8px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>×{card.qty}</div>}
                           </div>
                           {/* Étiquette bas — propre et sobre */}
-                          <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'6px 8px 7px', background:'rgba(0,0,0,.75)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(255,255,255,.04)' }}>
+                          <div style={{ padding:'8px 8px 6px' }}>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
-                              <div style={{ fontSize:fsName, fontWeight:700, color:'rgba(255,255,255,.82)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
-                              {card.buyPrice>0&&<div style={{ fontSize:'8px', fontWeight:800, color:roi>=0?'#4ECCA3':'#FF6B8A', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
+                              <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
+                              {card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
-                            <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
-                              <span style={{ fontSize:'9px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
-                              {card.number&&card.number!=='???'&&<span style={{ fontSize:'8px', color:'rgba(255,255,255,.35)', fontFamily:'monospace' }}>#{card.number}</span>}
-                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:'7px', color:'rgba(255,215,0,.7)', fontFamily:'var(--font-display)', marginLeft:'2px' }}>{card.rarity}</span>}
+                            <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
+                              <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                              {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px' }}>{card.rarity}</span>}
                             </div>
                           </div>
                           <button className="remove-btn" onClick={e=>removeCard(card,e)}
-                            style={{ position:'absolute', top:'5px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(0,0,0,.85)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.8)', borderRadius:'16px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .18s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
+                            style={{ position:'absolute', top:'5px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(250,251,252,.94)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'16px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .18s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                             Retirer
                           </button>
                         </div>
@@ -908,11 +939,11 @@ export function Holdings() {
                     })}
                     {Array.from({length:phantomCount}).map((_,i)=>(
                       <div key={'ph-'+i} onClick={()=>setAddOpen(true)}
-                        style={{ aspectRatio:'2/3', borderRadius:'10px', border:'1.5px dashed rgba(255,255,255,.06)', background:'linear-gradient(145deg,rgba(255,255,255,.015),rgba(255,255,255,.006))', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', boxShadow:'0 4px 0 rgba(0,0,0,.35)' }}
-                        onMouseEnter={e=>{ e.currentTarget.style.borderColor='rgba(255,107,53,.25)'; e.currentTarget.style.background='rgba(255,107,53,.03)' }}
-                        onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,.06)'; e.currentTarget.style.background='linear-gradient(145deg,rgba(255,255,255,.015),rgba(255,255,255,.006))' }}>
+                        style={{ aspectRatio:'2/3', borderRadius:'10px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}
+                        onMouseEnter={e=>{ e.currentTarget.style.borderColor='#D2D2D7'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform='scale(1.02)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.05)' }}
+                        onMouseLeave={e=>{ e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.08)' }}>
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'6px' }}>
-                          <div style={{ width:'22px', height:'22px', borderRadius:'50%', border:'1px solid rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', color:'rgba(255,255,255,.15)' }}>+</div>
+                          <div style={{ width:'22px', height:'22px', borderRadius:'50%', border:'1px solid #E5E5EA', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', color:'#86868B' }}>+</div>
                         </div>
                       </div>
                     ))}
@@ -921,7 +952,7 @@ export function Holdings() {
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(255,255,255,.55)':'rgba(255,255,255,.15)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
+                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(29,29,31,.45)':'rgba(29,29,31,.11)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
                     ))}
                   </div>
                 )}
@@ -935,12 +966,12 @@ export function Holdings() {
           <div style={{ position:'relative', zIndex:1, padding:'0 24px 28px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'18px' }}>
               <div>
-                <div style={{ fontSize:'10px', color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Vitrine</div>
-                <div style={{ fontSize:'13px', color:'rgba(255,255,255,.45)', fontFamily:'var(--font-display)' }}>{showcase.length===0?'Exposez vos plus belles pieces':showcase.length+' piece'+(showcase.length!==1?'s':'')+' exposee'+(showcase.length!==1?'s':'')}</div>
+                <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Vitrine</div>
+                <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)' }}>{showcase.length===0?'Exposez vos plus belles pieces':showcase.length+' piece'+(showcase.length!==1?'s':'')+' exposee'+(showcase.length!==1?'s':'')}</div>
               </div>
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 <select value={showcaseBg} onChange={e=>setShowcaseBg(e.target.value)}
-                  style={{ height:'38px', padding:'0 10px', borderRadius:'10px', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', fontSize:'11px', cursor:'pointer', fontFamily:'var(--font-display)', outline:'none' }}>
+                  style={{ height:'38px', padding:'0 10px', borderRadius:'10px', background:'#E8E8ED', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', cursor:'pointer', fontFamily:'var(--font-display)', outline:'none' }}>
                   <option value="obsidienne" style={{background:'#111'}}>⬛ Obsidienne & Or</option>
                   <option value="nuit"       style={{background:'#111'}}>🌌 Nuit Étoilée</option>
                   <option value="jade"       style={{background:'#111'}}>🟢 Jade Impérial</option>
@@ -950,28 +981,28 @@ export function Holdings() {
                   <option value="labo"       style={{background:'#111'}}>🔬 Labo Pr. Chen</option>
                 </select>
                 <button onClick={()=>setShowInfo(v=>!v)}
-                  style={{ padding:'9px 14px', borderRadius:'10px', background:showInfo?'rgba(255,255,255,.08)':'transparent', border:'1px solid rgba(255,255,255,.12)', color:showInfo?'rgba(255,255,255,.7)':'rgba(255,255,255,.3)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', whiteSpace:'nowrap' as const }}>
+                  style={{ padding:'9px 14px', borderRadius:'10px', background:showInfo?'rgba(29,29,31,.06)':'transparent', border:'1.5px solid #D1CEC9', color:showInfo?'rgba(29,29,31,.6)':'rgba(29,29,31,.24)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', whiteSpace:'nowrap' as const }}>
                   {showInfo ? '👁 Masquer les infos' : '🙈 Afficher les infos'}
                 </button>
                 <button onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else if(showcase.length>=5){ showToast('La vitrine est limitée à 5 pièces') }else{ setShowPickerForShowcase(true) } }}
-                  style={{ padding:'9px 18px', borderRadius:'10px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                  style={{ padding:'9px 18px', borderRadius:'10px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                   + Ajouter une carte
                 </button>
               </div>
             </div>
             {showcase.length===0?(
               <div style={{ textAlign:'center', padding:'80px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'18px' }}>
-                <div style={{ fontSize:'15px', color:'rgba(255,255,255,.3)', fontFamily:'var(--font-display)' }}>Vitrine vide</div>
-                <div style={{ fontSize:'12px', color:'rgba(255,255,255,.2)', fontFamily:'var(--font-display)', maxWidth:'280px' }}>Exposez vos pieces maitresses. Partagez-les avec votre communaute.</div>
+                <div style={{ fontSize:'15px', color:'#48484A', fontFamily:'var(--font-display)' }}>Vitrine vide</div>
+                <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'280px' }}>Exposez vos pieces maitresses. Partagez-les avec votre communaute.</div>
                 {portfolio.length>0&&(
-                  <button onClick={()=>setShowPickerForShowcase(true)} style={{ padding:'10px 22px', borderRadius:'10px', background:'rgba(255,107,53,.15)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  <button onClick={()=>setShowPickerForShowcase(true)} style={{ padding:'10px 22px', borderRadius:'10px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     Choisir depuis ma collection
                   </button>
                 )}
               </div>
             ):(
               /* ── VITRINE LUXE ── */
-              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 40px 44px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.6)' }}>
+              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 40px 44px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(29,29,31,.05),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.6)' }}>
                 {showcaseBg==='obsidienne'&&<>
                   <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(201,168,76,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.05) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
                   <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.06) 0%,transparent 60%)', pointerEvents:'none' }}/>
@@ -1020,7 +1051,7 @@ export function Holdings() {
                     return (
                       <div key={card.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', position:'relative', zIndex:1 }}>
                         {/* Spotlight cone */}
-                        <div style={{ position:'absolute', top:'-80px', left:'50%', transform:'translateX(-50%)', width:'200px', height:'160px', background:`radial-gradient(ellipse at 50% 0%,${isGold?'rgba(255,240,150,.18)':isFeat?`${ec}28`:'rgba(255,255,255,.06)'} 0%,transparent 60%)`, pointerEvents:'none' }}/>
+                        <div style={{ position:'absolute', top:'-80px', left:'50%', transform:'translateX(-50%)', width:'200px', height:'160px', background:`radial-gradient(ellipse at 50% 0%,${isGold?'rgba(255,240,150,.18)':isFeat?`${ec}28`:'rgba(29,29,31,.05)'} 0%,transparent 60%)`, pointerEvents:'none' }}/>
 
                         {/* Card slot */}
                         <div
@@ -1071,7 +1102,7 @@ export function Holdings() {
                             </div>
                           )}
                           {/* Shimmer */}
-                          <div style={{ position:'absolute', top:0, left:'-80px', width:'50px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)', transform:'skewX(-12deg)', animation:`shim ${3+idx*.4}s ${shimDelay}s ease-in-out infinite` }}/>
+                          <div style={{ position:'absolute', top:0, left:'-80px', width:'50px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(29,29,31,.07),transparent)', transform:'skewX(-12deg)', animation:`shim ${3+idx*.4}s ${shimDelay}s ease-in-out infinite` }}/>
                           {/* Metal lines */}
                           <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:`linear-gradient(90deg,transparent,${metalTop},transparent)` }}/>
                           <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:`linear-gradient(90deg,transparent,${ec}40,transparent)` }}/>
@@ -1082,13 +1113,13 @@ export function Holdings() {
                             {[0,1,2].map(i=><div key={i} style={{ width:'3px', height:'3px', borderRadius:'50%', background:'#fff' }}/>)}
                           </div>
                           {/* Signal */}
-                          {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'8px', fontWeight:700, background:TIER_BG[card.signal], color:'#fff', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
+                          {card.signal&&<div style={{ position:'absolute', top:'8px', right:'8px', zIndex:3, fontSize:'8px', fontWeight:700, background:TIER_BG[card.signal], color:'#1D1D1F', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>{card.signal}</div>}
                           {/* Gold badge */}
                           {isGold&&<div style={{ position:'absolute', top:'8px', right:'8px', fontSize:'8px', fontWeight:800, background:'rgba(255,215,0,.15)', border:'1px solid rgba(255,215,0,.4)', color:'#FFD740', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>★ Gold</div>}
 
                           {/* Retirer */}
                           <button className="remove-btn" onClick={e=>removeFromShowcase(card.id,e)}
-                            style={{ position:'absolute', top:'7px', left:'7px', zIndex:10, background:'rgba(0,0,0,.8)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.8)', borderRadius:'7px', padding:'3px 9px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
+                            style={{ position:'absolute', top:'7px', left:'7px', zIndex:10, background:'rgba(240,239,237,.94)', backdropFilter:'blur(4px)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'7px', padding:'3px 9px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
                             Retirer
                           </button>
                         </div>
@@ -1101,12 +1132,12 @@ export function Holdings() {
                         <div style={{ marginTop:'18px', textAlign:'center', opacity:showInfo?1:0, transition:'opacity .4s ease', minWidth:'180px', maxWidth:'220px' }}>
                           {/* Ligne décorative */}
                           <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px', justifyContent:'center' }}>
-                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to right,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(255,255,255,.1)'})` }}/>
-                            <div style={{ width:'4px', height:'4px', borderRadius:'50%', background:isGold?'rgba(255,215,0,.6)':'rgba(255,255,255,.2)' }}/>
-                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to left,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(255,255,255,.1)'})` }}/>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to right,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(29,29,31,.07)'})` }}/>
+                            <div style={{ width:'4px', height:'4px', borderRadius:'50%', background:isGold?'rgba(255,215,0,.6)':'rgba(29,29,31,.16)' }}/>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to left,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(29,29,31,.07)'})` }}/>
                           </div>
                           {/* Nom */}
-                          <div style={{ fontSize:'12px', fontWeight:600, color:'rgba(255,255,255,.7)', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
+                          <div style={{ fontSize:'12px', fontWeight:600, color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
                           {/* Prix */}
                           <div style={{ fontSize:'20px', fontWeight:700, color:priceCol, fontFamily:'var(--font-display)', letterSpacing:'.04em', lineHeight:1, marginBottom:'6px' }}>
                             {card.curPrice>0?card.curPrice.toLocaleString('fr-FR')+' €':'—'}
@@ -1114,8 +1145,8 @@ export function Holdings() {
                           {/* Meta */}
                           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                             <span style={{ fontSize:'12px' }}>{ls.flag}</span>
-                            {card.rarity&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.22)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>{card.rarity}</span>}
-                            {card.graded&&<span style={{ fontSize:'9px', color:'rgba(255,255,255,.4)', fontFamily:'var(--font-display)', fontWeight:600 }}>⭐ {card.condition}</span>}
+                            {card.rarity&&<span style={{ fontSize:'9px', color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>{card.rarity}</span>}
+                            {card.graded&&<span style={{ fontSize:'9px', color:'#48484A', fontFamily:'var(--font-display)', fontWeight:600 }}>⭐ {card.condition}</span>}
                             {roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'9px', fontWeight:700, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</span>}
                           </div>
                         </div>
@@ -1134,45 +1165,45 @@ export function Holdings() {
             <div style={{ padding:'40px 28px 28px', textAlign:'center', position:'relative', overflow:'hidden' }}>
               <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 50% 60%,rgba(255,107,53,.12) 0%,transparent 55%)', pointerEvents:'none' }}/>
               <div style={{ position:'relative' }}>
-                <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
-                <div style={{ fontSize:'52px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>
+                <div style={{ fontSize:'11px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
+                <div style={{ fontSize:'52px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>
                   {portfolio.length>0?'EUR '+totalCur.toLocaleString('fr-FR'):'---'}
                 </div>
                 {totalBuy>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', marginTop:'8px', fontWeight:500 }}>+{totalROI}% depuis achat | +EUR {totalGain.toLocaleString('fr-FR')}</div>}
               </div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', borderTop:'1px solid rgba(255,255,255,.07)', borderBottom:'1px solid rgba(255,255,255,.07)' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', borderTop:'1px solid #E5E5EA', borderBottom:'1px solid #E5E5EA' }}>
               {([
                 {l:'Cartes',v:String(portfolio.length),c:undefined},
-                {l:'Meilleur ROI',v:bestCard&&bestCard.buyPrice>0?'+'+Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)+'%':'---',c:'#FFD700'},
+                {l:'Meilleur ROI',v:bestCard&&bestCard.buyPrice>0?'+'+Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)+'%':'---',c:'#D97706'},
                 {l:'Signaux S',v:String(portfolio.filter(c=>c.signal==='S').length),c:undefined},
                 {l:'Favoris',v:String(favs.size),c:undefined},
               ]).map((s,i)=>(
-                <div key={s.l} style={{ padding:'18px', borderRight:i<3?'1px solid rgba(255,255,255,.07)':'none', textAlign:'center' }}>
-                  <div style={{ fontSize:'28px', fontWeight:600, color:s.c??'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px' }}>{s.v}</div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
+                <div key={s.l} style={{ padding:'18px', borderRight:i<3?'1px solid #E5E5EA':'none', textAlign:'center' }}>
+                  <div style={{ fontSize:'28px', fontWeight:600, color:s.c??'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px' }}>{s.v}</div>
+                  <div style={{ fontSize:'10px', color:'#48484A', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
                 </div>
               ))}
             </div>
             {portfolio.filter(c=>c.buyPrice>0).length>0?(
               <div style={{ padding:'24px 28px' }}>
-                <div style={{ fontSize:'10px', fontWeight:500, color:'rgba(255,255,255,.25)', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
+                <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
                   {[...portfolio].filter(c=>c.buyPrice>0).sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
                     const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100), ec=EC[card.type]??'#888'
                     return(
-                      <div key={card.id} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
+                      <div key={card.id} style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'12px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'12px' }}>
                         <div style={{ fontSize:'20px', flexShrink:0 }}>{['1','2','3'][i]}</div>
                         <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                           <div style={{ width:'14px', height:'14px', borderRadius:'50%', background:ec, opacity:.7 }}/>
                         </div>
                         <div style={{ flex:1 }}>
-                          <div style={{ fontSize:'13px', fontWeight:500, color:'rgba(255,255,255,.8)', fontFamily:'var(--font-display)' }}>{card.name}</div>
-                          <div style={{ fontSize:'10px', color:'rgba(255,255,255,.3)' }}>{card.set} - {card.year}</div>
+                          <div style={{ fontSize:'13px', fontWeight:500, color:'#3A3A3C', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                          <div style={{ fontSize:'10px', color:'#48484A' }}>{card.set} - {card.year}</div>
                         </div>
                         <div style={{ textAlign:'right' }}>
                           <div style={{ fontSize:'16px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{roi}%</div>
-                          <div style={{ fontSize:'11px', color:'rgba(255,255,255,.35)' }}>EUR {card.curPrice}</div>
+                          <div style={{ fontSize:'11px', color:'#48484A' }}>EUR {card.curPrice}</div>
                         </div>
                       </div>
                     )
@@ -1180,24 +1211,24 @@ export function Holdings() {
                 </div>
               </div>
             ):(
-              <div style={{ textAlign:'center', padding:'40px', color:'rgba(255,255,255,.2)', fontSize:'13px', fontFamily:'var(--font-display)' }}>
+              <div style={{ textAlign:'center', padding:'40px', color:'#6E6E73', fontSize:'13px', fontFamily:'var(--font-display)' }}>
                 Ajoutez des cartes avec un prix d achat pour voir votre Wrapped
               </div>
             )}
             <div style={{ padding:'0 28px 28px', display:'flex', gap:'8px' }}>
               <button onClick={()=>{ setShareCtx('wrapped'); setShareCard(null); setShareOpen(true) }} style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager mon Wrapped 2026</button>
-              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'rgba(255,255,255,.06)', color:'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
+              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'#E8E8ED', color:'#48484A', border:'1px solid #E5E5EA', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
             </div>
           </div>
         )}
 
         {/* SHARE SHEET */}
         {shareOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }}>
-            <div style={{ width:'100%', background:'#0F0B07', borderTop:'1px solid rgba(255,255,255,.12)', borderRadius:'16px 16px 0 0', padding:'22px 26px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(250,251,252,.92)', zIndex:45, display:'flex', alignItems:'flex-end' }} onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }}>
+            <div style={{ width:'100%', background:'#FFFFFF', borderTop:'1px solid rgba(29,29,31,.09)', borderRadius:'16px 16px 0 0', padding:'22px 26px', animation:'shareUp .32s cubic-bezier(.22,.58,.36,1)' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
-                <div style={{ fontSize:'14px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Partager</div>
-                <button onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:'20px', padding:0 }}>x</button>
+                <div style={{ fontSize:'14px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Partager</div>
+                <button onClick={()=>{ setShareOpen(false); setSelectedFmt(null) }} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'20px', padding:0 }}>x</button>
               </div>
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={()=>{ navigator.clipboard.writeText('https://pokealphaterminal.io/share/demo'); showToast('Lien copie'); setShareOpen(false) }}
@@ -1205,7 +1236,7 @@ export function Holdings() {
                   Copier le lien
                 </button>
                 <button onClick={()=>{ setRefCopied(true); setTimeout(()=>setRefCopied(false),2000) }}
-                  style={{ padding:'12px 18px', borderRadius:'10px', background:'rgba(255,255,255,.06)', color:refCopied?'#4ECCA3':'rgba(255,255,255,.6)', border:'1px solid rgba(255,255,255,.1)', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  style={{ padding:'12px 18px', borderRadius:'10px', background:'#E8E8ED', color:refCopied?'#4ECCA3':'rgba(29,29,31,.5)', border:'1px solid #E5E5EA', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
                   {refCopied?'Copie!':'Parrainage'}
                 </button>
               </div>
@@ -1220,16 +1251,16 @@ export function Holdings() {
           <div style={{ maxWidth:'420px',width:'100%',textAlign:'center',animation:'welcomeIn .5s cubic-bezier(.34,1.2,.64,1)' }}>
             <div style={{ fontSize:'64px',marginBottom:'20px',animation:'burst .6s .2s cubic-bezier(.34,1.4,.64,1) both' }}>📖</div>
             <div style={{ fontSize:'11px',fontWeight:700,color:'rgba(255,107,53,.8)',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur PokéAlpha Terminal</div>
-            <h2 style={{ fontSize:'28px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.15,marginBottom:'14px' }}>
+            <h2 style={{ fontSize:'28px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.15,marginBottom:'14px' }}>
               Votre collection mérite<br/>
               <span style={{ background:'linear-gradient(135deg,#FF6B35,#FFD700,#FF6B35)',backgroundSize:'200% 200%',animation:'shimmerG 3s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>d'être célébrée.</span>
             </h2>
-            <p style={{ fontSize:'14px',color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)',lineHeight:1.7,marginBottom:'28px' }}>
+            <p style={{ fontSize:'14px',color:'#48484A',fontFamily:'var(--font-display)',lineHeight:1.7,marginBottom:'28px' }}>
               Ajoutez vos premières cartes et regardez votre binder prendre vie.
               Chaque carte est un souvenir, une victoire, une passion.
             </p>
             <button onClick={()=>setShowWelcome(false)}
-              style={{ padding:'14px 36px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF6B35)',color:'#fff',border:'none',fontSize:'14px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 8px 32px rgba(224,48,32,.45)',letterSpacing:'.03em' }}>
+              style={{ padding:'14px 36px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF6B35)',color:'#1D1D1F',border:'none',fontSize:'14px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 8px 32px rgba(224,48,32,.45)',letterSpacing:'.03em' }}>
               Ouvrir mon binder →
             </button>
           </div>
@@ -1241,7 +1272,7 @@ export function Holdings() {
         const confetti = Array.from({length:48},(_,i)=>({
           left:(i*37+13)%100, top:(i*19+5)%100, size:4+(i*3)%10,
           round:i%3!==0, delay:(i*0.08)%2.5, dur:1.8+(i*0.09)%1.5,
-          color:['#FFD700','#FF6B35','#C855D4','#42A5F5','#4ECCA3','#FF6B8A','#fff'][i%7],
+          color:['#D97706','#FF6B35','#C855D4','#42A5F5','#4ECCA3','#FF6B8A','#E03020'][i%7],
         }))
         return (
           <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.92)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',backdropFilter:'blur(8px)' }}
@@ -1252,15 +1283,15 @@ export function Holdings() {
             ))}
             <div style={{ textAlign:'center',zIndex:2,animation:'welcomeIn .4s cubic-bezier(.34,1.2,.64,1)' }} onClick={e=>e.stopPropagation()}>
               <div style={{ fontSize:'72px',marginBottom:'8px',filter:'drop-shadow(0 0 32px rgba(255,215,0,.6))' }}>🏆</div>
-              <div style={{ fontSize:'11px',fontWeight:700,color:'#FFD700',letterSpacing:'.25em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'10px' }}>Set complété !</div>
-              <h2 style={{ fontSize:'32px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)',letterSpacing:'-1px',marginBottom:'8px',lineHeight:1.2 }}>
+              <div style={{ fontSize:'11px',fontWeight:700,color:'#D97706',letterSpacing:'.25em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'10px' }}>Set complété !</div>
+              <h2 style={{ fontSize:'32px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',marginBottom:'8px',lineHeight:1.2 }}>
                 {celebSet}
               </h2>
-              <p style={{ fontSize:'14px',color:'rgba(255,255,255,.5)',fontFamily:'var(--font-display)',marginBottom:'28px' }}>
+              <p style={{ fontSize:'14px',color:'#6E6E73',fontFamily:'var(--font-display)',marginBottom:'28px' }}>
                 Vous avez complété ce set à 100%. Impressionnant.
               </p>
               <button onClick={()=>setCelebSet(null)}
-                style={{ padding:'12px 32px',borderRadius:'10px',background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',color:'#fff',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)' }}>
+                style={{ padding:'12px 32px',borderRadius:'10px',background:'#EDEDF0',border:'1px solid rgba(29,29,31,.16)',color:'#1D1D1F',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)' }}>
                 Continuer la collection
               </button>
             </div>
@@ -1312,10 +1343,10 @@ export function Holdings() {
             <div style={{ maxWidth:'340px',width:'100%',animation:'welcomeIn .3s ease-out' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
                 <div>
-                  <div style={{ fontSize:'16px',fontWeight:700,color:'#fff',fontFamily:'var(--font-display)' }}>📷 Scanner une carte</div>
-                  <div style={{ fontSize:'11px',color:'rgba(255,255,255,.35)',marginTop:'3px' }}>L'IA identifie automatiquement la carte</div>
+                  <div style={{ fontSize:'16px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>📷 Scanner une carte</div>
+                  <div style={{ fontSize:'11px',color:'#48484A',marginTop:'3px' }}>L'IA identifie automatiquement la carte</div>
                 </div>
-                {!scannerLoad&&<button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:'20px',padding:0 }}>×</button>}
+                {!scannerLoad&&<button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ background:'none',border:'none',color:'#48484A',cursor:'pointer',fontSize:'20px',padding:0 }}>×</button>}
               </div>
 
               {/* Frame */}
@@ -1324,7 +1355,7 @@ export function Holdings() {
                   <img src={scannerImg} alt="scan" style={{ width:'100%',height:'100%',objectFit:'contain' }}/>
                 ) : (
                   <>
-                    <div style={{ textAlign:'center',color:'rgba(255,255,255,.2)' }}>
+                    <div style={{ textAlign:'center',color:'#6E6E73' }}>
                       <div style={{ fontSize:'40px',marginBottom:'8px' }}>🎴</div>
                       <div style={{ fontSize:'11px',fontFamily:'var(--font-display)' }}>Photo de la carte</div>
                     </div>
@@ -1337,9 +1368,9 @@ export function Holdings() {
                   </>
                 )}
                 {scannerLoad&&(
-                  <div style={{ position:'absolute',inset:0,background:'rgba(0,0,0,.75)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
+                  <div style={{ position:'absolute',inset:0,background:'rgba(250,251,252,.92)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
                     <div style={{ width:'24px',height:'24px',border:'2px solid rgba(16,185,129,.3)',borderTop:'2px solid #10b981',borderRadius:'50%',animation:'spin .8s linear infinite' }}/>
-                    <div style={{ fontSize:'11px',color:'rgba(255,255,255,.6)',fontFamily:'var(--font-display)' }}>Identification en cours…</div>
+                    <div style={{ fontSize:'11px',color:'#48484A',fontFamily:'var(--font-display)' }}>Identification en cours…</div>
                   </div>
                 )}
               </div>
@@ -1349,7 +1380,7 @@ export function Holdings() {
                 onChange={e=>{ const f=e.target.files?.[0]; if(f) handleScan(f) }}/>
               <button disabled={scannerLoad}
                 onClick={()=>fileRef.current?.click()}
-                style={{ width:'100%',padding:'13px',borderRadius:'10px',background:scannerLoad?'rgba(16,185,129,.15)':'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#fff',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .2s' }}>
+                style={{ width:'100%',padding:'13px',borderRadius:'10px',background:scannerLoad?'rgba(16,185,129,.15)':'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#1D1D1F',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .2s' }}>
                 {scannerLoad ? 'Analyse…' : scannerImg ? 'Réanalyser' : 'Choisir une photo'}
               </button>
             </div>

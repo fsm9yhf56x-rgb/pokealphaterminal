@@ -7,17 +7,18 @@
 
 /* ── VARIABLES ──────────────────────────────────── */
 :root {
-  --font-sans:    var(--font-outfit, system-ui);
-  --font-display: var(--font-space, system-ui);
+  --font-sans:    var(--font-dm, system-ui);
+  --font-display: var(--font-sora, system-ui);
+  --font-data:    var(--font-mono, monospace);
 
-  --bg:             #FAFAFA;
+  --bg:             #FAFBFC;
   --surface:        #FFFFFF;
-  --border:         #EBEBEB;
-  --border-strong:  #D4D4D4;
+  --border:         #E5E5EA;
+  --border-strong:  #C7C7CC;
 
-  --ink:            #111111;
-  --ink-muted:      #888888;
-  --ink-faint:      #BBBBBB;
+  --ink:            #1D1D1F;
+  --ink-muted:      #6E6E73;
+  --ink-faint:      #AEAEB2;
 
   --red:            #E03020;
   --red-light:      #FFF0EE;
@@ -45,8 +46,8 @@ body {
 /* ── SCROLLBAR ──────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D4D4D4; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #BBBBBB; }
+::-webkit-scrollbar-thumb { background: #C7C7CC; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #AEAEB2; }
 
 /* ── FOCUS ──────────────────────────────────────── */
 :focus-visible {

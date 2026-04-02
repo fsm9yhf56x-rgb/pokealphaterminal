@@ -11,27 +11,27 @@ const config: Config = {
     extend: {
       // ─── TYPOGRAPHY ────────────────────────────────
       fontFamily: {
-        sans:    ['var(--font-dm)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-sora)', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-outfit)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-space)', 'system-ui', 'sans-serif'],
         mono:    ['var(--font-mono)', 'monospace'],
       },
 
       // ─── COLORS ────────────────────────────────────
       colors: {
         // Surfaces
-        bg:      '#FAFBFC',
+        bg:      '#FAFAFA',
         surface: '#FFFFFF',
         // Borders
         border: {
-          DEFAULT: '#E5E5EA',
-          strong:  '#C7C7CC',
-          focus:   '#1D1D1F',
+          DEFAULT: '#EBEBEB',
+          strong:  '#D4D4D4',
+          focus:   '#111111',
         },
         // Text
         ink: {
-          DEFAULT: '#1D1D1F',
-          muted:   '#6E6E73',
-          faint:   '#AEAEB2',
+          DEFAULT: '#111111',
+          muted:   '#888888',
+          faint:   '#BBBBBB',
         },
         // Brand
         red: {

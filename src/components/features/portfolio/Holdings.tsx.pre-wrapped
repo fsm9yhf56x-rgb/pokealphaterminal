@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
+import { fetchSets, fetchCardsForSet, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { ShareSheet } from './ShareSheet'
-import { WrappedView } from './WrappedView'
 
 type CardItem = {
   id: string; name: string; set: string; year: number; number: string
@@ -82,7 +81,7 @@ export function Holdings() {
   const [setSearch,   setSetSearch]   = useState('')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
-  const [binderCols,  setBinderCols]  = useState(6)
+  const [binderCols,  setBinderCols]  = useState(5)
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
@@ -91,8 +90,6 @@ export function Holdings() {
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
   const [showPickerForShowcase, setShowPickerForShowcase] = useState(false)
-  const [vitrineSearch, setVitrineSearch] = useState('')
-  const [vitrineFilter, setVitrineFilter] = useState('all')
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   const [editQty,     setEditQty]     = useState<number|null>(null)
   const [favs,        setFavs]        = useState<Set<string>>(new Set())
@@ -103,7 +100,6 @@ export function Holdings() {
   const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
   const [addOpen,     setAddOpen]     = useState(false)
   const [addSuggs,    setAddSuggs]    = useState<string[]>([])
-  const [nameValidated, setNameValidated] = useState(false)
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string;
@@ -116,22 +112,6 @@ export function Holdings() {
   const [showWelcome,  setShowWelcome]  = useState(false)
   const [celebSet,     setCelebSet]     = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
-  const scrollRefs = useRef<Record<string, HTMLDivElement|null>>({})
-  const [scrollPcts, setScrollPcts] = useState<Record<string, number>>({})
-  const handleShelfScroll = (setName: string, e: React.UIEvent<HTMLDivElement>) => {
-    const t = e.currentTarget
-    const max = t.scrollWidth - t.clientWidth
-    setScrollPcts(p => ({ ...p, [setName]: max > 0 ? t.scrollLeft / max : 0 }))
-  }
-  const handleMinimapClick = (setName: string, totalCards: number, e: React.MouseEvent<HTMLDivElement>) => {
-    const el = scrollRefs.current[setName]
-    if (!el) return
-    const r = e.currentTarget.getBoundingClientRect()
-    const clickFrac = (e.clientX - r.left) / r.width
-    const viewFrac = Math.min(1, 7 / Math.max(totalCards, 1))
-    const targetFrac = Math.max(0, Math.min(1, clickFrac - viewFrac / 2))
-    el.scrollTo({ left: targetFrac * (el.scrollWidth - el.clientWidth), behavior: 'smooth' })
-  }
 
   useEffect(()=>{ try { localStorage.setItem('pka_portfolio', JSON.stringify(portfolio)) } catch {} }, [portfolio])
   useEffect(()=>{ try { localStorage.setItem('pka_showcase', JSON.stringify(showcase)) } catch {} }, [showcase])
@@ -200,39 +180,7 @@ export function Holdings() {
     fetchSets(addForm.lang)
       .then(sets => { setLiveSets(sets); setSetsLoading(false) })
       .catch(() => setSetsLoading(false))
-    // Re-fetch cartes si un set est déjà sélectionné
-    if (addForm.setId) {
-      setCardsLoading(true)
-      setLiveCards([])
-      setAddSuggs([])
-      setAddForm(p=>({...p, name:''}))
-      fetchCardsForSet(addForm.lang, addForm.setId)
-        .then(cards => { setLiveCards(cards); setCardsLoading(false) })
-        .catch(() => setCardsLoading(false))
-    }
   }, [addForm.lang])
-
-  const mmDrag = useRef<{active:boolean;setN:string;total:number}>({active:false,setN:'',total:0})
-  const mmSyncScroll = (setName:string, total:number, clientX:number, mmEl:HTMLElement) => {
-    const el = scrollRefs.current[setName]
-    if(!el) return
-    const r = mmEl.getBoundingClientRect()
-    const frac = Math.max(0, Math.min(1, (clientX - r.left) / r.width))
-    const maxScroll = el.scrollWidth - el.clientWidth
-    if(maxScroll <= 0) return
-    el.scrollTo({ left: frac * maxScroll })
-    setScrollPcts(p => ({ ...p, [setName]: frac }))
-  }
-  const mmDown = (setName:string, total:number, e:React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    mmDrag.current = {active:true, setN:setName, total}
-    mmSyncScroll(setName, total, e.clientX, e.currentTarget)
-    const mm = e.currentTarget
-    const onMove = (ev:MouseEvent) => { if(mmDrag.current.active) mmSyncScroll(setName, total, ev.clientX, mm) }
-    const onUp = () => { mmDrag.current.active=false; window.removeEventListener('mousemove',onMove); window.removeEventListener('mouseup',onUp) }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
@@ -268,7 +216,6 @@ export function Holdings() {
   const handleSetChange = (id:string, name:string) => {
     setAddForm(p=>({...p, set:name, setId:id, name:''}))
     setAddSuggs([])
-    setNameValidated(false)
     setLiveCards([])
     if (id) {
       setCardsLoading(true)
@@ -279,36 +226,24 @@ export function Holdings() {
   }
   const handleNameInput = (val:string) => {
     setAddForm(p=>({...p,name:val}))
-    setNameValidated(false)
-    if(val.length<1){setAddSuggs([]);return}
+    if(val.length<2){setAddSuggs([]);return}
     if (liveCards.length > 0) {
       const matches = liveCards
         .filter(c=>c.name.toLowerCase().includes(val.toLowerCase()))
         .map(c=>c.name)
-      setAddSuggs([...new Set(matches)].slice(0,10))
-    } else if (!addForm.setId) {
-      // Fallback ENCYCLOPEDIA seulement si aucun set sélectionné
+      setAddSuggs([...new Set(matches)].slice(0,8))
+    } else {
       const pool = addForm.set?ENCYCLOPEDIA.filter(cc=>cc.set===addForm.set):ENCYCLOPEDIA
       const matches = pool.filter(cc=>cc.name.toLowerCase().includes(val.toLowerCase())).map(cc=>cc.name)
       setAddSuggs([...new Set(matches)].slice(0,6))
     }
   }
-  const handleSuggSelect = async (name:string) => {
+  const handleSuggSelect = (name:string) => {
     const extra = encyclopediaLookup(name, addForm.set)
     const liveCard = liveCards.find(c=>c.name===name)
     const img = liveCard?.image ?? ''
-    const num = liveCard?.localId ?? extra.number ?? ''
-    let rar = liveCard?.rarity ?? extra.rarity ?? ''
-    // Fetch détails pour récupérer rarity si manquant
-    if (!rar && liveCard) {
-      try {
-        const detail = await fetchCardDetail(addForm.lang as 'EN'|'FR'|'JP', liveCard.id)
-        if (detail?.rarity) rar = detail.rarity
-      } catch {}
-    }
-    setAddForm(p=>({...p, name, type:extra.type??p.type, year:extra.year??p.year, image:img, number:num, rarity:rar}))
+    setAddForm(p=>({...p,name,type:extra.type??p.type,year:extra.year??p.year,image:img}))
     setAddSuggs([])
-    setNameValidated(true)
   }
   const handleConditionChange = (cond:string) => {
     if (cond === '__graded__') {
@@ -320,18 +255,16 @@ export function Holdings() {
     }
   }
   const addCard = () => {
-    if(!addForm.name||!addForm.set||!nameValidated) return
+    if(!addForm.name||!addForm.set) return
     const extra = encyclopediaLookup(addForm.name, addForm.set)
     const bp = parseFloat(addForm.buyPrice)||0
     const liveMatch = liveCards.find(c=>c.name.toLowerCase()===addForm.name.toLowerCase())
     const resolvedImage = addForm.image || liveMatch?.image || ''
-    const resolvedNumber = addForm.number || liveMatch?.localId || extra.number || '???'
-    const resolvedRarity = addForm.rarity || liveMatch?.rarity || extra.rarity || ''
     const newCard:CardItem = {
       id:'u'+Date.now(), name:addForm.name, set:addForm.set,
       year:extra.year??addForm.year,
-      number:resolvedNumber,
-      rarity:resolvedRarity,
+      number:extra.number||(addForm.number||'???'),
+      rarity:extra.rarity||(addForm.rarity||''),
       type:addForm.type, lang:addForm.lang,
       condition:addForm.condition, graded:addForm.graded,
       buyPrice:bp, curPrice:extra.curPrice??bp, qty:addForm.qty,
@@ -344,7 +277,7 @@ export function Holdings() {
       const next=[...prev,newCard]
       return next
     })
-    setAddOpen(false); setAddSuggs([]); setNameValidated(false)
+    setAddOpen(false); setAddSuggs([])
     setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
@@ -368,7 +301,7 @@ export function Holdings() {
         @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes slotIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
         @keyframes illuminate{ 0%{opacity:0;transform:scale(.93) translateY(12px)} 50%{opacity:1;transform:scale(1.02) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
-        
+        .pocket-shell:hover .card-plastic { opacity:.12 !important; }
         .pocket-shell .card-plastic { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(29,29,31,.06) 0%,rgba(29,29,31,0) 45%,rgba(29,29,31,.025) 100%);pointer-events:none;z-index:5;transition:opacity .2s; }
         @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.2),0 4px 16px rgba(0,0,0,.08)} 50%{box-shadow:0 0 36px rgba(255,107,53,.35),0 8px 28px rgba(0,0,0,.12)} }
@@ -386,14 +319,14 @@ export function Holdings() {
         button:active:not(:disabled) { transform:scale(.97) !important;transition-duration:.06s !important; }
         input:focus { box-shadow:0 0 0 3px rgba(224,48,32,.12) !important;border-color:#E03020 !important;transition:box-shadow .2s,border-color .2s; }
         /* ── CARD IMAGE SHINE ON HOVER ── */
-        
-        
-        
+        .pocket-shell .card-plastic { transition:opacity .35s cubic-bezier(.25,.46,.45,.94); }
+        .pocket-shell:hover img { transform:scale(1.06) !important; }
+        .pocket-shell:hover .holo { opacity:.35 !important; }
         /* ── RARE CARD GLOW ── */
         
         @keyframes holoPulse { 0%,100%{opacity:.08} 50%{opacity:.18} }
         /* ── SMOOTH REVEAL FOR ALL CARDS ── */
-        @keyframes cardReveal { 0%{opacity:0;transform:translateY(12px)} 100%{opacity:1;transform:translateY(0)} }
+        @keyframes cardReveal { 0%{opacity:0;transform:translateY(20px) scale(.94) rotateX(8deg)} 50%{opacity:1;transform:translateY(-4px) scale(1.01) rotateX(-1deg)} 100%{opacity:1;transform:translateY(0) scale(1) rotateX(0deg)} }
         .pocket-shell { animation:cardReveal .5s cubic-bezier(.22,.68,0,1.1) both; }
 
         /* ══ HOOK ANIMATIONS ══════════════════════ */
@@ -496,13 +429,6 @@ export function Holdings() {
         .set-header:hover {
           background:rgba(0,0,0,.015);border-radius:12px;
         }
-        .shelf-row { scrollbar-width:none; -ms-overflow-style:none; overflow-x:scroll !important; }
-        .shelf-row::-webkit-scrollbar { display:none; }
-        .shelf-row::-webkit-scrollbar { display:none; }
-        .minimap { position:relative;height:20px;background:#F0F0F5;border-radius:7px;overflow:hidden;cursor:grab;transition:height .15s,opacity .15s;user-select:none;-webkit-user-select:none; }
-        .minimap:hover { height:24px; }
-        .minimap:active { cursor:grabbing; }
-        .minimap:hover .mm-vp { border-color:rgba(29,29,31,.45) !important;background:rgba(224,48,32,.08) !important; }
         .set-header:active {
           transform:scale(.995);
         }
@@ -525,55 +451,18 @@ export function Holdings() {
           100%{background-position:-200% center}
         }
 
-
-        /* ── VITRINE CARD ENTRANCE ── */
-        @keyframes showcaseReveal {
-          0% { opacity:0; transform:translateY(40px) scale(.9); }
-          60% { opacity:1; transform:translateY(-6px) scale(1.02); }
-          100% { opacity:1; transform:translateY(0) scale(1); }
-        }
-
-
-        /* ── GRADE VISUAL ── */
-        @keyframes goldShine {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-
-        @keyframes goldShimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        /* ── HOOK HOVERS ── */
-        /* ── ADD MODAL HOVERS ── */
-        .add-modal input:focus { border-color:#1D1D1F !important;box-shadow:0 0 0 3px rgba(29,29,31,.06) !important; }
-        .add-modal select:focus { border-color:#1D1D1F !important;box-shadow:0 0 0 3px rgba(29,29,31,.06) !important; }
-        .add-modal input:hover:not(:focus) { border-color:#C7C7CC !important; }
-        .add-modal select:hover { border-color:#C7C7CC !important; }
-
-        button:hover:not(:disabled) { filter:brightness(1.05); }
-        .vtab:hover:not(.on) { background:#F0F0F5 !important;color:#48484A !important;border-color:#C7C7CC !important; }
-        .vtab:active { transform:scale(.96) !important;transition-duration:.06s !important; }
-        .colbtn:hover { background:#F0F0F5 !important;color:#48484A !important; }
-        .colbtn:active { transform:scale(.9) !important; }
-        .pocket-shell:hover .remove-btn { opacity:1 !important; }
-
-        .set-header:hover { background:rgba(0,0,0,.02) !important;border-radius:12px; }
-        .set-header:active { transform:scale(.998) !important; }
-
         .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
         .gem .hm { position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%,rgba(29,29,31,.3),transparent 65%);opacity:0;pointer-events:none;mix-blend-mode:overlay;transition:opacity .25s; }
-        
+        .gem:hover .holo { opacity:.28; }
         .gem .ptcl { position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none;opacity:0; }
         .gem:hover .ptcl:nth-child(1){ animation:ptcl 2s ease-out infinite; }
         .gem:hover .ptcl:nth-child(2){ animation:ptcl 2.4s .5s ease-out infinite; }
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
         .breathe-S { animation:breatheS 2.4s ease-in-out infinite; }
         .breathe-A { animation:breatheA 3s ease-in-out infinite; }
-        .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 4px rgba(0,0,0,.02); }
-        .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 16px 48px rgba(0,0,0,.08),0 6px 20px rgba(0,0,0,.03) !important; }
-        
-        .pocket-shell:active { transform:translateY(-3px) scale(.99) !important;transition-duration:.12s !important; }
+        .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .35s cubic-bezier(.22,.68,0,1.4),box-shadow .4s cubic-bezier(.25,.46,.45,.94);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.03); }
+        .pocket-shell:hover { transform:translateY(-6px) scale(1.03) !important;box-shadow:0 12px 28px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.06) !important; }
+        .pocket-shell:active { transform:translateY(-2px) scale(1.01) !important;transition-duration:.1s !important; }
         @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 6px rgba(224,48,32,.06)} }
         .empty-pocket { animation:slotPulse 3s ease-in-out infinite; }
         .empty-pocket:hover { animation:none !important; }
@@ -586,8 +475,8 @@ export function Holdings() {
         .colbtn:active { transform:scale(.92);transition-duration:.06s; }
         .remove-btn { pointer-events:all !important; }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
-        .req-label { font-size:10px;font-weight:600;color:#1D1D1F;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
-        .opt-label { font-size:10px;font-weight:500;color:#86868B;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
+        .req-label { font-size:10px;font-weight:700;color:rgba(255,107,53,.9);font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
+        .opt-label { font-size:10px;color:rgba(29,29,31,.28);font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
         .req-field { border:2px solid rgba(255,107,53,.35) !important; }
         .req-field-ok { border:2px solid rgba(78,204,163,.4) !important; }
         select { color-scheme:dark; }
@@ -620,58 +509,44 @@ export function Holdings() {
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
           const curQty=editQty??spotCard.qty
           return(
-            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null) }}>
-              <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.05)', padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out', position:'relative' }} onClick={e=>e.stopPropagation()}>
-                <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'16px', right:'16px', width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:5, transition:'all .15s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                  onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.82)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null) }}>
+              <div style={{ background:'rgba(255,255,255,.85)', backdropFilter:'saturate(180%) blur(20px)', WebkitBackdropFilter:'saturate(180%) blur(20px)', borderRadius:'20px', border:`1px solid ${ec}40`, boxShadow:`0 0 40px ${eg},0 20px 50px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06)`, padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
                 <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'24px', alignItems:'start' }}>
-                  <div className="gem" style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'14px', boxShadow:'0 4px 20px rgba(0,0,0,.06)' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
+                  <div className="gem" style={{ background:`linear-gradient(160deg,${ec}22,${ec}08)`, border:`2px solid ${ec}50`, boxShadow:`0 0 60px ${eg},0 24px 60px rgba(0,0,0,.15),0 8px 20px rgba(0,0,0,.08)` }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
                     {isHolo&&<div className="holo"/>}
                     <div className="hm"/>
-                    
-                    
-                    
+                    <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
+                    <div className="ptcl" style={{ background:ec, bottom:'35%', left:'65%' }}/>
+                    <div style={{ height:'3px', background:`linear-gradient(90deg,${ec},${ec}55)`, position:'absolute', top:0, left:0, right:0 }}/>
                     {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#1D1D1F', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
-                    <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:'#EBEBEB', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
+                    <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:`${ec}14`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
                       {spotCard.image ? (
                         <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
                           style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1 }}
                           onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else t.style.display='none' }}/>
                       ) : (
                         <>
-                          <div style={{ position:'absolute', width:'75%', height:'75%', borderRadius:'50%', background:'rgba(0,0,0,.06)', filter:'blur(28px)', opacity:.65 }}/>
-                          <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%,#C7C7CC,#A1A1A6)', boxShadow:'0 0 20px rgba(0,0,0,.08)', zIndex:1 }}/>
+                          <div style={{ position:'absolute', width:'75%', height:'75%', borderRadius:'50%', background:eg, filter:'blur(28px)', opacity:.65 }}/>
+                          <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}DD,${ec}77)`, boxShadow:`0 0 28px ${eg}`, zIndex:1 }}/>
                         </>
                       )}
                     </div>
                     <div style={{ padding:'14px' }}>
                       <div style={{ fontSize:'16px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
-                      <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-                        <span style={{ fontSize:'11px', color:'#86868B' }}>{spotCard.set} · {spotCard.year}</span>
-                        {spotCard.graded&&(()=>{
-                          const gn=parseFloat(spotCard.condition.replace(/[^0-9.]/g,''))
-                          const bg=gn>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn>=9?'linear-gradient(135deg,#A8A8A8,#E8E8E8,#A8A8A8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#6E6E73'
-                          const fg=gn>=10?'#1a1200':gn>=9?'#222':gn>=5?'#2a1800':'#fff'
-                          const sh=gn>=10?'0 2px 8px rgba(201,168,76,.4)':gn>=9?'0 2px 6px rgba(0,0,0,.08)':'none'
-                          return <span style={{ fontSize:'10px', fontWeight:800, background:bg, color:fg, padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', backgroundSize:gn>=10?'300% 100%':'auto', animation:gn>=10?'goldShine 3s ease-in-out infinite':'none' }}>{spotCard.condition}</span>
-                        })()}
-                      </div>
+                      <div style={{ fontSize:'11px', color:'#48484A' }}>{spotCard.set} - {spotCard.year} - {spotCard.condition}</div>
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize:'36px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'8px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'40px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'6px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
                     {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'14px' }}>
                       {[
-                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'#48484A'},
-                        {l:'Marche',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
-                        {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:'#2E9E6A'},
-                        {l:'Langue',v:spotCard.lang,c:'#48484A'},
-                        {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'#48484A'},
-                        {l:'Gain',v:spotCard.buyPrice>0?'+EUR '+Math.abs(gain).toLocaleString('fr-FR'):'---',c:'#2E9E6A'},
+                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'rgba(29,29,31,.4)'},
+                        {l:'Marche',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#fff'},
+                        {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:'#4ECCA3'},
+                        {l:'Langue',v:spotCard.lang,c:'rgba(29,29,31,.6)'},
+                        {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'rgba(29,29,31,.6)'},
+                        {l:'Gain',v:spotCard.buyPrice>0?'+EUR '+Math.abs(gain).toLocaleString('fr-FR'):'---',c:'#4ECCA3'},
                       ].map(s=>(
                         <div key={s.l} style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'9px', padding:'10px 12px' }}>
                           <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
@@ -684,7 +559,7 @@ export function Holdings() {
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                         <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'#F0F0F5', border:'1px solid #D2D2D7', color:'#1D1D1F', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
                         <div style={{ flex:1, background:'#E8E8ED', border:'1.5px solid #D1CEC9', borderRadius:'8px', padding:'7px', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{curQty}</div>
-                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
+                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
                         {editQty!==null&&editQty!==spotCard.qty&&(
                           <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantite mise a jour') }} style={{ padding:'7px 12px', borderRadius:'8px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
                             Sauvegarder
@@ -695,11 +570,7 @@ export function Holdings() {
                     <div style={{ display:'flex', gap:'8px' }}>
                       <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal</button>
                       <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#E8E8ED', color:'#48484A', border:'1.5px solid #D1CEC9', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
-                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:favs.has(spotCard.id)?'#FFF0F0':'#E8E8ED', border:`1px solid ${favs.has(spotCard.id)?'rgba(224,48,32,.25)':'#E5E5EA'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s' }}
-                        onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.06)'}}
-                        onMouseLeave={e=>{e.currentTarget.style.transform=''}}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={favs.has(spotCard.id)?'#E03020':'none'} stroke={favs.has(spotCard.id)?'#E03020':'#86868B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                      </button>
+                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:'#E8E8ED', border:'1px solid #E5E5EA', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>{favs.has(spotCard.id)?'X':'O'}</button>
                     </div>
                   </div>
                 </div>
@@ -710,109 +581,50 @@ export function Holdings() {
 
         {/* SHOWCASE PICKER */}
         {showPickerForShowcase&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>{setShowPickerForShowcase(false);setVitrineSearch('');setVitrineFilter('all')}}>
-            <div style={{ background:'#fff', borderRadius:'20px', padding:'0', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'85vh', display:'flex', flexDirection:'column', overflow:'hidden' }} onClick={e=>e.stopPropagation()}>
-              {/* Header */}
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 20px', borderBottom:'1px solid #E5E5EA', flexShrink:0 }}>
-                <div>
-                  <div style={{ fontSize:'16px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter a la Vitrine</div>
-                  <div style={{ fontSize:'11px', color:'#86868B', marginTop:'2px' }}>{showcase.length}/5 pieces exposees</div>
-                </div>
-                <button onClick={()=>setShowPickerForShowcase(false)} style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+          <div style={{ position:'fixed', inset:0, background:'rgba(250,251,252,.94)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>setShowPickerForShowcase(false)}>
+            <div style={{ background:'rgba(255,255,255,.85)', backdropFilter:'saturate(180%) blur(20px)', WebkitBackdropFilter:'saturate(180%) blur(20px)', borderRadius:'20px', border:'1px solid rgba(255,107,53,.2)', padding:'24px', maxWidth:'480px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'85vh', display:'flex', flexDirection:'column' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexShrink:0 }}>
+                <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Choisir une carte</div>
+                <button onClick={()=>setShowPickerForShowcase(false)} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'20px', padding:0 }}>x</button>
               </div>
-              {(()=>{
-                const available = portfolio.filter(c=>!showcase.find(sc=>sc.id===c.id))
-                const filtered = available.filter(c=>{
-                  const matchSearch = !vitrineSearch || c.name.toLowerCase().includes(vitrineSearch.toLowerCase()) || c.set.toLowerCase().includes(vitrineSearch.toLowerCase())
-                  const matchFilter = vitrineFilter==='all' || c.type===vitrineFilter || (vitrineFilter==='graded'&&c.graded) || (vitrineFilter==='rare'&&c.rarity&&['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare'].includes(c.rarity))
-                  return matchSearch && matchFilter
-                })
-                return available.length===0?(
-                <div style={{ textAlign:'center', padding:'40px 20px', color:'#86868B', fontSize:'13px', fontFamily:'var(--font-display)' }}>Toutes vos cartes sont dans la vitrine.</div>
+              {portfolio.filter(c=>!showcase.find(s=>s.id===c.id)).length===0?(
+                <div style={{ textAlign:'center', padding:'32px 0', color:'#48484A', fontSize:'13px' }}>Toutes vos cartes sont dans la vitrine.</div>
               ):(
-                <>
-                {/* Search + filters */}
-                <div style={{ padding:'12px 16px 0', flexShrink:0 }}>
-                  <div style={{ position:'relative', marginBottom:'10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                    <input value={vitrineSearch} onChange={e=>setVitrineSearch(e.target.value)} placeholder="Rechercher une carte..."
-                      style={{ width:'100%', height:'38px', padding:'0 12px 0 36px', borderRadius:'10px', border:'1px solid #E5E5EA', background:'#F5F5F7', fontSize:'13px', color:'#1D1D1F', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' }}/>
-                  </div>
-                  <div style={{ display:'flex', gap:'4px', flexWrap:'wrap', marginBottom:'4px' }}>
-                    {[{k:'all',l:'Toutes'},{k:'fire',l:'Feu'},{k:'water',l:'Eau'},{k:'psychic',l:'Psy'},{k:'grass',l:'Plante'},{k:'rare',l:'Rares'},{k:'graded',l:'Gradees'}].map(f=>(
-                      <button key={f.k} onClick={()=>setVitrineFilter(f.k)}
-                        style={{ padding:'5px 12px', borderRadius:'99px', border:`1px solid ${vitrineFilter===f.k?'#1D1D1F':'#E5E5EA'}`, background:vitrineFilter===f.k?'#1D1D1F':'transparent', color:vitrineFilter===f.k?'#fff':'#86868B', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                        {f.l}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ fontSize:'10px', color:'#AEAEB2', fontFamily:'var(--font-display)', padding:'4px 0' }}>{filtered.length} carte{filtered.length!==1?'s':''} disponible{filtered.length!==1?'s':''}</div>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px', padding:'8px 16px 16px', overflowY:'auto' as const }}>
-                  {filtered.slice(0,18).map(card=>{
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px', overflowY:'auto' as const }}>
+                  {portfolio.filter(c=>!showcase.find(s=>s.id===c.id)).map(card=>{
                     const ec2=EC[card.type]??'#888'
                     return (
                       <div key={card.id} onClick={()=>addToShowcase(card)}
-                        style={{ borderRadius:'14px', overflow:'hidden', cursor:'pointer', background:'#F5F5F7', border:'1px solid #E5E5EA', transition:'all .2s cubic-bezier(.22,.68,0,1.1)' }}
-                        onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,.08)';e.currentTarget.style.borderColor='#E03020'}}
-                        onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';e.currentTarget.style.borderColor='#E5E5EA'}}>
-                        {card.image?(
-                          <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={card.name}
-                            loading="lazy"
-                            style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
-                            onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                        ):(
-                          <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}15,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:ec2, opacity:.4 }}/>
-                          </div>
-                        )}
-                        <div style={{ padding:'8px' }}>
-                          <div style={{ fontSize:'11px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
-                          <div style={{ fontSize:'9px', color:'#86868B', marginTop:'2px' }}>{card.set}</div>
-                          {card.curPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:'4px' }}>{card.curPrice} EUR</div>}
+                        style={{ display:'flex', alignItems:'center', gap:'12px', padding:'10px 14px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', cursor:'pointer' }}
+                        onMouseEnter={e=>(e.currentTarget.style.background='#F0F0F5')}
+                        onMouseLeave={e=>(e.currentTarget.style.background='#F5F5F7')}>
+                        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:`linear-gradient(145deg,${ec2}25,${ec2}10)`, border:`1px solid ${ec2}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <div style={{ width:'12px', height:'12px', borderRadius:'50%', background:ec2, opacity:.8 }}/>
                         </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:'13px', fontWeight:500, color:'#3A3A3C', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                          <div style={{ fontSize:'10px', color:'#48484A' }}>{card.set} - {card.condition}</div>
+                        </div>
+                        <div style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>EUR {card.curPrice}</div>
                       </div>
                     )
                   })}
                 </div>
-                </>
-              )
-              })()}
+              )}
             </div>
           </div>
         )}
 
         {/* ADD CARD MODAL */}
         {addOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}>
-            <div className='add-modal' style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.06)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}>
+            <div style={{ background:'rgba(255,255,255,.85)', backdropFilter:'saturate(180%) blur(20px)', WebkitBackdropFilter:'saturate(180%) blur(20px)', borderRadius:'20px', border:'1px solid rgba(255,107,53,.25)', boxShadow:'0 0 60px rgba(255,107,53,.15),0 24px 60px rgba(0,0,0,.8)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
                   <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte ou un item</div>
-                  <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
+                  <div style={{ fontSize:'11px', marginTop:'3px', color:'rgba(255,107,53,.7)', fontWeight:600 }}>* champs obligatoires</div>
                 </div>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                  onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-              </div>
-
-              <div style={{ marginBottom:'14px' }}>
-                <div className="req-label">Langue *</div>
-                <div style={{ display:'flex', gap:'6px' }}>
-                  {([{k:'FR' as const,flag:'\u{1F1EB}\u{1F1F7}',label:'Francais'},{k:'EN' as const,flag:'\u{1F1FA}\u{1F1F8}',label:'English'},{k:'JP' as const,flag:'\u{1F1EF}\u{1F1F5}',label:'\u65E5\u672C\u8A9E'}]).map(l=>(
-                    <button key={l.k} onClick={()=>setAddForm(p=>({...p,lang:l.k}))}
-                      style={{ flex:1, padding:'10px 8px', borderRadius:'10px', border:`1.5px solid ${addForm.lang===l.k?'#1D1D1F':'#E5E5EA'}`, background:addForm.lang===l.k?'#1D1D1F':'#fff', color:addForm.lang===l.k?'#fff':'#86868B', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
-                      onMouseLeave={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
-                      <span style={{ fontSize:'16px' }}>{l.flag}</span>
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'22px', padding:0, lineHeight:1 }}>x</button>
               </div>
 
               <div style={{ marginBottom:'12px' }}>
@@ -821,15 +633,15 @@ export function Holdings() {
                   <select value={addForm.setId}
                     onChange={e=>{ const found=liveSets.find(x=>x.id===e.target.value); if(found) handleSetChange(found.id,found.name) }}
                     className={addForm.set?'req-field-ok':'req-field'}
-                    style={{ width:'100%', appearance:'none' as const, background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 36px 10px 12px', color:addForm.set?'#1D1D1F':'#AEAEB2', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    style={{ width:'100%', appearance:'none' as const, background:'#E8E8ED', borderRadius:'9px', padding:'10px 36px 10px 12px', color:addForm.set?'#fff':'rgba(29,29,31,.28)', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
                     {liveSets.map(s=>(
-                      <option key={s.id} value={s.id} style={{background:'#fff',color:'#1D1D1F'}}>
+                      <option key={s.id} value={s.id} style={{background:'#111'}}>
                         {s.name}{s.total?' ('+s.total+')':''}
                       </option>
                     ))}
                   </select>
-                  <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg></div>
+                  <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', fontSize:'10px', color:'#48484A' }}>v</div>
                 </div>
               </div>
 
@@ -839,13 +651,12 @@ export function Holdings() {
                   {addForm.set&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'rgba(255,107,53,.5)', fontWeight:400 }}>{cardsLoading?'chargement…':liveCards.length>0?liveCards.length+' cartes':'encyclopédie'}</span>}
                 </div>
                 <div style={{ position:'relative' }}>
-                  {nameValidated&&<div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', zIndex:2, pointerEvents:'none' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
                   <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
                     placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte ou item…'}
                     className={addForm.name?'req-field-ok':'req-field'}
-                    style={{ width:'100%', background:nameValidated?'#fff':'#F5F5F7', borderRadius:'10px', border:`1px solid ${nameValidated?'#2E9E6A':'#E5E5EA'}`, padding:'10px 12px 10px '+(nameValidated?'32px':'12px'), color:'#1D1D1F', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                    style={{ width:'100%', background:'#E8E8ED', borderRadius:'9px', padding:'10px 12px', color:'#1D1D1F', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
                   {addSuggs.length>0&&(
-                    <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#fff', border:'1px solid #E5E5EA', borderRadius:'12px', overflow:'hidden', zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,.1)' }}>
+                    <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#1A0E06', border:'1px solid rgba(255,107,53,.3)', borderRadius:'10px', overflow:'hidden', zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,.6)' }}>
                       {addSuggs.map((s,i)=>(
                         <div key={i} onMouseDown={()=>handleSuggSelect(s)}
                           style={{ padding:'9px 14px', fontSize:'13px', color:'#3A3A3C', fontFamily:'var(--font-display)', cursor:'pointer', borderBottom:i<addSuggs.length-1?'1px solid rgba(29,29,31,.05)':'none' }}
@@ -859,98 +670,85 @@ export function Holdings() {
                 </div>
               </div>
 
-
-
-              <div style={{ marginBottom:'14px' }}>
-                <div className="opt-label">Etat</div>
-                {/* Segmented control iOS-style */}
-                <div style={{ display:'flex', background:'#F0F0F5', borderRadius:'12px', padding:'3px', marginBottom:addForm.graded?'12px':'0' }}>
-                  {([{k:'Raw',l:'Raw (neuf)'},{k:'__graded__',l:'Grade'},{k:'Scelle',l:'Scelle'}] as const).map(opt=>{
-                    const active = opt.k==='__graded__' ? addForm.graded : (!addForm.graded && addForm.condition===opt.k)
-                    return (
-                      <button key={opt.k} onClick={()=>handleConditionChange(opt.k)}
-                        style={{ flex:1, padding:'9px', borderRadius:'10px', border:'none', background:active?'#fff':'transparent', color:active?'#1D1D1F':'#86868B', fontSize:'12px', fontWeight:active?600:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s', boxShadow:active?'0 1px 3px rgba(0,0,0,.08)':'none' }}
-                        onMouseEnter={e=>{if(!active)e.currentTarget.style.color='#48484A'}}
-                        onMouseLeave={e=>{if(!active)e.currentTarget.style.color='#86868B'}}>
-                        {opt.l}
-                      </button>
-                    )
-                  })}
+              <div style={{ marginBottom:'12px' }}>
+                <div className="opt-label">Langue</div>
+                <div style={{ display:'flex', gap:'8px' }}>
+                  {(['EN','JP','FR'] as const).map(l=>(
+                    <button key={l} onClick={()=>setAddForm(p=>({...p,lang:l}))}
+                      style={{ flex:1, padding:'9px', borderRadius:'8px', border:`1px solid ${addForm.lang===l?'rgba(255,107,53,.6)':'rgba(29,29,31,.07)'}`, background:addForm.lang===l?'rgba(255,107,53,.15)':'rgba(29,29,31,.03)', color:addForm.lang===l?'#FF9060':'rgba(29,29,31,.4)', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                      {l}
+                    </button>
+                  ))}
                 </div>
-                {/* Grade selector */}
+              </div>
+
+              <div style={{ marginBottom:'12px' }}>
+                <div className="opt-label">Etat / Grade</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'6px', marginBottom:'10px' }}>
+                  <button onClick={()=>handleConditionChange('Raw')}
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:!addForm.graded&&addForm.condition==='Raw'?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:!addForm.graded&&addForm.condition==='Raw'?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    Raw
+                  </button>
+                  <button onClick={()=>handleConditionChange('__graded__')}
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${addForm.graded?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:addForm.graded?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:addForm.graded?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    Grade
+                  </button>
+                  <button onClick={()=>handleConditionChange('Scelle')}
+                    style={{ padding:'10px', borderRadius:'8px', border:`1.5px solid ${!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.7)':'rgba(29,29,31,.09)'}`, background:!addForm.graded&&addForm.condition==='Scelle'?'rgba(255,107,53,.18)':'rgba(29,29,31,.03)', color:!addForm.graded&&addForm.condition==='Scelle'?'#FF9060':'rgba(29,29,31,.4)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    Scelle
+                  </button>
+                </div>
                 {addForm.graded&&(
-                  <div style={{ background:'#F5F5F7', borderRadius:'12px', padding:'12px' }}>
-                    <div style={{ display:'flex', gap:'6px', marginBottom:'10px' }}>
-                      {GRADE_COMPANIES.map(company=>{
-                        const isActive = addForm.condition.startsWith(company.label+' ')
-                        return (
-                          <button key={company.label} onClick={()=>handleConditionChange(company.label+' 10')}
-                            style={{ flex:1, padding:'7px 4px', borderRadius:'8px', border:`1.5px solid ${isActive?'#1D1D1F':'#E5E5EA'}`, background:isActive?'#1D1D1F':'#fff', color:isActive?'#fff':'#86868B', fontSize:'10px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', letterSpacing:'.02em' }}
-                            onMouseEnter={e=>{if(!isActive){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
-                            onMouseLeave={e=>{if(!isActive){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
-                            {company.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {/* Note selector */}
-                    {(()=>{
-                      const activeCompany = GRADE_COMPANIES.find(c=>addForm.condition.startsWith(c.label+' '))
-                      if (!activeCompany) return null
-                      const curVal = addForm.condition.replace(activeCompany.label+' ','')
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'6px' }}>
+                    {GRADE_COMPANIES.map(company=>{
+                      const isActive = addForm.condition.startsWith(company.label+' ')
+                      const curVal = isActive ? addForm.condition.replace(company.label+' ','') : ''
                       return (
-                        <div>
-                          <div style={{ fontSize:'9px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Note {activeCompany.label}</div>
-                          <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' }}>
-                            {activeCompany.grades.map(g=>{
-                              const shortG = g.replace(activeCompany.label+' ','')
-                              const isSel = curVal===shortG
-                              return (
-                                <button key={g} onClick={()=>handleConditionChange(activeCompany.label+' '+shortG)}
-                                  style={{ padding:'6px 10px', borderRadius:'8px', border:`1px solid ${isSel?'#1D1D1F':'#E5E5EA'}`, background:isSel?'#1D1D1F':'#fff', color:isSel?'#fff':'#48484A', fontSize:'11px', fontWeight:isSel?700:500, cursor:'pointer', fontFamily:'var(--font-data)', transition:'all .1s', minWidth:'36px' }}
-                                  onMouseEnter={e=>{if(!isSel){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
-                                  onMouseLeave={e=>{if(!isSel){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
-                                  {shortG}
-                                </button>
-                              )
+                        <div key={company.label}>
+                          <div style={{ fontSize:'9px', color:isActive?'#FF9060':'rgba(29,29,31,.24)', fontFamily:'var(--font-display)', marginBottom:'5px', fontWeight:isActive?700:400, textAlign:'center' as const }}>{company.label}</div>
+                          <select value={curVal} onChange={e=>{ if(e.target.value) handleConditionChange(company.label+' '+e.target.value) }}
+                            style={{ width:'100%', appearance:'none' as const, background:isActive?'rgba(255,107,53,.15)':'rgba(29,29,31,.04)', border:`1px solid ${isActive?'rgba(255,107,53,.5)':'rgba(29,29,31,.07)'}`, borderRadius:'7px', padding:'7px 4px', color:isActive?'#FF9060':'rgba(29,29,31,.35)', fontSize:'11px', fontWeight:600, fontFamily:'var(--font-display)', outline:'none', cursor:'pointer', textAlign:'center' as const }}>
+                            <option value="">-</option>
+                            {company.grades.map(g=>{
+                              const shortG = g.replace(company.label+' ','')
+                              return <option key={g} value={shortG} style={{background:'#111'}}>{shortG}</option>
                             })}
-                          </div>
+                          </select>
                         </div>
                       )
-                    })()}
+                    })}
                   </div>
                 )}
               </div>
 
               {/* Prix + Quantité */}
-
-              <div style={{ display:'flex', gap:'10px', marginBottom:'14px', alignItems:'flex-end' }}>
-                {/* Prix */}
-                <div style={{ flex:1 }}>
-                  <div className="opt-label">Prix d'achat</div>
+              {addForm.name && !addForm.buyPrice && (
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 14px', borderRadius:'10px', background:'rgba(0,0,0,.012)', border:'1px solid rgba(255,107,53,.18)', marginBottom:'10px', animation:'fadeUp .25s ease-out' }}>
+                  <span style={{ fontSize:'16px' }}>💰</span>
+                  <div>
+                    <div style={{ fontSize:'11px', fontWeight:700, color:'#FF9060', fontFamily:'var(--font-display)' }}>Dernière étape — indiquez votre prix d'achat</div>
+                    <div style={{ fontSize:'10px', color:'rgba(255,107,53,.5)', marginTop:'1px' }}>Nécessaire pour calculer votre ROI</div>
+                  </div>
+                </div>
+              )}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'14px' }}>
+                <div>
+                  <div className="req-label">Prix d'achat EUR *</div>
                   <div style={{ position:'relative' }}>
-                    <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'13px', color:'#AEAEB2', fontFamily:'var(--font-data)', pointerEvents:'none' }}>EUR</span>
+                    <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)', pointerEvents:'none' }}>€</span>
                     <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))}
                       placeholder="0.00"
-                      style={{ width:'100%', background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 12px 10px 42px', color:'#1D1D1F', fontSize:'16px', fontWeight:600, fontFamily:'var(--font-data)', outline:'none', boxSizing:'border-box' as const }}/>
+                      autoFocus={!!(addForm.name && !addForm.buyPrice)}
+                      className={addForm.buyPrice?'req-field-ok':'req-field'}
+                      style={{ width:'100%', background: !addForm.buyPrice && addForm.name ? 'rgba(255,107,53,.06)' : 'rgba(29,29,31,.05)', borderRadius:'9px', padding:'10px 12px 10px 26px', color:'#1D1D1F', fontSize:'18px', fontWeight:700, fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .2s' }}/>
                   </div>
-                  <div style={{ fontSize:'9px', color:'#AEAEB2', marginTop:'4px', fontFamily:'var(--font-display)' }}>Optionnel — permet le calcul du ROI</div>
                 </div>
-                {/* Quantité */}
-                <div style={{ width:'120px', flexShrink:0 }}>
-                  <div className="opt-label">Quantite</div>
-                  <div style={{ display:'flex', alignItems:'center', background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', overflow:'hidden' }}>
-                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))} style={{ width:'36px', height:'38px', background:'transparent', border:'none', borderRight:'1px solid #E5E5EA', color:addForm.qty>1?'#1D1D1F':'#AEAEB2', fontSize:'16px', cursor:addForm.qty>1?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center' }}
-                      onMouseEnter={e=>{if(addForm.qty>1)e.currentTarget.style.background='#EDEDF0'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/></svg>
-                    </button>
-                    <div style={{ flex:1, textAlign:'center', fontSize:'16px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{addForm.qty}</div>
-                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.min(99,p.qty+1)}))} style={{ width:'36px', height:'38px', background:'transparent', border:'none', borderLeft:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
-                      onMouseEnter={e=>{e.currentTarget.style.background='#EDEDF0'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </button>
+                <div>
+                  <div className="opt-label">Exemplaires</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))} style={{ width:'38px', height:'38px', borderRadius:'8px', background:'#F0F0F5', border:'1px solid #D2D2D7', color:'#1D1D1F', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>-</button>
+                    <div style={{ flex:1, background:'#E8E8ED', border:'1.5px solid #D1CEC9', borderRadius:'9px', padding:'9px 0', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{addForm.qty}</div>
+                    <button onClick={()=>setAddForm(p=>({...p,qty:Math.min(99,p.qty+1)}))} style={{ width:'38px', height:'38px', borderRadius:'8px', background:'rgba(255,107,53,.2)', border:'1px solid rgba(255,107,53,.4)', color:'#FF9060', fontSize:'20px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>+</button>
                   </div>
                 </div>
               </div>
@@ -958,7 +756,7 @@ export function Holdings() {
               {!canAdd&&(
                 <div style={{ display:'flex', alignItems:'center', gap:'7px', padding:'9px 12px', borderRadius:'9px', background:'rgba(0,0,0,.012)', border:'1px solid rgba(255,107,53,.2)', marginBottom:'12px' }}>
                   <span style={{ fontSize:'11px', color:'#EA580C', fontFamily:'var(--font-display)' }}>
-                    {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':!nameValidated?'Selectionnez une carte dans la liste':''}
+                    {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':''}
                     {' '}pour activer le bouton
                   </span>
                 </div>
@@ -966,10 +764,10 @@ export function Holdings() {
 
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={addCard} disabled={!canAdd}
-                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:canAdd?'#1D1D1F':'#F0F0F5', color:canAdd?'#fff':'#AEAEB2', border:'none', fontSize:'14px', fontWeight:600, cursor:canAdd?'pointer':'default', fontFamily:'var(--font-display)', boxShadow:'none', transition:'all .2s' }}>
+                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:canAdd?'linear-gradient(135deg,#E03020,#FF4433)':'rgba(29,29,31,.05)', color:canAdd?'#fff':'rgba(29,29,31,.16)', border:'none', fontSize:'14px', fontWeight:600, cursor:canAdd?'pointer':'default', fontFamily:'var(--font-display)', boxShadow:canAdd?'0 4px 16px rgba(224,48,32,.4)':'none', transition:'all .2s' }}>
                   Ajouter {addForm.qty>1?addForm.qty+' exemplaires':'au portfolio'}
                 </button>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]) }}
                   style={{ padding:'13px 20px', borderRadius:'11px', background:'#F5F5F7', color:'#6E6E73', border:'1px solid #E5E5EA', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
                   Annuler
                 </button>
@@ -1000,8 +798,7 @@ export function Holdings() {
                   <div style={{ fontSize:'10px', color:'#48484A' }}>{bestCard.name}</div>
                 </div>
               )}
-              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }} className='btn-shimmer' onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(224,48,32,.3)'}}
-                onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>Partager</button>
+              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }} className='btn-shimmer'>Partager</button>
             </div>
           </div>
           <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
@@ -1016,7 +813,7 @@ export function Holdings() {
                 Par sets
               </button>
               <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
-                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:binderSet==='__all__'?'#1D1D1F':'transparent', color:binderSet==='__all__'?'#fff':'#86868B', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:binderSet==='__all__'?'rgba(29,29,31,.07)':'transparent', color:binderSet==='__all__'?'#fff':'#86868B', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
                 Toute ma collection
               </button>
             </div>
@@ -1025,10 +822,10 @@ export function Holdings() {
 
         {/* BINDER */}
         {view==='binder'&&(
-          <div style={{ position:'relative', zIndex:1, padding:'0 20px 20px', animation:'fadeUp .3s ease-out' }}>
+          <div style={{ position:'relative', zIndex:1, padding:'0 24px 20px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ background:'transparent', position:'relative' }}>
 
-              <div style={{ position:'relative', padding:'12px 0 10px' }}>
+              <div style={{ position:'relative', padding:'12px 22px 10px' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
@@ -1045,25 +842,16 @@ export function Holdings() {
                 </div>
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-                    <button onClick={()=>setAddOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                      Ajouter
+                    <button onClick={()=>setAddOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                      + Ajouter une carte ou un item
                     </button>
-                    <button onClick={()=>setImportOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                      Importer
+                    <button onClick={()=>setImportOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#EEF4FF', border:'1px solid rgba(30,100,200,.25)', color:'#1E5ABF', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                      ↑ Importer votre collection
                     </button>
-                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      Scanner
+                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'6px 14px', borderRadius:'8px', background:'#EDFAF4', border:'1px solid rgba(10,140,90,.25)', color:'#0A7850', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                      📷 Scanner
                     </button>
-                    {(binderSet!==null)&&[6,7,8].map(n=>(
+                    {(binderSet!==null)&&[3,4,5,6].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
                     ))}
                     <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage===0?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8249;</button>
@@ -1086,7 +874,7 @@ export function Holdings() {
                       <div style={{ position:'relative', marginBottom:'18px' }}>
                         <input
                           type="text"
-                          placeholder="Rechercher un set..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                          placeholder="Rechercher un set..."
                           value={setSearch}
                           onChange={e=>setSetSearch(e.target.value)}
                           style={{ width:'100%', padding:'9px 14px 9px 36px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
@@ -1104,7 +892,7 @@ export function Holdings() {
                       const totalForDisplay=resolvedTotal
                       const ec2=EC[setCards[0]?.type??'fire']??'#888'
                       const isComplete=pct===100
-                      const cardImgs=setCards
+                      const cardImgs=setCards.filter(c=>c.image).slice(0,8)
                       return (
                         <div key={setName} style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
                           {/* Header du set — XP Bar gamifiée exact artifact */}
@@ -1171,13 +959,13 @@ export function Holdings() {
                             )
                           })()}
                           {/* Rayon de cartes */}
-                          <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any }}>
+                          <div style={{ display:'flex', gap:'8px', overflowX:'auto' as const, paddingBottom:'4px' }}>
                             {cardImgs.map((card,ci)=>(
                               <div key={card.id}
-                                style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'visible', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
-                                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,.1)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
-                                onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}>
-                                <div onClick={()=>{ setSpotCard(card); setEditQty(null) }} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${ec2}25`, boxShadow:`0 2px 8px rgba(0,0,0,.08)`, position:'relative', cursor:'pointer' }}>
+                                onClick={()=>{ setSpotCard(card); setEditQty(null) }}
+                                style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', border:`1px solid ${ec2}35`, boxShadow:`0 2px 8px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06)`, cursor:'pointer', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
+                                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-5px)' }}
+                                onMouseLeave={e=>{ e.currentTarget.style.transform='' }}>
                                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
                                   <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
@@ -1188,28 +976,14 @@ export function Holdings() {
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
                                   </div>
                                 )}
-                                {/* Badge gradé sur l'image */}
-                                {card.graded&&(()=>{
-                                  const gn=parseFloat(card.condition.replace(/[^0-9.]/g,''))
-                                  const bg=gn>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn>=8?'linear-gradient(135deg,#A8A8A8,#D8D8D8,#A8A8A8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#48484A'
-                                  const fg=gn>=10?'#1a1200':gn>=8?'#333':gn>=5?'#2a1800':'#fff'
-                                  const sh=gn>=10?'0 2px 8px rgba(201,168,76,.4)':gn>=8?'0 2px 6px rgba(0,0,0,.1)':gn>=5?'0 2px 6px rgba(160,114,74,.2)':'0 1px 4px rgba(0,0,0,.15)'
-                                  return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg, color:fg, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', backgroundSize:gn>=10?'300% 100%':'auto', animation:gn>=10?'goldShine 3s ease-in-out infinite':'none' }}>{card.condition}</div>
-                                })()}
                                 <div style={{ padding:'6px 6px 4px' }}>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
-                                  <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
                                     <span style={{ fontSize:'10px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
-                                    {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
                                   </div>
                                 </div>
-                                </div>
-                                <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeCard(card,e)}
-                                  style={{ position:'absolute', top:'5px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(255,255,255,.94)', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'5px 14px', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .15s', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)' }}>
-                                  Retirer
-                                </button>
                               </div>
                             ))}
                             {/* Carte + ajout */}
@@ -1220,32 +994,6 @@ export function Holdings() {
                               <span style={{ fontSize:'18px', color:'#48484A' }}>+</span>
                             </div>
                           </div>
-
-                          {/* ── MINIMAP ── */}
-                          {(()=>{
-                            const total = resolvedTotal || setCards.length
-                            const owned = setCards.length
-                            const pct = scrollPcts[setName] ?? 0
-                            const viewFrac = Math.min(1, Math.max(0.08, 7 / Math.max(total, 1)))
-                            if (total <= 7) return null
-                            const bars = Math.min(total, 150)
-                            return (
-                              <div className="minimap" style={{ marginTop:'8px' }}
-                                onMouseDown={e => mmDown(setName, total, e)}>
-                                {/* Micro-rectangles */}
-                                <div style={{ position:'absolute', inset:'3px', display:'flex', gap:'1px', borderRadius:'4px', overflow:'hidden' }}>
-                                  {Array.from({ length: bars }).map((_, i) => {
-                                    const isOwned = i < owned
-                                    return (
-                                      <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? (0.45 + (i / Math.max(owned, 1)) * 0.55) : 0.5 }} />
-                                    )
-                                  })}
-                                </div>
-                                {/* Viewport indicator */}
-                                <div className="mm-vp" style={{ position:'absolute', top:'1px', bottom:'1px', left:`${pct * (1 - viewFrac) * 100}%`, width:`${viewFrac * 100}%`, background:'rgba(29,29,31,.08)', border:'1.5px solid rgba(29,29,31,.2)', borderRadius:'5px', transition:'left .12s cubic-bezier(.25,.46,.45,.94)', pointerEvents:'none' }} />
-                              </div>
-                            )
-                          })()}
                           {/* Séparateur */}
                           {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:'20px' }}/>}
                         </div>
@@ -1253,26 +1001,32 @@ export function Holdings() {
                     })}
                   </div>
                 ):(
-                  <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'1fr', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},1fr)`, gap:'10px' }}>
                     {pageItems.map((card,idx)=>{
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
-                      const fsName=binderCols<=3?'14px':binderCols===4?'13px':binderCols===5?'12px':binderCols===6?'10px':'9px'
+                      const fsName=binderCols<=3?'14px':binderCols===4?'13px':binderCols===5?'12px':'10px'
                       return (
                         <div key={card.id}
-                          className='pocket-shell'
-                          style={{ background:'transparent', border:'none', boxShadow:'none', animation:`illuminate .35s ${Math.min(idx,12)*.06}s ease-out both`, position:'relative', borderRadius:'10px', overflow:'visible', cursor:'pointer', transition:'transform .3s cubic-bezier(.22,.68,0,1.1), box-shadow .35s ease', display:'flex', flexDirection:'column' as const, height:'100%' }}
-                          onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
-                          onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-8px)'; e.currentTarget.style.boxShadow='0 20px 40px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.04)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
+                          className={'pocket-shell gem'+(card.signal==='S'?' breathe-S':card.signal==='A'?' breathe-A':'')}
+                          style={{ background:'transparent', border:'none', boxShadow:'none', animation:`illuminate .35s ${Math.min(idx,12)*.06}s ease-out both`, position:'relative', borderRadius:'10px', overflow:'hidden', cursor:'pointer' }}
+                          onMouseMove={tiltCard}
+                          onMouseLeave={e=>{ resetCard(e); const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
+                          onMouseEnter={e=>{ const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                           onClick={()=>{ setSpotCard(card); setEditQty(null) }}>
-
+                          {/* Reflet plastique protecteur */}
+                          <div className="card-plastic" style={{ opacity:.08 }}/>
+                          {isHolo&&<div className="holo"/>}
+                          {isHolo&&<div className="hm"/>}
+                          <div className="ptcl" style={{ background:ec, bottom:'22%', left:'20%' }}/>
+                          <div className="ptcl" style={{ background:ec, bottom:'35%', left:'62%' }}/>
                           {/* Image pleine hauteur */}
-                          <div style={{ position:'relative', width:'100%', aspectRatio:'63/88', overflow:'hidden', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04)', flex:'none' }}>
+                          <div style={{ position:'relative', width:'100%', overflow:'hidden', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04)' }}>
                             {card.image ? (()=>{
                               const imgBase = card.image.replace(/\/low\.(webp|jpg|png)$/, '').replace(/\/high\.(webp|jpg|png)$/, '')
                               return <img src={`${imgBase}/high.webp`} alt={card.name}
-                                style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
+                                style={{ width:'100%', display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
                                 onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${imgBase}/high.jpg`; else if(t.src.includes('high')) t.src=`${imgBase}/low.webp`; else t.style.display='none' }}
                               />
                             })() : (
@@ -1285,11 +1039,11 @@ export function Holdings() {
                             
                             {/* Badges positionnés sur l'image */}
                             {card.signal&&<div style={{ position:'absolute', top:'5px', right:'5px', fontSize:'8px', fontWeight:800, background:TIER_BG[card.signal], color:'#1D1D1F', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
-
+                            {card.graded&&<div style={{ position:'absolute', top:'5px', left:'5px', fontSize:'8px', fontWeight:700, background:'rgba(250,251,252,.94)', color:'#1D1D1F', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', zIndex:2 }}>⭐ {card.condition}</div>}
                             {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'5px', zIndex:2, background:'rgba(250,251,252,.94)', border:'1px solid rgba(29,29,31,.16)', borderRadius:'8px', padding:'1px 5px', fontSize:'8px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>×{card.qty}</div>}
                           </div>
                           {/* Étiquette bas — propre et sobre */}
-                          <div style={{ padding:'6px 4px 8px' }}>
+                          <div style={{ padding:'8px 8px 6px' }}>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
                               {card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
@@ -1297,18 +1051,11 @@ export function Holdings() {
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
-                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'8px':'10px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
-                              {card.graded&&(()=>{
-                                const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
-                                const bg3=gn3>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn3>=9?'linear-gradient(135deg,#A8A8A8,#E8E8E8,#A8A8A8)':gn3>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#6E6E73'
-                                const fg3=gn3>=10?'#1a1200':gn3>=9?'#222':gn3>=5?'#2a1800':'#fff'
-                                const sh3=gn3>=10?'0 1px 4px rgba(201,168,76,.35)':gn3>=9?'0 1px 3px rgba(0,0,0,.08)':'none'
-                                return <span style={{ fontSize:binderCols>=7?'7px':'8px', fontWeight:800, background:bg3, color:fg3, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', backgroundSize:gn3>=10?'300% 100%':'auto', animation:gn3>=10?'goldShine 3s ease-in-out infinite':'none', marginLeft:'2px' }}>{card.condition}</span>
-                              })()}
+                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px' }}>{card.rarity}</span>}
                             </div>
                           </div>
-                          <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeCard(card,e)}
-                            style={{ position:'absolute', top:'4px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(250,251,252,.94)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'16px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .18s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
+                          <button className="remove-btn" onClick={e=>removeCard(card,e)}
+                            style={{ position:'absolute', top:'5px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(250,251,252,.94)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'16px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .18s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
                             Retirer
                           </button>
                         </div>
@@ -1316,7 +1063,7 @@ export function Holdings() {
                     })}
                     {Array.from({length:phantomCount}).map((_,i)=>(
                       <div key={'ph-'+i} onClick={()=>setAddOpen(true)}
-                        style={{ aspectRatio:'63/88', borderRadius:'10px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}
+                        style={{ aspectRatio:'2/3', borderRadius:'10px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}
                         onMouseEnter={e=>{ e.currentTarget.style.borderColor='#D2D2D7'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform='scale(1.02)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.05)' }}
                         onMouseLeave={e=>{ e.currentTarget.style.borderColor='#C7C7CC'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.08)' }}>
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'6px' }}>
@@ -1348,18 +1095,18 @@ export function Holdings() {
               </div>
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 <select value={showcaseBg} onChange={e=>setShowcaseBg(e.target.value)}
-                  style={{ height:'36px', padding:'0 28px 0 12px', borderRadius:'99px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', appearance:'none' as const, backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1L5 5L9 1\' stroke=\'%2348484A\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")', backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-                  <option value="obsidienne">Obsidienne & Or</option>
-                  <option value="nuit">Nuit Etoilee</option>
-                  <option value="jade">Jade Imperial</option>
-                  <option value="pokedex">Interface Pokedex</option>
-                  <option value="holodex">Pokedex Holo</option>
-                  <option value="centre">Centre Pokemon</option>
-                  <option value="labo">Labo Pr. Chen</option>
+                  style={{ height:'38px', padding:'0 10px', borderRadius:'10px', background:'#E8E8ED', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', cursor:'pointer', fontFamily:'var(--font-display)', outline:'none' }}>
+                  <option value="obsidienne" style={{background:'#111'}}>⬛ Obsidienne & Or</option>
+                  <option value="nuit"       style={{background:'#111'}}>🌌 Nuit Étoilée</option>
+                  <option value="jade"       style={{background:'#111'}}>🟢 Jade Impérial</option>
+                  <option value="pokedex"    style={{background:'#111'}}>📱 Interface Pokédex</option>
+                  <option value="holodex"    style={{background:'#111'}}>🔵 Pokédex Holo</option>
+                  <option value="centre"     style={{background:'#111'}}>🏥 Centre Pokémon</option>
+                  <option value="labo"       style={{background:'#111'}}>🔬 Labo Pr. Chen</option>
                 </select>
                 <button onClick={()=>setShowInfo(v=>!v)}
-                  style={{ padding:'0', width:'36px', height:'36px', borderRadius:'99px', background:showInfo?'#F5F5F7':'#F5F5F7', border:'1px solid #E5E5EA', color:showInfo?'#1D1D1F':'#AEAEB2', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{showInfo?<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z"/>:<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/>}</svg>
+                  style={{ padding:'9px 14px', borderRadius:'10px', background:showInfo?'rgba(29,29,31,.06)':'transparent', border:'1.5px solid #D1CEC9', color:showInfo?'rgba(29,29,31,.6)':'rgba(29,29,31,.24)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', whiteSpace:'nowrap' as const }}>
+                  {showInfo ? '👁 Masquer les infos' : '🙈 Afficher les infos'}
                 </button>
                 <button onClick={()=>{ setShareCtx('showcase'); setShareCard(null); setShareOpen(true) }}
                   disabled={showcase.length===0}
@@ -1384,7 +1131,7 @@ export function Holdings() {
               </div>
             ):(
               /* ── VITRINE LUXE ── */
-              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 48px 52px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(255,255,255,.03),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.1)' }}>
+              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 40px 44px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(29,29,31,.05),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.6)' }}>
                 {showcaseBg==='obsidienne'&&<>
                   <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(201,168,76,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.05) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
                   <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.06) 0%,transparent 60%)', pointerEvents:'none' }}/>
@@ -1431,7 +1178,7 @@ export function Holdings() {
                     const shimDelay=idx*0.9
                     const isFeat = showcase.length>1 && idx===Math.floor((showcase.length-1)/2)
                     return (
-                      <div key={card.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', animation:`showcaseReveal .6s ${idx*.12}s cubic-bezier(.16,1,.3,1) both`, position:'relative', zIndex:1 }}>
+                      <div key={card.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', position:'relative', zIndex:1 }}>
                         {/* Spotlight cone */}
                         <div style={{ position:'absolute', top:'-80px', left:'50%', transform:'translateX(-50%)', width:'200px', height:'160px', background:`radial-gradient(ellipse at 50% 0%,${isGold?'rgba(255,240,150,.18)':isFeat?`${ec}28`:'rgba(29,29,31,.05)'} 0%,transparent 60%)`, pointerEvents:'none' }}/>
 
@@ -1451,7 +1198,7 @@ export function Holdings() {
                             const x=((e.clientX-r.left)/r.width-.5)*16
                             const y=((e.clientY-r.top)/r.height-.5)*-20
                             el.style.transform=`perspective(700px) rotateY(${x}deg) rotateX(${y}deg) translateY(-20px) scale(1.05)`
-                            el.style.boxShadow=`0 ${24+Math.abs(y)*1.2}px 48px rgba(0,0,0,.45), 0 0 50px ${ec}20, 0 0 0 1px ${borderCol}`
+                            el.style.boxShadow=`0 ${28+Math.abs(y)*1.5}px 50px rgba(0,0,0,.65), 0 0 0 1px ${borderCol}`
                           }}
                           onMouseEnter={e=>{
                             const el=e.currentTarget as HTMLElement
@@ -1459,7 +1206,7 @@ export function Holdings() {
                             el.style.animation='none'
                             el.style.transition='transform .35s cubic-bezier(.34,1.3,.64,1),box-shadow .35s ease'
                             el.style.transform='perspective(700px) translateY(-20px) scale(1.05)'
-                            el.style.boxShadow=`0 24px 50px rgba(0,0,0,.5), 0 0 60px ${ec}25, 0 0 0 1px ${borderCol}`
+                            el.style.boxShadow=`0 32px 50px rgba(0,0,0,.65), 0 0 0 1px ${borderCol}`
                             setTimeout(()=>{ if(el.dataset.hovered) el.style.transition='none' }, 350)
                           }}
                           onMouseLeave={e=>{
@@ -1500,41 +1247,36 @@ export function Holdings() {
                           {isGold&&<div style={{ position:'absolute', top:'8px', right:'8px', fontSize:'8px', fontWeight:800, background:'rgba(255,215,0,.15)', border:'1px solid rgba(255,215,0,.4)', color:'#FFD740', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)' }}>★ Gold</div>}
 
                           {/* Retirer */}
-                          <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeFromShowcase(card.id,e)}
+                          <button className="remove-btn" onClick={e=>removeFromShowcase(card.id,e)}
                             style={{ position:'absolute', top:'7px', left:'7px', zIndex:10, background:'rgba(240,239,237,.94)', backdropFilter:'blur(4px)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'7px', padding:'3px 9px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .2s', pointerEvents:'all' }}>
                             Retirer
                           </button>
                         </div>
                         {/* Socle métal */}
-                        <div style={{ width:'200px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.6)':ec+'60'},transparent)`, marginTop:'16px', transition:'width .4s' }}/>
-                        <div style={{ width:'160px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.25)':ec+'25'},transparent)`, marginTop:'3px', transition:'width .4s' }}/>
+                        <div style={{ width:'180px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.5)':ec+'50'},transparent)`, marginTop:'14px', transition:'width .4s' }}/>
+                        <div style={{ width:'140px', height:'1px', background:`linear-gradient(90deg,transparent,${isGold?'rgba(255,215,0,.2)':ec+'20'},transparent)`, marginTop:'2px', transition:'width .4s' }}/>
                         {/* Ombre sol */}
-                        <div style={{ width:'180px', height:'20px', background:`radial-gradient(ellipse at 50% 0%,rgba(0,0,0,.6) 0%,transparent 70%)`, marginTop:'4px', transition:'width .4s' }}/>
+                        <div style={{ width:'160px', height:'16px', background:`radial-gradient(ellipse at 50% 100%,rgba(0,0,0,.9) 0%,transparent 70%)`, marginTop:'4px', transition:'width .4s' }}/>
                         {/* Étiquette luxe */}
-                        <div style={{ marginTop:'20px', textAlign:'center', opacity:showInfo?1:0, transition:'opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1)', transform:showInfo?'translateY(0)':'translateY(8px)', minWidth:'190px', maxWidth:'240px' }}>
+                        <div style={{ marginTop:'18px', textAlign:'center', opacity:showInfo?1:0, transition:'opacity .4s ease', minWidth:'180px', maxWidth:'220px' }}>
                           {/* Ligne décorative */}
                           <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px', justifyContent:'center' }}>
-                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to right,transparent,${isGold?'rgba(255,215,0,.4)':'rgba(255,255,255,.12)'})` }}/>
-                            <div style={{ width:'4px', height:'4px', borderRadius:'50%', background:isGold?'rgba(255,215,0,.6)':'#E03020' }}/>
-                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to left,transparent,${isGold?'rgba(255,215,0,.4)':'rgba(255,255,255,.12)'})` }}/>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to right,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(29,29,31,.07)'})` }}/>
+                            <div style={{ width:'4px', height:'4px', borderRadius:'50%', background:isGold?'rgba(255,215,0,.6)':'rgba(29,29,31,.16)' }}/>
+                            <div style={{ flex:1, height:'1px', background:`linear-gradient(to left,transparent,${isGold?'rgba(255,215,0,.3)':'rgba(29,29,31,.07)'})` }}/>
                           </div>
                           {/* Nom */}
-                          <div style={{ fontSize:'14px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', letterSpacing:'.06em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
+                          <div style={{ fontSize:'12px', fontWeight:600, color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'.08em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
                           {/* Prix */}
-                          <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', letterSpacing:'-.02em', lineHeight:1, marginBottom:'8px' }}>
+                          <div style={{ fontSize:'20px', fontWeight:700, color:priceCol, fontFamily:'var(--font-display)', letterSpacing:'.04em', lineHeight:1, marginBottom:'6px' }}>
                             {card.curPrice>0?card.curPrice.toLocaleString('fr-FR')+' €':'—'}
                           </div>
                           {/* Meta */}
                           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                            <span style={{ fontSize:'14px' }}>{ls.flag}</span>
-                            {card.rarity&&<span style={{ fontSize:'10px', color:'rgba(255,255,255,.45)', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>{card.rarity}</span>}
-                            {card.graded&&(()=>{
-                            const gn=parseInt(card.condition.replace(/[^0-9]/g,''))
-                            const gp=gn>=10||card.condition.includes('10')
-                            const gh=gn>=9||card.condition.includes('9.5')||card.condition.includes('9')
-                            return <span style={{ fontSize:'9px', fontWeight:800, fontFamily:'var(--font-data)', color:gp?'#FFD700':gh?'#D2D2D7':'rgba(255,255,255,.5)', letterSpacing:'.03em' }}>{card.condition}</span>
-                          })()}
-                            {roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>{roi>=0?'+':''}{roi}%</span>}
+                            <span style={{ fontSize:'12px' }}>{ls.flag}</span>
+                            {card.rarity&&<span style={{ fontSize:'9px', color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'.06em' }}>{card.rarity}</span>}
+                            {card.graded&&<span style={{ fontSize:'9px', color:'#48484A', fontFamily:'var(--font-display)', fontWeight:600 }}>⭐ {card.condition}</span>}
+                            {roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'9px', fontWeight:700, color:roi>=0?'#4ECCA3':'#FF6B8A' }}>{roi>=0?'+':''}{roi}%</span>}
                           </div>
                         </div>
                       </div>
@@ -1548,16 +1290,65 @@ export function Holdings() {
 
         {/* WRAPPED */}
         {view==='wrapped'&&(
-          <WrappedView
-            portfolio={portfolio}
-            totalCur={totalCur}
-            totalBuy={totalBuy}
-            totalROI={totalROI}
-            totalGain={totalGain}
-            bestCard={bestCard}
-            favs={favs}
-            onShare={()=>{ setShareCtx('wrapped'); setShareCard(null); setShareOpen(true) }}
-          />
+          <div style={{ position:'relative', zIndex:1, animation:'wrappedIn .35s ease-out' }}>
+            <div style={{ padding:'40px 28px 28px', textAlign:'center', position:'relative', overflow:'hidden' }}>
+              <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 50% 60%,rgba(255,107,53,.12) 0%,transparent 55%)', pointerEvents:'none' }}/>
+              <div style={{ position:'relative' }}>
+                <div style={{ fontSize:'11px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.18em', fontFamily:'var(--font-display)', marginBottom:'12px' }}>Ta collection en chiffres</div>
+                <div style={{ fontSize:'52px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>
+                  {portfolio.length>0?'EUR '+totalCur.toLocaleString('fr-FR'):'---'}
+                </div>
+                {totalBuy>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', marginTop:'8px', fontWeight:500 }}>+{totalROI}% depuis achat | +EUR {totalGain.toLocaleString('fr-FR')}</div>}
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', borderTop:'1px solid #E5E5EA', borderBottom:'1px solid #E5E5EA' }}>
+              {([
+                {l:'Cartes',v:String(portfolio.length),c:undefined},
+                {l:'Meilleur ROI',v:bestCard&&bestCard.buyPrice>0?'+'+Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)+'%':'---',c:'#D97706'},
+                {l:'Signaux S',v:String(portfolio.filter(c=>c.signal==='S').length),c:undefined},
+                {l:'Favoris',v:String(favs.size),c:undefined},
+              ]).map((s,i)=>(
+                <div key={s.l} style={{ padding:'18px', borderRight:i<3?'1px solid #E5E5EA':'none', textAlign:'center' }}>
+                  <div style={{ fontSize:'28px', fontWeight:600, color:s.c??'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px' }}>{s.v}</div>
+                  <div style={{ fontSize:'10px', color:'#48484A', marginTop:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {portfolio.filter(c=>c.buyPrice>0).length>0?(
+              <div style={{ padding:'24px 28px' }}>
+                <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:'14px' }}>Tes cartes les plus performantes</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {[...portfolio].filter(c=>c.buyPrice>0).sort((a,b)=>((b.curPrice-b.buyPrice)/b.buyPrice)-((a.curPrice-a.buyPrice)/a.buyPrice)).slice(0,3).map((card,i)=>{
+                    const roi=Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100), ec=EC[card.type]??'#888'
+                    return(
+                      <div key={card.id} style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'10px', padding:'8px 14px', display:'flex', alignItems:'center', gap:'12px' }}>
+                        <div style={{ fontSize:'20px', flexShrink:0 }}>{['1','2','3'][i]}</div>
+                        <div style={{ width:'36px', height:'36px', borderRadius:'9px', background:`linear-gradient(145deg,${ec}25,${ec}10)`, border:`1px solid ${ec}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <div style={{ width:'14px', height:'14px', borderRadius:'50%', background:ec, opacity:.7 }}/>
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:'13px', fontWeight:500, color:'#3A3A3C', fontFamily:'var(--font-display)' }}>{card.name}</div>
+                          <div style={{ fontSize:'10px', color:'#48484A' }}>{card.set} - {card.year}</div>
+                        </div>
+                        <div style={{ textAlign:'right' }}>
+                          <div style={{ fontSize:'16px', fontWeight:600, color:'#4ECCA3', fontFamily:'var(--font-display)' }}>+{roi}%</div>
+                          <div style={{ fontSize:'11px', color:'#48484A' }}>EUR {card.curPrice}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ):(
+              <div style={{ textAlign:'center', padding:'40px', color:'#6E6E73', fontSize:'13px', fontFamily:'var(--font-display)' }}>
+                Ajoutez des cartes avec un prix d achat pour voir votre Wrapped
+              </div>
+            )}
+            <div style={{ padding:'0 28px 28px', display:'flex', gap:'8px' }}>
+              <button onClick={()=>{ setShareCtx('wrapped'); setShareCard(null); setShareOpen(true) }} className='btn-shimmer' style={{ flex:1, padding:'14px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager mon Wrapped 2026</button>
+              <button style={{ padding:'14px 20px', borderRadius:'12px', background:'#E8E8ED', color:'#48484A', border:'1px solid #E5E5EA', fontSize:'14px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Sauvegarder</button>
+            </div>
+          </div>
         )}
 
         {/* SHARE SHEET */}
@@ -1647,7 +1438,7 @@ export function Holdings() {
                   model:'claude-sonnet-4-20250514', max_tokens:500,
                   messages:[{role:'user',content:[
                     {type:'image',source:{type:'base64',media_type:file.type as 'image/jpeg'|'image/png'|'image/webp',data:b64}},
-                    {type:'text',text:'Identifie cette carte Pokemon TCG. Reponds UNIQUEMENT en JSON valide sans markdown: {"name":"nom exact","set":"nom du set","lang":"EN ou FR ou JP","type":"fire ou water ou psychic ou dark ou electric ou grass ou normal","year":2023,"rarity":"rarity"}'}
+                    {type:'text',text:'Identifie cette carte Pokémon TCG. Réponds UNIQUEMENT en JSON valide sans markdown: {"name":"nom exact de la carte","set":"nom du set","lang":"EN ou FR ou JP","type":"fire ou water ou psychic ou dark ou electric ou grass ou normal","year":2023}'}
                   ]}]
                 })
               })
@@ -1659,104 +1450,61 @@ export function Holdings() {
                 name:parsed.name??'', set:parsed.set??'',
                 lang:(parsed.lang==='JP'?'JP':parsed.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
                 type:parsed.type??'fire', year:parsed.year??new Date().getFullYear(),
-                rarity:parsed.rarity??'', setId:'',image:'',setTotal:0,
+                setId:'',image:'',setTotal:0,
               }))
               setScannerOpen(false); setScannerImg(null); setScannerLoad(false)
-              setAddOpen(true); setNameValidated(true)
-              showToast('Carte identifiee — verifiez et ajoutez')
-            } catch { setScannerLoad(false); showToast('Identification echouee') }
+              setAddOpen(true)
+              showToast('Carte identifiée — vérifiez et ajoutez')
+            } catch { setScannerLoad(false); showToast('Identification échouée — saisissez manuellement') }
           }
           reader.readAsDataURL(file)
         }
         return (
-          <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px' }}
+          <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.9)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(10px)' }}
             onClick={()=>{ if(!scannerLoad){ setScannerOpen(false); setScannerImg(null) } }}>
-            <div style={{ maxWidth:'380px',width:'100%',background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.15)',overflow:'hidden',animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
-
-              {/* Header */}
-              <div style={{ padding:'18px 20px',borderBottom:'1px solid #E5E5EA',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+            <div style={{ maxWidth:'340px',width:'100%',animation:'welcomeIn .3s ease-out' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
                 <div>
-                  <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    <span style={{ fontSize:'16px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>Scanner une carte</span>
-                  </div>
-                  <div style={{ fontSize:'11px',color:'#86868B',marginTop:'3px',paddingLeft:'26px' }}>L'IA identifie automatiquement la carte</div>
+                  <div style={{ fontSize:'16px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>📷 Scanner une carte</div>
+                  <div style={{ fontSize:'11px',color:'#48484A',marginTop:'3px' }}>L'IA identifie automatiquement la carte</div>
                 </div>
-                {!scannerLoad&&(
-                  <button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ width:'28px',height:'28px',borderRadius:'50%',background:'#F0F0F5',border:'none',color:'#86868B',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                    onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
+                {!scannerLoad&&<button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ background:'none',border:'none',color:'#48484A',cursor:'pointer',fontSize:'20px',padding:0 }}>×</button>}
+              </div>
+
+              {/* Frame */}
+              <div className="scan-frame" style={{ position:'relative',width:'100%',aspectRatio:'63/88',borderRadius:'14px',border:'2px solid rgba(16,185,129,.4)',background:'#0a0a0a',overflow:'hidden',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center' }}>
+                {scannerImg ? (
+                  <img src={scannerImg} alt="scan" style={{ width:'100%',height:'100%',objectFit:'contain' }}/>
+                ) : (
+                  <>
+                    <div style={{ textAlign:'center',color:'#6E6E73' }}>
+                      <div style={{ fontSize:'40px',marginBottom:'8px' }}>🎴</div>
+                      <div style={{ fontSize:'11px',fontFamily:'var(--font-display)' }}>Photo de la carte</div>
+                    </div>
+                    {/* Scan line */}
+                    <div className="scan-line" style={{ position:'absolute',left:0,right:0,height:'2px',background:'linear-gradient(90deg,transparent,rgba(16,185,129,.8),transparent)',pointerEvents:'none' }}/>
+                    {/* Corner marks */}
+                    {[[0,0,'top','left'],[0,100,'top','right'],[100,0,'bottom','left'],[100,100,'bottom','right']].map(([t,l,tb,lr],ci)=>(
+                      <div key={ci} style={{ position:'absolute',[tb as string]:'-1px',[lr as string]:'-1px',width:'18px',height:'18px',borderTop:tb==='top'?'2px solid #10b981':'none',borderBottom:tb==='bottom'?'2px solid #10b981':'none',borderLeft:lr==='left'?'2px solid #10b981':'none',borderRight:lr==='right'?'2px solid #10b981':'none' }}/>
+                    ))}
+                  </>
+                )}
+                {scannerLoad&&(
+                  <div style={{ position:'absolute',inset:0,background:'rgba(250,251,252,.92)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
+                    <div style={{ width:'24px',height:'24px',border:'2px solid rgba(16,185,129,.3)',borderTop:'2px solid #10b981',borderRadius:'50%',animation:'spin .8s linear infinite' }}/>
+                    <div style={{ fontSize:'11px',color:'#48484A',fontFamily:'var(--font-display)' }}>Identification en cours…</div>
+                  </div>
                 )}
               </div>
 
-              <div style={{ padding:'20px' }}>
-                {/* Frame */}
-                <div style={{ position:'relative',width:'100%',aspectRatio:'3/4',borderRadius:'16px',border:`2px dashed ${scannerImg?'#2E9E6A':'#D2D2D7'}`,background:'#FAFAFA',overflow:'hidden',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center',cursor:scannerLoad?'default':'pointer',transition:'all .2s' }}
-                  onClick={()=>{if(!scannerLoad) fileRef.current?.click()}}
-                  onMouseEnter={e=>{if(!scannerImg&&!scannerLoad)e.currentTarget.style.borderColor='#86868B'}}
-                  onMouseLeave={e=>{if(!scannerImg&&!scannerLoad)e.currentTarget.style.borderColor='#D2D2D7'}}>
-                  {scannerImg ? (
-                    <img src={scannerImg} alt="scan" style={{ width:'100%',height:'100%',objectFit:'contain' }}/>
-                  ) : (
-                    <div style={{ textAlign:'center' }}>
-                      <div style={{ width:'48px',height:'48px',borderRadius:'14px',background:'#F0F0F5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      </div>
-                      <div style={{ fontSize:'13px',color:'#48484A',fontFamily:'var(--font-display)',marginBottom:'4px' }}>Photographiez votre carte</div>
-                      <div style={{ fontSize:'11px',color:'#AEAEB2' }}>Cliquez ou glissez une photo</div>
-                    </div>
-                  )}
-                  {/* Corner marks */}
-                  {!scannerImg&&!scannerLoad&&(
-                    <>
-                      <div style={{ position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #1D1D1F',borderLeft:'2px solid #1D1D1F',borderRadius:'2px 0 0 0' }}/>
-                      <div style={{ position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #1D1D1F',borderRight:'2px solid #1D1D1F',borderRadius:'0 2px 0 0' }}/>
-                      <div style={{ position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #1D1D1F',borderLeft:'2px solid #1D1D1F',borderRadius:'0 0 0 2px' }}/>
-                      <div style={{ position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #1D1D1F',borderRight:'2px solid #1D1D1F',borderRadius:'0 0 2px 0' }}/>
-                    </>
-                  )}
-                  {/* Loading overlay */}
-                  {scannerLoad&&(
-                    <div style={{ position:'absolute',inset:0,background:'rgba(255,255,255,.9)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
-                      <div style={{ width:'24px',height:'24px',border:'2px solid #E5E5EA',borderTop:'2px solid #1D1D1F',borderRadius:'50%',animation:'spin .8s linear infinite' }}/>
-                      <div style={{ fontSize:'12px',color:'#1D1D1F',fontWeight:600,fontFamily:'var(--font-display)' }}>Identification en cours</div>
-                      <div style={{ fontSize:'10px',color:'#86868B' }}>Analyse par IA...</div>
-                    </div>
-                  )}
-                </div>
-
-                <input type="file" accept="image/*" capture="environment" style={{ display:'none' }}
-                  ref={el=>{ fileRef.current=el }}
-                  onChange={e=>{ const f=e.target.files?.[0]; if(f) handleScan(f) }}/>
-
-                {/* Buttons */}
-                <div style={{ display:'flex',gap:'8px' }}>
-                  <button disabled={scannerLoad}
-                    onClick={()=>fileRef.current?.click()}
-                    style={{ flex:1,padding:'13px',borderRadius:'12px',background:scannerLoad?'#F0F0F5':'#1D1D1F',border:'none',color:scannerLoad?'#AEAEB2':'#fff',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .15s',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px' }}
-                    onMouseEnter={e=>{if(!scannerLoad)e.currentTarget.style.background='#333'}}
-                    onMouseLeave={e=>{if(!scannerLoad)e.currentTarget.style.background='#1D1D1F'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    {scannerLoad ? 'Analyse...' : scannerImg ? 'Nouvelle photo' : 'Prendre une photo'}
-                  </button>
-                  {scannerImg&&!scannerLoad&&(
-                    <button onClick={()=>setScannerImg(null)}
-                      style={{ padding:'13px 18px',borderRadius:'12px',background:'#F5F5F7',border:'1px solid #E5E5EA',color:'#48484A',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.background='#EDEDF0'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='#F5F5F7'}}>
-                      Effacer
-                    </button>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div style={{ display:'flex',alignItems:'center',gap:'6px',marginTop:'12px',padding:'8px 10px',borderRadius:'8px',background:'#F5F5F7' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                  <span style={{ fontSize:'10px',color:'#86868B',fontFamily:'var(--font-display)',lineHeight:1.4 }}>Sur mobile, utilisez la camera. La carte sera identifiee par l'IA et pre-remplie dans le formulaire d'ajout.</span>
-                </div>
-              </div>
+              <input type="file" accept="image/*" capture="environment" style={{ display:'none' }}
+                ref={el=>{ fileRef.current=el }}
+                onChange={e=>{ const f=e.target.files?.[0]; if(f) handleScan(f) }}/>
+              <button disabled={scannerLoad}
+                onClick={()=>fileRef.current?.click()}
+                style={{ width:'100%',padding:'13px',borderRadius:'10px',background:scannerLoad?'rgba(16,185,129,.15)':'linear-gradient(135deg,#059669,#10b981)',border:'none',color:'#1D1D1F',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .2s' }}>
+                {scannerLoad ? 'Analyse…' : scannerImg ? 'Réanalyser' : 'Choisir une photo'}
+              </button>
             </div>
           </div>
         )

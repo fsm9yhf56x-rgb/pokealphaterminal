@@ -2,7 +2,7 @@ const BASE = 'https://api.tcgdex.net/v2'
 const TTL  = 24 * 60 * 60 * 1000
 
 export interface TCGSet     { id:string; name:string; lang:string; total?:number; releaseDate?:string }
-export interface TCGCard    { id:string; name:string; localId:string; image?:string }
+export interface TCGCard    { id:string; name:string; localId:string; image?:string; rarity?:string }
 export interface TCGCardFull {
   id:string; localId:string; name:string; image?:string
   category?:string; hp?:number; types?:string[]; rarity?:string
@@ -43,7 +43,7 @@ export async function fetchCardsForSet(lang:Lang, setId:string): Promise<TCGCard
   const res=await fetch(`${BASE}/${l}/sets/${setId}`)
   if (!res.ok) throw new Error(`fetchCardsForSet ${setId} failed`)
   const raw:{cards?:Array<{id?:string;name:string;localId:string;image?:string}>}=await res.json()
-  const cards:TCGCard[]=(raw.cards??[]).map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image}))
+  const cards:TCGCard[]=(raw.cards??[]).map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image,rarity:(c as any).rarity}))
   setCache(key,cards); return cards
 }
 
@@ -53,7 +53,7 @@ export async function searchCards(lang:Lang, query:string): Promise<TCGCard[]> {
   const res=await fetch(`${BASE}/${l}/cards?name=${encodeURIComponent(query)}`)
   if (!res.ok) return []
   const raw:Array<{id?:string;name:string;localId:string;image?:string}>=await res.json()
-  const cards:TCGCard[]=raw.map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image}))
+  const cards:TCGCard[]=raw.map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image,rarity:(c as any).rarity}))
   setCache(key,cards); return cards
 }
 
@@ -63,7 +63,7 @@ export async function fetchAllCards(lang:Lang): Promise<TCGCard[]> {
   const res=await fetch(`${BASE}/${l}/cards`)
   if (!res.ok) throw new Error(`fetchAllCards ${lang} failed`)
   const raw:Array<{id?:string;name:string;localId:string;image?:string}>=await res.json()
-  const cards:TCGCard[]=raw.map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image}))
+  const cards:TCGCard[]=raw.map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image,rarity:(c as any).rarity}))
   setCache(key,cards); return cards
 }
 

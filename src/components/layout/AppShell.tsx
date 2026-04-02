@@ -7,7 +7,7 @@ const HEADER_H = '83px'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh', width:'100%' }}>
-      <div style={{ position:'fixed', top:0, left:0, right:0, zIndex:50 }}>
+      <div style={{ position:'fixed', top:0, left:0, right:0, zIndex:50, background:'rgba(255,255,255,.6)', backdropFilter:'saturate(180%) blur(20px)', WebkitBackdropFilter:'saturate(180%) blur(20px)' }}>
         <TickerBar />
         <TopNav />
       </div>

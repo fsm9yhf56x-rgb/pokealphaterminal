@@ -86,6 +86,23 @@ body {
 html { zoom: 1.1; }
 html, body { width: 100%; }
 
+
+/* ── APPLE GLASS TOKENS ── */
+:root {
+  --glass-bg: rgba(255,255,255,.72);
+  --glass-border: rgba(0,0,0,.06);
+  --glass-blur: saturate(180%) blur(20px);
+  --spring: cubic-bezier(.22,.68,0,1.1);
+  --spring-soft: cubic-bezier(.25,.46,.45,.94);
+  --ease-out-expo: cubic-bezier(.16,1,.3,1);
+}
+
+/* ── GLOBAL TRANSITIONS ── */
+
+
+::selection { background: rgba(224,48,32,.12); color: #1D1D1F; }
+
+
 /* Padding réduit sur mobile */
 @media (max-width: 768px) {
   main { padding: 16px !important; }
@@ -161,4 +178,155 @@ html, body { width: 100%; }
   flex: 1;
   height: 1px;
   background: linear-gradient(90deg, var(--border-strong), transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   POKÉALPHA · HOOK SYSTEM — Apple-grade micro-interactions
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── PAGE ENTRANCE ── */
+@keyframes pageIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+/* ── LINKS — smooth color ── */
+
+
+
+/* ── IMAGES — smooth load (opt-in only) ── */
+@keyframes imgReveal {
+  0% { opacity: 0; transform: scale(.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.img-reveal { animation: imgReveal .5s cubic-bezier(.16,1,.3,1) both; }
+
+/* ── INPUTS — premium focus ── */
+input:hover, select:hover {
+  border-color: #C7C7CC;
+}
+
+
+
+/* ── SCROLLBAR — fade in/out ── */
+::-webkit-scrollbar-thumb {
+  transition: background .2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #86868B !important;
+}
+
+/* ── SHIMMER — réutilisable ── */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── GLOW PULSE — pour badges, signaux ── */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,48,32,0); }
+  50% { box-shadow: 0 0 0 6px rgba(224,48,32,.08); }
+}
+
+/* ── COUNTER REVEAL — chiffres animés ── */
+@keyframes counterIn {
+  0% { opacity: 0; transform: translateY(8px); filter: blur(3px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ── STAGGER SYSTEM — classes utilitaires ── */
+.reveal { animation: pageIn .45s cubic-bezier(.16,1,.3,1) both; }
+.reveal-1 { animation-delay: .06s; }
+.reveal-2 { animation-delay: .12s; }
+.reveal-3 { animation-delay: .18s; }
+.reveal-4 { animation-delay: .24s; }
+.reveal-5 { animation-delay: .30s; }
+
+/* ── HOVER LIFT — classe utilitaire ── */
+.hover-lift {
+  transition: transform .25s cubic-bezier(.22,.68,0,1.1), box-shadow .3s !important;
+  cursor: pointer;
+}
+.hover-lift:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04) !important;
+}
+.hover-lift:active {
+  transform: translateY(-1px) scale(.99) !important;
+  transition-duration: .08s !important;
+}
+
+/* ── GLASS CARD — classe utilitaire ── */
+.glass {
+  background: rgba(255,255,255,.72) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  border: 1px solid rgba(0,0,0,.06) !important;
+}
+
+/* ── BADGE SHIMMER — pour Pro, Tier S ── */
+.badge-glow {
+  position: relative;
+  overflow: hidden;
+}
+.badge-glow::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.3) 45%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.3) 55%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── TOOLTIP SPRING ── */
+@keyframes tooltipIn {
+  0% { opacity: 0; transform: translateY(4px) scale(.95); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── BORDER GRADIENT — accent subtil ── */
+.border-accent {
+  border-image: linear-gradient(135deg, #E03020, #FF6B35) 1;
+}
+
+/* ── POKÉBALL LOADER ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ── SKELETON LOADING — shimmer élégant ── */
+@keyframes skeletonShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #F5F5F7 0%, #EDEDF0 40%, #F5F5F7 80%);
+  background-size: 400px 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+
+
+/* ── SMOOTH THEME ── */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── REDUCED MOTION ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

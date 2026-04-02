@@ -80,9 +80,11 @@ export function Holdings() {
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
   const [setSearch,   setSetSearch]   = useState('')
+  const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'>('number')
+  const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
-  const [binderCols,  setBinderCols]  = useState(6)
+  const [binderCols,  setBinderCols]  = useState(7)
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
@@ -260,8 +262,20 @@ export function Holdings() {
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = binderCols*3
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
-  const binderPages = Math.max(1,Math.ceil(binderFiltered.length/slotsPer))
-  const pageItems   = binderFiltered.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
+  const binderPages = Math.max(1,Math.ceil((binderFilter==='all'?binderFiltered.length:binderFiltered.filter(c=>binderFilter==='graded'?c.graded:binderFilter==='raw'?!c.graded:['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare','Holo Rare'].includes(c.rarity)).length)/slotsPer))
+  const binderSorted = [...binderFiltered].sort((a,b)=>{
+    if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
+    if(binderSort==='name') return a.name.localeCompare(b.name)
+    if(binderSort==='price') return b.curPrice-a.curPrice
+    return 0
+  })
+  const binderFilteredFinal = binderSorted.filter(c=>{
+    if(binderFilter==='graded' && !c.graded) return false
+    if(binderFilter==='raw' && c.graded) return false
+    if(setSearch && !c.name.toLowerCase().includes(setSearch.toLowerCase()) && !c.set.toLowerCase().includes(setSearch.toLowerCase())) return false
+    return true
+  })
+  const pageItems   = binderFilteredFinal.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
   const phantomCount = binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
 
   const showToast = (msg:string) => {
@@ -1175,16 +1189,33 @@ export function Holdings() {
                   /* VUE SETS — SHELF */
                   <div style={{ display:'flex', flexDirection:'column', gap:'0' }}>
                     {true&&(
-                      <div style={{ position:'relative', marginBottom:'18px' }}>
-                        <input
-                          type="text"
-                          placeholder="Rechercher un set..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
-                          value={setSearch}
-                          onChange={e=>setSetSearch(e.target.value)}
-                          style={{ width:'100%', padding:'9px 14px 9px 36px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
-                        />
-                        <div style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'13px', color:'#48484A', pointerEvents:'none' }}>🔍</div>
-                        {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
+                      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
+                        <div style={{ position:'relative', flex:1, minWidth:'120px' }}>
+                          <input
+                            type="text"
+                            placeholder="Rechercher un set..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                            value={setSearch}
+                            onChange={e=>setSetSearch(e.target.value)}
+                            style={{ width:'100%', padding:'7px 12px 7px 32px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
+                          />
+                          <div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'#AEAEB2', pointerEvents:'none' }}>🔍</div>
+                          {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
+                        </div>
+                        <div style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
+                          {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
+                            <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
+                              style={{ padding:'5px 12px',borderRadius:'99px',border:`1px solid ${binderFilter===fi.k?'#1D1D1F':'#E5E5EA'}`,background:binderFilter===fi.k?'#1D1D1F':'transparent',color:binderFilter===fi.k?'#fff':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                              {fi.l}
+                            </button>
+                          ))}
+                          <div style={{ width:'1px',height:'16px',background:'#E5E5EA',margin:'0 2px' }}/>
+                          {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
+                            <button key={so.k} onClick={()=>setBinderSort(so.k)}
+                              style={{ padding:'5px 10px',borderRadius:'99px',border:`1px solid ${binderSort===so.k?'#E03020':'#E5E5EA'}`,background:binderSort===so.k?'#FFF1EE':'transparent',color:binderSort===so.k?'#E03020':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                              {so.l}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
@@ -1196,7 +1227,16 @@ export function Holdings() {
                       const totalForDisplay=resolvedTotal
                       const ec2=EC[setCards[0]?.type??'fire']??'#888'
                       const isComplete=pct===100
-                      const cardImgs=setCards
+                      const cardImgs=[...setCards].filter(c=>{
+                        if(binderFilter==='graded') return c.graded
+                        if(binderFilter==='raw') return !c.graded
+                        return true
+                      }).sort((a,b)=>{
+                        if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
+                        if(binderSort==='name') return a.name.localeCompare(b.name)
+                        if(binderSort==='price') return b.curPrice-a.curPrice
+                        return 0
+                      })
                       return (
                         <div key={setName} style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
                           {/* Header du set — XP Bar gamifiée exact artifact */}
@@ -1245,7 +1285,7 @@ export function Holdings() {
                                     </div>
                                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:'3px', padding:'0 1px' }}>
                                       {(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
-                                        <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor+'99':'rgba(29,29,31,.07)', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
+                                        <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor:'#86868B', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
                                       ))}
                                     </div>
                                     {isComplete&&<div style={{ textAlign:'center', marginTop:'5px' }}><span style={{ fontSize:'8px', color:'rgba(255,215,0,.45)', letterSpacing:'.1em' }}>★ COLLECTION COMPLÈTE ★</span></div>}
@@ -1296,13 +1336,15 @@ export function Holdings() {
                                   const sh=gn>=10?'0 2px 8px rgba(201,168,76,.4)':gn>=8?'0 2px 6px rgba(0,0,0,.1)':gn>=5?'0 2px 6px rgba(160,114,74,.2)':'0 1px 4px rgba(0,0,0,.15)'
                                   return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg, color:fg, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', backgroundSize:gn>=10?'300% 100%':'auto', animation:gn>=10?'goldShine 3s ease-in-out infinite':'none' }}>{card.condition}</div>
                                 })()}
-                                <div style={{ padding:'6px 6px 4px' }}>
+                                <div style={{ padding:'6px 6px 4px', position:'relative' }}>
+                                  <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
-                                    <span style={{ fontSize:'10px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
-                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
-                                    {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
+                                    <span style={{ fontSize:'12px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                                    {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
+                                    
                                   </div>
                                 </div>
                                 </div>
@@ -1313,7 +1355,13 @@ export function Holdings() {
                               </div>
                             ))}
                             {/* Carte + ajout */}
-                            <div onClick={()=>setAddOpen(true)}
+                            <div onClick={()=>{
+                                const lang=setCards[0]?.lang||'FR'
+                                const sid=setCards.find(c=>c.setId)?.setId || liveSets.find(ls=>ls.name===setName)?.id || liveSets.find(ls=>ls.name.toLowerCase()===setName.toLowerCase())?.id || ''
+                                setAddForm(p=>({...p, set:setName, setId:sid, lang}))
+                                if(sid){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(addForm.lang,sid).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                                setAddOpen(true)
+                              }}
                               style={{ flexShrink:0, width:'180px', aspectRatio:'63/88', borderRadius:'12px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .15s' }}
                               onMouseEnter={e=>{ e.currentTarget.style.borderColor='#D2D2D7'; e.currentTarget.style.background='#F0F0F5'; e.currentTarget.style.transform='scale(1.03)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)' }}
                               onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5EA'; e.currentTarget.style.background='#F5F5F7'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}>
@@ -1352,13 +1400,39 @@ export function Holdings() {
                       )
                     })}
                   </div>
-                ):(
+                ):(<>
+                  <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
+                    <div style={{ position:'relative', flex:1, minWidth:'120px' }}>
+                      <input type="text" placeholder="Rechercher une carte..."
+                        onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}}
+                        onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                        value={setSearch} onChange={e=>{setSetSearch(e.target.value);setBinderPage(0)}}
+                        style={{ width:'100%', padding:'7px 12px 7px 32px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                      <div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'#AEAEB2', pointerEvents:'none' }}>🔍</div>
+                      {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
+                    </div>
+                    <div style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
+                      {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
+                        <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
+                          style={{ padding:'5px 12px',borderRadius:'99px',border:`1px solid ${binderFilter===fi.k?'#1D1D1F':'#E5E5EA'}`,background:binderFilter===fi.k?'#1D1D1F':'transparent',color:binderFilter===fi.k?'#fff':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                          {fi.l}
+                        </button>
+                      ))}
+                      <div style={{ width:'1px',height:'16px',background:'#E5E5EA',margin:'0 2px' }}/>
+                      {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
+                        <button key={so.k} onClick={()=>setBinderSort(so.k)}
+                          style={{ padding:'5px 10px',borderRadius:'99px',border:`1px solid ${binderSort===so.k?'#E03020':'#E5E5EA'}`,background:binderSort===so.k?'#FFF1EE':'transparent',color:binderSort===so.k?'#E03020':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                          {so.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'1fr', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
                     {pageItems.map((card,idx)=>{
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
-                      const fsName=binderCols<=3?'14px':binderCols===4?'13px':binderCols===5?'12px':binderCols===6?'10px':'9px'
+                      const fsName=binderCols<=3?'15px':binderCols===4?'14px':binderCols===5?'13px':binderCols===6?'12px':'11px'
                       return (
                         <div key={card.id}
                           className='pocket-shell'
@@ -1390,10 +1464,11 @@ export function Holdings() {
                             {/* Badges positionnés sur l'image */}
                             {card.signal&&<div style={{ position:'absolute', top:'5px', right:'5px', fontSize:'8px', fontWeight:800, background:TIER_BG[card.signal], color:'#1D1D1F', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
 
-                            {card.qty>1&&<div style={{ position:'absolute', bottom:'4px', left:'5px', zIndex:2, background:'rgba(250,251,252,.94)', border:'1px solid rgba(29,29,31,.16)', borderRadius:'8px', padding:'1px 5px', fontSize:'8px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>×{card.qty}</div>}
+                            
                           </div>
                           {/* Étiquette bas — propre et sobre */}
-                          <div style={{ padding:'6px 4px 8px' }}>
+                          <div style={{ padding:'6px 4px 8px', position:'relative' }}>
+                            <span style={{ position:'absolute', bottom:'6px', right:'4px', fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
                               {card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
@@ -1401,7 +1476,7 @@ export function Holdings() {
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
-                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'8px':'10px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
+                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
                               {card.graded&&(()=>{
                                 const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
                                 const bg3=gn3>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn3>=9?'linear-gradient(135deg,#A8A8A8,#E8E8E8,#A8A8A8)':gn3>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#6E6E73'
@@ -1409,6 +1484,7 @@ export function Holdings() {
                                 const sh3=gn3>=10?'0 1px 4px rgba(201,168,76,.35)':gn3>=9?'0 1px 3px rgba(0,0,0,.08)':'none'
                                 return <span style={{ fontSize:binderCols>=7?'7px':'8px', fontWeight:800, background:bg3, color:fg3, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', backgroundSize:gn3>=10?'300% 100%':'auto', animation:gn3>=10?'goldShine 3s ease-in-out infinite':'none', marginLeft:'2px' }}>{card.condition}</span>
                               })()}
+                              
                             </div>
                           </div>
                           <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeCard(card,e)}
@@ -1429,7 +1505,7 @@ export function Holdings() {
                       </div>
                     ))}
                   </div>
-                )}
+                </>)}
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(

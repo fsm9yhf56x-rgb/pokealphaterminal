@@ -82,6 +82,7 @@ export function Holdings() {
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
   const [setSearch,   setSetSearch]   = useState('')
+  const [collapsedSets, setCollapsedSets] = useState<Set<string>>(new Set())
   const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'>('number')
   const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
@@ -751,7 +752,7 @@ export function Holdings() {
 
         .set-header:hover { background:rgba(0,0,0,.02) !important;border-radius:12px; }
         @keyframes nudgeRight { 0%,100%{transform:translateX(0)} 50%{transform:translateX(3px)} }
-        .set-header:hover .voir-pill { animation:nudgeRight .6s ease-in-out; }
+        .voir-pill { animation:nudgeRight 1.5s ease-in-out infinite; }
         .set-header:active { transform:scale(.998) !important; }
 
         .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
@@ -1378,7 +1379,7 @@ export function Holdings() {
                             const s4col=isComplete?'linear-gradient(90deg,#FF8C00,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
                             const segs=[[s1pct,s1col],[s2pct,s2col],[s3pct,s3col],[s4pct,s4col]]
                             return (
-                              <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer' }} onClick={()=>{ setBinderSet(setName); setBinderPage(0) }}>
+                              <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer' }} onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0 }}>{lvl}</div>
@@ -1397,7 +1398,8 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
-                                    <span className="voir-pill" style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap' }}>Voir le set ›</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .25s', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)' }}><path d="M6 9l6 6 6-6"/></svg>
+                                    <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir le set complet ›</span>
                                   </div>
                                 </div>
                                 {resolvedTotal>0&&(
@@ -1439,6 +1441,7 @@ export function Holdings() {
                             )
                           })()}
                           {/* Rayon de cartes */}
+                          <div style={{ maxHeight:collapsedSets.has(setName)?'0px':'3000px', overflow:'hidden', transition:'max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s', opacity:collapsedSets.has(setName)?0:1 }}>
                           <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any }}>
                             {cardImgs.map((item,ci)=>{
                               if(item.type==='ghost'){
@@ -1562,8 +1565,9 @@ export function Holdings() {
                               </div>
                             )
                           })()}
+                          </div>
                           {/* Séparateur */}
-                          {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:'20px' }}/>}
+                          {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
                         </div>
                       )
                     })}

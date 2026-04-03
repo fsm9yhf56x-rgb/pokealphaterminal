@@ -82,6 +82,11 @@ export function Holdings() {
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
   const [setSearch,   setSetSearch]   = useState('')
+  const [setOrder, setSetOrder] = useState<string[]>(()=>{
+    try { const r=localStorage.getItem('pka_set_order'); return r?JSON.parse(r):[] } catch { return [] }
+  })
+  const [dragSet, setDragSet] = useState<string|null>(null)
+  const [dragOverSet, setDragOverSet] = useState<string|null>(null)
   const [collapsedSets, setCollapsedSets] = useState<Set<string>>(()=>{
     try { const r=localStorage.getItem('pka_collapsed'); return r?new Set(JSON.parse(r)):new Set() } catch { return new Set() }
   })
@@ -117,6 +122,13 @@ export function Holdings() {
   }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
+  const [addSetOpen,   setAddSetOpen]   = useState(false)
+  const [addSetLang,   setAddSetLang]   = useState<'FR'|'EN'|'JP'>('FR')
+  const [addSetId,     setAddSetId]     = useState('')
+  const [addSetName,   setAddSetName]   = useState('')
+  const [addSetCards,  setAddSetCards]  = useState<TCGCard[]>([])
+  const [addSetLoading,setAddSetLoading]= useState(false)
+  const [addSetSets,   setAddSetSets]   = useState<TCGSet[]>([])
   const [uploadCardId, setUploadCardId] = useState<string|null>(null)
   const ghostClickRef = useRef(false)
   const uploadRef = useRef<HTMLInputElement|null>(null)
@@ -156,6 +168,7 @@ export function Holdings() {
   useEffect(()=>{ try { localStorage.setItem('pka_portfolio', JSON.stringify(portfolio)) } catch {} }, [portfolio])
   useEffect(()=>{ try { localStorage.setItem('pka_showcase', JSON.stringify(showcase)) } catch {} }, [showcase])
   useEffect(()=>{ try { localStorage.setItem('pka_collapsed', JSON.stringify([...collapsedSets])) } catch {} }, [collapsedSets])
+  useEffect(()=>{ try { localStorage.setItem('pka_set_order', JSON.stringify(setOrder)) } catch {} }, [setOrder])
 
   // ── FR sets reference (pour traduction JP) ──
   useEffect(() => {
@@ -319,6 +332,12 @@ export function Holdings() {
       .catch(() => setFullSetLoading(false))
   }, [binderSet, liveSets.length])
 
+  // -- Fetch sets pour modal ajouter serie --
+  useEffect(() => {
+    if (!addSetOpen) return
+    fetchSets(addSetLang).then(sets => setAddSetSets(sets)).catch(() => {})
+  }, [addSetOpen, addSetLang])
+
   const mmDrag = useRef<{active:boolean;setN:string;total:number}>({active:false,setN:'',total:0})
   const mmSyncScroll = (setName:string, total:number, clientX:number, mmEl:HTMLElement) => {
     const el = scrollRefs.current[setName]
@@ -379,7 +398,7 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const slotsPer  = (binderSet&&binderSet!=='__all__') ? binderCols*9 : binderCols*3
+  const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*3
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
   const binderSorted = [...binderFiltered].sort((a,b)=>{
@@ -611,7 +630,8 @@ export function Holdings() {
 
         /* ── MICRO-INTERACTIONS ───────── */
         button { transition:transform .15s cubic-bezier(.25,.46,.45,.94),opacity .15s,box-shadow .25s; }
-        button:active:not(:disabled) { transform:scale(.97) !important;transition-duration:.06s !important; }
+        button:active:not(:disabled):not(.remove-btn) { transform:scale(.97) !important;transition-duration:.06s !important; }
+        .pocket-shell:active:not(:has(.remove-btn:hover)) { transform:translateY(-3px) scale(.99) !important;transition-duration:.12s !important; }
         input:focus { box-shadow:0 0 0 3px rgba(224,48,32,.12) !important;border-color:#E03020 !important;transition:box-shadow .2s,border-color .2s; }
         /* ── CARD IMAGE SHINE ON HOVER ── */
         
@@ -765,6 +785,9 @@ export function Holdings() {
 
 
         /* ── GRADE VISUAL ── */
+        @keyframes masterPulse { 0%,100%{box-shadow:0 0 12px rgba(255,215,0,.2),0 0 4px rgba(255,215,0,.1)} 50%{box-shadow:0 0 24px rgba(255,215,0,.4),0 0 8px rgba(255,215,0,.2)} }
+        @keyframes masterShine { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes starSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
         @keyframes goldShine {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
@@ -805,7 +828,6 @@ export function Holdings() {
         .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 4px rgba(0,0,0,.02); }
         .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 16px 48px rgba(0,0,0,.08),0 6px 20px rgba(0,0,0,.03) !important; }
         
-        .pocket-shell:active { transform:translateY(-3px) scale(.99) !important;transition-duration:.12s !important; }
         @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 6px rgba(224,48,32,.06)} }
         .empty-pocket { animation:slotPulse 3s ease-in-out infinite; }
         .empty-pocket:hover { animation:none !important; }
@@ -1028,7 +1050,7 @@ export function Holdings() {
             <div className='add-modal' style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.06)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
-                  <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte ou un item</div>
+                  <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
                   <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
                 </div>
                 <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
@@ -1073,13 +1095,13 @@ export function Holdings() {
 
               <div style={{ marginBottom:'12px' }}>
                 <div className="req-label">
-                  Nom de la carte ou de l'item *
+                  Nom de la carte *
                   {addForm.set&&<span style={{ marginLeft:'6px', fontSize:'9px', color:'rgba(255,107,53,.5)', fontWeight:400 }}>{cardsLoading?'chargement…':liveCards.length>0?liveCards.length+' cartes':'encyclopédie'}</span>}
                 </div>
                 <div style={{ position:'relative' }}>
                   {nameValidated&&<div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', zIndex:2, pointerEvents:'none' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
                   <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
-                    placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte ou item…'}
+                    placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte…'}
                     className={addForm.name?'req-field-ok':'req-field'}
                     style={{ width:'100%', background:nameValidated?'#fff':'#F5F5F7', borderRadius:'10px', border:`1px solid ${nameValidated?'#2E9E6A':'#E5E5EA'}`, padding:'10px 12px 10px '+(nameValidated?'32px':'12px'), color:'#1D1D1F', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
                   {addSuggs.length>0&&(
@@ -1108,7 +1130,7 @@ export function Holdings() {
                 <div className="opt-label">Etat</div>
                 {/* Segmented control iOS-style */}
                 <div style={{ display:'flex', background:'#F0F0F5', borderRadius:'12px', padding:'3px', marginBottom:addForm.graded?'12px':'0' }}>
-                  {([{k:'Raw',l:'Raw (neuf)'},{k:'__graded__',l:'Grade'},{k:'Scelle',l:'Scelle'}] as const).map(opt=>{
+                  {([{k:'Raw',l:'Raw (neuf)'},{k:'__graded__',l:'Grade'}] as const).map(opt=>{
                     const active = opt.k==='__graded__' ? addForm.graded : (!addForm.graded && addForm.condition===opt.k)
                     return (
                       <button key={opt.k} onClick={()=>handleConditionChange(opt.k)}
@@ -1281,6 +1303,41 @@ export function Holdings() {
               </span>
                 <div style={{ height:'1px', width:'64px', background:'linear-gradient(to left, transparent, #AEAEB2)' }}/>
               </div>
+              <div style={{ marginTop:'12px', maxWidth:'320px', width:'100%', cursor:'pointer', position:'relative' }}
+                onClick={()=>{
+                  const sc=portfolio.filter(c=>c.set===binderSet)
+                  const existingNums=new Set(sc.map(c=>c.number))
+                  const toAdd=fullSetCards.filter(c=>!existingNums.has(c.localId||''))
+                  if(toAdd.length===0){showToast('Set déjà complet');return}
+                  const newCards:CardItem[]=toAdd.map(c=>({
+                    id:'u'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+                    name:c.name,set:binderSet||'',year:new Date().getFullYear(),
+                    number:c.localId||'',rarity:c.rarity||'',
+                    type:'fire',lang:sc[0]?.lang||'FR',
+                    condition:'Raw',graded:false,
+                    buyPrice:0,curPrice:0,qty:1,
+                    image:c.image||undefined,
+                    setId:sc[0]?.setId||'',setTotal:fullSetCards.length,
+                  }))
+                  setPortfolio(prev=>[...prev,...newCards])
+                  showToast(toAdd.length+' cartes ajoutées')
+                }}>
+                {(()=>{
+                  const sc2=portfolio.filter(c=>c.set===binderSet)
+                  const total2=fullSetCards.length||0
+                  const owned2=sc2.length
+                  const pct2=total2>0?Math.round(owned2/total2*100):0
+                  const missing2=Math.max(0,total2-owned2)
+                  if(missing2===0||total2===0) return null
+                  return (<>
+                    <div style={{ height:'8px',borderRadius:'4px',background:'#E8E8ED',overflow:'hidden' }}>
+                      <div style={{ width:pct2+'%',height:'100%',background:'linear-gradient(90deg,#ff6b35,#ff4433)',borderRadius:'4px',transition:'width .5s' }}/>
+                    </div>
+                    <div style={{ position:'absolute',right:0,top:'-2px',width:'12px',height:'12px',borderRadius:'50%',background:'#E03020',border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,.15)' }}/>
+                    <div style={{ fontSize:'10px',color:'#E03020',marginTop:'6px',textAlign:'right' as const,fontFamily:'var(--font-display)',fontWeight:500 }}>{'Ajouter les '+missing2+' ›'}</div>
+                  </>)
+                })()}
+              </div>
             </div>
           )}
         </div>
@@ -1311,8 +1368,14 @@ export function Holdings() {
                       onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'}}
                       onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                      Ajouter
+                      Ajouter une carte
                     </button>
+                    {(!binderSet||binderSet==='__all__')&&<button onClick={()=>{/* TODO: modal ajouter serie */setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}} style={{ padding:'7px 16px', borderRadius:'10px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
+                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                      Ajouter une série
+                    </button>}
                     <button onClick={()=>setImportOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
                       onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
                       onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
@@ -1325,7 +1388,7 @@ export function Holdings() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                       Scanner
                     </button>
-                    {(binderSet!==null)&&[6,7,8].map(n=>(
+                    {(binderSet!==null)&&[6,7,8,9].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
                     ))}
                     <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage===0?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8249;</button>
@@ -1374,7 +1437,11 @@ export function Holdings() {
                         </div>
                       </div>
                     )}
-                    {[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
+                    {(()=>{
+                      const raw=[...new Set(portfolio.map(c=>c.set))]
+                      const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw
+                      return ordered
+                    })().filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
                       const setCards=portfolio.filter(c=>c.set===setName)
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
@@ -1419,28 +1486,49 @@ export function Holdings() {
                             const s2pct=isComplete?100:Math.min(100,Math.max(0,(p-25)*4))
                             const s3pct=isComplete?100:Math.min(100,Math.max(0,(p-50)*4))
                             const s4pct=isComplete?100:Math.min(100,Math.max(0,(p-75)*4))
-                            const s1col=isComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#ff6b35,#ff4433)'
-                            const s2col=isComplete?'linear-gradient(90deg,#FF8C00,#FFD700)':'linear-gradient(90deg,#60a5fa,#3b82f6)'
-                            const s3col=isComplete?'linear-gradient(90deg,#FFD700,#FF8C00)':'linear-gradient(90deg,#34d399,#10b981)'
-                            const s4col=isComplete?'linear-gradient(90deg,#FF8C00,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
+                            const s1col=isComplete?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':'linear-gradient(90deg,#ff6b35,#ff4433)'
+                            const s2col=isComplete?'linear-gradient(90deg,#FFD700,#FFF1A8,#FFD700,#C9A84C,#FFD700)':'linear-gradient(90deg,#60a5fa,#3b82f6)'
+                            const s3col=isComplete?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':'linear-gradient(90deg,#34d399,#10b981)'
+                            const s4col=isComplete?'linear-gradient(90deg,#FFD700,#FFF1A8,#FFD700,#C9A84C,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
                             const segs=[[s1pct,s1col],[s2pct,s2col],[s3pct,s3col],[s4pct,s4col]]
                             return (
-                              <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer' }} onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
+                              <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer', opacity:dragSet===setName?.5:1, borderTop:dragOverSet===setName?'2px solid #E03020':'2px solid transparent', transition:'opacity .2s, border-color .2s' }}
+                                draggable
+                                onDragStart={e=>{setDragSet(setName);e.dataTransfer.effectAllowed='move'}}
+                                onDragEnd={()=>{setDragSet(null);setDragOverSet(null)}}
+                                onDragOver={e=>{e.preventDefault();if(dragSet&&dragSet!==setName)setDragOverSet(setName)}}
+                                onDragLeave={()=>setDragOverSet(null)}
+                                onDrop={e=>{
+                                  e.preventDefault()
+                                  if(!dragSet||dragSet===setName) return
+                                  const raw=[...new Set(portfolio.map(c=>c.set))]
+                                  const current=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw
+                                  const fromIdx=current.indexOf(dragSet)
+                                  const toIdx=current.indexOf(setName)
+                                  if(fromIdx<0||toIdx<0) return
+                                  const next=[...current]
+                                  next.splice(fromIdx,1)
+                                  next.splice(toIdx,0,dragSet)
+                                  setSetOrder(next)
+                                  setDragSet(null)
+                                  setDragOverSet(null)
+                                }}
+                                onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
-                                    <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0 }}>{lvl}</div>
+                                    <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0, boxShadow:isComplete?'0 0 12px rgba(255,215,0,.4)':'none', animation:isComplete?'masterPulse 3s ease-in-out infinite':'none' }}>{lvl}</div>
                                                                         {setLogos[setName]&&(
                                       <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
                                     <div>
-                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{setName}</div>
+                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:isComplete?'0 0 8px rgba(255,215,0,.2)':'none' }}>{setName}</div>
                                       {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; const frName=frSetsMap[sid]; const fullName=liveSets.find(ls=>ls.id===sid)?.name; const sub=frName&&frName!==setName?frName:fullName&&fullName!==setName?fullName:null; return sub?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{sub}</div>:null })()}
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
-                                    {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#1D1D1F', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.05em' }}>MASTER SET</span>}
+                                    {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)', backgroundSize:'300% 100%', animation:'masterShine 3s ease-in-out infinite', color:'#1a1200', padding:'3px 10px', borderRadius:'4px', letterSpacing:'.08em', boxShadow:'0 2px 8px rgba(255,215,0,.3)', display:'inline-flex', alignItems:'center', gap:'4px' }}><span style={{ fontSize:'10px' }}>{String.fromCharCode(9733)}</span>MASTER SET</span>}
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
@@ -1464,7 +1552,7 @@ export function Holdings() {
                                         <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor:'#86868B', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
                                       ))}
                                     </div>
-                                    {isComplete&&<div style={{ textAlign:'center', marginTop:'5px' }}><span style={{ fontSize:'8px', color:'rgba(255,215,0,.45)', letterSpacing:'.1em' }}>★ COLLECTION COMPLÈTE ★</span></div>}
+                                    
                                   </>
                                 )}
                                 {!resolvedTotal&&(
@@ -1562,10 +1650,12 @@ export function Holdings() {
                                   </div>
                                 </div>
                                 </div>
-                                <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeCard(card,e)}
-                                  style={{ position:'absolute', top:'5px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(255,255,255,.94)', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'5px 14px', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .15s', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)' }}>
-                                  Retirer
-                                </button>
+                                <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}
+                                  onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-6px)';p.style.transition='none'}}}
+                                  onClick={e=>{e.stopPropagation();removeCard(card,e)}}
+                                  style={{ position:'absolute', top:0, left:0, right:0, height:'25%', zIndex:20, cursor:'pointer', opacity:0, transition:'opacity .15s', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'8px', borderRadius:'12px 12px 0 0', background:'linear-gradient(to bottom, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 60%, transparent 100%)' }}>
+                                  <span style={{ background:'#fff', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'5px 14px', fontSize:'10px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)', pointerEvents:'none' }}>Retirer</span>
+                                </div>
                               </div>
                               )
                             })}
@@ -1613,7 +1703,7 @@ export function Holdings() {
                           })()}
                           </div>
                           {/* Séparateur */}
-                          {si<[...new Set(portfolio.map(c=>c.set))].filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
+                          {si<(()=>{const raw=[...new Set(portfolio.map(c=>c.set))];const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw;return ordered})().filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
                         </div>
                       )
                     })}
@@ -1742,10 +1832,12 @@ export function Holdings() {
                               
                             </div>
                           </div>
-                          <button className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}} onClick={e=>removeCard(card,e)}
-                            style={{ position:'absolute', top:'4px', left:'50%', transform:'translateX(-50%)', zIndex:20, background:'rgba(250,251,252,.94)', border:'1px solid #D2D2D7', color:'#3A3A3C', borderRadius:'16px', padding:'3px 10px', fontSize:'9px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', opacity:0, transition:'opacity .18s', whiteSpace:'nowrap', backdropFilter:'blur(4px)' }}>
-                            Retirer
-                          </button>
+                          <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}
+                            onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-8px)';p.style.transition='none'}}}
+                            onClick={e=>{e.stopPropagation();removeCard(card,e)}}
+                            style={{ position:'absolute', top:0, left:0, right:0, height:'25%', zIndex:20, cursor:'pointer', opacity:0, transition:'opacity .15s', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'6px', borderRadius:'10px 10px 0 0', background:'linear-gradient(to bottom, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 60%, transparent 100%)' }}>
+                            <span style={{ background:'#fff', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'4px 12px', fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)', pointerEvents:'none' }}>Retirer</span>
+                          </div>
                         </div>
                       )
                     })}
@@ -2060,6 +2152,105 @@ export function Holdings() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+            {/* ADD SET MODAL */}
+      {addSetOpen&&(
+        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px' }}
+          onClick={()=>setAddSetOpen(false)}>
+          <div style={{ background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.15)',padding:'24px',maxWidth:'480px',width:'100%',animation:'fadeUp .25s ease-out' }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'18px' }}>
+              <div>
+                <div style={{ fontSize:'17px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>Ajouter une série complète</div>
+                <div style={{ fontSize:'10px',marginTop:'3px',color:'#AEAEB2',fontWeight:500 }}>Toutes les cartes seront ajoutées en Raw</div>
+              </div>
+              <button onClick={()=>setAddSetOpen(false)} style={{ width:'28px',height:'28px',borderRadius:'50%',background:'#F0F0F5',border:'none',color:'#86868B',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div style={{ marginBottom:'14px' }}>
+              <div style={{ fontSize:'10px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'6px' }}>Langue</div>
+              <div style={{ display:'flex',gap:'6px' }}>
+                {([{k:'FR' as const,flag:'\u{1F1EB}\u{1F1F7}',label:'Français'},{k:'EN' as const,flag:'\u{1F1FA}\u{1F1F8}',label:'English'},{k:'JP' as const,flag:'\u{1F1EF}\u{1F1F5}',label:'日本語'}]).map(l=>(
+                  <button key={l.k} onClick={()=>{setAddSetLang(l.k);setAddSetCards([]);setAddSetId('');setAddSetName('')}}
+                    style={{ flex:1,padding:'10px 8px',borderRadius:'10px',border:`1.5px solid ${addSetLang===l.k?'#1D1D1F':'#E5E5EA'}`,background:addSetLang===l.k?'#1D1D1F':'#fff',color:addSetLang===l.k?'#fff':'#86868B',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s' }}>
+                    <span style={{ fontSize:'16px' }}>{l.flag}</span>{l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom:'14px' }}>
+              <div style={{ fontSize:'10px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'6px' }}>Série</div>
+              <select value={addSetId} onChange={e=>{
+                const found=addSetSets.find(x=>x.id===e.target.value)
+                if(!found) return
+                setAddSetId(found.id)
+                setAddSetName(found.name)
+                setAddSetLoading(true)
+                setAddSetCards([])
+                fetchCardsForSet(addSetLang,found.id).then(cards=>{setAddSetCards(cards);setAddSetLoading(false)}).catch(()=>setAddSetLoading(false))
+              }}
+                style={{ width:'100%',appearance:'none' as const,background:'#F5F5F7',borderRadius:'10px',border:'1px solid #E5E5EA',padding:'10px 36px 10px 12px',color:addSetId?'#1D1D1F':'#AEAEB2',fontSize:'13px',fontFamily:'var(--font-display)',outline:'none',cursor:'pointer' }}>
+                <option value=''>Sélectionner une série...</option>
+                {addSetSets.map(ls=>(
+                  <option key={ls.id} value={ls.id} style={{background:'#fff',color:'#1D1D1F'}}>{ls.name}{ls.total?' ('+ls.total+')':''}</option>
+                ))}
+              </select>
+            </div>
+            {addSetLoading&&(
+              <div style={{ textAlign:'center',padding:'20px 0',color:'#86868B',fontSize:'12px',fontFamily:'var(--font-display)' }}>
+                <div style={{ width:'20px',height:'20px',border:'2px solid #E5E5EA',borderTop:'2px solid #1D1D1F',borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 8px' }}/>
+                Chargement des cartes...
+              </div>
+            )}
+            {addSetCards.length>0&&!addSetLoading&&(()=>{
+              const existingNums = new Set(portfolio.filter(c=>c.set===addSetName).map(c=>c.number))
+              const alreadyOwned = addSetCards.filter(c=>existingNums.has(c.localId||'')).length
+              const toAdd = addSetCards.length - alreadyOwned
+              return (
+                <div>
+                  <div style={{ background:'#F5F5F7',borderRadius:'12px',padding:'14px',marginBottom:'14px' }}>
+                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px' }}>
+                      <span style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>{addSetCards.length} cartes</span>
+                      {alreadyOwned>0&&<span style={{ fontSize:'11px',color:'#86868B' }}>dont {alreadyOwned} déjà possédées</span>}
+                    </div>
+                    <div style={{ height:'6px',borderRadius:'3px',background:'#E8E8ED',overflow:'hidden',marginBottom:'10px' }}>
+                      <div style={{ width:addSetCards.length>0?Math.round(alreadyOwned/addSetCards.length*100)+'%':'0%',height:'100%',background:'linear-gradient(90deg,#ff6b35,#ff4433)',borderRadius:'3px',transition:'width .3s' }}/>
+                    </div>
+                    <div style={{ display:'flex',gap:'16px',fontSize:'11px' }}>
+                      {alreadyOwned>0&&<span style={{ color:'#2E9E6A',fontWeight:500 }}>{String.fromCharCode(10003)} {alreadyOwned} conservées</span>}
+                      <span style={{ color:'#0C447C',fontWeight:500 }}>+ {toAdd} nouvelles</span>
+                    </div>
+                  </div>
+                  <button onClick={()=>{
+                    if(toAdd===0){ showToast('Set déjà complet'); return }
+                    const newCards: CardItem[] = addSetCards
+                      .filter(c=>!existingNums.has(c.localId||''))
+                      .map(c=>({
+                        id:'u'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+                        name:c.name, set:addSetName, year:new Date().getFullYear(),
+                        number:c.localId||'', rarity:c.rarity||'',
+                        type:'fire', lang:addSetLang,
+                        condition:'Raw', graded:false,
+                        buyPrice:0, curPrice:0, qty:1,
+                        image:c.image||undefined,
+                        setId:addSetId, setTotal:addSetCards.length,
+                      }))
+                    setPortfolio(prev=>[...prev,...newCards])
+                    setAddSetOpen(false)
+                    showToast(toAdd+' cartes ajoutées')
+                  }}
+                    style={{ width:'100%',padding:'13px',borderRadius:'11px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'14px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}
+                    onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'}}
+                    onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                    {toAdd>0?'Ajouter les '+toAdd+' cartes manquantes':'Set déjà complet'}
+                  </button>
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}

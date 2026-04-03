@@ -144,6 +144,7 @@ export function Holdings() {
   const [fullSetLoading, setFullSetLoading] = useState(false)
   const [shelfSetCards, setShelfSetCards] = useState<Record<string, TCGCard[]>>({})
   const [setLogos, setSetLogos] = useState<Record<string, string>>({})
+  const [setBlocks, setSetBlocks] = useState<Record<string, string>>({})
   const [scannerLoad,  setScannerLoad]  = useState(false)
   const [scannerImg,   setScannerImg]   = useState<string|null>(null)
   const [showWelcome,  setShowWelcome]  = useState(false)
@@ -290,7 +291,7 @@ export function Holdings() {
       try {
         const cacheKey = 'pka_logo_' + sid
         const cached = localStorage.getItem(cacheKey)
-        if (cached) { setSetLogos(prev => ({ ...prev, [setName]: cached })); return }
+        if (cached) { setSetLogos(prev => ({ ...prev, [setName]: cached })); const cb=localStorage.getItem('pka_block_'+sid); if(cb){ setSetBlocks(prev=>({...prev,[setName]:cb})); return } }
         const res = await fetch('https://api.tcgdex.net/v2/' + lang + '/sets/' + sid)
         if (!res.ok) return
         const data = await res.json()
@@ -299,6 +300,7 @@ export function Holdings() {
           const logoWithExt = logo + '.png'
           localStorage.setItem(cacheKey, logoWithExt)
           setSetLogos(prev => ({ ...prev, [setName]: logoWithExt }))
+          if (data.serie && data.serie.name) { setSetBlocks(prev => ({ ...prev, [setName]: data.serie.name })); localStorage.setItem('pka_block_'+sid, data.serie.name) }
         }
       } catch {}
     })
@@ -1370,7 +1372,15 @@ export function Holdings() {
                   const owned2=sc2.length
                   const pct2=total2>0?Math.round(owned2/total2*100):0
                   const missing2=Math.max(0,total2-owned2)
-                  if(missing2===0||total2===0) return null
+                  if(total2===0) return null
+                  if(missing2===0) return (
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
+                      <div style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'6px 16px', borderRadius:'99px', background:'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', border:'1px solid rgba(212,175,55,.4)', boxShadow:'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,240,.4)', overflow:'visible', position:'relative' }}>
+                        <div style={{ position:'absolute', inset:0, borderRadius:'99px', background:'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>
+                        <span style={{ position:'relative', zIndex:1, fontSize:'12px', fontWeight:700, color:'#5C4A12', fontFamily:'var(--font-display)', letterSpacing:'.08em' }}>{String.fromCharCode(9733)} MASTER SET {String.fromCharCode(9733)}</span>
+                      </div>
+                    </div>
+                  )
                   return (<>
                     <div style={{ height:'8px',borderRadius:'4px',background:'#E8E8ED',overflow:'hidden' }}>
                       <div style={{ width:pct2+'%',height:'100%',background:'linear-gradient(90deg,#ff6b35,#ff4433)',borderRadius:'4px',transition:'width .5s' }}/>
@@ -1566,7 +1576,7 @@ export function Holdings() {
                                     )}
                                     <div>
                                       <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#1D1D1F':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
-                                      {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; const frName=frSetsMap[sid]; const fullName=liveSets.find(ls=>ls.id===sid)?.name; const sub=frName&&frName!==setName?frName:fullName&&fullName!==setName?fullName:null; return sub?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{sub}</div>:null })()}
+                                      {setBlocks[setName]?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{setBlocks[setName]}</div>:null}
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}

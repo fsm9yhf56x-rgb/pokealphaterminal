@@ -26,10 +26,10 @@ export const NAV: NavItem[] = [
     ],
   },
   {
-    label: 'Cartes',
+    label: 'Pokédesk',
     href:  '/cartes',
     children: [
-      { label:'Encyclopédie', href:'/cartes'        },
+      { label:'Cartes', href:'/cartes'        },
       { label:'Scellés',      href:'/cartes/scelles'},
     ],
   },

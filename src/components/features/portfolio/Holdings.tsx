@@ -1265,14 +1265,22 @@ export function Holdings() {
             </div>
           )}
           {binderSet&&binderSet!=='__all__'&&view==='binder'&&(
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'6px', padding:'6px 0', gap:'4px' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'4px', padding:'20px 0 16px', position:'relative' }}>
+              <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'340px', height:'180px', borderRadius:'50%', background:'radial-gradient(ellipse, rgba(224,48,32,.06) 0%, rgba(224,48,32,.02) 40%, transparent 70%)', pointerEvents:'none' }}/>
               {setLogos[binderSet||'']&&(
-                <img src={setLogos[binderSet||'']} alt={binderSet||''} style={{ height:'56px', maxWidth:'280px', objectFit:'contain' }}
+                <img src={setLogos[binderSet||'']} alt={binderSet||''} style={{ height:'96px', maxWidth:'400px', objectFit:'contain', position:'relative', filter:'drop-shadow(0 4px 16px rgba(0,0,0,.1))' }}
                   onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
               )}
-              <span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>
+              {!setLogos[binderSet||'']&&(
+                <div style={{ fontSize:'24px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', position:'relative' }}>{binderSet}</div>
+              )}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'8px', position:'relative' }}>
+                <div style={{ height:'1px', width:'48px', background:'linear-gradient(to right, transparent, #C7C7CC)' }}/>
+                <span style={{ fontSize:'13px', color:'#6E6E73', fontFamily:'var(--font-display)', letterSpacing:'.04em', fontWeight:500 }}>
                 {binderFiltered.length} carte{binderFiltered.length!==1?'s':''}{(()=>{ const t=portfolio.filter(c=>c.set===binderSet); const sid=t.find(c=>c.setId)?.setId; const total=t[0]?.setTotal||(sid?setTotalsMap[sid]:0)||setTotalsMap[binderSet]||0; return total?' sur '+total+' • '+Math.round(binderFiltered.length/total*100)+'%':'' })()}
               </span>
+                <div style={{ height:'1px', width:'48px', background:'linear-gradient(to left, transparent, #C7C7CC)' }}/>
+              </div>
             </div>
           )}
         </div>

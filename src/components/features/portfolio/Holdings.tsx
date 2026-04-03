@@ -131,6 +131,7 @@ export function Holdings() {
   const [addSetSets,   setAddSetSets]   = useState<TCGSet[]>([])
   const [uploadCardId, setUploadCardId] = useState<string|null>(null)
   const ghostClickRef = useRef(false)
+  const masterGlitterRef = useRef<HTMLDivElement|null>(null)
   const uploadRef = useRef<HTMLInputElement|null>(null)
   const uploadTargetId = useRef<string|null>(null)
   const [uploadModal, setUploadModal] = useState<{
@@ -331,6 +332,39 @@ export function Holdings() {
       .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
       .catch(() => setFullSetLoading(false))
   }, [binderSet, liveSets.length])
+
+  // -- Master set glitter generator --
+  useEffect(() => {
+    const els = document.querySelectorAll('.master-glitter-container')
+    els.forEach(el => {
+      if (el.childNodes.length > 0) return
+      const anims = ['gl1','gl2','gl3','gl4']
+      for (let i = 0; i < 2000; i++) {
+        const d = document.createElement('div')
+        const sz = Math.random() > .6 ? 2 : 1
+        const top = (-2 + Math.random() * 12).toFixed(0)
+        const left = (Math.random() * 99).toFixed(1)
+        const delay = (Math.random() * 4).toFixed(2)
+        d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite`
+        el.appendChild(d)
+      }
+    })
+    // Badge glitter (grade 10)
+    const badges = document.querySelectorAll('.badge-glitter-container')
+    badges.forEach(bg => {
+      if (bg.childNodes.length > 0) return
+      const anims = ['gl1','gl2','gl3','gl4']
+      for (let i = 0; i < 80; i++) {
+        const d = document.createElement('div')
+        const sz = Math.random() > .5 ? 2 : 1
+        const top = (-1 + Math.random() * 18).toFixed(0)
+        const left = (Math.random() * 98).toFixed(1)
+        const delay = (Math.random() * 4).toFixed(2)
+        d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite`
+        bg.appendChild(d)
+      }
+    })
+  })
 
   // -- Fetch sets pour modal ajouter serie --
   useEffect(() => {
@@ -785,6 +819,14 @@ export function Holdings() {
 
 
         /* ── GRADE VISUAL ── */
+        @keyframes metalShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes masterSweep { 0%{left:-15%} 100%{left:115%} }
+        @keyframes goldSlow { 0%{background-position:0% center} 100%{background-position:200% center} }
+        @keyframes gl1 { 0%{opacity:0} 6%{opacity:1} 12%{opacity:0} 100%{opacity:0} }
+        @keyframes gl2 { 0%{opacity:0} 8%{opacity:.8} 14%{opacity:1} 20%{opacity:0} 100%{opacity:0} }
+        @keyframes gl3 { 0%{opacity:0} 4%{opacity:1} 8%{opacity:.6} 14%{opacity:0} 100%{opacity:0} }
+        @keyframes gl4 { 0%{opacity:0} 10%{opacity:1} 16%{opacity:.4} 22%{opacity:0} 100%{opacity:0} }
+        @keyframes starBreath { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
         @keyframes masterPulse { 0%,100%{box-shadow:0 0 12px rgba(255,215,0,.2),0 0 4px rgba(255,215,0,.1)} 50%{box-shadow:0 0 24px rgba(255,215,0,.4),0 0 8px rgba(255,215,0,.2)} }
         @keyframes masterShine { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes starSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
@@ -1477,9 +1519,9 @@ export function Holdings() {
                           {/* Header du set — XP Bar gamifiée exact artifact */}
                           {(()=>{
                             const p=pct??0
-                            const lvlColor = isComplete?'rgba(255,215,0,.9)':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'#EA580C'
-                            const lvlBg = isComplete?'rgba(255,215,0,.15)':p>=75?'rgba(52,211,153,.22)':p>=50?'rgba(96,165,250,.22)':p>=25?'rgba(96,165,250,.2)':'rgba(255,107,53,.25)'
-                            const lvlBorder = isComplete?'rgba(255,215,0,.4)':p>=75?'rgba(52,211,153,.3)':p>=50?'rgba(96,165,250,.3)':p>=25?'rgba(96,165,250,.25)':'rgba(255,107,53,.3)'
+                            const lvlColor = isComplete?'#fff':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'#EA580C'
+                            const lvlBg = isComplete?'linear-gradient(135deg,#D4AF37,#F0E080)':p>=75?'rgba(52,211,153,.22)':p>=50?'rgba(96,165,250,.22)':p>=25?'rgba(96,165,250,.2)':'rgba(255,107,53,.25)'
+                            const lvlBorder = isComplete?'#E8D48B':p>=75?'rgba(52,211,153,.3)':p>=50?'rgba(96,165,250,.3)':p>=25?'rgba(96,165,250,.25)':'rgba(255,107,53,.3)'
                             const lvl = isComplete?'★':String(si+1)
                             // Segments proportionnels exacts
                             const s1pct=isComplete?100:Math.min(100,p*4)
@@ -1517,18 +1559,18 @@ export function Holdings() {
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
-                                    <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0, boxShadow:isComplete?'0 0 12px rgba(255,215,0,.4)':'none', animation:isComplete?'masterPulse 3s ease-in-out infinite':'none' }}>{lvl}</div>
+                                    <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0, textShadow:isComplete?'0 1px 2px rgba(100,80,20,.4)':'none', boxShadow:'none', animation:isComplete?'starBreath 4s ease-in-out infinite':'none' }}>{lvl}</div>
                                                                         {setLogos[setName]&&(
                                       <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
                                     <div>
-                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:isComplete?'0 0 8px rgba(255,215,0,.2)':'none' }}>{setName}</div>
+                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#1D1D1F':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
                                       {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; const frName=frSetsMap[sid]; const fullName=liveSets.find(ls=>ls.id===sid)?.name; const sub=frName&&frName!==setName?frName:fullName&&fullName!==setName?fullName:null; return sub?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{sub}</div>:null })()}
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
-                                    {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)', backgroundSize:'300% 100%', animation:'masterShine 3s ease-in-out infinite', color:'#1a1200', padding:'3px 10px', borderRadius:'4px', letterSpacing:'.08em', boxShadow:'0 2px 8px rgba(255,215,0,.3)', display:'inline-flex', alignItems:'center', gap:'4px' }}><span style={{ fontSize:'10px' }}>{String.fromCharCode(9733)}</span>MASTER SET</span>}
+                                    {isComplete&&<span style={{ fontSize:'7px', fontWeight:700, background:'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', color:'#5C4A12', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.12em', border:'1px solid rgba(212,175,55,.4)', boxShadow:'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,240,.4)', display:'inline-flex', alignItems:'center', gap:'4px' }}><span style={{ fontSize:'10px' }}>{String.fromCharCode(9733)}</span>MASTER SET</span>}
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
@@ -1538,6 +1580,16 @@ export function Holdings() {
                                 </div>
                                 {resolvedTotal>0&&(
                                   <>
+                                    {isComplete?(
+                                      <div style={{ height:'8px', borderRadius:'4px', background:'#F0EBD8', overflow:'visible', position:'relative' }}>
+                                        <div style={{ width:'100%', height:'100%', borderRadius:'4px', background:'linear-gradient(90deg,#C9A84C,#D4AF37,#E8D48B,#D4AF37,#C9A84C)', overflow:'hidden' }}>
+                                          <div style={{ position:'absolute', top:0, width:'80px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,250,.7),transparent)', animation:'masterSweep 6s ease-in-out infinite', borderRadius:'4px' }}/>
+                                          <div style={{ position:'absolute', top:0, width:'50px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,250,.45),transparent)', animation:'masterSweep 6s 3s ease-in-out infinite', borderRadius:'4px' }}/>
+                                        </div>
+                                        <div style={{ position:'absolute', inset:0, borderRadius:'4px', background:'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.3) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>
+                                        <div className='master-glitter-container' style={{ position:'absolute', inset:'-2px 0', pointerEvents:'none' }}/>
+                                      </div>
+                                    ):(
                                     <div style={{ display:'flex', gap:'3px' }}>
                                       {segs.map((seg,si2)=>(
                                         <div key={si2} style={{ flex:1, height:'6px', borderRadius:'3px', overflow:'hidden', position:'relative', background:'#E8E8ED' }}>
@@ -1547,8 +1599,9 @@ export function Holdings() {
                                         </div>
                                       ))}
                                     </div>
+                                    )}
                                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:'3px', padding:'0 1px' }}>
-                                      {(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
+                                      {!isComplete&&(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
                                         <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor:'#86868B', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
                                       ))}
                                     </div>
@@ -1633,10 +1686,14 @@ export function Holdings() {
                                 {/* Badge gradé sur l'image */}
                                 {card.graded&&(()=>{
                                   const gn=parseFloat(card.condition.replace(/[^0-9.]/g,''))
-                                  const bg=gn>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn>=8?'linear-gradient(135deg,#A8A8A8,#D8D8D8,#A8A8A8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#48484A'
+                                  const bg=gn>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn>=8?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#48484A'
                                   const fg=gn>=10?'#1a1200':gn>=8?'#333':gn>=5?'#2a1800':'#fff'
-                                  const sh=gn>=10?'0 2px 8px rgba(201,168,76,.4)':gn>=8?'0 2px 6px rgba(0,0,0,.1)':gn>=5?'0 2px 6px rgba(160,114,74,.2)':'0 1px 4px rgba(0,0,0,.15)'
-                                  return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg, color:fg, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', backgroundSize:gn>=10?'300% 100%':'auto', animation:gn>=10?'goldShine 3s ease-in-out infinite':'none' }}>{card.condition}</div>
+                                  const sh=gn>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn>=8?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
+                                  return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg, color:fg, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', overflow:'visible', border:gn>=10?'1px solid rgba(212,175,55,.4)':gn>=8?'1px solid rgba(168,168,168,.4)':gn>=5?'1px solid rgba(160,114,74,.3)':'none', backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none' }}>
+                                    {gn>=5&&<div style={{ position:'absolute', inset:0, borderRadius:'5px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
+                                    {gn>=10&&<div className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
+                                    <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
+                                  </div>
                                 })()}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
@@ -1824,10 +1881,14 @@ export function Holdings() {
                               {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
                               {card.graded&&(()=>{
                                 const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
-                                const bg3=gn3>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn3>=9?'linear-gradient(135deg,#A8A8A8,#E8E8E8,#A8A8A8)':gn3>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#6E6E73'
+                                const bg3=gn3>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn3>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn3>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73'
                                 const fg3=gn3>=10?'#1a1200':gn3>=9?'#222':gn3>=5?'#2a1800':'#fff'
-                                const sh3=gn3>=10?'0 1px 4px rgba(201,168,76,.35)':gn3>=9?'0 1px 3px rgba(0,0,0,.08)':'none'
-                                return <span style={{ fontSize:binderCols>=7?'7px':'8px', fontWeight:800, background:bg3, color:fg3, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', backgroundSize:gn3>=10?'300% 100%':'auto', animation:gn3>=10?'goldShine 3s ease-in-out infinite':'none', marginLeft:'2px' }}>{card.condition}</span>
+                                const sh3=gn3>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn3>=9?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn3>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
+                                return <span style={{ fontSize:binderCols>=7?'7px':'8px', fontWeight:800, background:bg3, color:fg3, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', marginLeft:'2px', overflow:'visible', position:'relative', border:gn3>=10?'1px solid rgba(212,175,55,.4)':gn3>=9?'1px solid rgba(168,168,168,.4)':gn3>=5?'1px solid rgba(160,114,74,.3)':'none', display:'inline-flex', alignItems:'center', backgroundSize:gn3>=5?'300% 300%':'auto', animation:gn3>=5?'metalShift 8s ease-in-out infinite':'none' }}>
+                                {gn3>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn3>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn3>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
+                                {gn3>=10&&<span className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
+                                <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
+                              </span>
                               })()}
                               
                             </div>

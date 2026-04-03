@@ -73,6 +73,8 @@ const GRADE_COMPANIES = [
   {label:'CCC', grades:['CCC 8','CCC 9','CCC 10']},
 ]
 
+type GridItem = { type:'owned'; card:CardItem } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
+
 export function Holdings() {
   const router = useRouter()
   const [view,        setView]        = useState<ViewMode>('binder')
@@ -113,6 +115,7 @@ export function Holdings() {
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [uploadCardId, setUploadCardId] = useState<string|null>(null)
+  const ghostClickRef = useRef(false)
   const uploadRef = useRef<HTMLInputElement|null>(null)
   const uploadTargetId = useRef<string|null>(null)
   const [uploadModal, setUploadModal] = useState<{
@@ -121,6 +124,10 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
+  const [fullSetCards, setFullSetCards] = useState<TCGCard[]>([])
+  const [fullSetLoading, setFullSetLoading] = useState(false)
+  const [shelfSetCards, setShelfSetCards] = useState<Record<string, TCGCard[]>>({})
+  const [setLogos, setSetLogos] = useState<Record<string, string>>({})
   const [scannerLoad,  setScannerLoad]  = useState(false)
   const [scannerImg,   setScannerImg]   = useState<string|null>(null)
   const [showWelcome,  setShowWelcome]  = useState(false)
@@ -226,12 +233,87 @@ export function Holdings() {
       setCardsLoading(true)
       setLiveCards([])
       setAddSuggs([])
-      setAddForm(p=>({...p, name:''}))
+      if(!ghostClickRef.current) setAddForm(p=>({...p, name:''}))
+      ghostClickRef.current = false
       fetchCardsForSet(addForm.lang, addForm.setId)
         .then(cards => { setLiveCards(cards); setCardsLoading(false) })
         .catch(() => setCardsLoading(false))
     }
   }, [addForm.lang])
+
+  // -- Backfill missing rarity via card detail API --
+  const rarityBackfilled = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const needsFix = portfolio.filter(c => !c.rarity && c.setId && c.number && c.number !== '???' && !rarityBackfilled.current.has(c.id))
+    if (needsFix.length === 0) return
+    const batch = needsFix.slice(0, 5)
+    batch.forEach(async card => {
+      rarityBackfilled.current.add(card.id)
+      const lang = card.lang === 'JP' ? 'JP' : card.lang === 'EN' ? 'EN' : 'FR'
+      const cardId = card.setId + '-' + card.number
+      try {
+        const detail = await fetchCardDetail(lang, cardId)
+        if (detail?.rarity) {
+          setPortfolio(prev => prev.map(c => c.id === card.id ? { ...c, rarity: detail.rarity! } : c))
+        }
+      } catch {}
+    })
+  }, [portfolio.length, shelfSetCards])
+
+  // -- Fetch set logos via TCGDex API --
+  useEffect(() => {
+    const sets = [...new Set(portfolio.map(c => c.set))]
+    sets.forEach(async setName => {
+      if (setLogos[setName]) return
+      const sc = portfolio.filter(c => c.set === setName)
+      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
+      if (!sid) return
+      const lang = sc[0]?.lang === 'JP' ? 'ja' : sc[0]?.lang === 'EN' ? 'en' : 'fr'
+      try {
+        const cacheKey = 'pka_logo_' + sid
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) { setSetLogos(prev => ({ ...prev, [setName]: cached })); return }
+        const res = await fetch('https://api.tcgdex.net/v2/' + lang + '/sets/' + sid)
+        if (!res.ok) return
+        const data = await res.json()
+        const logo = data.logo || data.symbol || ''
+        if (logo) {
+          const logoWithExt = logo + '.png'
+          localStorage.setItem(cacheKey, logoWithExt)
+          setSetLogos(prev => ({ ...prev, [setName]: logoWithExt }))
+        }
+      } catch {}
+    })
+  }, [portfolio.length, liveSets.length])
+
+  // -- Fetch shelf ghost cards pour chaque set visible --
+  useEffect(() => {
+    if (binderSet && binderSet !== '__all__') return
+    const sets = [...new Set(portfolio.map(c => c.set))]
+    sets.forEach(setName => {
+      if (shelfSetCards[setName]) return
+      const sc = portfolio.filter(c => c.set === setName)
+      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
+      if (!sid) return
+      const lang = sc[0]?.lang || 'FR'
+      fetchCardsForSet(lang, sid)
+        .then(cards => setShelfSetCards(prev => ({ ...prev, [setName]: cards })))
+        .catch(() => {})
+    })
+  }, [portfolio.length, liveSets.length, binderSet])
+
+  // -- Fetch full set cards quand on entre dans un set --
+  useEffect(() => {
+    if (!binderSet || binderSet === '__all__') { setFullSetCards([]); return }
+    const sc = portfolio.filter(c => c.set === binderSet)
+    const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === binderSet)?.id || liveSets.find(ls => ls.name.toLowerCase() === binderSet.toLowerCase())?.id || ''
+    if (!sid) { setFullSetCards([]); return }
+    const lang = sc[0]?.lang || 'FR'
+    setFullSetLoading(true)
+    fetchCardsForSet(lang, sid)
+      .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
+      .catch(() => setFullSetLoading(false))
+  }, [binderSet, liveSets.length])
 
   const mmDrag = useRef<{active:boolean;setN:string;total:number}>({active:false,setN:'',total:0})
   const mmSyncScroll = (setName:string, total:number, clientX:number, mmEl:HTMLElement) => {
@@ -262,7 +344,7 @@ export function Holdings() {
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = binderCols*3
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
-  const binderPages = Math.max(1,Math.ceil((binderFilter==='all'?binderFiltered.length:binderFiltered.filter(c=>binderFilter==='graded'?c.graded:binderFilter==='raw'?!c.graded:['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare','Holo Rare'].includes(c.rarity)).length)/slotsPer))
+  // binderPages moved after gridItems
   const binderSorted = [...binderFiltered].sort((a,b)=>{
     if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
     if(binderSort==='name') return a.name.localeCompare(b.name)
@@ -275,8 +357,22 @@ export function Holdings() {
     if(setSearch && !c.name.toLowerCase().includes(setSearch.toLowerCase()) && !c.set.toLowerCase().includes(setSearch.toLowerCase())) return false
     return true
   })
-  const pageItems   = binderFilteredFinal.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
-  const phantomCount = binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
+  const buildGridItems = (): GridItem[] => {
+    if(binderSort!=='number'||!binderSet||binderSet==='__all__'||fullSetCards.length===0||binderFilter!=='all'||setSearch){
+      return binderFilteredFinal.map(c=>({type:'owned' as const,card:c}))
+    }
+    const ownedMap = new Map<string,CardItem>()
+    binderFiltered.forEach(c=>{ ownedMap.set(c.number,c) })
+    return fullSetCards.map(fc=>{
+      const owned = ownedMap.get(fc.localId||'')
+      if(owned) return { type:'owned' as const, card:owned }
+      return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:fc.image||'', rarity:fc.rarity||'' }
+    })
+  }
+  const gridItems = buildGridItems()
+  const pageItems = gridItems.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
+  const phantomCount = gridItems.some(g=>g.type==='ghost') ? 0 : binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
+  const binderPages = Math.max(1,Math.ceil(gridItems.length/slotsPer))
 
   const showToast = (msg:string) => {
     setToast(msg)
@@ -654,6 +750,8 @@ export function Holdings() {
         .pocket-shell:hover .remove-btn { opacity:1 !important; }
 
         .set-header:hover { background:rgba(0,0,0,.02) !important;border-radius:12px; }
+        @keyframes nudgeRight { 0%,100%{transform:translateX(0)} 50%{transform:translateX(3px)} }
+        .set-header:hover .voir-pill { animation:nudgeRight .6s ease-in-out; }
         .set-header:active { transform:scale(.998) !important; }
 
         .gem .holo { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,#ff0080,#ff8c00,#ffd700,#00ff88,#00cfff,#8b00ff,#ff0080);background-size:500% 500%;mix-blend-mode:overlay;opacity:0;pointer-events:none;transition:opacity .35s;animation:holoShift 8s ease infinite; }
@@ -1127,6 +1225,17 @@ export function Holdings() {
               </button>
             </div>
           )}
+          {binderSet&&binderSet!=='__all__'&&view==='binder'&&(
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'6px', padding:'6px 0', gap:'4px' }}>
+              {setLogos[binderSet||'']&&(
+                <img src={setLogos[binderSet||'']} alt={binderSet||''} style={{ height:'56px', maxWidth:'280px', objectFit:'contain' }}
+                  onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+              )}
+              <span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>
+                {binderFiltered.length} carte{binderFiltered.length!==1?'s':''}{(()=>{ const t=portfolio.filter(c=>c.set===binderSet); const sid=t.find(c=>c.setId)?.setId; const total=t[0]?.setTotal||(sid?setTotalsMap[sid]:0)||setTotalsMap[binderSet]||0; return total?' sur '+total+' • '+Math.round(binderFiltered.length/total*100)+'%':'' })()}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* BINDER */}
@@ -1227,16 +1336,28 @@ export function Holdings() {
                       const totalForDisplay=resolvedTotal
                       const ec2=EC[setCards[0]?.type??'fire']??'#888'
                       const isComplete=pct===100
-                      const cardImgs=[...setCards].filter(c=>{
+                      const filteredSetCards=[...setCards].filter(c=>{
                         if(binderFilter==='graded') return c.graded
                         if(binderFilter==='raw') return !c.graded
                         return true
-                      }).sort((a,b)=>{
-                        if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
-                        if(binderSort==='name') return a.name.localeCompare(b.name)
-                        if(binderSort==='price') return b.curPrice-a.curPrice
-                        return 0
                       })
+                      const shelfGhosts = shelfSetCards[setName] || []
+                      const cardImgs: GridItem[] = (binderSort==='number' && shelfGhosts.length>0 && binderFilter==='all' && !setSearch)
+                        ? (()=>{
+                            const ownedMap = new Map<string,CardItem>()
+                            setCards.forEach(c => ownedMap.set(c.number, c))
+                            return shelfGhosts.map(fc => {
+                              const owned = ownedMap.get(fc.localId||'')
+                              if(owned) return { type:'owned' as const, card:owned }
+                              return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:fc.image||'', rarity:fc.rarity||'' }
+                            })
+                          })()
+                        : filteredSetCards.sort((a,b)=>{
+                            if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
+                            if(binderSort==='name') return a.name.localeCompare(b.name)
+                            if(binderSort==='price') return b.curPrice-a.curPrice
+                            return 0
+                          }).map(c=>({ type:'owned' as const, card:c }))
                       return (
                         <div key={setName} style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
                           {/* Header du set — XP Bar gamifiée exact artifact */}
@@ -1261,7 +1382,14 @@ export function Holdings() {
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0 }}>{lvl}</div>
-                                    <span style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)' }}>{setName}</span>
+                                                                        {setLogos[setName]&&(
+                                      <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
+                                        onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                                    )}
+                                    <div>
+                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#B8860B':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{setName}</div>
+                                      {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; const frName=frSetsMap[sid]; const fullName=liveSets.find(ls=>ls.id===sid)?.name; const sub=frName&&frName!==setName?frName:fullName&&fullName!==setName?fullName:null; return sub?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{sub}</div>:null })()}
+                                    </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
                                     {isComplete&&<span style={{ fontSize:'8px', fontWeight:800, background:'linear-gradient(135deg,#FFD700,#FF8C00)', color:'#1D1D1F', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.05em' }}>MASTER SET</span>}
@@ -1269,7 +1397,7 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
-                                    <span style={{ fontSize:'13px', color:'#6E6E73' }}>›</span>
+                                    <span className="voir-pill" style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap' }}>Voir le set ›</span>
                                   </div>
                                 </div>
                                 {resolvedTotal>0&&(
@@ -1312,7 +1440,44 @@ export function Holdings() {
                           })()}
                           {/* Rayon de cartes */}
                           <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any }}>
-                            {cardImgs.map((card,ci)=>(
+                            {cardImgs.map((item,ci)=>{
+                              if(item.type==='ghost'){
+                                const gi=item
+                                return(
+                                  <div key={'sg-'+gi.number}
+                                    style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', opacity:.4, transition:'opacity .2s', cursor:'pointer' }}
+                                    onMouseEnter={e=>{e.currentTarget.style.opacity='0.6'}}
+                                    onMouseLeave={e=>{e.currentTarget.style.opacity='0.4'}}
+                                    onClick={()=>{
+                                      ghostClickRef.current=true
+                                      const sid2=setCards.find(c=>c.setId)?.setId||liveSets.find(ls=>ls.name===setName)?.id||''
+                                      const lang2=setCards[0]?.lang||'FR'
+                                      setAddForm(p=>({...p, set:setName, setId:sid2, lang:lang2, name:gi.name, number:gi.number, image:gi.image||''}))
+                                      setNameValidated(true)
+                                      if(sid2){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(lang2,sid2).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                                      setAddOpen(true)
+                                    }}>
+                                    <div style={{ borderRadius:'12px', overflow:'hidden', border:'1px solid #E5E5EA', position:'relative' }}>
+                                      {gi.image?(
+                                        <img src={(gi.image.replace(/\/low\.(webp|jpg|png)$/,''))+'/low.webp'} alt={gi.name}
+                                          style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block', filter:'grayscale(1)' }}
+                                          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                                      ):(
+                                        <div style={{ width:'100%', aspectRatio:'63/88', background:'#EDEDF0' }}/>
+                                      )}
+                                    </div>
+                                    <div style={{ padding:'6px 6px 4px' }}>
+                                      <div style={{ fontSize:'11px', fontWeight:500, color:'#AEAEB2', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:'var(--font-display)' }}>{gi.name}</div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
+                                        <span style={{ fontSize:'10px', color:'#C7C7CC', fontFamily:'var(--font-data)' }}>#{gi.number}</span>
+                                        {gi.rarity&&<span style={{ fontSize:'9px', color:'#D2D2D7' }}>{gi.rarity}</span>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              }
+                              const card=item.card
+                              return(
                               <div key={card.id}
                                 style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'visible', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
                                 onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,.1)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
@@ -1353,7 +1518,8 @@ export function Holdings() {
                                   Retirer
                                 </button>
                               </div>
-                            ))}
+                              )
+                            })}
                             {/* Carte + ajout */}
                             <div onClick={()=>{
                                 const lang=setCards[0]?.lang||'FR'
@@ -1377,15 +1543,17 @@ export function Holdings() {
                             const viewFrac = Math.min(1, Math.max(0.08, 7 / Math.max(total, 1)))
                             if (total <= 7) return null
                             const bars = Math.min(total, 150)
+                            const ownedNumbers = new Set(setCards.map(c => parseInt(c.number) || 0))
                             return (
                               <div className="minimap" style={{ marginTop:'8px' }}
                                 onMouseDown={e => mmDown(setName, total, e)}>
                                 {/* Micro-rectangles */}
                                 <div style={{ position:'absolute', inset:'3px', display:'flex', gap:'1px', borderRadius:'4px', overflow:'hidden' }}>
                                   {Array.from({ length: bars }).map((_, i) => {
-                                    const isOwned = i < owned
+                                    const cardNum = total <= 150 ? i + 1 : Math.round((i / bars) * total) + 1
+                                    const isOwned = ownedNumbers.has(cardNum)
                                     return (
-                                      <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? (0.45 + (i / Math.max(owned, 1)) * 0.55) : 0.5 }} />
+                                      <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? 0.9 : 0.5 }} />
                                     )
                                   })}
                                 </div>
@@ -1428,7 +1596,44 @@ export function Holdings() {
                     </div>
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'1fr', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
-                    {pageItems.map((card,idx)=>{
+                    {pageItems.map((item,idx)=>{
+                      if(item.type==='ghost'){
+                        const gi=item
+                        return(
+                          <div key={'g-'+gi.number}
+                            style={{ position:'relative',borderRadius:'10px',overflow:'hidden',cursor:'pointer',opacity:.45,transition:'opacity .2s' }}
+                            onMouseEnter={e=>{e.currentTarget.style.opacity='0.65'}}
+                            onMouseLeave={e=>{e.currentTarget.style.opacity='0.45'}}
+                            onClick={()=>{
+                              ghostClickRef.current=true
+                              const sc2=portfolio.filter(c=>c.set===binderSet)
+                              const sid2=sc2.find(c=>c.setId)?.setId||liveSets.find(ls=>ls.name===(binderSet||''))?.id||''
+                              const lang2=sc2[0]?.lang||'FR'
+                              setAddForm(p=>({...p, set:binderSet||'', setId:sid2, lang:lang2, name:gi.name, number:gi.number, image:gi.image||''}))
+                              setNameValidated(true)
+                              if(sid2){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(lang2,sid2).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                              setAddOpen(true)
+                            }}>
+                            <div style={{ position:'relative',width:'100%',aspectRatio:'63/88',overflow:'hidden',borderRadius:'10px' }}>
+                              {gi.image?(
+                                <img src={(gi.image.replace(/\/low\.(webp|jpg|png)$/,''))+'/low.webp'} alt={gi.name}
+                                  style={{ position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(1)',borderRadius:'10px' }}
+                                  onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                              ):(
+                                <div style={{ width:'100%',height:'100%',background:'#EDEDF0',borderRadius:'10px' }}/>
+                              )}
+                            </div>
+                            <div style={{ padding:'6px 4px 8px' }}>
+                              <div style={{ fontSize:'11px',fontWeight:500,color:'#AEAEB2',fontFamily:'var(--font-display)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{gi.name}</div>
+                              <div style={{ display:'flex',alignItems:'center',gap:'3px',marginTop:'2px' }}>
+                                <span style={{ fontSize:'10px',color:'#C7C7CC',fontFamily:'var(--font-data)' }}>#{gi.number}</span>
+                                {gi.rarity&&<span style={{ fontSize:'9px',color:'#D2D2D7' }}>{gi.rarity}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      const card=item.card
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0

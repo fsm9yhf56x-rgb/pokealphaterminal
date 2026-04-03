@@ -82,7 +82,9 @@ export function Holdings() {
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
   const [setSearch,   setSetSearch]   = useState('')
-  const [collapsedSets, setCollapsedSets] = useState<Set<string>>(new Set())
+  const [collapsedSets, setCollapsedSets] = useState<Set<string>>(()=>{
+    try { const r=localStorage.getItem('pka_collapsed'); return r?new Set(JSON.parse(r)):new Set() } catch { return new Set() }
+  })
   const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'>('number')
   const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
@@ -153,6 +155,7 @@ export function Holdings() {
 
   useEffect(()=>{ try { localStorage.setItem('pka_portfolio', JSON.stringify(portfolio)) } catch {} }, [portfolio])
   useEffect(()=>{ try { localStorage.setItem('pka_showcase', JSON.stringify(showcase)) } catch {} }, [showcase])
+  useEffect(()=>{ try { localStorage.setItem('pka_collapsed', JSON.stringify([...collapsedSets])) } catch {} }, [collapsedSets])
 
   // ── FR sets reference (pour traduction JP) ──
   useEffect(() => {
@@ -338,12 +341,45 @@ export function Holdings() {
     window.addEventListener('mouseup', onUp)
   }
 
+  // ── Drag-to-scroll shelf ──
+  const shelfDrag = useRef<{active:boolean;dragging:boolean;startX:number;scrollLeft:number;el:HTMLElement|null}>({active:false,dragging:false,startX:0,scrollLeft:0,el:null})
+  const onShelfMouseDown = (e:React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget
+    shelfDrag.current = { active:true, dragging:false, startX:e.clientX, scrollLeft:el.scrollLeft, el }
+    const onMove = (ev:MouseEvent) => {
+      if (!shelfDrag.current.active) return
+      const dx = ev.clientX - shelfDrag.current.startX
+      if (!shelfDrag.current.dragging && Math.abs(dx) < 5) return
+      if (!shelfDrag.current.dragging) {
+        shelfDrag.current.dragging = true
+        el.style.cursor = 'grabbing'
+        el.style.userSelect = 'none'
+      }
+      el.scrollLeft = shelfDrag.current.scrollLeft - dx
+    }
+    const onUp = () => {
+      const wasDragging = shelfDrag.current.dragging
+      shelfDrag.current.active = false
+      shelfDrag.current.dragging = false
+      el.style.cursor = ''
+      el.style.userSelect = ''
+      if (wasDragging) {
+        const block = (ev:MouseEvent) => { ev.stopPropagation(); ev.preventDefault() }
+        el.addEventListener('click', block, { capture:true, once:true })
+      }
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const slotsPer  = binderCols*3
+  const slotsPer  = (binderSet&&binderSet!=='__all__') ? binderCols*9 : binderCols*3
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
   const binderSorted = [...binderFiltered].sort((a,b)=>{
@@ -689,6 +725,8 @@ export function Holdings() {
           background:rgba(0,0,0,.015);border-radius:12px;
         }
         .shelf-row { scrollbar-width:none; -ms-overflow-style:none; overflow-x:scroll !important; }
+        .shelf-row img { -webkit-user-drag:none; user-drag:none; pointer-events:none; }
+        .shelf-row * { -webkit-user-select:none; user-select:none; }
         .shelf-row::-webkit-scrollbar { display:none; }
         .shelf-row::-webkit-scrollbar { display:none; }
         .minimap { position:relative;height:20px;background:#F0F0F5;border-radius:7px;overflow:hidden;cursor:grab;transition:height .15s,opacity .15s;user-select:none;-webkit-user-select:none; }
@@ -1382,6 +1420,7 @@ export function Holdings() {
                               <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer' }} onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
                                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
                                     <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0 }}>{lvl}</div>
                                                                         {setLogos[setName]&&(
                                       <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
@@ -1398,7 +1437,6 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .25s', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)' }}><path d="M6 9l6 6 6-6"/></svg>
                                     <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir le set complet ›</span>
                                   </div>
                                 </div>
@@ -1442,7 +1480,7 @@ export function Holdings() {
                           })()}
                           {/* Rayon de cartes */}
                           <div style={{ maxHeight:collapsedSets.has(setName)?'0px':'3000px', overflow:'hidden', transition:'max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s', opacity:collapsedSets.has(setName)?0:1 }}>
-                          <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any }}>
+                          <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} onMouseDown={e=>{e.preventDefault();onShelfMouseDown(e)}} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any, cursor:'grab' }}>
                             {cardImgs.map((item,ci)=>{
                               if(item.type==='ghost'){
                                 const gi=item

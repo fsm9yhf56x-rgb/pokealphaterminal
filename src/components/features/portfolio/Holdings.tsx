@@ -10,7 +10,7 @@ import { WrappedView } from './WrappedView'
 type CardItem = {
   id: string; name: string; set: string; year: number; number: string
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
-  condition: string; graded: boolean
+  condition: string; graded: boolean; imageStatus?: 'pending'|'approved'|'rejected'
   buyPrice: number; curPrice: number; qty: number
   psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean
   image?: string; setTotal?: number; setId?: string
@@ -107,6 +107,7 @@ export function Holdings() {
   const [vitrineFilter, setVitrineFilter] = useState('all')
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   const [editQty,     setEditQty]     = useState<number|null>(null)
+  const [cardZoom,    setCardZoom]    = useState(false)
   const [favs,        setFavs]        = useState<Set<string>>(new Set())
   const [shareOpen,   setShareOpen]   = useState(false)
   const [shareCtx,    setShareCtx]    = useState<'portfolio'|'card'|'wrapped'|'showcase'>('portfolio')
@@ -434,7 +435,7 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*3
+  const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*15
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
   const binderSorted = [...binderFiltered].sort((a,b)=>{
@@ -602,6 +603,9 @@ export function Holdings() {
       { label:'Taille du fichier', status:'pending' },
       { label:'Dimensions', status:'pending' },
       { label:'Orientation portrait', status:'pending' },
+      { label:'Ratio carte standard', status:'pending' },
+      { label:'Résolution minimale', status:'pending' },
+      { label:'Cadrage des bords', status:'pending' },
     ]
     setUploadModal({ open:true, preview, checks:[...checks], done:false, success:false })
     const delay = (ms:number) => new Promise(r=>setTimeout(r,ms))
@@ -623,19 +627,69 @@ export function Holdings() {
     try {
       await new Promise<void>((res,rej)=>{ img.onload=()=>res(); img.onerror=()=>rej(); img.src=preview })
       await delay(400)
-      if(img.width>=300&&img.height>=400){ upd(2,'pass',img.width+'\u00d7'+img.height+' px') }
-      else { upd(2,'fail',img.width+'\u00d7'+img.height+' px (min 300\u00d7400)'); ok=false }
+      if(img.width>=500&&img.height>=700){ upd(2,'pass',img.width+'\u00d7'+img.height+' px') }
+      else { upd(2,'fail',img.width+'\u00d7'+img.height+' px (min 500\u00d7700)'); ok=false }
       upd(3,'checking'); await delay(300)
       if(img.height>=img.width){ upd(3,'pass','Portrait') }
       else { upd(3,'fail','Paysage detecte'); ok=false }
-    } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); ok=false }
+
+      // 5. Ratio carte
+      upd(4,'checking'); await delay(350)
+      const ratio = img.width / img.height
+      if(ratio >= 0.63 && ratio <= 0.80){ upd(4,'pass','Ratio ' + ratio.toFixed(3)) }
+      else { upd(4,'fail','Ratio ' + ratio.toFixed(3) + ' (attendu 0.63-0.80)'); ok=false }
+
+      // 6. Resolution
+      upd(5,'checking'); await delay(350)
+      if(img.width >= 600 && img.height >= 840){ upd(5,'pass',img.width+'x'+img.height+' px') }
+      else { upd(5,'fail',img.width+'x'+img.height+' px (min 600x840)'); ok=false }
+
+      // 7. Cadrage des bords — consistance couleur le long des 4 bords
+      upd(6,'checking'); await delay(400)
+      try {
+        const cv = document.createElement('canvas')
+        cv.width = img.width; cv.height = img.height
+        const ctx = cv.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+        // Echantillonner une bande de 3px le long de chaque bord
+        const bw = 3
+        const topStrip = ctx.getImageData(0, 0, img.width, bw)
+        const botStrip = ctx.getImageData(0, img.height - bw, img.width, bw)
+        const leftStrip = ctx.getImageData(0, 0, bw, img.height)
+        const rightStrip = ctx.getImageData(img.width - bw, 0, bw, img.height)
+        // Calculer la variance de couleur pour chaque bord
+        const calcVariance = (data: Uint8ClampedArray) => {
+          let sumR=0,sumG=0,sumB=0
+          const n = data.length / 4
+          for(let i=0;i<data.length;i+=4){ sumR+=data[i]; sumG+=data[i+1]; sumB+=data[i+2] }
+          const avgR=sumR/n, avgG=sumG/n, avgB=sumB/n
+          let varSum=0
+          for(let i=0;i<data.length;i+=4){
+            varSum+=Math.pow(data[i]-avgR,2)+Math.pow(data[i+1]-avgG,2)+Math.pow(data[i+2]-avgB,2)
+          }
+          return Math.sqrt(varSum/(n*3))
+        }
+        const variances = [
+          calcVariance(topStrip.data),
+          calcVariance(botStrip.data),
+          calcVariance(leftStrip.data),
+          calcVariance(rightStrip.data),
+        ]
+        const avgVar = variances.reduce((a,b)=>a+b,0) / 4
+        // Une carte a des bords trés uniformes (variance < 35)
+        // Une photo random a des bords trés variés (variance > 50)
+        if (avgVar < 40) { upd(6,'pass','Bords uniformes (var: '+avgVar.toFixed(0)+')') }
+        else { upd(6,'fail','Bords irréguliers (var: '+avgVar.toFixed(0)+') \u2014 pas une carte recadrée'); ok=false }
+      } catch { upd(6,'fail','Analyse impossible'); ok=false }
+
+        } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); upd(4,'fail','\u2014'); upd(5,'fail','\u2014'); upd(6,'fail','\u2014'); ok=false }
     await delay(300)
     if(ok){
       const reader = new FileReader()
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string
-        setPortfolio(prev=>prev.map(c=>c.id===cardId?{...c,image:dataUrl}:c))
-        if(spotCard?.id===cardId) setSpotCard(prev=>prev?{...prev,image:dataUrl}:null)
+        setPortfolio(prev=>prev.map(c=>c.id===cardId?{...c,image:dataUrl,imageStatus:'pending' as const}:c))
+        if(spotCard?.id===cardId) setSpotCard(prev=>prev?{...prev,image:dataUrl,imageStatus:'pending' as const}:null)
         setUploadModal(p=>({...p,done:true,success:true}))
       }
       reader.readAsDataURL(file)
@@ -919,15 +973,16 @@ export function Holdings() {
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
           const curQty=editQty??spotCard.qty
           return(
-            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null) }}>
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
               <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.05)', padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out', position:'relative' }} onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'16px', right:'16px', width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:5, transition:'all .15s' }}
                   onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
                   onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
-                <div style={{ display:'grid', gridTemplateColumns:'220px 1fr', gap:'24px', alignItems:'start' }}>
-                  <div className="gem" style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'14px', boxShadow:'0 4px 20px rgba(0,0,0,.06)' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
+                <div style={{ display:'flex', overflow:'hidden', margin:'-28px', borderRadius:'20px' }}>
+                  <div style={{ flexShrink:0, width:'250px', background:'#F5F5F7', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+                  <div className="gem" style={{ background:'transparent', borderRadius:'14px', width:'100%' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
                     {isHolo&&<div className="holo"/>}
                     <div className="hm"/>
                     
@@ -937,7 +992,8 @@ export function Holdings() {
                     <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:'#EBEBEB', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
                       {spotCard.image ? (
                         <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
-                          style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1 }}
+                          onClick={e=>{e.stopPropagation();setCardZoom(true)}}
+                          style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1, cursor:'zoom-in' }}
                           onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else t.style.display='none' }}/>
                       ) : (
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', zIndex:1 }}>
@@ -951,53 +1007,63 @@ export function Holdings() {
                         </div>
                       )}
                     </div>
-                    <div style={{ padding:'14px' }}>
-                      <div style={{ fontSize:'16px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'3px' }}>{spotCard.name}</div>
-                      <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-                        <span style={{ fontSize:'11px', color:'#86868B' }}>{spotCard.set} · {spotCard.year}</span>
+                  </div>
+                  </div>
+                  <div style={{ flex:1, minWidth:0, padding:'28px 28px 24px' }}>
+                    <div style={{ paddingRight:'28px', marginBottom:'14px' }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px' }}>
+                        <div style={{ fontSize:'20px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{spotCard.name}</div>
                         {spotCard.graded&&(()=>{
                           const gn=parseFloat(spotCard.condition.replace(/[^0-9.]/g,''))
-                          const bg=gn>=10?'linear-gradient(90deg,#C9A84C,#FFD700,#FFF1A8,#FFD700,#C9A84C)':gn>=9?'linear-gradient(135deg,#A8A8A8,#E8E8E8,#A8A8A8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#A0724A)':'#6E6E73'
-                          const fg=gn>=10?'#1a1200':gn>=9?'#222':gn>=5?'#2a1800':'#fff'
-                          const sh=gn>=10?'0 2px 8px rgba(201,168,76,.4)':gn>=9?'0 2px 6px rgba(0,0,0,.08)':'none'
-                          return <span style={{ fontSize:'10px', fontWeight:800, background:bg, color:fg, padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', backgroundSize:gn>=10?'300% 100%':'auto', animation:gn>=10?'goldShine 3s ease-in-out infinite':'none' }}>{spotCard.condition}</span>
+                          const bg=gn>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73'
+                          const fg=gn>=10?'#5C4A12':gn>=9?'#222':gn>=5?'#2a1800':'#fff'
+                          const sh=gn>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn>=9?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'none'
+                          return <div style={{ flexShrink:0, background:bg, color:fg, fontSize:'10px', fontWeight:800, padding:'4px 10px', borderRadius:'6px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', overflow:'visible', position:'relative', border:gn>=10?'1px solid rgba(212,175,55,.4)':gn>=9?'1px solid rgba(168,168,168,.4)':gn>=5?'1px solid rgba(160,114,74,.3)':'none', backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none' }}>
+                            {gn>=5&&<div style={{ position:'absolute', inset:0, borderRadius:'6px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
+                            {gn>=10&&<div className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
+                            <span style={{ position:'relative', zIndex:1 }}>{spotCard.condition}</span>
+                          </div>
                         })()}
                       </div>
+                      <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px' }}>
+                        <span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.set}</span>
+                        <span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
+                        <span style={{ fontSize:'12px', color:'#86868B' }}>#{spotCard.number||'???'}</span>
+                        {spotCard.rarity&&<><span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span><span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.rarity}</span></>}
+                        <span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
+                        <span style={{ fontSize:'14px' }}>{spotCard.lang==='EN'?'\u{1F1FA}\u{1F1F8}':spotCard.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize:'36px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'8px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
+                    <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
                     {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'14px' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'14px' }}>
                       {[
-                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'#48484A'},
-                        {l:'Marche',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
-                        {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:'#2E9E6A'},
-                        {l:'Langue',v:spotCard.lang,c:'#48484A'},
+                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
+                        {l:'Marché',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
+                        {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
                         {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'#48484A'},
-                        {l:'Gain',v:spotCard.buyPrice>0?'+EUR '+Math.abs(gain).toLocaleString('fr-FR'):'---',c:'#2E9E6A'},
-                      ].map(s=>(
-                        <div key={s.l} style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'9px', padding:'10px 12px' }}>
-                          <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{s.l}</div>
-                          <div style={{ fontSize:'15px', fontWeight:600, color:s.c, fontFamily:'var(--font-display)' }}>{s.v}</div>
+                      ].map(st=>(
+                        <div key={st.l} style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px' }}>
+                          <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500 }}>{st.l}</div>
+                          <div style={{ fontSize:'14px', fontWeight:600, color:st.c, fontFamily:'var(--font-display)', marginTop:'2px' }}>{st.v}</div>
                         </div>
                       ))}
                     </div>
-                    <div style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'10px', padding:'12px 14px', marginBottom:'12px' }}>
-                      <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'8px' }}>Quantite dans la collection</div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', padding:'10px 0', borderTop:'1px solid #F0F0F5', borderBottom:'1px solid #F0F0F5' }}>
+                      <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'#F0F0F5', border:'1px solid #D2D2D7', color:'#1D1D1F', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
-                        <div style={{ flex:1, background:'#E8E8ED', border:'1.5px solid #D1CEC9', borderRadius:'8px', padding:'7px', textAlign:'center' as const, fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{curQty}</div>
-                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'32px', height:'32px', borderRadius:'8px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
+                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'28px', height:'28px', borderRadius:'8px', background:'#F5F5F7', border:'none', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
+                        <span style={{ fontSize:'14px', fontWeight:600, color:'#1D1D1F', minWidth:'20px', textAlign:'center' as const, fontFamily:'var(--font-display)' }}>{curQty}</span>
+                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'28px', height:'28px', borderRadius:'8px', background:'#F5F5F7', border:'none', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
                         {editQty!==null&&editQty!==spotCard.qty&&(
-                          <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantite mise a jour') }} style={{ padding:'7px 12px', borderRadius:'8px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
-                            Sauvegarder
+                          <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantité mise à jour') }} style={{ padding:'6px 12px', borderRadius:'8px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                            OK
                           </button>
                         )}
                       </div>
                     </div>
                     <div style={{ display:'flex', gap:'8px' }}>
-                      <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal</button>
+                      <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal</button>
                       <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#E8E8ED', color:'#48484A', border:'1.5px solid #D1CEC9', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
                       <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:favs.has(spotCard.id)?'#FFF0F0':'#E8E8ED', border:`1px solid ${favs.has(spotCard.id)?'rgba(224,48,32,.25)':'#E5E5EA'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s' }}
                         onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.06)'}}
@@ -1706,6 +1772,7 @@ export function Holdings() {
                                   </div>
                                 })()}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
+                                  {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
@@ -1889,20 +1956,21 @@ export function Holdings() {
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                               {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
-                              {card.graded&&(()=>{
-                                const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
-                                const bg3=gn3>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn3>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn3>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73'
-                                const fg3=gn3>=10?'#1a1200':gn3>=9?'#222':gn3>=5?'#2a1800':'#fff'
-                                const sh3=gn3>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn3>=9?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn3>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
-                                return <span style={{ fontSize:binderCols>=7?'7px':'8px', fontWeight:800, background:bg3, color:fg3, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', marginLeft:'2px', overflow:'visible', position:'relative', border:gn3>=10?'1px solid rgba(212,175,55,.4)':gn3>=9?'1px solid rgba(168,168,168,.4)':gn3>=5?'1px solid rgba(160,114,74,.3)':'none', display:'inline-flex', alignItems:'center', backgroundSize:gn3>=5?'300% 300%':'auto', animation:gn3>=5?'metalShift 8s ease-in-out infinite':'none' }}>
-                                {gn3>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn3>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn3>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
-                                {gn3>=10&&<span className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
-                                <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
-                              </span>
-                              })()}
+
                               
                             </div>
                           </div>
+                          {card.graded&&(()=>{
+                            const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
+                            const bg3=gn3>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn3>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn3>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73'
+                            const fg3=gn3>=10?'#1a1200':gn3>=9?'#222':gn3>=5?'#2a1800':'#fff'
+                            const sh3=gn3>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn3>=9?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn3>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
+                            return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg3, color:fg3, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', overflow:'visible', border:gn3>=10?'1px solid rgba(212,175,55,.4)':gn3>=9?'1px solid rgba(168,168,168,.4)':gn3>=5?'1px solid rgba(160,114,74,.3)':'none', backgroundSize:gn3>=5?'300% 300%':'auto', animation:gn3>=5?'metalShift 8s ease-in-out infinite':'none' }}>
+                              {gn3>=5&&<div style={{ position:'absolute', inset:0, borderRadius:'5px', background:gn3>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn3>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
+                              {gn3>=10&&<div className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
+                              <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
+                            </div>
+                          })()}
                           <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}
                             onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-8px)';p.style.transition='none'}}}
                             onClick={e=>{e.stopPropagation();removeCard(card,e)}}
@@ -2227,7 +2295,17 @@ export function Holdings() {
         </div>
       )}
 
-            {/* ADD SET MODAL */}
+            {/* CARD ZOOM */}
+        {cardZoom&&spotCard&&spotCard.image&&(
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', cursor:'zoom-out', animation:'fadeUp .2s ease-out' }}
+            onClick={()=>setCardZoom(false)}>
+            <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
+              style={{ maxHeight:'90vh', maxWidth:'90vw', objectFit:'contain', borderRadius:'16px', boxShadow:'0 32px 80px rgba(0,0,0,.4)', animation:'illuminate .3s ease-out' }}
+              onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg') }}/>
+          </div>
+        )}
+
+                {/* ADD SET MODAL */}
       {addSetOpen&&(
         <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px' }}
           onClick={()=>setAddSetOpen(false)}>

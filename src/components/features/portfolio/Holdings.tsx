@@ -1320,7 +1320,7 @@ export function Holdings() {
             <div style={{ display:'flex', gap:'4px', marginTop:'6px' }}>
               <button onClick={()=>{ setBinderSet(null); setBinderPage(0) }}
                 style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${!binderSet?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:!binderSet?'#1D1D1F':'transparent', color:!binderSet?'#fff':'rgba(29,29,31,.45)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                Par sets
+                Par séries
               </button>
               <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
                 style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:binderSet==='__all__'?'#1D1D1F':'transparent', color:binderSet==='__all__'?'#fff':'#86868B', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
@@ -1350,7 +1350,7 @@ export function Holdings() {
                   const sc=portfolio.filter(c=>c.set===binderSet)
                   const existingNums=new Set(sc.map(c=>c.number))
                   const toAdd=fullSetCards.filter(c=>!existingNums.has(c.localId||''))
-                  if(toAdd.length===0){showToast('Set déjà complet');return}
+                  if(toAdd.length===0){showToast('Série déjà complète');return}
                   const newCards:CardItem[]=toAdd.map(c=>({
                     id:'u'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
                     name:c.name,set:binderSet||'',year:new Date().getFullYear(),
@@ -1395,7 +1395,7 @@ export function Holdings() {
                     <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
                     <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)', marginTop:'2px' }}>
                   {binderSet
-                    ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Tous les sets</button>
+                    ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Toutes les séries</button>
                     : <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
                   }
                   {binderSet && (
@@ -1454,7 +1454,7 @@ export function Holdings() {
                         <div style={{ position:'relative', flex:1, minWidth:'120px' }}>
                           <input
                             type="text"
-                            placeholder="Rechercher un set..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                            placeholder="Rechercher une série..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
                             value={setSearch}
                             onChange={e=>setSetSearch(e.target.value)}
                             style={{ width:'100%', padding:'7px 12px 7px 32px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
@@ -1575,7 +1575,7 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
-                                    <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir le set complet ›</span>
+                                    <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir la série complète ›</span>
                                   </div>
                                 </div>
                                 {resolvedTotal>0&&(
@@ -2287,7 +2287,7 @@ export function Holdings() {
                     </div>
                   </div>
                   <button onClick={()=>{
-                    if(toAdd===0){ showToast('Set déjà complet'); return }
+                    if(toAdd===0){ showToast('Série déjà complète'); return }
                     const newCards: CardItem[] = addSetCards
                       .filter(c=>!existingNums.has(c.localId||''))
                       .map(c=>({
@@ -2307,7 +2307,7 @@ export function Holdings() {
                     style={{ width:'100%',padding:'13px',borderRadius:'11px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'14px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}
                     onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'}}
                     onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                    {toAdd>0?'Ajouter les '+toAdd+' cartes manquantes':'Set déjà complet'}
+                    {toAdd>0?'Ajouter les '+toAdd+' cartes manquantes':'Série déjà complète'}
                   </button>
                 </div>
               )

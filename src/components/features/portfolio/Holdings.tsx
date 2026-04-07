@@ -76,6 +76,36 @@ const GRADE_COMPANIES = [
 type GridItem = { type:'owned'; card:CardItem } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
 export function Holdings() {
+  // -- IndexedDB persistence --
+  const dbOpen = () => new Promise<IDBDatabase>((res, rej) => {
+    const req = indexedDB.open('pka_db', 1)
+    req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains('store')) db.createObjectStore('store') }
+    req.onsuccess = () => res(req.result)
+    req.onerror = () => rej(req.error)
+  })
+  const dbGet = async <T,>(key: string): Promise<T | null> => {
+    try {
+      const db = await dbOpen()
+      return new Promise((res, rej) => {
+        const tx = db.transaction('store', 'readonly')
+        const req = tx.objectStore('store').get(key)
+        req.onsuccess = () => res(req.result ?? null)
+        req.onerror = () => rej(req.error)
+      })
+    } catch { return null }
+  }
+  const dbSet = async (key: string, value: unknown) => {
+    try {
+      const db = await dbOpen()
+      return new Promise<void>((res, rej) => {
+        const tx = db.transaction('store', 'readwrite')
+        tx.objectStore('store').put(value, key)
+        tx.oncomplete = () => res()
+        tx.onerror = () => rej(tx.error)
+      })
+    } catch {}
+  }
+
   const router = useRouter()
   const [view,        setView]        = useState<ViewMode>('binder')
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
@@ -99,6 +129,13 @@ export function Holdings() {
   const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
   })
+  const [portfolioLoaded, setPortfolioLoaded] = useState(false)
+  useEffect(() => {
+    dbGet<CardItem[]>('portfolio').then(data => {
+      if (data && data.length > 0) setPortfolio(data)
+      setPortfolioLoaded(true)
+    }).catch(() => setPortfolioLoaded(true))
+  }, [])
   const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
@@ -168,8 +205,27 @@ export function Holdings() {
     el.scrollTo({ left: targetFrac * (el.scrollWidth - el.clientWidth), behavior: 'smooth' })
   }
 
-  useEffect(()=>{ try { localStorage.setItem('pka_portfolio', JSON.stringify(portfolio)) } catch {} }, [portfolio])
-  useEffect(()=>{ try { localStorage.setItem('pka_showcase', JSON.stringify(showcase)) } catch {} }, [showcase])
+  const saveTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
+  useEffect(()=>{
+    if (!portfolioLoaded) return
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      dbSet('portfolio', portfolio)
+      try {
+        const slim = portfolio.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c)
+        localStorage.setItem('pka_portfolio', JSON.stringify(slim))
+      } catch {}
+    }, 500)
+  }, [portfolio, portfolioLoaded])
+  useEffect(() => {
+    dbGet<CardItem[]>('showcase').then(data => {
+      if (data && data.length > 0) setShowcase(data)
+    })
+  }, [])
+  useEffect(()=>{
+    dbSet('showcase', showcase)
+    try { const slim = showcase.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c); localStorage.setItem('pka_showcase', JSON.stringify(slim)) } catch {}
+  }, [showcase])
   useEffect(()=>{ try { localStorage.setItem('pka_collapsed', JSON.stringify([...collapsedSets])) } catch {} }, [collapsedSets])
   useEffect(()=>{ try { localStorage.setItem('pka_set_order', JSON.stringify(setOrder)) } catch {} }, [setOrder])
 
@@ -261,24 +317,89 @@ export function Holdings() {
     }
   }, [addForm.lang])
 
-  // -- Backfill missing rarity via card detail API --
-  const rarityBackfilled = useRef<Set<string>>(new Set())
+  // -- Backfill missing rarity from static data + API fallback --
+  const rarityBackfilled = useRef(false)
   useEffect(() => {
-    const needsFix = portfolio.filter(c => !c.rarity && c.setId && c.number && c.number !== '???' && !rarityBackfilled.current.has(c.id))
+    if (rarityBackfilled.current) return
+    const needsFix = portfolio.filter(c => !c.rarity && c.setId && c.number && c.number !== '???')
     if (needsFix.length === 0) return
-    const batch = needsFix.slice(0, 5)
-    batch.forEach(async card => {
-      rarityBackfilled.current.add(card.id)
-      const lang = card.lang === 'JP' ? 'JP' : card.lang === 'EN' ? 'EN' : 'FR'
-      const cardId = card.setId + '-' + card.number
-      try {
-        const detail = await fetchCardDetail(lang, cardId)
-        if (detail?.rarity) {
-          setPortfolio(prev => prev.map(c => c.id === card.id ? { ...c, rarity: detail.rarity! } : c))
+    rarityBackfilled.current = true
+    const doBackfill = async () => {
+      const langs = [...new Set(needsFix.map(c => c.lang === 'JP' ? 'JP' : c.lang === 'EN' ? 'EN' : 'FR'))]
+      const staticCards: Record<string, Record<string, {r:string|null}[]>> = {}
+      for (const lang of langs) {
+        try {
+          const res = await fetch('/data/cards-' + lang + '.json')
+          if (res.ok) staticCards[lang] = await res.json()
+        } catch {}
+      }
+      const updates: Record<string, string> = {}
+      for (const card of needsFix) {
+        const lang = card.lang === 'JP' ? 'JP' : card.lang === 'EN' ? 'EN' : 'FR'
+        const setCards = card.setId ? staticCards[lang]?.[card.setId as string] : undefined
+        if (setCards) {
+          const match = setCards.find((c: any) => c.lid === card.number || c.id === card.setId + '-' + card.number)
+          if (match?.r) { updates[card.id] = match.r; continue }
         }
-      } catch {}
-    })
-  }, [portfolio.length, shelfSetCards])
+        // Fallback API pour les cartes pas dans le dump
+        try {
+          const detail = await fetchCardDetail(lang, card.setId + '-' + card.number)
+          if (detail?.rarity) updates[card.id] = detail.rarity
+        } catch {}
+      }
+      if (Object.keys(updates).length > 0) {
+        setPortfolio(prev => prev.map(c => updates[c.id] ? { ...c, rarity: updates[c.id] } : c))
+      }
+      rarityBackfilled.current = false
+    }
+    doBackfill()
+  }, [portfolio.length])
+
+  // -- Backfill missing images from static data (FR+EN+JP) --
+  const imgBackfilled = useRef(false)
+  useEffect(() => {
+    if (imgBackfilled.current) return
+    const needsImg = portfolio.filter(c => !c.image && c.setId && c.number && c.number !== '???')
+    if (needsImg.length === 0) return
+    imgBackfilled.current = true
+    const doImgBackfill = async () => {
+      // Charger les 3 langues pour maximiser la couverture
+      const allStatic: Record<string, Record<string, any[]>> = {}
+      for (const lang of ['FR', 'EN', 'JP']) {
+        try {
+          const res = await fetch('/data/cards-' + lang + '.json')
+          if (res.ok) allStatic[lang] = await res.json()
+        } catch {}
+      }
+      const updates: Record<string, string> = {}
+      for (const card of needsImg) {
+        const lang = card.lang === 'JP' ? 'JP' : card.lang === 'EN' ? 'EN' : 'FR'
+        const apiLang = card.lang === 'JP' ? 'ja' : card.lang === 'EN' ? 'en' : 'fr'
+        const sid = card.setId as string
+        if (!sid) continue
+        // 1. Chercher dans la langue de la carte
+        const match1 = allStatic[lang]?.[sid]?.find((c: any) => c.lid === card.number)
+        if (match1?.img) { updates[card.id] = match1.img; continue }
+        // 2. Chercher dans EN (meilleure couverture)
+        if (lang !== 'EN') {
+          const match2 = allStatic['EN']?.[sid]?.find((c: any) => c.lid === card.number)
+          if (match2?.img) { updates[card.id] = match2.img; continue }
+        }
+        // 3. Chercher dans FR comme fallback
+        if (lang !== 'FR') {
+          const match3 = allStatic['FR']?.[sid]?.find((c: any) => c.lid === card.number)
+          if (match3?.img) { updates[card.id] = match3.img; continue }
+        }
+        // 4. Construire URL directement (pas de HEAD — le onError gere)
+        updates[card.id] = 'https://assets.tcgdex.net/' + apiLang + '/' + sid + '/' + card.number + '/high.webp'
+      }
+      if (Object.keys(updates).length > 0) {
+        setPortfolio(prev => prev.map(c => updates[c.id] ? { ...c, image: updates[c.id] } : c))
+      }
+      imgBackfilled.current = false
+    }
+    doImgBackfill()
+  }, [portfolio.length])
 
   // -- Fetch set logos via TCGDex API --
   useEffect(() => {
@@ -336,37 +457,44 @@ export function Holdings() {
       .catch(() => setFullSetLoading(false))
   }, [binderSet, liveSets.length])
 
-  // -- Master set glitter generator --
+  // -- Glitter: IntersectionObserver (perf) --
+  const glitterObsRef = useRef<IntersectionObserver|null>(null)
   useEffect(() => {
-    const els = document.querySelectorAll('.master-glitter-container')
-    els.forEach(el => {
+    const fillGlitter = (el: Element, count: number) => {
       if (el.childNodes.length > 0) return
       const anims = ['gl1','gl2','gl3','gl4']
-      for (let i = 0; i < 2000; i++) {
+      for (let i = 0; i < count; i++) {
         const d = document.createElement('div')
         const sz = Math.random() > .6 ? 2 : 1
-        const top = (-2 + Math.random() * 12).toFixed(0)
+        const top = (count > 100 ? -2 + Math.random() * 12 : -1 + Math.random() * 18).toFixed(0)
         const left = (Math.random() * 99).toFixed(1)
         const delay = (Math.random() * 4).toFixed(2)
         d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite`
         el.appendChild(d)
       }
-    })
-    // Badge glitter (grade 10)
-    const badges = document.querySelectorAll('.badge-glitter-container')
-    badges.forEach(bg => {
-      if (bg.childNodes.length > 0) return
-      const anims = ['gl1','gl2','gl3','gl4']
-      for (let i = 0; i < 80; i++) {
-        const d = document.createElement('div')
-        const sz = Math.random() > .5 ? 2 : 1
-        const top = (-1 + Math.random() * 18).toFixed(0)
-        const left = (Math.random() * 98).toFixed(1)
-        const delay = (Math.random() * 4).toFixed(2)
-        d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite`
-        bg.appendChild(d)
-      }
-    })
+    }
+    const pauseGlitter = (el: Element) => {
+      (el as HTMLElement).style.display = 'none'
+    }
+    const resumeGlitter = (el: Element, count: number) => {
+      fillGlitter(el, count)
+      ;(el as HTMLElement).style.display = ''
+    }
+    if (glitterObsRef.current) glitterObsRef.current.disconnect()
+    glitterObsRef.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const el = entry.target
+        const count = el.classList.contains('master-glitter-container') ? 2000 : 40
+        if (entry.isIntersecting) {
+          resumeGlitter(el, count)
+        } else {
+          pauseGlitter(el)
+        }
+      })
+    }, { rootMargin: '200px' })
+    const obs = glitterObsRef.current
+    document.querySelectorAll('.master-glitter-container, .badge-glitter-container').forEach(el => obs.observe(el))
+    return () => obs.disconnect()
   })
 
   // -- Fetch sets pour modal ajouter serie --
@@ -435,7 +563,7 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*15
+  const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
   const binderSorted = [...binderFiltered].sort((a,b)=>{
@@ -464,7 +592,7 @@ export function Holdings() {
   }
   const gridItems = buildGridItems()
   const pageItems = gridItems.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
-  const phantomCount = gridItems.some(g=>g.type==='ghost') ? 0 : binderSet ? Math.max(0,slotsPer-pageItems.length) : 0
+  const phantomCount = 0
   const binderPages = Math.max(1,Math.ceil(gridItems.length/slotsPer))
 
   const showToast = (msg:string) => {
@@ -706,6 +834,11 @@ export function Holdings() {
         @keyframes slotIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
         @keyframes illuminate{ 0%{opacity:0;transform:scale(.93) translateY(12px)} 50%{opacity:1;transform:scale(1.02) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
         
+        .pocket-shell { contain:layout style paint; }
+        .img-missing { position:relative; }
+        .img-missing::after { content:'+'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; opacity:.4; pointer-events:none; }
+        .set-block { content-visibility:auto; contain-intrinsic-size:auto 400px; }
+        .shelf-row img, .binder-grid img { content-visibility:auto; }
         .pocket-shell .card-plastic { position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(29,29,31,.06) 0%,rgba(29,29,31,0) 45%,rgba(29,29,31,.025) 100%);pointer-events:none;z-index:5;transition:opacity .2s; }
         @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes breatheS  { 0%,100%{box-shadow:0 0 18px rgba(255,107,53,.2),0 4px 16px rgba(0,0,0,.08)} 50%{box-shadow:0 0 36px rgba(255,107,53,.35),0 8px 28px rgba(0,0,0,.12)} }
@@ -994,7 +1127,7 @@ export function Holdings() {
                         <img src={`${spotCard.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={spotCard.name}
                           onClick={e=>{e.stopPropagation();setCardZoom(true)}}
                           style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1, cursor:'zoom-in' }}
-                          onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else t.style.display='none' }}/>
+                          onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}/>
                       ) : (
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px', zIndex:1 }}>
                           <div style={{ width:'48px', height:'48px', borderRadius:'14px', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -1077,6 +1210,16 @@ export function Holdings() {
             </div>
           )
         })()}
+
+        
+        {/* Retour en haut */}
+        {view==='binder'&&binderSet&&binderSet!=='__all__'&&(
+          <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} style={{ position:'fixed', bottom:'24px', right:'24px', width:'44px', height:'44px', borderRadius:'50%', background:'#1D1D1F', color:'#fff', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,.15)', zIndex:30, transition:'all .2s' }}
+            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,.2)'}}
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 15l-6-6-6 6"/></svg>
+          </button>
+        )}
 
         {/* SHOWCASE PICKER */}
         {showPickerForShowcase&&(
@@ -1591,7 +1734,7 @@ export function Holdings() {
                             return 0
                           }).map(c=>({ type:'owned' as const, card:c }))
                       return (
-                        <div key={setName} style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
+                        <div key={setName} className="set-block" style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
                           {/* Header du set — XP Bar gamifiée exact artifact */}
                           {(()=>{
                             const p=pct??0
@@ -1651,6 +1794,11 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
+                                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
+                                      onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}
+                                      onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                                    </button>
                                     <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir la série complète ›</span>
                                   </div>
                                 </div>
@@ -1704,8 +1852,8 @@ export function Holdings() {
                             )
                           })()}
                           {/* Rayon de cartes */}
-                          <div style={{ maxHeight:collapsedSets.has(setName)?'0px':'3000px', overflow:'hidden', transition:'max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s', opacity:collapsedSets.has(setName)?0:1 }}>
-                          <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} onMouseDown={e=>{e.preventDefault();onShelfMouseDown(e)}} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any, cursor:'grab' }}>
+                          {!collapsedSets.has(setName)&&<div>
+                          <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} onMouseDown={e=>{e.preventDefault();onShelfMouseDown(e)}} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any, cursor:'grab', willChange:'scroll-position' }}>
                             {cardImgs.map((item,ci)=>{
                               if(item.type==='ghost'){
                                 const gi=item
@@ -1753,7 +1901,7 @@ export function Holdings() {
                                 {card.image?(
                                   <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
                                     style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
-                                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
+                                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}/>
                                 ):(
                                   <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}18,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
@@ -1835,7 +1983,7 @@ export function Holdings() {
                               </div>
                             )
                           })()}
-                          </div>
+                          </div>}
                           {/* Séparateur */}
                           {si<(()=>{const raw=[...new Set(portfolio.map(c=>c.set))];const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw;return ordered})().filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
                         </div>
@@ -1926,7 +2074,7 @@ export function Holdings() {
                               const imgBase = card.image.replace(/\/low\.(webp|jpg|png)$/, '').replace(/\/high\.(webp|jpg|png)$/, '')
                               return <img src={`${imgBase}/high.webp`} alt={card.name}
                                 style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
-                                onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${imgBase}/high.jpg`; else if(t.src.includes('high')) t.src=`${imgBase}/low.webp`; else t.style.display='none' }}
+                                onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${imgBase}/high.jpg`; else if(t.src.includes('high')) t.src=`${imgBase}/low.webp`; else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}
                               />
                             })() : (
                               <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec}15,${ec}06)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', position:'relative' }}>
@@ -1995,7 +2143,7 @@ export function Holdings() {
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{ height:'4px', borderRadius:'2px', background:i===binderPage?'rgba(29,29,31,.45)':'rgba(29,29,31,.11)', cursor:'pointer', transition:'all .2s', width:i===binderPage?'18px':'6px' }}/>
+                      <div key={i} onClick={()=>setBinderPage(i)} style={{ width:'28px', height:'28px', borderRadius:'8px', background:i===binderPage?'#1D1D1F':'transparent', color:i===binderPage?'#fff':'#86868B', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:i===binderPage?600:500, cursor:'pointer', transition:'all .15s', fontFamily:'var(--font-data)' }}>{i+1}</div>
                     ))}
                   </div>
                 )}
@@ -2142,7 +2290,7 @@ export function Holdings() {
                           {card.image ? (
                             <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/high.webp`} alt={card.name}
                               style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-                              onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else t.style.display='none' }}/>
+                              onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}/>
                           ) : (
                             <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
                               <div style={{ position:'absolute', width:'65%', height:'65%', borderRadius:'50%', background:eg, filter:'blur(24px)', opacity:.5 }}/>

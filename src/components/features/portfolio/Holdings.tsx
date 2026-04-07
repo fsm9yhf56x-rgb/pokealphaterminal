@@ -484,7 +484,7 @@ export function Holdings() {
     glitterObsRef.current = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const el = entry.target
-        const count = el.classList.contains('master-glitter-container') ? 2000 : 40
+        const count = el.classList.contains('master-glitter-container') ? 500 : 40
         if (entry.isIntersecting) {
           resumeGlitter(el, count)
         } else {
@@ -835,6 +835,8 @@ export function Holdings() {
         @keyframes illuminate{ 0%{opacity:0;transform:scale(.93) translateY(12px)} 50%{opacity:1;transform:scale(1.02) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
         
         .pocket-shell { contain:layout style paint; }
+        .master-glitter-container, .badge-glitter-container { contain:strict; will-change:opacity; pointer-events:none; }
+        .master-glitter-container div, .badge-glitter-container div { will-change:opacity; }
         .img-missing { position:relative; }
         .img-missing::after { content:'+'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; opacity:.4; pointer-events:none; }
         .set-block { content-visibility:auto; contain-intrinsic-size:auto 400px; }

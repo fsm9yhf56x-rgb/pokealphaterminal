@@ -188,60 +188,24 @@ export function Encyclopedie() {
     } catch {}
   }, [])
 
-  // Fetch set logos from TCGDex (batched)
+  // Load set logos from local JSON
   useEffect(() => {
-    if (allCards.length === 0) return
-    const sids = [...new Set(allCards.map(c => c.setId))]
-    // 1. Load all cached first
-    const uncached: string[] = []
-    const logosBatch: Record<string,string> = {}
-    const blocksBatch: Record<string,string> = {}
-    sids.forEach(sid => {
-      const cached = localStorage.getItem('pka_logo_' + sid)
-      if (cached) {
-        logosBatch[sid] = cached
-        const cb = localStorage.getItem('pka_block_' + sid)
-        if (cb) blocksBatch[sid] = cb
-      } else {
-        uncached.push(sid)
-      }
-    })
-    if (Object.keys(logosBatch).length > 0) {
-      setSetLogos(prev => ({ ...prev, ...logosBatch }))
-      setSetBlocks(prev => ({ ...prev, ...blocksBatch }))
-    }
-    // 2. Fetch uncached in batches of 8 with delay
-    if (uncached.length === 0) return
-    let cancelled = false
-    const fetchBatch = async () => {
-      for (let i = 0; i < uncached.length; i += 8) {
-        if (cancelled) return
-        const batch = uncached.slice(i, i + 8)
-        const results = await Promise.allSettled(batch.map(async sid => {
-          const res = await fetch('https://api.tcgdex.net/v2/en/sets/' + sid)
-          if (!res.ok) return null
-          const data = await res.json()
-          return { sid, logo: data.logo ? data.logo + '/low.webp' : null, block: data.serie?.name || null }
-        }))
-        if (cancelled) return
-        const newLogos: Record<string,string> = {}
-        const newBlocks: Record<string,string> = {}
-        results.forEach(r => {
-          if (r.status === 'fulfilled' && r.value) {
-            const { sid, logo, block } = r.value
-            if (logo) { newLogos[sid] = logo; localStorage.setItem('pka_logo_' + sid, logo) }
-            if (block) { newBlocks[sid] = block; localStorage.setItem('pka_block_' + sid, block) }
-          }
+    const loadLogos = async () => {
+      try {
+        const res = await fetch('/data/sets-EN.json')
+        const sets: {id:string;logo:string|null;serie:string|null}[] = await res.json()
+        const logos: Record<string,string> = {}
+        const blocks: Record<string,string> = {}
+        sets.forEach(s => {
+          if (s.logo) logos[s.id] = s.logo
+          if (s.serie) blocks[s.id] = s.serie
         })
-        if (Object.keys(newLogos).length > 0) setSetLogos(prev => ({ ...prev, ...newLogos }))
-        if (Object.keys(newBlocks).length > 0) setSetBlocks(prev => ({ ...prev, ...newBlocks }))
-        if (i + 8 < uncached.length) await new Promise(r => setTimeout(r, 300))
-      }
+        setSetLogos(logos)
+        setSetBlocks(blocks)
+      } catch {}
     }
-    fetchBatch()
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allCards.length])
+    loadLogos()
+  }, [])
 
   const saveCustomImg = useCallback((cardKey: string, b64: string) => {
     setCustomImgs(prev => {

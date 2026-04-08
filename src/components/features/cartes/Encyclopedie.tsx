@@ -173,7 +173,11 @@ export function Encyclopedie() {
   const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
   const uploadRef = useRef<HTMLInputElement>(null)
   const [uploadTarget, setUploadTarget] = useState<string|null>(null)
-  const [uploadStatus, setUploadStatus] = useState<string|null>(null)
+  const [uploadModal, setUploadModal] = useState<{
+    open:boolean; preview:string|null;
+    checks:{label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[];
+    done:boolean; success:boolean
+  }>({ open:false, preview:null, checks:[], done:false, success:false })
 
   useEffect(() => {
     try {
@@ -195,46 +199,98 @@ export function Encyclopedie() {
   const handleUploadClick = (card: EnrichedCard, e: React.MouseEvent) => {
     e.stopPropagation()
     setUploadTarget(customImgKey(card))
-    setUploadStatus(null)
     setTimeout(() => uploadRef.current?.click(), 50)
   }
+
+  const runUploadChecks = useCallback(async (file: File) => {
+    if (!uploadTarget) return
+    const preview = URL.createObjectURL(file)
+    const checks: {label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[] = [
+      { label:'Format du fichier', status:'pending' },
+      { label:'Taille du fichier', status:'pending' },
+      { label:'Dimensions', status:'pending' },
+      { label:'Orientation portrait', status:'pending' },
+      { label:'Ratio carte standard', status:'pending' },
+      { label:'R\u00e9solution minimale', status:'pending' },
+      { label:'Cadrage des bords', status:'pending' },
+    ]
+    setUploadModal({ open:true, preview, checks:[...checks], done:false, success:false })
+    const delay = (ms:number) => new Promise(r=>setTimeout(r,ms))
+    const upd = (i:number, st:'checking'|'pass'|'fail', detail?:string) => {
+      checks[i] = { ...checks[i], status:st, detail }
+      setUploadModal(p=>({ ...p, checks:[...checks] }))
+    }
+    let ok = true
+    // 1. Format
+    upd(0,'checking'); await delay(400)
+    if(['image/jpeg','image/png','image/webp'].includes(file.type)){
+      upd(0,'pass',file.type.replace('image/','').toUpperCase())
+    } else { upd(0,'fail','Format: '+file.type); ok=false }
+    // 2. Taille
+    upd(1,'checking'); await delay(350)
+    const mb = file.size/1024/1024
+    if(mb<=5){ upd(1,'pass',mb.toFixed(1)+' Mo') } else { upd(1,'fail',mb.toFixed(1)+' Mo (max 5)'); ok=false }
+    // 3-7. Image checks
+    upd(2,'checking')
+    const img = new Image()
+    try {
+      await new Promise<void>((res,rej)=>{ img.onload=()=>res(); img.onerror=()=>rej(); img.src=preview })
+      await delay(400)
+      if(img.width>=250&&img.height>=350){ upd(2,'pass',img.width+'\u00d7'+img.height+' px') }
+      else { upd(2,'fail',img.width+'\u00d7'+img.height+' px (min 250\u00d7350)'); ok=false }
+      upd(3,'checking'); await delay(300)
+      if(img.height>=img.width){ upd(3,'pass','Portrait') }
+      else { upd(3,'fail','Paysage detect\u00e9'); ok=false }
+      upd(4,'checking'); await delay(350)
+      const ratio = img.width / img.height
+      if(ratio >= 0.55 && ratio <= 0.85){ upd(4,'pass','Ratio ' + ratio.toFixed(3)) }
+      else { upd(4,'fail','Ratio ' + ratio.toFixed(3) + ' (attendu 0.55-0.85)'); ok=false }
+      upd(5,'checking'); await delay(350)
+      if(img.width >= 300 && img.height >= 420){ upd(5,'pass',img.width+'x'+img.height+' px') }
+      else { upd(5,'fail',img.width+'x'+img.height+' px (min 300x420)'); ok=false }
+      upd(6,'checking'); await delay(400)
+      try {
+        const cv = document.createElement('canvas')
+        cv.width = img.width; cv.height = img.height
+        const ctx = cv.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+        const bw = 3
+        const strips = [
+          ctx.getImageData(0,0,img.width,bw),
+          ctx.getImageData(0,img.height-bw,img.width,bw),
+          ctx.getImageData(0,0,bw,img.height),
+          ctx.getImageData(img.width-bw,0,bw,img.height),
+        ]
+        const calcVar = (data: Uint8ClampedArray) => {
+          let sR=0,sG=0,sB=0; const n=data.length/4
+          for(let i=0;i<data.length;i+=4){ sR+=data[i]; sG+=data[i+1]; sB+=data[i+2] }
+          const aR=sR/n,aG=sG/n,aB=sB/n; let v=0
+          for(let i=0;i<data.length;i+=4){ v+=Math.pow(data[i]-aR,2)+Math.pow(data[i+1]-aG,2)+Math.pow(data[i+2]-aB,2) }
+          return Math.sqrt(v/(n*3))
+        }
+        const avgVar = strips.map(s=>calcVar(s.data)).reduce((a,b)=>a+b,0)/4
+        if(avgVar<45){ upd(6,'pass','Bords uniformes (var: '+avgVar.toFixed(0)+')') }
+        else { upd(6,'fail','Bords irr\u00e9guliers (var: '+avgVar.toFixed(0)+')'); ok=false }
+      } catch { upd(6,'fail','Analyse impossible'); ok=false }
+    } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); upd(4,'fail','\u2014'); upd(5,'fail','\u2014'); upd(6,'fail','\u2014'); ok=false }
+    await delay(300)
+    if(ok){
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string
+        saveCustomImg(uploadTarget, dataUrl)
+        setUploadModal(p=>({...p,done:true,success:true}))
+      }
+      reader.readAsDataURL(file)
+    } else { setUploadModal(p=>({...p,done:true,success:false})) }
+  }, [uploadTarget, saveCustomImg])
 
   const handleUploadFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !uploadTarget) return
     e.target.value = ''
-
-    // ── QC 7 checks ──
-    const MAX_SIZE = 5 * 1024 * 1024
-    const ALLOWED = ['image/jpeg','image/png','image/webp']
-    if (!ALLOWED.includes(file.type)) { setUploadStatus('Format invalide (JPG, PNG ou WebP)'); return }
-    if (file.size > MAX_SIZE) { setUploadStatus('Fichier trop lourd (max 5 Mo)'); return }
-
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const b64 = ev.target?.result as string
-      const img = new Image()
-      img.onload = () => {
-        const w = img.naturalWidth, h = img.naturalHeight
-        // Check 3: min dimensions
-        if (w < 250 || h < 350) { setUploadStatus('Dimensions trop petites (min 250' + String.fromCharCode(0xD7) + '350)'); return }
-        // Check 4: orientation portrait
-        if (w > h) { setUploadStatus('L' + "'" + 'image doit ' + String.fromCharCode(0xEA) + 'tre en portrait'); return }
-        // Check 5: ratio 0.55-0.85
-        const ratio = w / h
-        if (ratio < 0.55 || ratio > 0.85) { setUploadStatus('Ratio incorrect (carte standard attendue)'); return }
-        // Check 6: resolution
-        if (w < 300 || h < 420) { setUploadStatus('R' + String.fromCharCode(0xE9) + 'solution trop basse (min 300' + String.fromCharCode(0xD7) + '420)'); return }
-        // All checks pass — save
-        saveCustomImg(uploadTarget, b64)
-        setUploadStatus(null)
-        setUploadTarget(null)
-      }
-      img.onerror = () => { setUploadStatus('Impossible de lire l' + "'" + 'image') }
-      img.src = b64
-    }
-    reader.readAsDataURL(file)
-  }, [uploadTarget, saveCustomImg])
+    runUploadChecks(file)
+  }, [uploadTarget, runUploadChecks])
 
 
   const [selId,      setSelId]       = useState<string|null>(null)
@@ -1057,11 +1113,53 @@ export function Encyclopedie() {
       <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display:'none' }}
         onChange={handleUploadFile}/>
 
-      {/* Upload status toast */}
-      {uploadStatus && (
-        <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'#1D1D1F', color:'#fff', padding:'10px 20px', borderRadius:'10px', fontSize:'12px', fontFamily:'var(--font-display)', fontWeight:600, zIndex:9999, boxShadow:'0 8px 32px rgba(0,0,0,.25)', display:'flex', alignItems:'center', gap:'8px', animation:'fadeIn .2s' }}>
-          <span style={{ color:'#E03020' }}>&#x26A0;</span> {uploadStatus}
-          <button onClick={()=>setUploadStatus(null)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.5)', cursor:'pointer', fontSize:'14px', padding:'0 0 0 8px' }}>&times;</button>
+      {/* Upload QC Modal */}
+      {uploadModal.open&&(
+        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(4px)' }}
+          onClick={()=>{if(uploadModal.done)setUploadModal(p=>({...p,open:false}))}}>
+          <div style={{ maxWidth:'380px',width:'100%',background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.18)',overflow:'hidden',animation:'fadeUp .25s ease-out' }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ display:'flex',justifyContent:'center',padding:'20px 20px 0' }}>
+              {uploadModal.preview&&(
+                <div style={{ width:'100px',aspectRatio:'63/88',borderRadius:'10px',overflow:'hidden',border:'1px solid '+(uploadModal.done?(uploadModal.success?'#BBF7D0':'#FECACA'):'#E5E5EA'),boxShadow:'0 4px 16px rgba(0,0,0,.08)',transition:'border-color .3s' }}>
+                  <img src={uploadModal.preview} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/>
+                </div>
+              )}
+            </div>
+            <div style={{ padding:'14px 20px' }}>
+              <div style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:'12px',textAlign:'center' }}>
+                {uploadModal.done?(uploadModal.success?'Illustration valid\u00e9e':'Illustration rejet\u00e9e'):'V\u00e9rification en cours...'}
+              </div>
+              <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
+                {uploadModal.checks.map((c,i)=>(
+                  <div key={i} style={{ display:'flex',alignItems:'center',gap:'10px',padding:'7px 10px',borderRadius:'8px',background:c.status==='fail'?'#FEF2F2':c.status==='pass'?'#F0FDF4':'#F5F5F7',border:'1px solid '+(c.status==='fail'?'#FECACA':c.status==='pass'?'#BBF7D0':'#E5E5EA'),transition:'all .3s' }}>
+                    <div style={{ width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,background:c.status==='checking'?'#D2D2D7':c.status==='pass'?'#2E9E6A':c.status==='fail'?'#E03020':'#E5E5EA',transition:'all .3s' }}>
+                      {c.status==='checking'?<div style={{ width:'10px',height:'10px',border:'2px solid #fff',borderTop:'2px solid transparent',borderRadius:'50%',animation:'spin .6s linear infinite' }}/>
+                      :c.status==='pass'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      :c.status==='fail'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                      :<div style={{ width:'6px',height:'6px',borderRadius:'50%',background:'#C7C7CC' }}/>}
+                    </div>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:'11px',fontWeight:600,color:c.status==='fail'?'#991B1B':'#1D1D1F',fontFamily:'var(--font-display)' }}>{c.label}</div>
+                      {c.detail&&<div style={{ fontSize:'9px',color:c.status==='fail'?'#DC2626':'#86868B',fontFamily:'var(--font-data)' }}>{c.detail}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {uploadModal.done&&(
+              <div style={{ padding:'0 20px 16px',display:'flex',gap:'8px' }}>
+                {uploadModal.success?(
+                  <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#2E9E6A',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Fermer</button>
+                ):(
+                  <>
+                    <button onClick={()=>{setUploadModal(p=>({...p,open:false}));setTimeout(()=>uploadRef.current?.click(),150)}} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>R\u00e9essayer</button>
+                    <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ padding:'12px 18px',borderRadius:'10px',background:'#F5F5F7',color:'#6E6E73',border:'1px solid #E5E5EA',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)' }}>Annuler</button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

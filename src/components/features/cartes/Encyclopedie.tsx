@@ -491,6 +491,10 @@ export function Encyclopedie() {
       const q=search.toLowerCase()
       r = r.filter(c=>c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q)
     }
+    // Auto sort by number when a specific set is filtered
+    if (filSet !== 'all') {
+      return [...r].sort((a,b) => parseInt(a.localId)-parseInt(b.localId))
+    }
     return sort==='name'
       ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
       : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
@@ -992,36 +996,49 @@ export function Encyclopedie() {
           {/* LIST */}
           {!loading && !loadErr && view==='list' && (
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
-              <div style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) minmax(0,1.5fr) 60px', padding:'9px 16px', background:'#FAFAFA', borderBottom:'1px solid #F0F0F0' }}>
-                {['Carte','Série','N°'].map((h,i)=>(
-                  <div key={i} style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.07em', fontFamily:'var(--font-display)', textAlign:i===2?'right' as const:'left' as const }}>{h}</div>
+              <div style={{ display:'grid', gridTemplateColumns:'40px minmax(0,2.5fr) minmax(0,1.2fr) 90px 55px 50px', padding:'9px 16px', background:'#FAFAFA', borderBottom:'1px solid #F0F0F0', gap:'8px' }}>
+                {['','Carte','Série','Rareté','N°',''].map((h,i)=>(
+                  <div key={i} style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.07em', fontFamily:'var(--font-display)', textAlign:i>=4?'right' as const:'left' as const }}>{h}</div>
                 ))}
               </div>
               {pageCards.map((card,i) => {
                 const isSel = selId===card.id
-                const img   = card.image ? (card.image.includes('.webp') || card.image.includes('.png') || card.image.includes('.jpg') ? card.image : `${card.image}/high.webp`) : null
+                const img = card.image ? (card.image.includes('.webp') || card.image.includes('.png') || card.image.includes('.jpg') ? card.image : `${card.image}/high.webp`) : null
+                const rc = card.rarity ? getRarityColor(card.rarity) : null
+                const owned = isOwned(card)
                 return (
                   <div key={card.id} className="rh"
                     onClick={()=>handleCardClick(card.id)}
-                    style={{ display:'grid', gridTemplateColumns:'minmax(0,2.5fr) minmax(0,1.5fr) 60px', padding:'10px 16px', borderBottom:i<pageCards.length-1?'1px solid #F8F8F8':'none', alignItems:'center', background:isSel?'#F8F8F8':'transparent', borderLeft:isSel?'3px solid #111':'3px solid transparent', transition:'all .1s' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px', minWidth:0 }}>
-                      <div style={{ width:'30px', height:'42px', flexShrink:0, borderRadius:'4px', overflow:'hidden', background:'#F5F5F5' }}>
-                        {img && <img src={img} alt={card.name} loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'contain' }} onError={e=>{
-                          const t=e.target as HTMLImageElement
-                          const src=t.src
-                          if(src.includes('high.webp')) t.src=src.replace('high.webp','high.png')
-                          else if(src.includes('high.png')) t.src=src.replace('/high.','/low.')
-                          else if(src.includes('/fr/')) t.src=src.replace('/fr/','/en/')
-                          else t.style.opacity='0'
-                        }}/>}
-                      </div>
-                      <div style={{ minWidth:0 }}>
-                        <div style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{card.name}</div>
-                        <div style={{ fontSize:'10px', color:'#CCC' }}>{flag(lang)} {lang}</div>
-                      </div>
+                    style={{ display:'grid', gridTemplateColumns:'40px minmax(0,2.5fr) minmax(0,1.2fr) 90px 55px 50px', padding:'8px 16px', borderBottom:i<pageCards.length-1?'1px solid #F8F8F8':'none', alignItems:'center', background:isSel?'#F5F5F7':owned?'#FAFEF5':'transparent', borderLeft:isSel?'3px solid #111':'3px solid transparent', transition:'all .1s', gap:'8px', cursor:'pointer' }}>
+                    <div style={{ width:'32px', height:'44px', flexShrink:0, borderRadius:'5px', overflow:'hidden', background:'#F5F5F5', border:'1px solid #EBEBEB' }}>
+                      {img && <img src={img} alt={card.name} loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'contain' }} onError={e=>{
+                        const t=e.target as HTMLImageElement; const src=t.src
+                        if(src.includes('high.webp')) t.src=src.replace('high.webp','high.png')
+                        else if(src.includes('high.png')) t.src=src.replace('/high.','/low.')
+                        else if(src.includes('/fr/')) t.src=src.replace('/fr/','/en/')
+                        else t.style.opacity='0'
+                      }}/>}
                     </div>
-                    <div style={{ fontSize:'11px', color:'#888', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{card.setName}</div>
-                    <div style={{ fontSize:'11px', color:'#AAA', fontFamily:'monospace', textAlign:'right' as const }}>#{card.localId}</div>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px' }}>
+                        {card.name}
+                        {owned&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="3" strokeLinecap="round" style={{ flexShrink:0 }}><path d="M20 6L9 17l-5-5"/></svg>}
+                      </div>
+                      <div style={{ fontSize:'10px', color:'#AEAEB2', display:'flex', alignItems:'center', gap:'3px' }}>{flag(lang)} {lang==='JP'&&card.enName?card.enName:''}</div>
+                    </div>
+                    <div style={{ fontSize:'11px', color:'#86868B', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'5px' }}>
+                      {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                      {card.setName}
+                    </div>
+                    <div>{rc&&<span style={{ fontSize:'9px', fontWeight:600, padding:'2px 6px', borderRadius:'4px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{card.rarity}</span>}</div>
+                    <div style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-data)', textAlign:'right' as const }}>#{card.localId}</div>
+                    <div style={{ textAlign:'right' }}>
+                      <button className="zoom-btn" onClick={e=>{e.stopPropagation();setLightbox(card)}} style={{ width:'26px', height:'26px', borderRadius:'6px', background:'#F5F5F7', border:'1px solid #EBEBEB', cursor:'pointer', display:'inline-flex', alignItems:'center', justifyContent:'center', opacity:.5, transition:'all .15s' }}
+                        onMouseEnter={e=>{e.currentTarget.style.opacity='1';e.currentTarget.style.background='#1D1D1F';(e.currentTarget.querySelector('svg') as SVGElement).style.stroke='#fff'}}
+                        onMouseLeave={e=>{e.currentTarget.style.opacity='.5';e.currentTarget.style.background='#F5F5F7';(e.currentTarget.querySelector('svg') as SVGElement).style.stroke='#1D1D1F'}}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                      </button>
+                    </div>
                   </div>
                 )
               })}
@@ -1114,9 +1131,15 @@ export function Encyclopedie() {
                       </div>
                     )}
 
-                    <div style={{ fontSize:'11px', color:'#AAA', marginBottom:'14px' }}>
-                      {detail.set?.name}{detail.localId ? ` · #${detail.localId}` : ''}
-                      {detail.set?.releaseDate && ` · ${detail.set.releaseDate.slice(0,4)}`}
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px', padding:'8px 10px', background:'#F8F8FA', borderRadius:'8px', border:'1px solid #F0F0F2' }}>
+                      {selCard&&setLogos[selCard.setId]&&<img src={setLogos[selCard.setId]} alt="" style={{ height:'22px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                      <div style={{ minWidth:0 }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{detail.set?.name}{detail.localId ? ` · #${detail.localId}` : ''}</div>
+                        <div style={{ fontSize:'9px', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>
+                          {selCard&&setBlocks[selCard.setId]?setBlocks[selCard.setId]+' · ':''}
+                          {detail.set?.releaseDate ? detail.set.releaseDate.slice(0,4) : ''}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Types + HP */}

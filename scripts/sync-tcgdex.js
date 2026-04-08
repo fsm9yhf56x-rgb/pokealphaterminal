@@ -12,6 +12,24 @@ async function fetchJSON(url) {
   return res.json()
 }
 
+async function fetchWithRetry(url, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try { return await fetchJSON(url) }
+    catch (e) { if (i === retries - 1) throw e; await delay(500 * (i + 1)) }
+  }
+}
+
+async function batchFetch(urls, concurrency = 5) {
+  const results = []
+  for (let i = 0; i < urls.length; i += concurrency) {
+    const batch = urls.slice(i, i + concurrency)
+    const batchResults = await Promise.allSettled(batch.map(u => fetchWithRetry(u)))
+    results.push(...batchResults)
+    if (i + concurrency < urls.length) await delay(200)
+  }
+  return results
+}
+
 async function syncLang(lang) {
   console.log(`\n[${lang.toUpperCase()}] Fetching sets...`)
   const sets = await fetchJSON(`${BASE}/${lang}/sets`)
@@ -19,14 +37,14 @@ async function syncLang(lang) {
 
   const setsMeta = []
   const allCards = {}
+  let totalCards = 0
 
-  for (let i = 0; i < sets.length; i++) {
-    const s = sets[i]
-    const sid = s.id
-    process.stdout.write(`  [${i + 1}/${sets.length}] ${sid}...`)
+  for (let si = 0; si < sets.length; si++) {
+    const sid = sets[si].id
+    process.stdout.write(`  [${si + 1}/${sets.length}] ${sid}...`)
 
     try {
-      const detail = await fetchJSON(`${BASE}/${lang}/sets/${sid}`)
+      const detail = await fetchWithRetry(`${BASE}/${lang}/sets/${sid}`)
       setsMeta.push({
         id: detail.id,
         name: detail.name,
@@ -36,16 +54,28 @@ async function syncLang(lang) {
         total: detail.cards ? detail.cards.length : 0,
       })
 
-      allCards[sid] = (detail.cards || []).map(c => ({
-        id: c.id,
-        lid: c.localId,
-        n: c.name,
-        img: c.image ? c.image + '/high.webp' : null,
-        r: c.rarity || null,
-      }))
+      const cards = detail.cards || []
+      if (cards.length === 0) { console.log(' 0 cards'); continue }
 
-      console.log(` ${allCards[sid].length} cards`)
-      if (i % 10 === 9) await delay(300)
+      // Fetch individual card details for rarity (batch of 5)
+      const cardUrls = cards.map(c => `${BASE}/${lang}/cards/${sid}-${c.localId}`)
+      const cardResults = await batchFetch(cardUrls, 5)
+
+      allCards[sid] = cards.map((c, i) => {
+        const r = cardResults[i]
+        const det = r.status === 'fulfilled' ? r.value : null
+        return {
+          id: c.id,
+          lid: c.localId,
+          n: c.name,
+          img: c.image ? c.image + '/high.webp' : null,
+          r: det ? det.rarity || null : null,
+        }
+      })
+
+      totalCards += allCards[sid].length
+      const withRarity = allCards[sid].filter(c => c.r).length
+      console.log(` ${allCards[sid].length} cards (${withRarity} with rarity)`)
     } catch (e) {
       console.log(` SKIP: ${e.message}`)
     }
@@ -54,13 +84,12 @@ async function syncLang(lang) {
   const langKey = lang === 'ja' ? 'JP' : lang.toUpperCase()
   fs.writeFileSync(path.join(OUT, `sets-${langKey}.json`), JSON.stringify(setsMeta))
   fs.writeFileSync(path.join(OUT, `cards-${langKey}.json`), JSON.stringify(allCards))
-  const totalCards = Object.values(allCards).reduce((a, c) => a + c.length, 0)
   console.log(`[${langKey}] Done: ${setsMeta.length} sets, ${totalCards} cards`)
 }
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true })
-  console.log('TCGDex Sync - ' + new Date().toISOString())
+  console.log('TCGDex Sync (with rarity) - ' + new Date().toISOString())
 
   for (const lang of LANGS) {
     await syncLang(lang)

@@ -211,6 +211,13 @@ export function Scelles() {
         .fsel{height:34px;padding:0 10px;border:1px solid #EBEBEB;border-radius:7px;font-size:12px;outline:none;background:#fff;cursor:pointer;font-family:var(--font-display);color:#555;transition:border-color .15s}
         .fsel:focus,.fsel:hover{border-color:#BBB}
         .detail-panel{animation:panelIn .28s cubic-bezier(.34,1.2,.64,1)}
+        .enc-card{transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s ease,border-color .18s ease;border-radius:12px;overflow:hidden;cursor:pointer;position:relative}
+        .enc-card:hover{transform:translateY(-5px) scale(1.02) !important;box-shadow:0 12px 32px rgba(0,0,0,.1) !important;border-color:#D2D2D7 !important}
+        .enc-card:hover .card-img{transform:scale(1.04)}
+        .enc-card:hover .card-name{color:#000 !important}
+        .enc-card::after{content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,0) 40%,rgba(255,255,255,.18) 50%,rgba(255,255,255,0) 60%);opacity:0;transition:opacity .25s}
+        .enc-card:hover::after{opacity:1}
+        .card-img{transition:transform .35s cubic-bezier(.34,1.2,.64,1);will-change:transform}
         .sc:hover .sealed-spec{opacity:1 !important}
         .sc:hover{transform:translateY(-5px) scale(1.015) !important}
       `}</style>
@@ -293,32 +300,35 @@ export function Scelles() {
 
           {/* Grid */}
           {!groupBySet && (
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:14}}>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
               {pageItems.map((item,idx)=>{
                 const tm=TYPE_META[item.type]
                 const owned=ownedInSet(item.setId)
                 const isSel=selId===item.id
+                const realImg=findRealImg(item.name,item.setName,item.type)
                 return (
-                  <div key={item.id} className="sc" onClick={()=>setSelId(isSel?null:item.id)}
-                    style={{background:'#fff',border:'1.5px solid '+(isSel?'#1D1D1F':'#EBEBEB'),borderRadius:16,overflow:'hidden',boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .25s '+Math.min(idx,15)*.025+'s ease-out both'}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
-                      <SealedImg type={item.type} logo={item.logo} setName={item.setName} selected={isSel} realImg={findRealImg(item.name,item.setName,item.type)||undefined}/>
+                  <div key={item.id} className="enc-card" onClick={()=>setSelId(isSel?null:item.id)}
+                    style={{background:'#fff',border:'1.5px solid '+(isSel?'#111':'#EBEBEB'),boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .28s '+Math.min(idx,18)*.025+'s ease-out both'}}>
+                    <div style={{height:180,background:'#F5F5F5',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      {realImg ? (
+                        <img src={realImg} alt={item.name} className="card-img"
+                          style={{maxWidth:'88%',maxHeight:'88%',objectFit:'contain' as const,filter:'drop-shadow(0 4px 12px rgba(0,0,0,.1))'}}
+                          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+                          {item.logo&&<img src={item.logo} alt="" style={{height:32,maxWidth:120,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                          <div style={{fontSize:11,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
+                        </div>
+                      )}
+                      <div style={{position:'absolute',top:6,left:6,zIndex:2,padding:'2px 6px',borderRadius:4,background:item.type==='booster'?'#F5EAFF':item.type==='display'?'#F0F5FF':item.type==='etb'?'#FFF5F0':'#FFFDE0',fontSize:8,fontWeight:600,color:item.type==='booster'?'#7B2D8B':item.type==='display'?'#003DAA':item.type==='etb'?'#C84B00':'#8B6E00',fontFamily:'var(--font-display)',letterSpacing:'.02em'}}>{tm.label}</div>
+                      {owned>0&&<div style={{position:'absolute',top:6,right:6,width:20,height:20,borderRadius:'50%',background:'#27500A',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
                     </div>
-                    <div style={{padding:14}}>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:4,lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{item.name}</div>
-                      <div style={{fontSize:10,color:'#AEAEB2',marginBottom:10,display:'flex',alignItems:'center',gap:4}}>
-                        {item.logo&&<img src={item.logo} alt="" style={{height:12,maxWidth:50,objectFit:'contain' as const,opacity:.5}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                        <span>{item.serie} · {item.year}</span>
-                      </div>
-                      <div style={{display:'flex',gap:6}}>
-                        <div style={{flex:1,background:'#F5F5F7',borderRadius:8,padding:'8px 10px'}}>
-                          <div style={{fontSize:8,color:'#AEAEB2',textTransform:'uppercase' as const,letterSpacing:'.06em',fontFamily:'var(--font-display)',marginBottom:2}}>Contenu</div>
-                          <div style={{fontSize:14,fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-data)'}}>{tm.cards}</div>
-                        </div>
-                        <div style={{flex:1,background:owned>0?'#F0FDF4':'#F5F5F7',borderRadius:8,padding:'8px 10px',border:owned>0?'1px solid #BBF7D0':'none'}}>
-                          <div style={{fontSize:8,color:owned>0?'#166534':'#AEAEB2',textTransform:'uppercase' as const,letterSpacing:'.06em',fontFamily:'var(--font-display)',marginBottom:2}}>Collection</div>
-                          <div style={{fontSize:14,fontWeight:700,color:owned>0?'#2E9E6A':'#AEAEB2',fontFamily:'var(--font-data)'}}>{owned}/{item.total}</div>
-                        </div>
+                    <div style={{padding:'10px 12px 12px'}}>
+                      <div className="card-name" style={{fontSize:13,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,lineHeight:1.3}}>{item.name}</div>
+                      <div style={{fontSize:10,color:'#AEAEB2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'flex',alignItems:'center',gap:4}}>
+                        {item.logo&&<img src={item.logo} alt="" style={{height:11,maxWidth:40,objectFit:'contain' as const,opacity:.6}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                        <span>{item.setName}</span>
+                        <span style={{fontFamily:'monospace',marginLeft:2}}>{item.year}</span>
                       </div>
                     </div>
                   </div>

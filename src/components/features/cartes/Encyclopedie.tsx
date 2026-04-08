@@ -23,6 +23,25 @@ const pkaDbSet = async (key: string, value: unknown) => {
   try { const db = await pkaDbOpen(); return new Promise<void>((r,j) => { const tx=db.transaction('store','readwrite'); tx.objectStore('store').put(value,key); tx.oncomplete=()=>r(); tx.onerror=()=>j(tx.error) }) } catch {}
 }
 
+const RARITY_COLORS: Record<string,{bg:string;fg:string}> = {
+  'Commune':       {bg:'#F1EFE8',fg:'#5F5E5A'},
+  'Common':        {bg:'#F1EFE8',fg:'#5F5E5A'},
+  'Peu Commune':   {bg:'#E1F5EE',fg:'#085041'},
+  'Uncommon':      {bg:'#E1F5EE',fg:'#085041'},
+  'Rare':          {bg:'#E6F1FB',fg:'#0C447C'},
+  'Holo Rare':     {bg:'#EEEDFE',fg:'#3C3489'},
+  'Ultra Rare':    {bg:'#FBEAF0',fg:'#72243E'},
+  'Double Rare':   {bg:'#FBEAF0',fg:'#72243E'},
+  'Illustration Rare': {bg:'#FAEEDA',fg:'#633806'},
+  'Special Art Rare':  {bg:'#FAEEDA',fg:'#633806'},
+  'Hyper Rare':    {bg:'#FAEEDA',fg:'#633806'},
+  'Secret Rare':   {bg:'#FAEEDA',fg:'#633806'},
+  'Alt Art':       {bg:'#FAEEDA',fg:'#633806'},
+  'ACE SPEC Rare': {bg:'#FCEBEB',fg:'#791F1F'},
+  'Shiny Rare':    {bg:'#EEEDFE',fg:'#3C3489'},
+}
+const getRarityColor = (r:string) => RARITY_COLORS[r] || {bg:'#F1EFE8',fg:'#5F5E5A'}
+
 const TC: Record<string,string> = {
   Fire:'#FF6B35', Water:'#42A5F5', Psychic:'#C855D4', Darkness:'#7E57C2',
   Lightning:'#D4A800', Grass:'#3DA85A', Colorless:'#AAAAAA', Fighting:'#C97840',
@@ -309,6 +328,10 @@ export function Encyclopedie() {
           transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s ease, border-color .18s ease;
           border-radius: 12px; overflow: hidden; cursor: pointer; position: relative;
         }
+        .enc-card { transition:transform .2s ease, box-shadow .2s ease !important; }
+        .enc-card:hover { transform:translateY(-4px) !important; box-shadow:0 12px 32px rgba(0,0,0,.08) !important; border-color:#D2D2D7 !important; }
+        .enc-card:hover .card-img { transform:scale(1.03); }
+        .enc-card .card-img { transition:transform .25s ease; }
         .enc-card::after {
           content:''; position:absolute; inset:0; border-radius:12px; pointer-events:none;
           background: linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 60%);
@@ -570,7 +593,8 @@ export function Encyclopedie() {
                       className={`enc-card${isSel?' sel':''}`}
                       onClick={()=>handleCardClick(card.id)}
                       style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .22s ${Math.min(idx,24)*.018}s ease-out both` }}>
-                      <div style={{ height:cfg.imgH, background:'linear-gradient(145deg,#F6F6F6,#EEEEEE)', position:'relative', overflow:'hidden' }}>
+                      <div style={{ height:cfg.imgH, background:'#F5F5F5', position:'relative', overflow:'hidden' }}>
+                        {card.rarity && (()=>{ const rc=getRarityColor(card.rarity); return <div style={{ position:'absolute', top:'6px', left:'6px', zIndex:2, padding:'2px 6px', borderRadius:'4px', background:rc.bg, fontSize:'8px', fontWeight:600, color:rc.fg, fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>{card.rarity}</div> })()}
                         {img ? (
                           <img src={img} alt={card.name}
                             className="card-img"

@@ -539,7 +539,7 @@ export function Encyclopedie() {
           {/* Filters */}
           <div style={{ display:'flex', gap:'8px', marginBottom:'18px', flexWrap:'wrap', alignItems:'center' }}>
             <select className="fsel" value={filEra} onChange={e=>setFilEra(e.target.value)}>
-              <option value="all">Toutes les ères</option>
+              <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
             </select>
 

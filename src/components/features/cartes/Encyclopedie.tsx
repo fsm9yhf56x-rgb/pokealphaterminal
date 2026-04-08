@@ -816,7 +816,11 @@ export function Encyclopedie() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:'8px', marginBottom:'16px' }}>
                 <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet==='all'?'#1D1D1F':'#E5E5EA'), background:filSet==='all'?'#1D1D1F':'#fff', color:filSet==='all'?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Toutes ({blocs.find(b=>b.name===selBloc)?.total.toLocaleString()})</div>
                 {blocs.find(b=>b.name===selBloc)?.sets.map(st=>(
-                  <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet===st.id?'#1D1D1F':'#E5E5EA'), background:filSet===st.id?'#1D1D1F':'#fff', color:filSet===st.id?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', display:'flex', alignItems:'center', gap:'8px' }}>
+                  <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}}
+                    className='rh'
+                    style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet===st.id?'#1D1D1F':'#E5E5EA'), background:filSet===st.id?'#1D1D1F':'#fff', color:filSet===st.id?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s', display:'flex', alignItems:'center', gap:'8px' }}
+                    onMouseEnter={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#F5F5F7';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}}
+                    onMouseLeave={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}}>
                     {setLogos[st.id]&&<img src={setLogos[st.id]} alt="" style={{ height:'16px', maxWidth:'60px', objectFit:'contain', opacity:filSet===st.id?.9:.5 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                     {st.name} <span style={{ opacity:.5 }}>({st.count})</span>
                   </div>

@@ -47,15 +47,27 @@ const CHUNK = 40
 
 function SealedImg({type,logo,selected,realImg}:{type:ProductType;logo:string|null;setName:string;selected:boolean;realImg?:string}) {
   const tm=TYPE_META[type]
+  const bgs: Record<ProductType,string> = {
+    booster:'linear-gradient(145deg,#F8F0FF 0%,#F0E8FA 50%,#EBE0F5 100%)',
+    display:'linear-gradient(145deg,#EEF5FF 0%,#E5EFFA 50%,#DDEAF8 100%)',
+    etb:'linear-gradient(145deg,#FFF5F0 0%,#FAEEE8 50%,#F5E5DD 100%)',
+    bundle:'linear-gradient(145deg,#FFFCF0 0%,#FAF5E5 50%,#F5F0DA 100%)',
+  }
   return (
-    <div style={{width:140,height:140,borderRadius:12,background:'#F5F5F7',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',border:selected?'2px solid #1D1D1F':'1px solid #EBEBEB',transition:'all .2s'}}>
+    <div style={{width:'100%',aspectRatio:'1',borderRadius:14,background:realImg?bgs[type]:'#F5F5F7',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',border:selected?'2px solid #1D1D1F':'1px solid #F0F0F2',transition:'all .25s',boxShadow:selected?'inset 0 0 0 1px rgba(0,0,0,.05)':'none'}}>
       {realImg ? (
-        <img src={realImg} alt="" style={{maxWidth:'90%',maxHeight:'90%',objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+        <>
+          <img src={realImg} alt="" style={{maxWidth:'85%',maxHeight:'85%',objectFit:'contain' as const,filter:'drop-shadow(0 4px 12px rgba(0,0,0,.12))',transition:'transform .3s cubic-bezier(.34,1.2,.64,1)'}}
+            onMouseEnter={e=>{(e.target as HTMLImageElement).style.transform='scale(1.05)'}}
+            onMouseLeave={e=>{(e.target as HTMLImageElement).style.transform='scale(1)'}}
+            onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+          <div style={{position:'absolute',top:8,right:8,padding:'3px 8px',borderRadius:6,background:'rgba(255,255,255,.85)',backdropFilter:'blur(4px)',border:'0.5px solid rgba(0,0,0,.06)',fontSize:9,fontWeight:600,color:'#86868B',fontFamily:'var(--font-display)'}}>{tm.label}</div>
+        </>
       ) : (
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
-          {logo?<img src={logo} alt="" style={{height:28,maxWidth:100,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>:null}
-          <div style={{fontSize:10,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
-          <div style={{fontSize:8,color:'#D2D2D7',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:16}}>
+          {logo?<img src={logo} alt="" style={{height:32,maxWidth:120,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>:null}
+          <div style={{fontSize:11,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
+          <div style={{fontSize:9,color:'#D2D2D7',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
         </div>
       )}
     </div>
@@ -289,12 +301,15 @@ export function Scelles() {
                 return (
                   <div key={item.id} className="sc" onClick={()=>setSelId(isSel?null:item.id)}
                     style={{background:'#fff',border:'1.5px solid '+(isSel?'#1D1D1F':'#EBEBEB'),borderRadius:16,overflow:'hidden',boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .25s '+Math.min(idx,15)*.025+'s ease-out both'}}>
-                    <div style={{background:'linear-gradient(135deg,#F8F8FA,#EDEDF0)',display:'flex',alignItems:'center',justifyContent:'center',padding:'8px 0',position:'relative'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
                       <SealedImg type={item.type} logo={item.logo} setName={item.setName} selected={isSel} realImg={findRealImg(item.name,item.setName,item.type)||undefined}/>
                     </div>
                     <div style={{padding:14}}>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:3,lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{item.name}</div>
-                      <div style={{fontSize:10,color:'#AEAEB2',marginBottom:8}}>{item.serie} · {item.year} · {item.total} cartes</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:4,lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{item.name}</div>
+                      <div style={{fontSize:10,color:'#AEAEB2',marginBottom:10,display:'flex',alignItems:'center',gap:4}}>
+                        {item.logo&&<img src={item.logo} alt="" style={{height:12,maxWidth:50,objectFit:'contain' as const,opacity:.5}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                        <span>{item.serie} · {item.year}</span>
+                      </div>
                       <div style={{display:'flex',gap:6}}>
                         <div style={{flex:1,background:'#F5F5F7',borderRadius:8,padding:'8px 10px'}}>
                           <div style={{fontSize:8,color:'#AEAEB2',textTransform:'uppercase' as const,letterSpacing:'.06em',fontFamily:'var(--font-display)',marginBottom:2}}>Contenu</div>

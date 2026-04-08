@@ -46,71 +46,50 @@ const ERA_ORDER = ['Scarlet & Violet','Sword & Shield','Sun & Moon','XY','Black 
 const CHUNK = 40
 
 function Box3D({type,logo,selected}:{type:ProductType;logo:string|null;setName:string;selected:boolean}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const stageRef = useRef<HTMLDivElement>(null)
-  const autoRef = useRef(true)
-  const tRef = useRef(Math.random()*6.28)
-  const ryRef = useRef(0)
-  const rxRef = useRef(0)
-
-  useEffect(()=>{
-    let af=0
-    const bry=-12+Math.random()*24, brx=4+Math.random()*4, sp=.005+Math.random()*.004
-    function loop(){
-      if(autoRef.current){tRef.current+=sp;ryRef.current=bry+Math.sin(tRef.current)*14;rxRef.current=brx+Math.cos(tRef.current*.7)*6}
-      if(ref.current) ref.current.style.transform='rotateX('+rxRef.current+'deg) rotateY('+ryRef.current+'deg)'
-      af=requestAnimationFrame(loop)
-    }
-    loop()
-    return ()=>cancelAnimationFrame(af)
-  },[])
-
-  const onEnter=()=>{autoRef.current=false}
-  const onLeave=()=>{autoRef.current=true}
-  const onMove=(e:React.MouseEvent)=>{
-    if(autoRef.current||!stageRef.current)return
-    const r=stageRef.current.getBoundingClientRect()
-    ryRef.current=((e.clientX-r.left)/r.width-.5)*40
-    rxRef.current=-((e.clientY-r.top)/r.height-.5)*25
-  }
-
-  const {w,h,d}=DIMS[type]
-  const hd=d/2,hw=w/2,hh=h/2,ox=.5
   const tm=TYPE_META[type]
-  const R=6
+  const gradients: Record<ProductType,{bg:string;accent:string}> = {
+    booster: {bg:'linear-gradient(145deg,#9B4AB0 0%,#6B1A8F 50%,#4A0A6F 100%)',accent:'#C080E0'},
+    display: {bg:'linear-gradient(145deg,#0088D8 0%,#005AAF 50%,#003A7F 100%)',accent:'#60B8FF'},
+    etb:     {bg:'linear-gradient(145deg,#E06A40 0%,#C04A28 50%,#8A2010 100%)',accent:'#FFA070'},
+    bundle:  {bg:'linear-gradient(145deg,#E4BF47 0%,#C4A332 50%,#907018 100%)',accent:'#FFE080'},
+  }
+  const g = gradients[type]
+  const icons: Record<ProductType,string> = {
+    booster: 'M12 2C8 2 6 4 6 7v10c0 3 2 5 6 5s6-2 6-5V7c0-3-2-5-6-5zM9 7h6M9 11h6M9 15h4',
+    display: 'M3 6h18v12H3zM3 6l3-3h12l3 3M8 10h8M8 13h5',
+    etb:     'M4 5h16v14H4zM4 5l2-2h12l2 2M8 9h8v6H8zM10 12h4',
+    bundle:  'M2 7h20v10H2zM7 7V5h10v2M9 10h6M9 13h4',
+  }
+  const sizes: Record<ProductType,{w:number;h:number}> = {
+    booster:{w:64,h:100}, display:{w:120,h:88}, etb:{w:100,h:96}, bundle:{w:120,h:80}
+  }
+  const sz = sizes[type]
 
   return (
-    <div ref={stageRef} onMouseEnter={onEnter} onMouseLeave={onLeave} onMouseMove={onMove}
-      style={{width:w+40,height:h+40,perspective:800,display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',flexShrink:0}}>
-      <div ref={ref} style={{width:w,height:h,transformStyle:'preserve-3d',position:'relative',filter:selected?'drop-shadow(0 0 12px rgba(224,48,32,.3))':''}}>
-        <div style={{position:'absolute',bottom:-16,left:'50%',transform:'translateX(-50%)',width:'65%',height:12,background:'radial-gradient(ellipse,rgba(0,0,0,.2),transparent 70%)',borderRadius:'50%',filter:'blur(4px)',pointerEvents:'none'}}/>
-        {/* Front */}
-        <div style={{position:'absolute',width:w,height:h,background:tm.fc,borderRadius:R,transform:'translateZ('+hd+'px)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,overflow:'hidden',backfaceVisibility:'hidden'}}>
-          <div style={{position:'absolute',inset:0,background:'linear-gradient(165deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.05) 25%,transparent 50%,rgba(0,0,0,.05) 100%)',pointerEvents:'none',zIndex:2,borderRadius:R}}/>
-          {logo?<img src={logo} alt="" style={{height:type==='booster'?20:24,maxWidth:w-16,objectFit:'contain' as const,position:'relative',zIndex:1}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-            :<div style={{background:'rgba(255,255,255,.12)',borderRadius:4,width:w*.65,height:type==='booster'?20:24}}/>}
-          <div style={{fontSize:6.5,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.1em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>{tm.label}</div>
-          <div style={{fontSize:6,color:'rgba(255,255,255,.3)',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
+    <div style={{width:sz.w+24,height:sz.h+24,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+      <div style={{width:sz.w,height:sz.h,borderRadius:10,background:g.bg,position:'relative',overflow:'hidden',boxShadow:selected?'0 0 0 2.5px #1D1D1F, 0 12px 32px rgba(0,0,0,.2)':'0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06)',transition:'box-shadow .2s, transform .2s'}}>
+        {/* Shine overlay */}
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(125deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.05) 30%,transparent 55%,rgba(0,0,0,.06) 100%)',pointerEvents:'none',zIndex:3,borderRadius:10}}/>
+        {/* Subtle pattern */}
+        <div style={{position:'absolute',inset:0,opacity:.04,backgroundImage:'radial-gradient(circle at 20% 80%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)',backgroundSize:'20px 20px',pointerEvents:'none'}}/>
+        {/* Bottom vignette */}
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'45%',background:'linear-gradient(transparent,rgba(0,0,0,.2))',pointerEvents:'none',borderRadius:'0 0 10px 10px'}}/>
+        {/* Type icon watermark */}
+        <svg viewBox="0 0 24 24" fill="none" stroke={g.accent} strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round"
+          style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:sz.w*.6,height:sz.h*.5,opacity:.12,pointerEvents:'none'}}>
+          <path d={icons[type]}/>
+        </svg>
+        {/* Logo */}
+        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:6,zIndex:2,padding:10}}>
+          {logo?<img src={logo} alt="" style={{maxHeight:type==='booster'?28:32,maxWidth:sz.w-20,objectFit:'contain' as const,filter:'drop-shadow(0 2px 4px rgba(0,0,0,.2))'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+            :<div style={{width:sz.w*.5,height:16,background:'rgba(255,255,255,.12)',borderRadius:3}}/>}
+          <div style={{fontSize:7.5,fontWeight:700,color:'rgba(255,255,255,.7)',letterSpacing:'.12em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.2)'}}>{tm.label}</div>
+          <div style={{fontSize:6.5,color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
         </div>
-        {/* Back */}
-        <div style={{position:'absolute',width:w,height:h,background:tm.bc,borderRadius:R,transform:'translateZ('+(-hd)+'px) rotateY(180deg)',backfaceVisibility:'hidden'}}/>
-        {/* Right */}
-        <div style={{position:'absolute',width:d+ox,height:h,left:(w-d-ox)/2,background:tm.sr,transform:'rotateY(90deg) translateZ('+hw+'px)',backfaceVisibility:'hidden'}}><div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.05),transparent 40%)',pointerEvents:'none'}}/></div>
-        {/* Left */}
-        <div style={{position:'absolute',width:d+ox,height:h,left:(w-d-ox)/2,background:tm.sl,transform:'rotateY(-90deg) translateZ('+hw+'px)',backfaceVisibility:'hidden'}}><div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.08),transparent 50%)',pointerEvents:'none'}}/></div>
-        {/* Top */}
-        <div style={{position:'absolute',width:w,height:d+ox,top:(h-d-ox)/2,background:tm.tp,transform:'rotateX(90deg) translateZ('+hh+'px)',borderRadius:R+' '+R+'px 0 0',backfaceVisibility:'hidden',overflow:'hidden'}}><div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%)',pointerEvents:'none'}}/></div>
-        {/* Bottom */}
-        <div style={{position:'absolute',width:w,height:d+ox,top:(h-d-ox)/2,background:tm.bt,transform:'rotateX(-90deg) translateZ('+hh+'px)',borderRadius:'0 0 '+R+'px '+R+'px',backfaceVisibility:'hidden'}}/>
-        {/* Booster card peek */}
-        {type==='booster'&&<>
-          <div style={{position:'absolute',top:-12,left:'50%',marginLeft:-18,width:36,height:20,background:'linear-gradient(180deg,#fff 50%,#f0f0f0)',borderRadius:'4px 4px 0 0',border:'1.5px solid rgba(0,0,0,.06)',borderBottom:'none',transform:'translateZ('+(hd+1)+'px)',zIndex:4}}/>
-          <div style={{position:'absolute',top:-8,left:'50%',marginLeft:-14,width:28,height:14,background:'linear-gradient(180deg,#fafafa,#eaeaea)',borderRadius:'3px 3px 0 0',border:'1px solid rgba(0,0,0,.04)',borderBottom:'none',transform:'translateZ('+(hd+2)+'px)',zIndex:5}}/>
-        </>}
-        {/* Bundle ribbon */}
-        {type==='bundle'&&<div style={{position:'absolute',top:12,left:-2,width:w+4,height:14,background:'linear-gradient(90deg,#B82020,#E03030,#B82020)',transform:'translateZ('+(hd+1)+'px)',zIndex:3,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <span style={{fontSize:5.5,fontWeight:700,color:'rgba(255,255,255,.9)',letterSpacing:'.14em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>★ Special ★</span>
-        </div>}
+        {/* Type badge top-left */}
+        <div style={{position:'absolute',top:6,left:6,zIndex:4,padding:'2px 6px',borderRadius:4,background:'rgba(0,0,0,.25)',backdropFilter:'blur(4px)',fontSize:6,fontWeight:700,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase' as const}}>{tm.label}</div>
+        {/* Foil edge */}
+        <div style={{position:'absolute',inset:0,borderRadius:10,border:'1px solid rgba(255,255,255,.15)',pointerEvents:'none',zIndex:4}}/>
       </div>
     </div>
   )

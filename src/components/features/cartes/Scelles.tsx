@@ -45,74 +45,26 @@ const DIMS: Record<ProductType,{w:number;h:number;d:number}> = {
 const ERA_ORDER = ['Scarlet & Violet','Sword & Shield','Sun & Moon','XY','Black & White','DP / Platinum','EX','Original (WotC)']
 const CHUNK = 40
 
-function Box3D({type,logo,selected}:{type:ProductType;logo:string|null;setName:string;selected:boolean}) {
+function SealedImg({type,logo,selected,realImg}:{type:ProductType;logo:string|null;setName:string;selected:boolean;realImg?:string}) {
   const tm=TYPE_META[type]
-  const ref=useRef<HTMLDivElement>(null)
-  const dims:{[k in ProductType]:{w:number;h:number}} = {
-    booster:{w:64,h:110}, display:{w:120,h:88}, etb:{w:96,h:100}, bundle:{w:120,h:76}
-  }
-  const {w,h}=dims[type]
-  const gradients: Record<ProductType,string> = {
-    booster:'linear-gradient(170deg,#AB5AC0 0%,#7B2A9F 30%,#5A1080 70%,#3A0860 100%)',
-    display:'linear-gradient(155deg,#0088D8 0%,#005AB0 35%,#003A80 70%,#002060 100%)',
-    etb:'linear-gradient(155deg,#E06A40 0%,#C04A28 35%,#9A3018 70%,#701808 100%)',
-    bundle:'linear-gradient(155deg,#EFCF57 0%,#D4AF37 30%,#B09020 65%,#887018 100%)',
-  }
-  const shadows: Record<ProductType,string> = {
-    booster:'0 8px 24px rgba(90,16,128,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.15)',
-    display:'0 8px 24px rgba(0,58,128,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.12)',
-    etb:'0 8px 24px rgba(154,48,24,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.12)',
-    bundle:'0 8px 24px rgba(136,112,24,.3),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.2)',
-  }
-  const onMove=(e:React.MouseEvent)=>{
-    if(!ref.current)return
-    const r=ref.current.getBoundingClientRect()
-    ref.current.style.setProperty('--mx',Math.round((e.clientX-r.left)/r.width*100)+'%')
-    ref.current.style.setProperty('--my',Math.round((e.clientY-r.top)/r.height*100)+'%')
-  }
   return (
-    <div ref={ref} onMouseMove={onMove}
-      style={{width:w,height:h,borderRadius:10,background:gradients[type],position:'relative',overflow:'hidden',boxShadow:selected?'0 0 0 2.5px #1D1D1F,'+shadows[type]:shadows[type],transition:'box-shadow .2s,transform .25s cubic-bezier(.34,1.2,.64,1)',flexShrink:0,cursor:'pointer'}}>
-      {/* Specular highlight — always visible, stronger on hover */}
-      <div className="sealed-spec" style={{position:'absolute',inset:0,background:'radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.45) 0%,rgba(255,255,255,.12) 25%,transparent 55%)',pointerEvents:'none',zIndex:5,opacity:.4,transition:'opacity .3s',borderRadius:10}}/>
-      {/* Foil / sheen overlay */}
-      <div style={{position:'absolute',inset:0,background:type==='booster'||type==='bundle'
-        ?'linear-gradient(135deg,rgba(255,200,255,.12),rgba(200,160,255,.18) 25%,rgba(160,200,255,.15) 50%,rgba(200,255,200,.12) 75%,rgba(255,200,200,.15))'
-        :'linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.08) 40%,rgba(255,255,255,.02) 60%,rgba(255,255,255,.06))',
-        mixBlendMode:'overlay' as const,pointerEvents:'none',zIndex:4,borderRadius:10}}/>
-      {/* Vignette + texture grain */}
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 30%,rgba(0,0,0,.18) 100%)',pointerEvents:'none',zIndex:2,borderRadius:10}}/>
-      {/* Noise texture for cardboard feel */}
-      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:3,borderRadius:10,opacity:type==='booster'?.03:.07,mixBlendMode:'overlay' as const}}>
-        <filter id={'n'+type}><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="4" stitchTiles="stitch"/></filter>
-        <rect width="100%" height="100%" filter={'url(#n'+type+')'}/>
-      </svg>
-      {/* Edge highlight */}
-      <div style={{position:'absolute',top:0,left:'10%',right:'10%',height:1,background:'linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)',zIndex:6}}/>
-      {/* Border */}
-      <div style={{position:'absolute',inset:0,borderRadius:10,border:'1px solid rgba(255,255,255,.12)',pointerEvents:'none',zIndex:6}}/>
-      {/* Booster card peek */}
-      {type==='booster'&&<div style={{position:'absolute',top:-6,left:'50%',marginLeft:-14,width:28,height:12,background:'linear-gradient(180deg,#fff,#f0f0f0)',borderRadius:'3px 3px 0 0',border:'1px solid rgba(0,0,0,.06)',borderBottom:'none',zIndex:7}}/>}
-      {/* Bundle ribbon */}
-      {type==='bundle'&&<div style={{position:'absolute',top:'20%',left:-3,right:-3,height:14,background:'linear-gradient(90deg,#B01818,#D82828,#B01818)',zIndex:7,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(0,0,0,.15)'}}>
-        <span style={{fontSize:5.5,fontWeight:700,color:'rgba(255,255,255,.9)',letterSpacing:'.14em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>★ Special ★</span>
-      </div>}
-      {/* ETB lines */}
-      {type==='etb'&&<><div style={{position:'absolute',top:'40%',left:0,right:0,height:1,background:'rgba(255,255,255,.04)',zIndex:2}}/><div style={{position:'absolute',top:'58%',left:0,right:0,height:1,background:'rgba(0,0,0,.06)',zIndex:2}}/></>}
-      {/* Content */}
-      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5,zIndex:3,padding:type==='bundle'?'24px 10px 10px':'10px'}}>
-        {logo?<img src={logo} alt="" style={{height:type==='booster'?22:26,maxWidth:w-20,objectFit:'contain' as const,filter:'drop-shadow(0 2px 4px rgba(0,0,0,.2))'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-          :<div style={{width:w*.5,height:18,background:'rgba(255,255,255,.1)',borderRadius:3}}/>}
-        <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.7)',letterSpacing:'.14em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 3px rgba(0,0,0,.25)'}}>{tm.label}</div>
-        <div style={{fontSize:7,color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.1)'}}>{tm.cards} cartes</div>
-      </div>
-
+    <div style={{width:140,height:140,borderRadius:12,background:'#F5F5F7',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',border:selected?'2px solid #1D1D1F':'1px solid #EBEBEB',transition:'all .2s'}}>
+      {realImg ? (
+        <img src={realImg} alt="" style={{maxWidth:'90%',maxHeight:'90%',objectFit:'contain'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+          {logo?<img src={logo} alt="" style={{height:28,maxWidth:100,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>:null}
+          <div style={{fontSize:10,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
+          <div style={{fontSize:8,color:'#D2D2D7',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
+        </div>
+      )}
     </div>
   )
 }
-
 export function Scelles() {
   const [sets, setSets] = useState<SetData[]>([])
+  const [cardsDb, setCardsDb] = useState<Record<string,{id:string;img:string;r:string}[]>>({})
+  const [realProducts, setRealProducts] = useState<{id:string;name:string;set:string;type:string;img:string}[]>([])
   const [lang, setLang] = useState<Lang>('FR')
   const [filType, setFilType] = useState<'all'|ProductType>('all')
   const [filEra, setFilEra] = useState('all')
@@ -127,6 +79,8 @@ export function Scelles() {
 
   useEffect(()=>{
     fetch('/data/sets-EN.json').then(r=>r.json()).then((d:SetData[])=>setSets(d)).catch(()=>{})
+    fetch('/data/cards-FR.json').then(r=>r.json()).then((d:Record<string,{id:string;img:string;r:string}[]>)=>setCardsDb(d)).catch(()=>{})
+    fetch('/data/sealed-products.json').then(r=>r.json()).then(d=>setRealProducts(d)).catch(()=>{})
     try { const p=localStorage.getItem('portfolio'); if(p) setPortfolio(JSON.parse(p)) } catch{}
   },[])
 
@@ -180,6 +134,35 @@ export function Scelles() {
     obs.observe(sentinelRef.current)
     return()=>obs.disconnect()
   },[visible,filtered.length])
+
+  const findRealImg = useCallback((name: string, setName: string, type: string): string|null => {
+    const q = name.toLowerCase()
+    const sq = setName.toLowerCase()
+    // Try exact name match
+    let m = realProducts.find(p => p.name.toLowerCase() === q)
+    if (m) return m.img
+    // Try set + type match
+    m = realProducts.find(p => p.set.toLowerCase().includes(sq) && p.type === type)
+    if (m) return m.img
+    // Try set match (any type)
+    m = realProducts.find(p => p.set.toLowerCase().includes(sq))
+    if (m) return m.img
+    // Try partial name
+    m = realProducts.find(p => q.includes(p.name.toLowerCase().split(' ').slice(0,2).join(' ')))
+    if (m) return m.img
+    return null
+  }, [realProducts])
+
+  const artworksForSet = useCallback((setId: string): string[] => {
+    const cards = cardsDb[setId]
+    if (!cards || cards.length === 0) return []
+    const rarityOrder = ['Illustration rare','Special Art Rare','Holo Rare V','Holo Rare VMAX','Holo Rare VSTAR','Ultra Rare','Secret Rare','Rare','Holo Rare','Double rare','Uncommon']
+    const sorted = [...cards].filter(c => c.img).sort((a, b) => {
+      const ai = rarityOrder.indexOf(a.r), bi = rarityOrder.indexOf(b.r)
+      return (ai === -1 ? 50 : ai) - (bi === -1 ? 50 : bi)
+    })
+    return sorted.slice(0, 8).map(c => c.img)
+  }, [cardsDb])
 
   const ownedInSet=useCallback((setId:string)=>portfolio.filter(c=>c.setId===setId||c.set===sets.find(s=>s.id===setId)?.name).length,[portfolio,sets])
 
@@ -302,7 +285,7 @@ export function Scelles() {
                   <div key={item.id} className="sc" onClick={()=>setSelId(isSel?null:item.id)}
                     style={{background:'#fff',border:'1.5px solid '+(isSel?'#1D1D1F':'#EBEBEB'),borderRadius:16,overflow:'hidden',boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .25s '+Math.min(idx,15)*.025+'s ease-out both'}}>
                     <div style={{background:'linear-gradient(135deg,#F8F8FA,#EDEDF0)',display:'flex',alignItems:'center',justifyContent:'center',padding:'8px 0',position:'relative'}}>
-                      <Box3D type={item.type} logo={item.logo} setName={item.setName} selected={isSel}/>
+                      <SealedImg type={item.type} logo={item.logo} setName={item.setName} selected={isSel} realImg={findRealImg(item.name,item.setName,item.type)||undefined}/>
                     </div>
                     <div style={{padding:14}}>
                       <div style={{fontSize:13,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:3,lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{item.name}</div>
@@ -343,7 +326,7 @@ export function Scelles() {
                     return (
                       <div key={p.id} onClick={()=>setSelId(isSel?null:p.id)}
                         style={{flex:'0 0 180px',padding:14,borderRight:'1px solid #F5F5F5',cursor:'pointer',background:isSel?'#F5F5F7':'transparent',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                        <Box3D type={p.type} logo={p.logo} setName={p.setName} selected={isSel}/>
+                        <SealedImg type={p.type} logo={p.logo} setName={p.setName} selected={isSel} realImg={findRealImg(p.name,p.setName,p.type)||undefined}/>
                         <div style={{fontSize:11,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',textAlign:'center' as const}}>{TYPE_META[p.type].label}</div>
                         <div style={{fontSize:9,color:'#AEAEB2',textAlign:'center' as const}}>{TYPE_META[p.type].cards} cartes</div>
                       </div>
@@ -370,7 +353,7 @@ export function Scelles() {
           <div className="detail-panel" style={{width:285,flexShrink:0,position:'sticky' as any,top:80,maxHeight:'calc(100vh - 100px)',overflowY:'auto' as any}}>
             <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:16,overflow:'hidden',boxShadow:'0 8px 32px rgba(0,0,0,.07)'}}>
               <div style={{background:'linear-gradient(135deg,#F8F8FA,#EDEDF0)',display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 0',position:'relative',minHeight:160}}>
-                <Box3D type={selProduct.type} logo={selProduct.logo} setName={selProduct.setName} selected={false}/>
+                <SealedImg type={selProduct.type} logo={selProduct.logo} setName={selProduct.setName} selected={false} realImg={findRealImg(selProduct.name,selProduct.setName,selProduct.type)||undefined}/>
                 <button onClick={()=>setSelId(null)} style={{position:'absolute',top:8,left:8,width:26,height:26,borderRadius:'50%',background:'rgba(255,255,255,.9)',border:'1px solid rgba(0,0,0,.08)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
               </div>
               <div style={{padding:14}}>

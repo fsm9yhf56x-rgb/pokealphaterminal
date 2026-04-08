@@ -594,7 +594,7 @@ export function Encyclopedie() {
                       onClick={()=>handleCardClick(card.id)}
                       style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .22s ${Math.min(idx,24)*.018}s ease-out both` }}>
                       <div style={{ height:cfg.imgH, background:'#F5F5F5', position:'relative', overflow:'hidden' }}>
-                        {card.rarity && (()=>{ const rc=getRarityColor(card.rarity); return <div style={{ position:'absolute', top:'6px', left:'6px', zIndex:2, padding:'2px 6px', borderRadius:'4px', background:rc.bg, fontSize:'8px', fontWeight:600, color:rc.fg, fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>{card.rarity}</div> })()}
+                        {card.rarity && (()=>{ const rc=getRarityColor(card.rarity); return <div style={{ position:'absolute', bottom:'6px', left:'6px', zIndex:2, padding:'2px 6px', borderRadius:'4px', background:rc.bg, fontSize:'7px', fontWeight:600, color:rc.fg, fontFamily:'var(--font-display)', letterSpacing:'.02em', opacity:.9 }}>{card.rarity}</div> })()}
                         {img ? (
                           <img src={img} alt={card.name}
                             className="card-img"
@@ -618,14 +618,9 @@ export function Encyclopedie() {
                           {flag(lang)}
                         </div>
                         <button className="zoom-btn" onClick={e=>{ e.stopPropagation(); setLightbox(card) }}
-                          style={{ position:'absolute', top:'6px', left:'6px', width:'26px', height:'26px', borderRadius:'7px', background:'rgba(0,0,0,.45)', border:'none', color:'#fff', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, transition:'opacity .15s', backdropFilter:'blur(4px)' }}
-                          onMouseEnter={e=>(e.currentTarget.style.opacity='1')}
-                          onMouseLeave={e=>(e.currentTarget.style.opacity='0')}>
-                          🔍
+                          style={{ position:'absolute', top:'6px', right:'6px', width:'24px', height:'24px', borderRadius:'6px', background:'rgba(255,255,255,.85)', backdropFilter:'blur(4px)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, zIndex:3 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                         </button>
-                        {cardSize==='L' && isSel && (
-                          <div style={{ position:'absolute', top:'7px', left:'7px', width:'8px', height:'8px', borderRadius:'50%', background:'#111', boxShadow:'0 0 0 2px #fff' }}/>
-                        )}
                         {isOwned(card)&&<div style={{ position:'absolute', top:'6px', right:'6px', width:'20px', height:'20px', borderRadius:'50%', background:'#27500A', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
                       </div>
                       <div style={{ padding:cfg.pad }}>

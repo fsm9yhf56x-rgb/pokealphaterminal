@@ -47,50 +47,59 @@ const CHUNK = 40
 
 function Box3D({type,logo,selected}:{type:ProductType;logo:string|null;setName:string;selected:boolean}) {
   const tm=TYPE_META[type]
-  const gradients: Record<ProductType,{bg:string;accent:string}> = {
-    booster: {bg:'linear-gradient(145deg,#9B4AB0 0%,#6B1A8F 50%,#4A0A6F 100%)',accent:'#C080E0'},
-    display: {bg:'linear-gradient(145deg,#0088D8 0%,#005AAF 50%,#003A7F 100%)',accent:'#60B8FF'},
-    etb:     {bg:'linear-gradient(145deg,#E06A40 0%,#C04A28 50%,#8A2010 100%)',accent:'#FFA070'},
-    bundle:  {bg:'linear-gradient(145deg,#E4BF47 0%,#C4A332 50%,#907018 100%)',accent:'#FFE080'},
+  const ref=useRef<HTMLDivElement>(null)
+  const dims:{[k in ProductType]:{w:number;h:number}} = {
+    booster:{w:64,h:110}, display:{w:120,h:88}, etb:{w:96,h:100}, bundle:{w:120,h:76}
   }
-  const g = gradients[type]
-  const icons: Record<ProductType,string> = {
-    booster: 'M12 2C8 2 6 4 6 7v10c0 3 2 5 6 5s6-2 6-5V7c0-3-2-5-6-5zM9 7h6M9 11h6M9 15h4',
-    display: 'M3 6h18v12H3zM3 6l3-3h12l3 3M8 10h8M8 13h5',
-    etb:     'M4 5h16v14H4zM4 5l2-2h12l2 2M8 9h8v6H8zM10 12h4',
-    bundle:  'M2 7h20v10H2zM7 7V5h10v2M9 10h6M9 13h4',
+  const {w,h}=dims[type]
+  const gradients: Record<ProductType,string> = {
+    booster:'linear-gradient(170deg,#AB5AC0 0%,#7B2A9F 30%,#5A1080 70%,#3A0860 100%)',
+    display:'linear-gradient(155deg,#0088D8 0%,#005AB0 35%,#003A80 70%,#002060 100%)',
+    etb:'linear-gradient(155deg,#E06A40 0%,#C04A28 35%,#9A3018 70%,#701808 100%)',
+    bundle:'linear-gradient(155deg,#EFCF57 0%,#D4AF37 30%,#B09020 65%,#887018 100%)',
   }
-  const sizes: Record<ProductType,{w:number;h:number}> = {
-    booster:{w:64,h:100}, display:{w:120,h:88}, etb:{w:100,h:96}, bundle:{w:120,h:80}
+  const shadows: Record<ProductType,string> = {
+    booster:'0 8px 24px rgba(90,16,128,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.15)',
+    display:'0 8px 24px rgba(0,58,128,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.12)',
+    etb:'0 8px 24px rgba(154,48,24,.25),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.12)',
+    bundle:'0 8px 24px rgba(136,112,24,.3),0 2px 6px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.2)',
   }
-  const sz = sizes[type]
-
+  const onMove=(e:React.MouseEvent)=>{
+    if(!ref.current)return
+    const r=ref.current.getBoundingClientRect()
+    ref.current.style.setProperty('--mx',Math.round((e.clientX-r.left)/r.width*100)+'%')
+    ref.current.style.setProperty('--my',Math.round((e.clientY-r.top)/r.height*100)+'%')
+  }
   return (
-    <div style={{width:sz.w+24,height:sz.h+24,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-      <div style={{width:sz.w,height:sz.h,borderRadius:10,background:g.bg,position:'relative',overflow:'hidden',boxShadow:selected?'0 0 0 2.5px #1D1D1F, 0 12px 32px rgba(0,0,0,.2)':'0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06)',transition:'box-shadow .2s, transform .2s'}}>
-        {/* Shine overlay */}
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(125deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.05) 30%,transparent 55%,rgba(0,0,0,.06) 100%)',pointerEvents:'none',zIndex:3,borderRadius:10}}/>
-        {/* Subtle pattern */}
-        <div style={{position:'absolute',inset:0,opacity:.04,backgroundImage:'radial-gradient(circle at 20% 80%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)',backgroundSize:'20px 20px',pointerEvents:'none'}}/>
-        {/* Bottom vignette */}
-        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'45%',background:'linear-gradient(transparent,rgba(0,0,0,.2))',pointerEvents:'none',borderRadius:'0 0 10px 10px'}}/>
-        {/* Type icon watermark */}
-        <svg viewBox="0 0 24 24" fill="none" stroke={g.accent} strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round"
-          style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:sz.w*.6,height:sz.h*.5,opacity:.12,pointerEvents:'none'}}>
-          <path d={icons[type]}/>
-        </svg>
-        {/* Logo */}
-        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:6,zIndex:2,padding:10}}>
-          {logo?<img src={logo} alt="" style={{maxHeight:type==='booster'?28:32,maxWidth:sz.w-20,objectFit:'contain' as const,filter:'drop-shadow(0 2px 4px rgba(0,0,0,.2))'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-            :<div style={{width:sz.w*.5,height:16,background:'rgba(255,255,255,.12)',borderRadius:3}}/>}
-          <div style={{fontSize:7.5,fontWeight:700,color:'rgba(255,255,255,.7)',letterSpacing:'.12em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.2)'}}>{tm.label}</div>
-          <div style={{fontSize:6.5,color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
-        </div>
-        {/* Type badge top-left */}
-        <div style={{position:'absolute',top:6,left:6,zIndex:4,padding:'2px 6px',borderRadius:4,background:'rgba(0,0,0,.25)',backdropFilter:'blur(4px)',fontSize:6,fontWeight:700,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase' as const}}>{tm.label}</div>
-        {/* Foil edge */}
-        <div style={{position:'absolute',inset:0,borderRadius:10,border:'1px solid rgba(255,255,255,.15)',pointerEvents:'none',zIndex:4}}/>
+    <div ref={ref} onMouseMove={onMove}
+      style={{width:w,height:h,borderRadius:10,background:gradients[type],position:'relative',overflow:'hidden',boxShadow:selected?'0 0 0 2.5px #1D1D1F,'+shadows[type]:shadows[type],transition:'box-shadow .2s,transform .25s cubic-bezier(.34,1.2,.64,1)',flexShrink:0,cursor:'pointer'}}>
+      {/* Specular highlight */}
+      <div className="sealed-spec" style={{position:'absolute',inset:0,background:'radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.35) 0%,rgba(255,255,255,.08) 30%,transparent 60%)',pointerEvents:'none',zIndex:5,opacity:0,transition:'opacity .3s',borderRadius:10}}/>
+      {/* Foil overlay */}
+      {(type==='booster'||type==='bundle')&&<div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,200,255,.08),rgba(200,160,255,.12) 25%,rgba(160,200,255,.1) 50%,rgba(200,255,200,.08) 75%,rgba(255,200,200,.1))',mixBlendMode:'overlay' as const,pointerEvents:'none',zIndex:4,borderRadius:10}}/>}
+      {/* Vignette */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.06) 0%,transparent 35%,rgba(0,0,0,.14) 100%)',pointerEvents:'none',zIndex:2,borderRadius:10}}/>
+      {/* Edge highlight */}
+      <div style={{position:'absolute',top:0,left:'10%',right:'10%',height:1,background:'linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)',zIndex:6}}/>
+      {/* Border */}
+      <div style={{position:'absolute',inset:0,borderRadius:10,border:'1px solid rgba(255,255,255,.12)',pointerEvents:'none',zIndex:6}}/>
+      {/* Booster card peek */}
+      {type==='booster'&&<div style={{position:'absolute',top:-6,left:'50%',marginLeft:-14,width:28,height:12,background:'linear-gradient(180deg,#fff,#f0f0f0)',borderRadius:'3px 3px 0 0',border:'1px solid rgba(0,0,0,.06)',borderBottom:'none',zIndex:7}}/>}
+      {/* Bundle ribbon */}
+      {type==='bundle'&&<div style={{position:'absolute',top:'20%',left:-3,right:-3,height:14,background:'linear-gradient(90deg,#B01818,#D82828,#B01818)',zIndex:7,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(0,0,0,.15)'}}>
+        <span style={{fontSize:5.5,fontWeight:700,color:'rgba(255,255,255,.9)',letterSpacing:'.14em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)'}}>★ Special ★</span>
+      </div>}
+      {/* ETB lines */}
+      {type==='etb'&&<><div style={{position:'absolute',top:'40%',left:0,right:0,height:1,background:'rgba(255,255,255,.04)',zIndex:2}}/><div style={{position:'absolute',top:'58%',left:0,right:0,height:1,background:'rgba(0,0,0,.06)',zIndex:2}}/></>}
+      {/* Content */}
+      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5,zIndex:3,padding:type==='bundle'?'24px 10px 10px':'10px'}}>
+        {logo?<img src={logo} alt="" style={{height:type==='booster'?22:26,maxWidth:w-20,objectFit:'contain' as const,filter:'drop-shadow(0 2px 4px rgba(0,0,0,.2))'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+          :<div style={{width:w*.5,height:18,background:'rgba(255,255,255,.1)',borderRadius:3}}/>}
+        <div style={{fontSize:7,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.15)'}}>{tm.label}</div>
+        <div style={{fontSize:6,color:'rgba(255,255,255,.35)',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
       </div>
+      {/* Type badge */}
+      <div style={{position:'absolute',top:6,left:6,zIndex:8,padding:'2px 6px',borderRadius:4,background:'rgba(0,0,0,.25)',backdropFilter:'blur(8px)',fontSize:6.5,fontWeight:600,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase' as const}}>{tm.label}</div>
     </div>
   )
 }
@@ -195,6 +204,7 @@ export function Scelles() {
         .fsel{height:34px;padding:0 10px;border:1px solid #EBEBEB;border-radius:7px;font-size:12px;outline:none;background:#fff;cursor:pointer;font-family:var(--font-display);color:#555;transition:border-color .15s}
         .fsel:focus,.fsel:hover{border-color:#BBB}
         .detail-panel{animation:panelIn .28s cubic-bezier(.34,1.2,.64,1)}
+        .sc:hover .sealed-spec{opacity:1 !important}
       `}</style>
 
       <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>
@@ -391,9 +401,21 @@ export function Scelles() {
                     </div>
                   )
                 })()}
-                <button onClick={()=>window.open('https://www.cardmarket.com/fr/Pokemon/Products/Search?searchString='+encodeURIComponent(selProduct.name),'_blank')}
+                <button onClick={()=>{
+                    const card: PortfolioCard = {
+                      id:'sealed_'+Date.now(), name:selProduct.name, set:selProduct.setName,
+                      setId:selProduct.setId, number:'SEALED', rarity:'Sealed',
+                      type:selProduct.type, lang:'FR', condition:'Sealed', graded:false,
+                      buyPrice:0, curPrice:0, qty:1, year:selProduct.year,
+                      image:selProduct.logo||undefined
+                    }
+                    const prev = JSON.parse(localStorage.getItem('portfolio')||'[]')
+                    prev.push(card)
+                    localStorage.setItem('portfolio', JSON.stringify(prev))
+                    setPortfolio(prev)
+                  }}
                   style={{width:'100%',padding:11,borderRadius:9,background:'#111',color:'#fff',border:'none',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>
-                  Voir sur Cardmarket →
+                  + Ajouter au portfolio
                 </button>
               </div>
             </div>

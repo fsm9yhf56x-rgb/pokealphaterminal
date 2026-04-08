@@ -188,34 +188,58 @@ export function Encyclopedie() {
     } catch {}
   }, [])
 
-  // Fetch set logos from TCGDex
+  // Fetch set logos from TCGDex (batched)
   useEffect(() => {
     if (allCards.length === 0) return
     const sids = [...new Set(allCards.map(c => c.setId))]
-    sids.forEach(async (sid) => {
-      if (setLogos[sid]) return
-      const cacheKey = 'pka_logo_' + sid
-      const cached = localStorage.getItem(cacheKey)
+    // 1. Load all cached first
+    const uncached: string[] = []
+    const logosBatch: Record<string,string> = {}
+    const blocksBatch: Record<string,string> = {}
+    sids.forEach(sid => {
+      const cached = localStorage.getItem('pka_logo_' + sid)
       if (cached) {
-        setSetLogos(prev => ({ ...prev, [sid]: cached }))
+        logosBatch[sid] = cached
         const cb = localStorage.getItem('pka_block_' + sid)
-        if (cb) setSetBlocks(prev => ({ ...prev, [sid]: cb }))
-        return
+        if (cb) blocksBatch[sid] = cb
+      } else {
+        uncached.push(sid)
       }
-      try {
-        const res = await fetch('https://api.tcgdex.net/v2/en/sets/' + sid)
-        if (!res.ok) return
-        const data = await res.json()
-        if (data.logo) {
-          setSetLogos(prev => ({ ...prev, [sid]: data.logo + '/low.webp' }))
-          localStorage.setItem(cacheKey, data.logo + '/low.webp')
-        }
-        if (data.serie && data.serie.name) {
-          setSetBlocks(prev => ({ ...prev, [sid]: data.serie.name }))
-          localStorage.setItem('pka_block_' + sid, data.serie.name)
-        }
-      } catch {}
     })
+    if (Object.keys(logosBatch).length > 0) {
+      setSetLogos(prev => ({ ...prev, ...logosBatch }))
+      setSetBlocks(prev => ({ ...prev, ...blocksBatch }))
+    }
+    // 2. Fetch uncached in batches of 8 with delay
+    if (uncached.length === 0) return
+    let cancelled = false
+    const fetchBatch = async () => {
+      for (let i = 0; i < uncached.length; i += 8) {
+        if (cancelled) return
+        const batch = uncached.slice(i, i + 8)
+        const results = await Promise.allSettled(batch.map(async sid => {
+          const res = await fetch('https://api.tcgdex.net/v2/en/sets/' + sid)
+          if (!res.ok) return null
+          const data = await res.json()
+          return { sid, logo: data.logo ? data.logo + '/low.webp' : null, block: data.serie?.name || null }
+        }))
+        if (cancelled) return
+        const newLogos: Record<string,string> = {}
+        const newBlocks: Record<string,string> = {}
+        results.forEach(r => {
+          if (r.status === 'fulfilled' && r.value) {
+            const { sid, logo, block } = r.value
+            if (logo) { newLogos[sid] = logo; localStorage.setItem('pka_logo_' + sid, logo) }
+            if (block) { newBlocks[sid] = block; localStorage.setItem('pka_block_' + sid, block) }
+          }
+        })
+        if (Object.keys(newLogos).length > 0) setSetLogos(prev => ({ ...prev, ...newLogos }))
+        if (Object.keys(newBlocks).length > 0) setSetBlocks(prev => ({ ...prev, ...newBlocks }))
+        if (i + 8 < uncached.length) await new Promise(r => setTimeout(r, 300))
+      }
+    }
+    fetchBatch()
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allCards.length])
 

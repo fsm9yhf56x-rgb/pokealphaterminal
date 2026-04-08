@@ -211,7 +211,7 @@ export function Encyclopedie() {
       { label:'Dimensions', status:'pending' },
       { label:'Orientation portrait', status:'pending' },
       { label:'Ratio carte standard', status:'pending' },
-      { label:'R\u00e9solution minimale', status:'pending' },
+      { label:'Résolution minimale', status:'pending' },
       { label:'Cadrage des bords', status:'pending' },
       { label:'Contenu illustré', status:'pending' },
     ]
@@ -1157,7 +1157,7 @@ export function Encyclopedie() {
             </div>
             <div style={{ padding:'14px 20px' }}>
               <div style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:'12px',textAlign:'center' }}>
-                {uploadModal.done?(uploadModal.success?'Illustration valid\u00e9e':'Illustration rejet\u00e9e'):'V\u00e9rification en cours...'}
+                {uploadModal.done?(uploadModal.success?'Illustration validée':'Illustration rejetée'):'Vérification en cours...'}
               </div>
               <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
                 {uploadModal.checks.map((c,i)=>(
@@ -1182,7 +1182,7 @@ export function Encyclopedie() {
                   <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#2E9E6A',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Fermer</button>
                 ):(
                   <>
-                    <button onClick={()=>{setUploadModal(p=>({...p,open:false}));setTimeout(()=>uploadRef.current?.click(),150)}} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>R\u00e9essayer</button>
+                    <button onClick={()=>{setUploadModal(p=>({...p,open:false}));setTimeout(()=>uploadRef.current?.click(),150)}} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Réessayer</button>
                     <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ padding:'12px 18px',borderRadius:'10px',background:'#F5F5F7',color:'#6E6E73',border:'1px solid #E5E5EA',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)' }}>Annuler</button>
                   </>
                 )}

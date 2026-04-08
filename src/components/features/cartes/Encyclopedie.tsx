@@ -171,6 +171,8 @@ export function Encyclopedie() {
 
   // ── Custom card images (user uploads) ──
   const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
+  const [setLogos, setSetLogos] = useState<Record<string,string>>({})
+  const [setBlocks, setSetBlocks] = useState<Record<string,string>>({})
   const uploadRef = useRef<HTMLInputElement>(null)
   const [uploadTarget, setUploadTarget] = useState<string|null>(null)
   const [uploadModal, setUploadModal] = useState<{
@@ -185,6 +187,36 @@ export function Encyclopedie() {
       if (raw) setCustomImgs(JSON.parse(raw))
     } catch {}
   }, [])
+
+  // Fetch set logos from TCGDex
+  useEffect(() => {
+    if (allCards.length === 0) return
+    const sids = [...new Set(allCards.map(c => c.setId))]
+    sids.forEach(async (sid) => {
+      if (setLogos[sid]) return
+      const cacheKey = 'pka_logo_' + sid
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        setSetLogos(prev => ({ ...prev, [sid]: cached }))
+        const cb = localStorage.getItem('pka_block_' + sid)
+        if (cb) setSetBlocks(prev => ({ ...prev, [sid]: cb }))
+        return
+      }
+      try {
+        const res = await fetch('https://api.tcgdex.net/v2/en/sets/' + sid)
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.logo) {
+          setSetLogos(prev => ({ ...prev, [sid]: data.logo + '/low.webp' }))
+          localStorage.setItem(cacheKey, data.logo + '/low.webp')
+        }
+        if (data.serie && data.serie.name) {
+          setSetBlocks(prev => ({ ...prev, [sid]: data.serie.name }))
+          localStorage.setItem('pka_block_' + sid, data.serie.name)
+        }
+      } catch {}
+    })
+  }, [allCards, setLogos])
 
   const saveCustomImg = useCallback((cardKey: string, b64: string) => {
     setCustomImgs(prev => {
@@ -648,6 +680,7 @@ export function Encyclopedie() {
                     style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
+                    {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                     {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?ow+'/'+ct:ct })()}</span>
                   </button>
                 )
@@ -773,6 +806,7 @@ export function Encyclopedie() {
               {blocs.map(b=>(
                 <div key={b.name} onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'12px', padding:'16px', cursor:'pointer', transition:'all .15s' }}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.boxShadow=''}}>
+                  {(()=>{ const logoSid = b.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'28px', maxWidth:'140px', objectFit:'contain', marginBottom:'6px' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                   <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{b.name}</div>
                   <div style={{ fontSize:'11px', color:'#86868B' }}>{b.sets.length} série{b.sets.length>1?'s':''} · {b.total.toLocaleString()} cartes</div>
                   <div style={{ display:'flex', gap:'4px', marginTop:'10px', flexWrap:'wrap' as const }}>
@@ -787,12 +821,14 @@ export function Encyclopedie() {
             <div style={{ marginBottom:'20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
                 <button onClick={()=>{setSelBloc(null);setFilEra('all');setFilSet('all');setPage(0)}} style={{ background:'#F5F5F7', border:'none', borderRadius:'8px', padding:'6px 10px', cursor:'pointer', fontSize:'12px', color:'#48484A', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>{String.fromCharCode(8249)} Blocs</button>
+                {(()=>{ const logoSid = blocs.find(b=>b.name===selBloc)?.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'24px', maxWidth:'120px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                 <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{selBloc}</span>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:'8px', marginBottom:'16px' }}>
                 <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet==='all'?'#1D1D1F':'#E5E5EA'), background:filSet==='all'?'#1D1D1F':'#fff', color:filSet==='all'?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Toutes ({blocs.find(b=>b.name===selBloc)?.total.toLocaleString()})</div>
                 {blocs.find(b=>b.name===selBloc)?.sets.map(st=>(
-                  <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet===st.id?'#1D1D1F':'#E5E5EA'), background:filSet===st.id?'#1D1D1F':'#fff', color:filSet===st.id?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s' }}>
+                  <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet===st.id?'#1D1D1F':'#E5E5EA'), background:filSet===st.id?'#1D1D1F':'#fff', color:filSet===st.id?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', display:'flex', alignItems:'center', gap:'8px' }}>
+                    {setLogos[st.id]&&<img src={setLogos[st.id]} alt="" style={{ height:'16px', maxWidth:'60px', objectFit:'contain', opacity:filSet===st.id?.9:.5 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                     {st.name} <span style={{ opacity:.5 }}>({st.count})</span>
                   </div>
                 ))}

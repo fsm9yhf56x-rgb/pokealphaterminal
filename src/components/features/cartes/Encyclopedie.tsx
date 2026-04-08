@@ -163,6 +163,8 @@ export function Encyclopedie() {
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
+
+
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
   const [detLoading, setDetLoading]  = useState(false)
@@ -292,6 +294,30 @@ export function Encyclopedie() {
       ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
       : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
   }, [allCards, filEra, filSet, search, sort])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && !lightbox && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault()
+        const input = document.querySelector<HTMLInputElement>('input[placeholder*="Rechercher"]')
+        input?.focus()
+        return
+      }
+      if (e.key === 'Escape') {
+        if (lightbox) { setLightbox(null); return }
+        if (search) { setSearch(''); return }
+      }
+      if (lightbox) {
+        const sc = filtered.filter(c=>c.setId===lightbox.setId).sort((a,b)=>parseInt(a.localId)-parseInt(b.localId))
+        const ci = sc.findIndex(c=>c.id===lightbox.id)
+        if (e.key === 'ArrowLeft' && ci > 0) { e.preventDefault(); setLightbox(sc[ci-1]) }
+        if (e.key === 'ArrowRight' && ci < sc.length-1) { e.preventDefault(); setLightbox(sc[ci+1]) }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lightbox, search, filtered])
 
   const pageCount = Math.ceil(filtered.length/PER_PAGE)||1
   const pageCards = filtered.slice(page*PER_PAGE, (page+1)*PER_PAGE)
@@ -432,6 +458,24 @@ export function Encyclopedie() {
           </div>
 
           {/* Search + sort + view */}
+          {/* Series populaires */}
+          {!loading && filSet==='all' && browseMode==='all' && (
+            <div style={{ display:'flex', gap:'6px', marginBottom:'12px', overflowX:'auto' as const, paddingBottom:'4px', scrollbarWidth:'none' as any }}>
+              {['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06'].filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
+                const nm = allCards.find(c=>c.setId===sid)?.setName||sid
+                const ct = allCards.filter(c=>c.setId===sid).length
+                return (
+                  <button key={sid} onClick={()=>{setFilSet(sid);setFilEra('all');setPage(0)}}
+                    style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
+                    {nm} <span style={{ opacity:.5 }}>{ct}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <div style={{ display:'flex', gap:'8px', marginBottom:'12px', flexWrap:'wrap' }}>
             <div style={{ position:'relative', flex:1, minWidth:'200px', zIndex:20 }}>
               <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', color:'#CCC', fontSize:'15px', pointerEvents:'none' }}>{String.fromCharCode(8981)}</span>

@@ -121,6 +121,7 @@ export function Encyclopedie() {
   const [browseMode, setBrowseMode]  = useState<'all'|'bloc'>('all')
   const [selBloc,    setSelBloc]     = useState<string|null>(null)
   const [filSet,     setFilSet]      = useState('all')
+  const [filRarity,  setFilRarity]   = useState('all')
   const [sort,       setSort]        = useState<SortKey>('set')
   const [view,       setView]        = useState<ViewMode>('grid')
   const [page,       setPage]        = useState(0)
@@ -257,6 +258,10 @@ export function Encyclopedie() {
     return [...map.entries()].sort((a,b)=>ERA_ORDER.indexOf(a[0])-ERA_ORDER.indexOf(b[0])).map(([,v])=>v)
   }, [allCards])
 
+  const rarities = useMemo(() =>
+    [...new Set(allCards.map(c=>c.rarity).filter(Boolean))].sort()
+  , [allCards])
+
   const eras = useMemo(() =>
     [...new Set(allCards.map(c=>c.era))].sort((a,b)=>ERA_ORDER.indexOf(a)-ERA_ORDER.indexOf(b))
   , [allCards])
@@ -272,12 +277,13 @@ export function Encyclopedie() {
   }, [allCards, filEra])
 
   useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
-  useEffect(() => { setPage(0) }, [search, filSet, sort])
+  useEffect(() => { setPage(0) }, [search, filSet, filRarity, sort])
 
   const filtered = useMemo(() => {
     let r = allCards
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
     if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
+    if (filRarity!=='all') r = r.filter(c=>c.rarity===filRarity)
     if (search) {
       const q=search.toLowerCase()
       r = r.filter(c=>c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q)
@@ -499,7 +505,12 @@ export function Encyclopedie() {
               {sets.map(s=><option key={s.id} value={s.id}>{s.name} ({s.count})</option>)}
             </select>
 
-            {(filEra!=='all'||filSet!=='all'||search) && (
+            <select className="fsel" value={filRarity} onChange={e=>{setFilRarity(e.target.value);setPage(0)}}
+              style={{ maxWidth:'180px', color:filRarity==='all'?'#AAA':'#111' }}>
+              <option value="all">Toutes les raretés</option>
+              {rarities.map(r=>(<option key={r} value={r}>{r}</option>))}
+            </select>
+            {(filEra!=='all'||filSet!=='all'||filRarity!=='all'||search) && (
               <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setSearch(''); setPage(0) }}
                 style={{ height:'34px', padding:'0 12px', borderRadius:'7px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
                 ✕ Effacer
@@ -877,59 +888,70 @@ export function Encyclopedie() {
       {/* LIGHTBOX */}
       {lightbox && (()=>{
         const base = cardImageUrl(lightbox, lang)
-        const imgHd = base ? `${base}/high.webp` : null
+        const imgHd = base ? (base.includes('.webp')||base.includes('.png') ? base : base+'/high.webp') : null
+        // Navigation dans le set
+        const setCards = filtered.filter(c=>c.setId===lightbox.setId).sort((a,b)=>parseInt(a.localId)-parseInt(b.localId))
+        const curIdx = setCards.findIndex(c=>c.id===lightbox.id)
+        const prevCard = curIdx > 0 ? setCards[curIdx-1] : null
+        const nextCard = curIdx < setCards.length-1 ? setCards[curIdx+1] : null
+        const rc = getRarityColor(lightbox.rarity||'')
         return (
-          <div className="lb-bg" onClick={()=>setLightbox(null)}
-            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.88)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(8px)', padding:'24px' }}>
-            <div className="lb-card" onClick={e=>e.stopPropagation()}
-              style={{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px', maxWidth:'360px', width:'100%' }}>
-
-              {/* Image */}
-              <div style={{ position:'relative', width:'100%' }}>
-                {imgHd ? (
-                  <img src={imgHd} alt={lightbox.name}
-                    style={{ width:'100%', borderRadius:'16px', boxShadow:'0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06)', display:'block' }}
-                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=`${base}/high.jpg`; else if(t.src.includes('.jpg')) t.src=`${base}/high.png`; }}
-                  />
-                ) : (
-                  <div style={{ width:'100%', aspectRatio:'2.5/3.5', borderRadius:'16px', background:'#1a1a1a' }}/>
-                )}
-                {/* Reflet subtil */}
-                <div style={{ position:'absolute', inset:0, borderRadius:'16px', background:'linear-gradient(135deg,rgba(255,255,255,.08) 0%,transparent 50%)', pointerEvents:'none' }}/>
-              </div>
-
-              {/* Infos sous la carte */}
+          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.92)', zIndex:60, display:'flex', alignItems:'center', justifyContent:'center' }}
+            onClick={()=>setLightbox(null)}>
+            {/* Prev */}
+            {prevCard && (
+              <button onClick={e=>{e.stopPropagation();setLightbox(prevCard)}}
+                style={{ position:'absolute', left:'20px', top:'50%', transform:'translateY(-50%)', width:'44px', height:'44px', borderRadius:'50%', background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.7)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', transition:'all .15s', zIndex:2 }}
+                onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.2)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.1)'}}>
+                {String.fromCharCode(8249)}
+              </button>
+            )}
+            {/* Next */}
+            {nextCard && (
+              <button onClick={e=>{e.stopPropagation();setLightbox(nextCard)}}
+                style={{ position:'absolute', right:'20px', top:'50%', transform:'translateY(-50%)', width:'44px', height:'44px', borderRadius:'50%', background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.7)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', transition:'all .15s', zIndex:2 }}
+                onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.2)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.1)'}}>
+                {String.fromCharCode(8250)}
+              </button>
+            )}
+            {/* Card */}
+            <div onClick={e=>e.stopPropagation()} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'16px', maxWidth:'420px', width:'100%' }}>
+              {imgHd && <img src={imgHd} alt={lightbox.name}
+                style={{ maxHeight:'75vh', maxWidth:'100%', objectFit:'contain', borderRadius:'16px', boxShadow:'0 24px 60px rgba(0,0,0,.4)' }}
+                onError={e=>{const t=e.target as HTMLImageElement; if(t.src.includes('high.webp')) t.src=t.src.replace('high.webp','high.png')}}/>}
               <div style={{ textAlign:'center' }}>
-                <div style={{ fontSize:'18px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px', letterSpacing:'-.3px' }}>
-                  {lightbox.name}
+                <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{lightbox.name}</div>
+                <div style={{ fontSize:'12px', color:'rgba(255,255,255,.5)', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                  <span>{lightbox.setName}</span>
+                  <span>{String.fromCharCode(183)}</span>
+                  <span>#{lightbox.localId}</span>
+                  {lightbox.rarity && <><span>{String.fromCharCode(183)}</span><span style={{ background:rc.bg, color:rc.fg, padding:'1px 6px', borderRadius:'4px', fontSize:'10px', fontWeight:600 }}>{lightbox.rarity}</span></>}
                 </div>
-                {lang==='JP' && lightbox.enName && (
-                  <div style={{ fontSize:'12px', color:'rgba(255,255,255,.45)', fontStyle:'italic', marginBottom:'6px' }}>
-                    🇺🇸 {lightbox.enName}
+                {curIdx>=0 && <div style={{ fontSize:'11px', color:'rgba(255,255,255,.3)', marginTop:'6px' }}>{curIdx+1} / {setCards.length}</div>}
+              </div>
+              <div style={{ display:'flex', gap:'8px', marginTop:'4px' }}>
+                {!isOwned(lightbox) && (
+                  <button onClick={()=>{addToPortfolio(lightbox);setToast(lightbox.name+' ajouté')}}
+                    style={{ padding:'8px 16px', borderRadius:'8px', background:'#fff', color:'#1D1D1F', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    + Ajouter au portfolio
+                  </button>
+                )}
+                {isOwned(lightbox) && (
+                  <div style={{ padding:'8px 16px', borderRadius:'8px', background:'rgba(39,80,10,.3)', color:'#C0DD97', fontSize:'12px', fontWeight:600, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'6px' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C0DD97" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    Dans ma collection
                   </div>
                 )}
-                <div style={{ fontSize:'12px', color:'rgba(255,255,255,.4)', fontFamily:'var(--font-display)' }}>
-                  {lightbox.setName} · <span style={{ fontFamily:'monospace' }}>#{lightbox.localId}</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display:'flex', gap:'8px' }}>
-                <button className="add-btn" onClick={()=>{ setLightbox(null); handleCardClick(lightbox.id) }}
-                  style={{ padding:'9px 20px', borderRadius:'9px', background:'#fff', color:'#111', border:'none', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                  Voir les détails
-                </button>
-                <button className="add-btn" onClick={()=>setLightbox(null)}
-                  style={{ padding:'9px 20px', borderRadius:'9px', background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.7)', border:'1px solid rgba(255,255,255,.15)', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
-                  Fermer
-                </button>
               </div>
             </div>
-
-            {/* Bouton fermer coin */}
-            <button className="lb-close" onClick={()=>setLightbox(null)}
-              style={{ position:'fixed', top:'18px', right:'18px', width:'38px', height:'38px', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px' }}>
-              ×
+            {/* Close */}
+            <button onClick={()=>setLightbox(null)}
+              style={{ position:'absolute', top:'20px', right:'20px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', transition:'all .15s' }}
+              onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'}}
+              onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.08)'}}>
+              {String.fromCharCode(215)}
             </button>
           </div>
         )

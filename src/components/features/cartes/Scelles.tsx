@@ -73,12 +73,20 @@ function Box3D({type,logo,selected}:{type:ProductType;logo:string|null;setName:s
   return (
     <div ref={ref} onMouseMove={onMove}
       style={{width:w,height:h,borderRadius:10,background:gradients[type],position:'relative',overflow:'hidden',boxShadow:selected?'0 0 0 2.5px #1D1D1F,'+shadows[type]:shadows[type],transition:'box-shadow .2s,transform .25s cubic-bezier(.34,1.2,.64,1)',flexShrink:0,cursor:'pointer'}}>
-      {/* Specular highlight */}
-      <div className="sealed-spec" style={{position:'absolute',inset:0,background:'radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.35) 0%,rgba(255,255,255,.08) 30%,transparent 60%)',pointerEvents:'none',zIndex:5,opacity:0,transition:'opacity .3s',borderRadius:10}}/>
-      {/* Foil overlay */}
-      {(type==='booster'||type==='bundle')&&<div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,200,255,.08),rgba(200,160,255,.12) 25%,rgba(160,200,255,.1) 50%,rgba(200,255,200,.08) 75%,rgba(255,200,200,.1))',mixBlendMode:'overlay' as const,pointerEvents:'none',zIndex:4,borderRadius:10}}/>}
-      {/* Vignette */}
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.06) 0%,transparent 35%,rgba(0,0,0,.14) 100%)',pointerEvents:'none',zIndex:2,borderRadius:10}}/>
+      {/* Specular highlight — always visible, stronger on hover */}
+      <div className="sealed-spec" style={{position:'absolute',inset:0,background:'radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.45) 0%,rgba(255,255,255,.12) 25%,transparent 55%)',pointerEvents:'none',zIndex:5,opacity:.4,transition:'opacity .3s',borderRadius:10}}/>
+      {/* Foil / sheen overlay */}
+      <div style={{position:'absolute',inset:0,background:type==='booster'||type==='bundle'
+        ?'linear-gradient(135deg,rgba(255,200,255,.12),rgba(200,160,255,.18) 25%,rgba(160,200,255,.15) 50%,rgba(200,255,200,.12) 75%,rgba(255,200,200,.15))'
+        :'linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.08) 40%,rgba(255,255,255,.02) 60%,rgba(255,255,255,.06))',
+        mixBlendMode:'overlay' as const,pointerEvents:'none',zIndex:4,borderRadius:10}}/>
+      {/* Vignette + texture grain */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 30%,rgba(0,0,0,.18) 100%)',pointerEvents:'none',zIndex:2,borderRadius:10}}/>
+      {/* Noise texture for cardboard feel */}
+      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:3,borderRadius:10,opacity:type==='booster'?.03:.07,mixBlendMode:'overlay' as const}}>
+        <filter id={'n'+type}><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="4" stitchTiles="stitch"/></filter>
+        <rect width="100%" height="100%" filter={'url(#n'+type+')'}/>
+      </svg>
       {/* Edge highlight */}
       <div style={{position:'absolute',top:0,left:'10%',right:'10%',height:1,background:'linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)',zIndex:6}}/>
       {/* Border */}
@@ -95,11 +103,10 @@ function Box3D({type,logo,selected}:{type:ProductType;logo:string|null;setName:s
       <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5,zIndex:3,padding:type==='bundle'?'24px 10px 10px':'10px'}}>
         {logo?<img src={logo} alt="" style={{height:type==='booster'?22:26,maxWidth:w-20,objectFit:'contain' as const,filter:'drop-shadow(0 2px 4px rgba(0,0,0,.2))'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
           :<div style={{width:w*.5,height:18,background:'rgba(255,255,255,.1)',borderRadius:3}}/>}
-        <div style={{fontSize:7,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.15)'}}>{tm.label}</div>
-        <div style={{fontSize:6,color:'rgba(255,255,255,.35)',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
+        <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.7)',letterSpacing:'.14em',textTransform:'uppercase' as const,fontFamily:'var(--font-display)',textShadow:'0 1px 3px rgba(0,0,0,.25)'}}>{tm.label}</div>
+        <div style={{fontSize:7,color:'rgba(255,255,255,.4)',fontFamily:'var(--font-display)',textShadow:'0 1px 2px rgba(0,0,0,.1)'}}>{tm.cards} cartes</div>
       </div>
-      {/* Type badge */}
-      <div style={{position:'absolute',top:6,left:6,zIndex:8,padding:'2px 6px',borderRadius:4,background:'rgba(0,0,0,.25)',backdropFilter:'blur(8px)',fontSize:6.5,fontWeight:600,color:'rgba(255,255,255,.8)',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase' as const}}>{tm.label}</div>
+
     </div>
   )
 }
@@ -205,6 +212,7 @@ export function Scelles() {
         .fsel:focus,.fsel:hover{border-color:#BBB}
         .detail-panel{animation:panelIn .28s cubic-bezier(.34,1.2,.64,1)}
         .sc:hover .sealed-spec{opacity:1 !important}
+        .sc:hover{transform:translateY(-5px) scale(1.015) !important}
       `}</style>
 
       <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>

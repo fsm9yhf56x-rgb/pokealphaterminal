@@ -85,20 +85,25 @@ export function Scelles() {
   },[])
 
   const products = useMemo(()=>{
-    const prods: SealedProduct[]=[]
-    sets.forEach(s=>{
-      const year=s.releaseDate?parseInt(s.releaseDate.slice(0,4)):2020
-      const serie=s.serie||'Autre'
-      const base={setId:s.id,setName:s.name,serie,year,logo:s.logo,total:s.total}
-      prods.push({...base,id:s.id+'-booster',name:'Booster '+s.name,type:'booster'})
-      if(s.total>=50){
-        prods.push({...base,id:s.id+'-display',name:'Display '+s.name,type:'display'})
-        prods.push({...base,id:s.id+'-etb',name:'ETB '+s.name,type:'etb'})
+    return realProducts.map(rp => {
+      const matchSet = sets.find(s => 
+        rp.set.toLowerCase().includes(s.name.toLowerCase()) || 
+        s.name.toLowerCase().includes(rp.set.toLowerCase()) ||
+        rp.name.toLowerCase().includes(s.name.toLowerCase())
+      )
+      return {
+        id: rp.id,
+        name: rp.name,
+        setId: matchSet?.id || rp.set.toLowerCase().replace(/\s+/g,'-'),
+        setName: rp.set,
+        serie: matchSet?.serie || 'Autre',
+        type: (rp.type || 'booster') as ProductType,
+        year: matchSet?.releaseDate ? parseInt(matchSet.releaseDate.slice(0,4)) : 2020,
+        logo: matchSet?.logo || null,
+        total: matchSet?.total || 0,
       }
-      if(s.total>=100) prods.push({...base,id:s.id+'-bundle',name:'Coffret '+s.name,type:'bundle'})
     })
-    return prods
-  },[sets])
+  },[realProducts, sets])
 
   const eras = useMemo(()=>{
     const e=[...new Set(products.map(p=>p.serie))]

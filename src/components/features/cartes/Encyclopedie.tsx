@@ -794,7 +794,7 @@ export function Encyclopedie() {
                   <div style={{ background:'#F8F8F8', padding:'14px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' }}>
                     {detail.image ? (
                       <img
-                        src={`${detail.image}/high.webp`}
+                        src={detail.image?.includes('.webp')||detail.image?.includes('.png')?detail.image:`${detail.image}/high.webp`}
                         alt={detail.name}
                         style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
@@ -806,17 +806,20 @@ export function Encyclopedie() {
                       </div>
                     )}
                     <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
-                      style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}>×</button>
+                      style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                     {selCard && (
                       <button className="zoom-btn" onClick={()=>setLightbox(selCard)}
                         style={{ position:'absolute', top:'8px', right:'8px', width:'30px', height:'30px', borderRadius:'50%', background:'rgba(0,0,0,.55)', border:'none', color:'#fff', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }}>
-                        🔍
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                       </button>
                     )}
                   </div>
 
                   <div style={{ padding:'14px' }}>
-                    <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2, marginBottom:'2px' }}>{detail.name}</div>
+                    <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
+                      <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{detail.name}</div>
+                      {detail.rarity && (()=>{ const rc=getRarityColor(detail.rarity); return <span style={{ flexShrink:0, padding:'3px 8px', borderRadius:'5px', background:rc.bg, color:rc.fg, fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>{detail.rarity}</span> })()}
+                    </div>
 
                     {/* Traduction JP → EN */}
                     {lang==='JP' && enDetail && (
@@ -846,7 +849,7 @@ export function Encyclopedie() {
                     {/* Infos */}
                     <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
                       {([
-                        ['Rareté',      detail.rarity],
+
                         ['Catégorie',   detail.category],
                         ['Stade',       detail.stage],
                         ['Évolue de',   detail.evolveFrom],
@@ -895,6 +898,24 @@ export function Encyclopedie() {
                         </div>
                       </div>
                     )}
+
+                    {/* Owned + set completion */}
+                    {selCard && (()=>{
+                      const setTotal = allCards.filter(c=>c.setId===selCard.setId).length
+                      const setOwned = allCards.filter(c=>c.setId===selCard.setId && isOwned(c)).length
+                      const pct = setTotal>0 ? Math.round(setOwned/setTotal*100) : 0
+                      return setTotal>0 ? (
+                        <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px', marginBottom:'12px' }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
+                            <span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>Complétion du set</span>
+                            <span style={{ fontSize:'10px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{setOwned}/{setTotal}</span>
+                          </div>
+                          <div style={{ height:'4px', borderRadius:'2px', background:'#E8E8ED', overflow:'hidden' }}>
+                            <div style={{ width:pct+'%', height:'100%', borderRadius:'2px', background:pct===100?'linear-gradient(90deg,#C9A84C,#D4AF37)':'#E03020', transition:'width .3s' }}/>
+                          </div>
+                        </div>
+                      ) : null
+                    })()}
 
                     {selCard && isOwned(selCard) ? (
                       <div style={{ width:'100%', padding:'11px', borderRadius:'9px', background:'#EAF3DE', color:'#27500A', border:'none', fontSize:'12px', fontWeight:600, fontFamily:'var(--font-display)', textAlign:'center' as const, display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>

@@ -469,7 +469,7 @@ export function Holdings() {
         const top = (count > 100 ? -2 + Math.random() * 12 : -1 + Math.random() * 18).toFixed(0)
         const left = (Math.random() * 99).toFixed(1)
         const delay = (Math.random() * 4).toFixed(2)
-        d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite`
+        d.style.cssText = `position:absolute;top:${top}px;left:${left}%;width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;animation:${anims[i%4]} 4s ${delay}s linear infinite;transform:translateZ(0);backface-visibility:hidden`
         el.appendChild(d)
       }
     }
@@ -526,10 +526,10 @@ export function Holdings() {
   }
 
   // ── Drag-to-scroll shelf ──
-  const shelfDrag = useRef<{active:boolean;dragging:boolean;startX:number;scrollLeft:number;el:HTMLElement|null}>({active:false,dragging:false,startX:0,scrollLeft:0,el:null})
+  const shelfDrag = useRef<{active:boolean;dragging:boolean;startX:number;scrollLeft:number;el:HTMLElement|null;lastX:number;lastT:number;vx:number}>({active:false,dragging:false,startX:0,scrollLeft:0,el:null,lastX:0,lastT:0,vx:0})
   const onShelfMouseDown = (e:React.MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget
-    shelfDrag.current = { active:true, dragging:false, startX:e.clientX, scrollLeft:el.scrollLeft, el }
+    shelfDrag.current = { active:true, dragging:false, startX:e.clientX, scrollLeft:el.scrollLeft, el, lastX:e.clientX, lastT:Date.now(), vx:0 }
     const onMove = (ev:MouseEvent) => {
       if (!shelfDrag.current.active) return
       const dx = ev.clientX - shelfDrag.current.startX
@@ -539,14 +539,30 @@ export function Holdings() {
         el.style.cursor = 'grabbing'
         el.style.userSelect = 'none'
       }
+      const now = Date.now()
+      const dt = now - shelfDrag.current.lastT
+      if (dt > 0) shelfDrag.current.vx = (ev.clientX - shelfDrag.current.lastX) / dt * 16
+      shelfDrag.current.lastX = ev.clientX
+      shelfDrag.current.lastT = now
       el.scrollLeft = shelfDrag.current.scrollLeft - dx
     }
     const onUp = () => {
       const wasDragging = shelfDrag.current.dragging
+      const vx = shelfDrag.current.vx
       shelfDrag.current.active = false
       shelfDrag.current.dragging = false
       el.style.cursor = ''
       el.style.userSelect = ''
+      if (wasDragging && Math.abs(vx) > 1) {
+        let momentum = -vx * 2.5
+        const decay = () => {
+          if (Math.abs(momentum) < 0.3) return
+          el.scrollLeft += momentum
+          momentum *= 0.94
+          requestAnimationFrame(decay)
+        }
+        requestAnimationFrame(decay)
+      }
       if (wasDragging) {
         const block = (ev:MouseEvent) => { ev.stopPropagation(); ev.preventDefault() }
         el.addEventListener('click', block, { capture:true, once:true })
@@ -836,7 +852,9 @@ export function Holdings() {
         
         .pocket-shell { contain:layout style paint; }
         .master-glitter-container, .badge-glitter-container { contain:strict; will-change:opacity; pointer-events:none; }
-        .master-glitter-container div, .badge-glitter-container div { will-change:opacity; }
+        .master-glitter-container div, .badge-glitter-container div { will-change:opacity; transform:translateZ(0); backface-visibility:hidden; }
+        .shelf-row > div { backface-visibility:hidden; }
+        * { -webkit-font-smoothing:antialiased; }
         .img-missing { position:relative; }
         .img-missing::after { content:'+'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; opacity:.4; pointer-events:none; }
         .set-block { content-visibility:auto; contain-intrinsic-size:auto 400px; }
@@ -969,7 +987,7 @@ export function Holdings() {
         .set-header:hover {
           background:rgba(0,0,0,.015);border-radius:12px;
         }
-        .shelf-row { scrollbar-width:none; -ms-overflow-style:none; overflow-x:scroll !important; }
+        .shelf-row { scrollbar-width:none; -ms-overflow-style:none; overflow-x:scroll !important; -webkit-overflow-scrolling:touch; }
         .shelf-row img { -webkit-user-drag:none; user-drag:none; pointer-events:none; }
         .shelf-row * { -webkit-user-select:none; user-select:none; }
         .shelf-row::-webkit-scrollbar { display:none; }

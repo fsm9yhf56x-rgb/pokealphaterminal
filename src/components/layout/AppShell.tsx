@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <div style={{ display:'flex', flex:1, marginTop:HEADER_H, minHeight:`calc(100vh - ${HEADER_H})`, width:'100%' }}>
         <SubMenu />
-        <main style={{ flex:1, minWidth:0, padding:'32px 36px', width:'100%', overflowX:'hidden' }}>
+        <main style={{ flex:1, minWidth:0, padding:'32px 36px', width:'100%', overflowX:'clip' as any }}>
           {children}
         </main>
       </div>

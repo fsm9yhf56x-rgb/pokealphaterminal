@@ -293,7 +293,7 @@ export function Encyclopedie() {
     return sort==='name'
       ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
       : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
-  }, [allCards, filEra, filSet, search, sort])
+  }, [allCards, filEra, filSet, filRarity, search, sort])
 
   // Keyboard navigation
   useEffect(() => {
@@ -555,7 +555,7 @@ export function Encyclopedie() {
               {rarities.map(r=>(<option key={r} value={r}>{r}</option>))}
             </select>
             {(filEra!=='all'||filSet!=='all'||filRarity!=='all'||search) && (
-              <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setSearch(''); setPage(0) }}
+              <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setFilRarity('all'); setSearch(''); setPage(0) }}
                 style={{ height:'34px', padding:'0 12px', borderRadius:'7px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
                 ✕ Effacer
               </button>

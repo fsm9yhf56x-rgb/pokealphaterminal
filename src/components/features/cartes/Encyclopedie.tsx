@@ -213,6 +213,7 @@ export function Encyclopedie() {
       { label:'Ratio carte standard', status:'pending' },
       { label:'R\u00e9solution minimale', status:'pending' },
       { label:'Cadrage des bords', status:'pending' },
+      { label:'Contenu illustré', status:'pending' },
     ]
     setUploadModal({ open:true, preview, checks:[...checks], done:false, success:false })
     const delay = (ms:number) => new Promise(r=>setTimeout(r,ms))
@@ -272,6 +273,34 @@ export function Encyclopedie() {
         if(avgVar<45){ upd(6,'pass','Bords uniformes (var: '+avgVar.toFixed(0)+')') }
         else { upd(6,'fail','Bords irr\u00e9guliers (var: '+avgVar.toFixed(0)+')'); ok=false }
       } catch { upd(6,'fail','Analyse impossible'); ok=false }
+      // 8. Saturation / color content check
+      upd(7,'checking'); await delay(400)
+      try {
+        const cv2 = document.createElement('canvas')
+        const sz = 100
+        cv2.width = sz; cv2.height = sz
+        const ctx2 = cv2.getContext('2d')!
+        ctx2.drawImage(img, 0, 0, sz, sz)
+        const px = ctx2.getImageData(0, 0, sz, sz).data
+        let satSum = 0; let colorPixels = 0
+        const n2 = px.length / 4
+        for(let i=0;i<px.length;i+=4){
+          const r=px[i],g=px[i+1],b=px[i+2]
+          const mx=Math.max(r,g,b), mn=Math.min(r,g,b)
+          const l=(mx+mn)/2
+          const sat=mx===mn?0:(mx-mn)/(l>127?(510-mx-mn):(mx+mn))
+          satSum+=sat
+          if(sat>0.15 && l>20 && l<235) colorPixels++
+        }
+        const avgSat = satSum / n2
+        const colorPct = Math.round(colorPixels / n2 * 100)
+        if(avgSat > 0.08 || colorPct > 10){
+          upd(7,'pass','Saturation: '+Math.round(avgSat*100)+'% / Couleur: '+colorPct+'%')
+        } else {
+          upd(7,'fail','Image sans couleur (sat: '+Math.round(avgSat*100)+'%, couleur: '+colorPct+'%)')
+          ok=false
+        }
+      } catch { upd(7,'fail','Analyse impossible'); ok=false }
     } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); upd(4,'fail','\u2014'); upd(5,'fail','\u2014'); upd(6,'fail','\u2014'); ok=false }
     await delay(300)
     if(ok){

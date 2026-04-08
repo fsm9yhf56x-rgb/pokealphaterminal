@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
@@ -168,6 +168,73 @@ export function Encyclopedie() {
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
+
+  // ── Custom card images (user uploads) ──
+  const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const [uploadTarget, setUploadTarget] = useState<string|null>(null)
+  const [uploadStatus, setUploadStatus] = useState<string|null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pka_custom_imgs')
+      if (raw) setCustomImgs(JSON.parse(raw))
+    } catch {}
+  }, [])
+
+  const saveCustomImg = useCallback((cardKey: string, b64: string) => {
+    setCustomImgs(prev => {
+      const next = { ...prev, [cardKey]: b64 }
+      try { localStorage.setItem('pka_custom_imgs', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [])
+
+  const customImgKey = (card: EnrichedCard) => `${card.setId}-${card.localId}-${lang}`
+
+  const handleUploadClick = (card: EnrichedCard, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setUploadTarget(customImgKey(card))
+    setUploadStatus(null)
+    setTimeout(() => uploadRef.current?.click(), 50)
+  }
+
+  const handleUploadFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !uploadTarget) return
+    e.target.value = ''
+
+    // ── QC 7 checks ──
+    const MAX_SIZE = 5 * 1024 * 1024
+    const ALLOWED = ['image/jpeg','image/png','image/webp']
+    if (!ALLOWED.includes(file.type)) { setUploadStatus('Format invalide (JPG, PNG ou WebP)'); return }
+    if (file.size > MAX_SIZE) { setUploadStatus('Fichier trop lourd (max 5 Mo)'); return }
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const b64 = ev.target?.result as string
+      const img = new Image()
+      img.onload = () => {
+        const w = img.naturalWidth, h = img.naturalHeight
+        // Check 3: min dimensions
+        if (w < 250 || h < 350) { setUploadStatus('Dimensions trop petites (min 250' + String.fromCharCode(0xD7) + '350)'); return }
+        // Check 4: orientation portrait
+        if (w > h) { setUploadStatus('L' + "'" + 'image doit ' + String.fromCharCode(0xEA) + 'tre en portrait'); return }
+        // Check 5: ratio 0.55-0.85
+        const ratio = w / h
+        if (ratio < 0.55 || ratio > 0.85) { setUploadStatus('Ratio incorrect (carte standard attendue)'); return }
+        // Check 6: resolution
+        if (w < 300 || h < 420) { setUploadStatus('R' + String.fromCharCode(0xE9) + 'solution trop basse (min 300' + String.fromCharCode(0xD7) + '420)'); return }
+        // All checks pass — save
+        saveCustomImg(uploadTarget, b64)
+        setUploadStatus(null)
+        setUploadTarget(null)
+      }
+      img.onerror = () => { setUploadStatus('Impossible de lire l' + "'" + 'image') }
+      img.src = b64
+    }
+    reader.readAsDataURL(file)
+  }, [uploadTarget, saveCustomImg])
 
 
   const [selId,      setSelId]       = useState<string|null>(null)
@@ -682,10 +749,17 @@ export function Encyclopedie() {
                             else t.style.opacity='0'
                           }}/>
                         ) : (
-                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#F5F5F5,#EEEEEE)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' }}>
-                            <div style={{ fontSize:cardSize==='S'?'18px':'24px', opacity:.2 }}>🎴</div>
-                            {lang==='JP' && cardSize!=='S' && <div style={{ fontSize:'8px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.4 }}>Image JP{String.fromCharCode(10)}non disponible</div>}
+                          customImgs[customImgKey(card)] ? (
+                          <img src={customImgs[customImgKey(card)]} alt={card.name}
+                            style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', borderRadius:'inherit' }}/>
+                          ) : (
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#F5F5F5,#EEEEEE)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px', cursor:'pointer' }}
+                            onClick={e => handleUploadClick(card, e)}>
+                            <div style={{ fontSize:cardSize==='S'?'16px':'20px', opacity:.25 }}>📷</div>
+                            {cardSize!=='S' && <div style={{ fontSize:'7px', color:'#BBB', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Ajouter<br/>illustration</div>}
+                            {lang==='JP' && cardSize!=='S' && <div style={{ fontSize:'7px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Image JP{String.fromCharCode(10)}non disponible</div>}
                           </div>
+                          )
                         )}
                         <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize: cardSize==='S'?'10px':'11px', background:'rgba(255,255,255,.92)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}>
                           {flag(lang)}
@@ -818,10 +892,19 @@ export function Encyclopedie() {
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
                       />
                     ) : (
-                      <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px' }}>
-                        <div style={{ fontSize:'32px', opacity:.18 }}>🎴</div>
-                        {lang==='JP' && <div style={{ fontSize:'10px', color:'#CCC', textAlign:'center' as const, fontFamily:'var(--font-display)', lineHeight:1.5 }}>Image JP<br/>non disponible</div>}
+                      selCard && customImgs[customImgKey(selCard)] ? (
+                      <img src={customImgs[customImgKey(selCard)]} alt={selCard.name}
+                        style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}/>
+                      ) : (
+                      <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px', cursor:'pointer', border:'2px dashed #DDD', transition:'all .2s' }}
+                        onClick={e => { if(selCard) handleUploadClick(selCard, e) }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='#E03020'; (e.currentTarget as HTMLElement).style.background='#FFF5F5' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='#DDD'; (e.currentTarget as HTMLElement).style.background='#F5F5F5' }}>
+                        <div style={{ fontSize:'24px', opacity:.3 }}>📷</div>
+                        <div style={{ fontSize:'10px', color:'#999', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.4 }}>Ajouter une<br/>illustration</div>
+                        {lang==='JP' && <div style={{ fontSize:'9px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const }}>Image JP non disponible</div>}
                       </div>
+                      )
                     )}
                     <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
                       style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
@@ -969,7 +1052,20 @@ export function Encyclopedie() {
       {toast&&<div style={{ position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)', background:'#1D1D1F', color:'#fff', padding:'10px 20px', borderRadius:'99px', fontSize:'13px', fontWeight:500, fontFamily:'var(--font-display)', zIndex:60, boxShadow:'0 8px 24px rgba(0,0,0,.15)', animation:'fadeUp .2s ease-out' }}>{toast}</div>}
 
       {/* LIGHTBOX */}
-      {lightbox && (()=>{
+
+      {/* Hidden upload input */}
+      <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display:'none' }}
+        onChange={handleUploadFile}/>
+
+      {/* Upload status toast */}
+      {uploadStatus && (
+        <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'#1D1D1F', color:'#fff', padding:'10px 20px', borderRadius:'10px', fontSize:'12px', fontFamily:'var(--font-display)', fontWeight:600, zIndex:9999, boxShadow:'0 8px 32px rgba(0,0,0,.25)', display:'flex', alignItems:'center', gap:'8px', animation:'fadeIn .2s' }}>
+          <span style={{ color:'#E03020' }}>&#x26A0;</span> {uploadStatus}
+          <button onClick={()=>setUploadStatus(null)} style={{ background:'none', border:'none', color:'rgba(255,255,255,.5)', cursor:'pointer', fontSize:'14px', padding:'0 0 0 8px' }}>&times;</button>
+        </div>
+      )}
+
+            {lightbox && (()=>{
         const base = cardImageUrl(lightbox, lang)
         const imgHd = base ? (base.includes('.webp')||base.includes('.png') ? base : base+'/high.webp') : null
         // Navigation dans le set

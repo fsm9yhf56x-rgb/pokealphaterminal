@@ -97,7 +97,7 @@ interface EnrichedCard extends TCGCard {
   setId:string; setName:string; year:number; era:string; enName?:string; enImage?:string
 }
 
-const PER_PAGE = 180
+const CHUNK_SIZE = 60
 const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
 
 function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
@@ -128,6 +128,8 @@ export function Encyclopedie() {
   const [filSet,     setFilSet]      = useState('all')
   const [filRarity,  setFilRarity]   = useState('all')
   const [sort,       setSort]        = useState<SortKey>('set')
+  const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
   const [view,       setView]        = useState<ViewMode>('grid')
   const [page,       setPage]        = useState(0)
   const [portfolio,  setPortfolioLocal] = useState<PortfolioCard[]>([])
@@ -478,7 +480,7 @@ export function Encyclopedie() {
   }, [allCards, filEra])
 
   useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
-  useEffect(() => { setPage(0) }, [search, filSet, filRarity, sort])
+  useEffect(() => { setPage(0); setVisibleCount(CHUNK_SIZE) }, [search, filSet, filRarity, sort])
 
   const filtered = useMemo(() => {
     let r = allCards
@@ -518,8 +520,9 @@ export function Encyclopedie() {
     return () => window.removeEventListener('keydown', handler)
   }, [lightbox, search, filtered])
 
-  const pageCount = Math.ceil(filtered.length/PER_PAGE)||1
-  const pageCards = filtered.slice(page*PER_PAGE, (page+1)*PER_PAGE)
+  const pageCount = Math.ceil(filtered.length/CHUNK_SIZE)||1
+  const pageCards = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
 
   const handleCardClick = useCallback(async (id:string) => {
     if (selId===id) { setSelId(null); setDetail(null); setEnDetail(null); return }
@@ -530,6 +533,18 @@ export function Encyclopedie() {
   }, [selId, lang])
 
   const selCard = allCards.find(c=>c.id===selId)
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && visibleCount < filtered.length) {
+        setVisibleCount(prev => Math.min(prev + CHUNK_SIZE, filtered.length))
+      }
+    }, { rootMargin: '400px' })
+    obs.observe(loadMoreRef.current)
+    return () => obs.disconnect()
+  }, [visibleCount, filtered.length])
   const flag = (l:Lang) => l==='EN'?'🇺🇸':l==='FR'?'🇫🇷':'🇯🇵'
 
   return (
@@ -670,7 +685,7 @@ export function Encyclopedie() {
                     onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
                     {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                    {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?ow+'/'+ct:ct })()}</span>
+                    {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?<><span style={{ color:'#2E9E6A', fontWeight:700 }}>{ow}</span>/{ct}</>:ct })()}</span>
                   </button>
                 )
               })}
@@ -738,7 +753,7 @@ export function Encyclopedie() {
           </div>
 
           {/* Filters */}
-          <div style={{ display:'flex', gap:'8px', marginBottom:'18px', flexWrap:'wrap', alignItems:'center' }}>
+          <div style={{ display:'flex', gap:'8px', marginBottom:'18px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,.92)', backdropFilter:'blur(8px)', padding:'10px 0', marginLeft:'-2px', marginRight:'-2px', paddingLeft:'2px', paddingRight:'2px' }}>
             <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>setFilEra(e.target.value)}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
@@ -764,7 +779,7 @@ export function Encyclopedie() {
 
             {!loading && filtered.length>0 && (
               <span style={{ fontSize:'11px', color:'#CCC', marginLeft:'auto' }}>
-                Page {page+1} / {pageCount}
+                {filtered.length.toLocaleString('fr-FR')} cartes
               </span>
             )}
           </div>
@@ -798,7 +813,16 @@ export function Encyclopedie() {
                   {(()=>{ const logoSid = b.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'28px', maxWidth:'140px', objectFit:'contain', marginBottom:'6px' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                   <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{b.name}</div>
                   <div style={{ fontSize:'11px', color:'#86868B' }}>{b.sets.length} série{b.sets.length>1?'s':''} · {b.total.toLocaleString()} cartes</div>
-                  <div style={{ display:'flex', gap:'4px', marginTop:'10px', flexWrap:'wrap' as const }}>
+                  <div style={{ display:'flex', gap:'3px', marginTop:'10px', marginBottom:'8px' }}>
+                    {(()=>{
+                      const preview = allCards.filter(c=>c.era===b.name&&c.image).slice(0,5)
+                      return preview.map(c=>{
+                        const imgUrl = cardImageUrl(c, lang)
+                        return imgUrl ? <img key={c.id} src={imgUrl.includes('.')?imgUrl:imgUrl+'/low.webp'} alt="" style={{ height:'42px', width:'30px', objectFit:'cover', borderRadius:'4px', border:'1px solid #EBEBEB' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null
+                      })
+                    })()}
+                  </div>
+                  <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
                     {b.sets.slice(0,4).map(st=>(<span key={st.id} style={{ fontSize:'9px', color:'#AEAEB2', background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px' }}>{st.name}</span>))}
                     {b.sets.length>4&&<span style={{ fontSize:'9px', color:'#AEAEB2', padding:'2px 4px' }}>+{b.sets.length-4}</span>}
                   </div>
@@ -822,20 +846,16 @@ export function Encyclopedie() {
                     onMouseEnter={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#F5F5F7';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}}
                     onMouseLeave={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}}>
                     {setLogos[st.id]&&<img src={setLogos[st.id]} alt="" style={{ height:'16px', maxWidth:'60px', objectFit:'contain', opacity:filSet===st.id?.9:.5 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                    {st.name} <span style={{ opacity:.5 }}>({st.count})</span>
+                    {st.name} <span style={{ opacity:.5 }}>({(()=>{const ow=allCards.filter(c=>c.setId===st.id&&isOwned(c)).length; return ow>0?<><span style={{ color:filSet===st.id?'#BBF7D0':'#2E9E6A' }}>{ow}</span>/{st.count}</>:st.count})()})</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {!loading && !loadErr && pageCount>1 && (
-            <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', gap:'5px', marginBottom:'12px' }}>
-              <button onClick={()=>{setPage(0);window.scrollTo({top:0,behavior:'smooth'})}} disabled={page===0} style={{ width:'32px', height:'32px', borderRadius:'7px', border:'1px solid #E8E8E8', background:'#fff', color:page===0?'#CCC':'#555', cursor:page===0?'default':'pointer', fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center' }}>{String.fromCharCode(171)}</button>
-              <button onClick={()=>{setPage(p=>Math.max(0,p-1));window.scrollTo({top:0,behavior:'smooth'})}} disabled={page===0} style={{ width:'32px', height:'32px', borderRadius:'7px', border:'1px solid #E8E8E8', background:'#fff', color:page===0?'#CCC':'#555', cursor:page===0?'default':'pointer', fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center' }}>{String.fromCharCode(8249)}</button>
-              <span style={{ fontSize:'11px', color:'#888', fontFamily:'var(--font-display)', padding:'0 6px' }}>Page {page+1} / {pageCount}</span>
-              <button onClick={()=>{setPage(p=>Math.min(pageCount-1,p+1));window.scrollTo({top:0,behavior:'smooth'})}} disabled={page>=pageCount-1} style={{ width:'32px', height:'32px', borderRadius:'7px', border:'1px solid #E8E8E8', background:'#fff', color:page>=pageCount-1?'#CCC':'#555', cursor:page>=pageCount-1?'default':'pointer', fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center' }}>{String.fromCharCode(8250)}</button>
-              <button onClick={()=>{setPage(pageCount-1);window.scrollTo({top:0,behavior:'smooth'})}} disabled={page>=pageCount-1} style={{ width:'32px', height:'32px', borderRadius:'7px', border:'1px solid #E8E8E8', background:'#fff', color:page>=pageCount-1?'#CCC':'#555', cursor:page>=pageCount-1?'default':'pointer', fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center' }}>{String.fromCharCode(187)}</button>
+          {!loading && !loadErr && filtered.length>0 && (
+            <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', marginBottom:'8px' }}>
+              <span style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{Math.min(visibleCount, filtered.length)} / {filtered.length} cartes affichées</span>
             </div>
           )}
 
@@ -851,6 +871,34 @@ export function Encyclopedie() {
             </div>
           )}
 
+          {/* Set header when filtered */}
+          {!loading && filSet!=='all' && (()=>{
+            const setInfo = sets.find(st=>st.id===filSet)
+            const totalInSet = allCards.filter(c=>c.setId===filSet).length
+            const ownedInSet = allCards.filter(c=>c.setId===filSet&&isOwned(c)).length
+            const pct = totalInSet>0?Math.round(ownedInSet/totalInSet*100):0
+            const rarityDist: Record<string,number> = {}
+            allCards.filter(c=>c.setId===filSet).forEach(c=>{ const r=c.rarity||'Inconnue'; rarityDist[r]=(rarityDist[r]||0)+1 })
+            const topRarities = Object.entries(rarityDist).sort((a,b)=>b[1]-a[1]).slice(0,6)
+            return (
+              <div style={{ background:'linear-gradient(135deg,#FAFAFA,#F0F0F2)', border:'1px solid #E5E5EA', borderRadius:'16px', padding:'20px 24px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'24px', flexWrap:'wrap' as const }}>
+                {setLogos[filSet]&&<img src={setLogos[filSet]} alt="" style={{ height:'48px', maxWidth:'200px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                <div style={{ flex:1, minWidth:'200px' }}>
+                  <div style={{ fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px' }}>{setInfo?.name||filSet}</div>
+                  {setBlocks[filSet]&&<div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'8px' }}>{setBlocks[filSet]}</div>}
+                  <div style={{ display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap' as const }}>
+                    <div style={{ height:'6px', flex:1, minWidth:'120px', maxWidth:'240px', background:'#E5E5EA', borderRadius:'3px', overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:pct+'%', background:pct===100?'#2E9E6A':pct>50?'#F5A623':'#E03020', borderRadius:'3px', transition:'width .4s ease' }}/>
+                    </div>
+                    <span style={{ fontSize:'12px', fontWeight:600, color:pct===100?'#2E9E6A':'#1D1D1F', fontFamily:'var(--font-data)' }}>{ownedInSet}/{totalInSet} ({pct}%)</span>
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' as const }}>
+                  {topRarities.map(([r,n])=>{ const rc=getRarityColor(r); return <span key={r} style={{ fontSize:'9px', fontWeight:600, padding:'3px 8px', borderRadius:'6px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{r} ({n})</span> })}
+                </div>
+              </div>
+            )
+          })()}
           {!loading && !loadErr && view==='grid' && (()=>{
             const cfg = {
               S:{ col:'repeat(auto-fill,minmax(130px,1fr))', imgH:'108px', nameSize:'11px', subSize:'9px',  pad:'8px 9px 9px'  },
@@ -910,6 +958,7 @@ export function Encyclopedie() {
                           {card.name}
                         </div>
                         <div style={{ fontSize:cfg.subSize, color:ERA_COLORS[card.era]||'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
+                          {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'11px', maxWidth:'40px', objectFit:'contain', verticalAlign:'middle', marginRight:'3px', opacity:.6 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                           {card.setName}
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                         </div>
@@ -1188,7 +1237,22 @@ export function Encyclopedie() {
 
       {/* LIGHTBOX */}
 
-      {/* Hidden upload input */}
+      {/* Infinite scroll sentinel */}
+      {hasMore && !loading && (
+        <div ref={loadMoreRef} style={{ display:'flex', justifyContent:'center', padding:'32px 0' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'8px', color:'#AEAEB2', fontSize:'12px', fontFamily:'var(--font-display)' }}>
+            <div style={{ width:'16px', height:'16px', border:'2px solid #E5E5EA', borderTop:'2px solid #86868B', borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
+            Chargement...
+          </div>
+        </div>
+      )}
+      {!hasMore && filtered.length > CHUNK_SIZE && !loading && (
+        <div style={{ textAlign:'center', padding:'20px 0', color:'#AEAEB2', fontSize:'11px', fontFamily:'var(--font-display)' }}>
+          {filtered.length.toLocaleString('fr-FR')} cartes affichées
+        </div>
+      )}
+
+            {/* Hidden upload input */}
       <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display:'none' }}
         onChange={handleUploadFile}/>
 

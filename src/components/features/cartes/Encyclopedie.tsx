@@ -216,7 +216,8 @@ export function Encyclopedie() {
         }
       } catch {}
     })
-  }, [allCards, setLogos])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCards.length])
 
   const saveCustomImg = useCallback((cardKey: string, b64: string) => {
     setCustomImgs(prev => {

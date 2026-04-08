@@ -23,6 +23,11 @@ const pkaDbSet = async (key: string, value: unknown) => {
   try { const db = await pkaDbOpen(); return new Promise<void>((r,j) => { const tx=db.transaction('store','readwrite'); tx.objectStore('store').put(value,key); tx.oncomplete=()=>r(); tx.onerror=()=>j(tx.error) }) } catch {}
 }
 
+const ERA_COLORS: Record<string,string> = {
+  'Original (WotC)':'#854F0B', 'EX':'#993C1D', 'DP / Platinum':'#0F6E56',
+  'Black & White':'#444441', 'XY':'#185FA5', 'Sun & Moon':'#BA7517',
+  'Sword & Shield':'#534AB7', 'Scarlet & Violet':'#A32D2D', 'Autre':'#5F5E5A',
+}
 const RARITY_COLORS: Record<string,{bg:string;fg:string}> = {
   'Commune':       {bg:'#F1EFE8',fg:'#5F5E5A'},
   'Common':        {bg:'#F1EFE8',fg:'#5F5E5A'},
@@ -337,6 +342,7 @@ export function Encyclopedie() {
     <>
       <style>{`
         @keyframes fadeIn    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes gridFade { from{opacity:0} to{opacity:1} }
         @keyframes cardIn    { from{opacity:0;transform:scale(.93) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes slideIn   { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
         @keyframes spin      { to{transform:rotate(360deg)} }
@@ -469,7 +475,7 @@ export function Encyclopedie() {
                     style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
-                    {nm} <span style={{ opacity:.5 }}>{ct}</span>
+                    {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?ow+'/'+ct:ct })()}</span>
                   </button>
                 )
               })}
@@ -538,7 +544,7 @@ export function Encyclopedie() {
 
           {/* Filters */}
           <div style={{ display:'flex', gap:'8px', marginBottom:'18px', flexWrap:'wrap', alignItems:'center' }}>
-            <select className="fsel" value={filEra} onChange={e=>setFilEra(e.target.value)}>
+            <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>setFilEra(e.target.value)}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
             </select>
@@ -550,7 +556,7 @@ export function Encyclopedie() {
             </select>
 
             <select className="fsel" value={filRarity} onChange={e=>{setFilRarity(e.target.value);setPage(0)}}
-              style={{ maxWidth:'180px', color:filRarity==='all'?'#AAA':'#111' }}>
+              style={{ maxWidth:'180px', color:filRarity==='all'?'#AAA':'#534AB7', background:filRarity!=='all'?'#EEEDFE':'', borderColor:filRarity!=='all'?'#CECBF6':'' }}>
               <option value="all">Toutes les raretés</option>
               {rarities.map(r=>(<option key={r} value={r}>{r}</option>))}
             </select>
@@ -631,6 +637,18 @@ export function Encyclopedie() {
             </div>
           )}
 
+          {!loading && !loadErr && filtered.length===0 && allCards.length>0 && (
+            <div style={{ textAlign:'center', padding:'60px 20px' }}>
+              <div style={{ fontSize:'48px', opacity:.15, marginBottom:'16px' }}>{String.fromCharCode(9997)}</div>
+              <div style={{ fontSize:'16px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Aucune carte trouvée</div>
+              <div style={{ fontSize:'13px', color:'#86868B', marginBottom:'16px' }}>Essayez avec d'autres filtres ou un autre terme de recherche.</div>
+              <button onClick={()=>{setFilEra('all');setFilSet('all');setFilRarity('all');setSearch('');setPage(0)}}
+                style={{ padding:'8px 16px', borderRadius:'8px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                Effacer les filtres
+              </button>
+            </div>
+          )}
+
           {!loading && !loadErr && view==='grid' && (()=>{
             const cfg = {
               S:{ col:'repeat(auto-fill,minmax(130px,1fr))', imgH:'108px', nameSize:'11px', subSize:'9px',  pad:'8px 9px 9px'  },
@@ -646,8 +664,8 @@ export function Encyclopedie() {
                   return (
                     <div key={card.id}
                       className={`enc-card${isSel?' sel':''}`}
-                      onClick={()=>handleCardClick(card.id)}
-                      style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .22s ${Math.min(idx,24)*.018}s ease-out both` }}>
+                      onClick={()=>handleCardClick(card.id)} onDoubleClick={e=>{e.stopPropagation();if(!isOwned(card)){addToPortfolio(card)}}}
+                      style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .28s ${Math.min(idx,18)*.025}s ease-out both` }}>
                       <div style={{ height:cfg.imgH, background:'#F5F5F5', position:'relative', overflow:'hidden' }}>
                         {card.rarity && (()=>{ const rc=getRarityColor(card.rarity); return <div style={{ position:'absolute', bottom:'6px', left:'6px', zIndex:2, padding:'2px 6px', borderRadius:'4px', background:rc.bg, fontSize:'7px', fontWeight:600, color:rc.fg, fontFamily:'var(--font-display)', letterSpacing:'.02em', opacity:.9 }}>{card.rarity}</div> })()}
                         {img ? (

@@ -270,8 +270,24 @@ export function DailyHub() {
     )
     const dragProps = {
       draggable: true,
-      onDragStart: () => setDragId(id),
+      onDragStart: (e: React.DragEvent) => { setDragId(id); e.dataTransfer.effectAllowed = 'move' },
       onDragEnd: () => { setDragId(null); setOverId(null) },
+      onDragOver: (e: React.DragEvent) => { if (dragId && dragId !== id) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } },
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault()
+        if (!dragId || dragId === id) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const above = e.clientY < rect.top + rect.height / 2
+        setWidgetOrder(prev => {
+          const next = prev.filter(i => i !== dragId)
+          const targetIdx = next.indexOf(id)
+          if (targetIdx === -1) return prev
+          next.splice(above ? targetIdx : targetIdx + 1, 0, dragId)
+          return next
+        })
+        setDragId(null)
+        setOverId(null)
+      },
     }
 
     switch(id) {
@@ -447,9 +463,9 @@ export function DailyHub() {
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
         .w{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
         .w-dragging{z-index:100 !important;opacity:.5 !important}
-        .drop-zone{height:0;transition:height .2s ease,opacity .2s;opacity:0;border-radius:8px;position:relative}
-        .drop-zone.active{height:8px;opacity:1}
-        .drop-zone.hover{height:12px;background:#FEF2F2;border:2px dashed #E03020;opacity:1}
+        .drop-zone{height:0;transition:height .15s ease,opacity .15s,background .15s;opacity:0;border-radius:8px;margin:0 4px}
+        .drop-zone.active{height:40px;opacity:1;border:2px dashed #E5E5EA;background:transparent}
+        .drop-zone.hover{background:#FEF2F2 !important;border-color:#E03020 !important}
         
         .w-hide{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;transition:all .15s;color:#CCC;font-size:11px}
         .w:hover .w-hide{opacity:.4}
@@ -604,7 +620,7 @@ export function DailyHub() {
 
         {/* ═══ GRID ═══ */}
         <div className="hub-grid">
-          <div style={{ display:'flex', flexDirection:'column', gap:dragId?8:16 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:dragId?4:16 }}>
             <DropZone col="left" position={0} />
             {leftWidgets.map((id, i) => (
               <div key={id}>
@@ -613,7 +629,7 @@ export function DailyHub() {
               </div>
             ))}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:dragId?8:16 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:dragId?4:16 }}>
             <DropZone col="right" position={0} />
             {rightWidgets.map((id, i) => (
               <div key={id}>

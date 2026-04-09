@@ -275,18 +275,23 @@ export function DailyHub() {
   }
 
   const renderWidget = (id: WidgetId) => {
-    const isEditing = false
+    const isEditing = true
     const isDragging = dragState.dragging === id
     const dropPos = dragState.dropTarget === id ? dragState.dropPosition : null
     const cls = 'w' + (isDragging ? ' w-dragging' : '') + (dropPos === 'above' ? ' w-drop-above' : '') + (dropPos === 'below' ? ' w-drop-below' : '')
     const editHandle = (
-      <div className="w-grip"
-        onPointerDown={e => startDrag(id, e)}
-        title="Maintenir pour déplacer">
-        <div className="w-grip-row"><i/><i/></div>
-        <div className="w-grip-row"><i/><i/></div>
-        <div className="w-grip-row"><i/><i/></div>
-      </div>
+      <>
+        <div className="w-grip"
+          onPointerDown={e => startDrag(id, e)}
+          title="Maintenir pour déplacer">
+          <div className="w-grip-row"><i/><i/></div>
+          <div className="w-grip-row"><i/><i/></div>
+          <div className="w-grip-row"><i/><i/></div>
+        </div>
+        <button className="w-hide" onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </>
     )
     const dragProps = {}
 
@@ -466,11 +471,14 @@ export function DailyHub() {
         .w-drop-above::before{content:'';position:absolute;top:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
         .w-drop-below::after{content:'';position:absolute;bottom:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
         @keyframes dropLine{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}
-        .w-grip{position:absolute;top:50%;left:-2px;transform:translateY(-50%);width:18px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:grab;opacity:0;transition:opacity .2s;z-index:5;border-radius:0 6px 6px 0}
+        .w-hide{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;transition:all .15s;color:#CCC;font-size:11px}
+        .w:hover .w-hide{opacity:.4}
+        .w-hide:hover{opacity:1 !important;background:#FEF2F2;color:#E03020}
+        .w-grip{position:absolute;top:14px;left:10px;width:16px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:grab;opacity:.2;transition:opacity .2s;z-index:5;border-radius:4px}
         .w-grip:active{cursor:grabbing}
-        .w:hover .w-grip{opacity:.25}
-        .w-grip:hover{opacity:.6 !important;background:rgba(0,0,0,.03)}
-        .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#888}
+        .w:hover .w-grip{opacity:.45}
+        .w-grip:hover{opacity:.8 !important;background:rgba(0,0,0,.04);border-radius:4px}
+        .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#999}
         .w-grip-row{display:flex;gap:3px}
         .edit-mode-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#FEF2F2;border:1px solid #FFD0C8;border-radius:10px;margin-bottom:14px;animation:fadeUp .2s ease-out}
         .edit-chip{padding:4px 10px;border-radius:6px;border:1px dashed #D2D2D7;background:#FAFAFA;font-size:10px;cursor:pointer;font-family:var(--font-display);color:#888;display:flex;align-items:center;gap:4px;transition:all .12s}
@@ -481,7 +489,7 @@ export function DailyHub() {
         @media(max-width:1000px){.hub-grid{grid-template-columns:1fr} .qa-grid{grid-template-columns:repeat(2,1fr) !important}}
         .w{background:#fff;border:1px solid #EBEBEB;border-radius:12px;overflow:hidden;animation:fadeUp .3s ease-out both}
         .w:nth-child(2){animation-delay:.04s}.w:nth-child(3){animation-delay:.08s}.w:nth-child(4){animation-delay:.12s}
-        .wh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0}
+        .wh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0 30px}
         .wt{font-size:11px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.07em;font-family:var(--font-display);display:flex;align-items:center;gap:6px}
         .wt .bar{width:3px;height:12px;border-radius:2px;background:#E03020}
         .wb{font-size:11px;color:#888;background:#F5F5F7;padding:2px 8px;border-radius:6px;font-family:var(--font-display)}

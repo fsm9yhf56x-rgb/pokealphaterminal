@@ -186,56 +186,70 @@ export function DailyHub() {
 
   const startDrag = (id: WidgetId, e: React.PointerEvent) => {
     e.preventDefault()
-    const col = WIDGET_META[id].col
-    dragRef.current = { id, startY: e.clientY, col }
+    e.stopPropagation()
+    const el = (e.target as HTMLElement).closest('[data-widget-id]') as HTMLElement
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const offsetY = e.clientY - rect.top
+    
+    el.setPointerCapture(e.pointerId)
+    dragRef.current = { id, startY: e.clientY, col: WIDGET_META[id].col }
     setDragState({ dragging: id, dropTarget: null, dropPosition: null })
+
+    let lastTarget: WidgetId|null = null
+    let lastPos: 'above'|'below'|null = null
 
     const onMove = (ev: PointerEvent) => {
       if (!dragRef.current) return
-      const elements = document.querySelectorAll('[data-widget-id]')
-      let closest: { id: WidgetId; pos: 'above'|'below' } | null = null
-      let minDist = Infinity
-      elements.forEach(el => {
-        const wid = el.getAttribute('data-widget-id') as WidgetId
-        if (wid === dragRef.current!.id) return
-        if (WIDGET_META[wid].col !== dragRef.current!.col) return
-        const rect = el.getBoundingClientRect()
-        const mid = rect.top + rect.height / 2
+      ev.preventDefault()
+      
+      const widgets = Array.from(document.querySelectorAll('[data-widget-id]'))
+      let best: { wid: WidgetId; pos: 'above'|'below' } | null = null
+      let bestDist = Infinity
+
+      for (const w of widgets) {
+        const wid = w.getAttribute('data-widget-id') as WidgetId
+        if (wid === id) continue
+        const r = w.getBoundingClientRect()
+        const mid = r.top + r.height / 2
         const dist = Math.abs(ev.clientY - mid)
-        if (dist < minDist) {
-          minDist = dist
-          closest = { id: wid, pos: ev.clientY < mid ? 'above' : 'below' }
+        if (dist < bestDist && dist < 200) {
+          bestDist = dist
+          best = { wid, pos: ev.clientY < mid ? 'above' : 'below' }
         }
-      })
-      if (closest) {
-        setDragState(prev => ({ ...prev, dropTarget: closest!.id, dropPosition: closest!.pos }))
+      }
+
+      if (best && (best.wid !== lastTarget || best.pos !== lastPos)) {
+        lastTarget = best.wid
+        lastPos = best.pos
+        setDragState({ dragging: id, dropTarget: best.wid, dropPosition: best.pos })
       }
     }
 
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      if (!dragRef.current) return
-      const { id: fromId } = dragRef.current
-
-      setDragState(prev => {
-        if (prev.dropTarget && prev.dropPosition) {
-          setWidgetOrder(order => {
-            const next = order.filter(i => i !== fromId)
-            const targetIdx = next.indexOf(prev.dropTarget!)
-            if (targetIdx === -1) return order
-            const insertIdx = prev.dropPosition === 'below' ? targetIdx + 1 : targetIdx
-            next.splice(insertIdx, 0, fromId)
-            return next
-          })
-        }
-        return { dragging: null, dropTarget: null, dropPosition: null }
-      })
+    const onUp = (ev: PointerEvent) => {
+      el.releasePointerCapture(ev.pointerId)
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      el.removeEventListener('pointercancel', onUp)
+      
+      if (lastTarget && lastPos) {
+        setWidgetOrder(order => {
+          const next = order.filter(i => i !== id)
+          let targetIdx = next.indexOf(lastTarget!)
+          if (targetIdx === -1) return order
+          if (lastPos === 'below') targetIdx++
+          next.splice(targetIdx, 0, id)
+          return next
+        })
+      }
+      
       dragRef.current = null
+      setDragState({ dragging: null, dropTarget: null, dropPosition: null })
     }
 
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+    el.addEventListener('pointercancel', onUp)
   }
 
   const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))
@@ -467,15 +481,16 @@ export function DailyHub() {
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
         .w{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
-        .w-dragging{z-index:100 !important;box-shadow:0 20px 60px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06) !important;transform:scale(1.02) !important;opacity:.92 !important;pointer-events:none}
-        .w-drop-above::before{content:'';position:absolute;top:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
-        .w-drop-below::after{content:'';position:absolute;bottom:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
+        .w-dragging{z-index:100 !important;box-shadow:0 20px 60px rgba(0,0,0,.15),0 8px 20px rgba(0,0,0,.08) !important;transform:scale(1.03) rotate(.5deg) !important;opacity:.85 !important;border-color:#E03020 !important}
+        .w-drop-above::before{content:'';position:absolute;top:-7px;left:0;right:0;height:4px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .15s ease-out;box-shadow:0 0 8px rgba(224,48,32,.3)}
+        .w-drop-below::after{content:'';position:absolute;bottom:-7px;left:0;right:0;height:4px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .15s ease-out;box-shadow:0 0 8px rgba(224,48,32,.3)}
         @keyframes dropLine{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}
         .w-hide{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;transition:all .15s;color:#CCC;font-size:11px}
         .w:hover .w-hide{opacity:.4}
         .w-hide:hover{opacity:1 !important;background:#FEF2F2;color:#E03020}
         .w-grip{position:absolute;top:14px;left:10px;width:16px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:grab;opacity:.2;transition:opacity .2s;z-index:5;border-radius:4px}
         .w-grip:active{cursor:grabbing}
+        .w-grip{touch-action:none}
         .w:hover .w-grip{opacity:.45}
         .w-grip:hover{opacity:.8 !important;background:rgba(0,0,0,.04);border-radius:4px}
         .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#999}

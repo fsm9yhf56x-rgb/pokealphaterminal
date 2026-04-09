@@ -186,70 +186,46 @@ export function DailyHub() {
 
   const startDrag = (id: WidgetId, e: React.PointerEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    const el = (e.target as HTMLElement).closest('[data-widget-id]') as HTMLElement
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const offsetY = e.clientY - rect.top
-    
-    el.setPointerCapture(e.pointerId)
     dragRef.current = { id, startY: e.clientY, col: WIDGET_META[id].col }
     setDragState({ dragging: id, dropTarget: null, dropPosition: null })
 
-    let lastTarget: WidgetId|null = null
-    let lastPos: 'above'|'below'|null = null
+    let target: WidgetId|null = null
+    let pos: 'above'|'below'|null = null
 
-    const onMove = (ev: PointerEvent) => {
-      if (!dragRef.current) return
-      ev.preventDefault()
-      
-      const widgets = Array.from(document.querySelectorAll('[data-widget-id]'))
-      let best: { wid: WidgetId; pos: 'above'|'below' } | null = null
-      let bestDist = Infinity
-
-      for (const w of widgets) {
+    const onMove = (ev: MouseEvent) => {
+      const widgets = document.querySelectorAll('[data-widget-id]')
+      let best: { wid: WidgetId; p: 'above'|'below' } | null = null
+      let bestDist = 9999
+      widgets.forEach(w => {
         const wid = w.getAttribute('data-widget-id') as WidgetId
-        if (wid === id) continue
+        if (wid === id) return
         const r = w.getBoundingClientRect()
         const mid = r.top + r.height / 2
         const dist = Math.abs(ev.clientY - mid)
-        if (dist < bestDist && dist < 200) {
-          bestDist = dist
-          best = { wid, pos: ev.clientY < mid ? 'above' : 'below' }
-        }
-      }
-
-      if (best && (best.wid !== lastTarget || best.pos !== lastPos)) {
-        lastTarget = best.wid
-        lastPos = best.pos
-        setDragState({ dragging: id, dropTarget: best.wid, dropPosition: best.pos })
-      }
+        if (dist < bestDist) { bestDist = dist; best = { wid, p: ev.clientY < mid ? 'above' : 'below' } }
+      })
+      if (best) { target = best.wid; pos = best.p; setDragState({ dragging: id, dropTarget: best.wid, dropPosition: best.p }) }
     }
 
-    const onUp = (ev: PointerEvent) => {
-      el.releasePointerCapture(ev.pointerId)
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerup', onUp)
-      el.removeEventListener('pointercancel', onUp)
-      
-      if (lastTarget && lastPos) {
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      if (target && pos) {
         setWidgetOrder(order => {
           const next = order.filter(i => i !== id)
-          let targetIdx = next.indexOf(lastTarget!)
-          if (targetIdx === -1) return order
-          if (lastPos === 'below') targetIdx++
-          next.splice(targetIdx, 0, id)
+          let idx = next.indexOf(target!)
+          if (idx === -1) return order
+          if (pos === 'below') idx++
+          next.splice(idx, 0, id)
           return next
         })
       }
-      
       dragRef.current = null
       setDragState({ dragging: null, dropTarget: null, dropPosition: null })
     }
 
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp)
-    el.addEventListener('pointercancel', onUp)
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }
 
   const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))

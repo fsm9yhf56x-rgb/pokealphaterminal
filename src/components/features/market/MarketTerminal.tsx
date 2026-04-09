@@ -59,14 +59,14 @@ const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':3
 const MOVERS = [
   { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'/img/cards/rayquaza-gold-star.webp', grade:'Raw' },
   { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'/img/cards/umbreon-vmax-alt.webp', grade:'Raw' },
-  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'/img/cards/charizard-ex-alt.webp', grade:'Raw' },
+  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'/img/cards/charizard-ex-alt.svg', grade:'Raw' },
   { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'/img/cards/gengar-vmax-alt.webp' },
   { name:'Lugia Neo Genesis',    set:'Neo Genesis',    price:580, change:15.2, vol:31,  img:'/img/cards/lugia-neo.webp' },
-  { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'/img/cards/mew-ex-alt.webp' },
+  { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'/img/cards/mew-ex-alt.svg' },
   { name:'Blastoise Base Set',   set:'Base Set',       price:620, change:-4.2, vol:24,  img:'/img/cards/blastoise-base.webp' },
   { name:'Pikachu VMAX RR',      set:'Vivid Voltage',  price:110, change:-3.8, vol:89,  img:'/img/cards/pikachu-vmax-rr.webp' },
   { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'/img/cards/mewtwo-gx-rainbow.webp', grade:'Raw' },
-  { name:'Charizard ex Alt PSA 10', set:'Obsidian Flames',price:1680,change:18.2,vol:31, img:'/img/cards/charizard-ex-alt.webp', grade:'PSA 10' },
+  { name:'Charizard ex Alt PSA 10', set:'Obsidian Flames',price:1680,change:18.2,vol:31, img:'/img/cards/charizard-ex-alt.svg', grade:'PSA 10' },
   { name:'Umbreon VMAX Alt PSA 10', set:'Evolving Skies', price:1600,change:22.4,vol:18, img:'/img/cards/umbreon-vmax-alt.webp', grade:'PSA 10' },
   { name:'Gengar VMAX Alt BGS 9.5', set:'Fusion Strike',  price:480, change:14.2,vol:12, img:'/img/cards/gengar-vmax-alt.webp', grade:'BGS 9.5' },
 ]

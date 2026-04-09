@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 
 const DEALS = [
   { name:'Blissey V Alt Art',    set:'Chilling Reign', fair:180,listed:128,gap:28,conf:81,source:'eBay',lang:'EN',signal:'S' as const,psa:null,  vol:34,trend:12.4,why:'PSA Pop tr\u00e8s faible, Alt Art populaire, momentum acheteur',img:'/img/cards/blissey-v-alt.webp' },
-  { name:'Espeon VMAX Alt Art',  set:'Evolving Skies', fair:420,listed:318,gap:24,conf:74,source:'CM',  lang:'JP',signal:'A' as const,psa:1240, vol:56,trend:8.5, why:'Version JP toujours sous-cot\u00e9e vs EN, set Eevee en hausse',img:'/img/cards/espeon-vmax-alt.webp' },
+  { name:'Espeon VMAX Alt Art',  set:'Evolving Skies', fair:420,listed:318,gap:24,conf:74,source:'CM',  lang:'JP',signal:'A' as const,psa:1240, vol:56,trend:8.5, why:'Version JP toujours sous-cot\u00e9e vs EN, set Eevee en hausse',img:'/img/cards/espeon-vmax-alt.svg' },
   { name:'Glaceon VMAX Alt Art', set:'Evolving Skies', fair:260,listed:198,gap:24,conf:69,source:'eBay',lang:'EN',signal:'A' as const,psa:null,  vol:41,trend:6.2, why:'Momentum Eevee set, Glaceon en retard vs Umbreon',img:'/img/cards/glaceon-vmax-alt.webp' },
   { name:'Leafeon VMAX Alt Art', set:'Evolving Skies', fair:310,listed:241,gap:22,conf:72,source:'CM',  lang:'EN',signal:'B' as const,psa:null,  vol:38,trend:7.1, why:'Set complet Eevee, toutes les \u00e9volutions montent',img:'/img/cards/leafeon-vmax-alt.webp' },
   { name:'Ditto V Alt Art',      set:'Fusion Strike',  fair:95, listed:74, gap:22,conf:61,source:'eBay',lang:'JP',signal:'B' as const,psa:null,  vol:18,trend:4.3, why:'Alt Art rare, sous-\u00e9valu\u00e9 vs Gengar du m\u00eame set',img:'/img/cards/ditto-v-alt.webp' },

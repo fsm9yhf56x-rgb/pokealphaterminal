@@ -14,16 +14,16 @@ const P_DAYS:Record<Period,number>={'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':
 
 interface Card{name:string;set:string;img:string;price:number;change:number;vol:number;rarity:string;type:string;gen:number;psa10:number;psa9:number;number:string;grade?:string}
 const CARDS:Card[]=[
-  {name:'Charizard ex Alt Art',set:'Obsidian Flames',price:920,change:21.3,vol:203,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.webp',grade:'Raw'},
+  {name:'Charizard ex Alt Art',set:'Obsidian Flames',price:920,change:21.3,vol:203,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'Raw'},
   {name:'Umbreon VMAX Alt Art',set:'Evolving Skies',price:880,change:24.1,vol:112,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'Raw'},
   {name:'Rayquaza Gold Star',set:'EX Deoxys',price:740,change:31.2,vol:48,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp',grade:'Raw'},
   {name:'Gengar VMAX Alt Art',set:'Fusion Strike',price:340,change:18.4,vol:67,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'Raw'},
   {name:'Lugia Neo Genesis',set:'Neo Genesis',price:580,change:15.2,vol:31,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'/img/cards/lugia-neo.webp',grade:'Raw'},
-  {name:'Mew ex Alt Art',set:'Pokemon 151',price:142,change:12.8,vol:95,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.webp',grade:'Raw'},
+  {name:'Mew ex Alt Art',set:'Pokemon 151',price:142,change:12.8,vol:95,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.svg',grade:'Raw'},
   {name:'Blastoise Base Set',set:'Base Set',price:620,change:-4.2,vol:24,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp',grade:'Raw'},
   {name:'Pikachu VMAX RR',set:'Vivid Voltage',price:110,change:-3.8,vol:89,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp',grade:'Raw'},
   {name:'Mewtwo GX Rainbow',set:'Unified Minds',price:95,change:-2.9,vol:44,rarity:'HR',type:'psychic',gen:1,psa10:190,psa9:120,number:'222/236',img:'/img/cards/mewtwo-gx-rainbow.webp',grade:'Raw'},
-  {name:'Espeon VMAX Alt Art',set:'Evolving Skies',price:420,change:8.5,vol:56,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'/img/cards/espeon-vmax-alt.webp'},
+  {name:'Espeon VMAX Alt Art',set:'Evolving Skies',price:420,change:8.5,vol:56,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'/img/cards/espeon-vmax-alt.svg'},
   {name:'Dragonite V Alt Art',set:'Pokemon GO',price:290,change:14.8,vol:33,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'/img/cards/dragonite-v-alt.webp',grade:'Raw'},
   {name:'Charizard Base Set',set:'Base Set',price:3400,change:5.8,vol:12,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'Raw'},
   {name:'Glaceon VMAX Alt Art',set:'Evolving Skies',price:260,change:6.2,vol:41,rarity:'SAR',type:'water',gen:4,psa10:490,psa9:330,number:'209/203',img:'/img/cards/glaceon-vmax-alt.webp',grade:'Raw'},

@@ -15,7 +15,7 @@ interface Card{name:string;set:string;img:string;price:number;change:number;vol:
 const CARDS:Card[]=[
   {name:'Charizard ex Alt Art',set:'Obsidian Flames',price:920,change:21.3,vol:203,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'https://assets.tcgdex.net/en/sv/sv3/234/high.webp'},
   {name:'Umbreon VMAX Alt Art',set:'Evolving Skies',price:880,change:24.1,vol:112,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'https://assets.tcgdex.net/en/swsh/swsh7/215/high.webp'},
-  {name:'Rayquaza Gold Star',set:'EX Deoxys',price:740,change:31.2,vol:48,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'https://assets.tcgdex.net/en/ex/ex7/107/high.webp'},
+  {name:'Rayquaza Gold Star',set:'EX Deoxys',price:740,change:31.2,vol:48,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'https://assets.tcgdex.net/en/ex/ex6/102/high.webp'},
   {name:'Gengar VMAX Alt Art',set:'Fusion Strike',price:340,change:18.4,vol:67,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'https://assets.tcgdex.net/en/swsh/swsh8/271/high.webp'},
   {name:'Lugia Neo Genesis',set:'Neo Genesis',price:580,change:15.2,vol:31,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'https://assets.tcgdex.net/en/neo/neo1/9/high.webp'},
   {name:'Mew ex Alt Art',set:'Pokemon 151',price:142,change:12.8,vol:95,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'https://assets.tcgdex.net/en/sv/sv3pt5/205/high.webp'},
@@ -23,11 +23,11 @@ const CARDS:Card[]=[
   {name:'Pikachu VMAX RR',set:'Vivid Voltage',price:110,change:-3.8,vol:89,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'https://assets.tcgdex.net/en/swsh/swsh4/188/high.webp'},
   {name:'Mewtwo GX Rainbow',set:'Unified Minds',price:95,change:-2.9,vol:44,rarity:'HR',type:'psychic',gen:1,psa10:190,psa9:120,number:'222/236',img:'https://assets.tcgdex.net/en/sm/sm11/222/high.webp'},
   {name:'Espeon VMAX Alt Art',set:'Evolving Skies',price:420,change:8.5,vol:56,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'https://assets.tcgdex.net/en/swsh/swsh7/270/high.webp'},
-  {name:'Dragonite V Alt Art',set:'Pokemon GO',price:290,change:14.8,vol:33,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'https://assets.tcgdex.net/en/swsh/swshp/SWSH154/high.webp'},
+  {name:'Dragonite V Alt Art',set:'Pokemon GO',price:290,change:14.8,vol:33,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'https://assets.tcgdex.net/en/swsh/swsh10/049/high.webp'},
   {name:'Charizard Base Set',set:'Base Set',price:3400,change:5.8,vol:12,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'https://assets.tcgdex.net/en/base/base1/4/high.webp'},
   {name:'Glaceon VMAX Alt Art',set:'Evolving Skies',price:260,change:6.2,vol:41,rarity:'SAR',type:'water',gen:4,psa10:490,psa9:330,number:'209/203',img:'https://assets.tcgdex.net/en/swsh/swsh7/209/high.webp'},
   {name:'Leafeon VMAX Alt Art',set:'Evolving Skies',price:310,change:7.1,vol:38,rarity:'SAR',type:'grass',gen:4,psa10:580,psa9:390,number:'205/203',img:'https://assets.tcgdex.net/en/swsh/swsh7/205/high.webp'},
-  {name:'Pikachu Illustrator',set:'Promo',price:42000,change:2.1,vol:1,rarity:'Promo',type:'electric',gen:1,psa10:420000,psa9:120000,number:'---',img:'https://assets.tcgdex.net/en/base/basep/1/high.webp'},
+  {name:'Pikachu Illustrator',set:'Promo',price:42000,change:2.1,vol:1,rarity:'Promo',type:'electric',gen:1,psa10:420000,psa9:120000,number:'---',img:'https://assets.tcgdex.net/en/base/base1/58/high.webp'},
   {name:'Moonbreon (Umbreon V Alt)',set:'Evolving Skies',price:340,change:19.5,vol:78,rarity:'SAR',type:'dark',gen:2,psa10:650,psa9:430,number:'188/203',img:'https://assets.tcgdex.net/en/swsh/swsh7/188/high.webp'},
 ]
 const SETS=[...new Set(CARDS.map(c=>c.set))].sort()
@@ -389,7 +389,7 @@ export function CardExplorer(){
             const sp=(HISTORIES[c.name]||[]).slice(-20)
             return(
               <div key={c.name} id={'c-'+c.name} className={'ex-r'+(on?' on':'')} onClick={()=>{setSel(c.name);setPeriod('1M')}}>
-                <img src={c.img} alt="" style={{width:34,height:47,objectFit:'cover',borderRadius:5,border:on?'1.5px solid #E03020':'1px solid #F0F0F0',flexShrink:0,transition:'border .12s'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                <img src={c.img} alt="" style={{width:34,height:47,objectFit:'cover',borderRadius:5,border:on?'1.5px solid #E03020':'1px solid #F0F0F0',flexShrink:0,transition:'border .12s'}} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F0F0F2';t.style.objectFit='contain';t.style.padding='4px'}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:12,fontWeight:on?600:400,color:on?'#111':'#555',fontFamily:'var(--font-display)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
                   <div style={{fontSize:10,color:'#BBB',marginTop:1,display:'flex',alignItems:'center',gap:4}}>
@@ -433,12 +433,8 @@ export function CardExplorer(){
         <div style={{padding:'20px 24px'}}>
           {/* Hero — card + info + chart inline */}
           <div style={{display:'flex',gap:20,marginBottom:16}}>
-            <div style={{flexShrink:0,position:'relative'}}>
-              <img src={card.img} alt="" style={{width:160,height:223,objectFit:'cover',borderRadius:12,border:'1px solid #EBEBEB',boxShadow:'0 6px 24px rgba(0,0,0,.1)'}}/>
-              <div style={{position:'absolute',bottom:8,left:8,right:8,background:'rgba(0,0,0,.65)',backdropFilter:'blur(8px)',borderRadius:8,padding:'6px 10px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:10,color:'rgba(255,255,255,.7)',fontFamily:'var(--font-display)'}}>{card.rarity}</span>
-                <span style={{fontSize:10,color:'rgba(255,255,255,.5)',fontFamily:'var(--font-data)'}}>{card.number}</span>
-              </div>
+            <div style={{flexShrink:0}}>
+              <img src={card.img} alt="" style={{width:160,height:223,objectFit:'cover',borderRadius:12,border:'1px solid #EBEBEB',boxShadow:'0 6px 24px rgba(0,0,0,.1)'}} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.border='1px dashed #DDD'}}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>

@@ -45,7 +45,7 @@ type Period = '1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
 const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}
 
 const MOVERS = [
-  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://assets.tcgdex.net/en/ex/ex7/107/high.webp' },
+  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://assets.tcgdex.net/en/ex/ex6/102/high.webp' },
   { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'https://assets.tcgdex.net/en/swsh/swsh7/215/high.webp' },
   { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'https://assets.tcgdex.net/en/sv/sv3/234/high.webp' },
   { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'https://assets.tcgdex.net/en/swsh/swsh8/271/high.webp' },

@@ -534,16 +534,32 @@ export function DailyHub() {
         </div>
 
         {/* ═══ CUSTOMIZE ═══ */}
-        {hiddenWidgets.length > 0 && (
-          <div className="edit-mode-bar">
-            <span style={{ fontSize:12, color:'#791F1F', fontFamily:'var(--font-display)' }}>Widgets masqués :</span>
-            {hiddenWidgets.map(id => (
-              <button key={id} className="edit-chip" onClick={()=>toggleWidget(id)}>
-                {WIDGET_META[id].icon} {WIDGET_META[id].label}
-                <span style={{ color:'#1D9E75', fontWeight:600, fontSize:12 }}>+</span>
-              </button>
-            ))}
-            <button onClick={resetLayout} style={{ marginLeft:'auto', padding:'4px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Tout réinitialiser</button>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:12 }}>
+          <button onClick={()=>setEditMode(m=>!m)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:9, border:editMode?'1.5px solid #E03020':'1px solid #EBEBEB', background:editMode?'#FEF2F2':'#fff', color:editMode?'#E03020':'#888', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s' }}>
+            {editMode ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-9.2-6.4 3.5-2m11.4-6.6 3.5-2M1 12h4m14 0h4M4.2 4.2l2.8 2.8m10 10 2.8 2.8M4.2 19.8l2.8-2.8m10-10 2.8-2.8"/></svg>
+            )}
+            {editMode ? 'Terminé' : 'Personnaliser'}
+          </button>
+        </div>
+        {(editMode || hiddenWidgets.length > 0) && (
+          <div className="edit-mode-bar" style={{ marginBottom:14 }}>
+            {editMode && <span style={{ fontSize:12, color:'#791F1F', fontFamily:'var(--font-display)' }}>Déplace les widgets pour réorganiser</span>}
+            {hiddenWidgets.length > 0 && (
+              <>
+                <span style={{ fontSize:11, color:'#888', fontFamily:'var(--font-display)' }}>Masqués :</span>
+                {hiddenWidgets.map(id => (
+                  <button key={id} className="edit-chip" onClick={()=>toggleWidget(id)}>
+                    {WIDGET_META[id].icon} {WIDGET_META[id].label}
+                    <span style={{ color:'#1D9E75', fontWeight:600, fontSize:12 }}>+</span>
+                  </button>
+                ))}
+              </>
+            )}
+            {editMode && <button onClick={resetLayout} style={{ marginLeft:'auto', padding:'4px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>}
           </div>
         )}
 

@@ -382,7 +382,19 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         .tab-btn:hover{background:#F0F0F0}
         .tab-btn.on{background:#111;color:#fff}
         .stat-box{flex:1;background:#fff;border:1px solid #EBEBEB;border-radius:10px;padding:12px 14px;transition:all .15s}
-        .stat-box:hover{border-color:#C7C7CC}
+        .stat-box:hover{border-color:#C7C7CC;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.03)}
+        .idx-card{transition:all .2s cubic-bezier(.2,.8,.2,1) !important}
+        .idx-card:hover{transform:translateY(-2px) !important;box-shadow:0 6px 20px rgba(0,0,0,.06) !important}
+        .idx-card.on{transform:translateY(-2px) !important;box-shadow:0 0 0 1.5px var(--ac),0 6px 20px rgba(0,0,0,.06) !important}
+        .mv-row{transition:all .12s !important}
+        .mv-row:hover{background:#FAFAFA !important;transform:translateX(2px)}
+        .tx-row{transition:all .12s !important}
+        .tx-row:hover{background:#FAFAFA !important}
+        @keyframes txSlide{from{opacity:0;transform:translateX(-8px);background:#F0FFF6}to{opacity:1;transform:translateX(0);background:transparent}}
+        @keyframes countUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        .tx-new{animation:txSlide .4s ease-out !important}
+        .sentiment-bar{height:6px;border-radius:99px;overflow:hidden;display:flex}
+        .sentiment-bar div{height:100%;transition:width .5s ease}
         .recent-tab{padding:5px 10px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;font-size:10px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s;display:flex;align-items:center;gap:4px;white-space:nowrap;color:#888}
         .recent-tab:hover{border-color:#C7C7CC;color:#111}
         .recent-tab.on{background:#111;color:#fff;border-color:#111}
@@ -474,7 +486,53 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         </div>
 
         {/* ── INDICES ── */}
-        <Sec>Indices Pok{'\u00e9'}Alpha</Sec>
+        
+        {/* ═══ MARKET PULSE ═══ */}
+        <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+          <div style={{ flex:1, background:'#fff', border:'1px solid #EBEBEB', borderRadius:12, padding:'14px 16px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)' }}>Sentiment march{'é'}</span>
+              <span style={{ fontSize:11, fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)' }}>Hausse</span>
+            </div>
+            <div className="sentiment-bar" style={{ marginBottom:6 }}>
+              <div style={{ width:'68%', background:'linear-gradient(90deg,#2E9E6A,#4ADE80)', borderRadius:'99px 0 0 99px' }} />
+              <div style={{ width:'32%', background:'linear-gradient(90deg,#F87171,#E03020)', borderRadius:'0 99px 99px 0' }} />
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#AAA', fontFamily:'var(--font-data)' }}>
+              <span>68% acheteurs</span>
+              <span>32% vendeurs</span>
+            </div>
+          </div>
+          <div style={{ flex:1, background:'#fff', border:'1px solid #EBEBEB', borderRadius:12, padding:'14px 16px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+              <span style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)' }}>Fear & Greed Index</span>
+              <span style={{ fontSize:20, fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)' }}>72</span>
+            </div>
+            <div style={{ height:6, background:'#F0F0F0', borderRadius:99, overflow:'hidden', marginBottom:6 }}>
+              <div style={{ height:'100%', width:'72%', background:'linear-gradient(90deg,#E03020 0%,#EF9F27 30%,#2E9E6A 70%,#2E9E6A 100%)', borderRadius:99, transition:'width .5s ease' }} />
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:9, color:'#BBB', fontFamily:'var(--font-display)' }}>
+              <span>Peur extr{'ê'}me</span>
+              <span>Neutre</span>
+              <span>Avidit{'é'}</span>
+            </div>
+          </div>
+          <div style={{ flex:1, background:'#fff', border:'1px solid #EBEBEB', borderRadius:12, padding:'14px 16px' }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', marginBottom:8 }}>Activit{'é'} 24h</div>
+            <div style={{ display:'flex', gap:4, alignItems:'flex-end', height:40 }}>
+              {[32,45,28,52,68,41,55,72,38,61,78,65,43,58,82,71,48,63,54,89,67,74,56,81].map((v,i) => (
+                <div key={i} style={{ flex:1, height:v+'%', background:i===23?'#E03020':i>20?'#2E9E6A':'#E5E5EA', borderRadius:1.5, transition:'height .3s ease' }} />
+              ))}
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:9, color:'#BBB', fontFamily:'var(--font-data)', marginTop:4 }}>
+              <span>00h</span>
+              <span>12h</span>
+              <span>Maintenant</span>
+            </div>
+          </div>
+        </div>
+
+<Sec>Indices Pok{'\u00e9'}Alpha</Sec>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:20 }}>
           {INDICES.map(i => {
             const h = SEED_HISTORIES[i.id]
@@ -487,7 +545,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
               <div key={i.id} className={`idx-card${on?' on':''}`} style={{ '--ac': i.color } as React.CSSProperties} onClick={() => setSelIdx(i.id)}>
                 <div className="idx-bar" style={{ background:i.color }} />
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                  <span style={{ fontSize:10, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>{i.ticker}</span>
+                  <span style={{ fontSize:10, fontWeight:600, color:on?i.color:'#888', fontFamily:'var(--font-display)', letterSpacing:'.04em', transition:'color .15s' }}>{i.ticker}</span>
                   <Spark data={spark} color={pct >= 0 ? '#2E9E6A' : '#E03020'} w={48} h={16} />
                 </div>
                 <div style={{ fontSize:20, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1px', marginBottom:2 }}>{cur.toLocaleString('fr-FR')}</div>
@@ -559,7 +617,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
               {(moverTab === 'up' ? moversUp : moversDown).map(m => (
                 <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)}>
-                  <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                  <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0, transition:'transform .15s' }} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.padding='4px'}} onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')} onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
                     <div style={{ fontSize:10, color:'#BBB', marginTop:1 }}>{m.set} {'\u00b7'} {m.vol} tx</div>

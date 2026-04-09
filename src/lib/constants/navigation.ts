@@ -31,6 +31,7 @@ export const NAV: NavItem[] = [
     children: [
       { label:'Cartes', href:'/cartes'        },
       { label:'Scellés',      href:'/cartes/scelles'},
+      { label:'Jeux Vidéo',    href:'/cartes/jeux'},
     ],
   },
   {

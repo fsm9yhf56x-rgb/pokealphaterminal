@@ -91,6 +91,19 @@ function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
   )
 }
 
+function getBaseName(name: string): string {
+  return name.replace(/ (PSA|CGC|BGS|PCA) [0-9.]+$/,'')
+}
+function getSiblings(cards: Card[], name: string): Card[] {
+  const base = getBaseName(name)
+  return cards.filter(c => getBaseName(c.name) === base).sort((a,b) => {
+    // Raw first, then by grade desc
+    if (!a.grade || a.grade === 'Raw') return -1
+    if (!b.grade || b.grade === 'Raw') return 1
+    return b.price - a.price
+  })
+}
+
 const VINTAGE_SETS=['Base Set','EX Deoxys','Neo Genesis','Promo']
 const TC:Record<string,string>={fire:'#FF6B35',water:'#42A5F5',psychic:'#C855D4',dark:'#7E57C2',electric:'#D4A800',grass:'#3DA85A',dragon:'#6F5CE6'}
 
@@ -365,13 +378,17 @@ export function CardExplorer(){
   const listRef=useRef<HTMLDivElement>(null)
 
   const card=CARDS.find(c=>c.name===sel)!
-  const data=useMemo(()=>getSlice(sel,period),[sel,period])
+  const siblings=useMemo(()=>getSiblings(CARDS,sel),[sel])
+  const [selGrade,setSelGrade]=useState<string>(card?.grade||'Raw')
+  const activeCard=siblings.find(s=>s.grade===selGrade)||card
+  const data=useMemo(()=>getSlice(activeCard.name,period),[activeCard.name,period])
   const volume=useMemo(()=>getVolume(data),[data])
+  // Use activeCard for price display
   const ma7=useMemo(()=>calcMA(data,7),[data])
   const ma30=useMemo(()=>calcMA(data,30),[data])
   const [showMA,setShowMA]=useState(true)
   const [showVol,setShowVol]=useState(true)
-  const cur=data[data.length-1]||card.price,start=data[0]||card.price
+  const cur=data[data.length-1]||activeCard.price,start=data[0]||activeCard.price
   const pct=((cur-start)/start*100),isUp=pct>=0
   const spark30=useMemo(()=>(HISTORIES[sel]||[]).slice(-30),[sel])
 
@@ -408,6 +425,7 @@ export function CardExplorer(){
   const ci=filtered.findIndex(c=>c.name===sel)
   const nav=(d:-1|1)=>{const n=ci+d;if(n>=0&&n<filtered.length){setSel(filtered[n].name);setPeriod('1M')}}
   useEffect(()=>{const h=(e:KeyboardEvent)=>{if(e.key==='ArrowUp'){e.preventDefault();nav(-1)}if(e.key==='ArrowDown'){e.preventDefault();nav(1)}};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[ci,filtered])
+  useEffect(()=>{setSelGrade(card?.grade||'Raw')},[sel])
   useEffect(()=>{const el=document.getElementById('c-'+sel);if(el&&listRef.current)el.scrollIntoView({block:'nearest',behavior:'smooth'})},[sel])
 
   return(
@@ -579,7 +597,32 @@ export function CardExplorer(){
                 <span style={{fontSize:11,color:'#DDD'}}>{'\u00b7'}</span>
                 <span style={{fontSize:11,color:'#AAA',fontFamily:'var(--font-display)'}}>{card.set}</span>
               </div>
-              <h2 style={{fontSize:24,fontWeight:600,fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:'0 0 12px',lineHeight:1.2}}>{card.name}</h2>
+              <h2 style={{fontSize:24,fontWeight:600,fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:'0 0 8px',lineHeight:1.2}}>{getBaseName(card.name)}</h2>
+              {/* Grade segment control */}
+              {siblings.length>1&&(
+                <div style={{display:'flex',gap:0,background:'#F5F5F7',borderRadius:8,padding:3,marginBottom:12,width:'fit-content'}}>
+                  {siblings.map(sib=>{
+                    const g=sib.grade||'Raw'
+                    const isOn=selGrade===g
+                    const gs=GRADE_STYLES[g]
+                    return(
+                      <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
+                        padding:'5px 12px',borderRadius:6,border:'none',
+                        background:isOn?(g==='Raw'?'#fff':gs?.bg||'#fff'):'transparent',
+                        color:isOn?(g==='Raw'?'#111':gs?.color||'#111'):'#AAA',
+                        fontSize:11,fontWeight:isOn?700:500,cursor:'pointer',
+                        fontFamily:'var(--font-data)',transition:'all .12s',
+                        boxShadow:isOn?'0 1px 4px rgba(0,0,0,.08)':'none',
+                        borderWidth:isOn&&g!=='Raw'?1:0,borderStyle:'solid',
+                        borderColor:isOn?gs?.border||'transparent':'transparent',
+                      }}>
+                        {g}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {siblings.length<=1&&<div style={{marginBottom:4}}/>}
               <div style={{fontSize:38,fontWeight:700,fontFamily:'var(--font-data)',letterSpacing:'-2px',lineHeight:1}}>{cur.toLocaleString('fr-FR')} {'\u20ac'}</div>
               <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6}}>
                 <span style={{fontSize:14,fontWeight:600,color:isUp?'#2E9E6A':'#E03020',fontFamily:'var(--font-data)',background:isUp?'rgba(46,158,106,.06)':'rgba(224,48,32,.06)',padding:'2px 10px',borderRadius:6}}>

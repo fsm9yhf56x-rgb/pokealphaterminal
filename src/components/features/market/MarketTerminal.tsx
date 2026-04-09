@@ -13,11 +13,11 @@ function genHistory(base: number, volatility: number, trend: number, days: numbe
 }
 
 const SEED_HISTORIES: Record<string, number[]> = {
-  global:  genHistory(2841, 0.012, 0.15, 365),
-  sealed:  genHistory(4120, 0.008, -0.04, 365),
-  vintage: genHistory(8740, 0.015, 0.22, 365),
-  modern:  genHistory(3200, 0.018, 0.08, 365),
-  jp:      genHistory(5600, 0.020, 0.30, 365),
+  global:  genHistory(2841, 0.012, 0.15, 3650),
+  sealed:  genHistory(4120, 0.008, 0.02, 3650),
+  vintage: genHistory(8740, 0.015, 0.22, 3650),
+  modern:  genHistory(3200, 0.018, 0.08, 3650),
+  jp:      genHistory(5600, 0.020, 0.30, 3650),
 }
 
 type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'
@@ -29,8 +29,8 @@ const INDICES: {id:IndexId;label:string;ticker:string;color:string;desc:string}[
   { id:'jp',      label:'PKA Japanese', ticker:'JP',   color:'#C855D4', desc:'March\u00e9 japonais' },
 ]
 
-type Period = '1J'|'1S'|'1M'|'3M'|'1A'
-const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365}
+type Period = '1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
+const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}
 
 const MOVERS = [
   { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://assets.tcgdex.net/en/ex/ex7/107/high.webp' },
@@ -64,12 +64,16 @@ type CardDetail = {
 }
 
 function genCardHistory(price:number): Record<Period, number[]> {
+  const full = genHistory(price, .018, .15, 3650)
   return {
     '1J': Array.from({length:48},(_,i)=>Math.round(price*(1+(Math.random()-.48)*.008*(48-i)))),
-    '1S': genHistory(price,.01,.02,7),
-    '1M': genHistory(price,.012,.05,30),
-    '3M': genHistory(price,.015,.1,90),
-    '1A': genHistory(price,.018,.2,365),
+    '1S': full.slice(-7),
+    '1M': full.slice(-30),
+    '3M': full.slice(-90),
+    '1A': full.slice(-365),
+    '3A': full.slice(-1095),
+    '5A': full.slice(-1825),
+    'MAX': full,
   }
 }
 
@@ -123,6 +127,8 @@ function Chart({ data, color, period }: { data:number[]; color:string; period:Pe
     const daysBack = data.length - 1 - idx
     d.setDate(d.getDate() - daysBack)
     if (period === '1J') return d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+    if (period === '3A' || period === '5A' || period === 'MAX') return d.toLocaleDateString('fr-FR', { month:'short', year:'numeric' })
+    if (period === '1A') return d.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' })
     return d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' })
   }
 
@@ -388,7 +394,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
               </div>
             </div>
             <div style={{ display:'flex', gap:4 }}>
-              {(['1J','1S','1M','3M','1A'] as Period[]).map(p => (
+              {(['1J','1S','1M','3M','1A','3A','5A','MAX'] as Period[]).map(p => (
                 <button key={p} className={`per-btn${period===p?' on':''}`} onClick={() => setPeriod(p)}>{p}</button>
               ))}
             </div>
@@ -486,7 +492,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                       <span style={{ color:'#AAA', fontWeight:400, fontSize:11, marginLeft:6 }}>{cUp?'+':''}{(cCur-cStart).toLocaleString('fr-FR')} {'\u20ac'}</span>
                     </div>
                     <div style={{ display:'flex', gap:4, marginTop:10 }}>
-                      {(['1J','1S','1M','3M','1A'] as Period[]).map(p => (
+                      {(['1J','1S','1M','3M','1A','3A','5A','MAX'] as Period[]).map(p => (
                         <button key={p} className={`per-btn${cardPeriod===p?' on':''}`} onClick={()=>setCardPeriod(p)} style={{ padding:'3px 10px', fontSize:10 }}>{p}</button>
                       ))}
                     </div>

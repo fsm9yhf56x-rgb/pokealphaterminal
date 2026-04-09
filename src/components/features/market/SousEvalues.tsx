@@ -105,7 +105,7 @@ export function SousEvalues({ isPro = false }: { isPro?: boolean }){
           onClick={()=>setExpanded(expanded===best.name?null:best.name)}
           onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-1px)')} onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
           <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#FFD700,#FF8C00,#E03020)'}}/>
-          <img src={best.img} alt="" style={{width:72,height:100,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.1)',flexShrink:0}} onError={e=>{(e.target as HTMLImageElement).style.opacity='.3'}}/>
+          <img src={best.img} alt="" style={{width:72,height:100,objectFit:'cover',borderRadius:8,border:'2px solid rgba(255,255,255,.1)',flexShrink:0}} onError={e=>{(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}}/>
           <div style={{flex:1}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
               <span style={{fontSize:10,fontWeight:700,color:'#FFD700',background:'rgba(255,215,0,.12)',padding:'3px 8px',borderRadius:4,fontFamily:'var(--font-display)',letterSpacing:'.04em'}}>MEILLEUR DEAL</span>
@@ -182,7 +182,7 @@ export function SousEvalues({ isPro = false }: { isPro?: boolean }){
                 {/* Header */}
                 <div style={{display:'flex',alignItems:'flex-start',gap:12,marginBottom:12}}>
                   <img src={d.img} alt="" style={{width:52,height:72,objectFit:'cover',borderRadius:6,border:'1px solid #F0F0F0',flexShrink:0}}
-                    onError={e=>{(e.target as HTMLImageElement).style.background='#F5F5F7'}}/>
+                    onError={e=>{(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
                       <span style={{fontSize:9,fontWeight:700,color:sig.color,background:sig.bg,border:'1px solid '+sig.border,padding:'2px 7px',borderRadius:4,fontFamily:'var(--font-display)'}}>{d.signal}</span>

@@ -525,7 +525,7 @@ export function CardExplorer(){
             const sp=(HISTORIES[c.name]||[]).slice(-20)
             return(
               <div key={c.name} id={'c-'+c.name} className={'ex-r'+(on?' on':'')} onClick={()=>{setSel(c.name);setPeriod('1M')}}>
-                <img src={c.img} alt="" style={{width:34,height:47,objectFit:'cover',borderRadius:5,border:on?'1.5px solid #E03020':'1px solid #F0F0F0',flexShrink:0,transition:'border .12s'}} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F0F0F2';t.style.objectFit='contain';t.style.padding='4px'}}/>
+                <img src={c.img} alt="" style={{width:34,height:47,objectFit:'cover',borderRadius:5,border:on?'1.5px solid #E03020':'1px solid #F0F0F0',flexShrink:0,transition:'border .12s'}} onError={e=>{(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:12,fontWeight:on?600:400,color:on?'#111':'#555',fontFamily:'var(--font-display)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
                   <div style={{fontSize:10,color:'#BBB',marginTop:1,display:'flex',alignItems:'center',gap:4}}>

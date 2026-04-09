@@ -21,6 +21,9 @@ const SEED_HISTORIES: Record<string, number[]> = {
   graded:  genHistory(6380, 0.014, 0.18, 3650),
   altart:  genHistory(4850, 0.022, 0.35, 3650),
   chase:   genHistory(3900, 0.019, 0.25, 3650),
+  us:      genHistory(3100, 0.013, 0.12, 3650),
+  fr:      genHistory(2200, 0.016, 0.20, 3650),
+  trophy:  genHistory(18500, 0.010, 0.28, 3650),
 }
 
 type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'

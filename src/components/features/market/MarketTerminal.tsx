@@ -18,6 +18,9 @@ const SEED_HISTORIES: Record<string, number[]> = {
   vintage: genHistory(8740, 0.015, 0.22, 3650),
   modern:  genHistory(3200, 0.018, 0.08, 3650),
   jp:      genHistory(5600, 0.020, 0.30, 3650),
+  graded:  genHistory(6380, 0.014, 0.18, 3650),
+  altart:  genHistory(4850, 0.022, 0.35, 3650),
+  chase:   genHistory(3900, 0.019, 0.25, 3650),
 }
 
 type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'
@@ -389,7 +392,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
 
         {/* ── INDICES ── */}
         <Sec>Indices Pok{'\u00e9'}Alpha</Sec>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:20 }}>
           {INDICES.map(i => {
             const h = SEED_HISTORIES[i.id]
             const cur = h[h.length - 1]

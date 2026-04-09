@@ -40,8 +40,6 @@ export const NAV: NavItem[] = [
     children: [
       { label:'Terminal',       href:'/market'              },
       { label:'Explorer',       href:'/market/explorer'     },
-      { label:'Tendances',      href:'/market/tendances'    },
-      { label:'Movers',         href:'/market/movers'       },
       { label:'Sous-évalués',   href:'/market/sous-evalues', pro: true },
     ],
   },

@@ -65,161 +65,218 @@ function Spark({data,w=56,h=20}:{data:number[];w?:number;h?:number}){
   return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{display:'block'}}><polyline points={pts} fill="none" stroke={up?'#2E9E6A':'#E03020'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
 
-function Chart({data,color,period,volume,ma7,ma30}:{data:number[];color:string;period:Period;volume?:number[];ma7?:(number|null)[];ma30?:(number|null)[]}){
-  const ref=useRef<SVGSVGElement>(null)
-  const [hover,setHover]=useState<{x:number;y:number;val:number;idx:number;pct:number}|null>(null)
-  const W=640,H=270,ML=54,MR=12,MT=16,MB=34
-  const cw=W-ML-MR,ch=H-MT-MB
-  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1
-  const first=data[0],last=data[data.length-1]
+function Chart({ data, color, period, height=360, volume, ma7, ma30 }: { data:number[]; color:string; period:Period; height?:number; volume?:number[]; ma7?:(number|null)[]; ma30?:(number|null)[] }) {
+  const ref = useRef<SVGSVGElement>(null)
+  const [hover, setHover] = useState<{x:number;y:number;val:number;idx:number}|null>(null)
+  const W = 800, H = height, ML = 58, MR = 14, MT = 20, MB = 32
+  const cw = W - ML - MR, ch = H - MT - MB
+  const mn = Math.min(...data), mx = Math.max(...data), range = mx - mn || 1
+  const first = data[0], last = data[data.length - 1]
+  const isUp = last >= first
 
-  // Smart Y-axis ticks
-  const rawStep=rng/5
-  const mag=Math.pow(10,Math.floor(Math.log10(rawStep)))
-  const nice=[1,2,2.5,5,10].find(n=>n*mag>=rawStep)||10
-  const step=nice*mag
-  const yMin=Math.floor(mn/step)*step
-  const yTicks:number[]=[]
-  for(let v=yMin;v<=mx+step*.5;v+=step)if(v>=mn-step*.5)yTicks.push(Math.round(v*100)/100)
+  // Smart Y ticks
+  const rawStep = range / 6
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)))
+  const nice = [1,2,2.5,5,10].find(n => n * mag >= rawStep) || 10
+  const step = nice * mag
+  const yMin = Math.floor(mn / step) * step
+  const yTicks: number[] = []
+  for (let v = yMin; v <= mx + step * .5; v += step) if (v >= mn - step * .5) yTicks.push(Math.round(v * 100) / 100)
 
-  // X-axis labels
-  const xCount=period==='1J'?8:period==='1S'?7:period==='1M'?6:period==='3M'?6:period==='1A'?6:5
-  const xTicks:{idx:number;label:string}[]=[]
-  for(let i=0;i<xCount;i++){
-    const idx=Math.round(i/(xCount-1)*(data.length-1))
-    const d=new Date();d.setDate(d.getDate()-(data.length-1-idx))
-    let l=''
-    if(period==='1J')l=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
-    else if(['3A','5A','MAX'].includes(period))l=d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})
-    else if(period==='1A')l=d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})
-    else l=d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})
-    xTicks.push({idx,label:l})
+  // X ticks
+  const xCount = period === '1J' ? 8 : period === '1S' ? 7 : period === '1M' ? 6 : 6
+  const xTicks: {idx:number;label:string}[] = []
+  for (let i = 0; i < xCount; i++) {
+    const idx = Math.round(i / (xCount - 1) * (data.length - 1))
+    const d = new Date(); d.setDate(d.getDate() - (data.length - 1 - idx))
+    let l = ''
+    if (period === '1J') l = d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
+    else if (['3A','5A','MAX'].includes(period)) l = d.toLocaleDateString('fr-FR', {month:'short',year:'numeric'})
+    else if (period === '1A') l = d.toLocaleDateString('fr-FR', {month:'short',year:'2-digit'})
+    else l = d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'})
+    xTicks.push({idx, label: l})
   }
 
-  const px=(i:number)=>ML+(i/(data.length-1))*cw
-  const py=(v:number)=>MT+(1-(v-mn)/rng)*ch
-  const pts=data.map((v,i)=>({x:px(i),y:py(v),v}))
+  const px = (i: number) => ML + (i / (data.length - 1)) * cw
+  const py = (v: number) => MT + (1 - (v - mn) / range) * ch
+  const pts = data.map((v, i) => ({x: px(i), y: py(v), v}))
 
-  // Smooth bezier path
-  const pathD=pts.length>2?pts.reduce((a,p,i)=>{
-    if(i===0)return'M '+p.x+' '+p.y
-    const pr=pts[i-1],cx=(pr.x+p.x)/2
-    return a+' C '+cx+' '+pr.y+' '+cx+' '+p.y+' '+p.x+' '+p.y
-  },''):pts.map((p,i)=>(i===0?'M':'L')+' '+p.x+' '+p.y).join(' ')
-  const areaD=pathD+' L '+pts[pts.length-1].x+' '+(MT+ch)+' L '+pts[0].x+' '+(MT+ch)+' Z'
+  // Smooth bezier
+  const pathD = pts.length > 2 ? pts.reduce((a, p, i) => {
+    if (i === 0) return 'M ' + p.x + ' ' + p.y
+    const pr = pts[i-1], cx = (pr.x + p.x) / 2
+    return a + ' C ' + cx + ' ' + pr.y + ' ' + cx + ' ' + p.y + ' ' + p.x + ' ' + p.y
+  }, '') : pts.map((p, i) => (i === 0 ? 'M' : 'L') + ' ' + p.x + ' ' + p.y).join(' ')
+  const areaD = pathD + ' L ' + pts[pts.length-1].x + ' ' + (MT + ch) + ' L ' + pts[0].x + ' ' + (MT + ch) + ' Z'
 
-  const onMove=useCallback((e:React.MouseEvent<SVGSVGElement>)=>{
-    if(!ref.current)return
-    const r=ref.current.getBoundingClientRect()
-    const rx=(e.clientX-r.left)/r.width
-    const dx=(rx*W-ML)/cw
-    const idx=Math.round(dx*(data.length-1))
-    if(idx>=0&&idx<pts.length){
-      const pctFromStart=((pts[idx].v-first)/first*100)
-      setHover({x:pts[idx].x,y:pts[idx].y,val:pts[idx].v,idx,pct:pctFromStart})
-    }
-  },[data,pts,W,ML,cw,first])
+  const onMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!ref.current) return
+    const r = ref.current.getBoundingClientRect()
+    const rx = (e.clientX - r.left) / r.width
+    const dx = (rx * W - ML) / cw
+    const idx = Math.round(dx * (data.length - 1))
+    if (idx >= 0 && idx < pts.length) setHover({x: pts[idx].x, y: pts[idx].y, val: pts[idx].v, idx})
+  }, [data, pts, W, ML, cw])
 
-  const hoverDate=(idx:number)=>{
-    const d=new Date();d.setDate(d.getDate()-(data.length-1-idx))
-    if(period==='1J')return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
-    return d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long',year:'numeric'})
+  const hoverLabel = (idx: number) => {
+    const d = new Date(); d.setDate(d.getDate() - (data.length - 1 - idx))
+    if (period === '1J') return d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
+    return d.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'long', year:'numeric'})
   }
 
-  const fmtY=(v:number)=>v>=10000?(v/1000).toFixed(0)+'k':v>=1000?(v/1000).toFixed(1)+'k':v.toLocaleString('fr-FR')
+  const fmtY = (v: number) => v >= 10000 ? (v/1000).toFixed(0) + 'k' : v >= 1000 ? (v/1000).toFixed(1) + 'k' : v.toLocaleString('fr-FR')
+  const fmtFull = (v: number) => v.toLocaleString('fr-FR')
 
-  return(
-    <svg ref={ref} viewBox={'0 0 '+W+' '+H} style={{width:'100%',height:270,display:'block',cursor:'crosshair',userSelect:'none'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
+  const volH = ch * .14
+
+  return (
+    <svg ref={ref} viewBox={'0 0 ' + W + ' ' + H} style={{width:'100%', height, display:'block', cursor:'crosshair', userSelect:'none'}} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
       <defs>
         <linearGradient id="cge" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={.1}/>
-          <stop offset="50%" stopColor={color} stopOpacity={.04}/>
+          <stop offset="0%" stopColor={color} stopOpacity={.08}/>
+          <stop offset="40%" stopColor={color} stopOpacity={.04}/>
           <stop offset="100%" stopColor={color} stopOpacity={0}/>
+        </linearGradient>
+        <linearGradient id="vupe" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2E9E6A" stopOpacity={.2}/>
+          <stop offset="100%" stopColor="#2E9E6A" stopOpacity={.06}/>
+        </linearGradient>
+        <linearGradient id="vdne" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#E03020" stopOpacity={.2}/>
+          <stop offset="100%" stopColor="#E03020" stopOpacity={.06}/>
         </linearGradient>
       </defs>
 
-      {/* Y grid + labels */}
-      {yTicks.map(v=>{
-        const y=py(v)
-        if(y<MT-4||y>MT+ch+4)return null
-        return<g key={v}>
-          <line x1={ML} x2={W-MR} y1={y} y2={y} stroke="rgba(0,0,0,.04)" strokeWidth={1}/>
-          <text x={ML-8} y={y+3.5} textAnchor="end" fill="#BBB" fontSize={9} fontFamily="var(--font-data)">{fmtY(v)}</text>
+      {/* Background subtle grid */}
+      {yTicks.map(v => {
+        const y = py(v)
+        if (y < MT - 4 || y > MT + ch + 4) return null
+        return <g key={v}>
+          <line x1={ML} x2={W - MR} y1={y} y2={y} stroke="rgba(0,0,0,.04)" strokeWidth={.5}/>
+          <text x={ML - 10} y={y + 3.5} textAnchor="end" fill="#BBB" fontSize={10} fontFamily="var(--font-data)" fontWeight={500}>{fmtY(v)}</text>
         </g>
       })}
 
       {/* X labels */}
-      {xTicks.map(t=>(
-        <text key={t.idx} x={px(t.idx)} y={H-8} textAnchor="middle" fill="#BBB" fontSize={9} fontFamily="var(--font-display)">{t.label}</text>
+      {xTicks.map(t => (
+        <g key={t.idx}>
+          <line x1={px(t.idx)} x2={px(t.idx)} y1={MT} y2={MT + ch} stroke="rgba(0,0,0,.02)" strokeWidth={.5}/>
+          <text x={px(t.idx)} y={H - 8} textAnchor="middle" fill="#BBB" fontSize={10} fontFamily="var(--font-display)" fontWeight={400}>{t.label}</text>
+        </g>
       ))}
 
-      {/* Baseline (first value) dashed line */}
-      <line x1={ML} x2={W-MR} y1={py(first)} y2={py(first)} stroke="rgba(0,0,0,.06)" strokeWidth={1} strokeDasharray="4,4"/>
-
-      {/* Area + Curve */}
-      <path d={areaD} fill="url(#cge)"/>
-      <path d={pathD} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
-
-      {/* Start + End dots */}
-      <circle cx={pts[0].x} cy={pts[0].y} r={2.5} fill="#BBB" stroke="#fff" strokeWidth={1.5}/>
-      <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r={3.5} fill={color} stroke="#fff" strokeWidth={2}/>
+      {/* Opening price baseline */}
+      <line x1={ML} x2={W - MR} y1={py(first)} y2={py(first)} stroke="rgba(0,0,0,.06)" strokeWidth={.5} strokeDasharray="6,4"/>
+      <text x={W - MR + 4} y={py(first) + 3} fill="#CCC" fontSize={8} fontFamily="var(--font-data)">ouv.</text>
 
       {/* Volume bars */}
-      {volume&&volume.length===data.length&&(()=>{
-        const maxV=Math.max(...volume)
-        const volH=ch*.18
-        return volume.map((v,i)=>{
-          const bx=px(i)
-          const bh=(v/maxV)*volH
-          const bw=Math.max(cw/data.length*.6,1.5)
-          return<rect key={'v'+i} x={bx-bw/2} y={MT+ch-bh} width={bw} height={bh} fill={data[i]>=(i>0?data[i-1]:data[i])?'rgba(46,158,106,.15)':'rgba(224,48,32,.15)'} rx={.5}/>
-        })
+      {volume && volume.length === data.length && (() => {
+        const maxV = Math.max(...volume)
+        return <g>{volume.map((v, i) => {
+          const bx = px(i)
+          const bh = (v / maxV) * volH
+          const bw = Math.max(cw / data.length * .65, 1.2)
+          const up = data[i] >= (i > 0 ? data[i-1] : data[i])
+          return <rect key={'v'+i} x={bx - bw/2} y={MT + ch - bh} width={bw} height={bh} fill={up ? 'url(#vupe)' : 'url(#vdne)'} rx={.5}/>
+        })}</g>
       })()}
 
-      {/* MA7 line */}
-      {ma7&&(()=>{
-        const maPath=ma7.reduce((a,v,i)=>{if(v===null)return a;return a+(a?'L':'M')+' '+px(i)+' '+py(v)},'')
-        return maPath?<path d={maPath} fill="none" stroke="#EF9F27" strokeWidth={1} strokeDasharray="4,2" opacity={.6}/>:null
+      {/* Area + Main curve */}
+      <path d={areaD} fill="url(#cge)"/>
+      <path d={pathD} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+
+      {/* MA7 */}
+      {ma7 && (() => {
+        const p = (ma7 as (number|null)[]).reduce((a: string, v, i) => { if (v === null) return a; return a + (a ? 'L' : 'M') + ' ' + px(i) + ' ' + py(v) }, '')
+        return p ? <path d={p} fill="none" stroke="#EF9F27" strokeWidth={1} strokeDasharray="4,3" opacity={.5}/> : null
       })()}
 
-      {/* MA30 line */}
-      {ma30&&(()=>{
-        const maPath=ma30.reduce((a,v,i)=>{if(v===null)return a;return a+(a?'L':'M')+' '+px(i)+' '+py(v)},'')
-        return maPath?<path d={maPath} fill="none" stroke="#7E57C2" strokeWidth={1} strokeDasharray="6,3" opacity={.5}/>:null
+      {/* MA30 */}
+      {ma30 && (() => {
+        const p = (ma30 as (number|null)[]).reduce((a: string, v, i) => { if (v === null) return a; return a + (a ? 'L' : 'M') + ' ' + px(i) + ' ' + py(v) }, '')
+        return p ? <path d={p} fill="none" stroke="#7E57C2" strokeWidth={1} strokeDasharray="6,4" opacity={.4}/> : null
       })()}
 
-      {/* MA Legend */}
-      {(ma7||ma30)&&<>
-        {ma7&&<><circle cx={ML+8} cy={MT+ch+20} r={3} fill="#EF9F27"/><text x={ML+16} y={MT+ch+23} fill="#BBB" fontSize={8} fontFamily="var(--font-display)">MA7</text></>}
-        {ma30&&<><circle cx={ML+48} cy={MT+ch+20} r={3} fill="#7E57C2"/><text x={ML+56} y={MT+ch+23} fill="#BBB" fontSize={8} fontFamily="var(--font-display)">MA30</text></>}
-      </>}
+      {/* End dot with glow */}
+      <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r={6} fill={color} fillOpacity={.12}/>
+      <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r={3.5} fill={color} stroke="#fff" strokeWidth={2}/>
 
-      {/* Hover crosshair + tooltip */}
-      {hover&&<>
-        {/* Vertical line */}
-        <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+ch} stroke="rgba(0,0,0,.1)" strokeWidth={1} strokeDasharray="3,3"/>
-        {/* Horizontal line */}
-        <line x1={ML} x2={W-MR} y1={hover.y} y2={hover.y} stroke="rgba(0,0,0,.05)" strokeWidth={1} strokeDasharray="2,3"/>
-        {/* Dot */}
-        <circle cx={hover.x} cy={hover.y} r={6} fill={color} fillOpacity={.15}/>
+      {/* Start dot */}
+      <circle cx={pts[0].x} cy={pts[0].y} r={2} fill="#CCC" stroke="#fff" strokeWidth={1.5}/>
+
+      {/* Current price line extending to right edge */}
+      <line x1={pts[pts.length-1].x} x2={W - MR} y1={pts[pts.length-1].y} y2={pts[pts.length-1].y} stroke={color} strokeWidth={.5} strokeDasharray="3,3" opacity={.4}/>
+      <rect x={W - MR - 1} y={pts[pts.length-1].y - 9} width={MR + 1} height={18} fill={color} rx={2}/>
+      <text x={W - MR/2} y={pts[pts.length-1].y + 3} textAnchor="middle" fill="#fff" fontSize={7.5} fontWeight={600} fontFamily="var(--font-data)">{fmtY(last)}</text>
+
+      {/* Legend */}
+      {(ma7 || ma30 || volume) && <g>
+        <text x={ML + 4} y={MT + 12} fill="#CCC" fontSize={9} fontFamily="var(--font-display)">
+          {'—'} Prix
+        </text>
+        {ma7 && <><circle cx={ML + 50} cy={MT + 9} r={3} fill="#EF9F27"/><text x={ML + 58} y={MT + 12} fill="#CCC" fontSize={9} fontFamily="var(--font-display)">MA7</text></>}
+        {ma30 && <><circle cx={ML + 90} cy={MT + 9} r={3} fill="#7E57C2"/><text x={ML + 98} y={MT + 12} fill="#CCC" fontSize={9} fontFamily="var(--font-display)">MA30</text></>}
+      </g>}
+
+      {/* Hover */}
+      {hover && <>
+        {/* Crosshair */}
+        <line x1={hover.x} x2={hover.x} y1={MT} y2={MT + ch} stroke="rgba(0,0,0,.12)" strokeWidth={.5}/>
+        <line x1={ML} x2={W - MR} y1={hover.y} y2={hover.y} stroke="rgba(0,0,0,.06)" strokeWidth={.5} strokeDasharray="2,2"/>
+
+        {/* Point */}
+        <circle cx={hover.x} cy={hover.y} r={6} fill={color} fillOpacity={.12}/>
         <circle cx={hover.x} cy={hover.y} r={4} fill={color} stroke="#fff" strokeWidth={2}/>
 
-        {/* Y-axis price badge */}
-        <rect x={0} y={hover.y-10} width={ML-5} height={20} rx={4} fill={color}/>
-        <text x={(ML-5)/2} y={hover.y+3.5} textAnchor="middle" fill="#fff" fontSize={8.5} fontWeight={600} fontFamily="var(--font-data)">{fmtY(hover.val)}</text>
+        {/* Y-axis price tag */}
+        <rect x={0} y={hover.y - 11} width={ML - 6} height={22} rx={4} fill={color}/>
+        <text x={(ML - 6) / 2} y={hover.y + 3.5} textAnchor="middle" fill="#fff" fontSize={9} fontWeight={600} fontFamily="var(--font-data)">{fmtY(hover.val)}</text>
 
         {/* Top tooltip */}
-        <rect x={Math.min(Math.max(hover.x-64,ML),W-MR-128)} y={4} width={128} height={44} rx={8} fill="#111"/>
-        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={22} textAnchor="middle" fill="#fff" fontSize={15} fontWeight={700} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')} {'€'}</text>
-        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={38} textAnchor="middle" fill={hover.pct>=0?'#4ADE80':'#F87171'} fontSize={10} fontWeight={600} fontFamily="var(--font-data)">{hover.pct>=0?'+':''}{hover.pct.toFixed(1)}%{volume&&volume[hover.idx]?' · '+volume[hover.idx]+' tx':''}</text>
+        {(() => {
+          const pctChange = ((hover.val - first) / first * 100)
+          const tw = 140, th = 52
+          const tx = Math.min(Math.max(hover.x - tw/2, ML), W - MR - tw)
+          return <g>
+            <rect x={tx} y={2} width={tw} height={th} rx={8} fill="#111" fillOpacity={.95}/>
+            <text x={tx + tw/2} y={22} textAnchor="middle" fill="#fff" fontSize={16} fontWeight={700} fontFamily="var(--font-data)">{fmtFull(hover.val)} {'€'}</text>
+            <text x={tx + tw/2} y={40} textAnchor="middle" fill={pctChange >= 0 ? '#4ADE80' : '#F87171'} fontSize={11} fontWeight={600} fontFamily="var(--font-data)">
+              {pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%{volume && volume[hover.idx] ? ' · ' + volume[hover.idx] + ' tx' : ''}
+            </text>
+          </g>
+        })()}
 
-        {/* Bottom date badge */}
-        <rect x={Math.min(Math.max(hover.x-60,ML),W-MR-120)} y={MT+ch+2} width={120} height={18} rx={4} fill="rgba(0,0,0,.06)"/>
-        <text x={Math.min(Math.max(hover.x,ML+60),W-MR-60)} y={MT+ch+14} textAnchor="middle" fill="#888" fontSize={8.5} fontFamily="var(--font-display)">{hoverDate(hover.idx)}</text>
+        {/* Bottom date */}
+        {(() => {
+          const dw = 150
+          const dx = Math.min(Math.max(hover.x - dw/2, ML), W - MR - dw)
+          return <g>
+            <rect x={dx} y={MT + ch + 4} width={dw} height={20} rx={4} fill="rgba(0,0,0,.06)"/>
+            <text x={dx + dw/2} y={MT + ch + 17} textAnchor="middle" fill="#888" fontSize={9} fontFamily="var(--font-display)">{hoverLabel(hover.idx)}</text>
+          </g>
+        })()}
       </>}
-    </svg>)
+    </svg>
+  )
 }
 
+
+
+// ── COUNTUP ──
+function CountUp({ target, suffix='', duration=1000 }: { target:number; suffix?:string; duration?:number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef(0)
+  useEffect(() => {
+    const t0 = performance.now()
+    ;(function f(t: number) {
+      const p = Math.min((t - t0) / duration, 1)
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) ref.current = requestAnimationFrame(f)
+    })(t0)
+    return () => cancelAnimationFrame(ref.current)
+  }, [target, duration])
+  return <>{val.toLocaleString('fr-FR')}{suffix}</>
+}
 function mockSales(c:Card){return[
   {src:'eBay',grade:'PSA 10',p:c.psa10,ago:'2h',lang:'EN'},{src:'CM',grade:'Raw NM',p:c.price,ago:'5h',lang:'FR'},
   {src:'eBay',grade:'PSA 9',p:c.psa9,ago:'1j',lang:'EN'},{src:'CM',grade:'Raw LP',p:Math.round(c.price*.85),ago:'2j',lang:'JP'},

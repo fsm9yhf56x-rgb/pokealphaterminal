@@ -152,8 +152,8 @@ export function DailyHub() {
     try { const v = localStorage.getItem('pka_hub_hidden'); return v ? JSON.parse(v) : DEFAULT_HIDDEN } catch { return DEFAULT_HIDDEN }
   })
   const [editMode, setEditMode] = useState(false)
-  const [dragState, setDragState] = useState<{dragging:WidgetId|null;dropTarget:WidgetId|null;dropPosition:'above'|'below'|null}>({dragging:null,dropTarget:null,dropPosition:null})
-  const dragRef = useRef<{id:WidgetId;startY:number;col:'left'|'right'}|null>(null)
+  const [dragId, setDragId] = useState<WidgetId|null>(null)
+  const [overId, setOverId] = useState<WidgetId|null>(null)
 
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
@@ -184,49 +184,7 @@ export function DailyHub() {
 
   const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
 
-  const startDrag = (id: WidgetId, e: React.MouseEvent) => {
-    e.preventDefault()
-    dragRef.current = { id, startY: e.clientY, col: WIDGET_META[id].col }
-    setDragState({ dragging: id, dropTarget: null, dropPosition: null })
 
-    let target: WidgetId|null = null
-    let pos: 'above'|'below'|null = null
-
-    const onMove = (ev: MouseEvent) => {
-      const widgets = document.querySelectorAll('[data-widget-id]')
-      let best: { wid: WidgetId; p: 'above'|'below' } | null = null as { wid: WidgetId; p: 'above'|'below' } | null
-      let bestDist = 9999
-      widgets.forEach(w => {
-        const wid = w.getAttribute('data-widget-id') as WidgetId
-        if (wid === id) return
-        const r = w.getBoundingClientRect()
-        const mid = r.top + r.height / 2
-        const dist = Math.abs(ev.clientY - mid)
-        if (dist < bestDist) { bestDist = dist; best = { wid, p: ev.clientY < mid ? 'above' : 'below' } }
-      })
-      if (best) { const b = best; target = b.wid; pos = b.p; setDragState({ dragging: id, dropTarget: b.wid, dropPosition: b.p }) }
-    }
-
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      if (target && pos) {
-        setWidgetOrder(order => {
-          const next = order.filter(i => i !== id)
-          let idx = next.indexOf(target!)
-          if (idx === -1) return order
-          if (pos === 'below') idx++
-          next.splice(idx, 0, id)
-          return next
-        })
-      }
-      dragRef.current = null
-      setDragState({ dragging: null, dropTarget: null, dropPosition: null })
-    }
-
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
 
   const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))
   const rightWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'right' && !hiddenWidgets.includes(id))
@@ -266,24 +224,36 @@ export function DailyHub() {
 
   const renderWidget = (id: WidgetId) => {
     const isEditing = true
-    const isDragging = dragState.dragging === id
-    const dropPos = dragState.dropTarget === id ? dragState.dropPosition : null
-    const cls = 'w' + (isDragging ? ' w-dragging' : '') + (dropPos === 'above' ? ' w-drop-above' : '') + (dropPos === 'below' ? ' w-drop-below' : '')
+    const cls = 'w' + (dragId === id ? ' w-dragging' : '') + (overId === id && dragId !== id ? ' w-drop-target' : '')
     const editHandle = (
       <>
-        <div className="w-grip"
-          onMouseDown={e => startDrag(id, e as any)}
-          title="Maintenir pour déplacer">
-          <div className="w-grip-row"><i/><i/></div>
-          <div className="w-grip-row"><i/><i/></div>
-          <div className="w-grip-row"><i/><i/></div>
-        </div>
+        <div className="w-grip"><div className="w-grip-row"><i/><i/></div><div className="w-grip-row"><i/><i/></div><div className="w-grip-row"><i/><i/></div></div>
         <button className="w-hide" onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer">
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </>
     )
-    const dragProps = {}
+    const dragProps = {
+      draggable: true,
+      onDragStart: () => setDragId(id),
+      onDragOver: (e: React.DragEvent) => { e.preventDefault(); setOverId(id) },
+      onDragLeave: () => { if (overId === id) setOverId(null) },
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault()
+        if (dragId && dragId !== id) {
+          setWidgetOrder(prev => {
+            const next = prev.filter(i => i !== dragId)
+            const idx = next.indexOf(id)
+            if (idx === -1) return prev
+            next.splice(idx, 0, dragId)
+            return next
+          })
+        }
+        setDragId(null)
+        setOverId(null)
+      },
+      onDragEnd: () => { setDragId(null); setOverId(null) },
+    }
 
     switch(id) {
       case 'portfolio': return (
@@ -457,16 +427,14 @@ export function DailyHub() {
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
         .w{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
-        .w-dragging{z-index:100 !important;box-shadow:0 20px 60px rgba(0,0,0,.15),0 8px 20px rgba(0,0,0,.08) !important;transform:scale(1.03) rotate(.5deg) !important;opacity:.85 !important;border-color:#E03020 !important}
-        .w-drop-above::before{content:'';position:absolute;top:-7px;left:0;right:0;height:4px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .15s ease-out;box-shadow:0 0 8px rgba(224,48,32,.3)}
-        .w-drop-below::after{content:'';position:absolute;bottom:-7px;left:0;right:0;height:4px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .15s ease-out;box-shadow:0 0 8px rgba(224,48,32,.3)}
-        @keyframes dropLine{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}
+        .w-dragging{z-index:100 !important;opacity:.5 !important}
+        .w-drop-target{border-color:#E03020 !important;box-shadow:0 0 0 2px rgba(224,48,32,.15) !important;transform:scale(1.01)}
+        
         .w-hide{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;transition:all .15s;color:#CCC;font-size:11px}
         .w:hover .w-hide{opacity:.4}
         .w-hide:hover{opacity:1 !important;background:#FEF2F2;color:#E03020}
         .w-grip{position:absolute;top:14px;left:10px;width:16px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:grab;opacity:.2;transition:opacity .2s;z-index:5;border-radius:4px}
         .w-grip:active{cursor:grabbing}
-        .w-grip{touch-action:none}
         .w:hover .w-grip{opacity:.45}
         .w-grip:hover{opacity:.8 !important;background:rgba(0,0,0,.04);border-radius:4px}
         .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#999}

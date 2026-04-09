@@ -55,7 +55,6 @@ const GAMES: Game[] = [
   {id:'stadium-jp',name:'Pocket Monsters Stadium',nameFr:'Pocket Monsters Stadium (JP)',nameJp:'ポケモンスタジアム',year:1998,platform:'N64',type:'stadium',gen:1,imgEn:'/img/games/jp/stadium-jp.png',imgJp:'/img/games/jp/stadium-jp.png',description:'Le tout premier Stadium, exclusif au Japon. Seulement 42 Pokémon jouables. Différent du Stadium occidental.'},
   {id:'tcg-gb2',name:'Pokémon Card GB2',nameFr:'Pokémon Card GB2',nameJp:'ポケモンカードGB2',year:2001,platform:'GBC',type:'spinoff',gen:2,imgEn:'/img/games/jp/tcg-gb2.png',imgJp:'/img/games/jp/tcg-gb2.png',description:'Suite du JCC Game Boy, exclusif au Japon. Team Great Rocket en antagoniste. Très recherché par les collectionneurs.'}
 ]
-]
 
 const CHUNK = 40
 

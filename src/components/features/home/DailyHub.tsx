@@ -242,10 +242,18 @@ export function DailyHub() {
         e.preventDefault()
         if (dragId && dragId !== id) {
           setWidgetOrder(prev => {
-            const next = prev.filter(i => i !== dragId)
-            const idx = next.indexOf(id)
-            if (idx === -1) return prev
-            next.splice(idx, 0, dragId)
+            const fromIdx = prev.indexOf(dragId)
+            const toIdx = prev.indexOf(id)
+            if (fromIdx === -1 || toIdx === -1) return prev
+            const next = [...prev]
+            next.splice(fromIdx, 1)
+            next.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, dragId)
+            // Swap columns if needed
+            const fromCol = WIDGET_META[dragId].col
+            const toCol = WIDGET_META[id].col
+            if (fromCol !== toCol) {
+              (WIDGET_META[dragId] as any).col = toCol
+            }
             return next
           })
         }

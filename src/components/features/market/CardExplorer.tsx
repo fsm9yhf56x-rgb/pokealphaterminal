@@ -664,21 +664,18 @@ export function CardExplorer(){
 
           {/* === GRADE SELECTOR === */}
           {siblings.length>1&&(
-            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,padding:'14px 16px',marginBottom:12}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-                <div style={{display:'flex',alignItems:'center',gap:6}}>
-                  <span style={{fontSize:12,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
-                  <span style={{fontSize:10,color:'#BBB',background:'#F5F5F7',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-data)'}}>{siblings.length}</span>
-                </div>
+            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,overflow:'hidden',marginBottom:12}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid #F5F5F5',background:'#FAFBFC'}}>
+                <span style={{fontSize:11,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
                 {(()=>{
                   const rawSib=siblings.find(x=>x.grade==='Raw')
                   if(!rawSib||selGrade==='Raw')return null
                   const prem=Math.round((activeCard.price/rawSib.price-1)*100)
-                  return <span style={{fontSize:11,color:'#2E9E6A',fontWeight:600,fontFamily:'var(--font-data)'}}>Prime vs Raw: +{prem}%</span>
+                  return <span style={{fontSize:11,fontWeight:700,color:'#2E9E6A',fontFamily:'var(--font-data)',background:'rgba(46,158,106,.06)',padding:'2px 8px',borderRadius:5}}>Prime +{prem}%</span>
                 })()}
               </div>
-              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                {siblings.map(sib=>{
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(110px,1fr))',gap:0}}>
+                {siblings.map((sib,idx)=>{
                   const g=sib.grade||'Raw'
                   const isOn=selGrade===g
                   const gs=GRADE_STYLES[g]||GRADE_STYLES['Raw']
@@ -687,19 +684,26 @@ export function CardExplorer(){
                   const prem=isRaw||!rawSib?0:Math.round((sib.price/rawSib.price-1)*100)
                   return(
                     <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
-                      display:'flex',alignItems:'center',gap:6,
-                      padding:'6px 12px',borderRadius:8,cursor:'pointer',
-                      border:isOn?'2px solid '+(isRaw?'#111':gs.border):'1px solid #EBEBEB',
-                      background:isOn?(isRaw?'#F8F8FA':gs.bg):'#fff',
-                      transition:'all .12s',position:'relative',
-                      boxShadow:isOn?'0 1px 6px rgba(0,0,0,.06)':'none',
+                      display:'flex',flexDirection:'column',alignItems:'flex-start',gap:1,
+                      padding:'10px 14px',cursor:'pointer',border:'none',
+                      background:isOn?(isRaw?'#F5F5F7':gs.bg):'#fff',
+                      borderRight:'1px solid #F5F5F5',borderBottom:'1px solid #F5F5F5',
+                      transition:'all .1s',position:'relative',
                     }}
-                    onMouseEnter={e=>{if(!isOn){e.currentTarget.style.borderColor='#CCC';e.currentTarget.style.background='#FAFAFA'}}}
-                    onMouseLeave={e=>{if(!isOn){e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.background='#fff'}}}
+                    onMouseEnter={e=>{if(!isOn)e.currentTarget.style.background='#FAFAFA'}}
+                    onMouseLeave={e=>{if(!isOn)e.currentTarget.style.background='#fff'}}
                     >
-                      <span style={{fontSize:11,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)'}}>{g}</span>
-                      <span style={{fontSize:12,fontWeight:700,color:isOn?'#111':'#AAA',fontFamily:'var(--font-data)',letterSpacing:'-.3px'}}>{sib.price.toLocaleString('fr-FR')} {String.fromCharCode(8364)}</span>
-                      {!isRaw&&prem>0&&<span style={{fontSize:9,fontWeight:600,color:prem>50?'#E03020':prem>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)',background:prem>50?'rgba(224,48,32,.06)':prem>20?'rgba(239,159,39,.06)':'rgba(46,158,106,.06)',padding:'1px 4px',borderRadius:3}}>+{prem}%</span>}
+                      {isOn&&<div style={{position:'absolute',top:0,left:0,right:0,height:2.5,background:isRaw?'#111':gs.color}}/>}
+                      <div style={{display:'flex',alignItems:'center',gap:5,width:'100%'}}>
+                        {!isRaw&&<div style={{width:6,height:6,borderRadius:2,background:gs.color,opacity:.7,flexShrink:0}}/>}
+                        <span style={{fontSize:11,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)'}}>{g}</span>
+                      </div>
+                      <span style={{fontSize:16,fontWeight:700,color:isOn?'#111':'#AAA',fontFamily:'var(--font-data)',letterSpacing:'-.5px'}}>{sib.price.toLocaleString('fr-FR')} {String.fromCharCode(8364)}</span>
+                      <div style={{display:'flex',alignItems:'center',gap:4}}>
+                        {!isRaw&&prem>0&&<span style={{fontSize:9,fontWeight:600,color:prem>50?'#E03020':prem>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)'}}>+{prem}%</span>}
+                        {isRaw&&<span style={{fontSize:9,color:'#CCC',fontFamily:'var(--font-display)'}}>base</span>}
+                        <span style={{fontSize:8,color:'#DDD',fontFamily:'var(--font-data)'}}>vol.{sib.vol}</span>
+                      </div>
                     </button>
                   )
                 })}
@@ -707,7 +711,7 @@ export function CardExplorer(){
             </div>
           )}
 
-          {/* Stats bar */}          {/* Stats bar */}
+          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}
           <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>
             {[
               {l:'Ouv.',v:data[0]},

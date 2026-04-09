@@ -3,13 +3,16 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 // ── GENERATE REALISTIC PRICE HISTORY ──
 function genHistory(base: number, volatility: number, trend: number, days: number): number[] {
-  const pts: number[] = [base * (1 - trend * days / 365)]
+  const start = Math.max(base * 0.35, base * (1 - trend * (days / 365) * 0.6))
+  const pts: number[] = [start]
   for (let i = 1; i <= days; i++) {
     const noise = (Math.random() - 0.48) * volatility * pts[i - 1]
     const t = trend * pts[i - 1] / 365
-    pts.push(Math.max(pts[i - 1] + noise + t, pts[0] * 0.5))
+    pts.push(Math.max(pts[i - 1] + noise + t, start * 0.6))
   }
-  return pts.map(v => Math.round(v))
+  // Normalize so last value is close to base
+  const ratio = base / pts[pts.length - 1]
+  return pts.map(v => Math.round(v * ratio))
 }
 
 const SEED_HISTORIES: Record<string, number[]> = {
@@ -105,65 +108,106 @@ function Spark({ data, color, w=80, h=24 }: { data:number[]; color:string; w?:nu
 }
 
 // ── MAIN CHART ──
-function Chart({ data, color, period }: { data:number[]; color:string; period:Period }) {
+function Chart({ data, color, period, height=240 }: { data:number[]; color:string; period:Period; height?:number }) {
   const ref = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<{x:number;y:number;val:number;idx:number}|null>(null)
-  const W = 700, H = 220, PX = 0, PY = 12
+  const W = 720, H = height, ML = 52, MR = 12, MT = 16, MB = 28
+  const cw = W - ML - MR, ch = H - MT - MB
   const mn = Math.min(...data), mx = Math.max(...data), range = mx - mn || 1
-  const points = data.map((v, i) => ({
-    x: PX + (i / (data.length - 1)) * (W - PX * 2),
-    y: PY + (1 - (v - mn) / range) * (H - PY * 2),
-    v
-  }))
-  const line = points.map(p => `${p.x},${p.y}`).join(' ')
-  const area = `${points[0].x},${H} ${line} ${points[points.length-1].x},${H}`
-  const isUp = data[data.length - 1] >= data[0]
-  const c = color
+
+  // Nice Y axis ticks
+  const step = Math.pow(10, Math.floor(Math.log10(range))) || 1
+  const niceStep = range / step > 6 ? step * 2 : step
+  const yStart = Math.floor(mn / niceStep) * niceStep
+  const yTicks: number[] = []
+  for (let v = yStart; v <= mx + niceStep; v += niceStep) yTicks.push(v)
+
+  // X axis labels
+  const xCount = period === '1J' ? 6 : period === '1S' ? 7 : period === '1M' ? 5 : 6
+  const xTicks: {idx:number;label:string}[] = []
+  for (let i = 0; i < xCount; i++) {
+    const idx = Math.round(i / (xCount - 1) * (data.length - 1))
+    const d = new Date()
+    d.setDate(d.getDate() - (data.length - 1 - idx))
+    let label = ''
+    if (period === '1J') label = d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
+    else if (['3A','5A','MAX'].includes(period)) label = d.toLocaleDateString('fr-FR', {month:'short',year:'numeric'})
+    else if (period === '1A') label = d.toLocaleDateString('fr-FR', {month:'short',year:'2-digit'})
+    else label = d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'})
+    xTicks.push({idx, label})
+  }
+
+  const px = (i:number) => ML + (i / (data.length - 1)) * cw
+  const py = (v:number) => MT + (1 - (v - mn) / range) * ch
+
+  const points = data.map((v, i) => ({x:px(i), y:py(v), v}))
+
+  // Smooth path
+  const pathD = points.length > 2 ? points.reduce((acc, p, i) => {
+    if (i === 0) return 'M ' + p.x + ' ' + p.y
+    const prev = points[i-1]
+    const cpx = (prev.x + p.x) / 2
+    return acc + ' C ' + cpx + ' ' + prev.y + ' ' + cpx + ' ' + p.y + ' ' + p.x + ' ' + p.y
+  }, '') : points.map((p,i) => (i===0?'M':'L') + ' ' + p.x + ' ' + p.y).join(' ')
+
+  const areaD = pathD + ' L ' + points[points.length-1].x + ' ' + (MT+ch) + ' L ' + points[0].x + ' ' + (MT+ch) + ' Z'
 
   const onMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!ref.current) return
     const rect = ref.current.getBoundingClientRect()
-    const mx = e.clientX - rect.left
-    const ratio = mx / rect.width
-    const idx = Math.round(ratio * (data.length - 1))
-    if (idx >= 0 && idx < points.length) {
-      setHover({ x: points[idx].x, y: points[idx].y, val: points[idx].v, idx })
-    }
-  }, [data, points])
+    const rx = (e.clientX - rect.left) / rect.width
+    const dataX = (rx * W - ML) / cw
+    const idx = Math.round(dataX * (data.length - 1))
+    if (idx >= 0 && idx < points.length) setHover({x:points[idx].x, y:points[idx].y, val:points[idx].v, idx})
+  }, [data, points, W, ML, cw])
 
-  const dateLabel = (idx: number) => {
-    const d = new Date()
-    const daysBack = data.length - 1 - idx
-    d.setDate(d.getDate() - daysBack)
-    if (period === '1J') return d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
-    if (period === '3A' || period === '5A' || period === 'MAX') return d.toLocaleDateString('fr-FR', { month:'short', year:'numeric' })
-    if (period === '1A') return d.toLocaleDateString('fr-FR', { month:'short', year:'2-digit' })
-    return d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' })
+  const hoverLabel = (idx:number) => {
+    const d = new Date(); d.setDate(d.getDate() - (data.length - 1 - idx))
+    if (period === '1J') return d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
+    if (['3A','5A','MAX'].includes(period)) return d.toLocaleDateString('fr-FR', {weekday:'short',day:'numeric',month:'short',year:'numeric'})
+    return d.toLocaleDateString('fr-FR', {weekday:'short',day:'numeric',month:'short',year:'numeric'})
   }
 
+  const isUp = data[data.length-1] >= data[0]
+
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:220, display:'block', cursor:'crosshair' }}
-      onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+    <svg ref={ref} viewBox={'0 0 '+W+' '+H} style={{width:'100%',height,display:'block',cursor:'crosshair',userSelect:'none'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
       <defs>
         <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={c} stopOpacity={0.15} />
-          <stop offset="100%" stopColor={c} stopOpacity={0} />
+          <stop offset="0%" stopColor={color} stopOpacity={0.12}/>
+          <stop offset="100%" stopColor={color} stopOpacity={0.01}/>
         </linearGradient>
       </defs>
-      {[0.25, 0.5, 0.75].map(r => (
-        <line key={r} x1={PX} x2={W - PX} y1={PY + r * (H - PY * 2)} y2={PY + r * (H - PY * 2)} stroke="rgba(0,0,0,.04)" strokeWidth={1} />
+      {/* Y grid + labels */}
+      {yTicks.map(v => {
+        const y = py(v)
+        if (y < MT - 4 || y > MT + ch + 4) return null
+        return <g key={v}>
+          <line x1={ML} x2={W-MR} y1={y} y2={y} stroke="rgba(0,0,0,.04)" strokeWidth={1}/>
+          <text x={ML-8} y={y+3.5} textAnchor="end" fill="#BBB" fontSize={9} fontFamily="var(--font-data)">{v >= 1000 ? (v/1000).toFixed(v%1000===0?0:1)+'k' : v.toLocaleString('fr-FR')}</text>
+        </g>
+      })}
+      {/* X labels */}
+      {xTicks.map(t => (
+        <text key={t.idx} x={px(t.idx)} y={H-6} textAnchor="middle" fill="#BBB" fontSize={9} fontFamily="var(--font-display)">{t.label}</text>
       ))}
-      <polygon points={area} fill="url(#cg)" />
-      <polyline points={line} fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      {hover && (
-        <>
-          <line x1={hover.x} x2={hover.x} y1={PY} y2={H - PY} stroke="rgba(0,0,0,.1)" strokeWidth={1} strokeDasharray="3,3" />
-          <circle cx={hover.x} cy={hover.y} r={4} fill={c} stroke="#fff" strokeWidth={2} />
-          <rect x={Math.min(hover.x - 44, W - 92)} y={Math.max(hover.y - 44, 0)} width={88} height={36} rx={8} fill="#111" />
-          <text x={Math.min(hover.x, W - 48)} y={Math.max(hover.y - 26, 12)} textAnchor="middle" fill="#fff" fontSize={13} fontWeight={600} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')}</text>
-          <text x={Math.min(hover.x, W - 48)} y={Math.max(hover.y - 13, 25)} textAnchor="middle" fill="rgba(255,255,255,.5)" fontSize={10} fontFamily="var(--font-display)">{dateLabel(hover.idx)}</text>
-        </>
-      )}
+      {/* Area + Line */}
+      <path d={areaD} fill="url(#cg)"/>
+      <path d={pathD} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      {/* End dot */}
+      <circle cx={points[points.length-1].x} cy={points[points.length-1].y} r={3} fill={color} stroke="#fff" strokeWidth={1.5}/>
+      {/* Hover */}
+      {hover && <>
+        <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+ch} stroke="rgba(0,0,0,.08)" strokeWidth={1} strokeDasharray="3,3"/>
+        <line x1={ML} x2={W-MR} y1={hover.y} y2={hover.y} stroke="rgba(0,0,0,.04)" strokeWidth={1} strokeDasharray="2,2"/>
+        <circle cx={hover.x} cy={hover.y} r={5} fill={color} stroke="#fff" strokeWidth={2}/>
+        <rect x={Math.min(Math.max(hover.x-52,ML),W-MR-104)} y={Math.max(hover.y-50,0)} width={104} height={40} rx={8} fill="#111"/>
+        <text x={Math.min(Math.max(hover.x,ML+52),W-MR-52)} y={Math.max(hover.y-32,12)} textAnchor="middle" fill="#fff" fontSize={14} fontWeight={700} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')}</text>
+        <text x={Math.min(Math.max(hover.x,ML+52),W-MR-52)} y={Math.max(hover.y-17,27)} textAnchor="middle" fill="rgba(255,255,255,.45)" fontSize={9} fontFamily="var(--font-display)">{hoverLabel(hover.idx)}</text>
+        {/* Price on Y axis */}
+        <rect x={0} y={hover.y-9} width={ML-4} height={18} rx={4} fill={color}/>
+        <text x={ML/2-2} y={hover.y+3.5} textAnchor="middle" fill="#fff" fontSize={8} fontWeight={600} fontFamily="var(--font-data)">{hover.val >= 1000 ? (hover.val/1000).toFixed(1)+'k' : hover.val}</text>
+      </>}
     </svg>
   )
 }

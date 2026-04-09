@@ -2,9 +2,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 function genH(base:number,vol:number,trend:number,days:number):number[]{
-  const p=[base*(1-trend*days/365)]
-  for(let i=1;i<=days;i++){const n=(Math.random()-.48)*vol*p[i-1];p.push(Math.max(p[i-1]+n+trend*p[i-1]/365,p[0]*.4))}
-  return p.map(v=>Math.round(v))
+  const start=Math.max(base*.35,base*(1-trend*(days/365)*.6))
+  const p=[start]
+  for(let i=1;i<=days;i++){const n=(Math.random()-.48)*vol*p[i-1];p.push(Math.max(p[i-1]+n+trend*p[i-1]/365,start*.6))}
+  const ratio=base/p[p.length-1]
+  return p.map(v=>Math.round(v*ratio))
 }
 type Period='1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
 const P_DAYS:Record<Period,number>={'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}

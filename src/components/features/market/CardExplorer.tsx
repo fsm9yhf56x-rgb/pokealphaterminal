@@ -711,7 +711,7 @@ export function CardExplorer(){
             </div>
           )}
 
-          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}
+          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}
           <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>
             {[
               {l:'Ouv.',v:data[0]},

@@ -7,7 +7,7 @@ type GameType = 'main'|'spinoff'|'stadium'|'mystery'|'ranger'
 
 interface Game {
   id: string; name: string; nameFr: string; nameJp: string; year: number; platform: Platform
-  type: GameType; gen: number; imgEn: string; imgJp: string; description: string
+  type: GameType; gen: number; imgEn: string; imgJp: string; description: string; jpOnly?: boolean
 }
 
 const PLATFORMS: Record<Platform,{label:string;color:string;bg:string}> = {
@@ -51,9 +51,9 @@ const GAMES: Game[] = [
   {id:'platinum',name:'Pok\u00e9mon Platinum',nameFr:'Pok\u00e9mon Platine',nameJp:'\u30dd\u30b1\u30c3\u30c8\u30e2\u30f3\u30b9\u30bf\u30fc \u30d7\u30e9\u30c1\u30ca',year:2008,platform:'DS',type:'main',gen:4,imgEn:'/img/games/en/platinum.png',imgJp:'/img/games/jp/platinum.png',description:'Le Monde Distorsion et Giratina. La version d\u00e9finitive de Sinnoh.'},
   {id:'hgss-hg',name:'Pok\u00e9mon HeartGold',nameFr:'Pok\u00e9mon Or HeartGold',nameJp:'\u30dd\u30b1\u30c3\u30c8\u30e2\u30f3\u30b9\u30bf\u30fc \u30cf\u30fc\u30c8\u30b4\u30fc\u30eb\u30c9',year:2009,platform:'DS',type:'main',gen:4,imgEn:'/img/games/en/hgss-hg.png',imgJp:'/img/games/jp/hgss-hg.png',description:'Remake d\'Or sur DS. Le Pok\u00e9walker et votre Pok\u00e9mon qui vous suit.'},
   {id:'hgss-ss',name:'Pok\u00e9mon SoulSilver',nameFr:'Pok\u00e9mon Argent SoulSilver',nameJp:'\u30dd\u30b1\u30c3\u30c8\u30e2\u30f3\u30b9\u30bf\u30fc \u30bd\u30a6\u30eb\u30b7\u30eb\u30d0\u30fc',year:2009,platform:'DS',type:'main',gen:4,imgEn:'/img/games/en/hgss-ss.png',imgJp:'/img/games/jp/hgss-ss.png',description:'Remake d\'Argent. Consid\u00e9r\u00e9 par beaucoup comme le meilleur Pok\u00e9mon.'},
-  {id:'green',name:'Pocket Monsters Green',nameFr:'Pocket Monsters Vert',nameJp:'ポケットモンスター 緑',year:1996,platform:'GB',type:'main',gen:1,imgEn:'/img/games/jp/green.png',imgJp:'/img/games/jp/green.png',description:'Le vrai original japonais, sorti en paire avec Rouge. Remplacé par Bleu en Occident.'},
-  {id:'stadium-jp',name:'Pocket Monsters Stadium',nameFr:'Pocket Monsters Stadium (JP)',nameJp:'ポケモンスタジアム',year:1998,platform:'N64',type:'stadium',gen:1,imgEn:'/img/games/jp/stadium-jp.png',imgJp:'/img/games/jp/stadium-jp.png',description:'Le tout premier Stadium, exclusif au Japon. Seulement 42 Pokémon jouables. Différent du Stadium occidental.'},
-  {id:'tcg-gb2',name:'Pokémon Card GB2',nameFr:'Pokémon Card GB2',nameJp:'ポケモンカードGB2',year:2001,platform:'GBC',type:'spinoff',gen:2,imgEn:'/img/games/jp/tcg-gb2.png',imgJp:'/img/games/jp/tcg-gb2.png',description:'Suite du JCC Game Boy, exclusif au Japon. Team Great Rocket en antagoniste. Très recherché par les collectionneurs.'}
+  {id:'green',name:'Pocket Monsters Green',nameFr:'Pocket Monsters Vert',nameJp:'ポケットモンスター 緑',year:1996,platform:'GB',type:'main',gen:1,imgEn:'/img/games/jp/green.png',imgJp:'/img/games/jp/green.png',jpOnly:true,description:'Le vrai original japonais, sorti en paire avec Rouge. Remplacé par Bleu en Occident.'},
+  {id:'stadium-jp',name:'Pocket Monsters Stadium',nameFr:'Pocket Monsters Stadium (JP)',nameJp:'ポケモンスタジアム',year:1998,platform:'N64',type:'stadium',gen:1,imgEn:'/img/games/jp/stadium-jp.png',imgJp:'/img/games/jp/stadium-jp.png',jpOnly:true,description:'Le tout premier Stadium, exclusif au Japon. Seulement 42 Pokémon jouables. Différent du Stadium occidental.'},
+  {id:'tcg-gb2',name:'Pokémon Card GB2',nameFr:'Pokémon Card GB2',nameJp:'ポケモンカードGB2',year:2001,platform:'GBC',type:'spinoff',gen:2,imgEn:'/img/games/jp/tcg-gb2.png',imgJp:'/img/games/jp/tcg-gb2.png',jpOnly:true,description:'Suite du JCC Game Boy, exclusif au Japon. Team Great Rocket en antagoniste. Très recherché par les collectionneurs.'}
 ]
 
 const CHUNK = 40
@@ -74,11 +74,12 @@ export function JeuxVideo() {
     if (filPlatform !== 'all') r = r.filter(g => g.platform === filPlatform)
     if (filType !== 'all') r = r.filter(g => g.type === filType)
     if (filGen !== 'all') r = r.filter(g => g.gen === parseInt(filGen))
+    r = r.filter(g => !g.jpOnly || lang==='JP')
     if (search) { const q = search.toLowerCase(); r = r.filter(g => g.name.toLowerCase().includes(q) || g.nameFr.toLowerCase().includes(q) || g.nameJp.toLowerCase().includes(q)) }
     if (sort === 'name') return r.sort((a, b) => a.nameFr.localeCompare(b.nameFr))
     if (sort === 'gen') return r.sort((a, b) => a.gen - b.gen || a.year - b.year)
     return r.sort((a, b) => a.year - b.year)
-  }, [filPlatform, filType, filGen, search, sort])
+  }, [filPlatform, filType, filGen, search, sort, lang])
 
   const pageItems = filtered.slice(0, visible)
   const hasMore = visible < filtered.length
@@ -87,7 +88,7 @@ export function JeuxVideo() {
   const gn = (g: Game) => lang==='FR'?g.nameFr:lang==='EN'?g.name:g.nameJp
   const gi = (g: Game) => lang==='JP'?g.imgJp:g.imgEn
 
-  useEffect(() => { setVisible(CHUNK) }, [filPlatform, filType, filGen, search, sort])
+  useEffect(() => { setVisible(CHUNK) }, [filPlatform, filType, filGen, search, sort, lang])
   useEffect(() => {
     if (!sentinelRef.current) return
     const obs = new IntersectionObserver(e => { if (e[0].isIntersecting) setVisible(p => Math.min(p + CHUNK, filtered.length)) }, { rootMargin: '400px' })

@@ -807,7 +807,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
               {(moverTab === 'up' ? moversUp : moversDown).map((m, mIdx) => (
-                <div key={m.name} className="mv-row" onClick={()=>router.push('/market/explorer?q='+encodeURIComponent(m.name.split(' PSA')[0].split(' CGC')[0].split(' BGS')[0].split(' PCA')[0]))}>
+                <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)}>
                   <span style={{ fontSize:10, fontWeight:700, color:'#CCC', fontFamily:'var(--font-data)', width:16, textAlign:'center', flexShrink:0 }}>{mIdx+1}</span>
                   <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.padding='4px'}} />
                   <div style={{ flex:1, minWidth:0 }}>
@@ -860,6 +860,137 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
           </div>
         </div>
+
+        {/* ═══ CARD PANEL ═══ */}
+        {selCard && (() => {
+          const mc = MOVERS.find(m => m.name === selCard)
+          if (!mc) return null
+          const hist = getCardHist(selCard)
+          const days = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}[cardPeriod]
+          const cData = cardPeriod === '1J'
+            ? Array.from({length:48}, () => Math.round(mc.price * (1 + (Math.random()-.48) * .005)))
+            : hist.slice(-Math.min(days + 1, hist.length))
+          const cCur = cData[cData.length-1], cStart = cData[0]
+          const cPct = ((cCur - cStart) / cStart * 100)
+          const cUp = cPct >= 0
+          const moversIdx = MOVERS.indexOf(mc)
+          const prevCard = moversIdx > 0 ? MOVERS[moversIdx-1] : null
+          const nextCard = moversIdx < MOVERS.length-1 ? MOVERS[moversIdx+1] : null
+
+          return (
+            <>
+              <div onClick={() => setSelCard(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.2)', zIndex:200 }} />
+              <div style={{ position:'fixed', top:0, right:0, bottom:0, width:440, background:'#fff', borderLeft:'1px solid #EBEBEB', zIndex:201, overflowY:'auto', boxShadow:'-8px 0 32px rgba(0,0,0,.06)', animation:'fadeIn .2s ease-out' }}>
+
+                {/* Nav + Close */}
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 18px', borderBottom:'1px solid #F5F5F5', position:'sticky', top:0, background:'#fff', zIndex:5 }}>
+                  <button onClick={() => prevCard && openCard(prevCard.name)} disabled={!prevCard}
+                    style={{ width:28, height:28, borderRadius:7, border:'1px solid #EBEBEB', background:'#fff', cursor:prevCard?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', color:'#888', opacity:prevCard?1:.2 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <button onClick={() => nextCard && openCard(nextCard.name)} disabled={!nextCard}
+                    style={{ width:28, height:28, borderRadius:7, border:'1px solid #EBEBEB', background:'#fff', cursor:nextCard?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', color:'#888', opacity:nextCard?1:.2 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                  <span style={{ fontSize:10, color:'#BBB', fontFamily:'var(--font-data)' }}>{moversIdx+1}/{MOVERS.length}</span>
+                  <div style={{ flex:1 }} />
+                  <button onClick={() => router.push('/market/explorer?q=' + encodeURIComponent(mc.name.split(' PSA')[0].split(' CGC')[0].split(' BGS')[0].split(' PCA')[0]))}
+                    style={{ fontSize:10, color:'#E03020', background:'#FFF0EE', border:'1px solid #FFD8D0', padding:'4px 10px', borderRadius:6, cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:500 }}>
+                    Voir dans Explorer {'→'}
+                  </button>
+                  <button onClick={() => setSelCard(null)}
+                    style={{ width:28, height:28, borderRadius:7, border:'1px solid #EBEBEB', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color:'#888' }}>{String.fromCharCode(215)}</button>
+                </div>
+
+                {/* Card image + price */}
+                <div style={{ display:'flex', gap:16, padding:'16px 18px' }}>
+                  <img src={mc.img} alt="" style={{ width:100, height:140, objectFit:'cover', borderRadius:8, border:'1px solid #F0F0F0', boxShadow:'0 4px 16px rgba(0,0,0,.08)', flexShrink:0 }}
+                    onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                      <span style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)' }}>{mc.set}</span>
+                      {mc.grade && <GradeBadge grade={mc.grade} size="md" />}
+                    </div>
+                    <div style={{ fontSize:18, fontWeight:600, fontFamily:'var(--font-display)', letterSpacing:'-.3px', marginBottom:8 }}>{mc.name}</div>
+                    <div style={{ fontSize:28, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1.5px', lineHeight:1 }}>{cCur.toLocaleString('fr-FR')} {'€'}</div>
+                    <div style={{ fontSize:14, fontWeight:600, color:cUp?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', marginTop:4 }}>
+                      {cUp?'▲':'▼'} {cUp?'+':''}{cPct.toFixed(1)}%
+                      <span style={{ color:'#AAA', fontWeight:400, fontSize:11, marginLeft:6 }}>{cUp?'+':''}{(cCur-cStart).toLocaleString('fr-FR')} {'€'}</span>
+                    </div>
+                    <div style={{ display:'flex', gap:3, marginTop:10 }}>
+                      {(['1J','1S','1M','3M','1A','3A','5A','MAX'] as Period[]).map(p => (
+                        <button key={p} className={`per-btn${cardPeriod===p?' on':''}`} onClick={() => setCardPeriod(p)} style={{ padding:'3px 8px', fontSize:9 }}>{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart */}
+                <div style={{ padding:'0 18px 16px' }}>
+                  <Chart data={cData} color={cUp?'#2E9E6A':'#E03020'} period={cardPeriod} height={200} />
+                </div>
+
+                {/* Stats */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, padding:'0 18px 16px' }}>
+                  <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>Volume 24h</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)' }}>{mc.vol}</div>
+                  </div>
+                  <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>Variation 24h</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)', color:mc.change>=0?'#2E9E6A':'#E03020' }}>{mc.change>=0?'+':''}{mc.change}%</div>
+                  </div>
+                </div>
+
+                {/* Recent sales */}
+                <div style={{ padding:'0 18px 18px' }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', marginBottom:8 }}>Derni{'è'}res ventes</div>
+                  <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:10, overflow:'hidden' }}>
+                    {[
+                      { src:'eBay', grade:'PSA 10', p:Math.round(mc.price*1.8), ago:'2h', lang:'EN' },
+                      { src:'CM',   grade:'Raw NM', p:mc.price,                 ago:'5h', lang:'FR' },
+                      { src:'eBay', grade:'PSA 9',  p:Math.round(mc.price*1.2), ago:'1j', lang:'EN' },
+                      { src:'CM',   grade:'Raw LP', p:Math.round(mc.price*.85), ago:'2j', lang:'JP' },
+                      { src:'eBay', grade:'Raw NM', p:Math.round(mc.price*1.02),ago:'3j', lang:'EN' },
+                    ].map((sale, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderBottom:i<4?'1px solid #F5F5F5':'none', fontSize:12 }}>
+                        <span style={{ fontSize:10, fontWeight:600, color:sale.src==='eBay'?'#378ADD':'#EF9F27', background:sale.src==='eBay'?'rgba(55,138,221,.06)':'rgba(239,159,39,.06)', padding:'2px 6px', borderRadius:4, fontFamily:'var(--font-display)' }}>{sale.src}</span>
+                        <span style={{ flex:1, color:'#555', fontFamily:'var(--font-display)' }}>{sale.grade}</span>
+                        <span style={{ fontSize:10, color:'#BBB', fontFamily:'var(--font-display)' }}>{sale.lang} {'·'} {sale.ago}</span>
+                        <span style={{ fontWeight:600, fontFamily:'var(--font-data)' }}>{sale.p.toLocaleString('fr-FR')} {'€'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* See also */}
+                <div style={{ padding:'0 18px 20px' }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', marginBottom:8 }}>Voir aussi</div>
+                  {MOVERS.filter(m => m.name !== selCard).slice(0, 4).map(m => (
+                    <div key={m.name} onClick={() => openCard(m.name)}
+                      style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', border:'1px solid #F0F0F0', marginBottom:4, transition:'background .1s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background='#FAFAFA')} onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
+                      <img src={m.img} alt="" style={{ width:24, height:33, objectFit:'cover', borderRadius:3, flexShrink:0 }}
+                        onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
+                        <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
+                          <span style={{ fontSize:10, color:'#BBB' }}>{m.set}</span>
+                          {m.grade && <GradeBadge grade={m.grade} size="sm" />}
+                        </div>
+                      </div>
+                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, fontFamily:'var(--font-data)' }}>{m.price} {'€'}</div>
+                        <div style={{ fontSize:10, fontWeight:600, color:m.change>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>{m.change>=0?'+':''}{m.change}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </>
+          )
+        })()}
 
       </div>
     </>

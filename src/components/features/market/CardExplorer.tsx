@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 function genH(base:number,vol:number,trend:number,days:number):number[]{
   const start=Math.max(base*.35,base*(1-trend*(days/365)*.6))
@@ -340,9 +341,17 @@ function mockSales(c:Card){return[
 ]}
 
 export function CardExplorer(){
-  const [sel,setSel]=useState(CARDS[0].name)
+  const searchParams = useSearchParams()
+  const initialQ = searchParams.get('q') || ''
+  const [sel,setSel]=useState(() => {
+    if (initialQ) {
+      const match = CARDS.find(c => c.name.toLowerCase().includes(initialQ.toLowerCase()))
+      if (match) return match.name
+    }
+    return CARDS[0].name
+  })
   const [period,setPeriod]=useState<Period>('1M')
-  const [search,setSearch]=useState('')
+  const [search,setSearch]=useState(initialQ)
   const [sort,setSort]=useState<'vol'|'price'|'change'|'psa'|'name'>('vol')
   const [filterSet,setFilterSet]=useState('all')
   const [filterRarity,setFilterRarity]=useState('all')

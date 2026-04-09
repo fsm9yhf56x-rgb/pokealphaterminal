@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 
 // ── GENERATE REALISTIC PRICE HISTORY ──
 function genHistory(base: number, volatility: number, trend: number, days: number): number[] {
@@ -396,6 +397,7 @@ function Sec({ children, right }: { children:React.ReactNode; right?:React.React
 }
 
 export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
+  const router = useRouter()
   const [selIdx, setSelIdx] = useState<IndexId>('global')
   const [showMA, setShowMA] = useState(true)
   const [showVol, setShowVol] = useState(true)

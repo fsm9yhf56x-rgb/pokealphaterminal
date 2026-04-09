@@ -53,32 +53,126 @@ function Spark({data,w=56,h=20}:{data:number[];w?:number;h?:number}){
 
 function Chart({data,color,period}:{data:number[];color:string;period:Period}){
   const ref=useRef<SVGSVGElement>(null)
-  const [hover,setHover]=useState<{x:number;y:number;val:number;idx:number}|null>(null)
-  const W=600,H=200,PY=10
+  const [hover,setHover]=useState<{x:number;y:number;val:number;idx:number;pct:number}|null>(null)
+  const W=640,H=240,ML=54,MR=12,MT=16,MB=30
+  const cw=W-ML-MR,ch=H-MT-MB
   const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1
-  const pts=data.map((v,i)=>({x:i/(data.length-1)*W,y:PY+(1-(v-mn)/rng)*(H-PY*2),v}))
-  const line=pts.map(p=>`${p.x},${p.y}`).join(' ')
-  const area=`0,${H} ${line} ${W},${H}`
+  const first=data[0],last=data[data.length-1]
+
+  // Smart Y-axis ticks
+  const rawStep=rng/5
+  const mag=Math.pow(10,Math.floor(Math.log10(rawStep)))
+  const nice=[1,2,2.5,5,10].find(n=>n*mag>=rawStep)||10
+  const step=nice*mag
+  const yMin=Math.floor(mn/step)*step
+  const yTicks:number[]=[]
+  for(let v=yMin;v<=mx+step*.5;v+=step)if(v>=mn-step*.5)yTicks.push(Math.round(v*100)/100)
+
+  // X-axis labels
+  const xCount=period==='1J'?8:period==='1S'?7:period==='1M'?6:period==='3M'?6:period==='1A'?6:5
+  const xTicks:{idx:number;label:string}[]=[]
+  for(let i=0;i<xCount;i++){
+    const idx=Math.round(i/(xCount-1)*(data.length-1))
+    const d=new Date();d.setDate(d.getDate()-(data.length-1-idx))
+    let l=''
+    if(period==='1J')l=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    else if(['3A','5A','MAX'].includes(period))l=d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})
+    else if(period==='1A')l=d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})
+    else l=d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})
+    xTicks.push({idx,label:l})
+  }
+
+  const px=(i:number)=>ML+(i/(data.length-1))*cw
+  const py=(v:number)=>MT+(1-(v-mn)/rng)*ch
+  const pts=data.map((v,i)=>({x:px(i),y:py(v),v}))
+
+  // Smooth bezier path
+  const pathD=pts.length>2?pts.reduce((a,p,i)=>{
+    if(i===0)return'M '+p.x+' '+p.y
+    const pr=pts[i-1],cx=(pr.x+p.x)/2
+    return a+' C '+cx+' '+pr.y+' '+cx+' '+p.y+' '+p.x+' '+p.y
+  },''):pts.map((p,i)=>(i===0?'M':'L')+' '+p.x+' '+p.y).join(' ')
+  const areaD=pathD+' L '+pts[pts.length-1].x+' '+(MT+ch)+' L '+pts[0].x+' '+(MT+ch)+' Z'
+
   const onMove=useCallback((e:React.MouseEvent<SVGSVGElement>)=>{
-    if(!ref.current)return;const r=ref.current.getBoundingClientRect()
-    const idx=Math.round((e.clientX-r.left)/r.width*(data.length-1))
-    if(idx>=0&&idx<pts.length)setHover({x:pts[idx].x,y:pts[idx].y,val:pts[idx].v,idx})
-  },[data,pts])
-  const dl=(idx:number)=>{const d=new Date();d.setDate(d.getDate()-(data.length-1-idx))
+    if(!ref.current)return
+    const r=ref.current.getBoundingClientRect()
+    const rx=(e.clientX-r.left)/r.width
+    const dx=(rx*W-ML)/cw
+    const idx=Math.round(dx*(data.length-1))
+    if(idx>=0&&idx<pts.length){
+      const pctFromStart=((pts[idx].v-first)/first*100)
+      setHover({x:pts[idx].x,y:pts[idx].y,val:pts[idx].v,idx,pct:pctFromStart})
+    }
+  },[data,pts,W,ML,cw,first])
+
+  const hoverDate=(idx:number)=>{
+    const d=new Date();d.setDate(d.getDate()-(data.length-1-idx))
     if(period==='1J')return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
-    if(['3A','5A','MAX'].includes(period))return d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})
-    if(period==='1A')return d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})
-    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}
+    return d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long',year:'numeric'})
+  }
+
+  const fmtY=(v:number)=>v>=10000?(v/1000).toFixed(0)+'k':v>=1000?(v/1000).toFixed(1)+'k':v.toLocaleString('fr-FR')
+
   return(
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:200,display:'block',cursor:'crosshair'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
-      <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity={.1}/><stop offset="100%" stopColor={color} stopOpacity={0}/></linearGradient></defs>
-      {[.25,.5,.75].map(r=><line key={r} x1={0} x2={W} y1={PY+r*(H-PY*2)} y2={PY+r*(H-PY*2)} stroke="rgba(0,0,0,.03)" strokeWidth={1}/>)}
-      <polygon points={area} fill="url(#cg)"/><polyline points={line} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
-      {hover&&<><line x1={hover.x} x2={hover.x} y1={PY} y2={H-PY} stroke="rgba(0,0,0,.08)" strokeWidth={1} strokeDasharray="3,3"/>
+    <svg ref={ref} viewBox={'0 0 '+W+' '+H} style={{width:'100%',height:240,display:'block',cursor:'crosshair',userSelect:'none'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
+      <defs>
+        <linearGradient id="cge" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={.1}/>
+          <stop offset="50%" stopColor={color} stopOpacity={.04}/>
+          <stop offset="100%" stopColor={color} stopOpacity={0}/>
+        </linearGradient>
+      </defs>
+
+      {/* Y grid + labels */}
+      {yTicks.map(v=>{
+        const y=py(v)
+        if(y<MT-4||y>MT+ch+4)return null
+        return<g key={v}>
+          <line x1={ML} x2={W-MR} y1={y} y2={y} stroke="rgba(0,0,0,.04)" strokeWidth={1}/>
+          <text x={ML-8} y={y+3.5} textAnchor="end" fill="#BBB" fontSize={9} fontFamily="var(--font-data)">{fmtY(v)}</text>
+        </g>
+      })}
+
+      {/* X labels */}
+      {xTicks.map(t=>(
+        <text key={t.idx} x={px(t.idx)} y={H-8} textAnchor="middle" fill="#BBB" fontSize={9} fontFamily="var(--font-display)">{t.label}</text>
+      ))}
+
+      {/* Baseline (first value) dashed line */}
+      <line x1={ML} x2={W-MR} y1={py(first)} y2={py(first)} stroke="rgba(0,0,0,.06)" strokeWidth={1} strokeDasharray="4,4"/>
+
+      {/* Area + Curve */}
+      <path d={areaD} fill="url(#cge)"/>
+      <path d={pathD} fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
+
+      {/* Start + End dots */}
+      <circle cx={pts[0].x} cy={pts[0].y} r={2.5} fill="#BBB" stroke="#fff" strokeWidth={1.5}/>
+      <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r={3.5} fill={color} stroke="#fff" strokeWidth={2}/>
+
+      {/* Hover crosshair + tooltip */}
+      {hover&&<>
+        {/* Vertical line */}
+        <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+ch} stroke="rgba(0,0,0,.1)" strokeWidth={1} strokeDasharray="3,3"/>
+        {/* Horizontal line */}
+        <line x1={ML} x2={W-MR} y1={hover.y} y2={hover.y} stroke="rgba(0,0,0,.05)" strokeWidth={1} strokeDasharray="2,3"/>
+        {/* Dot */}
+        <circle cx={hover.x} cy={hover.y} r={6} fill={color} fillOpacity={.15}/>
         <circle cx={hover.x} cy={hover.y} r={4} fill={color} stroke="#fff" strokeWidth={2}/>
-        <rect x={Math.min(Math.max(hover.x-44,0),W-88)} y={Math.max(hover.y-46,0)} width={88} height={36} rx={8} fill="#111"/>
-        <text x={Math.min(Math.max(hover.x,44),W-44)} y={Math.max(hover.y-28,12)} textAnchor="middle" fill="#fff" fontSize={13} fontWeight={600} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')}</text>
-        <text x={Math.min(Math.max(hover.x,44),W-44)} y={Math.max(hover.y-15,25)} textAnchor="middle" fill="rgba(255,255,255,.5)" fontSize={10} fontFamily="var(--font-display)">{dl(hover.idx)}</text></>}
+
+        {/* Y-axis price badge */}
+        <rect x={0} y={hover.y-10} width={ML-5} height={20} rx={4} fill={color}/>
+        <text x={(ML-5)/2} y={hover.y+3.5} textAnchor="middle" fill="#fff" fontSize={8.5} fontWeight={600} fontFamily="var(--font-data)">{fmtY(hover.val)}</text>
+
+        {/* Top tooltip */}
+        <rect x={Math.min(Math.max(hover.x-64,ML),W-MR-128)} y={4} width={128} height={44} rx={8} fill="#111"/>
+        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={22} textAnchor="middle" fill="#fff" fontSize={15} fontWeight={700} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')} {'€'}</text>
+        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={38} textAnchor="middle" fill={hover.pct>=0?'#4ADE80':'#F87171'} fontSize={10} fontWeight={600} fontFamily="var(--font-data)">{hover.pct>=0?'+':''}{hover.pct.toFixed(1)}%</text>
+
+        {/* Bottom date badge */}
+        <rect x={Math.min(Math.max(hover.x-60,ML),W-MR-120)} y={MT+ch+2} width={120} height={18} rx={4} fill="rgba(0,0,0,.06)"/>
+        <text x={Math.min(Math.max(hover.x,ML+60),W-MR-60)} y={MT+ch+14} textAnchor="middle" fill="#888" fontSize={8.5} fontFamily="var(--font-display)">{hoverDate(hover.idx)}</text>
+      </>}
     </svg>)
 }
 

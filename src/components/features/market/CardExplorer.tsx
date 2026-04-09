@@ -11,22 +11,22 @@ function genH(base:number,vol:number,trend:number,days:number):number[]{
 type Period='1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
 const P_DAYS:Record<Period,number>={'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}
 
-interface Card{name:string;set:string;img:string;price:number;change:number;vol:number;rarity:string;type:string;gen:number;psa10:number;psa9:number;number:string}
+interface Card{name:string;set:string;img:string;price:number;change:number;vol:number;rarity:string;type:string;gen:number;psa10:number;psa9:number;number:string;grade?:string}
 const CARDS:Card[]=[
-  {name:'Charizard ex Alt Art',set:'Obsidian Flames',price:920,change:21.3,vol:203,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.webp'},
-  {name:'Umbreon VMAX Alt Art',set:'Evolving Skies',price:880,change:24.1,vol:112,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp'},
-  {name:'Rayquaza Gold Star',set:'EX Deoxys',price:740,change:31.2,vol:48,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp'},
-  {name:'Gengar VMAX Alt Art',set:'Fusion Strike',price:340,change:18.4,vol:67,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp'},
-  {name:'Lugia Neo Genesis',set:'Neo Genesis',price:580,change:15.2,vol:31,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'/img/cards/lugia-neo.webp'},
-  {name:'Mew ex Alt Art',set:'Pokemon 151',price:142,change:12.8,vol:95,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.webp'},
-  {name:'Blastoise Base Set',set:'Base Set',price:620,change:-4.2,vol:24,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp'},
-  {name:'Pikachu VMAX RR',set:'Vivid Voltage',price:110,change:-3.8,vol:89,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp'},
-  {name:'Mewtwo GX Rainbow',set:'Unified Minds',price:95,change:-2.9,vol:44,rarity:'HR',type:'psychic',gen:1,psa10:190,psa9:120,number:'222/236',img:'/img/cards/mewtwo-gx-rainbow.webp'},
+  {name:'Charizard ex Alt Art',set:'Obsidian Flames',price:920,change:21.3,vol:203,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.webp',grade:'Raw'},
+  {name:'Umbreon VMAX Alt Art',set:'Evolving Skies',price:880,change:24.1,vol:112,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'Raw'},
+  {name:'Rayquaza Gold Star',set:'EX Deoxys',price:740,change:31.2,vol:48,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp',grade:'Raw'},
+  {name:'Gengar VMAX Alt Art',set:'Fusion Strike',price:340,change:18.4,vol:67,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'Raw'},
+  {name:'Lugia Neo Genesis',set:'Neo Genesis',price:580,change:15.2,vol:31,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'/img/cards/lugia-neo.webp',grade:'Raw'},
+  {name:'Mew ex Alt Art',set:'Pokemon 151',price:142,change:12.8,vol:95,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.webp',grade:'Raw'},
+  {name:'Blastoise Base Set',set:'Base Set',price:620,change:-4.2,vol:24,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp',grade:'Raw'},
+  {name:'Pikachu VMAX RR',set:'Vivid Voltage',price:110,change:-3.8,vol:89,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp',grade:'Raw'},
+  {name:'Mewtwo GX Rainbow',set:'Unified Minds',price:95,change:-2.9,vol:44,rarity:'HR',type:'psychic',gen:1,psa10:190,psa9:120,number:'222/236',img:'/img/cards/mewtwo-gx-rainbow.webp',grade:'Raw'},
   {name:'Espeon VMAX Alt Art',set:'Evolving Skies',price:420,change:8.5,vol:56,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'/img/cards/espeon-vmax-alt.webp'},
-  {name:'Dragonite V Alt Art',set:'Pokemon GO',price:290,change:14.8,vol:33,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'/img/cards/dragonite-v-alt.webp'},
-  {name:'Charizard Base Set',set:'Base Set',price:3400,change:5.8,vol:12,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp'},
-  {name:'Glaceon VMAX Alt Art',set:'Evolving Skies',price:260,change:6.2,vol:41,rarity:'SAR',type:'water',gen:4,psa10:490,psa9:330,number:'209/203',img:'/img/cards/glaceon-vmax-alt.webp'},
-  {name:'Leafeon VMAX Alt Art',set:'Evolving Skies',price:310,change:7.1,vol:38,rarity:'SAR',type:'grass',gen:4,psa10:580,psa9:390,number:'205/203',img:'/img/cards/leafeon-vmax-alt.webp'},
+  {name:'Dragonite V Alt Art',set:'Pokemon GO',price:290,change:14.8,vol:33,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'/img/cards/dragonite-v-alt.webp',grade:'Raw'},
+  {name:'Charizard Base Set',set:'Base Set',price:3400,change:5.8,vol:12,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'Raw'},
+  {name:'Glaceon VMAX Alt Art',set:'Evolving Skies',price:260,change:6.2,vol:41,rarity:'SAR',type:'water',gen:4,psa10:490,psa9:330,number:'209/203',img:'/img/cards/glaceon-vmax-alt.webp',grade:'Raw'},
+  {name:'Leafeon VMAX Alt Art',set:'Evolving Skies',price:310,change:7.1,vol:38,rarity:'SAR',type:'grass',gen:4,psa10:580,psa9:390,number:'205/203',img:'/img/cards/leafeon-vmax-alt.webp',grade:'Raw'},
   {name:'Pikachu Illustrator',set:'Promo',price:42000,change:2.1,vol:1,rarity:'Promo',type:'electric',gen:1,psa10:420000,psa9:120000,number:'---',img:'/img/cards/pikachu-vmax-rr.webp'},
   {name:'Moonbreon (Umbreon V Alt)',set:'Evolving Skies',price:340,change:19.5,vol:78,rarity:'SAR',type:'dark',gen:2,psa10:650,psa9:430,number:'188/203',img:'/img/cards/moonbreon-v-alt.webp'},
 ]
@@ -34,6 +34,41 @@ const SETS=[...new Set(CARDS.map(c=>c.set))].sort()
 const RARITIES=[...new Set(CARDS.map(c=>c.rarity))].sort()
 const HISTORIES:Record<string,number[]>={}
 CARDS.forEach(c=>{HISTORIES[c.name]=genH(c.price,.018,.15,3650)})
+
+// Grade badge colors — same as Portfolio
+const GRADE_STYLES: Record<string,{bg:string;color:string;border:string}> = {
+  'PSA 10': {bg:'linear-gradient(135deg,#FEF3C7,#FDE68A)',color:'#92400E',border:'#F59E0B'},
+  'PSA 9':  {bg:'linear-gradient(135deg,#F5F5F7,#E8E8ED)',color:'#555',border:'#C7C7CC'},
+  'PSA 8':  {bg:'#F5F5F7',color:'#888',border:'#D4D4D4'},
+  'CGC 10': {bg:'linear-gradient(135deg,#EFF6FF,#DBEAFE)',color:'#1E40AF',border:'#60A5FA'},
+  'CGC 9.5':{bg:'#EFF6FF',color:'#2563EB',border:'#93C5FD'},
+  'CGC 9':  {bg:'#F0F9FF',color:'#3B82F6',border:'#BAD6FB'},
+  'BGS 10': {bg:'linear-gradient(135deg,#FEF2F2,#FECACA)',color:'#991B1B',border:'#F87171'},
+  'BGS 9.5':{bg:'#FEF2F2',color:'#B91C1C',border:'#FCA5A5'},
+  'BGS 9':  {bg:'#FFF5F5',color:'#DC2626',border:'#FECACA'},
+  'PCA 10': {bg:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',color:'#166534',border:'#4ADE80'},
+  'PCA 9.5':{bg:'#F0FDF4',color:'#15803D',border:'#86EFAC'},
+  'PCA 9':  {bg:'#F0FFF4',color:'#22C55E',border:'#BBF7D0'},
+  'Raw':    {bg:'transparent',color:'#AAA',border:'#E5E5EA'},
+}
+
+function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
+  const st=GRADE_STYLES[grade]||GRADE_STYLES['Raw']
+  const isRaw=grade==='Raw'||!grade
+  const sz=size==='lg'?{fs:11,px:10,py:3}:size==='sm'?{fs:8,px:5,py:1}:{fs:9,px:7,py:2}
+  if(isRaw)return <span style={{fontSize:sz.fs,color:'#BBB',fontFamily:'var(--font-display)'}}>Raw</span>
+  return(
+    <span style={{
+      fontSize:sz.fs,fontWeight:700,color:st.color,background:st.bg,
+      border:'1px solid '+st.border,padding:sz.py+'px '+sz.px+'px',
+      borderRadius:4,fontFamily:'var(--font-data)',letterSpacing:'.02em',
+      whiteSpace:'nowrap',lineHeight:1,display:'inline-flex',alignItems:'center',gap:3,
+    }}>
+      {grade}
+    </span>
+  )
+}
+
 const VINTAGE_SETS=['Base Set','EX Deoxys','Neo Genesis','Promo']
 const TC:Record<string,string>={fire:'#FF6B35',water:'#42A5F5',psychic:'#C855D4',dark:'#7E57C2',electric:'#D4A800',grass:'#3DA85A',dragon:'#6F5CE6'}
 
@@ -295,6 +330,7 @@ export function CardExplorer(){
   const [filterPriceMax,setFilterPriceMax]=useState('')
   const [filterTrend,setFilterTrend]=useState('all')
   const [filterGrade,setFilterGrade]=useState('all')
+  const [filterCondition,setFilterCondition]=useState<string>('all')
   const [showFilters,setShowFilters]=useState(false)
   const listRef=useRef<HTMLDivElement>(null)
 
@@ -309,8 +345,8 @@ export function CardExplorer(){
   const pct=((cur-start)/start*100),isUp=pct>=0
   const spark30=useMemo(()=>(HISTORIES[sel]||[]).slice(-30),[sel])
 
-  const af=[filterSet,filterRarity,filterEra,filterPriceMin,filterPriceMax,filterTrend,filterGrade].filter(f=>f&&f!=='all').length
-  const resetF=()=>{setFilterSet('all');setFilterRarity('all');setFilterEra('all');setFilterPriceMin('');setFilterPriceMax('');setFilterTrend('all');setFilterGrade('all')}
+  const af=[filterSet,filterRarity,filterEra,filterPriceMin,filterPriceMax,filterTrend,filterGrade,filterCondition].filter(f=>f&&f!=='all').length
+  const resetF=()=>{setFilterSet('all');setFilterRarity('all');setFilterEra('all');setFilterPriceMin('');setFilterPriceMax('');setFilterTrend('all');setFilterGrade('all');setFilterCondition('all')}
 
   const filtered=useMemo(()=>{
     let l=[...CARDS]
@@ -325,11 +361,19 @@ export function CardExplorer(){
     if(filterTrend==='down')l=l.filter(c=>c.change<0)
     if(filterTrend==='hot')l=l.filter(c=>c.change>15)
     if(filterTrend==='stable')l=l.filter(c=>Math.abs(c.change)<5)
+    if(filterCondition!=='all'){
+      if(filterCondition==='raw')l=l.filter(c=>!c.grade||c.grade==='Raw')
+      if(filterCondition==='graded')l=l.filter(c=>c.grade&&c.grade!=='Raw')
+      if(filterCondition==='psa')l=l.filter(c=>c.grade&&c.grade.startsWith('PSA'))
+      if(filterCondition==='cgc')l=l.filter(c=>c.grade&&c.grade.startsWith('CGC'))
+      if(filterCondition==='bgs')l=l.filter(c=>c.grade&&c.grade.startsWith('BGS'))
+      if(filterCondition==='pca')l=l.filter(c=>c.grade&&c.grade.startsWith('PCA'))
+    }
     if(filterGrade==='psa10+')l=l.filter(c=>c.psa10>=1000)
     if(filterGrade==='premium')l=l.filter(c=>(c.psa10/c.price)>=2)
     l.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):sort==='price'?b.price-a.price:sort==='change'?b.change-a.change:sort==='psa'?b.psa10-a.psa10:b.vol-a.vol)
     return l
-  },[search,filterSet,filterRarity,filterEra,filterPriceMin,filterPriceMax,filterTrend,filterGrade,sort])
+  },[search,filterSet,filterRarity,filterEra,filterPriceMin,filterPriceMax,filterTrend,filterGrade,filterCondition,sort])
 
   const ci=filtered.findIndex(c=>c.name===sel)
   const nav=(d:-1|1)=>{const n=ci+d;if(n>=0&&n<filtered.length){setSel(filtered[n].name);setPeriod('1M')}}

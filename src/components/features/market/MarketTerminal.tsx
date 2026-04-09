@@ -56,28 +56,31 @@ type Period = '1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
 const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}
 
 const MOVERS = [
-  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'/img/cards/rayquaza-gold-star.webp' },
-  { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'/img/cards/umbreon-vmax-alt.webp' },
-  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'/img/cards/charizard-ex-alt.webp' },
+  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'/img/cards/rayquaza-gold-star.webp', grade:'Raw' },
+  { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'/img/cards/umbreon-vmax-alt.webp', grade:'Raw' },
+  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'/img/cards/charizard-ex-alt.webp', grade:'Raw' },
   { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'/img/cards/gengar-vmax-alt.webp' },
   { name:'Lugia Neo Genesis',    set:'Neo Genesis',    price:580, change:15.2, vol:31,  img:'/img/cards/lugia-neo.webp' },
   { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'/img/cards/mew-ex-alt.webp' },
   { name:'Blastoise Base Set',   set:'Base Set',       price:620, change:-4.2, vol:24,  img:'/img/cards/blastoise-base.webp' },
   { name:'Pikachu VMAX RR',      set:'Vivid Voltage',  price:110, change:-3.8, vol:89,  img:'/img/cards/pikachu-vmax-rr.webp' },
-  { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'/img/cards/mewtwo-gx-rainbow.webp' },
+  { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'/img/cards/mewtwo-gx-rainbow.webp', grade:'Raw' },
+  { name:'Charizard ex Alt PSA 10', set:'Obsidian Flames',price:1680,change:18.2,vol:31, img:'/img/cards/charizard-ex-alt.webp', grade:'PSA 10' },
+  { name:'Umbreon VMAX Alt PSA 10', set:'Evolving Skies', price:1600,change:22.4,vol:18, img:'/img/cards/umbreon-vmax-alt.webp', grade:'PSA 10' },
+  { name:'Gengar VMAX Alt BGS 9.5', set:'Fusion Strike',  price:480, change:14.2,vol:12, img:'/img/cards/gengar-vmax-alt.webp', grade:'BGS 9.5' },
 ]
 
 const TRANSACTIONS = [
-  { card:'Charizard ex Alt Art PSA 10',  price:1240, type:'buy'  as const, source:'eBay',  seller:'RedDragonKai', lang:'EN' },
-  { card:'Umbreon VMAX Alt Art Raw',     price:880,  type:'buy'  as const, source:'CM',    seller:'SakuraTCG',    lang:'JP' },
-  { card:'Rayquaza Gold Star PSA 9',     price:720,  type:'sell' as const, source:'eBay',  seller:'GoldStarFR',   lang:'EN' },
-  { card:'Lugia Neo Genesis PSA 8',      price:580,  type:'buy'  as const, source:'eBay',  seller:'VintageJP',    lang:'JP' },
-  { card:'Gengar VMAX Alt Art Raw',      price:340,  type:'buy'  as const, source:'CM',    seller:'PsychicDeck',  lang:'FR' },
-  { card:'Mew ex Alt Art Raw',           price:142,  type:'sell' as const, source:'eBay',  seller:'NewCollect',   lang:'EN' },
-  { card:'Pikachu Illustrator Promo',    price:4200, type:'buy'  as const, source:'Goldin',seller:'WhaleJP',      lang:'JP' },
-  { card:'Blastoise Base Set PSA 9',     price:620,  type:'sell' as const, source:'CM',    seller:'VintageEU',    lang:'EN' },
-  { card:'Espeon VMAX Alt Art Raw',      price:418,  type:'buy'  as const, source:'CM',    seller:'EeveeFanFR',   lang:'FR' },
-  { card:'Dragonite V Alt Art Raw',      price:290,  type:'buy'  as const, source:'eBay',  seller:'DragonLord',   lang:'EN' },
+  { card:'Charizard ex Alt Art',  price:1240, type:'buy'  as const, source:'eBay',  seller:'RedDragonKai', lang:'EN', grade:'PSA 10' },
+  { card:'Umbreon VMAX Alt Art',     price:880,  type:'buy'  as const, source:'CM',    seller:'SakuraTCG',    lang:'JP', grade:'Raw' },
+  { card:'Rayquaza Gold Star',     price:720,  type:'sell' as const, source:'eBay',  seller:'GoldStarFR',   lang:'EN', grade:'PSA 9' },
+  { card:'Lugia Neo Genesis',      price:580,  type:'buy'  as const, source:'eBay',  seller:'VintageJP',    lang:'JP', grade:'PSA 8' },
+  { card:'Gengar VMAX Alt Art',      price:340,  type:'buy'  as const, source:'CM',    seller:'PsychicDeck',  lang:'FR', grade:'Raw' },
+  { card:'Mew ex Alt Art',           price:142,  type:'sell' as const, source:'eBay',  seller:'NewCollect',   lang:'EN', grade:'Raw' },
+  { card:'Pikachu Illustrator',    price:4200, type:'buy'  as const, source:'Goldin',seller:'WhaleJP',      lang:'JP', grade:'PSA 10' },
+  { card:'Blastoise Base Set',     price:620,  type:'sell' as const, source:'CM',    seller:'VintageEU',    lang:'EN', grade:'PCA 9' },
+  { card:'Espeon VMAX Alt Art',      price:418,  type:'buy'  as const, source:'CM',    seller:'EeveeFanFR',   lang:'FR', grade:'CGC 9.5' },
+  { card:'Dragonite V Alt Art',      price:290,  type:'buy'  as const, source:'eBay',  seller:'DragonLord',   lang:'EN', grade:'Raw' },
 ]
 
 // ── CARD DETAIL ──
@@ -332,6 +335,30 @@ function CountUp({ target, suffix='', duration=1000 }: { target:number; suffix?:
   return <>{val.toLocaleString('fr-FR')}{suffix}</>
 }
 
+// ── GRADE BADGES ──
+const GRADE_STYLES: Record<string,{bg:string;color:string;border:string}> = {
+  'PSA 10': {bg:'linear-gradient(135deg,#FEF3C7,#FDE68A)',color:'#92400E',border:'#F59E0B'},
+  'PSA 9':  {bg:'linear-gradient(135deg,#F5F5F7,#E8E8ED)',color:'#555',border:'#C7C7CC'},
+  'PSA 8':  {bg:'#F5F5F7',color:'#888',border:'#D4D4D4'},
+  'CGC 10': {bg:'linear-gradient(135deg,#EFF6FF,#DBEAFE)',color:'#1E40AF',border:'#60A5FA'},
+  'CGC 9.5':{bg:'#EFF6FF',color:'#2563EB',border:'#93C5FD'},
+  'BGS 10': {bg:'linear-gradient(135deg,#FEF2F2,#FECACA)',color:'#991B1B',border:'#F87171'},
+  'BGS 9.5':{bg:'#FEF2F2',color:'#B91C1C',border:'#FCA5A5'},
+  'PCA 10': {bg:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',color:'#166534',border:'#4ADE80'},
+  'PCA 9':  {bg:'#F0FFF4',color:'#22C55E',border:'#BBF7D0'},
+  'Raw':    {bg:'transparent',color:'#AAA',border:'#E5E5EA'},
+}
+function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
+  const st=GRADE_STYLES[grade]||GRADE_STYLES['Raw']
+  if(!grade||grade==='Raw')return <span style={{fontSize:9,color:'#BBB',background:'#F5F5F7',padding:'1px 5px',borderRadius:3,fontFamily:'var(--font-data)'}}>Raw</span>
+  const sz=size==='lg'?{fs:11,px:10,py:3}:size==='sm'?{fs:8,px:5,py:1}:{fs:9,px:7,py:2}
+  return(
+    <span style={{fontSize:sz.fs,fontWeight:700,color:st.color,background:st.bg,border:'1px solid '+st.border,padding:sz.py+'px '+sz.px+'px',borderRadius:4,fontFamily:'var(--font-data)',letterSpacing:'.02em',whiteSpace:'nowrap',lineHeight:1,display:'inline-flex',alignItems:'center'}}>
+      {grade}
+    </span>
+  )
+}
+
 // ── SECTION HEADER ──
 function Sec({ children, right }: { children:React.ReactNode; right?:React.ReactNode }) {
   return (
@@ -434,7 +461,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
     const t = setInterval(() => {
       const src = TRANSACTIONS[Math.floor(Math.random() * TRANSACTIONS.length)]
       const variation = 1 + (Math.random() - 0.5) * 0.1
-      const tx = { ...src, id: Date.now(), time: "\u00c0 l'instant", price: Math.round(src.price * variation) }
+      const tx = { ...src, id: Date.now(), time: "\u00c0 l'instant", price: Math.round(src.price * variation), grade: src.grade }
       setFeed(prev => [tx, ...prev.slice(0, 19)])
       setNewTx(tx.id)
       setTimeout(() => setNewTx(null), 2000)
@@ -759,7 +786,10 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                   <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.padding='4px'}} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
-                    <div style={{ fontSize:10, color:'#BBB', marginTop:1 }}>{m.set} {'\u00b7'} {m.vol} tx</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
+                      <span style={{ fontSize:10, color:'#BBB' }}>{m.set} {'\u00b7'} {m.vol} tx</span>
+                      {m.grade && <GradeBadge grade={m.grade} size="sm"/>}
+                    </div>
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:15, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.5px' }}>{m.price} {'\u20ac'}</div>
@@ -789,7 +819,10 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                     {tx.id === newTx && <div style={{ position:'absolute', top:-2, right:-2, width:7, height:7, borderRadius:'50%', background:'#2E9E6A', border:'1.5px solid #fff', animation:'pulse 1s infinite' }}/>}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.card}</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                      <span style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.card}</span>
+                      {tx.grade && <GradeBadge grade={tx.grade} size="sm"/>}
+                    </div>
                     <div style={{ fontSize:10, color:'#BBB', marginTop:1 }}><span style={{fontSize:9,fontWeight:600,color:tx.source==='eBay'?'#378ADD':tx.source==='CM'?'#EF9F27':'#888',background:tx.source==='eBay'?'rgba(55,138,221,.06)':tx.source==='CM'?'rgba(239,159,39,.06)':'#F5F5F7',padding:'1px 5px',borderRadius:3}}>{tx.source}</span> {tx.seller} {'\u00b7'} {tx.lang} {'\u00b7'} {tx.time}</div>
                   </div>
                   <div style={{ textAlign:'right', flexShrink:0 }}>

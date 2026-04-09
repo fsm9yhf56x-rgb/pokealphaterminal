@@ -42,6 +42,20 @@ function getSlice(name:string,period:Period):number[]{
   if(period==='1J')return Array.from({length:48},()=>Math.round(h[h.length-1]*(1+(Math.random()-.48)*.005)))
   return h.slice(-Math.min(P_DAYS[period]+1,h.length))
 }
+function getVolume(data:number[]):number[]{
+  return data.map((_,i)=>{
+    if(i===0)return Math.round(Math.random()*50+10)
+    const change=Math.abs(data[i]-data[i-1])/data[i-1]
+    return Math.round((Math.random()*40+10)*(1+change*20))
+  })
+}
+function calcMA(data:number[],window:number):( number|null)[]{
+  return data.map((_,i)=>{
+    if(i<window-1)return null
+    let sum=0;for(let j=i-window+1;j<=i;j++)sum+=data[j]
+    return Math.round(sum/window)
+  })
+}
 
 function Spark({data,w=56,h=20}:{data:number[];w?:number;h?:number}){
   if(data.length<2)return null
@@ -51,10 +65,10 @@ function Spark({data,w=56,h=20}:{data:number[];w?:number;h?:number}){
   return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{display:'block'}}><polyline points={pts} fill="none" stroke={up?'#2E9E6A':'#E03020'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
 
-function Chart({data,color,period}:{data:number[];color:string;period:Period}){
+function Chart({data,color,period,volume,ma7,ma30}:{data:number[];color:string;period:Period;volume?:number[];ma7?:(number|null)[];ma30?:(number|null)[]}){
   const ref=useRef<SVGSVGElement>(null)
   const [hover,setHover]=useState<{x:number;y:number;val:number;idx:number;pct:number}|null>(null)
-  const W=640,H=240,ML=54,MR=12,MT=16,MB=30
+  const W=640,H=270,ML=54,MR=12,MT=16,MB=34
   const cw=W-ML-MR,ch=H-MT-MB
   const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1
   const first=data[0],last=data[data.length-1]
@@ -115,7 +129,7 @@ function Chart({data,color,period}:{data:number[];color:string;period:Period}){
   const fmtY=(v:number)=>v>=10000?(v/1000).toFixed(0)+'k':v>=1000?(v/1000).toFixed(1)+'k':v.toLocaleString('fr-FR')
 
   return(
-    <svg ref={ref} viewBox={'0 0 '+W+' '+H} style={{width:'100%',height:240,display:'block',cursor:'crosshair',userSelect:'none'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
+    <svg ref={ref} viewBox={'0 0 '+W+' '+H} style={{width:'100%',height:270,display:'block',cursor:'crosshair',userSelect:'none'}} onMouseMove={onMove} onMouseLeave={()=>setHover(null)}>
       <defs>
         <linearGradient id="cge" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity={.1}/>
@@ -150,6 +164,36 @@ function Chart({data,color,period}:{data:number[];color:string;period:Period}){
       <circle cx={pts[0].x} cy={pts[0].y} r={2.5} fill="#BBB" stroke="#fff" strokeWidth={1.5}/>
       <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r={3.5} fill={color} stroke="#fff" strokeWidth={2}/>
 
+      {/* Volume bars */}
+      {volume&&volume.length===data.length&&(()=>{
+        const maxV=Math.max(...volume)
+        const volH=ch*.18
+        return volume.map((v,i)=>{
+          const bx=px(i)
+          const bh=(v/maxV)*volH
+          const bw=Math.max(cw/data.length*.6,1.5)
+          return<rect key={'v'+i} x={bx-bw/2} y={MT+ch-bh} width={bw} height={bh} fill={data[i]>=(i>0?data[i-1]:data[i])?'rgba(46,158,106,.15)':'rgba(224,48,32,.15)'} rx={.5}/>
+        })
+      })()}
+
+      {/* MA7 line */}
+      {ma7&&(()=>{
+        const maPath=ma7.reduce((a,v,i)=>{if(v===null)return a;return a+(a?'L':'M')+' '+px(i)+' '+py(v)},'')
+        return maPath?<path d={maPath} fill="none" stroke="#EF9F27" strokeWidth={1} strokeDasharray="4,2" opacity={.6}/>:null
+      })()}
+
+      {/* MA30 line */}
+      {ma30&&(()=>{
+        const maPath=ma30.reduce((a,v,i)=>{if(v===null)return a;return a+(a?'L':'M')+' '+px(i)+' '+py(v)},'')
+        return maPath?<path d={maPath} fill="none" stroke="#7E57C2" strokeWidth={1} strokeDasharray="6,3" opacity={.5}/>:null
+      })()}
+
+      {/* MA Legend */}
+      {(ma7||ma30)&&<>
+        {ma7&&<><circle cx={ML+8} cy={MT+ch+20} r={3} fill="#EF9F27"/><text x={ML+16} y={MT+ch+23} fill="#BBB" fontSize={8} fontFamily="var(--font-display)">MA7</text></>}
+        {ma30&&<><circle cx={ML+48} cy={MT+ch+20} r={3} fill="#7E57C2"/><text x={ML+56} y={MT+ch+23} fill="#BBB" fontSize={8} fontFamily="var(--font-display)">MA30</text></>}
+      </>}
+
       {/* Hover crosshair + tooltip */}
       {hover&&<>
         {/* Vertical line */}
@@ -167,7 +211,7 @@ function Chart({data,color,period}:{data:number[];color:string;period:Period}){
         {/* Top tooltip */}
         <rect x={Math.min(Math.max(hover.x-64,ML),W-MR-128)} y={4} width={128} height={44} rx={8} fill="#111"/>
         <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={22} textAnchor="middle" fill="#fff" fontSize={15} fontWeight={700} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')} {'€'}</text>
-        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={38} textAnchor="middle" fill={hover.pct>=0?'#4ADE80':'#F87171'} fontSize={10} fontWeight={600} fontFamily="var(--font-data)">{hover.pct>=0?'+':''}{hover.pct.toFixed(1)}%</text>
+        <text x={Math.min(Math.max(hover.x,ML+64),W-MR-64)} y={38} textAnchor="middle" fill={hover.pct>=0?'#4ADE80':'#F87171'} fontSize={10} fontWeight={600} fontFamily="var(--font-data)">{hover.pct>=0?'+':''}{hover.pct.toFixed(1)}%{volume&&volume[hover.idx]?' · '+volume[hover.idx]+' tx':''}</text>
 
         {/* Bottom date badge */}
         <rect x={Math.min(Math.max(hover.x-60,ML),W-MR-120)} y={MT+ch+2} width={120} height={18} rx={4} fill="rgba(0,0,0,.06)"/>
@@ -199,6 +243,11 @@ export function CardExplorer(){
 
   const card=CARDS.find(c=>c.name===sel)!
   const data=useMemo(()=>getSlice(sel,period),[sel,period])
+  const volume=useMemo(()=>getVolume(data),[data])
+  const ma7=useMemo(()=>calcMA(data,7),[data])
+  const ma30=useMemo(()=>calcMA(data,30),[data])
+  const [showMA,setShowMA]=useState(true)
+  const [showVol,setShowVol]=useState(true)
   const cur=data[data.length-1]||card.price,start=data[0]||card.price
   const pct=((cur-start)/start*100),isUp=pct>=0
   const spark30=useMemo(()=>(HISTORIES[sel]||[]).slice(-30),[sel])
@@ -369,10 +418,15 @@ export function CardExplorer(){
           <button className="nb" disabled={ci>=filtered.length-1} onClick={()=>nav(1)}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
           <span style={{fontSize:10,color:'#BBB',fontFamily:'var(--font-data)'}}>{ci+1} / {filtered.length}</span>
           <div style={{flex:1}}/>
-          <div style={{display:'flex',gap:3}}>
-            {(['1J','1S','1M','3M','1A','3A','5A','MAX'] as Period[]).map(p=>(
-              <button key={p} className={`per${period===p?' on':''}`} onClick={()=>setPeriod(p)}>{p}</button>
-            ))}
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <div style={{display:'flex',gap:3}}>
+              {(['1J','1S','1M','3M','1A','3A','5A','MAX'] as Period[]).map(p=>(
+                <button key={p} className={`per${period===p?' on':''}`} onClick={()=>setPeriod(p)}>{p}</button>
+              ))}
+            </div>
+            <div style={{height:16,width:1,background:'#EBEBEB'}}/>
+            <button className={`per${showMA?' on':''}`} onClick={()=>setShowMA(v=>!v)} style={{fontSize:9}}>MA</button>
+            <button className={`per${showVol?' on':''}`} onClick={()=>setShowVol(v=>!v)} style={{fontSize:9}}>Vol</button>
           </div>
         </div>
 
@@ -411,9 +465,26 @@ export function CardExplorer(){
             </div>
           </div>
 
+          {/* Stats bar */}
+          <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>
+            {[
+              {l:'Ouv.',v:data[0]},
+              {l:'Haut',v:Math.max(...data)},
+              {l:'Bas',v:Math.min(...data)},
+              {l:'Moy.',v:Math.round(data.reduce((a,b)=>a+b,0)/data.length)},
+              {l:'Amp.',v:Math.max(...data)-Math.min(...data)},
+              {l:'Vol. moy.',v:Math.round(volume.reduce((a,b)=>a+b,0)/volume.length)},
+            ].map(s=>(
+              <div key={s.l} style={{flex:1,background:'#fff',padding:'8px 10px',textAlign:'center'}}>
+                <div style={{fontSize:9,color:'#AAA',fontFamily:'var(--font-display)',marginBottom:2}}>{s.l}</div>
+                <div style={{fontSize:12,fontWeight:600,fontFamily:'var(--font-data)',letterSpacing:'-.3px'}}>{s.v.toLocaleString('fr-FR')}{s.l!=='Vol. moy.'?' \u20ac':''}</div>
+              </div>
+            ))}
+          </div>
+
           {/* Chart */}
-          <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,padding:'16px 18px',marginBottom:16}}>
-            <Chart data={data} color={isUp?'#2E9E6A':'#E03020'} period={period}/>
+          <div style={{background:'#fff',border:'1px solid #EBEBEB',borderTop:'none',borderRadius:'0 0 12px 12px',padding:'16px 18px 8px',marginBottom:16}}>
+            <Chart data={data} color={isUp?'#2E9E6A':'#E03020'} period={period} volume={showVol?volume:undefined} ma7={showMA?ma7:undefined} ma30={showMA&&data.length>30?ma30:undefined}/>
           </div>
 
           {/* Grade premium bars */}

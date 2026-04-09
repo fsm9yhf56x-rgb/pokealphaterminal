@@ -468,7 +468,22 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         </div>
 
         {/* ── CHART ── */}
-        <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, padding:'18px 20px', marginBottom:20 }}>
+        {/* OHLC Stats */}
+        <div style={{ display:'flex', gap:1, marginBottom:0, background:'#F5F5F7', borderRadius:'14px 14px 0 0', overflow:'hidden' }}>
+          {[
+            {l:'Ouv.',v:chartData[0]},
+            {l:'Haut',v:Math.max(...chartData)},
+            {l:'Bas',v:Math.min(...chartData)},
+            {l:'Moy.',v:Math.round(chartData.reduce((a:number,b:number)=>a+b,0)/chartData.length)},
+            {l:'Amplitude',v:Math.max(...chartData)-Math.min(...chartData)},
+          ].map(s=>(
+            <div key={s.l} style={{ flex:1, background:'#fff', padding:'8px 12px', textAlign:'center' }}>
+              <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>{s.l}</div>
+              <div style={{ fontSize:13, fontWeight:600, fontFamily:'var(--font-data)', letterSpacing:'-.3px' }}>{s.v.toLocaleString('fr-FR')}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderTop:'none', borderRadius:'0 0 14px 14px', padding:'18px 20px', marginBottom:20 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -488,7 +503,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
               ))}
             </div>
           </div>
-          <Chart data={chartData} color={isUp ? '#2E9E6A' : '#E03020'} period={period} />
+          <Chart data={chartData} color={isUp ? '#2E9E6A' : '#E03020'} period={period} height={260} />
         </div>
 
         {/* ── MOVERS + FEED ── */}

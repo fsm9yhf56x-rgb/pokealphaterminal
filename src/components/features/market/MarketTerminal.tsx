@@ -57,6 +57,28 @@ const TRANSACTIONS = [
   { card:'Dragonite V Alt Art Raw',      price:290,  type:'buy'  as const, source:'eBay',  seller:'DragonLord',   lang:'EN' },
 ]
 
+// ── CARD DETAIL ──
+type CardDetail = {
+  name:string; set:string; img:string; price:number; change:number; vol:number
+  rarity?:string; number?:string; psa10?:number; psa9?:number
+}
+
+function genCardHistory(price:number): Record<Period, number[]> {
+  return {
+    '1J': Array.from({length:48},(_,i)=>Math.round(price*(1+(Math.random()-.48)*.008*(48-i)))),
+    '1S': genHistory(price,.01,.02,7),
+    '1M': genHistory(price,.012,.05,30),
+    '3M': genHistory(price,.015,.1,90),
+    '1A': genHistory(price,.018,.2,365),
+  }
+}
+
+const CARD_DB: Record<string, CardDetail> = {}
+MOVERS.forEach(m => { CARD_DB[m.name] = { ...m, rarity:'Ultra Rare', number:'---', psa10:Math.round(m.price*1.8), psa9:Math.round(m.price*1.2) } })
+
+// Search helper
+const ALL_CARDS = MOVERS.map(m => m.name)
+
 // ── SPARKLINE ──
 function Spark({ data, color, w=80, h=24 }: { data:number[]; color:string; w?:number; h?:number }) {
   if (data.length < 2) return null
@@ -145,6 +167,34 @@ function Sec({ children, right }: { children:React.ReactNode; right?:React.React
 
 export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
   const [selIdx, setSelIdx] = useState<IndexId>('global')
+  const [selCard, setSelCard] = useState<string|null>(null)
+  const [cardPeriod, setCardPeriod] = useState<Period>('1M')
+  const [searchQ, setSearchQ] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const cardHistories = useRef<Record<string, Record<Period,number[]>>>({})
+
+  const getCardHistory = (name:string): Record<Period,number[]> => {
+    if (!cardHistories.current[name]) {
+      const card = CARD_DB[name]
+      if (card) cardHistories.current[name] = genCardHistory(card.price)
+    }
+    return cardHistories.current[name] || genCardHistory(500)
+  }
+
+  const openCard = (name:string) => {
+    if (!CARD_DB[name]) return
+    setSelCard(name)
+    setCardPeriod('1M')
+    setSearchOpen(false)
+    setSearchQ('')
+  }
+
+  const searchResults = useMemo(() => {
+    if (!searchQ.trim()) return []
+    const q = searchQ.toLowerCase()
+    return ALL_CARDS.filter(c => c.toLowerCase().includes(q)).slice(0, 6)
+  }, [searchQ])
   const [period, setPeriod] = useState<Period>('1M')
   const [feedPaused, setFeedPaused] = useState(false)
   const [feed, setFeed] = useState(TRANSACTIONS.map((t, i) => ({ ...t, id: i, time: `Il y a ${i * 2 + 1} min` })))
@@ -230,8 +280,44 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
               <span style={{ fontSize:11, color:'#AAA' }}>{'\u00b7'} Mise {'\u00e0'} jour toutes les 15 min</span>
             </div>
           </div>
-          <div style={{ fontSize:11, color:'#888', background:'#F5F5F7', padding:'6px 12px', borderRadius:8, fontFamily:'var(--font-data)' }}>
-            {new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ position:'relative' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6, background:'#F5F5F7', border:'1px solid #EBEBEB', borderRadius:9, padding:'6px 12px', cursor:'text', minWidth:220 }}
+                onClick={()=>{setSearchOpen(true);setTimeout(()=>searchRef.current?.focus(),50)}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AAA" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                {searchOpen ? (
+                  <input ref={searchRef} value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+                    onBlur={()=>setTimeout(()=>setSearchOpen(false),200)}
+                    onKeyDown={e=>{ if(e.key==='Escape'){setSearchOpen(false);setSearchQ('')} if(e.key==='Enter'&&searchResults.length>0)openCard(searchResults[0]) }}
+                    placeholder="Rechercher une carte..."
+                    style={{ border:'none', background:'transparent', outline:'none', fontSize:12, fontFamily:'var(--font-display)', color:'#111', width:160 }} />
+                ) : (
+                  <span style={{ fontSize:12, color:'#AAA', fontFamily:'var(--font-display)' }}>Rechercher une carte...</span>
+                )}
+              </div>
+              {searchOpen && searchResults.length > 0 && (
+                <div style={{ position:'absolute', top:'100%', left:0, right:0, marginTop:4, background:'#fff', border:'1px solid #EBEBEB', borderRadius:10, overflow:'hidden', boxShadow:'0 8px 24px rgba(0,0,0,.08)', zIndex:100 }}>
+                  {searchResults.map(name => {
+                    const card = CARD_DB[name]
+                    return (
+                      <div key={name} onMouseDown={()=>openCard(name)}
+                        style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid #F5F5F5', transition:'background .1s' }}
+                        onMouseEnter={e=>(e.currentTarget.style.background='#FAFAFA')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
+                        {card && <img src={card.img} alt="" style={{ width:24, height:33, objectFit:'cover', borderRadius:3, flexShrink:0 }} />}
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)' }}>{name}</div>
+                          <div style={{ fontSize:10, color:'#BBB' }}>{card?.set}</div>
+                        </div>
+                        <div style={{ fontSize:12, fontWeight:600, fontFamily:'var(--font-data)' }}>{card?.price} {'\u20ac'}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize:11, color:'#888', background:'#F5F5F7', padding:'6px 12px', borderRadius:8, fontFamily:'var(--font-data)' }}>
+              {new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}
+            </div>
           </div>
         </div>
 
@@ -324,7 +410,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
               {(moverTab === 'up' ? moversUp : moversDown).map(m => (
-                <div key={m.name} className="mv-row">
+                <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)}>
                   <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
@@ -352,7 +438,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden', maxHeight:520, overflowY:'auto' }}>
               {feed.map((tx, i) => (
-                <div key={tx.id} className={`tx-row${tx.id === newTx ? ' tx-new' : ''}`}>
+                <div key={tx.id} className={`tx-row${tx.id === newTx ? ' tx-new' : ''}`} style={{cursor:'pointer'}} onClick={()=>{const match=ALL_CARDS.find(c=>tx.card.includes(c.split(' ')[0]));if(match)openCard(match)}}>
                   <div style={{ width:28, height:28, borderRadius:8, background:tx.type==='buy'?'#F0FFF6':'#FFF0EE', border:`1px solid ${tx.type==='buy'?'#AAEEC8':'#FFD8D0'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0, color:tx.type==='buy'?'#2E9E6A':'#E03020' }}>
                     {tx.type === 'buy' ? '\u2197' : '\u2199'}
                   </div>
@@ -369,6 +455,93 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
           </div>
         </div>
+
+        {/* ── CARD DETAIL PANEL ── */}
+        {selCard && CARD_DB[selCard] && (() => {
+          const card = CARD_DB[selCard]
+          const histories = getCardHistory(selCard)
+          const cData = histories[cardPeriod] || []
+          const cCur = cData[cData.length-1] || card.price
+          const cStart = cData[0] || card.price
+          const cPct = ((cCur-cStart)/cStart*100)
+          const cUp = cPct >= 0
+          return (
+            <>
+              <div onClick={()=>setSelCard(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.25)', zIndex:200, animation:'fadeIn .15s ease-out' }} />
+              <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'#fff', borderLeft:'1px solid #EBEBEB', zIndex:201, overflowY:'auto', boxShadow:'-8px 0 32px rgba(0,0,0,.08)', animation:'fadeIn .2s ease-out' }}>
+                {/* Close */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderBottom:'1px solid #F5F5F5' }}>
+                  <span style={{ fontSize:14, fontWeight:600, fontFamily:'var(--font-display)' }}>{card.name}</span>
+                  <button onClick={()=>setSelCard(null)} style={{ width:28, height:28, borderRadius:8, border:'1px solid #EBEBEB', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color:'#888' }}>{String.fromCharCode(215)}</button>
+                </div>
+
+                {/* Card image + price */}
+                <div style={{ display:'flex', gap:16, padding:'16px 18px' }}>
+                  <img src={card.img} alt="" style={{ width:100, height:140, objectFit:'cover', borderRadius:8, border:'1px solid #F0F0F0', boxShadow:'0 4px 16px rgba(0,0,0,.08)', flexShrink:0 }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:10, color:'#AAA', marginBottom:2, fontFamily:'var(--font-display)' }}>{card.set}</div>
+                    <div style={{ fontSize:28, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1.5px', lineHeight:1 }}>{cCur.toLocaleString('fr-FR')} {'\u20ac'}</div>
+                    <div style={{ fontSize:14, fontWeight:600, color:cUp?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', marginTop:4 }}>
+                      {cUp?'\u25b2':'\u25bc'} {cUp?'+':''}{cPct.toFixed(1)}%
+                      <span style={{ color:'#AAA', fontWeight:400, fontSize:11, marginLeft:6 }}>{cUp?'+':''}{(cCur-cStart).toLocaleString('fr-FR')} {'\u20ac'}</span>
+                    </div>
+                    <div style={{ display:'flex', gap:4, marginTop:10 }}>
+                      {(['1J','1S','1M','3M','1A'] as Period[]).map(p => (
+                        <button key={p} className={`per-btn${cardPeriod===p?' on':''}`} onClick={()=>setCardPeriod(p)} style={{ padding:'3px 10px', fontSize:10 }}>{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart */}
+                <div style={{ padding:'0 18px 16px' }}>
+                  <Chart data={cData} color={cUp?'#2E9E6A':'#E03020'} period={cardPeriod} />
+                </div>
+
+                {/* Stats grid */}
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, padding:'0 18px 16px' }}>
+                  <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>Volume 24h</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)' }}>{card.vol}</div>
+                  </div>
+                  <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>Variation 24h</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)', color:card.change>=0?'#2E9E6A':'#E03020' }}>{card.change>=0?'+':''}{card.change}%</div>
+                  </div>
+                  {card.psa10 && <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>PSA 10</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)' }}>{card.psa10?.toLocaleString('fr-FR')} {'\u20ac'}</div>
+                  </div>}
+                  {card.psa9 && <div style={{ background:'#F8F8FA', borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:2 }}>PSA 9</div>
+                    <div style={{ fontSize:16, fontWeight:700, fontFamily:'var(--font-data)' }}>{card.psa9?.toLocaleString('fr-FR')} {'\u20ac'}</div>
+                  </div>}
+                </div>
+
+                {/* Recent sales for this card */}
+                <div style={{ padding:'0 18px 18px' }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Derni{String.fromCharCode(232)}res ventes</div>
+                  <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:10, overflow:'hidden' }}>
+                    {[
+                      { src:'eBay', grade:'PSA 10', p:card.psa10||0, ago:'2h', lang:'EN' },
+                      { src:'CM',   grade:'Raw NM', p:card.price,     ago:'5h', lang:'FR' },
+                      { src:'eBay', grade:'PSA 9',  p:card.psa9||0,  ago:'1j', lang:'EN' },
+                      { src:'CM',   grade:'Raw LP', p:Math.round(card.price*.85), ago:'2j', lang:'JP' },
+                      { src:'eBay', grade:'PSA 10', p:Math.round((card.psa10||0)*.97), ago:'3j', lang:'EN' },
+                    ].map((sale,i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderBottom:i<4?'1px solid #F5F5F5':'none', fontSize:12 }}>
+                        <span style={{ fontSize:10, fontWeight:600, color:sale.src==='eBay'?'#378ADD':'#EF9F27', background:sale.src==='eBay'?'rgba(55,138,221,.06)':'rgba(239,159,39,.06)', padding:'2px 6px', borderRadius:4, fontFamily:'var(--font-display)' }}>{sale.src}</span>
+                        <span style={{ flex:1, color:'#555', fontFamily:'var(--font-display)' }}>{sale.grade}</span>
+                        <span style={{ fontSize:10, color:'#BBB', fontFamily:'var(--font-display)' }}>{sale.lang} {String.fromCharCode(183)} {sale.ago}</span>
+                        <span style={{ fontWeight:600, fontFamily:'var(--font-data)' }}>{sale.p.toLocaleString('fr-FR')} {'\u20ac'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          )
+        })()}
 
       </div>
     </>

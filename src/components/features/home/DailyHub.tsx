@@ -184,7 +184,7 @@ export function DailyHub() {
 
   const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
 
-  const startDrag = (id: WidgetId, e: React.PointerEvent) => {
+  const startDrag = (id: WidgetId, e: React.MouseEvent) => {
     e.preventDefault()
     dragRef.current = { id, startY: e.clientY, col: WIDGET_META[id].col }
     setDragState({ dragging: id, dropTarget: null, dropPosition: null })
@@ -272,7 +272,7 @@ export function DailyHub() {
     const editHandle = (
       <>
         <div className="w-grip"
-          onPointerDown={e => startDrag(id, e)}
+          onMouseDown={e => startDrag(id, e as any)}
           title="Maintenir pour déplacer">
           <div className="w-grip-row"><i/><i/></div>
           <div className="w-grip-row"><i/><i/></div>

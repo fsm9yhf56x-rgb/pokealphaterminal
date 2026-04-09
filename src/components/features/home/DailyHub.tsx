@@ -237,19 +237,22 @@ export function DailyHub() {
 
   const renderWidget = (id: WidgetId) => {
     const isEditing = editMode
-    const editHandle = isEditing ? (
+    const editHandle = (
       <>
-        <div className="w-drag-handle" draggable onDragStart={()=>handleDragStart(id)} />
-        <button className="w-hide-btn" onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer">
+        <div className="w-grip"><span/><span/><span/></div>
+        {isEditing && <button className="w-hide-btn" onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        </button>}
       </>
-    ) : null
+    )
     const cls = 'w' + (isEditing ? ' editing' : '') + (dragOver === id ? ' drag-over' : '')
     const dragProps = isEditing ? {
+      draggable: true,
+      onDragStart: () => handleDragStart(id),
       onDragOver: (e: React.DragEvent) => handleDragOver(e, id),
       onDragLeave: handleDragLeave,
       onDrop: () => handleDrop(id),
+      onDragEnd: () => { setDragId(null); setDragOver(null) },
     } : {}
 
     switch(id) {
@@ -423,27 +426,20 @@ export function DailyHub() {
         .new-dot::after{content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#E03020;border:2px solid #fff}
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
-        .edit-panel{background:#fff;border:1.5px solid #E03020;border-radius:14px;padding:16px;margin-bottom:18px;animation:fadeUp .25s ease-out}
-        .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-        .edit-chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid #EBEBEB;background:#fff;cursor:grab;font-size:12px;font-family:var(--font-display);transition:all .2s;user-select:none;position:relative}
-        .edit-chip:active{cursor:grabbing;transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:10}
-        .edit-chip:hover{border-color:#C7C7CC;background:#FAFAFA}
-        .edit-chip.hidden{opacity:.4;border-style:dashed}
-        .edit-chip .chip-icon{width:24px;height:24px;border-radius:6px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
-        .edit-chip .chip-eye{width:20px;height:20px;border-radius:50%;border:1.5px solid #D2D2D7;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;font-size:9px;color:#888}
-        .edit-chip .chip-eye:hover{border-color:#111;color:#111}
-        .edit-chip .chip-eye.on{background:#1D9E75;border-color:#1D9E75;color:#fff}
-        .edit-chip .grip{display:flex;flex-direction:column;gap:1px;margin-right:4px;flex-shrink:0;opacity:.3}
-        .edit-chip .grip span{display:block;width:8px;height:1.5px;background:#888;border-radius:1px}
-        .w.editing{border:1.5px dashed #D2D2D7;position:relative}
-        .w.editing::before{content:'';position:absolute;inset:-2px;border:2px dashed transparent;border-radius:14px;pointer-events:none;transition:border-color .2s}
-        .w.drag-over::before{border-color:#E03020 !important}
-        .w.drag-over{background:#FEF2F2 !important}
-        .w-drag-handle{position:absolute;top:0;left:0;right:0;height:40px;cursor:grab;z-index:4}
-        .w-drag-handle:active{cursor:grabbing}
-        .w-hide-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;border:1px solid #EBEBEB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .15s;opacity:0}
-        .w.editing .w-hide-btn{opacity:1}
-        .w-hide-btn:hover{background:#FEF2F2;border-color:#E03020;color:#E03020}
+        .w.editing{border:1.5px dashed #D2D2D7;cursor:grab;transition:all .2s}
+        .w.editing:active{cursor:grabbing;transform:scale(1.02);box-shadow:0 12px 32px rgba(0,0,0,.08);z-index:10}
+        .w.editing .wh{cursor:grab}
+        .w.editing .wh:active{cursor:grabbing}
+        .w.drag-over{border-color:#E03020 !important;background:#FEF2F2 !important;transform:scale(1.01)}
+        .w.editing .w-grip{opacity:1 !important}
+        .w.editing .w-hide-btn{opacity:1 !important}
+        .w-grip{position:absolute;top:12px;left:8px;opacity:0;transition:opacity .15s;display:flex;flex-direction:column;gap:2px;padding:4px;z-index:5}
+        .w:hover .w-grip{opacity:.3}
+        .w-grip span{display:block;width:12px;height:1.5px;background:#888;border-radius:1px}
+        .w-hide-btn{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .15s;opacity:0;color:#BBB}
+        .w:hover .w-hide-btn{opacity:.5}
+        .w-hide-btn:hover{opacity:1 !important;background:#FEF2F2;border-color:#FFD0C8;color:#E03020}
+        .edit-hint{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#FEF2F2;border:1px solid #FFD0C8;border-radius:10px;margin-bottom:14px;animation:fadeUp .2s ease-out}
         .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
         .xp-particle{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:#E03020;font-family:var(--font-display);z-index:9999;animation:floatXP 1.1s ease-out forwards}
         .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -521,7 +517,7 @@ export function DailyHub() {
         </div>
 
         {/* ═══ CUSTOMIZE ═══ */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:12 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:editMode?0:12 }}>
           <button onClick={()=>setEditMode(!editMode)}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:9, border:editMode?'1.5px solid #E03020':'1px solid #EBEBEB', background:editMode?'#FEF2F2':'#fff', color:editMode?'#E03020':'#888', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s' }}>
             {editMode ? (
@@ -529,47 +525,28 @@ export function DailyHub() {
             ) : (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-9.2-6.4 3.5-2m11.4-6.6 3.5-2M1 12h4m14 0h4M4.2 4.2l2.8 2.8m10 10 2.8 2.8M4.2 19.8l2.8-2.8m10-10 2.8-2.8"/></svg>
             )}
-            {editMode ? 'Termin\u00e9' : 'Personnaliser'}
+            {editMode ? 'Terminé' : 'Personnaliser'}
           </button>
         </div>
-
         {editMode && (
-          <div className="edit-panel">
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
-              <div>
-                <div style={{ fontSize:14, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:2 }}>Personnalise ton Daily Hub</div>
-                <div style={{ fontSize:11, color:'#888' }}>Glisse les widgets pour les r\u00e9organiser. Clique l'\u0153il pour masquer.</div>
+          <div className="edit-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="3"/></svg>
+            <span style={{ fontSize:12, color:'#791F1F', flex:1, fontFamily:'var(--font-display)' }}>Glisse les cartes pour les réorganiser. Clique <strong style={{fontWeight:600}}>✕</strong> pour masquer un widget.</span>
+            <button onClick={resetLayout} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>
+            {hiddenWidgets.length > 0 && (
+              <div style={{ display:'flex', gap:4, marginLeft:8 }}>
+                {hiddenWidgets.map(id => (
+                  <button key={id} onClick={()=>toggleWidget(id)} style={{ padding:'4px 10px', borderRadius:6, border:'1px dashed #D2D2D7', background:'#FAFAFA', fontSize:10, cursor:'pointer', fontFamily:'var(--font-display)', color:'#888', display:'flex', alignItems:'center', gap:4 }}>
+                    {WIDGET_META[id].icon} {WIDGET_META[id].label}
+                    <span style={{ color:'#1D9E75', fontWeight:600 }}>+</span>
+                  </button>
+                ))}
               </div>
-              <button onClick={resetLayout} style={{ padding:'6px 12px', borderRadius:7, border:'1px solid #FFD0C8', background:'#FEF2F2', color:'#E03020', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>R\u00e9initialiser</button>
-            </div>
-            <div className="edit-grid">
-              {widgetOrder.map(id => {
-                const meta = WIDGET_META[id]
-                const isHidden = hiddenWidgets.includes(id)
-                return (
-                  <div key={id} className={'edit-chip'+(isHidden?' hidden':'')}
-                    draggable
-                    onDragStart={()=>handleDragStart(id)}
-                    onDragOver={e=>{e.preventDefault();setDragOver(id)}}
-                    onDragLeave={()=>setDragOver(null)}
-                    onDrop={()=>handleDrop(id)}
-                    style={{ borderColor:dragOver===id?'#E03020':'', background:dragOver===id?'#FEF2F2':'' }}>
-                    <div className="grip"><span/><span/><span/></div>
-                    <div className="chip-icon">{meta.icon}</div>
-                    <span style={{ flex:1, fontWeight:500 }}>{meta.label}</span>
-                    <div className={'chip-eye'+(isHidden?'':' on')} onClick={e=>{e.stopPropagation();toggleWidget(id)}} title={isHidden?'Afficher':'Masquer'}>
-                      {isHidden ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>
-                      ) : (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            )}
           </div>
         )}
+
+                )}
 
         {/* ═══ PRO NUDGE ═══ */}
         {!isPro && (

@@ -1,10 +1,14 @@
 <svg width="245" height="342" viewBox="0 0 245 342" xmlns="http://www.w3.org/2000/svg">
-  <rect width="245" height="342" rx="12" fill="#1a1a2e"/>
-  <rect x="8" y="8" width="229" height="326" rx="8" fill="none" stroke="#e03020" stroke-width="2" stroke-opacity=".3"/>
-  <circle cx="122.5" cy="155" r="55" fill="none" stroke="#e03020" stroke-width="2.5" stroke-opacity=".25"/>
-  <circle cx="122.5" cy="155" r="35" fill="#e03020" fill-opacity=".08"/>
-  <line x1="67.5" y1="155" x2="177.5" y2="155" stroke="#e03020" stroke-width="2" stroke-opacity=".2"/>
-  <circle cx="122.5" cy="155" r="12" fill="#e03020" fill-opacity=".15" stroke="#e03020" stroke-width="1.5" stroke-opacity=".3"/>
-  <text x="122.5" y="240" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#e03020" fill-opacity=".3" letter-spacing=".1em">POKÉALPHA</text>
-  <text x="122.5" y="256" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#fff" fill-opacity=".15" letter-spacing=".15em">TERMINAL</text>
+  <rect width="245" height="342" rx="12" fill="#1B1B2F"/>
+  <rect x="6" y="6" width="233" height="330" rx="9" fill="none" stroke="#E03020" stroke-width="2" stroke-opacity=".5"/>
+  <rect x="14" y="14" width="217" height="314" rx="6" fill="none" stroke="#E03020" stroke-width="1" stroke-opacity=".2"/>
+  <circle cx="122.5" cy="145" r="58" fill="none" stroke="#E03020" stroke-width="3" stroke-opacity=".35"/>
+  <circle cx="122.5" cy="145" r="38" fill="#E03020" fill-opacity=".1"/>
+  <line x1="64.5" y1="145" x2="180.5" y2="145" stroke="#E03020" stroke-width="2.5" stroke-opacity=".35"/>
+  <circle cx="122.5" cy="145" r="14" fill="#1B1B2F" stroke="#E03020" stroke-width="2" stroke-opacity=".5"/>
+  <circle cx="122.5" cy="145" r="6" fill="#E03020" fill-opacity=".3"/>
+  <text x="122.5" y="232" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#E03020" fill-opacity=".5" letter-spacing=".12em">POKEALPHA</text>
+  <text x="122.5" y="250" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#fff" fill-opacity=".25" letter-spacing=".2em">TERMINAL</text>
+  <rect x="50" y="270" width="145" height="1" fill="#E03020" fill-opacity=".15"/>
+  <text x="122.5" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#fff" fill-opacity=".15">Image non disponible</text>
 </svg>

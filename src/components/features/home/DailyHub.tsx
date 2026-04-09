@@ -152,6 +152,8 @@ export function DailyHub() {
     try { const v = localStorage.getItem('pka_hub_hidden'); return v ? JSON.parse(v) : DEFAULT_HIDDEN } catch { return DEFAULT_HIDDEN }
   })
   const [editMode, setEditMode] = useState(false)
+  const [dragState, setDragState] = useState<{dragging:WidgetId|null;dropTarget:WidgetId|null;dropPosition:'above'|'below'|null}>({dragging:null,dropTarget:null,dropPosition:null})
+  const dragRef = useRef<{id:WidgetId;startY:number;col:'left'|'right'}|null>(null)
 
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
@@ -181,6 +183,60 @@ export function DailyHub() {
   }
 
   const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
+
+  const startDrag = (id: WidgetId, e: React.PointerEvent) => {
+    e.preventDefault()
+    const col = WIDGET_META[id].col
+    dragRef.current = { id, startY: e.clientY, col }
+    setDragState({ dragging: id, dropTarget: null, dropPosition: null })
+
+    const onMove = (ev: PointerEvent) => {
+      if (!dragRef.current) return
+      const elements = document.querySelectorAll('[data-widget-id]')
+      let closest: { id: WidgetId; pos: 'above'|'below' } | null = null
+      let minDist = Infinity
+      elements.forEach(el => {
+        const wid = el.getAttribute('data-widget-id') as WidgetId
+        if (wid === dragRef.current!.id) return
+        if (WIDGET_META[wid].col !== dragRef.current!.col) return
+        const rect = el.getBoundingClientRect()
+        const mid = rect.top + rect.height / 2
+        const dist = Math.abs(ev.clientY - mid)
+        if (dist < minDist) {
+          minDist = dist
+          closest = { id: wid, pos: ev.clientY < mid ? 'above' : 'below' }
+        }
+      })
+      if (closest) {
+        setDragState(prev => ({ ...prev, dropTarget: closest!.id, dropPosition: closest!.pos }))
+      }
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      if (!dragRef.current) return
+      const { id: fromId } = dragRef.current
+
+      setDragState(prev => {
+        if (prev.dropTarget && prev.dropPosition) {
+          setWidgetOrder(order => {
+            const next = order.filter(i => i !== fromId)
+            const targetIdx = next.indexOf(prev.dropTarget!)
+            if (targetIdx === -1) return order
+            const insertIdx = prev.dropPosition === 'below' ? targetIdx + 1 : targetIdx
+            next.splice(insertIdx, 0, fromId)
+            return next
+          })
+        }
+        return { dragging: null, dropTarget: null, dropPosition: null }
+      })
+      dragRef.current = null
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))
   const rightWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'right' && !hiddenWidgets.includes(id))
@@ -219,14 +275,24 @@ export function DailyHub() {
   }
 
   const renderWidget = (id: WidgetId) => {
-    const isEditing = editMode
-    const editHandle = null
-    const cls = 'w'
+    const isEditing = false
+    const isDragging = dragState.dragging === id
+    const dropPos = dragState.dropTarget === id ? dragState.dropPosition : null
+    const cls = 'w' + (isDragging ? ' w-dragging' : '') + (dropPos === 'above' ? ' w-drop-above' : '') + (dropPos === 'below' ? ' w-drop-below' : '')
+    const editHandle = (
+      <div className="w-grip"
+        onPointerDown={e => startDrag(id, e)}
+        title="Maintenir pour déplacer">
+        <div className="w-grip-row"><i/><i/></div>
+        <div className="w-grip-row"><i/><i/></div>
+        <div className="w-grip-row"><i/><i/></div>
+      </div>
+    )
     const dragProps = {}
 
     switch(id) {
       case 'portfolio': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Mon portfolio</div><span className="wb wb-g">+{'\u20ac'} {USER.portfolioGain} aujourd'hui</span></div>
           <div className="wc">
@@ -246,7 +312,7 @@ export function DailyHub() {
         </div>
       )
       case 'collections': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Mes collections</div><span className="wb">{COLLECTIONS.length} en cours</span></div>
           <div className="wc">
@@ -264,7 +330,7 @@ export function DailyHub() {
         </div>
       )
       case 'missions': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Missions du jour</div><span className="wb">{done.length}/{MISSIONS.length} {'\u00b7'} +{xpEarned} XP</span></div>
           <div className="wc">
@@ -294,7 +360,7 @@ export function DailyHub() {
         </div>
       )
       case 'resume': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Reprendre</div></div>
           <div className="wc">
@@ -310,7 +376,7 @@ export function DailyHub() {
         </div>
       )
       case 'dexy': return (
-        <div key={id} className={cls} style={{ borderLeft:'3px solid #E03020', borderRadius:'0 12px 12px 0', position:'relative' }} {...dragProps}>
+        <div key={id} className={cls} style={{ borderLeft:'3px solid #E03020', borderRadius:'0 12px 12px 0', position:'relative' }} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh">
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -328,7 +394,7 @@ export function DailyHub() {
         </div>
       )
       case 'movers': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Top movers</div><span className="wb">24h</span></div>
           <div className="wc">
@@ -337,7 +403,7 @@ export function DailyHub() {
         </div>
       )
       case 'whales': return (
-        <div key={id} className={cls} style={{position:'relative'}} {...dragProps}>
+        <div key={id} className={cls} style={{position:'relative'}} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Whale tracker</div><div style={{ display:'flex', alignItems:'center', gap:4 }}><div className="live-dot"/><span className="wb">Live</span></div></div>
           <div className="wc">
@@ -348,7 +414,7 @@ export function DailyHub() {
         </div>
       )
       case 'deals': return (
-        <div key={id} className={cls} style={{ position:'relative', overflow:'hidden' }} {...dragProps}>
+        <div key={id} className={cls} style={{ position:'relative', overflow:'hidden' }} data-widget-id={id} {...dragProps}>
           {editHandle}
           <div className="wh"><div className="wt"><div className="bar"/>Deals du moment</div><span className="wb">{DEALS.length} sous march{'\u00e9'}</span></div>
           {isPro ? (
@@ -395,22 +461,20 @@ export function DailyHub() {
         .new-dot::after{content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#E03020;border:2px solid #fff}
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
-        .edit-drawer{background:#fff;border:1px solid #EBEBEB;border-radius:14px;padding:16px 18px;margin-bottom:18px;animation:fadeUp .2s ease-out;box-shadow:0 4px 16px rgba(0,0,0,.04)}
-        .ew{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid #EBEBEB;margin-bottom:6px;transition:all .15s;background:#fff}
-        .ew:last-child{margin-bottom:0}
-        .ew:hover{background:#FAFAFA}
-        .ew.off{opacity:.45;border-style:dashed}
-        .ew .ew-icon{width:28px;height:28px;border-radius:7px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-        .ew .ew-name{flex:1;font-size:13px;font-weight:500;font-family:var(--font-display)}
-        .ew .ew-arrows{display:flex;gap:2px}
-        .ew .ew-arrows button{width:24px;height:24px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .12s;color:#888}
-        .ew .ew-arrows button:hover{border-color:#111;color:#111;background:#F5F5F7}
-        .ew .ew-arrows button:disabled{opacity:.2;cursor:default}
-        .ew-toggle{width:36px;height:20px;border-radius:99px;border:none;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
-        .ew-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
-        .ew-toggle.on{background:#1D9E75}
-        .ew-toggle.on::after{transform:translateX(16px)}
-        .ew-toggle.off{background:#D2D2D7}
+        .w{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
+        .w-dragging{z-index:100 !important;box-shadow:0 20px 60px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06) !important;transform:scale(1.02) !important;opacity:.92 !important;pointer-events:none}
+        .w-drop-above::before{content:'';position:absolute;top:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
+        .w-drop-below::after{content:'';position:absolute;bottom:-5px;left:8px;right:8px;height:3px;background:#E03020;border-radius:2px;z-index:10;animation:dropLine .2s ease-out}
+        @keyframes dropLine{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}
+        .w-grip{position:absolute;top:50%;left:-2px;transform:translateY(-50%);width:18px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:grab;opacity:0;transition:opacity .2s;z-index:5;border-radius:0 6px 6px 0}
+        .w-grip:active{cursor:grabbing}
+        .w:hover .w-grip{opacity:.25}
+        .w-grip:hover{opacity:.6 !important;background:rgba(0,0,0,.03)}
+        .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#888}
+        .w-grip-row{display:flex;gap:3px}
+        .edit-mode-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#FEF2F2;border:1px solid #FFD0C8;border-radius:10px;margin-bottom:14px;animation:fadeUp .2s ease-out}
+        .edit-chip{padding:4px 10px;border-radius:6px;border:1px dashed #D2D2D7;background:#FAFAFA;font-size:10px;cursor:pointer;font-family:var(--font-display);color:#888;display:flex;align-items:center;gap:4px;transition:all .12s}
+        .edit-chip:hover{border-color:#1D9E75;color:#1D9E75;background:#E1F5EE}
         .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
         .xp-particle{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:#E03020;font-family:var(--font-display);z-index:9999;animation:floatXP 1.1s ease-out forwards}
         .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -488,38 +552,16 @@ export function DailyHub() {
         </div>
 
         {/* ═══ CUSTOMIZE ═══ */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:12 }}>
-          <button onClick={()=>setEditMode(!editMode)}
-            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:9, border:editMode?'1.5px solid #E03020':'1px solid #EBEBEB', background:editMode?'#FEF2F2':'#fff', color:editMode?'#E03020':'#888', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s' }}>
-            {editMode ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-9.2-6.4 3.5-2m11.4-6.6 3.5-2M1 12h4m14 0h4M4.2 4.2l2.8 2.8m10 10 2.8 2.8M4.2 19.8l2.8-2.8m10-10 2.8-2.8"/></svg>
-            )}
-            {editMode ? 'Terminé' : 'Personnaliser'}
-          </button>
-        </div>
-        {editMode && (
-          <div className="edit-drawer">
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-              <div style={{ fontSize:14, fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Organise ton dashboard</div>
-              <button onClick={resetLayout} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#FEF2F2', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>
-            </div>
-            {widgetOrder.map((id, idx) => {
-              const meta = WIDGET_META[id]
-              const isHidden = hiddenWidgets.includes(id)
-              return (
-                <div key={id} className={'ew'+(isHidden?' off':'')}>
-                  <div className="ew-arrows">
-                    <button disabled={idx===0} onClick={()=>moveWidget(id,-1)}>{String.fromCharCode(9650)}</button>
-                    <button disabled={idx===widgetOrder.length-1} onClick={()=>moveWidget(id,1)}>{String.fromCharCode(9660)}</button>
-                  </div>
-                  <div className="ew-icon">{meta.icon}</div>
-                  <span className="ew-name">{meta.label}</span>
-                  <button className={'ew-toggle '+(isHidden?'off':'on')} onClick={()=>toggleWidget(id)} />
-                </div>
-              )
-            })}
+        {hiddenWidgets.length > 0 && (
+          <div className="edit-mode-bar">
+            <span style={{ fontSize:12, color:'#791F1F', fontFamily:'var(--font-display)' }}>Widgets masqués :</span>
+            {hiddenWidgets.map(id => (
+              <button key={id} className="edit-chip" onClick={()=>toggleWidget(id)}>
+                {WIDGET_META[id].icon} {WIDGET_META[id].label}
+                <span style={{ color:'#1D9E75', fontWeight:600, fontSize:12 }}>+</span>
+              </button>
+            ))}
+            <button onClick={resetLayout} style={{ marginLeft:'auto', padding:'4px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Tout réinitialiser</button>
           </div>
         )}
 

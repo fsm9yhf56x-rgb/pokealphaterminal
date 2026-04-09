@@ -455,6 +455,22 @@ export function DailyHub() {
         .w-grip i{display:block;width:3px;height:3px;border-radius:50%;background:#999}
         .w-grip-row{display:flex;gap:3px}
         .edit-mode-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#FEF2F2;border:1px solid #FFD0C8;border-radius:10px;margin-bottom:14px;animation:fadeUp .2s ease-out}
+        .edit-drawer{background:#fff;border:1px solid #EBEBEB;border-radius:14px;padding:16px 18px;margin-bottom:18px;animation:fadeUp .2s ease-out;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+        .ew{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid #EBEBEB;margin-bottom:6px;transition:all .15s;background:#fff}
+        .ew:last-child{margin-bottom:0}
+        .ew:hover{background:#FAFAFA}
+        .ew.off{opacity:.45;border-style:dashed}
+        .ew .ew-icon{width:28px;height:28px;border-radius:7px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+        .ew .ew-name{flex:1;font-size:13px;font-weight:500;font-family:var(--font-display)}
+        .ew .ew-arrows{display:flex;gap:2px}
+        .ew .ew-arrows button{width:24px;height:24px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .12s;color:#888}
+        .ew .ew-arrows button:hover:not(:disabled){border-color:#111;color:#111;background:#F5F5F7}
+        .ew .ew-arrows button:disabled{opacity:.15;cursor:default}
+        .ew-toggle{width:36px;height:20px;border-radius:99px;border:none;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+        .ew-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+        .ew-toggle.on{background:#1D9E75}
+        .ew-toggle.on::after{transform:translateX(16px)}
+        .ew-toggle.off{background:#D2D2D7}
         .edit-chip{padding:4px 10px;border-radius:6px;border:1px dashed #D2D2D7;background:#FAFAFA;font-size:10px;cursor:pointer;font-family:var(--font-display);color:#888;display:flex;align-items:center;gap:4px;transition:all .12s}
         .edit-chip:hover{border-color:#1D9E75;color:#1D9E75;background:#E1F5EE}
         .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
@@ -545,21 +561,43 @@ export function DailyHub() {
             {editMode ? 'Terminé' : 'Personnaliser'}
           </button>
         </div>
-        {(editMode || hiddenWidgets.length > 0) && (
+
+        {editMode && (
+          <div className="edit-drawer">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+              <div>
+                <div style={{ fontSize:14, fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Organise ton dashboard</div>
+                <div style={{ fontSize:11, color:'#888', marginTop:2 }}>Réordonne avec les flèches ou glisse directement les cartes</div>
+              </div>
+              <button onClick={resetLayout} style={{ padding:'6px 12px', borderRadius:7, border:'1px solid #FFD0C8', background:'#FEF2F2', color:'#E03020', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>
+            </div>
+            {widgetOrder.map((id, idx) => {
+              const meta = WIDGET_META[id]
+              const isHidden = hiddenWidgets.includes(id)
+              return (
+                <div key={id} className={'ew'+(isHidden?' off':'')}>
+                  <div className="ew-arrows">
+                    <button disabled={idx===0} onClick={()=>moveWidget(id,-1)}>{String.fromCharCode(9650)}</button>
+                    <button disabled={idx===widgetOrder.length-1} onClick={()=>moveWidget(id,1)}>{String.fromCharCode(9660)}</button>
+                  </div>
+                  <div className="ew-icon">{meta.icon}</div>
+                  <span className="ew-name">{meta.label}</span>
+                  <button className={'ew-toggle '+(isHidden?'off':'on')} onClick={()=>toggleWidget(id)} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {!editMode && hiddenWidgets.length > 0 && (
           <div className="edit-mode-bar" style={{ marginBottom:14 }}>
-            {editMode && <span style={{ fontSize:12, color:'#791F1F', fontFamily:'var(--font-display)' }}>Déplace les widgets pour réorganiser</span>}
-            {hiddenWidgets.length > 0 && (
-              <>
-                <span style={{ fontSize:11, color:'#888', fontFamily:'var(--font-display)' }}>Masqués :</span>
-                {hiddenWidgets.map(id => (
-                  <button key={id} className="edit-chip" onClick={()=>toggleWidget(id)}>
-                    {WIDGET_META[id].icon} {WIDGET_META[id].label}
-                    <span style={{ color:'#1D9E75', fontWeight:600, fontSize:12 }}>+</span>
-                  </button>
-                ))}
-              </>
-            )}
-            {editMode && <button onClick={resetLayout} style={{ marginLeft:'auto', padding:'4px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>}
+            <span style={{ fontSize:11, color:'#888', fontFamily:'var(--font-display)' }}>Masqués :</span>
+            {hiddenWidgets.map(id => (
+              <button key={id} className="edit-chip" onClick={()=>toggleWidget(id)}>
+                {WIDGET_META[id].icon} {WIDGET_META[id].label}
+                <span style={{ color:'#1D9E75', fontWeight:600, fontSize:12 }}>+</span>
+              </button>
+            ))}
           </div>
         )}
 

@@ -194,7 +194,7 @@ export function DailyHub() {
 
     const onMove = (ev: MouseEvent) => {
       const widgets = document.querySelectorAll('[data-widget-id]')
-      let best: { wid: WidgetId; p: 'above'|'below' } | null = null
+      let best: { wid: WidgetId; p: 'above'|'below' } | null = null as { wid: WidgetId; p: 'above'|'below' } | null
       let bestDist = 9999
       widgets.forEach(w => {
         const wid = w.getAttribute('data-widget-id') as WidgetId
@@ -204,7 +204,7 @@ export function DailyHub() {
         const dist = Math.abs(ev.clientY - mid)
         if (dist < bestDist) { bestDist = dist; best = { wid, p: ev.clientY < mid ? 'above' : 'below' } }
       })
-      if (best) { target = best.wid; pos = best.p; setDragState({ dragging: id, dropTarget: best.wid, dropPosition: best.p }) }
+      if (best) { const b = best; target = b.wid; pos = b.p; setDragState({ dragging: id, dropTarget: b.wid, dropPosition: b.p }) }
     }
 
     const onUp = () => {

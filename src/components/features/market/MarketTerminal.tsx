@@ -807,7 +807,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             </div>
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
               {(moverTab === 'up' ? moversUp : moversDown).map((m, mIdx) => (
-                <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)}>
+                <div key={m.name} className="mv-row" onClick={()=>router.push('/market/explorer?q='+encodeURIComponent(m.name.split(' PSA')[0].split(' CGC')[0].split(' BGS')[0].split(' PCA')[0]))}>
                   <span style={{ fontSize:10, fontWeight:700, color:'#CCC', fontFamily:'var(--font-data)', width:16, textAlign:'center', flexShrink:0 }}>{mIdx+1}</span>
                   <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.padding='4px'}} />
                   <div style={{ flex:1, minWidth:0 }}>

@@ -467,7 +467,8 @@ export function CardExplorer(){
       .sr{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #F5F5F5;font-size:12px}.sr:last-child{border-bottom:none}
       .fc{padding:3px 8px;border-radius:5px;border:1px solid #EBEBEB;background:#fff;font-size:10px;color:#888;cursor:pointer;font-family:var(--font-display);transition:all .1s;white-space:nowrap}
       .fc:hover{border-color:#C7C7CC;color:#111}.fc.on{background:#111;color:#fff;border-color:#111}
-      .fp{width:56px;padding:4px 6px;border-radius:5px;border:1px solid #EBEBEB;font-size:10px;font-family:var(--font-data);outline:none;text-align:center}.fp:focus{border-color:#E03020}.fp::placeholder{color:#CCC}
+      .fp{width:56px;padding:4px 6px;border-radius:5px;border:1px solid #EBEBEB;font-size:10px;font-family:var(--font-data);outline:none;text-align:center}.fp:focus{border-color:#E03020}
+      .grade-btn:hover{border-color:#C7C7CC !important;transform:translateY(-1px) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important}.fp::placeholder{color:#CCC}
       .srt{padding:3px 8px;border-radius:5px;border:none;background:transparent;font-size:10px;color:#AAA;cursor:pointer;font-family:var(--font-display)}.srt:hover{color:#111}.srt.on{background:#111;color:#fff}
       .ft{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;border:1px solid #EBEBEB;cursor:pointer;font-size:11px;font-family:var(--font-display);color:#888;background:#fff;transition:all .12s}
       .ft:hover{border-color:#C7C7CC;color:#111}.ft.on{background:#FFF5F4;border-color:#FFD8D0;color:#E03020}
@@ -620,31 +621,7 @@ export function CardExplorer(){
                 <span style={{fontSize:11,color:'#AAA',fontFamily:'var(--font-display)'}}>{card.set}</span>
               </div>
               <h2 style={{fontSize:24,fontWeight:600,fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:'0 0 8px',lineHeight:1.2}}>{getBaseName(card.name)}</h2>
-              {/* Grade segment control */}
-              {siblings.length>1&&(
-                <div style={{display:'flex',gap:0,background:'#F5F5F7',borderRadius:8,padding:3,marginBottom:12,width:'fit-content'}}>
-                  {siblings.map(sib=>{
-                    const g=sib.grade||'Raw'
-                    const isOn=selGrade===g
-                    const gs=GRADE_STYLES[g]
-                    return(
-                      <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
-                        padding:'5px 12px',borderRadius:6,border:'none',
-                        background:isOn?(g==='Raw'?'#fff':gs?.bg||'#fff'):'transparent',
-                        color:isOn?(g==='Raw'?'#111':gs?.color||'#111'):'#AAA',
-                        fontSize:11,fontWeight:isOn?700:500,cursor:'pointer',
-                        fontFamily:'var(--font-data)',transition:'all .12s',
-                        boxShadow:isOn?'0 1px 4px rgba(0,0,0,.08)':'none',
-                        borderWidth:isOn&&g!=='Raw'?1:0,borderStyle:'solid',
-                        borderColor:isOn?gs?.border||'transparent':'transparent',
-                      }}>
-                        {g}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-              {siblings.length<=1&&<div style={{marginBottom:4}}/>}
+
               <div style={{fontSize:38,fontWeight:700,fontFamily:'var(--font-data)',letterSpacing:'-2px',lineHeight:1}}>{cur.toLocaleString('fr-FR')} {'\u20ac'}</div>
               <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6}}>
                 <span style={{fontSize:14,fontWeight:600,color:isUp?'#2E9E6A':'#E03020',fontFamily:'var(--font-data)',background:isUp?'rgba(46,158,106,.06)':'rgba(224,48,32,.06)',padding:'2px 10px',borderRadius:6}}>
@@ -661,6 +638,47 @@ export function CardExplorer(){
               </div>
             </div>
           </div>
+
+          {/* ═══ GRADE SELECTOR ═══ */}
+          {siblings.length>1&&(
+            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,padding:'12px 14px',marginBottom:12}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span style={{fontSize:12,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
+                <span style={{fontSize:10,color:'#BBB',fontFamily:'var(--font-data)'}}>{siblings.length} versions</span>
+              </div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {siblings.map(sib=>{
+                  const g=sib.grade||'Raw'
+                  const isOn=selGrade===g
+                  const gs=GRADE_STYLES[g]||GRADE_STYLES['Raw']
+                  const isRaw=g==='Raw'
+                  return(
+                    <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
+                      display:'flex',flexDirection:'column',alignItems:'center',gap:2,
+                      padding:'8px 16px',borderRadius:10,cursor:'pointer',
+                      border:isOn?'2px solid '+(isRaw?'#111':gs.border):'1.5px solid #EBEBEB',
+                      background:isOn?(isRaw?'#F8F8FA':gs.bg):'#fff',
+                      transition:'all .15s',minWidth:72,position:'relative',
+                      boxShadow:isOn?'0 2px 8px rgba(0,0,0,.06)':'none',
+                      transform:isOn?'translateY(-1px)':'none',
+                    }}>
+                      {isOn&&<div style={{position:'absolute',top:-1,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:isRaw?'#111':gs.color}}/>}
+                      <span style={{fontSize:12,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)',letterSpacing:'.02em'}}>{g}</span>
+                      <span style={{fontSize:14,fontWeight:700,color:isOn?'#111':'#AAA',fontFamily:'var(--font-data)',letterSpacing:'-.5px'}}>{sib.price.toLocaleString('fr-FR')} {'€'}</span>
+                      {!isRaw&&(()=>{
+                        const rawSib=siblings.find(x=>x.grade==='Raw')
+                        if(!rawSib)return null
+                        const premium=Math.round((sib.price/rawSib.price-1)*100)
+                        return <span style={{fontSize:9,fontWeight:600,color:'#2E9E6A',fontFamily:'var(--font-data)'}}>{premium>0?'+':''}{premium}% vs raw</span>
+                      })()}
+                      {isRaw&&<span style={{fontSize:9,color:'#BBB',fontFamily:'var(--font-display)'}}>base</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Stats bar */}
           <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>

@@ -174,6 +174,7 @@ function Sec({ children, right }: { children:React.ReactNode; right?:React.React
 export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
   const [selIdx, setSelIdx] = useState<IndexId>('global')
   const [selCard, setSelCard] = useState<string|null>(null)
+  const [recentCards, setRecentCards] = useState<string[]>([])
   const [cardPeriod, setCardPeriod] = useState<Period>('1M')
   const [searchQ, setSearchQ] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -194,7 +195,32 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
     setCardPeriod('1M')
     setSearchOpen(false)
     setSearchQ('')
+    setRecentCards(prev => {
+      const next = prev.filter(c => c !== name)
+      next.unshift(name)
+      return next.slice(0, 8)
+    })
   }
+
+  const navCard = (dir: -1|1) => {
+    if (!selCard) return
+    const idx = ALL_CARDS.indexOf(selCard)
+    if (idx === -1) return
+    const next = idx + dir
+    if (next >= 0 && next < ALL_CARDS.length) openCard(ALL_CARDS[next])
+  }
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!selCard) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); navCard(-1) }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); navCard(1) }
+      if (e.key === 'Escape') setSelCard(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selCard])
 
   const searchResults = useMemo(() => {
     if (!searchQ.trim()) return []
@@ -271,6 +297,16 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         .tab-btn.on{background:#111;color:#fff}
         .stat-box{flex:1;background:#fff;border:1px solid #EBEBEB;border-radius:10px;padding:12px 14px;transition:all .15s}
         .stat-box:hover{border-color:#C7C7CC}
+        .recent-tab{padding:5px 10px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;font-size:10px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s;display:flex;align-items:center;gap:4px;white-space:nowrap;color:#888}
+        .recent-tab:hover{border-color:#C7C7CC;color:#111}
+        .recent-tab.on{background:#111;color:#fff;border-color:#111}
+        .recent-tab .close{opacity:0;font-size:8px;margin-left:2px;transition:opacity .1s}
+        .recent-tab:hover .close{opacity:.5}
+        .nav-arrow{width:30px;height:30px;border-radius:8px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;color:#888;font-size:12px}
+        .nav-arrow:hover:not(:disabled){border-color:#111;color:#111;background:#F8F8FA}
+        .nav-arrow:disabled{opacity:.2;cursor:default}
+        .see-also{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .1s;border:1px solid #F0F0F0}
+        .see-also:hover{background:#F8F8FA;border-color:#EBEBEB}
       `}</style>
 
       <div style={{ animation:'fadeIn .25s ease-out', width:'100%' }}>
@@ -475,10 +511,31 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
             <>
               <div onClick={()=>setSelCard(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.25)', zIndex:200, animation:'fadeIn .15s ease-out' }} />
               <div style={{ position:'fixed', top:0, right:0, bottom:0, width:420, background:'#fff', borderLeft:'1px solid #EBEBEB', zIndex:201, overflowY:'auto', boxShadow:'-8px 0 32px rgba(0,0,0,.08)', animation:'fadeIn .2s ease-out' }}>
-                {/* Close */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderBottom:'1px solid #F5F5F5' }}>
-                  <span style={{ fontSize:14, fontWeight:600, fontFamily:'var(--font-display)' }}>{card.name}</span>
-                  <button onClick={()=>setSelCard(null)} style={{ width:28, height:28, borderRadius:8, border:'1px solid #EBEBEB', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color:'#888' }}>{String.fromCharCode(215)}</button>
+                {/* Nav + Close */}
+                <div style={{ padding:'12px 18px', borderBottom:'1px solid #F5F5F5' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:recentCards.length>1?8:0 }}>
+                    <button className="nav-arrow" disabled={ALL_CARDS.indexOf(card.name)<=0} onClick={()=>navCard(-1)}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button className="nav-arrow" disabled={ALL_CARDS.indexOf(card.name)>=ALL_CARDS.length-1} onClick={()=>navCard(1)}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                    <span style={{ fontSize:14, fontWeight:600, fontFamily:'var(--font-display)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</span>
+                    <span style={{ fontSize:10, color:'#BBB', fontFamily:'var(--font-data)', flexShrink:0 }}>
+                      {ALL_CARDS.indexOf(card.name)+1}/{ALL_CARDS.length}
+                    </span>
+                    <button onClick={()=>setSelCard(null)} style={{ width:28, height:28, borderRadius:8, border:'1px solid #EBEBEB', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color:'#888', flexShrink:0 }}>{String.fromCharCode(215)}</button>
+                  </div>
+                  {recentCards.length > 1 && (
+                    <div style={{ display:'flex', gap:4, overflowX:'auto', paddingTop:4 }}>
+                      {recentCards.map(rc => (
+                        <button key={rc} className={'recent-tab'+(rc===selCard?' on':'')} onClick={()=>openCard(rc)}>
+                          {rc.split(' ').slice(0,2).join(' ')}
+                          {rc!==selCard && <span className="close" onMouseDown={e=>{e.stopPropagation();setRecentCards(p=>p.filter(c=>c!==rc))}}>{String.fromCharCode(215)}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Card image + price */}
@@ -542,6 +599,29 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                         <span style={{ fontWeight:600, fontFamily:'var(--font-data)' }}>{sale.p.toLocaleString('fr-FR')} {'\u20ac'}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+                {/* Voir aussi */}
+                <div style={{ padding:'0 18px 20px' }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Voir aussi</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {ALL_CARDS.filter(c => c !== selCard).slice(0, 4).map(name => {
+                      const other = CARD_DB[name]
+                      if (!other) return null
+                      return (
+                        <div key={name} className="see-also" onClick={()=>openCard(name)}>
+                          <img src={other.img} alt="" style={{ width:24, height:33, objectFit:'cover', borderRadius:3, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
+                            <div style={{ fontSize:10, color:'#BBB' }}>{other.set}</div>
+                          </div>
+                          <div style={{ textAlign:'right', flexShrink:0 }}>
+                            <div style={{ fontSize:12, fontWeight:600, fontFamily:'var(--font-data)' }}>{other.price} {'\u20ac'}</div>
+                            <div style={{ fontSize:10, fontWeight:600, color:other.change>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>{other.change>=0?'+':''}{other.change}%</div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </div>

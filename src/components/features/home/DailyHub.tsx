@@ -153,7 +153,7 @@ export function DailyHub() {
   })
   const [editMode, setEditMode] = useState(false)
   const [dragId, setDragId] = useState<WidgetId|null>(null)
-  const [overId, setOverId] = useState<WidgetId|null>(null)
+  const [overId, setOverId] = useState<string|null>(null)
 
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
@@ -183,6 +183,41 @@ export function DailyHub() {
   }
 
   const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
+
+  const dropAt = (col: 'left'|'right', position: number) => {
+    if (!dragId) return
+    setWidgetOrder(prev => {
+      const next = prev.filter(i => i !== dragId)
+      // Get visible widgets in this column
+      const colWidgets = next.filter(i => WIDGET_META[i].col === col && !hiddenWidgets.includes(i))
+      // Find insert index in the full array
+      if (position >= colWidgets.length) {
+        // Insert after last widget in column
+        const lastInCol = colWidgets[colWidgets.length - 1]
+        const idx = lastInCol ? next.indexOf(lastInCol) + 1 : next.length
+        next.splice(idx, 0, dragId)
+      } else {
+        const targetWidget = colWidgets[position]
+        const idx = next.indexOf(targetWidget)
+        next.splice(idx, 0, dragId)
+      }
+      return next
+    })
+    setDragId(null)
+    setOverId(null)
+  }
+
+  const DropZone = ({ col, position }: { col: 'left'|'right'; position: number }) => {
+    const zoneId = col + '-' + position
+    return (
+      <div
+        className={'drop-zone' + (dragId ? ' active' : '') + (overId === zoneId ? ' hover' : '')}
+        onDragOver={e => { e.preventDefault(); setOverId(zoneId as any) }}
+        onDragLeave={() => setOverId(null)}
+        onDrop={e => { e.preventDefault(); dropAt(col, position); }}
+      />
+    )
+  }
 
 
 
@@ -224,7 +259,7 @@ export function DailyHub() {
 
   const renderWidget = (id: WidgetId) => {
     const isEditing = true
-    const cls = 'w' + (dragId === id ? ' w-dragging' : '') + (overId === id && dragId !== id ? ' w-drop-target' : '')
+    const cls = 'w' + (dragId === id ? ' w-dragging' : '')
     const editHandle = (
       <>
         <div className="w-grip"><div className="w-grip-row"><i/><i/></div><div className="w-grip-row"><i/><i/></div><div className="w-grip-row"><i/><i/></div></div>
@@ -236,30 +271,6 @@ export function DailyHub() {
     const dragProps = {
       draggable: true,
       onDragStart: () => setDragId(id),
-      onDragOver: (e: React.DragEvent) => { e.preventDefault(); setOverId(id) },
-      onDragLeave: () => { if (overId === id) setOverId(null) },
-      onDrop: (e: React.DragEvent) => {
-        e.preventDefault()
-        if (dragId && dragId !== id) {
-          setWidgetOrder(prev => {
-            const fromIdx = prev.indexOf(dragId)
-            const toIdx = prev.indexOf(id)
-            if (fromIdx === -1 || toIdx === -1) return prev
-            const next = [...prev]
-            next.splice(fromIdx, 1)
-            next.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, dragId)
-            // Swap columns if needed
-            const fromCol = WIDGET_META[dragId].col
-            const toCol = WIDGET_META[id].col
-            if (fromCol !== toCol) {
-              (WIDGET_META[dragId] as any).col = toCol
-            }
-            return next
-          })
-        }
-        setDragId(null)
-        setOverId(null)
-      },
       onDragEnd: () => { setDragId(null); setOverId(null) },
     }
 
@@ -436,7 +447,9 @@ export function DailyHub() {
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
         .w{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
         .w-dragging{z-index:100 !important;opacity:.5 !important}
-        .w-drop-target{border-color:#E03020 !important;box-shadow:0 0 0 2px rgba(224,48,32,.15) !important;transform:scale(1.01)}
+        .drop-zone{height:0;transition:height .2s ease,opacity .2s;opacity:0;border-radius:8px;position:relative}
+        .drop-zone.active{height:8px;opacity:1}
+        .drop-zone.hover{height:12px;background:#FEF2F2;border:2px dashed #E03020;opacity:1}
         
         .w-hide{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;opacity:0;transition:all .15s;color:#CCC;font-size:11px}
         .w:hover .w-hide{opacity:.4}
@@ -591,11 +604,23 @@ export function DailyHub() {
 
         {/* ═══ GRID ═══ */}
         <div className="hub-grid">
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            {leftWidgets.map(id => renderWidget(id))}
+          <div style={{ display:'flex', flexDirection:'column', gap:dragId?8:16 }}>
+            <DropZone col="left" position={0} />
+            {leftWidgets.map((id, i) => (
+              <div key={id}>
+                {renderWidget(id)}
+                <DropZone col="left" position={i + 1} />
+              </div>
+            ))}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            {rightWidgets.map(id => renderWidget(id))}
+          <div style={{ display:'flex', flexDirection:'column', gap:dragId?8:16 }}>
+            <DropZone col="right" position={0} />
+            {rightWidgets.map((id, i) => (
+              <div key={id}>
+                {renderWidget(id)}
+                <DropZone col="right" position={i + 1} />
+              </div>
+            ))}
           </div>
         </div>
       </div>

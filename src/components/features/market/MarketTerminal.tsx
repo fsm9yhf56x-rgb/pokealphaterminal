@@ -26,7 +26,7 @@ const SEED_HISTORIES: Record<string, number[]> = {
   trophy:  genHistory(18500, 0.010, 0.28, 3650),
 }
 
-type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'
+type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'|'us'|'fr'|'trophy'
 const INDICES: {id:IndexId;label:string;ticker:string;color:string;desc:string}[] = [
   { id:'global',  label:'PKA Global',   ticker:'PKA',  color:'#E03020', desc:'Toutes cartes confondues' },
   { id:'sealed',  label:'PKA Sealed',   ticker:'SEAL', color:'#42A5F5', desc:'Boosters, displays, ETB' },

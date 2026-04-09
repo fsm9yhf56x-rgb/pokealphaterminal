@@ -546,7 +546,6 @@ export function DailyHub() {
           </div>
         )}
 
-                )}
 
         {/* ═══ PRO NUDGE ═══ */}
         {!isPro && (

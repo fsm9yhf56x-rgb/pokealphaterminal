@@ -865,7 +865,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         {selCard && (() => {
           const mc = MOVERS.find(m => m.name === selCard)
           if (!mc) return null
-          const hist = getCardHist(selCard)
+          const hist = getCardHistory(selCard)
           const days = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}[cardPeriod]
           const cData = cardPeriod === '1J'
             ? Array.from({length:48}, () => Math.round(mc.price * (1 + (Math.random()-.48) * .005)))

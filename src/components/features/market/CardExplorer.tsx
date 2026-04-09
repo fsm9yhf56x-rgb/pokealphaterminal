@@ -52,45 +52,24 @@ const CARDS:Card[]=[
   {name:'Mew ex Alt Art PCA 10',set:'Pokemon 151',price:320,change:15.2,vol:7,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.svg',grade:'PCA 10'},
   {name:'Espeon VMAX Alt PSA 10',set:'Evolving Skies',price:780,change:11.4,vol:6,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'/img/cards/espeon-vmax-alt.svg',grade:'PSA 10'},
   {name:'Pikachu VMAX RR CGC 10',set:'Vivid Voltage',price:420,change:8.9,vol:5,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp',grade:'CGC 10'},
-  {name:'Charizard ex Alt Art PSA 10',set:'Obsidian Flames',price:1680,change:18.2,vol:31,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'PSA 10'},
-  {name:'Charizard ex Alt Art PSA 9',set:'Obsidian Flames',price:1100,change:14.5,vol:22,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'PSA 9'},
   {name:'Charizard ex Alt Art PSA 8',set:'Obsidian Flames',price:820,change:8.4,vol:35,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'PSA 8'},
   {name:'Charizard ex Alt Art CGC 9.5',set:'Obsidian Flames',price:1350,change:16.8,vol:11,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'CGC 9.5'},
   {name:'Charizard ex Alt Art BGS 9.5',set:'Obsidian Flames',price:1280,change:15.2,vol:8,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'BGS 9.5'},
   {name:'Charizard ex Alt Art PCA 10',set:'Obsidian Flames',price:1420,change:19.1,vol:4,rarity:'SAR',type:'fire',gen:1,psa10:1680,psa9:1100,number:'234/197',img:'/img/cards/charizard-ex-alt.svg',grade:'PCA 10'},
-  {name:'Umbreon VMAX Alt PSA 10',set:'Evolving Skies',price:1600,change:22.4,vol:18,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'PSA 10'},
-  {name:'Umbreon VMAX Alt PSA 9',set:'Evolving Skies',price:1050,change:12.3,vol:15,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'PSA 9'},
-  {name:'Umbreon VMAX Alt CGC 9.5',set:'Evolving Skies',price:1200,change:16.8,vol:9,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'CGC 9.5'},
   {name:'Umbreon VMAX Alt BGS 9.5',set:'Evolving Skies',price:1150,change:18.1,vol:7,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'BGS 9.5'},
   {name:'Umbreon VMAX Alt PCA 10',set:'Evolving Skies',price:1320,change:20.5,vol:3,rarity:'SAR',type:'dark',gen:2,psa10:1600,psa9:1050,number:'215/203',img:'/img/cards/umbreon-vmax-alt.webp',grade:'PCA 10'},
-  {name:'Charizard Base Set PSA 10',set:'Base Set',price:42000,change:3.2,vol:2,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'PSA 10'},
-  {name:'Charizard Base Set PSA 9',set:'Base Set',price:5200,change:4.8,vol:8,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'PSA 9'},
-  {name:'Charizard Base Set PSA 8',set:'Base Set',price:2800,change:3.5,vol:14,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'PSA 8'},
   {name:'Charizard Base Set CGC 9.5',set:'Base Set',price:8200,change:5.1,vol:3,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'CGC 9.5'},
   {name:'Charizard Base Set PCA 9',set:'Base Set',price:4800,change:6.2,vol:5,rarity:'Holo',type:'fire',gen:1,psa10:42000,psa9:5200,number:'4/102',img:'/img/cards/charizard-base.webp',grade:'PCA 9'},
-  {name:'Rayquaza Gold Star PSA 10',set:'EX Deoxys',price:4200,change:25.1,vol:2,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp',grade:'PSA 10'},
   {name:'Rayquaza Gold Star PSA 9',set:'EX Deoxys',price:1800,change:22.3,vol:4,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp',grade:'PSA 9'},
-  {name:'Rayquaza Gold Star CGC 9.5',set:'EX Deoxys',price:2800,change:26.8,vol:3,rarity:'Gold Star',type:'dragon',gen:3,psa10:4200,psa9:1800,number:'107/107',img:'/img/cards/rayquaza-gold-star.webp',grade:'CGC 9.5'},
-  {name:'Gengar VMAX Alt PSA 10',set:'Fusion Strike',price:620,change:16.1,vol:8,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'PSA 10'},
-  {name:'Gengar VMAX Alt PSA 9',set:'Fusion Strike',price:420,change:9.8,vol:14,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'PSA 9'},
-  {name:'Gengar VMAX Alt BGS 9.5',set:'Fusion Strike',price:480,change:14.2,vol:12,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'BGS 9.5'},
   {name:'Gengar VMAX Alt PCA 10',set:'Fusion Strike',price:550,change:13.5,vol:3,rarity:'SAR',type:'psychic',gen:1,psa10:620,psa9:420,number:'271/264',img:'/img/cards/gengar-vmax-alt.webp',grade:'PCA 10'},
-  {name:'Lugia Neo Genesis PSA 10',set:'Neo Genesis',price:8400,change:6.1,vol:3,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'/img/cards/lugia-neo.webp',grade:'PSA 10'},
-  {name:'Lugia Neo Genesis PSA 9',set:'Neo Genesis',price:1200,change:5.2,vol:7,rarity:'Holo',type:'psychic',gen:2,psa10:8400,psa9:1200,number:'9/111',img:'/img/cards/lugia-neo.webp',grade:'PSA 9'},
-  {name:'Blastoise Base Set PSA 10',set:'Base Set',price:12000,change:4.2,vol:1,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp',grade:'PSA 10'},
-  {name:'Blastoise Base Set PSA 9',set:'Base Set',price:1400,change:5.1,vol:6,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp',grade:'PSA 9'},
-  {name:'Blastoise Base Set PCA 9',set:'Base Set',price:1800,change:7.5,vol:4,rarity:'Holo',type:'water',gen:1,psa10:12000,psa9:1400,number:'2/102',img:'/img/cards/blastoise-base.webp',grade:'PCA 9'},
   {name:'Mew ex Alt Art PSA 10',set:'Pokemon 151',price:280,change:14.5,vol:12,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.svg',grade:'PSA 10'},
   {name:'Mew ex Alt Art PSA 9',set:'Pokemon 151',price:180,change:10.2,vol:18,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.svg',grade:'PSA 9'},
-  {name:'Mew ex Alt Art PCA 10',set:'Pokemon 151',price:320,change:15.2,vol:7,rarity:'SAR',type:'psychic',gen:1,psa10:280,psa9:180,number:'205/165',img:'/img/cards/mew-ex-alt.svg',grade:'PCA 10'},
   {name:'Moonbreon (Umbreon V Alt) PSA 10',set:'Evolving Skies',price:650,change:21.2,vol:8,rarity:'SAR',type:'dark',gen:2,psa10:650,psa9:430,number:'188/203',img:'/img/cards/moonbreon-v-alt.webp',grade:'PSA 10'},
   {name:'Moonbreon (Umbreon V Alt) PSA 9',set:'Evolving Skies',price:430,change:15.8,vol:14,rarity:'SAR',type:'dark',gen:2,psa10:650,psa9:430,number:'188/203',img:'/img/cards/moonbreon-v-alt.webp',grade:'PSA 9'},
-  {name:'Espeon VMAX Alt PSA 10',set:'Evolving Skies',price:780,change:11.4,vol:6,rarity:'SAR',type:'psychic',gen:2,psa10:780,psa9:520,number:'270/203',img:'/img/cards/espeon-vmax-alt.svg',grade:'PSA 10'},
   {name:'Glaceon VMAX Alt PSA 10',set:'Evolving Skies',price:490,change:8.5,vol:5,rarity:'SAR',type:'water',gen:4,psa10:490,psa9:330,number:'209/203',img:'/img/cards/glaceon-vmax-alt.webp',grade:'PSA 10'},
   {name:'Leafeon VMAX Alt PSA 10',set:'Evolving Skies',price:580,change:9.2,vol:4,rarity:'SAR',type:'grass',gen:4,psa10:580,psa9:390,number:'205/203',img:'/img/cards/leafeon-vmax-alt.webp',grade:'PSA 10'},
   {name:'Dragonite V Alt Art PSA 10',set:'Pokemon GO',price:540,change:16.2,vol:6,rarity:'SAR',type:'dragon',gen:1,psa10:540,psa9:360,number:'076/078',img:'/img/cards/dragonite-v-alt.webp',grade:'PSA 10'},
   {name:'Pikachu VMAX RR PSA 10',set:'Vivid Voltage',price:220,change:5.5,vol:15,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp',grade:'PSA 10'},
-  {name:'Pikachu VMAX RR CGC 10',set:'Vivid Voltage',price:420,change:8.9,vol:5,rarity:'RR',type:'electric',gen:1,psa10:220,psa9:140,number:'188/185',img:'/img/cards/pikachu-vmax-rr.webp',grade:'CGC 10'},
 ]
 const SETS=[...new Set(CARDS.map(c=>c.set))].sort()
 const RARITIES=[...new Set(CARDS.map(c=>c.rarity))].sort()
@@ -458,6 +437,8 @@ export function CardExplorer(){
 
   const filtered=useMemo(()=>{
     let l=[...CARDS]
+    // By default only show base cards in list — graded accessible via selector
+    if(filterCondition==='all')l=l.filter(c=>!c.grade||c.grade==='Raw')
     if(search){const q=search.toLowerCase();l=l.filter(c=>c.name.toLowerCase().includes(q)||c.set.toLowerCase().includes(q)||c.rarity.toLowerCase().includes(q)||c.number.includes(q))}
     if(filterSet!=='all')l=l.filter(c=>c.set===filterSet)
     if(filterRarity!=='all')l=l.filter(c=>c.rarity===filterRarity)
@@ -470,6 +451,9 @@ export function CardExplorer(){
     if(filterTrend==='hot')l=l.filter(c=>c.change>15)
     if(filterTrend==='stable')l=l.filter(c=>Math.abs(c.change)<5)
     if(filterCondition!=='all'){
+      // Override the base-only filter above
+      l=[...CARDS]
+      if(search){const q=search.toLowerCase();l=l.filter(c=>c.name.toLowerCase().includes(q)||c.set.toLowerCase().includes(q)||c.rarity.toLowerCase().includes(q)||c.number.includes(q))}
       if(filterCondition==='raw')l=l.filter(c=>!c.grade||c.grade==='Raw')
       if(filterCondition==='graded')l=l.filter(c=>c.grade&&c.grade!=='Raw')
       if(filterCondition==='psa')l=l.filter(c=>c.grade&&c.grade.startsWith('PSA'))
@@ -678,80 +662,52 @@ export function CardExplorer(){
             </div>
           </div>
 
-          {/* ═══ GRADE SELECTOR ═══ */}
+          {/* === GRADE SELECTOR === */}
           {siblings.length>1&&(
-            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,padding:'12px 14px',marginBottom:12}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                <span style={{fontSize:12,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
-                <span style={{fontSize:10,color:'#BBB',fontFamily:'var(--font-data)'}}>{siblings.length} versions</span>
+            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,padding:'14px 16px',marginBottom:12}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:12,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
+                  <span style={{fontSize:10,color:'#BBB',background:'#F5F5F7',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-data)'}}>{siblings.length}</span>
+                </div>
+                {(()=>{
+                  const rawSib=siblings.find(x=>x.grade==='Raw')
+                  if(!rawSib||selGrade==='Raw')return null
+                  const prem=Math.round((activeCard.price/rawSib.price-1)*100)
+                  return <span style={{fontSize:11,color:'#2E9E6A',fontWeight:600,fontFamily:'var(--font-data)'}}>Prime vs Raw: +{prem}%</span>
+                })()}
               </div>
-              {(()=>{
-                const rawSib=siblings.find(x=>x.grade==='Raw')
-                const rawPrice=rawSib?.price||card.price
-                const companies=[
-                  {name:'Raw',color:'#888',cards:siblings.filter(x=>!x.grade||x.grade==='Raw')},
-                  {name:'PSA',color:'#F59E0B',cards:siblings.filter(x=>x.grade?.startsWith('PSA')).sort((a,b)=>b.price-a.price)},
-                  {name:'CGC',color:'#3B82F6',cards:siblings.filter(x=>x.grade?.startsWith('CGC')).sort((a,b)=>b.price-a.price)},
-                  {name:'BGS',color:'#DC2626',cards:siblings.filter(x=>x.grade?.startsWith('BGS')).sort((a,b)=>b.price-a.price)},
-                  {name:'PCA',color:'#22C55E',cards:siblings.filter(x=>x.grade?.startsWith('PCA')).sort((a,b)=>b.price-a.price)},
-                ].filter(c=>c.cards.length>0)
-                const allGraded=siblings.filter(x=>x.grade&&x.grade!=='Raw')
-                const mostTraded=allGraded.length>0?allGraded.reduce((a,b)=>a.vol>b.vol?a:b):null
-                const mostExpensive=allGraded.length>0?allGraded.reduce((a,b)=>a.price>b.price?a:b):null
-                return(
-                  <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                    {companies.map(comp=>(
-                      <div key={comp.name}>
-                        {comp.name!=='Raw'&&<div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
-                          <div style={{width:10,height:10,borderRadius:3,background:comp.color,opacity:.7}}/>
-                          <span style={{fontSize:11,fontWeight:700,color:comp.color,fontFamily:'var(--font-display)',letterSpacing:'.05em'}}>{comp.name}</span>
-                          <div style={{flex:1,height:1,background:'#F0F0F0'}}/>
-                          <span style={{fontSize:9,color:'#CCC'}}>{comp.cards.length} note{comp.cards.length>1?'s':''}</span>
-                        </div>}
-                        <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                          {comp.cards.map(sib=>{
-                            const g=sib.grade||'Raw'
-                            const isOn=selGrade===g
-                            const gs=GRADE_STYLES[g]||GRADE_STYLES['Raw']
-                            const isRaw=g==='Raw'
-                            const premium=isRaw?0:Math.round((sib.price/rawPrice-1)*100)
-                            const isPopular=mostTraded&&sib.name===mostTraded.name
-                            const isTop=mostExpensive&&sib.name===mostExpensive.name&&!isRaw
-                            return(
-                              <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
-                                display:'flex',flexDirection:'column',alignItems:'center',gap:2,
-                                padding:'8px 14px',borderRadius:10,cursor:'pointer',
-                                border:isOn?'2px solid '+(isRaw?'#111':gs.border):'1.5px solid #EBEBEB',
-                                background:isOn?(isRaw?'#F8F8FA':gs.bg):'#fff',
-                                transition:'all .15s cubic-bezier(.2,.8,.2,1)',minWidth:80,position:'relative',
-                                boxShadow:isOn?'0 2px 10px rgba(0,0,0,.08)':'none',
-                                transform:isOn?'translateY(-2px)':'none',
-                              }}
-                              onMouseEnter={e=>{if(!isOn){e.currentTarget.style.borderColor='#CCC';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 2px 6px rgba(0,0,0,.04)'}}}
-                              onMouseLeave={e=>{if(!isOn){e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='none'}}}
-                              >
-                                {isPopular&&!isTop&&<div style={{position:'absolute',top:-7,right:-4,fontSize:7,fontWeight:700,color:'#fff',background:'#2E9E6A',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-display)'}}>POPULAIRE</div>}
-                                {isTop&&<div style={{position:'absolute',top:-7,right:-4,fontSize:7,fontWeight:700,color:'#fff',background:'#F59E0B',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-display)'}}>TOP</div>}
-                                {isOn&&<div style={{position:'absolute',top:-1,left:'50%',transform:'translateX(-50%)',width:24,height:3,borderRadius:2,background:isRaw?'#111':gs.color}}/>}
-                                <span style={{fontSize:12,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)',letterSpacing:'.02em'}}>{g}</span>
-                                <span style={{fontSize:15,fontWeight:700,color:isOn?'#111':'#999',fontFamily:'var(--font-data)',letterSpacing:'-.5px',lineHeight:1}}>{sib.price.toLocaleString('fr-FR')} {String.fromCharCode(8364)}</span>
-                                {!isRaw&&<span style={{fontSize:9,fontWeight:600,color:premium>50?'#E03020':premium>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)'}}>+{premium}%</span>}
-                                {isRaw&&<span style={{fontSize:9,color:'#BBB',fontFamily:'var(--font-display)'}}>base</span>}
-                                <span style={{fontSize:8,color:'#CCC',fontFamily:'var(--font-data)'}}>vol. {sib.vol}</span>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
+              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {siblings.map(sib=>{
+                  const g=sib.grade||'Raw'
+                  const isOn=selGrade===g
+                  const gs=GRADE_STYLES[g]||GRADE_STYLES['Raw']
+                  const isRaw=g==='Raw'
+                  const rawSib=siblings.find(x=>x.grade==='Raw')
+                  const prem=isRaw||!rawSib?0:Math.round((sib.price/rawSib.price-1)*100)
+                  return(
+                    <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
+                      display:'flex',alignItems:'center',gap:6,
+                      padding:'6px 12px',borderRadius:8,cursor:'pointer',
+                      border:isOn?'2px solid '+(isRaw?'#111':gs.border):'1px solid #EBEBEB',
+                      background:isOn?(isRaw?'#F8F8FA':gs.bg):'#fff',
+                      transition:'all .12s',position:'relative',
+                      boxShadow:isOn?'0 1px 6px rgba(0,0,0,.06)':'none',
+                    }}
+                    onMouseEnter={e=>{if(!isOn){e.currentTarget.style.borderColor='#CCC';e.currentTarget.style.background='#FAFAFA'}}}
+                    onMouseLeave={e=>{if(!isOn){e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.background='#fff'}}}
+                    >
+                      <span style={{fontSize:11,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)'}}>{g}</span>
+                      <span style={{fontSize:12,fontWeight:700,color:isOn?'#111':'#AAA',fontFamily:'var(--font-data)',letterSpacing:'-.3px'}}>{sib.price.toLocaleString('fr-FR')} {String.fromCharCode(8364)}</span>
+                      {!isRaw&&prem>0&&<span style={{fontSize:9,fontWeight:600,color:prem>50?'#E03020':prem>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)',background:prem>50?'rgba(224,48,32,.06)':prem>20?'rgba(239,159,39,.06)':'rgba(46,158,106,.06)',padding:'1px 4px',borderRadius:3}}>+{prem}%</span>}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {/* Stats bar */}
+          {/* Stats bar */}          {/* Stats bar */}
           <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>
             {[
               {l:'Ouv.',v:data[0]},

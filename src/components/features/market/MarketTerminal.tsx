@@ -56,15 +56,15 @@ type Period = '1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'
 const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095,'5A':1825,'MAX':3650}
 
 const MOVERS = [
-  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://assets.tcgdex.net/en/ex/ex6/102/high.webp' },
-  { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'https://assets.tcgdex.net/en/swsh/swsh7/215/high.webp' },
-  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'https://assets.tcgdex.net/en/sv/sv3/234/high.webp' },
-  { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'https://assets.tcgdex.net/en/swsh/swsh8/271/high.webp' },
-  { name:'Lugia Neo Genesis',    set:'Neo Genesis',    price:580, change:15.2, vol:31,  img:'https://assets.tcgdex.net/en/neo/neo1/9/high.webp' },
-  { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'https://assets.tcgdex.net/en/sv/sv3pt5/151/high.webp' },
-  { name:'Blastoise Base Set',   set:'Base Set',       price:620, change:-4.2, vol:24,  img:'https://assets.tcgdex.net/en/base/base1/2/high.webp' },
-  { name:'Pikachu VMAX RR',      set:'Vivid Voltage',  price:110, change:-3.8, vol:89,  img:'https://assets.tcgdex.net/en/swsh/swsh4/188/high.webp' },
-  { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'https://assets.tcgdex.net/en/sm/sm11/222/high.webp' },
+  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://images.pokemontcg.io/ex7/107_hires.png' },
+  { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'https://images.pokemontcg.io/swsh7/215_hires.png' },
+  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'https://images.pokemontcg.io/sv3/234_hires.png' },
+  { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'https://images.pokemontcg.io/swsh8/271_hires.png' },
+  { name:'Lugia Neo Genesis',    set:'Neo Genesis',    price:580, change:15.2, vol:31,  img:'https://images.pokemontcg.io/neo1/9_hires.png' },
+  { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'https://images.pokemontcg.io/sv3pt5/205_hires.png' },
+  { name:'Blastoise Base Set',   set:'Base Set',       price:620, change:-4.2, vol:24,  img:'https://images.pokemontcg.io/base1/2_hires.png' },
+  { name:'Pikachu VMAX RR',      set:'Vivid Voltage',  price:110, change:-3.8, vol:89,  img:'https://images.pokemontcg.io/swsh4/188_hires.png' },
+  { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'https://images.pokemontcg.io/sm11/222_hires.png' },
 ]
 
 const TRANSACTIONS = [

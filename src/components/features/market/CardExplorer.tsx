@@ -364,7 +364,12 @@ export function CardExplorer(){
       .fr{display:flex;gap:3px;flex-wrap:wrap}
     `}</style>
 
-    <div style={{display:'flex',height:'calc(100vh - 120px)',animation:'fadeIn .25s ease-out'}}>
+    <div style={{animation:'fadeIn .25s ease-out',width:'100%'}}>
+        <div style={{marginBottom:16}}>
+          <p style={{fontSize:10,color:'#AAA',textTransform:'uppercase',letterSpacing:'.1em',margin:'0 0 4px',fontFamily:'var(--font-display)'}}>Market</p>
+          <h1 style={{fontSize:26,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:0}}>Explorer</h1>
+        </div>
+      <div style={{display:'flex',height:'calc(100vh - 180px)'}}>
 
       {/* ── LEFT ── */}
       <div style={{width:340,borderRight:'1px solid #EBEBEB',display:'flex',flexDirection:'column',flexShrink:0,background:'#fff'}}>
@@ -576,6 +581,7 @@ export function CardExplorer(){
           </div>
         </div>
       </div>
+    </div>
     </div>
     </>
   )

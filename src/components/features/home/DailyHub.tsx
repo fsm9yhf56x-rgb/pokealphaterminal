@@ -2,6 +2,20 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
+type WidgetId = 'portfolio'|'collections'|'missions'|'resume'|'dexy'|'movers'|'whales'|'deals'
+const WIDGET_META: Record<WidgetId,{label:string;icon:string;col:'left'|'right'}> = {
+  portfolio:   {label:'Mon portfolio',    icon:'\ud83d\udcb0', col:'left'},
+  collections: {label:'Mes collections',  icon:'\ud83d\udcda', col:'left'},
+  missions:    {label:'Missions du jour', icon:'\ud83c\udfaf', col:'left'},
+  resume:      {label:'Reprendre',        icon:'\u23ea',       col:'left'},
+  dexy:        {label:'Dexy AI Briefing', icon:'\ud83e\udd16', col:'right'},
+  movers:      {label:'Top movers',       icon:'\ud83d\udcc8', col:'right'},
+  whales:      {label:'Whale tracker',    icon:'\ud83d\udc0b', col:'right'},
+  deals:       {label:'Deals du moment',  icon:'\ud83d\udcb8', col:'right'},
+}
+const DEFAULT_ORDER: WidgetId[] = ['portfolio','collections','missions','resume','dexy','movers','whales','deals']
+const DEFAULT_HIDDEN: WidgetId[] = []
+
 const USER = {
   name:'Alon', plan:'free' as 'free'|'pro',
   streak:7, xp:2340, xpNext:3000, level:12,
@@ -129,6 +143,16 @@ export function DailyHub() {
   const router = useRouter()
   const [done, setDone] = useState<number[]>(MISSIONS.filter(m=>m.done).map(m=>m.id))
   const [dismissed, setDismissed] = useState(false)
+  const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_ORDER
+    try { const v = localStorage.getItem('pka_hub_order'); return v ? JSON.parse(v) : DEFAULT_ORDER } catch { return DEFAULT_ORDER }
+  })
+  const [hiddenWidgets, setHiddenWidgets] = useState<WidgetId[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_HIDDEN
+    try { const v = localStorage.getItem('pka_hub_hidden'); return v ? JSON.parse(v) : DEFAULT_HIDDEN } catch { return DEFAULT_HIDDEN }
+  })
+  const [editMode, setEditMode] = useState(false)
+  const [dragId, setDragId] = useState<WidgetId|null>(null)
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
   const [dexyOpen, setDexyOpen] = useState(false)
@@ -137,6 +161,28 @@ export function DailyHub() {
   const [streakShake, setStreakShake] = useState(false)
   const [showNewBadge, setShowNewBadge] = useState(true)
   const pidRef = useRef(0)
+
+  useEffect(() => { localStorage.setItem('pka_hub_order', JSON.stringify(widgetOrder)) }, [widgetOrder])
+  useEffect(() => { localStorage.setItem('pka_hub_hidden', JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
+
+  const toggleWidget = (id: WidgetId) => {
+    setHiddenWidgets(prev => prev.includes(id) ? prev.filter(i=>i!==id) : [...prev, id])
+  }
+  const moveWidget = (id: WidgetId, dir: -1|1) => {
+    setWidgetOrder(prev => {
+      const idx = prev.indexOf(id)
+      if (idx === -1) return prev
+      const next = [...prev]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return prev
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return next
+    })
+  }
+  const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
+
+  const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))
+  const rightWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'right' && !hiddenWidgets.includes(id))
 
   const isPro = USER.plan === 'pro'
   const xpPct = Math.round((USER.xp/USER.xpNext)*100)
@@ -171,6 +217,161 @@ export function DailyHub() {
     if (!isDone) setShowNewBadge(false)
   }
 
+  const renderWidget = (id: WidgetId) => {
+    const isEditing = editMode
+    const editHandle = isEditing ? (
+      <div className="w-edit-handle">
+        <button onClick={e=>{e.stopPropagation();moveWidget(id,-1)}} title="Monter">{String.fromCharCode(9650)}</button>
+        <button onClick={e=>{e.stopPropagation();moveWidget(id,1)}} title="Descendre">{String.fromCharCode(9660)}</button>
+        <button onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer" style={{color:'#E03020'}}>{String.fromCharCode(215)}</button>
+      </div>
+    ) : null
+    const cls = 'w' + (isEditing ? ' editing' : '')
+
+    switch(id) {
+      case 'portfolio': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Mon portfolio</div><span className="wb wb-g">+{'\u20ac'} {USER.portfolioGain} aujourd'hui</span></div>
+          <div className="wc">
+            <div className="num-reveal" style={{ fontSize:28, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', marginBottom:2 }}><CountUp target={USER.portfolioValue} /> {'\u20ac'}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:'#1D9E75', marginBottom:14 }}>{'\u25b2'} +{USER.portfolioGainPct}% {'\u00b7'} +{USER.portfolioGain} {'\u20ac'} depuis hier</div>
+            <div style={{ borderTop:'1px solid #F5F5F5', paddingTop:10 }}>
+              {PORTFOLIO_MOVES.map((c,i)=>(
+                <div key={i} className="row">
+                  <div className="dot" style={{ background:c.hot?'#E03020':c.change>=0?'#1D9E75':'#E24B4A', animation:c.hot?'pulse 1.5s infinite':'none' }}/>
+                  <span className="rn">{c.name}</span>
+                  <span className={'rv '+(c.change>=0?'up':'dn')}>{c.amount}</span>
+                  <span className={'rp '+(c.change>=0?'up':'dn')}>{c.change>=0?'+':''}{c.change}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+      case 'collections': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Mes collections</div><span className="wb">{COLLECTIONS.length} en cours</span></div>
+          <div className="wc">
+            {COLLECTIONS.map((col,i)=>{
+              const pct=Math.round((col.owned/col.total)*100)
+              return (
+                <div key={i} className="row" style={{ cursor:'pointer' }} onClick={()=>router.push('/cartes')}>
+                  <ProgressCircle pct={pct} color={col.color} />
+                  <div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)' }}>{col.name}</div><div style={{ fontSize:11, color:'#BBB' }}>{col.owned} / {col.total} cartes</div></div>
+                  <div style={{ fontSize:11, color:pct>=75?'#1D9E75':'#888', fontWeight:500, fontFamily:'var(--font-display)' }}>{col.total-col.owned} manquantes</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )
+      case 'missions': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Missions du jour</div><span className="wb">{done.length}/{MISSIONS.length} {'\u00b7'} +{xpEarned} XP</span></div>
+          <div className="wc">
+            {MISSIONS.map(m=>{
+              const isDone=done.includes(m.id)
+              return (
+                <div key={m.id} className="mis" onClick={e=>toggleMission(m.id,m.xp,e)}>
+                  <div className={'ck'+(isDone?' on':'')}>{isDone?'\u2713':''}</div>
+                  <span className={'ml'+(isDone?' done':'')}>{m.label}</span>
+                  <span className="xp-badge">+{m.xp}</span>
+                </div>
+              )
+            })}
+            <div style={{ marginTop:12 }}><Bar value={missionPct} color="linear-gradient(90deg,#E03020,#FF8C00)" h={4} /></div>
+            {done.length < MISSIONS.length && (
+              <div style={{ marginTop:10, fontSize:11, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:4 }}>
+                <span style={{ animation:'pulse 1.5s infinite', display:'inline-block' }}>{'\u26a1'}</span>
+                Encore {MISSIONS.length - done.length} mission{MISSIONS.length-done.length>1?'s':''} pour d{'\u00e9'}bloquer +{MISSIONS.filter(m=>!done.includes(m.id)).reduce((a,m)=>a+m.xp,0)} XP
+              </div>
+            )}
+            {done.length === MISSIONS.length && (
+              <div className="celeb" style={{ marginTop:10, fontSize:12, color:'#1D9E75', fontWeight:600, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:6, background:'#E1F5EE', padding:'8px 12px', borderRadius:8 }}>
+                {'\u2728'} Toutes les missions compl{'\u00e9'}t{'\u00e9'}es ! +{xpEarned} XP gagn{'\u00e9'}s
+              </div>
+            )}
+          </div>
+        </div>
+      )
+      case 'resume': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Reprendre</div></div>
+          <div className="wc">
+            <div style={{ display:'flex', gap:8 }}>
+              {RESUME_ITEMS.map((r,i)=>(
+                <div key={i} className="resume-card" onClick={()=>router.push(r.href)}>
+                  <div style={{ fontSize:11, fontWeight:500, fontFamily:'var(--font-display)', marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.icon} {r.name}</div>
+                  <div style={{ fontSize:10, color:'#BBB' }}>{r.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+      case 'dexy': return (
+        <div key={id} className={cls} style={{ borderLeft:'3px solid #E03020', borderRadius:'0 12px 12px 0', position:'relative' }}>
+          {editHandle}
+          <div className="wh">
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:28, height:28, borderRadius:8, background:'#E03020', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11, fontWeight:700 }}>D</div>
+              <span style={{ fontSize:13, fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Dexy AI {'\u00b7'} Briefing</span>
+            </div>
+            <span className="wb">{DEXY.time}</span>
+          </div>
+          <div className="wc">
+            <div style={{ fontSize:13, color:'#666', lineHeight:1.7 }}>{DEXY.text}</div>
+            <div style={{ marginTop:8, display:'flex', gap:4, flexWrap:'wrap' }}>
+              {DEXY.tags.map(t=>(<span key={t} style={{ fontSize:10, background:'#FEF2F2', color:'#993C1D', padding:'2px 8px', borderRadius:6, fontFamily:'var(--font-display)' }}>{t}</span>))}
+            </div>
+          </div>
+        </div>
+      )
+      case 'movers': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Top movers</div><span className="wb">24h</span></div>
+          <div className="wc">
+            {MOVERS.map((m,i)=>(<div key={i} className="row"><div className="dot" style={{ background:m.color }}/><span className="rn">{m.name}</span><span className="rv">{m.price}</span><span className={'rp '+(m.change>=0?'up':'dn')}>{m.change>=0?'\u25b2':'\u25bc'} {Math.abs(m.change)}%</span></div>))}
+          </div>
+        </div>
+      )
+      case 'whales': return (
+        <div key={id} className={cls} style={{position:'relative'}}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Whale tracker</div><div style={{ display:'flex', alignItems:'center', gap:4 }}><div className="live-dot"/><span className="wb">Live</span></div></div>
+          <div className="wc">
+            {WHALE_FEED.map((w,i)=>(<div key={i} className="row"><div className="whale-av" style={{ background:w.bg, color:w.fg, border:'1px solid '+w.border }}>{w.initials}</div><div style={{ flex:1 }}><div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)' }}>{w.name}</div><div style={{ fontSize:11, color:'#BBB' }}>Achet{'\u00e9'} {w.card} {'\u00b7'} {w.time}</div></div><div style={{ fontSize:13, fontWeight:600, color:'#1D9E75', fontFamily:'var(--font-data)' }}>{w.amount}</div></div>))}
+            <div className="row" style={{ opacity:.35 }}><div className="whale-av" style={{ background:'#F0F0F0', color:'#BBB' }}>??</div><div style={{ flex:1 }}><div style={{ fontSize:13 }}>Mouvement masqu{'\u00e9'}</div><div style={{ fontSize:11, color:'#BBB' }}>Visible avec Pro</div></div><div style={{ fontSize:13, color:'#BBB' }}>{'\u00b7\u00b7\u00b7'}</div></div>
+            {!isPro && (<div style={{ paddingTop:8, borderTop:'1px solid #F5F5F5', display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:4 }}><span style={{ fontSize:11, color:'#BBB' }}>1 mouvement masqu{'\u00e9'}</span><span style={{ fontSize:11, fontWeight:600, color:'#E03020', cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir avec Pro {'\u2192'}</span></div>)}
+          </div>
+        </div>
+      )
+      case 'deals': return (
+        <div key={id} className={cls} style={{ position:'relative', overflow:'hidden' }}>
+          {editHandle}
+          <div className="wh"><div className="wt"><div className="bar"/>Deals du moment</div><span className="wb">{DEALS.length} sous march{'\u00e9'}</span></div>
+          {isPro ? (
+            <div className="wc">{DEALS.map((d,i)=>(<div key={i} className="row"><span className="rn">{d.name}</span><span className="rv">{d.price}</span><span className="rp up">-{d.discount}%</span></div>))}</div>
+          ) : (
+            <><div className="wc" style={{ filter:'blur(2px)', pointerEvents:'none', userSelect:'none', opacity:.6 }}>{DEALS.map((d,i)=>(<div key={i} className="row"><span className="rn">{d.name}</span><span className="rv">{d.price}</span><span className="rp up">-{d.discount}%</span></div>))}</div>
+            <div style={{ position:'absolute', inset:0, top:30, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
+              <div style={{ fontSize:14 }}>{'\ud83d\udd12'}</div>
+              <div style={{ fontSize:12, color:'#888', textAlign:'center', maxWidth:200, lineHeight:1.5 }}>{DEALS.length} deals sous valeur march{'\u00e9'}</div>
+              <div style={{ fontSize:10, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)' }}>{'\u26a1'} 23 personnes en ont profit{'\u00e9'} aujourd'hui</div>
+              <button className="btn-dark" style={{ fontSize:12, padding:'8px 18px' }}>D{'\u00e9'}bloquer avec Pro {'\u2192'}</button>
+            </div></>
+          )}
+        </div>
+      )
+      default: return null
+    }
+  }
+
   return (
     <>
       <style>{`
@@ -198,6 +399,16 @@ export function DailyHub() {
         .new-dot::after{content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#E03020;border:2px solid #fff}
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
+        .edit-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F8F8FA;border:1.5px dashed #D2D2D7;border-radius:12px;margin-bottom:16px;animation:fadeUp .2s ease-out}
+        .edit-bar button{padding:5px 12px;border-radius:7px;border:1px solid #EBEBEB;background:#fff;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s}
+        .edit-bar button:hover{border-color:#111;background:#F5F5F7}
+        .w-toggle{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;font-size:11px;font-family:var(--font-display);transition:all .12s}
+        .w-toggle:hover{border-color:#111}
+        .w-toggle.off{opacity:.5;text-decoration:line-through}
+        .w-edit-handle{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5;animation:fadeUp .15s ease-out}
+        .w-edit-handle button{width:22px;height:22px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12s;color:#888}
+        .w-edit-handle button:hover{border-color:#111;color:#111}
+        .w.editing{border-style:dashed;border-color:#C7C7CC}
         .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
         .xp-particle{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:#E03020;font-family:var(--font-display);z-index:9999;animation:floatXP 1.1s ease-out forwards}
         .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -274,6 +485,31 @@ export function DailyHub() {
           </div>
         </div>
 
+        {/* ═══ CUSTOMIZE ═══ */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:editMode?0:12 }}>
+          <button onClick={()=>setEditMode(!editMode)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:8, border:'1px solid #EBEBEB', background:editMode?'#111':'#fff', color:editMode?'#fff':'#888', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-9.2-6.4 3.5-2m11.4-6.6 3.5-2M1 12h4m14 0h4M4.2 4.2l2.8 2.8m10 10 2.8 2.8M4.2 19.8l2.8-2.8m10-10 2.8-2.8"/></svg>
+            {editMode ? 'Termin\u00e9' : 'Personnaliser'}
+          </button>
+        </div>
+
+        {editMode && (
+          <div className="edit-bar">
+            <span style={{ fontSize:12, color:'#555', fontFamily:'var(--font-display)', flex:1 }}>
+              {'\u2699\ufe0f'} Glisse les widgets ou clique les fl\u00e8ches pour r\u00e9organiser. Clique un widget pour le masquer.
+            </span>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              {widgetOrder.map(id => (
+                <button key={id} className={'w-toggle'+(hiddenWidgets.includes(id)?' off':'')} onClick={()=>toggleWidget(id)}>
+                  {WIDGET_META[id].icon} {WIDGET_META[id].label}
+                </button>
+              ))}
+            </div>
+            <button onClick={resetLayout} style={{ color:'#E03020', borderColor:'#FFD0C8' }}>R\u00e9initialiser</button>
+          </div>
+        )}
+
         {/* ═══ PRO NUDGE ═══ */}
         {!isPro && (
           <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', background:'#FEF2F2', border:'1px solid #FFD0C8', borderRadius:10, marginBottom:16, animation:'fadeUp .3s ease-out' }}>
@@ -325,200 +561,11 @@ export function DailyHub() {
 
         {/* ═══ GRID ═══ */}
         <div className="hub-grid">
-
-          {/* ── COL GAUCHE : TOI ── */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-
-            {/* Portfolio */}
-            <div className="w">
-              <div className="wh"><div className="wt"><div className="bar"/>Mon portfolio</div><span className="wb wb-g">+{'\u20ac'} {USER.portfolioGain} aujourd'hui</span></div>
-              <div className="wc">
-                <div className="num-reveal" style={{ fontSize:28, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', marginBottom:2 }}><CountUp target={USER.portfolioValue} /> {'\u20ac'}</div>
-                <div style={{ fontSize:13, fontWeight:600, color:'#1D9E75', marginBottom:14 }}>{'\u25b2'} +{USER.portfolioGainPct}% {'\u00b7'} +{USER.portfolioGain} {'\u20ac'} depuis hier</div>
-                <div style={{ borderTop:'1px solid #F5F5F5', paddingTop:10 }}>
-                  {PORTFOLIO_MOVES.map((c,i)=>(
-                    <div key={i} className="row">
-                      <div className="dot" style={{ background:c.hot?'#E03020':c.change>=0?'#1D9E75':'#E24B4A', animation:c.hot?'pulse 1.5s infinite':'none' }}/>
-                      <span className="rn">{c.name}</span>
-                      <span className={'rv '+(c.change>=0?'up':'dn')}>{c.amount}</span>
-                      <span className={'rp '+(c.change>=0?'up':'dn')}>{c.change>=0?'+':''}{c.change}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Collections */}
-            <div className="w">
-              <div className="wh"><div className="wt"><div className="bar"/>Mes collections</div><span className="wb">{COLLECTIONS.length} en cours</span></div>
-              <div className="wc">
-                {COLLECTIONS.map((s,i)=>{
-                  const pct=Math.round((s.owned/s.total)*100)
-                  return (
-                    <div key={i} className="row" style={{ cursor:'pointer' }} onClick={()=>router.push('/cartes')}>
-                      <ProgressCircle pct={pct} color={s.color} />
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)' }}>{s.name}</div>
-                        <div style={{ fontSize:11, color:'#BBB' }}>{s.owned} / {s.total} cartes</div>
-                      </div>
-                      <div style={{ fontSize:11, color:pct>=75?'#1D9E75':'#888', fontWeight:500, fontFamily:'var(--font-display)' }}>{s.total-s.owned} manquantes</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Missions */}
-            <div className="w">
-              <div className="wh"><div className="wt"><div className="bar"/>Missions du jour</div><span className="wb">{done.length}/{MISSIONS.length} {'\u00b7'} +{xpEarned} XP</span></div>
-              <div className="wc">
-                {MISSIONS.map(m=>{
-                  const isDone=done.includes(m.id)
-                  return (
-                    <div key={m.id} className="mis" onClick={e=>toggleMission(m.id,m.xp,e)}>
-                      <div className={'ck'+(isDone?' on':'')}>{isDone?'\u2713':''}</div>
-                      <span className={'ml'+(isDone?' done':'')}>{m.label}</span>
-                      <span className="xp-badge">+{m.xp}</span>
-                    </div>
-                  )
-                })}
-                <div style={{ marginTop:12 }}>
-                  <Bar value={missionPct} color="linear-gradient(90deg,#E03020,#FF8C00)" h={4} />
-                </div>
-                {done.length < MISSIONS.length && (
-                  <div style={{ marginTop:10, fontSize:11, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:4 }}>
-                    <span style={{ animation:'pulse 1.5s infinite', display:'inline-block' }}>{'\u26a1'}</span>
-                    Encore {MISSIONS.length - done.length} mission{MISSIONS.length-done.length>1?'s':''} pour d{'\u00e9'}bloquer +{MISSIONS.filter(m=>!done.includes(m.id)).reduce((a,m)=>a+m.xp,0)} XP
-                  </div>
-                )}
-                {done.length === MISSIONS.length && (
-                  <div className="celeb" style={{ marginTop:10, fontSize:12, color:'#1D9E75', fontWeight:600, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:6, background:'#E1F5EE', padding:'8px 12px', borderRadius:8 }}>
-                    {'\u2728'} Toutes les missions compl{'\u00e9'}t{'\u00e9'}es ! +{xpEarned} XP gagn{'\u00e9'}s
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Reprendre */}
-            <div className="w">
-              <div className="wh"><div className="wt"><div className="bar"/>Reprendre</div></div>
-              <div className="wc">
-                <div style={{ display:'flex', gap:8 }}>
-                  {RESUME_ITEMS.map((r,i)=>(
-                    <div key={i} className="resume-card" onClick={()=>router.push(r.href)}>
-                      <div style={{ fontSize:11, fontWeight:500, fontFamily:'var(--font-display)', marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.icon} {r.name}</div>
-                      <div style={{ fontSize:10, color:'#BBB' }}>{r.sub}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {leftWidgets.map(id => renderWidget(id))}
           </div>
-
-          {/* ── COL DROITE : LE MARCH{'\u00c9'} ── */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-
-            {/* Dexy */}
-            <div className="w" style={{ borderLeft:'3px solid #E03020', borderRadius:'0 12px 12px 0' }}>
-              <div className="wh">
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <div style={{ width:28, height:28, borderRadius:8, background:'#E03020', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11, fontWeight:700 }}>D</div>
-                  <span style={{ fontSize:13, fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Dexy AI {'\u00b7'} Briefing</span>
-                </div>
-                <span className="wb">{DEXY.time}</span>
-              </div>
-              <div className="wc">
-                <div style={{ fontSize:13, color:'#666', lineHeight:1.7 }}>{DEXY.text}</div>
-                <div style={{ marginTop:8, display:'flex', gap:4, flexWrap:'wrap' }}>
-                  {DEXY.tags.map(t=>(
-                    <span key={t} style={{ fontSize:10, background:'#FEF2F2', color:'#993C1D', padding:'2px 8px', borderRadius:6, fontFamily:'var(--font-display)' }}>{t}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Top Movers */}
-            <div className="w">
-              <div className="wh"><div className="wt"><div className="bar"/>Top movers</div><span className="wb">24h</span></div>
-              <div className="wc">
-                {MOVERS.map((m,i)=>(
-                  <div key={i} className="row">
-                    <div className="dot" style={{ background:m.color }}/>
-                    <span className="rn">{m.name}</span>
-                    <span className="rv">{m.price}</span>
-                    <span className={'rp '+(m.change>=0?'up':'dn')}>{m.change>=0?'\u25b2':'\u25bc'} {Math.abs(m.change)}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Whale Tracker */}
-            <div className="w">
-              <div className="wh">
-                <div className="wt"><div className="bar"/>Whale tracker</div>
-                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                  <div className="live-dot"/>
-                  <span className="wb">Live</span>
-                </div>
-              </div>
-              <div className="wc">
-                {WHALE_FEED.map((w,i)=>(
-                  <div key={i} className="row">
-                    <div className="whale-av" style={{ background:w.bg, color:w.fg, border:`1px solid ${w.border}` }}>{w.initials}</div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)' }}>{w.name}</div>
-                      <div style={{ fontSize:11, color:'#BBB' }}>Achet{'\u00e9'} {w.card} {'\u00b7'} {w.time}</div>
-                    </div>
-                    <div style={{ fontSize:13, fontWeight:600, color:'#1D9E75', fontFamily:'var(--font-data)' }}>{w.amount}</div>
-                  </div>
-                ))}
-                <div className="row" style={{ opacity:.35 }}>
-                  <div className="whale-av" style={{ background:'#F0F0F0', color:'#BBB' }}>??</div>
-                  <div style={{ flex:1 }}><div style={{ fontSize:13 }}>Mouvement masqu{'\u00e9'}</div><div style={{ fontSize:11, color:'#BBB' }}>Visible avec Pro</div></div>
-                  <div style={{ fontSize:13, color:'#BBB' }}>{'\u00b7\u00b7\u00b7'}</div>
-                </div>
-                {!isPro && (
-                  <div style={{ paddingTop:8, borderTop:'1px solid #F5F5F5', display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:4 }}>
-                    <span style={{ fontSize:11, color:'#BBB' }}>1 mouvement masqu{'\u00e9'}</span>
-                    <span style={{ fontSize:11, fontWeight:600, color:'#E03020', cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir avec Pro {'\u2192'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Deals — Pro Gate */}
-            <div className="w" style={{ position:'relative', overflow:'hidden' }}>
-              <div className="wh"><div className="wt"><div className="bar"/>Deals du moment</div><span className="wb">{DEALS.length} sous march{'\u00e9'}</span></div>
-              {isPro ? (
-                <div className="wc">
-                  {DEALS.map((d,i)=>(
-                    <div key={i} className="row">
-                      <span className="rn">{d.name}</span>
-                      <span className="rv">{d.price}</span>
-                      <span className="rp up">-{d.discount}%</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <div className="wc" style={{ filter:'blur(2px)', pointerEvents:'none', userSelect:'none', opacity:.6 }}>
-                    {DEALS.map((d,i)=>(
-                      <div key={i} className="row">
-                        <span className="rn">{d.name}</span>
-                        <span className="rv">{d.price}</span>
-                        <span className="rp up">-{d.discount}%</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ position:'absolute', inset:0, top:30, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
-                    <div style={{ fontSize:14 }}>{'\ud83d\udd12'}</div>
-                    <div style={{ fontSize:12, color:'#888', textAlign:'center', maxWidth:200, lineHeight:1.5 }}>{DEALS.length} deals sous valeur march{'\u00e9'}</div>
-                    <div style={{ fontSize:10, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)' }}>{'\u26a1'} 23 personnes en ont profit{'\u00e9'} aujourd'hui</div>
-                    <button className="btn-dark" style={{ fontSize:12, padding:'8px 18px' }}>D{'\u00e9'}bloquer avec Pro {'\u2192'}</button>
-                  </div>
-                </>
-              )}
-            </div>
+            {rightWidgets.map(id => renderWidget(id))}
           </div>
         </div>
       </div>

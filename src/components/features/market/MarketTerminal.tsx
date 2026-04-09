@@ -1,431 +1,371 @@
 'use client'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+// ── GENERATE REALISTIC PRICE HISTORY ──
+function genHistory(base: number, volatility: number, trend: number, days: number): number[] {
+  const pts: number[] = [base * (1 - trend * days / 365)]
+  for (let i = 1; i <= days; i++) {
+    const noise = (Math.random() - 0.48) * volatility * pts[i - 1]
+    const t = trend * pts[i - 1] / 365
+    pts.push(Math.max(pts[i - 1] + noise + t, pts[0] * 0.5))
+  }
+  return pts.map(v => Math.round(v))
+}
 
-const INDICES = [
-  { id:'cards',   label:'Cards Index',  value:2841, prev:2748, change:3.8,  color:'#FF6B35', desc:'Toutes cartes raw & gradées' },
-  { id:'sealed',  label:'Sealed Index', value:4120, prev:4166, change:-1.1, color:'#42A5F5', desc:'Boosters & displays scellés'  },
-  { id:'vintage', label:'Vintage',      value:8740, prev:8184, change:6.8,  color:'#FFD700', desc:'Cartes avant 2003'            },
-  { id:'graded',  label:'Graded PSA',   value:6380, prev:6189, change:3.1,  color:'#C855D4', desc:'PSA 9 & PSA 10 uniquement'   },
+const SEED_HISTORIES: Record<string, number[]> = {
+  global:  genHistory(2841, 0.012, 0.15, 365),
+  sealed:  genHistory(4120, 0.008, -0.04, 365),
+  vintage: genHistory(8740, 0.015, 0.22, 365),
+  modern:  genHistory(3200, 0.018, 0.08, 365),
+  jp:      genHistory(5600, 0.020, 0.30, 365),
+}
+
+type IndexId = 'global'|'sealed'|'vintage'|'modern'|'jp'
+const INDICES: {id:IndexId;label:string;ticker:string;color:string;desc:string}[] = [
+  { id:'global',  label:'PKA Global',   ticker:'PKA',  color:'#E03020', desc:'Toutes cartes confondues' },
+  { id:'sealed',  label:'PKA Sealed',   ticker:'SEAL', color:'#42A5F5', desc:'Boosters, displays, ETB' },
+  { id:'vintage', label:'PKA Vintage',  ticker:'VNTG', color:'#FFD700', desc:'Cartes avant 2003' },
+  { id:'modern',  label:'PKA Modern',   ticker:'MODN', color:'#2E9E6A', desc:'Sword & Shield, SV' },
+  { id:'jp',      label:'PKA Japanese', ticker:'JP',   color:'#C855D4', desc:'March\u00e9 japonais' },
 ]
 
-const MOVERS_UP = [
-  { name:'Rayquaza Gold Star',     set:'EX Deoxys',      price:740,  change:31.2, vol:48,  type:'electric' },
-  { name:'Umbreon VMAX Alt Art',   set:'Evolving Skies', price:880,  change:24.1, vol:112, type:'dark'     },
-  { name:'Charizard Alt Art',      set:'SV151',          price:920,  change:21.3, vol:203, type:'fire'     },
-  { name:'Gengar VMAX Alt Art',    set:'Fusion Strike',  price:340,  change:18.4, vol:67,  type:'psychic'  },
-  { name:'Lugia Neo Genesis',      set:'Neo Genesis',    price:580,  change:15.2, vol:31,  type:'water'    },
-]
+type Period = '1J'|'1S'|'1M'|'3M'|'1A'
+const PERIOD_DAYS: Record<Period,number> = {'1J':1,'1S':7,'1M':30,'3M':90,'1A':365}
 
-const MOVERS_DOWN = [
-  { name:'Blastoise Base Set',  set:'Base Set',      price:620, change:-4.2, vol:24,  type:'water'    },
-  { name:'Pikachu VMAX RR',     set:'Vivid Voltage', price:110, change:-3.8, vol:89,  type:'electric' },
-  { name:'Mewtwo GX Rainbow',   set:'Unified Minds', price:95,  change:-2.9, vol:44,  type:'psychic'  },
+const MOVERS = [
+  { name:'Rayquaza Gold Star',   set:'EX Deoxys',      price:740, change:31.2, vol:48,  img:'https://assets.tcgdex.net/en/ex/ex7/107/high.webp' },
+  { name:'Umbreon VMAX Alt Art', set:'Evolving Skies', price:880, change:24.1, vol:112, img:'https://assets.tcgdex.net/en/swsh/swsh7/215/high.webp' },
+  { name:'Charizard ex Alt Art', set:'Obsidian Flames',price:920, change:21.3, vol:203, img:'https://assets.tcgdex.net/en/sv/sv3/234/high.webp' },
+  { name:'Gengar VMAX Alt Art',  set:'Fusion Strike',  price:340, change:18.4, vol:67,  img:'https://assets.tcgdex.net/en/swsh/swsh8/271/high.webp' },
+  { name:'Lugia Neo Genesis',    set:'Neo Genesis',    price:580, change:15.2, vol:31,  img:'https://assets.tcgdex.net/en/neo/neo1/9/high.webp' },
+  { name:'Mew ex Alt Art',       set:'Pok\u00e9mon 151',price:142, change:12.8, vol:95,  img:'https://assets.tcgdex.net/en/sv/sv3pt5/205/high.webp' },
+  { name:'Blastoise Base Set',   set:'Base Set',       price:620, change:-4.2, vol:24,  img:'https://assets.tcgdex.net/en/base/base1/2/high.webp' },
+  { name:'Pikachu VMAX RR',      set:'Vivid Voltage',  price:110, change:-3.8, vol:89,  img:'https://assets.tcgdex.net/en/swsh/swsh4/188/high.webp' },
+  { name:'Mewtwo GX Rainbow',    set:'Unified Minds',  price:95,  change:-2.9, vol:44,  img:'https://assets.tcgdex.net/en/sm/sm11/222/high.webp' },
 ]
 
 const TRANSACTIONS = [
-  { id:1, card:'Charizard Alt Art PSA 10', price:1240, type:'buy',  source:'eBay',  time:'Il y a 1 min',  seller:'RedDragonKai', hot:true  },
-  { id:2, card:'Umbreon VMAX Alt Art Raw', price:880,  type:'buy',  source:'CM',    time:'Il y a 3 min',  seller:'SakuraTCG',   hot:false },
-  { id:3, card:'Rayquaza Gold Star PSA 9', price:720,  type:'sell', source:'eBay',  time:'Il y a 5 min',  seller:'GoldStarFR',  hot:false },
-  { id:4, card:'Lugia Neo Genesis PSA 8',  price:580,  type:'buy',  source:'eBay',  time:'Il y a 7 min',  seller:'VintageJP',   hot:false },
-  { id:5, card:'Gengar VMAX Alt Art Raw',  price:340,  type:'buy',  source:'CM',    time:'Il y a 9 min',  seller:'PsychicDeck', hot:false },
-  { id:6, card:'Mew ex Alt Art Raw',       price:142,  type:'sell', source:'eBay',  time:'Il y a 11 min', seller:'NewCollect',  hot:false },
-  { id:7, card:'Charizard VMAX PSA 10',    price:890,  type:'buy',  source:'TCGp',  time:'Il y a 14 min', seller:'FireKing',    hot:false },
-  { id:8, card:'Pikachu Illus. Rare',      price:210,  type:'buy',  source:'CM',    time:'Il y a 18 min', seller:'ElectroPika', hot:false },
+  { card:'Charizard ex Alt Art PSA 10',  price:1240, type:'buy'  as const, source:'eBay',  seller:'RedDragonKai', lang:'EN' },
+  { card:'Umbreon VMAX Alt Art Raw',     price:880,  type:'buy'  as const, source:'CM',    seller:'SakuraTCG',    lang:'JP' },
+  { card:'Rayquaza Gold Star PSA 9',     price:720,  type:'sell' as const, source:'eBay',  seller:'GoldStarFR',   lang:'EN' },
+  { card:'Lugia Neo Genesis PSA 8',      price:580,  type:'buy'  as const, source:'eBay',  seller:'VintageJP',    lang:'JP' },
+  { card:'Gengar VMAX Alt Art Raw',      price:340,  type:'buy'  as const, source:'CM',    seller:'PsychicDeck',  lang:'FR' },
+  { card:'Mew ex Alt Art Raw',           price:142,  type:'sell' as const, source:'eBay',  seller:'NewCollect',   lang:'EN' },
+  { card:'Pikachu Illustrator Promo',    price:4200, type:'buy'  as const, source:'Goldin',seller:'WhaleJP',      lang:'JP' },
+  { card:'Blastoise Base Set PSA 9',     price:620,  type:'sell' as const, source:'CM',    seller:'VintageEU',    lang:'EN' },
+  { card:'Espeon VMAX Alt Art Raw',      price:418,  type:'buy'  as const, source:'CM',    seller:'EeveeFanFR',   lang:'FR' },
+  { card:'Dragonite V Alt Art Raw',      price:290,  type:'buy'  as const, source:'eBay',  seller:'DragonLord',   lang:'EN' },
 ]
 
-// Heatmap — triée par volume décroissant pour treemap feeling
-const HEATMAP = [
-  { name:'Charizard',  pct:21.3, vol:203 },
-  { name:'Umbreon',    pct:24.1, vol:112 },
-  { name:'Pikachu',    pct:-3.8, vol:89  },
-  { name:'Gengar',     pct:18.4, vol:67  },
-  { name:'Eevee',      pct:5.4,  vol:52  },
-  { name:'Mewtwo',     pct:-2.9, vol:44  },
-  { name:'Mew',        pct:9.1,  vol:38  },
-  { name:'Rayquaza',   pct:31.2, vol:48  },
-  { name:'Dragonite',  pct:14.8, vol:33  },
-  { name:'Snorlax',    pct:3.2,  vol:27  },
-  { name:'Raichu',     pct:11.2, vol:29  },
-  { name:'Alakazam',   pct:7.6,  vol:21  },
-  { name:'Gyarados',   pct:-6.1, vol:19  },
-  { name:'Machamp',    pct:2.1,  vol:18  },
-  { name:'Venusaur',   pct:-1.4, vol:15  },
-  { name:'Blastoise',  pct:-4.2, vol:24  },
-  { name:'Lugia',      pct:15.2, vol:31  },
-  { name:'Arcanine',   pct:8.9,  vol:24  },
-  { name:'Jigglypuff', pct:4.3,  vol:16  },
-  { name:'Clefairy',   pct:-0.8, vol:11  },
-].sort((a,b) => b.vol - a.vol)
-
-const UNDERVALUED = [
-  { name:'Blissey V Alt Art',    set:'Chilling Reign', fair:180, listed:128, gap:28, conf:81, source:'eBay', lang:'EN', signal:'A' },
-  { name:'Espeon VMAX Alt Art',  set:'Evolving Skies', fair:420, listed:318, gap:24, conf:74, source:'CM',   lang:'JP', signal:'A' },
-  { name:'Glaceon VMAX Alt Art', set:'Evolving Skies', fair:260, listed:198, gap:24, conf:69, source:'eBay', lang:'EN', signal:'B' },
-  { name:'Leafeon VMAX Alt Art', set:'Evolving Skies', fair:310, listed:241, gap:22, conf:72, source:'CM',   lang:'EN', signal:'B' },
-  { name:'Ditto V Alt Art',      set:'Fusion Strike',  fair:95,  listed:74,  gap:22, conf:61, source:'eBay', lang:'JP', signal:'B' },
-]
-
-const EC: Record<string,string> = {
-  fire:'#FF6B35', water:'#42A5F5', psychic:'#C855D4',
-  dark:'#7E57C2', electric:'#D4A800', grass:'#3DA85A',
-}
-
-function heatStyle(pct: number, vol: number) {
-  const abs       = Math.abs(pct)
-  const isUp      = pct >= 0
-  const intensity = Math.min(abs / 30, 1) // 0→1 selon amplitude
-
-  // Couleurs : vert pour hausse, rouge pour baisse — saturation proportionnelle
-  // Fond léger → coloré selon intensité
-  const bg = isUp
-    ? `hsl(152, ${Math.round(40 + intensity * 55)}%, ${Math.round(97 - intensity * 28)}%)`
-    : `hsl(4,   ${Math.round(40 + intensity * 55)}%, ${Math.round(97 - intensity * 28)}%)`
-
-  const textMain = isUp
-    ? `hsl(152, ${Math.round(50 + intensity * 30)}%, ${Math.round(28 - intensity * 8)}%)`
-    : `hsl(4,   ${Math.round(50 + intensity * 30)}%, ${Math.round(32 - intensity * 10)}%)`
-
-  const border = isUp
-    ? `hsl(152, ${Math.round(35 + intensity * 40)}%, ${Math.round(80 - intensity * 30)}%)`
-    : `hsl(4,   ${Math.round(35 + intensity * 40)}%, ${Math.round(80 - intensity * 30)}%)`
-
-  // Taille : basée sur le volume
-  const maxVol = 203
-  const t      = Math.min(vol / maxVol, 1)
-  // 3 tailles : sm (vol < 30), md (30–80), lg (80+)
-  const size   = vol >= 80 ? 'lg' : vol >= 30 ? 'md' : 'sm'
-
-  return { bg, textMain, border, size, intensity }
-}
-
-function Sec({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+// ── SPARKLINE ──
+function Spark({ data, color, w=80, h=24 }: { data:number[]; color:string; w?:number; h?:number }) {
+  if (data.length < 2) return null
+  const mn = Math.min(...data), mx = Math.max(...data), range = mx - mn || 1
+  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - mn) / range) * (h - 2) - 1}`).join(' ')
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px' }}>
-      <div style={{ width:'3px', height:'16px', borderRadius:'2px', background:'#E03020', flexShrink:0 }} />
-      <span style={{ fontSize:'11px', fontWeight:700, color:'#444', textTransform:'uppercase' as const, letterSpacing:'0.09em', fontFamily:'var(--font-display)' }}>{children}</span>
-      <div style={{ flex:1, height:'1px', background:'#EBEBEB' }} />
-      {action}
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display:'block' }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// ── MAIN CHART ──
+function Chart({ data, color, period }: { data:number[]; color:string; period:Period }) {
+  const ref = useRef<SVGSVGElement>(null)
+  const [hover, setHover] = useState<{x:number;y:number;val:number;idx:number}|null>(null)
+  const W = 700, H = 220, PX = 0, PY = 12
+  const mn = Math.min(...data), mx = Math.max(...data), range = mx - mn || 1
+  const points = data.map((v, i) => ({
+    x: PX + (i / (data.length - 1)) * (W - PX * 2),
+    y: PY + (1 - (v - mn) / range) * (H - PY * 2),
+    v
+  }))
+  const line = points.map(p => `${p.x},${p.y}`).join(' ')
+  const area = `${points[0].x},${H} ${line} ${points[points.length-1].x},${H}`
+  const isUp = data[data.length - 1] >= data[0]
+  const c = color
+
+  const onMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const mx = e.clientX - rect.left
+    const ratio = mx / rect.width
+    const idx = Math.round(ratio * (data.length - 1))
+    if (idx >= 0 && idx < points.length) {
+      setHover({ x: points[idx].x, y: points[idx].y, val: points[idx].v, idx })
+    }
+  }, [data, points])
+
+  const dateLabel = (idx: number) => {
+    const d = new Date()
+    const daysBack = data.length - 1 - idx
+    d.setDate(d.getDate() - daysBack)
+    if (period === '1J') return d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+    return d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' })
+  }
+
+  return (
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:220, display:'block', cursor:'crosshair' }}
+      onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <defs>
+        <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c} stopOpacity={0.15} />
+          <stop offset="100%" stopColor={c} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map(r => (
+        <line key={r} x1={PX} x2={W - PX} y1={PY + r * (H - PY * 2)} y2={PY + r * (H - PY * 2)} stroke="rgba(0,0,0,.04)" strokeWidth={1} />
+      ))}
+      <polygon points={area} fill="url(#cg)" />
+      <polyline points={line} fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      {hover && (
+        <>
+          <line x1={hover.x} x2={hover.x} y1={PY} y2={H - PY} stroke="rgba(0,0,0,.1)" strokeWidth={1} strokeDasharray="3,3" />
+          <circle cx={hover.x} cy={hover.y} r={4} fill={c} stroke="#fff" strokeWidth={2} />
+          <rect x={Math.min(hover.x - 44, W - 92)} y={Math.max(hover.y - 44, 0)} width={88} height={36} rx={8} fill="#111" />
+          <text x={Math.min(hover.x, W - 48)} y={Math.max(hover.y - 26, 12)} textAnchor="middle" fill="#fff" fontSize={13} fontWeight={600} fontFamily="var(--font-data)">{hover.val.toLocaleString('fr-FR')}</text>
+          <text x={Math.min(hover.x, W - 48)} y={Math.max(hover.y - 13, 25)} textAnchor="middle" fill="rgba(255,255,255,.5)" fontSize={10} fontFamily="var(--font-display)">{dateLabel(hover.idx)}</text>
+        </>
+      )}
+    </svg>
+  )
+}
+
+// ── SECTION HEADER ──
+function Sec({ children, right }: { children:React.ReactNode; right?:React.ReactNode }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+      <div style={{ width:3, height:14, borderRadius:2, background:'#E03020', flexShrink:0 }} />
+      <span style={{ fontSize:11, fontWeight:700, color:'#444', textTransform:'uppercase', letterSpacing:'.08em', fontFamily:'var(--font-display)' }}>{children}</span>
+      <div style={{ flex:1, height:1, background:'#EBEBEB' }} />
+      {right}
     </div>
   )
 }
 
-function LiveDot() {
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-      <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#2E9E6A', animation:'pulse 1.5s ease-in-out infinite' }} />
-      <span style={{ fontSize:'10px', color:'#2E9E6A', fontWeight:600, fontFamily:'var(--font-display)' }}>LIVE</span>
-    </div>
-  )
-}
-
-export function MarketTerminal({ isPro = false, defaultTab = 'movers' }: { isPro?: boolean; defaultTab?: string }) {
-  const [tab,        setTab]        = useState<'movers'|'undervalued'>(defaultTab as 'movers'|'undervalued')
+export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
+  const [selIdx, setSelIdx] = useState<IndexId>('global')
+  const [period, setPeriod] = useState<Period>('1M')
   const [feedPaused, setFeedPaused] = useState(false)
-  const [feed,       setFeed]       = useState(TRANSACTIONS)
-  const [newTx,      setNewTx]      = useState<number|null>(null)
-  const feedRef = useRef<HTMLDivElement>(null)
+  const [feed, setFeed] = useState(TRANSACTIONS.map((t, i) => ({ ...t, id: i, time: `Il y a ${i * 2 + 1} min` })))
+  const [newTx, setNewTx] = useState<number|null>(null)
+  const [moverTab, setMoverTab] = useState<'up'|'down'>('up')
 
+  const idx = INDICES.find(i => i.id === selIdx)!
+  const history = SEED_HISTORIES[selIdx]
+  const days = PERIOD_DAYS[period]
+  const chartData = useMemo(() => {
+    const slice = history.slice(-Math.min(days + 1, history.length))
+    if (period === '1J') {
+      const last = slice[slice.length - 1]
+      return Array.from({ length: 48 }, (_, i) => Math.round(last + (Math.random() - 0.48) * last * 0.005))
+    }
+    return slice
+  }, [selIdx, period, history, days])
+  const curVal = chartData[chartData.length - 1]
+  const startVal = chartData[0]
+  const chgPct = ((curVal - startVal) / startVal * 100)
+  const chgAbs = curVal - startVal
+  const isUp = chgPct >= 0
+
+  // Live feed
   useEffect(() => {
     if (feedPaused) return
     const t = setInterval(() => {
-      const mock = TRANSACTIONS[Math.floor(Math.random()*TRANSACTIONS.length)]
-      const tx = { ...mock, id: Date.now(), time:"À l'instant" }
-      setFeed(prev => [tx, ...prev.slice(0,14)])
+      const src = TRANSACTIONS[Math.floor(Math.random() * TRANSACTIONS.length)]
+      const variation = 1 + (Math.random() - 0.5) * 0.1
+      const tx = { ...src, id: Date.now(), time: "\u00c0 l'instant", price: Math.round(src.price * variation) }
+      setFeed(prev => [tx, ...prev.slice(0, 19)])
       setNewTx(tx.id)
-      setTimeout(() => setNewTx(null), 1500)
-    }, 6000)
+      setTimeout(() => setNewTx(null), 2000)
+    }, 5000)
     return () => clearInterval(t)
   }, [feedPaused])
 
-  const totalVol = MOVERS_UP.reduce((s,m)=>s+m.vol,0) + MOVERS_DOWN.reduce((s,m)=>s+m.vol,0)
+  const moversUp = MOVERS.filter(m => m.change > 0).sort((a, b) => b.change - a.change)
+  const moversDown = MOVERS.filter(m => m.change < 0).sort((a, b) => a.change - b.change)
+  const totalVol = MOVERS.reduce((s, m) => s + m.vol, 0)
+  const totalTx = feed.length
+  const topCard = MOVERS.reduce((a, b) => a.vol > b.vol ? a : b)
+  const avgPrice = Math.round(MOVERS.reduce((s, m) => s + m.price, 0) / MOVERS.length)
 
   return (
     <>
       <style>{`
-        @keyframes fadeIn  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pulse   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-        @keyframes txSlide { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cellIn  { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
-
-        .rh:hover          { background:#F8F8F8 !important; cursor:pointer; }
-        .mover-row:hover   { background:#F8F8F8 !important; cursor:pointer; }
-        .hc:hover          { filter:brightness(0.94) !important; transform:scale(1.03) !important; z-index:2; }
-        .tab-btn           { padding:7px 16px; border-radius:8px; border:none; background:transparent; color:#666; font-size:12px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; }
-        .tab-btn:hover     { background:#F0F0F0; }
-        .tab-btn.on        { background:#111 !important; color:#fff !important; }
-        .tx-new            { animation: txSlide 0.35s ease-out; }
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes txSlide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .idx-card{background:#fff;border:1px solid #EBEBEB;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+        .idx-card:hover{border-color:#C7C7CC;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .idx-card.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac),0 4px 12px rgba(0,0,0,.04)}
+        .idx-card.on .idx-bar{opacity:1}
+        .idx-bar{position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:12px 12px 0 0;opacity:.3;transition:opacity .15s}
+        .per-btn{padding:5px 14px;border-radius:7px;border:1px solid #EBEBEB;background:#fff;color:#888;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s}
+        .per-btn:hover{border-color:#C7C7CC;color:#111}
+        .per-btn.on{background:#111;color:#fff;border-color:#111}
+        .mv-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #F5F5F5;transition:background .1s;cursor:pointer}
+        .mv-row:last-child{border-bottom:none}
+        .mv-row:hover{background:#FAFAFA}
+        .tx-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #F5F5F5;transition:all .12s}
+        .tx-row:last-child{border-bottom:none}
+        .tx-row:hover{background:#FAFAFA}
+        .tx-new{animation:txSlide .3s ease-out;background:#F5FFF9 !important}
+        .tab-btn{padding:5px 14px;border-radius:7px;border:none;background:transparent;color:#888;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s}
+        .tab-btn:hover{background:#F0F0F0}
+        .tab-btn.on{background:#111;color:#fff}
+        .stat-box{flex:1;background:#fff;border:1px solid #EBEBEB;border-radius:10px;padding:12px 14px;transition:all .15s}
+        .stat-box:hover{border-color:#C7C7CC}
       `}</style>
 
-      <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%' }}>
+      <div style={{ animation:'fadeIn .25s ease-out', width:'100%' }}>
 
-        {/* ── HEADER ─────────────────────────────────── */}
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'22px', flexWrap:'wrap', gap:'12px' }}>
+        {/* ── HEADER ── */}
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
           <div>
-            <p style={{ fontSize:'10px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Market</p>
-            <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', margin:'0 0 6px' }}>Terminal</h1>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <LiveDot />
-              <span style={{ fontSize:'12px', color:'#888' }}>Mise à jour toutes les 15 min · {totalVol} transactions aujourd'hui</span>
+            <p style={{ fontSize:10, color:'#AAA', textTransform:'uppercase', letterSpacing:'.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Market</p>
+            <h1 style={{ fontSize:26, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-.5px', margin:'0 0 6px' }}>Terminal</h1>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'#2E9E6A', animation:'pulse 1.5s infinite' }} />
+              <span style={{ fontSize:11, color:'#2E9E6A', fontWeight:600, fontFamily:'var(--font-display)' }}>LIVE</span>
+              <span style={{ fontSize:11, color:'#AAA' }}>{'\u00b7'} Mise {'\u00e0'} jour toutes les 15 min</span>
             </div>
           </div>
-          <div style={{ fontSize:'12px', color:'#888', background:'#F5F5F5', padding:'6px 12px', borderRadius:'8px', fontFamily:'var(--font-display)' }}>
+          <div style={{ fontSize:11, color:'#888', background:'#F5F5F7', padding:'6px 12px', borderRadius:8, fontFamily:'var(--font-data)' }}>
             {new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}
           </div>
         </div>
 
-        {/* ── INDICES ────────────────────────────────── */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'22px' }}>
-          {INDICES.map(idx => {
-            const gain = idx.value - idx.prev
+        {/* ── MARKET STATS ── */}
+        <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+          <div className="stat-box">
+            <div style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:4 }}>Volume 24h</div>
+            <div style={{ fontSize:18, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.5px' }}>{totalVol.toLocaleString('fr-FR')}</div>
+            <div style={{ fontSize:10, color:'#AAA' }}>transactions</div>
+          </div>
+          <div className="stat-box">
+            <div style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:4 }}>Carte la + {'\u00e9'}chang{'\u00e9'}e</div>
+            <div style={{ fontSize:14, fontWeight:600, fontFamily:'var(--font-display)', letterSpacing:'-.3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{topCard.name}</div>
+            <div style={{ fontSize:10, color:'#AAA' }}>{topCard.vol} tx</div>
+          </div>
+          <div className="stat-box">
+            <div style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:4 }}>Prix moyen</div>
+            <div style={{ fontSize:18, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.5px' }}>{avgPrice} {'\u20ac'}</div>
+            <div style={{ fontSize:10, color:'#AAA' }}>top movers</div>
+          </div>
+          <div className="stat-box">
+            <div style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)', marginBottom:4 }}>March{'\u00e9'}</div>
+            <div style={{ fontSize:18, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.5px', color:isUp?'#2E9E6A':'#E03020' }}>{isUp?'+':''}{chgPct.toFixed(1)}%</div>
+            <div style={{ fontSize:10, color:'#AAA' }}>PKA Global 24h</div>
+          </div>
+        </div>
+
+        {/* ── INDICES ── */}
+        <Sec>Indices Pok{'\u00e9'}Alpha</Sec>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, marginBottom:20 }}>
+          {INDICES.map(i => {
+            const h = SEED_HISTORIES[i.id]
+            const cur = h[h.length - 1]
+            const prev = h[h.length - 2]
+            const pct = ((cur - prev) / prev * 100)
+            const spark = h.slice(-30)
+            const on = selIdx === i.id
             return (
-              <div key={idx.id} style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', padding:'16px 18px', position:'relative', overflow:'hidden', cursor:'pointer' }}>
-                <div style={{ position:'absolute', top:0, left:0, right:0, height:'3px', background:idx.color, borderRadius:'14px 14px 0 0' }} />
-                <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'10px' }}>
-                  <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:idx.color }} />
-                  <span style={{ fontSize:'10px', color:'#888', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:'var(--font-display)', fontWeight:600 }}>{idx.label}</span>
+              <div key={i.id} className={`idx-card${on?' on':''}`} style={{ '--ac': i.color } as React.CSSProperties} onClick={() => setSelIdx(i.id)}>
+                <div className="idx-bar" style={{ background:i.color }} />
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                  <span style={{ fontSize:10, fontWeight:600, color:'#888', fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>{i.ticker}</span>
+                  <Spark data={spark} color={pct >= 0 ? '#2E9E6A' : '#E03020'} w={48} h={16} />
                 </div>
-                <div style={{ fontSize:'28px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', lineHeight:1, marginBottom:'6px' }}>
-                  {idx.value.toLocaleString('fr-FR')}
+                <div style={{ fontSize:20, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1px', marginBottom:2 }}>{cur.toLocaleString('fr-FR')}</div>
+                <div style={{ fontSize:11, fontWeight:600, color:pct >= 0 ? '#2E9E6A' : '#E03020', fontFamily:'var(--font-data)' }}>
+                  {pct >= 0 ? '\u25b2' : '\u25bc'} {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
                 </div>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <span style={{ fontSize:'12px', fontWeight:600, color:idx.change>=0?'#2E9E6A':'#E03020' }}>
-                    {idx.change>=0?'▲':'▼'} {Math.abs(idx.change)}%
-                  </span>
-                  <span style={{ fontSize:'11px', color:gain>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-display)' }}>
-                    {gain>=0?'+':''}{gain.toLocaleString('fr-FR')} pts
-                  </span>
-                </div>
-                <div style={{ fontSize:'10px', color:'#CCC', marginTop:'4px' }}>{idx.desc}</div>
+                <div style={{ fontSize:9, color:'#CCC', marginTop:2 }}>{i.desc}</div>
               </div>
             )
           })}
         </div>
 
-        {/* ── MOVERS + FEED ──────────────────────────── */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'20px' }}>
-
-          {/* Movers / Undervalued */}
-          <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px' }}>
-              <Sec>{tab==='movers' ? 'Top Movers · 24h' : 'Sous-évalués · Live'}</Sec>
-              <div style={{ display:'flex', gap:'3px', background:'#F5F5F5', borderRadius:'8px', padding:'3px', marginLeft:'8px', flexShrink:0 }}>
-                <button onClick={()=>setTab('movers')}      className={`tab-btn${tab==='movers'?      ' on':''}`}>Movers</button>
-                <button onClick={()=>setTab('undervalued')} className={`tab-btn${tab==='undervalued'? ' on':''}`}>
-                  Sous-évalués {!isPro && <span style={{ fontSize:'9px', background:'#E03020', color:'#fff', padding:'1px 4px', borderRadius:'3px', marginLeft:'3px' }}>PRO</span>}
-                </button>
+        {/* ── CHART ── */}
+        <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, padding:'18px 20px', marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:idx.color }} />
+                <span style={{ fontSize:14, fontWeight:600, fontFamily:'var(--font-display)' }}>{idx.label}</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'baseline', gap:10, marginTop:4 }}>
+                <span style={{ fontSize:30, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1.5px' }}>{curVal.toLocaleString('fr-FR')}</span>
+                <span style={{ fontSize:14, fontWeight:600, color:isUp?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>
+                  {isUp?'\u25b2':'\u25bc'} {isUp?'+':''}{chgAbs.toLocaleString('fr-FR')} ({isUp?'+':''}{chgPct.toFixed(2)}%)
+                </span>
               </div>
             </div>
-
-            {tab==='movers' && (
-              <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
-                <div style={{ padding:'8px 14px', background:'#F5FFF9', borderBottom:'1px solid #E0F5EA', display:'flex', alignItems:'center', gap:'6px' }}>
-                  <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#2E9E6A' }} />
-                  <span style={{ fontSize:'10px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-display)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Hausse · {MOVERS_UP.length}</span>
-                </div>
-                {MOVERS_UP.map((m,i)=>(
-                  <div key={m.name} className="mover-row" style={{ display:'flex', alignItems:'center', gap:'12px', padding:'12px 14px', borderBottom:'1px solid #F5F5F5', transition:'background 0.1s' }}>
-                    <div style={{ width:'32px', height:'44px', borderRadius:'6px', background:`linear-gradient(145deg,${EC[m.type]??'#888'}20,${EC[m.type]??'#888'}08)`, border:`1.5px solid ${EC[m.type]??'#888'}28`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <div style={{ width:'10px', height:'10px', borderRadius:'50%', background:EC[m.type]??'#888', opacity:0.6 }} />
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
-                      <div style={{ fontSize:'10px', color:'#BBB', marginTop:'2px' }}>{m.set} · {m.vol} tx</div>
-                    </div>
-                    <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:'14px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>€ {m.price}</div>
-                      <div style={{ fontSize:'12px', fontWeight:700, color:'#2E9E6A' }}>▲ +{m.change}%</div>
-                    </div>
-                  </div>
-                ))}
-                <div style={{ padding:'8px 14px', background:'#FFF5F5', borderTop:'1px solid #F5E0E0', borderBottom:'1px solid #F5E0E0', display:'flex', alignItems:'center', gap:'6px' }}>
-                  <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#E03020' }} />
-                  <span style={{ fontSize:'10px', fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Baisse · {MOVERS_DOWN.length}</span>
-                </div>
-                {MOVERS_DOWN.map((m,i)=>(
-                  <div key={m.name} className="mover-row" style={{ display:'flex', alignItems:'center', gap:'12px', padding:'12px 14px', borderBottom:i<MOVERS_DOWN.length-1?'1px solid #F5F5F5':'none', transition:'background 0.1s' }}>
-                    <div style={{ width:'32px', height:'44px', borderRadius:'6px', background:`linear-gradient(145deg,${EC[m.type]??'#888'}20,${EC[m.type]??'#888'}08)`, border:`1.5px solid ${EC[m.type]??'#888'}28`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <div style={{ width:'10px', height:'10px', borderRadius:'50%', background:EC[m.type]??'#888', opacity:0.6 }} />
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
-                      <div style={{ fontSize:'10px', color:'#BBB', marginTop:'2px' }}>{m.set} · {m.vol} tx</div>
-                    </div>
-                    <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:'14px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>€ {m.price}</div>
-                      <div style={{ fontSize:'12px', fontWeight:700, color:'#E03020' }}>▼ {m.change}%</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tab==='undervalued' && (
-              isPro ? (
-                <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
-                  {UNDERVALUED.map((u,i)=>(
-                    <div key={u.name} className="mover-row" style={{ display:'flex', alignItems:'center', gap:'12px', padding:'13px 14px', borderBottom:i<UNDERVALUED.length-1?'1px solid #F5F5F5':'none', transition:'background 0.1s' }}>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'3px' }}>
-                          <span style={{ fontSize:'13px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)' }}>{u.name}</span>
-                          <span style={{ fontSize:'8px', fontWeight:700, background:u.signal==='A'?'#C855D4':'#2E9E6A', color:'#fff', padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', flexShrink:0 }}>Tier {u.signal}</span>
-                        </div>
-                        <div style={{ fontSize:'10px', color:'#BBB' }}>{u.set} · {u.source} · {u.lang}</div>
-                      </div>
-                      <div style={{ textAlign:'right' }}>
-                        <div style={{ fontSize:'14px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>€ {u.listed}</div>
-                        <div style={{ fontSize:'11px', color:'#AAA', textDecoration:'line-through' }}>€ {u.fair}</div>
-                      </div>
-                      <div style={{ textAlign:'right' }}>
-                        <div style={{ fontSize:'14px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-display)' }}>-{u.gap}%</div>
-                        <div style={{ fontSize:'10px', color:'#AAA' }}>{u.conf}%</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ position:'relative', borderRadius:'14px', overflow:'hidden' }}>
-                  <div style={{ filter:'blur(2px)', pointerEvents:'none', opacity:0.65, background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px' }}>
-                    {UNDERVALUED.map((u,i)=>(
-                      <div key={u.name} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'13px 14px', borderBottom:i<UNDERVALUED.length-1?'1px solid #F5F5F5':'none' }}>
-                        <div style={{ flex:1 }}>
-                          <div style={{ fontSize:'13px', color:'#AAA', fontFamily:'var(--font-display)' }}>{u.name}</div>
-                          <div style={{ fontSize:'10px', color:'#CCC' }}>{u.set}</div>
-                        </div>
-                        <div style={{ textAlign:'right' }}>
-                          <div style={{ fontSize:'14px', fontWeight:700, color:'#AAA' }}>€ {u.listed}</div>
-                          <div style={{ fontSize:'14px', fontWeight:700, color:'#AAA' }}>-{u.gap}%</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'rgba(255,255,255,0.7)', borderRadius:'14px', gap:'8px', padding:'20px', textAlign:'center' }}>
-                    <div style={{ fontSize:'16px' }}>🔒</div>
-                    <div style={{ fontSize:'14px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Réservé Pro</div>
-                    <div style={{ fontSize:'12px', color:'#888', maxWidth:'200px', lineHeight:1.5 }}>{UNDERVALUED.length} deals sous valeur marché détectés maintenant</div>
-                    <button onClick={()=>window.location.href='/signup'} style={{ padding:'8px 20px', borderRadius:'20px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>Passer Pro →</button>
-                  </div>
-                </div>
-              )
-            )}
+            <div style={{ display:'flex', gap:4 }}>
+              {(['1J','1S','1M','3M','1A'] as Period[]).map(p => (
+                <button key={p} className={`per-btn${period===p?' on':''}`} onClick={() => setPeriod(p)}>{p}</button>
+              ))}
+            </div>
           </div>
+          <Chart data={chartData} color={isUp ? '#2E9E6A' : '#E03020'} period={period} />
+        </div>
 
-          {/* Flux transactions */}
+        {/* ── MOVERS + FEED ── */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
+
+          {/* Movers */}
           <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px' }}>
-              <Sec><LiveDot />&nbsp;Flux de transactions</Sec>
-              <button onClick={()=>setFeedPaused(p=>!p)} style={{ fontSize:'11px', color:feedPaused?'#E03020':'#888', background:feedPaused?'#FFF0EE':'#F5F5F5', border:`1px solid ${feedPaused?'#FFD8D0':'#EBEBEB'}`, padding:'4px 12px', borderRadius:'7px', cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:500, flexShrink:0 }}>
-                {feedPaused ? '▶ Reprendre' : '⏸ Pause'}
-              </button>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <Sec>Top Movers {'\u00b7'} 24h</Sec>
+              <div style={{ display:'flex', gap:3, background:'#F5F5F7', borderRadius:8, padding:3, flexShrink:0 }}>
+                <button className={`tab-btn${moverTab==='up'?' on':''}`} onClick={()=>setMoverTab('up')}>{'\u25b2'} Hausse ({moversUp.length})</button>
+                <button className={`tab-btn${moverTab==='down'?' on':''}`} onClick={()=>setMoverTab('down')}>{'\u25bc'} Baisse ({moversDown.length})</button>
+              </div>
             </div>
-            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden', maxHeight:'480px', overflowY:'auto' }} ref={feedRef}>
-              {feed.map((tx,i)=>(
-                <div key={tx.id} className={`rh${tx.id===newTx?' tx-new':''}`} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'11px 14px', borderBottom:i<feed.length-1?'1px solid #F5F5F5':'none', transition:'background 0.1s', background:tx.id===newTx?'#F5FFF9':'transparent' }}>
-                  <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:tx.type==='buy'?'#F0FFF6':'#FFF0EE', border:`1px solid ${tx.type==='buy'?'#AAEEC8':'#FFD8D0'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', flexShrink:0 }}>
-                    {tx.type==='buy'?'↗':'↙'}
-                  </div>
+            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
+              {(moverTab === 'up' ? moversUp : moversDown).map(m => (
+                <div key={m.name} className="mv-row">
+                  <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'2px' }}>
-                      <span style={{ fontSize:'12px', fontWeight:500, color:'#111', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.card}</span>
-                      {tx.hot && <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:'#E03020', flexShrink:0, animation:'pulse 1.5s ease-in-out infinite' }} />}
-                    </div>
-                    <div style={{ fontSize:'10px', color:'#BBB' }}>{tx.source} · {tx.seller} · {tx.time}</div>
+                    <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
+                    <div style={{ fontSize:10, color:'#BBB', marginTop:1 }}>{m.set} {'\u00b7'} {m.vol} tx</div>
                   </div>
-                  <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontSize:'13px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>€ {tx.price.toLocaleString('fr-FR')}</div>
-                    <div style={{ fontSize:'10px', fontWeight:600, color:tx.type==='buy'?'#2E9E6A':'#E03020' }}>{tx.type==='buy'?'Achat':'Vente'}</div>
+                  <div style={{ textAlign:'right' }}>
+                    <div style={{ fontSize:15, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.5px' }}>{m.price} {'\u20ac'}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:m.change>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>
+                      {m.change>=0?'+':''}{m.change}%
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* ── HEATMAP ── fond blanc, design propre ─────── */}
-        <div>
-          <Sec action={
-            <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-              {/* Légende inline */}
-              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                {[
-                  { label:'>+15%', bg:'hsl(152,78%,82%)', border:'hsl(152,60%,70%)' },
-                  { label:'+5%',   bg:'hsl(152,50%,91%)', border:'hsl(152,40%,82%)' },
-                  { label:'0',     bg:'#F5F5F5',           border:'#E8E8E8'          },
-                  { label:'-5%',   bg:'hsl(4,50%,91%)',    border:'hsl(4,40%,82%)'   },
-                  { label:'<-15%', bg:'hsl(4,78%,82%)',    border:'hsl(4,60%,70%)'   },
-                ].map(l=>(
-                  <div key={l.label} style={{ display:'flex', alignItems:'center', gap:'4px' }}>
-                    <div style={{ width:'12px', height:'12px', borderRadius:'3px', background:l.bg, border:`1px solid ${l.border}` }} />
-                    <span style={{ fontSize:'10px', color:'#AAA', fontFamily:'var(--font-display)' }}>{l.label}</span>
-                  </div>
-                ))}
-              </div>
-              <span style={{ fontSize:'11px', color:'#AAA', fontFamily:'var(--font-display)' }}>
-                {HEATMAP.length} Pokémon · 24h
-              </span>
+          {/* Feed */}
+          <div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <Sec right={
+                <button onClick={() => setFeedPaused(p => !p)} style={{ fontSize:10, color:feedPaused?'#E03020':'#888', background:feedPaused?'#FFF0EE':'#F5F5F7', border:`1px solid ${feedPaused?'#FFD8D0':'#EBEBEB'}`, padding:'4px 10px', borderRadius:6, cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:500 }}>
+                  {feedPaused ? '\u25b6 Reprendre' : '\u23f8 Pause'}
+                </button>
+              }>Transactions {'\u00b7'} Live</Sec>
             </div>
-          }>Market Heatmap</Sec>
-
-          <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', padding:'16px' }}>
-            {/* Grille flexible — les grosses cartes (vol élevé) sont plus larges */}
-            <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
-              {HEATMAP.map((cell, idx) => {
-                const { bg, textMain, border, size, intensity } = heatStyle(cell.pct, cell.vol)
-                const abs = Math.abs(cell.pct)
-
-                // Largeur variable : lg = 180px, md = 130px, sm = 90px
-                const w = size === 'lg' ? '180px' : size === 'md' ? '130px' : '90px'
-                const h = size === 'lg' ? '88px'  : size === 'md' ? '76px'  : '64px'
-                const fsPct = size === 'lg' ? '20px' : size === 'md' ? '17px' : '14px'
-                const fsName = size === 'lg' ? '12px' : '11px'
-
-                return (
-                  <div key={cell.name} className="hc" style={{
-                    width: w,
-                    height: h,
-                    flexShrink: 0,
-                    background: bg,
-                    border: `1px solid ${border}`,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '3px',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s cubic-bezier(0.34,1.2,0.64,1)',
-                    animation: `cellIn 0.25s ${Math.min(idx,12)*0.025}s ease-out both`,
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}>
-                    {/* Subtle top border accent */}
-                    <div style={{ position:'absolute', top:0, left:'15%', right:'15%', height:'2px', background: cell.pct>=0 ? `hsl(152,${Math.round(55+intensity*30)}%,${Math.round(55-intensity*20)}%)` : `hsl(4,${Math.round(55+intensity*30)}%,${Math.round(55-intensity*20)}%)`, borderRadius:'0 0 2px 2px', opacity: 0.5 + intensity * 0.5 }} />
-
-                    <div style={{ fontSize:fsName, fontWeight:600, color:'rgba(0,0,0,0.55)', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'88%', letterSpacing:'0.01em' }}>
-                      {cell.name}
-                    </div>
-                    <div style={{ fontSize:fsPct, fontWeight:800, color:textMain, fontFamily:'var(--font-display)', letterSpacing:'-0.4px', lineHeight:1 }}>
-                      {cell.pct>=0?'+':''}{cell.pct}%
-                    </div>
-                    {size !== 'sm' && (
-                      <div style={{ fontSize:'9px', color:'rgba(0,0,0,0.3)', fontFamily:'var(--font-display)' }}>
-                        {cell.vol} tx
-                      </div>
-                    )}
+            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden', maxHeight:520, overflowY:'auto' }}>
+              {feed.map((tx, i) => (
+                <div key={tx.id} className={`tx-row${tx.id === newTx ? ' tx-new' : ''}`}>
+                  <div style={{ width:28, height:28, borderRadius:8, background:tx.type==='buy'?'#F0FFF6':'#FFF0EE', border:`1px solid ${tx.type==='buy'?'#AAEEC8':'#FFD8D0'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0, color:tx.type==='buy'?'#2E9E6A':'#E03020' }}>
+                    {tx.type === 'buy' ? '\u2197' : '\u2199'}
                   </div>
-                )
-              })}
-            </div>
-
-            {/* Footer info */}
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'12px', paddingTop:'10px', borderTop:'1px solid #F0F0F0' }}>
-              <span style={{ fontSize:'11px', color:'#BBB', fontFamily:'var(--font-display)' }}>
-                Taille des cellules proportionnelle au volume de transactions
-              </span>
-              <span style={{ fontSize:'11px', color:'#BBB', fontFamily:'var(--font-display)' }}>
-                Dernière mise à jour · {new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}
-              </span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.card}</div>
+                    <div style={{ fontSize:10, color:'#BBB', marginTop:1 }}>{tx.source} {'\u00b7'} {tx.seller} {'\u00b7'} {tx.lang} {'\u00b7'} {tx.time}</div>
+                  </div>
+                  <div style={{ textAlign:'right', flexShrink:0 }}>
+                    <div style={{ fontSize:14, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-.3px' }}>{tx.price.toLocaleString('fr-FR')} {'\u20ac'}</div>
+                    <div style={{ fontSize:10, fontWeight:600, color:tx.type==='buy'?'#2E9E6A':'#E03020' }}>{tx.type==='buy'?'Achat':'Vente'}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

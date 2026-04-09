@@ -33,6 +33,9 @@ const INDICES: {id:IndexId;label:string;ticker:string;color:string;desc:string}[
   { id:'vintage', label:'PKA Vintage',  ticker:'VNTG', color:'#FFD700', desc:'Cartes avant 2003' },
   { id:'modern',  label:'PKA Modern',   ticker:'MODN', color:'#2E9E6A', desc:'Sword & Shield, SV' },
   { id:'jp',      label:'PKA Japanese', ticker:'JP',   color:'#C855D4', desc:'March\u00e9 japonais' },
+  { id:'us',      label:'PKA US Market',    ticker:'US',   color:'#3B82F6', desc:'Marché américain eBay + TCGPlayer' },
+  { id:'fr',      label:'PKA French',       ticker:'FR',   color:'#1D4ED8', desc:'Premium cartes françaises vs EN' },
+  { id:'trophy',  label:'PKA Trophy',       ticker:'TRPH', color:'#B45309', desc:'Illustrator, Tropical Mega, No.1 Trainer' },
 ]
 
 type Period = '1J'|'1S'|'1M'|'3M'|'1A'|'3A'|'5A'|'MAX'

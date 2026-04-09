@@ -96,6 +96,35 @@ function ProgressCircle({ pct, color, size=36 }: { pct:number; color:string; siz
   )
 }
 
+function Toast({ msg, onClose }: { msg:string; onClose:()=>void }) {
+  useEffect(() => { const t = setTimeout(onClose, 5000); return ()=>clearTimeout(t) }, [onClose])
+  return (
+    <div className="toast-slide" style={{ position:'fixed', top:96, right:24, zIndex:1000, background:'rgba(17,17,17,.92)', backdropFilter:'blur(8px)', color:'#fff', padding:'12px 16px', borderRadius:12, fontSize:13, fontFamily:'var(--font-sans)', boxShadow:'0 8px 24px rgba(0,0,0,.15)', display:'flex', alignItems:'center', gap:10, maxWidth:300 }}>
+      <div className="live-dot" style={{ flexShrink:0 }} />
+      <span style={{ flex:1, lineHeight:1.5 }}>{msg}</span>
+      <button onClick={onClose} style={{ background:'none', border:'none', color:'rgba(255,255,255,.4)', cursor:'pointer', fontSize:16, padding:0 }}>{String.fromCharCode(215)}</button>
+    </div>
+  )
+}
+
+function CountUp({ target, suffix, duration=1200 }: { target:number; suffix?:string; duration?:number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef<number>(0)
+  useEffect(() => {
+    const start = Date.now()
+    const tick = () => {
+      const elapsed = Date.now() - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setVal(Math.round(target * eased))
+      if (progress < 1) ref.current = requestAnimationFrame(tick)
+    }
+    ref.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(ref.current)
+  }, [target, duration])
+  return <>{val.toLocaleString()}{suffix || ''}</>
+}
+
 export function DailyHub() {
   const router = useRouter()
   const [done, setDone] = useState<number[]>(MISSIONS.filter(m=>m.done).map(m=>m.id))
@@ -103,11 +132,29 @@ export function DailyHub() {
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
   const [dexyOpen, setDexyOpen] = useState(false)
+  const [toast, setToast] = useState<string|null>(null)
+  const [toastIdx, setToastIdx] = useState(0)
+  const [streakShake, setStreakShake] = useState(false)
+  const [showNewBadge, setShowNewBadge] = useState(true)
   const pidRef = useRef(0)
 
   const isPro = USER.plan === 'pro'
   const xpPct = Math.round((USER.xp/USER.xpNext)*100)
   const xpEarned = MISSIONS.filter(m=>done.includes(m.id)).reduce((a,m)=>a+m.xp,0)
+  const TOASTS = [
+    '\ud83d\udc0b RedDragonKai vient d\'acheter Charizard Alt Art \u00b7 \u20ac4,200',
+    '\ud83d\udd25 Signal Tier S activ\u00e9 sur Rayquaza Gold Star',
+    '\ud83d\udcc8 Umbreon VMAX Alt +8% en 1h \u00b7 Momentum acheteur',
+  ]
+  useEffect(() => {
+    if (toastIdx >= TOASTS.length) return
+    const delays = [8000, 22000, 40000]
+    const t = setTimeout(() => { setToast(TOASTS[toastIdx]); setToastIdx(i=>i+1) }, delays[toastIdx] || 30000)
+    return () => clearTimeout(t)
+  }, [toastIdx])
+  useEffect(() => { const t = setTimeout(()=>setStreakShake(true), 2000); const t2 = setTimeout(()=>setStreakShake(false), 2500); return ()=>{clearTimeout(t);clearTimeout(t2)} }, [])
+  const closeToast = useCallback(()=>setToast(null),[])
+
   const today = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
   const missionPct = Math.round((done.length/MISSIONS.length)*100)
 
@@ -121,6 +168,7 @@ export function DailyHub() {
       setXpAnim(true); setTimeout(()=>setXpAnim(false),600)
     }
     setDone(prev=>isDone?prev.filter(i=>i!==id):[...prev,id])
+    if (!isDone) setShowNewBadge(false)
   }
 
   return (
@@ -131,6 +179,26 @@ export function DailyHub() {
         @keyframes floatXP{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-44px)}}
         @keyframes xpBump{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
         @keyframes grow{from{width:0}}
+        @keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes streakShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+        @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}50%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+        @keyframes urgentPulse{0%,100%{border-color:#EBEBEB}50%{border-color:#E03020}}
+        @keyframes liveDot{0%,100%{box-shadow:0 0 0 0 rgba(29,158,117,.4)}50%{box-shadow:0 0 0 6px rgba(29,158,117,0)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes numberReveal{from{opacity:0;filter:blur(4px);transform:translateY(4px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes badgeBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+        .streak-fire{animation:streakShake .5s ease-in-out}
+        .celeb{animation:celebPop .4s cubic-bezier(.34,1.56,.64,1)}
+        .num-reveal{animation:numberReveal .6s ease-out both}
+        .num-reveal-d1{animation-delay:.1s}
+        .num-reveal-d2{animation-delay:.2s}
+        .badge-bounce{animation:badgeBounce .3s ease}
+        .new-dot{position:relative}
+        .new-dot::after{content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#E03020;border:2px solid #fff}
+        .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
+        .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
+        .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
         .xp-particle{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:#E03020;font-family:var(--font-display);z-index:9999;animation:floatXP 1.1s ease-out forwards}
         .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
         @media(max-width:1000px){.hub-grid{grid-template-columns:1fr} .qa-grid{grid-template-columns:repeat(2,1fr) !important}}
@@ -176,6 +244,7 @@ export function DailyHub() {
         .btn-ghost{padding:10px 14px;border-radius:9px;background:transparent;color:#888;border:1px solid #E0E0E0;font-size:13px;cursor:pointer;font-family:var(--font-display)}
       `}</style>
 
+      {toast && <Toast msg={toast} onClose={closeToast} />}
       {particles.map(p=>(
         <div key={p.id} className="xp-particle" style={{left:p.x,top:p.y}}>+{p.xp} XP</div>
       ))}
@@ -189,9 +258,9 @@ export function DailyHub() {
             <div style={{ fontSize:12, color:'#888' }}>{today}</div>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div className="stat-pill">
-              <span style={{ fontSize:16 }}>{'\ud83d\udd25'}</span>
-              <span style={{ fontSize:16, letterSpacing:'-.5px' }}>{USER.streak}</span>
+            <div className="stat-pill" style={{ animation:USER.streakExpiresIn<3600?'urgentPulse 2s infinite':'none', borderColor:USER.streakExpiresIn<3600?'#FFD0C8':'#EBEBEB' }}>
+              <span style={{ fontSize:16, display:'inline-block' }} className={streakShake?'streak-fire':''}>{'\ud83d\udd25'}</span>
+              <span style={{ fontSize:16, letterSpacing:'-.5px', fontFamily:'var(--font-data)' }}>{USER.streak}</span>
               <span style={{ color:'#BBB', fontWeight:400 }}>jours</span>
               <Timer seconds={USER.streakExpiresIn} />
             </div>
@@ -204,6 +273,15 @@ export function DailyHub() {
             </div>
           </div>
         </div>
+
+        {/* ═══ PRO NUDGE ═══ */}
+        {!isPro && (
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', background:'#FEF2F2', border:'1px solid #FFD0C8', borderRadius:10, marginBottom:16, animation:'fadeUp .3s ease-out' }}>
+            <div className="live-dot" style={{ background:'#E03020', flexShrink:0 }}/>
+            <span style={{ fontSize:12, color:'#791F1F', flex:1 }}><strong style={{ color:'#111', fontFamily:'var(--font-display)' }}>12 signaux</strong> et <strong style={{ color:'#111', fontFamily:'var(--font-display)' }}>8 deals</strong> disponibles avec Pro</span>
+            <button style={{ fontSize:11, fontWeight:700, color:'#fff', background:'#E03020', border:'none', cursor:'pointer', fontFamily:'var(--font-display)', padding:'6px 14px', borderRadius:8, transition:'opacity .15s' }}>Passer Pro {'\u2197'}</button>
+          </div>
+        )}
 
         {/* ═══ QUICK ACTIONS ═══ */}
         <div className="qa-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
@@ -221,13 +299,14 @@ export function DailyHub() {
               <div style={{ flex:1 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
                   <span className="tier">Tier {DAILY_ALPHA.tier}</span>
-                  <span style={{ fontSize:11, color:'#BBB', fontFamily:'var(--font-display)' }}>#{DAILY_ALPHA.id} {'\u00b7'} {DAILY_ALPHA.watching.toLocaleString()} regardent</span>
+                  {showNewBadge && <span className="badge-bounce" style={{ fontSize:9, fontWeight:700, background:'#E03020', color:'#fff', padding:'2px 8px', borderRadius:4, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>NEW</span>}
+                  <span style={{ fontSize:11, color:'#BBB', fontFamily:'var(--font-display)' }}>#{DAILY_ALPHA.id} {'\u00b7'} <span style={{ display:'inline-flex', alignItems:'center', gap:3 }}><span className="live-dot" style={{ width:4, height:4 }}/><CountUp target={DAILY_ALPHA.watching} /> regardent</span></span>
                 </div>
                 <div style={{ fontSize:20, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', margin:'8px 0 6px', letterSpacing:'-.3px' }}>{DAILY_ALPHA.name}</div>
                 <div style={{ fontSize:12, color:'#888', lineHeight:1.6, maxWidth:420 }}>{DAILY_ALPHA.reason}</div>
               </div>
               <div style={{ textAlign:'right', flexShrink:0 }}>
-                <div style={{ fontSize:32, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>{'\u20ac'} {DAILY_ALPHA.price.toLocaleString()}</div>
+                <div className="num-reveal" style={{ fontSize:32, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1 }}>{'\u20ac'} <CountUp target={DAILY_ALPHA.price} /></div>
                 <div style={{ fontSize:18, fontWeight:700, color:'#1D9E75' }}>+{DAILY_ALPHA.pct}%</div>
                 <div style={{ fontSize:11, color:'#BBB', marginTop:4 }}>March{'\u00e9'} {'\u20ac'} {DAILY_ALPHA.market.toLocaleString()} {'\u00b7'} Cible {'\u20ac'} {DAILY_ALPHA.target.toLocaleString()}</div>
                 <div style={{ marginTop:14, display:'flex', gap:8, justifyContent:'flex-end' }}>
@@ -254,7 +333,7 @@ export function DailyHub() {
             <div className="w">
               <div className="wh"><div className="wt"><div className="bar"/>Mon portfolio</div><span className="wb wb-g">+{'\u20ac'} {USER.portfolioGain} aujourd'hui</span></div>
               <div className="wc">
-                <div style={{ fontSize:28, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', marginBottom:2 }}>{USER.portfolioValue.toLocaleString()} {'\u20ac'}</div>
+                <div className="num-reveal" style={{ fontSize:28, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-1px', marginBottom:2 }}><CountUp target={USER.portfolioValue} /> {'\u20ac'}</div>
                 <div style={{ fontSize:13, fontWeight:600, color:'#1D9E75', marginBottom:14 }}>{'\u25b2'} +{USER.portfolioGainPct}% {'\u00b7'} +{USER.portfolioGain} {'\u20ac'} depuis hier</div>
                 <div style={{ borderTop:'1px solid #F5F5F5', paddingTop:10 }}>
                   {PORTFOLIO_MOVES.map((c,i)=>(
@@ -306,6 +385,17 @@ export function DailyHub() {
                 <div style={{ marginTop:12 }}>
                   <Bar value={missionPct} color="linear-gradient(90deg,#E03020,#FF8C00)" h={4} />
                 </div>
+                {done.length < MISSIONS.length && (
+                  <div style={{ marginTop:10, fontSize:11, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:4 }}>
+                    <span style={{ animation:'pulse 1.5s infinite', display:'inline-block' }}>{'\u26a1'}</span>
+                    Encore {MISSIONS.length - done.length} mission{MISSIONS.length-done.length>1?'s':''} pour d{'\u00e9'}bloquer +{MISSIONS.filter(m=>!done.includes(m.id)).reduce((a,m)=>a+m.xp,0)} XP
+                  </div>
+                )}
+                {done.length === MISSIONS.length && (
+                  <div className="celeb" style={{ marginTop:10, fontSize:12, color:'#1D9E75', fontWeight:600, fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:6, background:'#E1F5EE', padding:'8px 12px', borderRadius:8 }}>
+                    {'\u2728'} Toutes les missions compl{'\u00e9'}t{'\u00e9'}es ! +{xpEarned} XP gagn{'\u00e9'}s
+                  </div>
+                )}
               </div>
             </div>
 
@@ -367,7 +457,7 @@ export function DailyHub() {
               <div className="wh">
                 <div className="wt"><div className="bar"/>Whale tracker</div>
                 <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                  <div className="dot" style={{ background:'#1D9E75', animation:'pulse 2s infinite' }}/>
+                  <div className="live-dot"/>
                   <span className="wb">Live</span>
                 </div>
               </div>
@@ -422,7 +512,8 @@ export function DailyHub() {
                   </div>
                   <div style={{ position:'absolute', inset:0, top:30, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
                     <div style={{ fontSize:14 }}>{'\ud83d\udd12'}</div>
-                    <div style={{ fontSize:12, color:'#888', textAlign:'center', maxWidth:180, lineHeight:1.5 }}>{DEALS.length} deals sous valeur march{'\u00e9'}</div>
+                    <div style={{ fontSize:12, color:'#888', textAlign:'center', maxWidth:200, lineHeight:1.5 }}>{DEALS.length} deals sous valeur march{'\u00e9'}</div>
+                    <div style={{ fontSize:10, color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)' }}>{'\u26a1'} 23 personnes en ont profit{'\u00e9'} aujourd'hui</div>
                     <button className="btn-dark" style={{ fontSize:12, padding:'8px 18px' }}>D{'\u00e9'}bloquer avec Pro {'\u2192'}</button>
                   </div>
                 </>

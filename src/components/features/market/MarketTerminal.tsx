@@ -902,7 +902,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                 {/* Card image + price */}
                 <div style={{ display:'flex', gap:16, padding:'16px 18px' }}>
                   <img src={mc.img} alt="" style={{ width:100, height:140, objectFit:'cover', borderRadius:8, border:'1px solid #F0F0F0', boxShadow:'0 4px 16px rgba(0,0,0,.08)', flexShrink:0 }}
-                    onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}} />
+                    onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.svg'}} />
                   <div style={{ flex:1 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
                       <span style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-display)' }}>{mc.set}</span>
@@ -968,7 +968,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                       style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', border:'1px solid #F0F0F0', marginBottom:4, transition:'background .1s' }}
                       onMouseEnter={e => (e.currentTarget.style.background='#FAFAFA')} onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
                       <img src={m.img} alt="" style={{ width:24, height:33, objectFit:'cover', borderRadius:3, flexShrink:0 }}
-                        onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.webp'}} />
+                        onError={e => {(e.target as HTMLImageElement).src='/img/cards/card-back.svg'}} />
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:12, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
                         <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:1 }}>

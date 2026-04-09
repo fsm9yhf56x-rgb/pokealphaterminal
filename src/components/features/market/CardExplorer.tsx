@@ -420,6 +420,7 @@ export function CardExplorer(){
   const card=CARDS.find(c=>c.name===sel)!
   const siblings=useMemo(()=>getSiblings(CARDS,sel),[sel])
   const [selGrade,setSelGrade]=useState<string>(card?.grade||'Raw')
+  const [selCompany,setSelCompany]=useState<string>('PSA')
   const activeCard=siblings.find(s=>s.grade===selGrade)||card
   const data=useMemo(()=>getSlice(activeCard.name,period),[activeCard.name,period])
   const volume=useMemo(()=>getVolume(data),[data])
@@ -470,7 +471,7 @@ export function CardExplorer(){
   const ci=filtered.findIndex(c=>c.name===sel)
   const nav=(d:-1|1)=>{const n=ci+d;if(n>=0&&n<filtered.length){setSel(filtered[n].name);setPeriod('1M')}}
   useEffect(()=>{const h=(e:KeyboardEvent)=>{if(e.key==='ArrowUp'){e.preventDefault();nav(-1)}if(e.key==='ArrowDown'){e.preventDefault();nav(1)}};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[ci,filtered])
-  useEffect(()=>{setSelGrade(card?.grade||'Raw')},[sel])
+  useEffect(()=>{setSelGrade(card?.grade||'Raw');setSelCompany('PSA')},[sel])
   useEffect(()=>{const el=document.getElementById('c-'+sel);if(el&&listRef.current)el.scrollIntoView({block:'nearest',behavior:'smooth'})},[sel])
 
   return(
@@ -663,55 +664,92 @@ export function CardExplorer(){
           </div>
 
           {/* === GRADE SELECTOR === */}
-          {siblings.length>1&&(
-            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,overflow:'hidden',marginBottom:12}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid #F5F5F5',background:'#FAFBFC'}}>
-                <span style={{fontSize:11,fontWeight:600,color:'#555',fontFamily:'var(--font-display)'}}>Grades disponibles</span>
-                {(()=>{
-                  const rawSib=siblings.find(x=>x.grade==='Raw')
-                  if(!rawSib||selGrade==='Raw')return null
-                  const prem=Math.round((activeCard.price/rawSib.price-1)*100)
-                  return <span style={{fontSize:11,fontWeight:700,color:'#2E9E6A',fontFamily:'var(--font-data)',background:'rgba(46,158,106,.06)',padding:'2px 8px',borderRadius:5}}>Prime +{prem}%</span>
-                })()}
+          {siblings.length>1&&(()=>{
+            const rawSib=siblings.find(x=>x.grade==='Raw')
+            const rawPrice=rawSib?.price||card.price
+            const companies=[
+              {id:'PSA',color:'#D97706',bg:'#FFFBEB',border:'#F59E0B',notes:['10','9','8','7','6','5','4','3','2','1']},
+              {id:'CGC',color:'#2563EB',bg:'#EFF6FF',border:'#60A5FA',notes:['10','9.5','9','8.5','8','7','6','5']},
+              {id:'BGS',color:'#DC2626',bg:'#FEF2F2',border:'#F87171',notes:['10','9.5','9','8.5','8','7','6']},
+              {id:'PCA',color:'#16A34A',bg:'#F0FDF4',border:'#4ADE80',notes:['10','9.5','9','8.5','8','7','6']},
+            ]
+            const comp=companies.find(c=>c.id===selCompany)||companies[0]
+            const hasCompany=(id:string)=>siblings.some(x=>x.grade?.startsWith(id))
+            return(
+              <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:12,overflow:'hidden',marginBottom:12}}>
+                <div style={{display:'flex',borderBottom:'1px solid #F0F0F0'}}>
+                  <button onClick={()=>setSelGrade('Raw')} style={{
+                    padding:'8px 16px',border:'none',cursor:'pointer',
+                    borderBottom:selGrade==='Raw'?'2px solid #111':'2px solid transparent',
+                    background:selGrade==='Raw'?'#F8F8FA':'#fff',
+                    display:'flex',alignItems:'center',gap:5,transition:'all .1s',
+                  }}>
+                    <span style={{fontSize:11,fontWeight:selGrade==='Raw'?700:500,color:selGrade==='Raw'?'#111':'#888',fontFamily:'var(--font-display)'}}>Raw</span>
+                    <span style={{fontSize:12,fontWeight:700,color:selGrade==='Raw'?'#111':'#BBB',fontFamily:'var(--font-data)'}}>{rawPrice.toLocaleString('fr-FR')} {'\u20ac'}</span>
+                  </button>
+                  <div style={{width:1,background:'#F0F0F0',margin:'6px 0'}}/>
+                  {companies.map(c=>{
+                    const active=selCompany===c.id&&selGrade!=='Raw'
+                    const has=hasCompany(c.id)
+                    return(
+                      <button key={c.id} onClick={()=>{
+                        setSelCompany(c.id)
+                        const best=siblings.find(x=>x.grade===c.id+' 10')||siblings.find(x=>x.grade?.startsWith(c.id))
+                        if(best)setSelGrade(best.grade||'Raw')
+                      }} disabled={!has} style={{
+                        padding:'8px 14px',border:'none',cursor:has?'pointer':'default',
+                        borderBottom:active?'2px solid '+c.color:'2px solid transparent',
+                        background:active?c.bg:'#fff',opacity:has?1:.35,
+                        display:'flex',alignItems:'center',gap:4,transition:'all .1s',
+                      }}>
+                        <div style={{width:7,height:7,borderRadius:2,background:c.color}}/>
+                        <span style={{fontSize:11,fontWeight:active?700:500,color:active?c.color:'#888',fontFamily:'var(--font-display)'}}>{c.id}</span>
+                        {has&&<span style={{fontSize:9,color:'#CCC',fontFamily:'var(--font-data)'}}>({siblings.filter(x=>x.grade?.startsWith(c.id)).length})</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+                {selGrade!=='Raw'&&(
+                  <div style={{padding:'10px 14px',display:'flex',gap:4,flexWrap:'wrap',alignItems:'center'}}>
+                    {comp.notes.map(note=>{
+                      const grade=comp.id+' '+note
+                      const sib=siblings.find(x=>x.grade===grade)
+                      const isOn=selGrade===grade
+                      const isGold=note==='10'
+                      const isSilver=note==='9'||note==='9.5'
+                      const isBronze=note==='8'||note==='8.5'
+                      const prem=sib?Math.round((sib.price/rawPrice-1)*100):0
+                      return(
+                        <button key={note} onClick={()=>{if(sib)setSelGrade(grade)}} disabled={!sib} style={{
+                          display:'flex',flexDirection:'column',alignItems:'center',gap:1,
+                          padding:sib?'6px 10px':'4px 8px',borderRadius:8,cursor:sib?'pointer':'default',
+                          border:isOn?'2px solid '+comp.border:sib?'1px solid #EBEBEB':'1px solid #F5F5F5',
+                          background:isOn?comp.bg:isGold&&sib?'linear-gradient(135deg,#FFFBEB,#FEF3C7)':isSilver&&sib?'linear-gradient(135deg,#FAFAFA,#F0F0F5)':'#fff',
+                          opacity:sib?1:.3,transition:'all .12s',minWidth:sib?72:40,
+                          boxShadow:isOn?'0 2px 8px rgba(0,0,0,.06)':'none',
+                        }}
+                        onMouseEnter={e=>{if(sib&&!isOn)(e.currentTarget as HTMLElement).style.borderColor='#CCC'}}
+                        onMouseLeave={e=>{if(sib&&!isOn)(e.currentTarget as HTMLElement).style.borderColor='#EBEBEB'}}
+                        >
+                          <div style={{display:'flex',alignItems:'center',gap:3}}>
+                            {isGold&&sib&&<span style={{fontSize:10}}>{'\ud83e\uddc1'==='\ud83e\uddc1'?'\ud83e\udd47':''}</span>}
+                            {isSilver&&sib&&<span style={{fontSize:10}}>{'\ud83e\udd48'}</span>}
+                            {isBronze&&sib&&<span style={{fontSize:10}}>{'\ud83e\udd49'}</span>}
+                            <span style={{fontSize:sib?12:10,fontWeight:isOn?700:sib?600:400,color:isOn?comp.color:sib?'#555':'#CCC',fontFamily:'var(--font-data)'}}>{note}</span>
+                          </div>
+                          {sib&&<span style={{fontSize:13,fontWeight:700,color:isOn?'#111':'#888',fontFamily:'var(--font-data)',letterSpacing:'-.3px'}}>{sib.price.toLocaleString('fr-FR')} {'\u20ac'}</span>}
+                          {sib&&prem>0&&<span style={{fontSize:8,fontWeight:600,color:prem>50?'#E03020':prem>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)'}}>+{prem}%</span>}
+                          {!sib&&<span style={{fontSize:8,color:'#DDD'}}>N/A</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(110px,1fr))',gap:0}}>
-                {siblings.map((sib,idx)=>{
-                  const g=sib.grade||'Raw'
-                  const isOn=selGrade===g
-                  const gs=GRADE_STYLES[g]||GRADE_STYLES['Raw']
-                  const isRaw=g==='Raw'
-                  const rawSib=siblings.find(x=>x.grade==='Raw')
-                  const prem=isRaw||!rawSib?0:Math.round((sib.price/rawSib.price-1)*100)
-                  return(
-                    <button key={sib.name} onClick={()=>setSelGrade(g)} style={{
-                      display:'flex',flexDirection:'column',alignItems:'flex-start',gap:1,
-                      padding:'10px 14px',cursor:'pointer',border:'none',
-                      background:isOn?(isRaw?'#F5F5F7':gs.bg):'#fff',
-                      borderRight:'1px solid #F5F5F5',borderBottom:'1px solid #F5F5F5',
-                      transition:'all .1s',position:'relative',
-                    }}
-                    onMouseEnter={e=>{if(!isOn)e.currentTarget.style.background='#FAFAFA'}}
-                    onMouseLeave={e=>{if(!isOn)e.currentTarget.style.background='#fff'}}
-                    >
-                      {isOn&&<div style={{position:'absolute',top:0,left:0,right:0,height:2.5,background:isRaw?'#111':gs.color}}/>}
-                      <div style={{display:'flex',alignItems:'center',gap:5,width:'100%'}}>
-                        {!isRaw&&<div style={{width:6,height:6,borderRadius:2,background:gs.color,opacity:.7,flexShrink:0}}/>}
-                        <span style={{fontSize:11,fontWeight:isOn?700:500,color:isOn?(isRaw?'#111':gs.color):'#888',fontFamily:'var(--font-data)'}}>{g}</span>
-                      </div>
-                      <span style={{fontSize:16,fontWeight:700,color:isOn?'#111':'#AAA',fontFamily:'var(--font-data)',letterSpacing:'-.5px'}}>{sib.price.toLocaleString('fr-FR')} {String.fromCharCode(8364)}</span>
-                      <div style={{display:'flex',alignItems:'center',gap:4}}>
-                        {!isRaw&&prem>0&&<span style={{fontSize:9,fontWeight:600,color:prem>50?'#E03020':prem>20?'#EF9F27':'#2E9E6A',fontFamily:'var(--font-data)'}}>+{prem}%</span>}
-                        {isRaw&&<span style={{fontSize:9,color:'#CCC',fontFamily:'var(--font-display)'}}>base</span>}
-                        <span style={{fontSize:8,color:'#DDD',fontFamily:'var(--font-data)'}}>vol.{sib.vol}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
-          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}
+          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}          {/* Stats bar */}
           <div style={{display:'flex',gap:1,marginBottom:2,background:'#F5F5F7',borderRadius:'12px 12px 0 0',overflow:'hidden'}}>
             {[
               {l:'Ouv.',v:data[0]},

@@ -240,6 +240,22 @@ function Chart({ data, color, period, height=240, volume, ma7, ma30 }: { data:nu
   )
 }
 
+// ── COUNTUP ──
+function CountUp({ target, suffix='', duration=1000 }: { target:number; suffix?:string; duration?:number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef(0)
+  useEffect(() => {
+    const t0 = performance.now()
+    ;(function f(t: number) {
+      const p = Math.min((t - t0) / duration, 1)
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) ref.current = requestAnimationFrame(f)
+    })(t0)
+    return () => cancelAnimationFrame(ref.current)
+  }, [target, duration])
+  return <>{val.toLocaleString('fr-FR')}{suffix}</>
+}
+
 // ── SECTION HEADER ──
 function Sec({ children, right }: { children:React.ReactNode; right?:React.ReactNode }) {
   return (
@@ -361,6 +377,9 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
     <>
       <style>{`
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes stagger{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .stat-box{transition:all .2s cubic-bezier(.2,.8,.2,1) !important;cursor:default;animation:stagger .4s ease-out both}
+        .stat-box:nth-child(1){animation-delay:.05s}.stat-box:nth-child(2){animation-delay:.1s}.stat-box:nth-child(3){animation-delay:.15s}.stat-box:nth-child(4){animation-delay:.2s}.stat-box:nth-child(5){animation-delay:.25s}
         @keyframes txSlide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
         .idx-card{background:#fff;border:1px solid #EBEBEB;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
@@ -383,7 +402,9 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         .tab-btn.on{background:#111;color:#fff}
         .stat-box{flex:1;background:#fff;border:1px solid #EBEBEB;border-radius:10px;padding:12px 14px;transition:all .15s}
         .stat-box:hover{border-color:#C7C7CC;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.03)}
-        .idx-card{transition:all .2s cubic-bezier(.2,.8,.2,1) !important}
+        .idx-card{transition:all .2s cubic-bezier(.2,.8,.2,1) !important;animation:stagger .4s ease-out both}
+        .idx-card:nth-child(1){animation-delay:.1s}.idx-card:nth-child(2){animation-delay:.15s}.idx-card:nth-child(3){animation-delay:.2s}.idx-card:nth-child(4){animation-delay:.25s}
+        .idx-card:nth-child(5){animation-delay:.3s}.idx-card:nth-child(6){animation-delay:.35s}.idx-card:nth-child(7){animation-delay:.4s}.idx-card:nth-child(8){animation-delay:.45s}
         .idx-card:hover{transform:translateY(-2px) !important;box-shadow:0 6px 20px rgba(0,0,0,.06) !important}
         .idx-card.on{transform:translateY(-2px) !important;box-shadow:0 0 0 1.5px var(--ac),0 6px 20px rgba(0,0,0,.06) !important}
         .mv-row{transition:all .12s !important}
@@ -413,7 +434,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
         <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
           <div>
             <p style={{ fontSize:10, color:'#AAA', textTransform:'uppercase', letterSpacing:'.1em', margin:'0 0 4px', fontFamily:'var(--font-display)' }}>Market</p>
-            <h1 style={{ fontSize:26, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-.5px', margin:'0 0 6px' }}>Terminal</h1>
+            <h1 style={{ fontSize:28, fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-.6px', margin:'0 0 6px' }}>Market Terminal</h1>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <div style={{ width:6, height:6, borderRadius:'50%', background:'#2E9E6A', animation:'pulse 1.5s infinite' }} />
               <span style={{ fontSize:11, color:'#2E9E6A', fontWeight:600, fontFamily:'var(--font-display)' }}>LIVE</span>
@@ -548,7 +569,7 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
                   <span style={{ fontSize:10, fontWeight:600, color:on?i.color:'#888', fontFamily:'var(--font-display)', letterSpacing:'.04em', transition:'color .15s' }}>{i.ticker}</span>
                   <Spark data={spark} color={pct >= 0 ? '#2E9E6A' : '#E03020'} w={48} h={16} />
                 </div>
-                <div style={{ fontSize:20, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1px', marginBottom:2 }}>{cur.toLocaleString('fr-FR')}</div>
+                <div style={{ fontSize:22, fontWeight:700, fontFamily:'var(--font-data)', letterSpacing:'-1px', marginBottom:2, lineHeight:1 }}>{cur.toLocaleString('fr-FR')}</div>
                 <div style={{ fontSize:11, fontWeight:600, color:pct >= 0 ? '#2E9E6A' : '#E03020', fontFamily:'var(--font-data)' }}>
                   {pct >= 0 ? '\u25b2' : '\u25bc'} {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
                 </div>
@@ -615,8 +636,9 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
               </div>
             </div>
             <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:14, overflow:'hidden' }}>
-              {(moverTab === 'up' ? moversUp : moversDown).map(m => (
-                <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)}>
+              {(moverTab === 'up' ? moversUp : moversDown).map((m, mIdx) => (
+                <div key={m.name} className="mv-row" onClick={()=>openCard(m.name)} style={{animationDelay:mIdx*.04+'s'}}>
+                  <span style={{ fontSize:10, fontWeight:700, color:'#CCC', fontFamily:'var(--font-data)', width:16, textAlign:'center', flexShrink:0 }}>{mIdx+1}</span>
                   <img src={m.img} alt="" style={{ width:36, height:50, objectFit:'cover', borderRadius:5, border:'1px solid #F0F0F0', flexShrink:0, transition:'transform .15s' }} onError={e=>{const t=e.target as HTMLImageElement;t.style.background='#F5F5F7';t.style.padding='4px'}} onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')} onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:500, fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name}</div>
@@ -636,6 +658,9 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
           {/* Feed */}
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                <span style={{ fontSize:10, color:'#AAA', fontFamily:'var(--font-data)' }}>{feed.length} transactions {'·'} {feed.filter(t=>t.type==='buy').length} achats {'·'} {feed.filter(t=>t.type==='sell').length} ventes</span>
+              </div>
               <Sec right={
                 <button onClick={() => setFeedPaused(p => !p)} style={{ fontSize:10, color:feedPaused?'#E03020':'#888', background:feedPaused?'#FFF0EE':'#F5F5F7', border:`1px solid ${feedPaused?'#FFD8D0':'#EBEBEB'}`, padding:'4px 10px', borderRadius:6, cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:500 }}>
                   {feedPaused ? '\u25b6 Reprendre' : '\u23f8 Pause'}

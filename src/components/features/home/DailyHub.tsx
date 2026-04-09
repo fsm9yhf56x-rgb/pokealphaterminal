@@ -152,8 +152,7 @@ export function DailyHub() {
     try { const v = localStorage.getItem('pka_hub_hidden'); return v ? JSON.parse(v) : DEFAULT_HIDDEN } catch { return DEFAULT_HIDDEN }
   })
   const [editMode, setEditMode] = useState(false)
-  const [dragId, setDragId] = useState<WidgetId|null>(null)
-  const [dragOver, setDragOver] = useState<WidgetId|null>(null)
+
   const [particles, setParticles] = useState<{id:number;x:number;y:number;xp:number}[]>([])
   const [xpAnim, setXpAnim] = useState(false)
   const [dexyOpen, setDexyOpen] = useState(false)
@@ -180,23 +179,7 @@ export function DailyHub() {
       return next
     })
   }
-  const handleDragStart = (id: WidgetId) => { setDragId(id) }
-  const handleDragOver = (e: React.DragEvent, id: WidgetId) => { e.preventDefault(); setDragOver(id) }
-  const handleDragLeave = () => { setDragOver(null) }
-  const handleDrop = (targetId: WidgetId) => {
-    if (!dragId || dragId === targetId) { setDragId(null); setDragOver(null); return }
-    setWidgetOrder(prev => {
-      const next = [...prev]
-      const fromIdx = next.indexOf(dragId)
-      const toIdx = next.indexOf(targetId)
-      if (fromIdx === -1 || toIdx === -1) return prev
-      next.splice(fromIdx, 1)
-      next.splice(toIdx, 0, dragId)
-      return next
-    })
-    setDragId(null)
-    setDragOver(null)
-  }
+
   const resetLayout = () => { setWidgetOrder(DEFAULT_ORDER); setHiddenWidgets(DEFAULT_HIDDEN) }
 
   const leftWidgets = widgetOrder.filter(id => WIDGET_META[id].col === 'left' && !hiddenWidgets.includes(id))
@@ -237,23 +220,9 @@ export function DailyHub() {
 
   const renderWidget = (id: WidgetId) => {
     const isEditing = editMode
-    const editHandle = (
-      <>
-        <div className="w-grip"><span/><span/><span/></div>
-        {isEditing && <button className="w-hide-btn" onClick={e=>{e.stopPropagation();toggleWidget(id)}} title="Masquer">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>}
-      </>
-    )
-    const cls = 'w' + (isEditing ? ' editing' : '') + (dragOver === id ? ' drag-over' : '')
-    const dragProps = isEditing ? {
-      draggable: true,
-      onDragStart: () => handleDragStart(id),
-      onDragOver: (e: React.DragEvent) => handleDragOver(e, id),
-      onDragLeave: handleDragLeave,
-      onDrop: () => handleDrop(id),
-      onDragEnd: () => { setDragId(null); setDragOver(null) },
-    } : {}
+    const editHandle = null
+    const cls = 'w'
+    const dragProps = {}
 
     switch(id) {
       case 'portfolio': return (
@@ -426,20 +395,22 @@ export function DailyHub() {
         .new-dot::after{content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#E03020;border:2px solid #fff}
         .live-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:liveDot 2s ease-in-out infinite}
         .toast-slide{animation:slideIn .35s cubic-bezier(.34,1.56,.64,1)}
-        .w.editing{border:1.5px dashed #D2D2D7;cursor:grab;transition:all .2s}
-        .w.editing:active{cursor:grabbing;transform:scale(1.02);box-shadow:0 12px 32px rgba(0,0,0,.08);z-index:10}
-        .w.editing .wh{cursor:grab}
-        .w.editing .wh:active{cursor:grabbing}
-        .w.drag-over{border-color:#E03020 !important;background:#FEF2F2 !important;transform:scale(1.01)}
-        .w.editing .w-grip{opacity:1 !important}
-        .w.editing .w-hide-btn{opacity:1 !important}
-        .w-grip{position:absolute;top:12px;left:8px;opacity:0;transition:opacity .15s;display:flex;flex-direction:column;gap:2px;padding:4px;z-index:5}
-        .w:hover .w-grip{opacity:.3}
-        .w-grip span{display:block;width:12px;height:1.5px;background:#888;border-radius:1px}
-        .w-hide-btn{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .15s;opacity:0;color:#BBB}
-        .w:hover .w-hide-btn{opacity:.5}
-        .w-hide-btn:hover{opacity:1 !important;background:#FEF2F2;border-color:#FFD0C8;color:#E03020}
-        .edit-hint{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#FEF2F2;border:1px solid #FFD0C8;border-radius:10px;margin-bottom:14px;animation:fadeUp .2s ease-out}
+        .edit-drawer{background:#fff;border:1px solid #EBEBEB;border-radius:14px;padding:16px 18px;margin-bottom:18px;animation:fadeUp .2s ease-out;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+        .ew{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid #EBEBEB;margin-bottom:6px;transition:all .15s;background:#fff}
+        .ew:last-child{margin-bottom:0}
+        .ew:hover{background:#FAFAFA}
+        .ew.off{opacity:.45;border-style:dashed}
+        .ew .ew-icon{width:28px;height:28px;border-radius:7px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+        .ew .ew-name{flex:1;font-size:13px;font-weight:500;font-family:var(--font-display)}
+        .ew .ew-arrows{display:flex;gap:2px}
+        .ew .ew-arrows button{width:24px;height:24px;border-radius:6px;border:1px solid #EBEBEB;background:#fff;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .12s;color:#888}
+        .ew .ew-arrows button:hover{border-color:#111;color:#111;background:#F5F5F7}
+        .ew .ew-arrows button:disabled{opacity:.2;cursor:default}
+        .ew-toggle{width:36px;height:20px;border-radius:99px;border:none;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+        .ew-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+        .ew-toggle.on{background:#1D9E75}
+        .ew-toggle.on::after{transform:translateX(16px)}
+        .ew-toggle.off{background:#D2D2D7}
         .shimmer-text{background:linear-gradient(90deg,#111 0%,#E03020 50%,#111 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
         .xp-particle{position:fixed;pointer-events:none;font-size:13px;font-weight:700;color:#E03020;font-family:var(--font-display);z-index:9999;animation:floatXP 1.1s ease-out forwards}
         .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -517,7 +488,7 @@ export function DailyHub() {
         </div>
 
         {/* ═══ CUSTOMIZE ═══ */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:editMode?0:12 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'flex-end', marginBottom:12 }}>
           <button onClick={()=>setEditMode(!editMode)}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:9, border:editMode?'1.5px solid #E03020':'1px solid #EBEBEB', background:editMode?'#FEF2F2':'#fff', color:editMode?'#E03020':'#888', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s' }}>
             {editMode ? (
@@ -529,23 +500,28 @@ export function DailyHub() {
           </button>
         </div>
         {editMode && (
-          <div className="edit-hint">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="3"/></svg>
-            <span style={{ fontSize:12, color:'#791F1F', flex:1, fontFamily:'var(--font-display)' }}>Glisse les cartes pour les réorganiser. Clique <strong style={{fontWeight:600}}>✕</strong> pour masquer un widget.</span>
-            <button onClick={resetLayout} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#fff', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>
-            {hiddenWidgets.length > 0 && (
-              <div style={{ display:'flex', gap:4, marginLeft:8 }}>
-                {hiddenWidgets.map(id => (
-                  <button key={id} onClick={()=>toggleWidget(id)} style={{ padding:'4px 10px', borderRadius:6, border:'1px dashed #D2D2D7', background:'#FAFAFA', fontSize:10, cursor:'pointer', fontFamily:'var(--font-display)', color:'#888', display:'flex', alignItems:'center', gap:4 }}>
-                    {WIDGET_META[id].icon} {WIDGET_META[id].label}
-                    <span style={{ color:'#1D9E75', fontWeight:600 }}>+</span>
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="edit-drawer">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+              <div style={{ fontSize:14, fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Organise ton dashboard</div>
+              <button onClick={resetLayout} style={{ padding:'5px 10px', borderRadius:6, border:'1px solid #FFD0C8', background:'#FEF2F2', color:'#E03020', fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Réinitialiser</button>
+            </div>
+            {widgetOrder.map((id, idx) => {
+              const meta = WIDGET_META[id]
+              const isHidden = hiddenWidgets.includes(id)
+              return (
+                <div key={id} className={'ew'+(isHidden?' off':'')}>
+                  <div className="ew-arrows">
+                    <button disabled={idx===0} onClick={()=>moveWidget(id,-1)}>{String.fromCharCode(9650)}</button>
+                    <button disabled={idx===widgetOrder.length-1} onClick={()=>moveWidget(id,1)}>{String.fromCharCode(9660)}</button>
+                  </div>
+                  <div className="ew-icon">{meta.icon}</div>
+                  <span className="ew-name">{meta.label}</span>
+                  <button className={'ew-toggle '+(isHidden?'off':'on')} onClick={()=>toggleWidget(id)} />
+                </div>
+              )
+            })}
           </div>
         )}
-
 
         {/* ═══ PRO NUDGE ═══ */}
         {!isPro && (

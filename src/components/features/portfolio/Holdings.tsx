@@ -875,7 +875,7 @@ export function Holdings() {
         button { transition:transform .15s cubic-bezier(.25,.46,.45,.94),opacity .15s,box-shadow .25s; }
         button:active:not(:disabled):not(.remove-btn) { transform:scale(.97) !important;transition-duration:.06s !important; }
         .pocket-shell:active:not(:has(.remove-btn:hover)) { transform:translateY(-3px) scale(.99) !important;transition-duration:.12s !important; }
-        input:focus { box-shadow:0 0 0 3px rgba(224,48,32,.12) !important;border-color:#E03020 !important;transition:box-shadow .2s,border-color .2s; }
+        input:focus { box-shadow:0 0 0 3px rgba(224,48,32,.18) !important;border-color:#E03020 !important;transition:box-shadow .2s,border-color .2s; }
         /* ── CARD IMAGE SHINE ON HOVER ── */
         
         
@@ -897,12 +897,12 @@ export function Holdings() {
           background:linear-gradient(135deg,#E03020,#FF4433,#FF6B35,#FF4433,#E03020) !important;
           background-size:300% 100% !important;
           animation:btnShimmer 4s ease-in-out infinite !important;
-          box-shadow:0 4px 16px rgba(224,48,32,.3),0 1px 3px rgba(0,0,0,.08) !important;
+          box-shadow:0 4px 16px rgba(224,48,32,.2),0 1px 3px rgba(0,0,0,.04) !important;
           transition:transform .2s var(--spring),box-shadow .3s !important;
         }
         .btn-shimmer:hover {
           transform:translateY(-2px) scale(1.03) !important;
-          box-shadow:0 8px 28px rgba(224,48,32,.35),0 2px 6px rgba(0,0,0,.1) !important;
+          box-shadow:0 8px 24px rgba(224,48,32,.22),0 2px 6px rgba(0,0,0,.05) !important;
         }
 
         /* Compteur EUR animé */
@@ -1076,13 +1076,13 @@ export function Holdings() {
         .gem:hover .ptcl:nth-child(3){ animation:ptcl 1.8s 1s ease-out infinite; }
         .breathe-S { animation:breatheS 2.4s ease-in-out infinite; }
         .breathe-A { animation:breatheA 3s ease-in-out infinite; }
-        .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04),0 1px 4px rgba(0,0,0,.02); }
-        .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 16px 48px rgba(0,0,0,.08),0 6px 20px rgba(0,0,0,.03) !important; }
+        .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;border:1px solid #EBEBEB;box-shadow:0 1px 3px rgba(0,0,0,.03); }
+        .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 12px 32px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.02) !important;border-color:#D2D2D7 !important; }
         
-        @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 6px rgba(224,48,32,.06)} }
-        .empty-pocket { animation:slotPulse 3s ease-in-out infinite; }
+        @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 8px rgba(224,48,32,.1)} }
+        .empty-pocket { animation:slotPulse 3s ease-in-out infinite;border:2px dashed #D2D2D7 !important;background:#FAFAFA !important; }
         .empty-pocket:hover { animation:none !important; }
-        .vtab { padding:7px 18px;border-radius:99px;border:1px solid #D2D2D7;background:transparent;color:#86868B;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .25s cubic-bezier(.25,.46,.45,.94); }
+        .vtab { padding:7px 18px;border-radius:99px;border:1px solid #C7C7CC;background:#FAFAFA;color:#6E6E73;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .25s cubic-bezier(.25,.46,.45,.94); }
         .vtab:hover:not(.on) { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
         .vtab:active { transform:scale(.96);transition-duration:.08s; }
         .vtab.on { background:#1D1D1F !important;border-color:#1D1D1F !important;color:#fff !important; }
@@ -1109,7 +1109,7 @@ export function Holdings() {
         .scan-line  { animation:scanLine 1.8s ease-in-out infinite alternate; }
       `}} />
 
-      <div style={{ background:'#F5F5F7', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative', paddingBottom:'40px' }}>
+      <div style={{ background:'#F8F8FA', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative', paddingBottom:'40px' }}>
         <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.04) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.04) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
 
         {toast&&(
@@ -1127,7 +1127,7 @@ export function Holdings() {
           const curQty=editQty??spotCard.qty
           return(
             <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
-              <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.05)', padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out', position:'relative' }} onClick={e=>e.stopPropagation()}>
+              <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.03)', padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out', position:'relative' }} onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'16px', right:'16px', width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:5, transition:'all .15s' }}
                   onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
                   onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>

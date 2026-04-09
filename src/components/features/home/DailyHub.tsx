@@ -152,6 +152,8 @@ export function DailyHub() {
     try { const v = localStorage.getItem('pka_hub_hidden'); return v ? JSON.parse(v) : DEFAULT_HIDDEN } catch { return DEFAULT_HIDDEN }
   })
   const [editMode, setEditMode] = useState(false)
+  const [ewDrag, setEwDrag] = useState<WidgetId|null>(null)
+  const [ewOver, setEwOver] = useState<WidgetId|null>(null)
   const [dragId, setDragId] = useState<WidgetId|null>(null)
   const [overId, setOverId] = useState<WidgetId|null>(null)
 
@@ -459,6 +461,10 @@ export function DailyHub() {
         .ew{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid #EBEBEB;margin-bottom:6px;transition:all .15s;background:#fff}
         .ew:last-child{margin-bottom:0}
         .ew:hover{background:#FAFAFA}
+        .ew{cursor:grab}
+        .ew:active{cursor:grabbing}
+        .ew.ew-dragging{opacity:.4}
+        .ew.ew-drop-target{border-color:#E03020;background:#FEF2F2}
         .ew.off{opacity:.45;border-style:dashed}
         .ew .ew-icon{width:28px;height:28px;border-radius:7px;background:#F5F5F7;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
         .ew .ew-name{flex:1;font-size:13px;font-weight:500;font-family:var(--font-display)}
@@ -575,14 +581,29 @@ export function DailyHub() {
               const meta = WIDGET_META[id]
               const isHidden = hiddenWidgets.includes(id)
               return (
-                <div key={id} className={'ew'+(isHidden?' off':'')}>
+                <div key={id}
+                  className={'ew'+(isHidden?' off':'')+(ewDrag===id?' ew-dragging':'')+(ewOver===id&&ewDrag!==id?' ew-drop-target':'')}
+                  draggable
+                  onDragStart={e=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);setTimeout(()=>setEwDrag(id),0)}}
+                  onDragEnd={()=>{setEwDrag(null);setEwOver(null)}}
+                  onDragOver={e=>{e.preventDefault();e.dataTransfer.dropEffect='move';if(ewDrag&&ewDrag!==id)setEwOver(id)}}
+                  onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setEwOver(null)}}
+                  onDrop={e=>{
+                    e.preventDefault()
+                    const from=e.dataTransfer.getData('text/plain') as WidgetId
+                    if(from&&from!==id){
+                      setWidgetOrder(prev=>{const next=[...prev];const fi=next.indexOf(from);const ti=next.indexOf(id);if(fi===-1||ti===-1)return prev;next.splice(fi,1);next.splice(ti,0,from);return next})
+                    }
+                    setEwDrag(null);setEwOver(null)
+                  }}>
                   <div className="ew-arrows">
-                    <button disabled={idx===0} onClick={()=>moveWidget(id,-1)}>{String.fromCharCode(9650)}</button>
-                    <button disabled={idx===widgetOrder.length-1} onClick={()=>moveWidget(id,1)}>{String.fromCharCode(9660)}</button>
+                    <button disabled={idx===0} onClick={e=>{e.stopPropagation();moveWidget(id,-1)}}>{String.fromCharCode(9650)}</button>
+                    <button disabled={idx===widgetOrder.length-1} onClick={e=>{e.stopPropagation();moveWidget(id,1)}}>{String.fromCharCode(9660)}</button>
                   </div>
                   <div className="ew-icon">{meta.icon}</div>
                   <span className="ew-name">{meta.label}</span>
-                  <button className={'ew-toggle '+(isHidden?'off':'on')} onClick={()=>toggleWidget(id)} />
+                  <span style={{ fontSize:10, color:'#BBB', fontFamily:'var(--font-display)' }}>{meta.col==='left'?'Gauche':'Droite'}</span>
+                  <button className={'ew-toggle '+(isHidden?'off':'on')} onClick={e=>{e.stopPropagation();toggleWidget(id)}} />
                 </div>
               )
             })}

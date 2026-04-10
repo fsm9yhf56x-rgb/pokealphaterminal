@@ -258,26 +258,41 @@ export function Holdings() {
         const slim = portfolio.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c)
         localStorage.setItem('pka_portfolio', JSON.stringify(slim))
       } catch {}
-      // Sync to Supabase if logged in
+      // Sync new local cards to Supabase if logged in
       if (user) {
-        portfolio.forEach(card => {
-          const row = {
-            name: card.name, set_name: card.set || null, set_id: card.setId || null,
-            card_number: card.number || null, lang: card.lang || 'FR',
-            rarity: card.rarity || null, card_type: card.type || null,
+        const localOnly = portfolio.filter(c => c.id.startsWith('u'))
+        if (localOnly.length > 0) {
+          const toInsert = localOnly.map(c => ({
+            user_id: user.id, name: c.name, set_name: c.set || null,
+            set_id: c.setId || null, card_number: c.number || null,
+            lang: c.lang || 'FR', rarity: c.rarity || null, card_type: c.type || null,
+            condition: c.condition || 'NM', graded: c.graded || false,
+            qty: c.qty || 1, buy_price: c.buyPrice || null,
+            current_price: c.curPrice || null, image_url: c.image || null,
+            is_favorite: c.favorite || false,
+          }))
+          supabase.from('portfolio_cards').insert(toInsert).select().then(({ data }) => {
+            if (data) {
+              setPortfolio(prev => {
+                const next = [...prev]
+                data.forEach((row: any, i: number) => {
+                  const idx = next.findIndex(c => c.id === localOnly[i]?.id)
+                  if (idx >= 0) next[idx] = { ...next[idx], id: row.id }
+                })
+                return next
+              })
+            }
+          })
+        }
+        // Update existing cards
+        const existing = portfolio.filter(c => !c.id.startsWith('u'))
+        existing.forEach(card => {
+          supabase.from('portfolio_cards').update({
+            qty: card.qty, buy_price: card.buyPrice || null,
+            current_price: card.curPrice || null, is_favorite: card.favorite || false,
             condition: card.condition || 'NM', graded: card.graded || false,
-            qty: card.qty || 1, buy_price: card.buyPrice || null,
-            current_price: card.curPrice || null, image_url: card.image || null,
-            is_favorite: card.favorite || false, updated_at: new Date().toISOString(),
-          }
-          if (card.id.startsWith('u')) {
-            // Local card not yet in Supabase — insert
-            supabase.from('portfolio_cards').insert({ ...row, user_id: user.id }).select().single()
-              .then(({ data }) => { if (data) card.id = data.id })
-          } else {
-            // Existing Supabase card — update
-            supabase.from('portfolio_cards').update(row).eq('id', card.id)
-          }
+            image_url: card.image || null, updated_at: new Date().toISOString(),
+          }).eq('id', card.id)
         })
       }
     }, 500)
@@ -688,6 +703,9 @@ export function Holdings() {
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
     setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
+    if (user && !card.id.startsWith('u')) {
+      supabase.from('portfolio_cards').delete().eq('id', card.id)
+    }
     setShowcase(prev=>prev.filter(c=>c.id!==card.id))
     showToast(card.name+' retiree')
   }
@@ -1879,7 +1897,7 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
-                                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
+                                    <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids);setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}
                                       onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>

@@ -132,9 +132,11 @@ export function Holdings() {
   const [portfolio,   setPortfolio]   = useState<CardItem[]>([])
   const [portfolioLoaded, setPortfolioLoaded] = useState(false)
   useEffect(() => {
-    if (authLoading) return // Attendre que l'auth soit résolue
+    if (authLoading) return
     if (user) {
-      // User connecté → Supabase est la source de vérité
+      // User connecté → Supabase SEULE source. Vider le local pour éviter les ghosts.
+      try { localStorage.removeItem('pka_portfolio') } catch {}
+      dbSet('portfolio', [])
       supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (!error && data && data.length > 0) {
@@ -150,20 +152,19 @@ export function Holdings() {
             }))
             setPortfolio(mapped.filter(c => !deletedIds.current.has(c.id)))
           } else {
-            // Supabase vide = portfolio vide (pas de migration auto)
             setPortfolio([])
           }
           setPortfolioLoaded(true)
         })
     } else {
-      // User non connecté → charger depuis IndexedDB/localStorage
+      // Non connecté → IndexedDB puis localStorage
       dbGet<CardItem[]>('portfolio').then(data => {
         if (data && data.length > 0) {
           setPortfolio(data)
         } else {
           try {
             const r = localStorage.getItem('pka_portfolio')
-            if (r) setPortfolio(JSON.parse(r))
+            if (r) { const parsed = JSON.parse(r); if (parsed.length > 0) setPortfolio(parsed) }
           } catch {}
         }
         setPortfolioLoaded(true)

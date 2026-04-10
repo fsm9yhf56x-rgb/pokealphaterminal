@@ -109,7 +109,7 @@ export function Holdings() {
   }
 
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
@@ -132,6 +132,7 @@ export function Holdings() {
   const [portfolio,   setPortfolio]   = useState<CardItem[]>([])
   const [portfolioLoaded, setPortfolioLoaded] = useState(false)
   useEffect(() => {
+    if (authLoading) return // Attendre que l'auth soit résolue
     if (user) {
       // User connecté → Supabase est la source de vérité
       supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
@@ -174,7 +175,7 @@ export function Holdings() {
         setPortfolioLoaded(true)
       })
     }
-  }, [user])
+  }, [user, authLoading])
   const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
@@ -247,7 +248,7 @@ export function Holdings() {
   const deletedIds = useRef<Set<string>>(new Set())
   const saveTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   useEffect(()=>{
-    if (!portfolioLoaded) return
+    if (!portfolioLoaded || authLoading) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       // Save to local only if NOT logged in (avoid ghost data)

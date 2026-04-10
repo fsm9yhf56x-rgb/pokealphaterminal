@@ -1,10 +1,8 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-
-const TickerBar = dynamic(() => import('./TickerBar').then(m => m.TickerBar), { ssr: false })
-const TopNav = dynamic(() => import('./TopNav').then(m => m.TopNav), { ssr: false })
-const SubMenu = dynamic(() => import('./SubMenu').then(m => m.SubMenu), { ssr: false })
+import { TickerBar } from './TickerBar'
+import { TopNav }    from './TopNav'
+import { SubMenu }   from './SubMenu'
 
 const HEADER_H = '83px'
 

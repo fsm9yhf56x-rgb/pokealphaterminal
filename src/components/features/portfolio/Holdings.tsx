@@ -129,13 +129,11 @@ export function Holdings() {
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
   const [binderCols,  setBinderCols]  = useState(7)
   const [binderPage,  setBinderPage]  = useState(0)
-  const [portfolio,   setPortfolio]   = useState<CardItem[]>(()=>{
-    try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] }
-  })
+  const [portfolio,   setPortfolio]   = useState<CardItem[]>([])
   const [portfolioLoaded, setPortfolioLoaded] = useState(false)
   useEffect(() => {
     if (user) {
-      // Load from Supabase
+      // User connecté → Supabase est la source de vérité
       supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (!error && data && data.length > 0) {
@@ -151,34 +149,30 @@ export function Holdings() {
             }))
             setPortfolio(mapped.filter(c => !deletedIds.current.has(c.id)))
           } else {
-            // First login: migrate local data to Supabase
-            const local: CardItem[] = (() => { try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] } })()
-            if (local.length > 0) {
-              const toInsert = local.map(c => ({
-                user_id: user.id, name: c.name, set_name: c.set || null,
-                set_id: c.setId || null, card_number: c.number || null,
-                lang: c.lang || 'FR', rarity: c.rarity || null, card_type: c.type || null,
-                condition: c.condition || 'NM', graded: c.graded || false,
-                qty: c.qty || 1, buy_price: c.buyPrice || null,
-                current_price: c.curPrice || null, image_url: c.image || null,
-                is_favorite: c.favorite || false,
-              }))
-              supabase.from('portfolio_cards').insert(toInsert).then(() => {
-                console.log('Migrated', local.length, 'cards to Supabase')
-              })
-              setPortfolio(local)
-            } else {
-              // Supabase vide + localStorage vide = portfolio vide
-              setPortfolio([])
-            }
+            // Supabase vide = portfolio vide (pas de migration auto)
+            setPortfolio([])
           }
           setPortfolioLoaded(true)
         })
     } else {
+      // User non connecté → charger depuis IndexedDB/localStorage
       dbGet<CardItem[]>('portfolio').then(data => {
-        if (data && data.length > 0) setPortfolio(data)
+        if (data && data.length > 0) {
+          setPortfolio(data)
+        } else {
+          try {
+            const r = localStorage.getItem('pka_portfolio')
+            if (r) setPortfolio(JSON.parse(r))
+          } catch {}
+        }
         setPortfolioLoaded(true)
-      }).catch(() => setPortfolioLoaded(true))
+      }).catch(() => {
+        try {
+          const r = localStorage.getItem('pka_portfolio')
+          if (r) setPortfolio(JSON.parse(r))
+        } catch {}
+        setPortfolioLoaded(true)
+      })
     }
   }, [user])
   const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
@@ -256,12 +250,14 @@ export function Holdings() {
     if (!portfolioLoaded) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      // Always save to local (fallback + offline)
-      dbSet('portfolio', portfolio)
-      try {
-        const slim = portfolio.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c)
-        localStorage.setItem('pka_portfolio', JSON.stringify(slim))
-      } catch {}
+      // Save to local only if NOT logged in (avoid ghost data)
+      if (!user) {
+        dbSet('portfolio', portfolio)
+        try {
+          const slim = portfolio.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c)
+          localStorage.setItem('pka_portfolio', JSON.stringify(slim))
+        } catch {}
+      }
       // Sync new local cards to Supabase if logged in
       if (user) {
         const localOnly = portfolio.filter(c => c.id.startsWith('u'))

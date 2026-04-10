@@ -1,6 +1,6 @@
-import AlphaSignals from '@/components/features/alpha/AlphaSignals'
+'use client'
 
-export const metadata = { title: 'Alpha Signals' }
+import AlphaSignals from '@/components/features/alpha/AlphaSignals'
 
 export default function AlphaPage() {
   return <AlphaSignals />

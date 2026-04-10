@@ -1,6 +1,6 @@
-import { DailyHub } from '@/components/features/home/DailyHub'
+'use client'
 
-export const metadata = { title: 'Home · Daily Hub' }
+import { DailyHub } from '@/components/features/home/DailyHub'
 
 export default function HomePage() {
   return <DailyHub />

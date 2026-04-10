@@ -1,11 +1,11 @@
+'use client'
+
 import { Button }  from '@/components/ui/Button'
 import { Badge }   from '@/components/ui/Badge'
 import { Input }   from '@/components/ui/Input'
 import { Card }    from '@/components/ui/Card'
 import { Ticker }  from '@/components/ui/Ticker'
 import type { TickerItem } from '@/components/ui/Ticker'
-
-export const metadata = { title: 'Dev UI · Design System' }
 
 const TICKER: TickerItem[] = [
   { name: 'Charizard Alt Art', price: '€ 920',   change: 53,  type: 'fire'     },

@@ -1049,42 +1049,6 @@ function Chart({ data, color, period, height=360, volume, ma7, ma30 }: { data:nu
 
 
 // ── GRADE BADGES ──
-const GRADE_STYLES: Record<string,{bg:string;color:string;border:string}> = {
-  'PSA 10': {bg:'linear-gradient(135deg,#FEF3C7,#FDE68A)',color:'#92400E',border:'#F59E0B'},
-  'PSA 9':  {bg:'linear-gradient(135deg,#F5F5F7,#E8E8ED)',color:'#555',border:'#C7C7CC'},
-  'PSA 8':  {bg:'#F5F5F7',color:'#666',border:'#D4D4D4'},
-  'PSA 7':  {bg:'#F8F8FA',color:'#777',border:'#DCDCDC'},
-  'PSA 6':  {bg:'#F8F8FA',color:'#888',border:'#E0E0E0'},
-  'PSA 5':  {bg:'#FAFAFA',color:'#999',border:'#E5E5E5'},
-  'PSA 4':  {bg:'#FAFAFA',color:'#999',border:'#E8E8E8'},
-  'PSA 3':  {bg:'#FAFAFA',color:'#AAA',border:'#EBEBEB'},
-  'PSA 2':  {bg:'#FAFAFA',color:'#AAA',border:'#EBEBEB'},
-  'PSA 1':  {bg:'#FAFAFA',color:'#BBB',border:'#EBEBEB'},
-  'PSA A':  {bg:'#FAFAFA',color:'#BBB',border:'#EBEBEB'},
-  'CGC 10': {bg:'linear-gradient(135deg,#EFF6FF,#DBEAFE)',color:'#1E40AF',border:'#60A5FA'},
-  'CGC 9.5':{bg:'#EFF6FF',color:'#2563EB',border:'#93C5FD'},
-  'CGC 9':  {bg:'#F0F5FF',color:'#3B82F6',border:'#BAD6FB'},
-  'CGC 8.5':{bg:'#F5F8FF',color:'#5B9BF0',border:'#C8DDFB'},
-  'CGC 8':  {bg:'#F5F8FF',color:'#6BA3EE',border:'#D0E2FB'},
-  'CGC 7':  {bg:'#F8FAFF',color:'#7BABE8',border:'#D8E8FC'},
-  'CGC 6':  {bg:'#F8FAFF',color:'#8BB3E2',border:'#E0EDFC'},
-  'CGC 5':  {bg:'#FAFBFF',color:'#9BBBE0',border:'#E5F0FC'},
-  'BGS 10': {bg:'linear-gradient(135deg,#FEF2F2,#FECACA)',color:'#991B1B',border:'#F87171'},
-  'BGS 9.5':{bg:'#FEF2F2',color:'#B91C1C',border:'#FCA5A5'},
-  'BGS 9':  {bg:'#FFF5F5',color:'#DC2626',border:'#FECACA'},
-  'BGS 8.5':{bg:'#FFF8F8',color:'#E04545',border:'#FED4D4'},
-  'BGS 8':  {bg:'#FFF8F8',color:'#E06060',border:'#FEDDDD'},
-  'BGS 7':  {bg:'#FFFAFA',color:'#E07070',border:'#FEE5E5'},
-  'BGS 6':  {bg:'#FFFAFA',color:'#E08080',border:'#FEEBEB'},
-  'PCA 10': {bg:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',color:'#166534',border:'#4ADE80'},
-  'PCA 9.5':{bg:'#F0FDF4',color:'#15803D',border:'#86EFAC'},
-  'PCA 9':  {bg:'#F0FFF4',color:'#22C55E',border:'#BBF7D0'},
-  'PCA 8.5':{bg:'#F5FFF8',color:'#34D070',border:'#C5F8D8'},
-  'PCA 8':  {bg:'#F5FFF8',color:'#45D580',border:'#D0FAE0'},
-  'PCA 7':  {bg:'#F8FFFA',color:'#55DA90',border:'#DAFCE8'},
-  'PCA 6':  {bg:'#F8FFFA',color:'#65DFA0',border:'#E0FCEC'},
-  'Raw':    {bg:'transparent',color:'#AAA',border:'#E5E5EA'},
-}
 function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
   const st=GRADE_STYLES[grade]||GRADE_STYLES['Raw']
   if(!grade||grade==='Raw')return <span style={{fontSize:9,color:'#BBB',background:'#F5F5F7',padding:'1px 5px',borderRadius:3,fontFamily:'var(--font-data)'}}>Raw</span>

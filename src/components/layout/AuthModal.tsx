@@ -15,8 +15,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-
   const [mounted, setMounted] = useState(false)
+
   useEffect(() => { setMounted(true) }, [])
 
   if (!open || !mounted) return null
@@ -41,8 +41,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     await signInWithGoogle()
   }
 
-  return (
-    {createPortal(<>
+  const modal = (
+    <>
       <style>{`
         @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
         @keyframes overlayIn{from{opacity:0}to{opacity:1}}
@@ -65,7 +65,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           width:'100%',maxWidth:'400px',background:'#fff',borderRadius:'18px',
           boxShadow:'0 24px 80px rgba(0,0,0,.2)',overflow:'hidden',margin:'auto 0',maxHeight:'calc(100vh - 40px)',overflowY:'auto',
         }}>
-          {/* Header */}
           <div style={{padding:'24px 24px 0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div>
               <p style={{fontSize:'10px',color:'#AEAEB2',textTransform:'uppercase',letterSpacing:'.12em',margin:'0 0 4px',fontWeight:600,fontFamily:'var(--font-sora,Sora,system-ui)'}}>PokéAlpha Terminal</p>
@@ -87,7 +86,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               </div>
             ) : (
               <>
-                {/* Google */}
                 <button className="auth-btn-google" onClick={handleGoogle} style={{
                   width:'100%',padding:'12px',borderRadius:'10px',border:'1px solid #E5E5EA',
                   background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',
@@ -97,14 +95,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   Continuer avec Google
                 </button>
 
-                {/* Divider */}
                 <div style={{display:'flex',alignItems:'center',gap:'12px',margin:'0 0 16px'}}>
                   <div style={{flex:1,height:'1px',background:'#E5E5EA'}}/>
                   <span style={{fontSize:'11px',color:'#AEAEB2',fontFamily:'var(--font-dm,"DM Sans",system-ui)'}}>ou par email</span>
                   <div style={{flex:1,height:'1px',background:'#E5E5EA'}}/>
                 </div>
 
-                {/* Form */}
                 {mode==='signup'&&(
                   <input className="auth-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Ton pseudo" style={{
                     width:'100%',padding:'12px 14px',borderRadius:'10px',border:'1px solid #E5E5EA',
@@ -134,7 +130,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   {loading?'Chargement...':mode==='login'?'Se connecter':'Créer mon compte'}
                 </button>
 
-                {/* Switch mode */}
                 <p style={{textAlign:'center',margin:'16px 0 0',fontSize:'13px',color:'#86868B',fontFamily:'var(--font-dm,"DM Sans",system-ui)'}}>
                   {mode==='login'?'Pas encore de compte ?':'Déjà un compte ?'}{' '}
                   <button className="auth-link" onClick={()=>{setMode(mode==='login'?'signup':'login');setError('')}} style={{
@@ -150,6 +145,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           </div>
         </div>
       </div>
-    </>, document.body)}
+    </>
   )
+
+  return createPortal(modal, document.body)
 }

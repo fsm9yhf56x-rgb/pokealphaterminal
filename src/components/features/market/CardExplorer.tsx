@@ -1049,16 +1049,6 @@ function Chart({ data, color, period, height=360, volume, ma7, ma30 }: { data:nu
 
 
 // ── GRADE BADGES ──
-function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
-  const st=GRADE_STYLES[grade]||GRADE_STYLES['Raw']
-  if(!grade||grade==='Raw')return <span style={{fontSize:9,color:'#BBB',background:'#F5F5F7',padding:'1px 5px',borderRadius:3,fontFamily:'var(--font-data)'}}>Raw</span>
-  const sz=size==='lg'?{fs:11,px:10,py:3}:size==='sm'?{fs:8,px:5,py:1}:{fs:9,px:7,py:2}
-  return(
-    <span style={{fontSize:sz.fs,fontWeight:700,color:st.color,background:st.bg,border:'1px solid '+st.border,padding:sz.py+'px '+sz.px+'px',borderRadius:4,fontFamily:'var(--font-data)',letterSpacing:'.02em',whiteSpace:'nowrap',lineHeight:1,display:'inline-flex',alignItems:'center'}}>
-      {grade}
-    </span>
-  )
-}
 
 function CountUp({ target, suffix='', duration=1000 }: { target:number; suffix?:string; duration?:number }) {
   const [val, setVal] = useState(0)

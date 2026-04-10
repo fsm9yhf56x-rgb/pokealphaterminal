@@ -78,9 +78,13 @@ export function useAuth() {
     return { error }
   }
 
+  const isPro = profile?.is_pro ?? false
+
   return {
     user, profile, session, loading,
     signUp, signIn, signInWithGoogle, signOut, updateProfile,
-    isPro: profile?.is_pro ?? false,
+    isPro,
+    // Backward compat aliases pour les pages qui utilisent l'ancien format
+    logout: signOut,
   }
 }

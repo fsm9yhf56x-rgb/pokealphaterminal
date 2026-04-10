@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { Sora, DM_Sans, Space_Mono } from 'next/font/google'
-import { AuthProvider } from '@/lib/auth/AuthContext'
 import './globals.css'
-
 const sora = Sora({
   subsets: ['latin'],
   variable: '--font-sora',
@@ -21,7 +19,6 @@ const spaceMono = Space_Mono({
   display: 'swap',
   weight: ['400', '700'],
 })
-
 export const metadata: Metadata = {
   title: {
     default: 'PokéAlpha Terminal',
@@ -34,11 +31,9 @@ export const metadata: Metadata = {
     siteName: 'PokéAlpha Terminal',
   },
 }
-
 interface RootLayoutProps {
   children: React.ReactNode
 }
-
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
@@ -47,9 +42,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg font-sans">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {children}
       </body>
     </html>
   )

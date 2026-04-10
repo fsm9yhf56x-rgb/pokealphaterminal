@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/lib/useAuth'
 
 type Mode = 'login' | 'signup'
@@ -15,7 +16,10 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  if (!open) return null
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!open || !mounted) return null
 
   const handleSubmit = async () => {
     setError('')
@@ -38,7 +42,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   }
 
   return (
-    <>
+    {createPortal(<>
       <style>{`
         @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
         @keyframes overlayIn{from{opacity:0}to{opacity:1}}
@@ -146,6 +150,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           </div>
         </div>
       </div>
-    </>
+    </>, document.body)}
   )
 }

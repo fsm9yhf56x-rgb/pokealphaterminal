@@ -167,6 +167,9 @@ export function Holdings() {
                 console.log('Migrated', local.length, 'cards to Supabase')
               })
               setPortfolio(local)
+            } else {
+              // Supabase vide + localStorage vide = portfolio vide
+              setPortfolio([])
             }
           }
           setPortfolioLoaded(true)
@@ -707,11 +710,22 @@ export function Holdings() {
     e.stopPropagation()
     deletedIds.current.add(card.id)
     setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
-    if (user && !card.id.startsWith('u')) {
-      supabase.from('portfolio_cards').delete().eq('id', card.id).then(({ error }) => {
-        if (error) console.error('Delete failed:', error)
-        else console.log('Deleted from Supabase:', card.id, card.name)
-      })
+    if (user) {
+      if (card.id.startsWith('u')) {
+        // Local ID — delete by name + set + user
+        supabase.from('portfolio_cards').delete()
+          .eq('user_id', user.id).eq('name', card.name).eq('set_name', card.set || '')
+          .then(({ error }) => {
+            if (error) console.error('Delete by name failed:', error)
+            else console.log('Deleted from Supabase by name:', card.name)
+          })
+      } else {
+        supabase.from('portfolio_cards').delete().eq('id', card.id)
+          .then(({ error }) => {
+            if (error) console.error('Delete failed:', error)
+            else console.log('Deleted from Supabase:', card.id)
+          })
+      }
     }
     setShowcase(prev=>prev.filter(c=>c.id!==card.id))
     showToast(card.name+' retiree')

@@ -55,7 +55,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
 
       <div className="auth-overlay" onClick={onClose} style={{
         position:'fixed',inset:0,background:'rgba(0,0,0,.4)',backdropFilter:'blur(4px)',
-        zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',overflowY:'auto',
+        zIndex:99999,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',overflowY:'auto',
       }}>
         <div className="auth-modal" onClick={e=>e.stopPropagation()} style={{
           width:'100%',maxWidth:'400px',background:'#fff',borderRadius:'18px',

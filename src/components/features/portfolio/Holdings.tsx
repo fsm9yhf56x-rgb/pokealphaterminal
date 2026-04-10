@@ -149,7 +149,7 @@ export function Holdings() {
               setId: c.set_id || undefined, favorite: c.is_favorite || false,
               notes: c.notes || undefined,
             }))
-            setPortfolio(mapped)
+            setPortfolio(mapped.filter(c => !deletedIds.current.has(c.id)))
           } else {
             // First login: migrate local data to Supabase
             const local: CardItem[] = (() => { try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] } })()
@@ -247,6 +247,7 @@ export function Holdings() {
     el.scrollTo({ left: targetFrac * (el.scrollWidth - el.clientWidth), behavior: 'smooth' })
   }
 
+  const deletedIds = useRef<Set<string>>(new Set())
   const saveTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   useEffect(()=>{
     if (!portfolioLoaded) return
@@ -284,16 +285,18 @@ export function Holdings() {
             }
           })
         }
-        // Update existing cards
-        const existing = portfolio.filter(c => !c.id.startsWith('u'))
-        existing.forEach(card => {
-          supabase.from('portfolio_cards').update({
-            qty: card.qty, buy_price: card.buyPrice || null,
-            current_price: card.curPrice || null, is_favorite: card.favorite || false,
-            condition: card.condition || 'NM', graded: card.graded || false,
-            image_url: card.image || null, updated_at: new Date().toISOString(),
-          }).eq('id', card.id)
-        })
+        // Update existing cards (skip recently deleted)
+        const existing = portfolio.filter(c => !c.id.startsWith('u') && !deletedIds.current.has(c.id))
+        if (existing.length > 0) {
+          existing.forEach(card => {
+            supabase.from('portfolio_cards').update({
+              qty: card.qty, buy_price: card.buyPrice || null,
+              current_price: card.curPrice || null, is_favorite: card.favorite || false,
+              condition: card.condition || 'NM', graded: card.graded || false,
+              image_url: card.image || null, updated_at: new Date().toISOString(),
+            }).eq('id', card.id)
+          })
+        }
       }
     }, 500)
   }, [portfolio, portfolioLoaded, user])
@@ -702,9 +705,13 @@ export function Holdings() {
   }
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
+    deletedIds.current.add(card.id)
     setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
     if (user && !card.id.startsWith('u')) {
-      supabase.from('portfolio_cards').delete().eq('id', card.id)
+      supabase.from('portfolio_cards').delete().eq('id', card.id).then(({ error }) => {
+        if (error) console.error('Delete failed:', error)
+        else console.log('Deleted from Supabase:', card.id, card.name)
+      })
     }
     setShowcase(prev=>prev.filter(c=>c.id!==card.id))
     showToast(card.name+' retiree')

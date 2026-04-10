@@ -426,6 +426,22 @@ function GradeBadge({grade,size='md'}:{grade:string;size?:'sm'|'md'|'lg'}){
   )
 }
 
+// ── COUNTUP ──
+function CountUp({ target, suffix='', duration=1000 }: { target:number; suffix?:string; duration?:number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef(0)
+  useEffect(() => {
+    const t0 = performance.now()
+    ;(function f(t: number) {
+      const p = Math.min((t - t0) / duration, 1)
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) ref.current = requestAnimationFrame(f)
+    })(t0)
+    return () => cancelAnimationFrame(ref.current)
+  }, [target, duration])
+  return <>{val.toLocaleString('fr-FR')}{suffix}</>
+}
+
 // ── SECTION HEADER ──
 function Sec({ children, right }: { children:React.ReactNode; right?:React.ReactNode }) {
   return (

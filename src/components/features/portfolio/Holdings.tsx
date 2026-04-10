@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/useAuth'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
 
@@ -107,6 +109,7 @@ export function Holdings() {
   }
 
   const router = useRouter()
+  const { user } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
@@ -131,11 +134,50 @@ export function Holdings() {
   })
   const [portfolioLoaded, setPortfolioLoaded] = useState(false)
   useEffect(() => {
-    dbGet<CardItem[]>('portfolio').then(data => {
-      if (data && data.length > 0) setPortfolio(data)
-      setPortfolioLoaded(true)
-    }).catch(() => setPortfolioLoaded(true))
-  }, [])
+    if (user) {
+      // Load from Supabase
+      supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+          if (!error && data && data.length > 0) {
+            const mapped: CardItem[] = data.map((c: any) => ({
+              id: c.id, name: c.name, set: c.set_name || '', year: 0,
+              number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
+              lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
+              condition: c.condition || 'Raw', graded: c.graded || false,
+              buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
+              qty: c.qty || 1, image: c.image_url || undefined,
+              setId: c.set_id || undefined, favorite: c.is_favorite || false,
+              notes: c.notes || undefined,
+            }))
+            setPortfolio(mapped)
+          } else {
+            // First login: migrate local data to Supabase
+            const local: CardItem[] = (() => { try { const r=localStorage.getItem('pka_portfolio'); return r?JSON.parse(r):[] } catch { return [] } })()
+            if (local.length > 0) {
+              const toInsert = local.map(c => ({
+                user_id: user.id, name: c.name, set_name: c.set || null,
+                set_id: c.setId || null, card_number: c.number || null,
+                lang: c.lang || 'FR', rarity: c.rarity || null, card_type: c.type || null,
+                condition: c.condition || 'NM', graded: c.graded || false,
+                qty: c.qty || 1, buy_price: c.buyPrice || null,
+                current_price: c.curPrice || null, image_url: c.image || null,
+                is_favorite: c.favorite || false,
+              }))
+              supabase.from('portfolio_cards').insert(toInsert).then(() => {
+                console.log('Migrated', local.length, 'cards to Supabase')
+              })
+              setPortfolio(local)
+            }
+          }
+          setPortfolioLoaded(true)
+        })
+    } else {
+      dbGet<CardItem[]>('portfolio').then(data => {
+        if (data && data.length > 0) setPortfolio(data)
+        setPortfolioLoaded(true)
+      }).catch(() => setPortfolioLoaded(true))
+    }
+  }, [user])
   const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
@@ -210,13 +252,36 @@ export function Holdings() {
     if (!portfolioLoaded) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
+      // Always save to local (fallback + offline)
       dbSet('portfolio', portfolio)
       try {
         const slim = portfolio.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c)
         localStorage.setItem('pka_portfolio', JSON.stringify(slim))
       } catch {}
+      // Sync to Supabase if logged in
+      if (user) {
+        portfolio.forEach(card => {
+          const row = {
+            name: card.name, set_name: card.set || null, set_id: card.setId || null,
+            card_number: card.number || null, lang: card.lang || 'FR',
+            rarity: card.rarity || null, card_type: card.type || null,
+            condition: card.condition || 'NM', graded: card.graded || false,
+            qty: card.qty || 1, buy_price: card.buyPrice || null,
+            current_price: card.curPrice || null, image_url: card.image || null,
+            is_favorite: card.favorite || false, updated_at: new Date().toISOString(),
+          }
+          if (card.id.startsWith('u')) {
+            // Local card not yet in Supabase — insert
+            supabase.from('portfolio_cards').insert({ ...row, user_id: user.id }).select().single()
+              .then(({ data }) => { if (data) card.id = data.id })
+          } else {
+            // Existing Supabase card — update
+            supabase.from('portfolio_cards').update(row).eq('id', card.id)
+          }
+        })
+      }
     }, 500)
-  }, [portfolio, portfolioLoaded])
+  }, [portfolio, portfolioLoaded, user])
   useEffect(() => {
     dbGet<CardItem[]>('showcase').then(data => {
       if (data && data.length > 0) setShowcase(data)

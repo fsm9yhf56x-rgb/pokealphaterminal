@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { getCardImageUrl } from '@/lib/cardImages'
 
 type Tier = 'S' | 'A' | 'B'
 type FilterTier = 'all' | Tier
@@ -9,16 +10,16 @@ interface Signal {
   id: string; tier: Tier; name: string; set: string; lang: 'EN'|'FR'|'JP'; source: 'eBay'|'CM'|'Mercari'
   psaPop?: number; watchers: number; price: number; marketValue: number; target: number
   confidence: number; momentum: number; upside: number; detectedAt: number
-  aiReason: string; tags: string[]; sparkline: number[]; img: string
+  aiReason: string; tags: string[]; sparkline: number[]; setId?: string; localId?: string
 }
 
 const SIGNALS: Signal[] = [
-  { id:'1', tier:'S', name:'Charizard Alt Art', set:'Obsidian Flames', lang:'EN', source:'eBay', psaPop:312, watchers:847, price:920, marketValue:1240, target:1300, confidence:72, momentum:53, upside:53, detectedAt:Date.now()-3.7*36e5, aiReason:"Alt Art extrêmement rare — PSA Pop de seulement 312 exemplaires. Momentum acheteur détecté sur eBay JP et Cardmarket. Le marché JP est en avance de 2-3 semaines sur l'EN.", tags:['PSA Pop faible','Momentum JP','Alt Art rare','eBay actif'], sparkline:[680,710,690,740,780,820,790,850,870,920], img:'https://assets.tcgdex.net/en/sv/sv3/228/high.webp' },
-  { id:'2', tier:'A', name:'Umbreon VMAX Alt Art', set:'Evolving Skies', lang:'EN', source:'CM', psaPop:2840, watchers:412, price:880, marketValue:1090, target:1150, confidence:68, momentum:24, upside:24, detectedAt:Date.now()-8*36e5, aiReason:"Demande soutenue sur Cardmarket, spread achat/vente en compression. Historiquement corrélé avec une hausse dans les 4-6 semaines.", tags:['Spread serré','Demande EU','Blue chip'], sparkline:[760,780,800,790,830,850,840,860,870,880], img:'https://assets.tcgdex.net/en/swsh/swsh7/215/high.webp' },
-  { id:'3', tier:'A', name:'Rayquaza VMAX Alt Art', set:'Evolving Skies', lang:'EN', source:'eBay', watchers:298, price:740, marketValue:970, target:1050, confidence:74, momentum:31, upside:31, detectedAt:Date.now()-12*36e5, aiReason:"Volume de recherche en hausse de 40% sur 7 jours. Peu de listings disponibles — tension offre/demande imminente.", tags:['Volume recherche ↑','Stock faible','Evolving Skies'], sparkline:[580,600,590,620,650,680,700,710,730,740], img:'https://assets.tcgdex.net/en/swsh/swsh7/218/high.webp' },
-  { id:'4', tier:'B', name:'Mewtwo V Alt Art', set:'Pokémon GO', lang:'JP', source:'CM', watchers:156, price:280, marketValue:358, target:400, confidence:61, momentum:28, upside:28, detectedAt:Date.now()-24*36e5, aiReason:"Carte JP sous-évaluée par rapport à l'équivalent EN (+35% d'écart). Potentiel de rattrapage si la hype Mewtwo continue.", tags:['JP discount','Rattrapage','Pokémon GO'], sparkline:[220,230,240,235,250,260,255,270,275,280], img:'https://assets.tcgdex.net/en/swsh/swsh10.5/TG22/high.webp' },
-  { id:'5', tier:'A', name:'Lugia Neo Genesis Holo', set:'Neo Genesis', lang:'EN', source:'eBay', psaPop:2100, watchers:203, price:580, marketValue:748, target:820, confidence:71, momentum:29, upside:29, detectedAt:Date.now()-36*36e5, aiReason:"Vintage WOTC avec une demande constante. Les prix se stabilisent après une correction — point d'entrée attractif pour du long terme.", tags:['Vintage WOTC',"Point d'entrée",'Long terme'], sparkline:[620,610,590,570,560,550,560,570,575,580], img:'https://assets.tcgdex.net/en/neo/neo1/9/high.webp' },
-  { id:'6', tier:'B', name:'Gengar VMAX Alt Art', set:'VMAX Climax', lang:'JP', source:'Mercari', watchers:189, price:340, marketValue:420, target:480, confidence:58, momentum:18, upside:24, detectedAt:Date.now()-48*36e5, aiReason:"Set VMAX Climax en épuisement progressif. Gengar reste un des Pokémon les plus populaires — potentiel spéculatif modéré.", tags:['Set épuisé','Fan favorite','JP exclusif'], sparkline:[290,300,310,305,320,315,330,335,340,340], img:'https://assets.tcgdex.net/en/swsh/swsh12.5/271/high.webp' },
+  { id:'1', tier:'S', name:'Charizard Alt Art', set:'Obsidian Flames', lang:'EN', source:'eBay', psaPop:312, watchers:847, price:920, marketValue:1240, target:1300, confidence:72, momentum:53, upside:53, detectedAt:Date.now()-3.7*36e5, aiReason:"Alt Art extrêmement rare — PSA Pop de seulement 312 exemplaires. Momentum acheteur détecté sur eBay JP et Cardmarket. Le marché JP est en avance de 2-3 semaines sur l'EN.", tags:['PSA Pop faible','Momentum JP','Alt Art rare','eBay actif'], sparkline:[680,710,690,740,780,820,790,850,870,920], setId:'sv03', localId:'228' },
+  { id:'2', tier:'A', name:'Umbreon VMAX Alt Art', set:'Evolving Skies', lang:'EN', source:'CM', psaPop:2840, watchers:412, price:880, marketValue:1090, target:1150, confidence:68, momentum:24, upside:24, detectedAt:Date.now()-8*36e5, aiReason:"Demande soutenue sur Cardmarket, spread achat/vente en compression. Historiquement corrélé avec une hausse dans les 4-6 semaines.", tags:['Spread serré','Demande EU','Blue chip'], sparkline:[760,780,800,790,830,850,840,860,870,880], setId:'swsh7', localId:'215' },
+  { id:'3', tier:'A', name:'Rayquaza VMAX Alt Art', set:'Evolving Skies', lang:'EN', source:'eBay', watchers:298, price:740, marketValue:970, target:1050, confidence:74, momentum:31, upside:31, detectedAt:Date.now()-12*36e5, aiReason:"Volume de recherche en hausse de 40% sur 7 jours. Peu de listings disponibles — tension offre/demande imminente.", tags:['Volume recherche ↑','Stock faible','Evolving Skies'], sparkline:[580,600,590,620,650,680,700,710,730,740], setId:'swsh7', localId:'218' },
+  { id:'4', tier:'B', name:'Mewtwo V Alt Art', set:'Pokémon GO', lang:'JP', source:'CM', watchers:156, price:280, marketValue:358, target:400, confidence:61, momentum:28, upside:28, detectedAt:Date.now()-24*36e5, aiReason:"Carte JP sous-évaluée par rapport à l'équivalent EN (+35% d'écart). Potentiel de rattrapage si la hype Mewtwo continue.", tags:['JP discount','Rattrapage','Pokémon GO'], sparkline:[220,230,240,235,250,260,255,270,275,280], setId:'swsh10.5', localId:'TG22' },
+  { id:'5', tier:'A', name:'Lugia Neo Genesis Holo', set:'Neo Genesis', lang:'EN', source:'eBay', psaPop:2100, watchers:203, price:580, marketValue:748, target:820, confidence:71, momentum:29, upside:29, detectedAt:Date.now()-36*36e5, aiReason:"Vintage WOTC avec une demande constante. Les prix se stabilisent après une correction — point d'entrée attractif pour du long terme.", tags:['Vintage WOTC',"Point d'entrée",'Long terme'], sparkline:[620,610,590,570,560,550,560,570,575,580], setId:'neo1', localId:'9' },
+  { id:'6', tier:'B', name:'Gengar VMAX Alt Art', set:'VMAX Climax', lang:'JP', source:'Mercari', watchers:189, price:340, marketValue:420, target:480, confidence:58, momentum:18, upside:24, detectedAt:Date.now()-48*36e5, aiReason:"Set VMAX Climax en épuisement progressif. Gengar reste un des Pokémon les plus populaires — potentiel spéculatif modéré.", tags:['Set épuisé','Fan favorite','JP exclusif'], sparkline:[290,300,310,305,320,315,330,335,340,340], setId:'swsh12.5', localId:'271' },
 ]
 
 const TC: Record<Tier,{color:string;glow:string;bg:string;grad:string}> = {
@@ -218,7 +219,7 @@ export default function AlphaSignals() {
 
                     {/* Card image */}
                     <div style={{width:'48px',height:'67px',borderRadius:'6px',overflow:'hidden',flexShrink:0,boxShadow:'0 2px 8px rgba(0,0,0,.1)',position:'relative'}}>
-                      <img className="a-card-img" src={sig.img} alt={sig.name} width={48} height={67} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+                      <img className="a-card-img" src={getCardImageUrl({lang:sig.lang,setId:sig.setId,localId:sig.localId})} alt={sig.name} width={48} height={67} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
                       {/* Tiny glow overlay on hover */}
                       <div style={{position:'absolute',inset:0,background:`radial-gradient(circle at center,${tc.color}15,transparent 70%)`,opacity:hovered===sig.id?1:0,transition:'opacity .3s',pointerEvents:'none'}}/>
                     </div>
@@ -305,7 +306,7 @@ export default function AlphaSignals() {
                       <div className="a-expand-price" style={{width:'215px',flexShrink:0,background:'#fff',borderRadius:'14px',border:'1px solid #E5E5EA',padding:'18px',display:'flex',flexDirection:'column',gap:'12px'}}>
                         {/* Big card image */}
                         <div style={{borderRadius:'10px',overflow:'hidden',boxShadow:'0 4px 16px rgba(0,0,0,.1)',marginBottom:'4px'}}>
-                          <img src={sig.img} alt={sig.name} width={179} height={250} style={{width:'100%',height:'auto',display:'block',borderRadius:'10px'}}/>
+                          <img src={getCardImageUrl({lang:sig.lang,setId:sig.setId,localId:sig.localId})} alt={sig.name} width={179} height={250} style={{width:'100%',height:'auto',display:'block',borderRadius:'10px'}}/>
                         </div>
                         <Spark data={sig.sparkline} color={tc.color} w={179} h={40}/>
                         {[

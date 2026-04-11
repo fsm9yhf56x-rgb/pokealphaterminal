@@ -5,6 +5,7 @@ import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getCardImageUrl } from '@/lib/cardImages'
 import { useAuth } from '@/lib/useAuth'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -475,7 +476,7 @@ export function Holdings() {
           if (match3?.img) { updates[card.id] = match3.img; continue }
         }
         // 4. Construire URL directement (pas de HEAD — le onError gere)
-        updates[card.id] = 'https://assets.tcgdex.net/' + apiLang + '/' + sid + '/' + card.number + '/high.webp'
+        updates[card.id] = getCardImageUrl({ lang: card.lang, setId: sid, localId: card.number })
       }
       if (Object.keys(updates).length > 0) {
         setPortfolio(prev => prev.map(c => updates[c.id] ? { ...c, image: updates[c.id] } : c))

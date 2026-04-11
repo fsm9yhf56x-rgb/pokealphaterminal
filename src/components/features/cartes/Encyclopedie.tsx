@@ -1,5 +1,7 @@
 'use client'
 
+import { getCardImageUrl } from '@/lib/cardImages'
+
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
@@ -101,6 +103,7 @@ const CHUNK_SIZE = 60
 const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
 
 function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
+  if (card.setId && card.localId) return getCardImageUrl({ lang, setId: card.setId, localId: card.localId })
   if (card.image) return card.image
   if (lang === 'JP' && card.enImage) return card.enImage
   return null
@@ -401,7 +404,7 @@ export function Encyclopedie() {
             const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
             enriched.push({
               id: sid+'-'+c.lid, localId: c.lid, name: c.n,
-              image: c.img || ('https://assets.tcgdex.net/' + apiLang + '/' + sid + '/' + c.lid + '/high.webp'),
+              image: c.img || getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }),
               rarity: c.r||'',
               setId: sid, setName: set?.name ?? sid, year, era,
               enName: lang==='JP' ? enMap.get(sid+'-'+c.lid) : undefined,
@@ -710,7 +713,7 @@ export function Encyclopedie() {
                 <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid #1D1D1F', borderTop:'1px solid #EBEBEB', borderRadius:'0 0 9px 9px', boxShadow:'0 8px 24px rgba(0,0,0,.08)', maxHeight:'340px', overflowY:'auto' as const }}>
                   {searchSuggs.map(card => {
                     const owned = isOwned(card)
-                    const cimg = card.image ? (card.image.includes('.webp')||card.image.includes('.png') ? card.image : card.image+'/high.webp') : null
+                    const cimg = card.image || (card.setId && card.localId ? getCardImageUrl({ lang: lang, setId: card.setId, localId: card.localId }) : null)
                     return (
                       <div key={card.id}
                         onMouseDown={e=>{e.preventDefault();handleCardClick(card.id);setSearchFocus(false)}}
@@ -1003,7 +1006,7 @@ export function Encyclopedie() {
               </div>
               {pageCards.map((card,i) => {
                 const isSel = selId===card.id
-                const img = card.image ? (card.image.includes('.webp') || card.image.includes('.png') || card.image.includes('.jpg') ? card.image : `${card.image}/high.webp`) : null
+                const img = card.image || (card.setId && card.localId ? getCardImageUrl({ lang: lang, setId: card.setId, localId: card.localId }) : null)
                 const rc = card.rarity ? getRarityColor(card.rarity) : null
                 const owned = isOwned(card)
                 return (
@@ -1087,7 +1090,7 @@ export function Encyclopedie() {
                   <div style={{ background:'#F8F8F8', padding:'14px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' }}>
                     {detail.image ? (
                       <img
-                        src={detail.image?.includes('.webp')||detail.image?.includes('.png')?detail.image:`${detail.image}/high.webp`}
+                        src={detail.image || getCardImageUrl({ lang: lang, setId: detail.set?.id, localId: detail.localId })}
                         alt={detail.name}
                         style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
@@ -1331,7 +1334,7 @@ export function Encyclopedie() {
 
             {lightbox && (()=>{
         const base = cardImageUrl(lightbox, lang)
-        const imgHd = base ? (base.includes('.webp')||base.includes('.png') ? base : base+'/high.webp') : null
+        const imgHd = base || (detail?.set?.id && detail?.localId ? getCardImageUrl({ lang: lang, setId: detail.set.id, localId: detail.localId }) : null)
         // Navigation dans le set
         const setCards = filtered.filter(c=>c.setId===lightbox.setId).sort((a,b)=>parseInt(a.localId)-parseInt(b.localId))
         const curIdx = setCards.findIndex(c=>c.id===lightbox.id)

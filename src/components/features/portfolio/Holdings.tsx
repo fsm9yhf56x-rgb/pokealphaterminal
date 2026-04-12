@@ -6,7 +6,7 @@ import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl } from '@/lib/cardImages'
-import { getCardsForSet } from '@/lib/cardDb'
+import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -525,18 +525,12 @@ export function Holdings() {
       const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
       if (!sid) return
       const lang = sc[0]?.lang || 'FR'
-      if (lang === 'JP') {
-          getCardsForSet('JP', sid)
-            .then(cards => {
-              const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || getCardImageUrl({ lang: 'JP', setId: sid, localId: c.lid }), rarity: c.r || undefined }))
-              setShelfSetCards(prev => ({ ...prev, [setName]: mapped as any }))
-            })
-            .catch(() => {})
-        } else {
-          fetchCardsForSet(lang as any, sid)
-            .then(cards => setShelfSetCards(prev => ({ ...prev, [setName]: cards })))
-            .catch(() => {})
-        }
+      getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
+          .then(cards => {
+            const mapped = staticToTCGCards(cards, sid, lang, (l,s,lid) => getCardImageUrl({lang:l,setId:s,localId:lid}))
+            setShelfSetCards(prev => ({ ...prev, [setName]: mapped as any }))
+          })
+          .catch(() => {})
     })
   }, [portfolio.length, liveSets.length, binderSet])
 
@@ -548,19 +542,13 @@ export function Holdings() {
     if (!sid) { setFullSetCards([]); return }
     const lang = sc[0]?.lang || 'FR'
     setFullSetLoading(true)
-    if (lang === 'JP') {
-      getCardsForSet('JP', sid)
-        .then(cards => {
-          const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || getCardImageUrl({ lang: 'JP', setId: sid, localId: c.lid }), rarity: c.r || undefined }))
-          setFullSetCards(mapped as any)
-          setFullSetLoading(false)
-        })
-        .catch(() => setFullSetLoading(false))
-    } else {
-      fetchCardsForSet(lang as any, sid)
-        .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
-        .catch(() => setFullSetLoading(false))
-    }
+    getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
+      .then(cards => {
+        const mapped = staticToTCGCards(cards, sid, lang, (l,s,lid) => getCardImageUrl({lang:l,setId:s,localId:lid}))
+        setFullSetCards(mapped as any)
+        setFullSetLoading(false)
+      })
+      .catch(() => setFullSetLoading(false))
   }, [binderSet, liveSets.length])
 
   // -- Glitter: IntersectionObserver (perf) --

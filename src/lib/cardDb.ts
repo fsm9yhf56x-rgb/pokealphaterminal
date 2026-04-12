@@ -81,13 +81,32 @@ export async function getCards(lang: 'FR' | 'EN' | 'JP'): Promise<Record<string,
 export async function getCardsForSet(lang: 'FR' | 'EN' | 'JP', setId: string): Promise<StaticCard[]> {
   const all = await getCards(lang)
   if (all[setId]) return all[setId]
-  // Fallback API
+  // Fallback: try other languages
+  for (const fallbackLang of ['EN', 'FR', 'JP'] as const) {
+    if (fallbackLang === lang) continue
+    try {
+      const fallback = await getCards(fallbackLang)
+      if (fallback[setId]) return fallback[setId]
+    } catch {}
+  }
+  // Last resort: TCGDex API
   const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
   try {
     const res = await fetch(`https://api.tcgdex.net/v2/${apiLang}/sets/${setId}`)
     const data = await res.json()
     return (data.cards || []).map((c: any) => ({ id: c.id, lid: c.localId, n: c.name, img: c.image ? c.image + '/high.webp' : null, r: c.rarity || null }))
   } catch { return [] }
+}
+
+// Convertit StaticCard[] en format compatible TCGCard (pour Holdings)
+export function staticToTCGCards(cards: StaticCard[], setId: string, lang: string, imageResolver?: (lang: string, setId: string, localId: string) => string): { id: string; localId: string; name: string; image?: string; rarity?: string }[] {
+  return cards.map(c => ({
+    id: c.id || setId + '-' + c.lid,
+    localId: c.lid,
+    name: c.n,
+    image: c.img || (imageResolver ? imageResolver(lang, setId, c.lid) : ''),
+    rarity: c.r || undefined,
+  }))
 }
 
 export async function getSyncDate(): Promise<string | null> {

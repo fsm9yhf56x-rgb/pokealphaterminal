@@ -97,7 +97,7 @@ type SortKey  = 'set'|'name'
 type ViewMode = 'grid'|'list'
 
 interface EnrichedCard extends TCGCard {
-  setId:string; setName:string; year:number; era:string; enName?:string; enImage?:string
+  setId:string; setName:string; year:number; era:string; enName?:string; enImage?:string; enSetName?:string
 }
 
 const CHUNK_SIZE = 60
@@ -458,8 +458,9 @@ export function Encyclopedie() {
               image: c.img || getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }),
               rarity: c.r||'',
               setId: sid, setName: set?.name ?? sid, year, era,
-              enName: lang==='JP' ? enMap.get(sid+'-'+c.lid) : undefined,
+              enName: lang==='JP' ? (c.en || enMap.get(sid+'-'+c.lid)) : undefined,
               enImage: lang==='JP' ? enImgMap.get(sid+'-'+c.lid) : undefined,
+              enSetName: lang==='JP' ? (set as any)?.enName : undefined,
             })
           })
         })
@@ -1023,7 +1024,7 @@ export function Encyclopedie() {
                         </div>
                         <div style={{ fontSize:cfg.subSize, color:ERA_COLORS[card.era]||'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
                           {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'11px', maxWidth:'40px', objectFit:'contain', verticalAlign:'middle', marginRight:'3px', opacity:.6 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                          {card.setName}
+                          {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ opacity:.5 }}> ({card.enSetName})</span>}
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                         </div>
                         {lang==='JP' && card.enName && cardSize!=='S' && (
@@ -1088,7 +1089,7 @@ export function Encyclopedie() {
                     </div>
                     <div style={{ fontSize:'11px', color:'#86868B', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'5px' }}>
                       {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                      {card.setName}
+                      {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ opacity:.5 }}> ({card.enSetName})</span>}
                     </div>
                     <div>{rc&&<span style={{ fontSize:'9px', fontWeight:600, padding:'2px 6px', borderRadius:'4px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{card.rarity}</span>}</div>
                     <div style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-data)', textAlign:'right' as const }}>#{card.localId}</div>

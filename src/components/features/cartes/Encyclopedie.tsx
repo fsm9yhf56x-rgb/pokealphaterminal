@@ -607,9 +607,24 @@ export function Encyclopedie() {
   const handleCardClick = useCallback(async (id:string) => {
     if (selId===id) { setSelId(null); setDetail(null); setEnDetail(null); return }
     setSelId(id); setDetail(null); setEnDetail(null); setDetLoading(true)
-    const d = await fetchCardDetail(lang, id)
-    setDetail(d); setDetLoading(false)
-    if (lang==='JP') fetchCardDetail('EN', id).then(d=>{ if(d) setEnDetail(d) }).catch(()=>{})
+    if (lang === 'JP') {
+      // JP: build detail from our local data (TCGDex doesn't have pokemon-card.com IDs)
+      const card = allCards.find(c => c.id === id)
+      if (card) {
+        setDetail({
+          id: card.id,
+          localId: card.localId,
+          name: card.name,
+          image: card.image,
+          rarity: card.rarity || undefined,
+          set: { id: card.setId, name: card.setName },
+        } as any)
+      }
+      setDetLoading(false)
+    } else {
+      const d = await fetchCardDetail(lang, id)
+      setDetail(d); setDetLoading(false)
+    }
   }, [selId, lang])
 
   const selCard = allCards.find(c=>c.id===selId)
@@ -1048,9 +1063,9 @@ export function Encyclopedie() {
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                         </div>
                         {lang==='JP' && jpToEn(card.name,jpEnDict) && cardSize!=='S' && (
-                          <div style={{ fontSize:'9px', color:'#BBBBBB', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, fontStyle:'italic', display:'flex', alignItems:'center', gap:'3px' }}>
-                            <span style={{ fontSize:'8px' }}>🇺🇸</span>
-                            <span>{jpToEn(card.name,jpEnDict)}</span>
+                          <div style={{ fontSize:'10px', color:'#6E6E73', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px', fontFamily:'var(--font-display)' }}>
+                            <span style={{ fontSize:'10px', opacity:.7 }}>EN</span>
+                            <span style={{ fontWeight:500 }}>{jpToEn(card.name,jpEnDict)}</span>
                           </div>
                         )}
                         {cardSize==='L' && (
@@ -1201,6 +1216,12 @@ export function Encyclopedie() {
                   <div style={{ padding:'14px' }}>
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{detail.name}</div>
+                      {lang==='JP' && jpToEn(detail.name,jpEnDict) && (
+                        <div style={{ fontSize:'12px', color:'#6E6E73', marginTop:'3px', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
+                          <span style={{ opacity:.6 }}>EN</span>
+                          <span style={{ fontWeight:500 }}>{jpToEn(detail.name,jpEnDict)}</span>
+                        </div>
+                      )}
                       {detail.rarity && (()=>{ const rc=getRarityColor(detail.rarity); return <span style={{ flexShrink:0, padding:'3px 8px', borderRadius:'5px', background:rc.bg, color:rc.fg, fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>{detail.rarity}</span> })()}
                     </div>
 

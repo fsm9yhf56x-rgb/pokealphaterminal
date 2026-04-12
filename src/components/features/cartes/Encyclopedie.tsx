@@ -2,6 +2,7 @@
 
 import { getCardImageUrl } from '@/lib/cardImages'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/useAuth'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -152,6 +153,7 @@ export function Encyclopedie() {
   const [filSet,     setFilSet]      = useState('all')
   const [filRarity,  setFilRarity]   = useState('all')
   const [sort,       setSort]        = useState<SortKey>('set')
+  const { user } = useAuth()
   const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [view,       setView]        = useState<ViewMode>('grid')
@@ -188,6 +190,22 @@ export function Encyclopedie() {
     setPortfolioLocal(updated)
     await pkaDbSet('portfolio', updated)
     try { const slim = updated.map(c => c.image&&c.image.startsWith('data:')?{...c,image:''}:c); localStorage.setItem('pka_portfolio', JSON.stringify(slim)) } catch {}
+    // Si connecté, sauvegarder dans Supabase
+    if (user) {
+      await supabase.from('portfolio_cards').insert({
+        user_id: user.id,
+        name: newCard.name,
+        set_name: newCard.set,
+        set_id: newCard.setId,
+        card_number: newCard.number,
+        rarity: newCard.rarity,
+        lang: newCard.lang,
+        condition_raw: newCard.condition,
+        quantity: newCard.qty,
+        buy_price: newCard.buyPrice,
+        image_url: newCard.image,
+      })
+    }
     setToast(card.name + ' ajouté')
     setTimeout(() => setToast(''), 2000)
   }

@@ -104,8 +104,8 @@ const CHUNK_SIZE = 60
 const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
 
 function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
-  if (card.setId && card.localId) return getCardImageUrl({ lang, setId: card.setId, localId: card.localId })
   if (card.image) return card.image
+  if (card.setId && card.localId) return getCardImageUrl({ lang, setId: card.setId, localId: card.localId })
   if (lang === 'JP' && card.enImage) return card.enImage
   return null
 }

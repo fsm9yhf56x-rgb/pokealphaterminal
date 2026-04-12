@@ -1063,9 +1063,8 @@ export function Encyclopedie() {
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                         </div>
                         {lang==='JP' && jpToEn(card.name,jpEnDict) && cardSize!=='S' && (
-                          <div style={{ fontSize:'10px', color:'#6E6E73', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px', fontFamily:'var(--font-display)' }}>
-                            <span style={{ fontSize:'10px', opacity:.7 }}>EN</span>
-                            <span style={{ fontWeight:500 }}>{jpToEn(card.name,jpEnDict)}</span>
+                          <div style={{ fontSize:cardSize==='L'?'11px':'10px', color:'#86868B', marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, fontFamily:'var(--font-display)', letterSpacing:'.01em' }}>
+                            {jpToEn(card.name,jpEnDict)}
                           </div>
                         )}
                         {cardSize==='L' && (
@@ -1120,7 +1119,9 @@ export function Encyclopedie() {
                         {card.name}
                         {owned&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="3" strokeLinecap="round" style={{ flexShrink:0 }}><path d="M20 6L9 17l-5-5"/></svg>}
                       </div>
-                      <div style={{ fontSize:'10px', color:'#AEAEB2', display:'flex', alignItems:'center', gap:'3px' }}>{flag(lang)} {lang==='JP'?jpToEn(card.name,jpEnDict)||'':''}</div>
+                      {lang==='JP' && jpToEn(card.name,jpEnDict) && (
+                        <div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-display)' }}>{jpToEn(card.name,jpEnDict)}</div>
+                      )}
                     </div>
                     <div style={{ fontSize:'11px', color:'#86868B', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'5px' }}>
                       {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
@@ -1217,9 +1218,8 @@ export function Encyclopedie() {
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{detail.name}</div>
                       {lang==='JP' && jpToEn(detail.name,jpEnDict) && (
-                        <div style={{ fontSize:'12px', color:'#6E6E73', marginTop:'3px', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
-                          <span style={{ opacity:.6 }}>EN</span>
-                          <span style={{ fontWeight:500 }}>{jpToEn(detail.name,jpEnDict)}</span>
+                        <div style={{ fontSize:'13px', color:'#86868B', marginTop:'4px', fontFamily:'var(--font-display)', fontWeight:500, fontStyle:'italic' }}>
+                          {jpToEn(detail.name,jpEnDict)}
                         </div>
                       )}
                       {detail.rarity && (()=>{ const rc=getRarityColor(detail.rarity); return <span style={{ flexShrink:0, padding:'3px 8px', borderRadius:'5px', background:rc.bg, color:rc.fg, fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>{detail.rarity}</span> })()}

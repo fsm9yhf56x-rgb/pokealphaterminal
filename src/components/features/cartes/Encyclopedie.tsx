@@ -203,7 +203,7 @@ export function Encyclopedie() {
         condition: newCard.condition || 'Raw',
         qty: newCard.qty || 1,
         buy_price: newCard.buyPrice || 0,
-        image_url: newCard.image || '',
+        image_url: getCardImageUrl({ lang: newCard.lang as string, setId: newCard.setId, localId: newCard.number }) || newCard.image || '',
       })
       if (error) console.error('Supabase insert error:', error.message)
     }

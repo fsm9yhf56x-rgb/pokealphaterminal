@@ -2096,15 +2096,18 @@ export function Holdings() {
                             const viewFrac = Math.min(1, Math.max(0.08, 7 / Math.max(total, 1)))
                             if (total <= 7) return null
                             const bars = Math.min(total, 150)
-                            const ownedNumbers = new Set(setCards.map(c => parseInt(c.number) || 0))
+                            const ownedNumbers = new Set(setCards.map(c => c.number))
+                            // Build ghost card number list for positional matching
+                            const ghostNums = (shelfSetCards[setName] || []).map((c: any) => c.localId || '')
                             return (
                               <div className="minimap" style={{ marginTop:'8px' }}
                                 onMouseDown={e => mmDown(setName, total, e)}>
                                 {/* Micro-rectangles */}
                                 <div style={{ position:'absolute', inset:'3px', display:'flex', gap:'1px', borderRadius:'4px', overflow:'hidden' }}>
                                   {Array.from({ length: bars }).map((_, i) => {
-                                    const cardNum = total <= 150 ? i + 1 : Math.round((i / bars) * total) + 1
-                                    const isOwned = ownedNumbers.has(cardNum)
+                                    const idx = total <= 150 ? i : Math.round((i / bars) * total)
+                                    const ghostNum = ghostNums[idx] || String(idx + 1)
+                                    const isOwned = ownedNumbers.has(ghostNum) || ownedNumbers.has(String(idx + 1))
                                     return (
                                       <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? 0.9 : 0.5 }} />
                                     )

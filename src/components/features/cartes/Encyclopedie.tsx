@@ -1047,7 +1047,7 @@ export function Encyclopedie() {
                           {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ opacity:.5 }}> ({card.enSetName})</span>}
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                         </div>
-                        {lang==='JP' && card.enName && cardSize!=='S' && (
+                        {lang==='JP' && jpToEn(card.name,jpEnDict) && cardSize!=='S' && (
                           <div style={{ fontSize:'9px', color:'#BBBBBB', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, fontStyle:'italic', display:'flex', alignItems:'center', gap:'3px' }}>
                             <span style={{ fontSize:'8px' }}>🇺🇸</span>
                             <span>{jpToEn(card.name,jpEnDict)}</span>

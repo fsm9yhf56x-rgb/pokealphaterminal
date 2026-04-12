@@ -796,10 +796,8 @@ export function Encyclopedie() {
           {/* Search + sort + view */}
           {/* Series populaires */}
           {!loading && filSet==='all' && browseMode==='all' && (
-            <div style={{ position:'relative', marginBottom:'12px' }}>
-              <div style={{ position:'absolute', right:0, top:0, bottom:'4px', width:'50px', background:'linear-gradient(to right, rgba(255,255,255,0), #fff)', zIndex:2, pointerEvents:'none', borderRadius:'0 8px 8px 0' }}/>
-              <div style={{ position:'absolute', left:0, top:0, bottom:'4px', width:'20px', background:'linear-gradient(to left, rgba(255,255,255,0), #fff)', zIndex:2, pointerEvents:'none', borderRadius:'8px 0 0 8px', opacity:0, transition:'opacity .2s' }} className="scroll-fade-left"/>
-              <div style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'4px', paddingRight:'40px', scrollbarWidth:'none' as any, msOverflowStyle:'none' as any, WebkitOverflowScrolling:'touch' as any }}>
+            <div style={{ marginBottom:'12px' }}>
+              <div style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'6px', scrollbarWidth:'none' as any, maskImage:'linear-gradient(to right, black 85%, transparent)', WebkitMaskImage:'linear-gradient(to right, black 85%, transparent)' }}>
                 {(lang==='JP'
                   ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
                   : lang==='FR'

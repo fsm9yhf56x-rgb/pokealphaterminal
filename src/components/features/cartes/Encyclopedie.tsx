@@ -103,6 +103,21 @@ interface EnrichedCard extends TCGCard {
 const CHUNK_SIZE = 60
 const LC_MAP: Record<Lang,string> = { EN:'en', FR:'fr', JP:'ja' }
 
+// Lookup JP card name → EN name from Pokédex dictionary
+function jpToEn(jpName: string, dict: Record<string,string>): string | null {
+  if (!jpName || !dict) return null
+  // Direct match
+  if (dict[jpName]) return dict[jpName]
+  // Try base name (strip ex/EX/GX/V/VMAX/VSTAR/BREAK suffix)
+  const suffixMatch = jpName.match(/^(.+?)(ex|EX|GX|V|VMAX|VSTAR|BREAK|ｅｘ)$/)
+  if (suffixMatch) {
+    const base = suffixMatch[1]
+    const suffix = suffixMatch[2].replace('ｅｘ','ex')
+    if (dict[base]) return dict[base] + ' ' + suffix
+  }
+  return null
+}
+
 function cardImageUrl(card: EnrichedCard, lang: Lang): string|null {
   if (card.image) return card.image
   if (card.setId && card.localId) return getCardImageUrl({ lang, setId: card.setId, localId: card.localId })
@@ -178,6 +193,7 @@ export function Encyclopedie() {
   // ── Custom card images (user uploads) ──
   const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
   const [setLogos, setSetLogos] = useState<Record<string,string>>({})
+  const [jpEnDict, setJpEnDict] = useState<Record<string,string>>({})
   const [setBlocks, setSetBlocks] = useState<Record<string,string>>({})
   const uploadRef = useRef<HTMLInputElement>(null)
   const [uploadTarget, setUploadTarget] = useState<string|null>(null)
@@ -211,6 +227,10 @@ export function Encyclopedie() {
       } catch {}
     }
     loadLogos()
+    // Load JP→EN Pokédex dictionary
+    if (lang === 'JP') {
+      fetch('/data/pokedex-jp-en.json').then(r => r.json()).then(d => setJpEnDict(d)).catch(() => {})
+    }
   }, [lang])
 
   const saveCustomImg = useCallback((cardKey: string, b64: string) => {
@@ -1030,7 +1050,7 @@ export function Encyclopedie() {
                         {lang==='JP' && card.enName && cardSize!=='S' && (
                           <div style={{ fontSize:'9px', color:'#BBBBBB', marginTop:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, fontStyle:'italic', display:'flex', alignItems:'center', gap:'3px' }}>
                             <span style={{ fontSize:'8px' }}>🇺🇸</span>
-                            <span>{card.enName}</span>
+                            <span>{jpToEn(card.name,jpEnDict)}</span>
                           </div>
                         )}
                         {cardSize==='L' && (
@@ -1085,7 +1105,7 @@ export function Encyclopedie() {
                         {card.name}
                         {owned&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="3" strokeLinecap="round" style={{ flexShrink:0 }}><path d="M20 6L9 17l-5-5"/></svg>}
                       </div>
-                      <div style={{ fontSize:'10px', color:'#AEAEB2', display:'flex', alignItems:'center', gap:'3px' }}>{flag(lang)} {lang==='JP'&&card.enName?card.enName:''}</div>
+                      <div style={{ fontSize:'10px', color:'#AEAEB2', display:'flex', alignItems:'center', gap:'3px' }}>{flag(lang)} {lang==='JP'?jpToEn(card.name,jpEnDict)||'':''}</div>
                     </div>
                     <div style={{ fontSize:'11px', color:'#86868B', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'5px' }}>
                       {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}

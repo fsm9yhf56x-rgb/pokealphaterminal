@@ -525,17 +525,18 @@ export function Holdings() {
       const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
       if (!sid) return
       const lang = sc[0]?.lang || 'FR'
-      getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
-        .then(cards => {
-          const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || undefined, rarity: c.r || undefined }))
-          setShelfSetCards(prev => ({ ...prev, [setName]: mapped as any }))
-        })
-        .catch(() => {
-          // Fallback TCGDex
+      if (lang === 'JP') {
+          getCardsForSet('JP', sid)
+            .then(cards => {
+              const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || getCardImageUrl({ lang: 'JP', setId: sid, localId: c.lid }), rarity: c.r || undefined }))
+              setShelfSetCards(prev => ({ ...prev, [setName]: mapped as any }))
+            })
+            .catch(() => {})
+        } else {
           fetchCardsForSet(lang as any, sid)
             .then(cards => setShelfSetCards(prev => ({ ...prev, [setName]: cards })))
             .catch(() => {})
-        })
+        }
     })
   }, [portfolio.length, liveSets.length, binderSet])
 
@@ -547,17 +548,19 @@ export function Holdings() {
     if (!sid) { setFullSetCards([]); return }
     const lang = sc[0]?.lang || 'FR'
     setFullSetLoading(true)
-    getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
-      .then(cards => {
-        const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || undefined, rarity: c.r || undefined }))
-        setFullSetCards(mapped as any)
-        setFullSetLoading(false)
-      })
-      .catch(() => {
-        fetchCardsForSet(lang as any, sid)
-          .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
-          .catch(() => setFullSetLoading(false))
-      })
+    if (lang === 'JP') {
+      getCardsForSet('JP', sid)
+        .then(cards => {
+          const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || getCardImageUrl({ lang: 'JP', setId: sid, localId: c.lid }), rarity: c.r || undefined }))
+          setFullSetCards(mapped as any)
+          setFullSetLoading(false)
+        })
+        .catch(() => setFullSetLoading(false))
+    } else {
+      fetchCardsForSet(lang as any, sid)
+        .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
+        .catch(() => setFullSetLoading(false))
+    }
   }, [binderSet, liveSets.length])
 
   // -- Glitter: IntersectionObserver (perf) --

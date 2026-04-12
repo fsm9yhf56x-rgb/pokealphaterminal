@@ -6,6 +6,7 @@ import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl } from '@/lib/cardImages'
+import { getCardsForSet } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -524,9 +525,17 @@ export function Holdings() {
       const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
       if (!sid) return
       const lang = sc[0]?.lang || 'FR'
-      fetchCardsForSet(lang, sid)
-        .then(cards => setShelfSetCards(prev => ({ ...prev, [setName]: cards })))
-        .catch(() => {})
+      getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
+        .then(cards => {
+          const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || undefined, rarity: c.r || undefined }))
+          setShelfSetCards(prev => ({ ...prev, [setName]: mapped as any }))
+        })
+        .catch(() => {
+          // Fallback TCGDex
+          fetchCardsForSet(lang as any, sid)
+            .then(cards => setShelfSetCards(prev => ({ ...prev, [setName]: cards })))
+            .catch(() => {})
+        })
     })
   }, [portfolio.length, liveSets.length, binderSet])
 
@@ -538,9 +547,17 @@ export function Holdings() {
     if (!sid) { setFullSetCards([]); return }
     const lang = sc[0]?.lang || 'FR'
     setFullSetLoading(true)
-    fetchCardsForSet(lang, sid)
-      .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
-      .catch(() => setFullSetLoading(false))
+    getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
+      .then(cards => {
+        const mapped = cards.map(c => ({ id: c.id || sid+'-'+c.lid, localId: c.lid, name: c.n, image: c.img || undefined, rarity: c.r || undefined }))
+        setFullSetCards(mapped as any)
+        setFullSetLoading(false)
+      })
+      .catch(() => {
+        fetchCardsForSet(lang as any, sid)
+          .then(cards => { setFullSetCards(cards); setFullSetLoading(false) })
+          .catch(() => setFullSetLoading(false))
+      })
   }, [binderSet, liveSets.length])
 
   // -- Glitter: IntersectionObserver (perf) --

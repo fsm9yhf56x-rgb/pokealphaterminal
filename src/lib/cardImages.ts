@@ -19,9 +19,14 @@ export function getCardImageUrl(opts: {
   const { lang, setId, localId, cardId, image } = opts
   const langCode = lang === 'EN' ? 'en' : lang === 'FR' ? 'fr' : lang === 'JP' ? 'jp' : lang.toLowerCase()
 
-  // JP uses cardId as filename (.jpg)
+  // JP with pokemon-card.com cardId
   if (langCode === 'jp' && cardId) {
     return `${STORAGE_BASE}/jp/${setId || 'unknown'}/${cardId}.jpg`
+  }
+
+  // JP from TCGDex (no cardId) → use EN image as fallback (same artwork)
+  if (langCode === 'jp' && setId && localId) {
+    return `${STORAGE_BASE}/en/${setId}/${localId}.webp`
   }
 
   // EN/FR use setId/localId (.webp)

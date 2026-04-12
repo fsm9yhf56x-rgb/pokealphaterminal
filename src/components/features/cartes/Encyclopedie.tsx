@@ -194,11 +194,11 @@ export function Encyclopedie() {
     } catch {}
   }, [])
 
-  // Load set logos from local JSON
+  // Load set logos from current language JSON
   useEffect(() => {
     const loadLogos = async () => {
       try {
-        const res = await fetch('/data/sets-EN.json')
+        const res = await fetch(`/data/sets-${lang}.json`)
         const sets: {id:string;logo:string|null;serie:string|null}[] = await res.json()
         const logos: Record<string,string> = {}
         const blocks: Record<string,string> = {}
@@ -211,7 +211,7 @@ export function Encyclopedie() {
       } catch {}
     }
     loadLogos()
-  }, [])
+  }, [lang])
 
   const saveCustomImg = useCallback((cardKey: string, b64: string) => {
     setCustomImgs(prev => {

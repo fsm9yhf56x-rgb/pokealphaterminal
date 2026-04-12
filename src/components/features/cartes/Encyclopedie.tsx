@@ -749,6 +749,10 @@ export function Encyclopedie() {
         .add-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1) !important; }
         .add-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow:0 4px 14px rgba(0,0,0,.18) !important; }
         .add-btn:active { transform: scale(.97) !important; }
+        .set-carousel::-webkit-scrollbar { height: 4px; }
+        .set-carousel::-webkit-scrollbar-track { background: transparent; }
+        .set-carousel::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 4px; }
+        .set-carousel::-webkit-scrollbar-thumb:hover { background: #A1A1A6; }
       `}</style>
 
       <div style={{ animation:'fadeIn .25s ease-out', width:'100%', display:'flex', gap:'20px', alignItems:'flex-start' }}>
@@ -797,7 +801,7 @@ export function Encyclopedie() {
           {/* Series populaires */}
           {!loading && filSet==='all' && browseMode==='all' && (
             <div style={{ marginBottom:'12px' }}>
-              <div style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'6px', scrollbarWidth:'none' as any, maskImage:'linear-gradient(to right, black 85%, transparent)', WebkitMaskImage:'linear-gradient(to right, black 85%, transparent)' }}>
+              <div className="set-carousel" style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'8px', scrollbarWidth:'thin' as any, scrollbarColor:'#D1D1D6 transparent' }}>
                 {(lang==='JP'
                   ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
                   : lang==='FR'

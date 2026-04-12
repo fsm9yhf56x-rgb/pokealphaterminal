@@ -26,7 +26,7 @@ export function getCardImageUrl(opts: {
 
   // JP from TCGDex (no cardId) → use EN image as fallback (same artwork)
   if (langCode === 'jp' && setId && localId) {
-    return `${STORAGE_BASE}/en/${setId}/${localId}.webp`
+    return `${STORAGE_BASE}/jp/${setId}/${localId}.jpg`
   }
 
   // EN/FR use setId/localId (.webp)

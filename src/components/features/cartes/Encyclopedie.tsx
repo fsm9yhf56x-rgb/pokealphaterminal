@@ -800,8 +800,12 @@ export function Encyclopedie() {
           {/* Search + sort + view */}
           {/* Series populaires */}
           {!loading && filSet==='all' && browseMode==='all' && (
-            <div style={{ marginBottom:'12px' }}>
-              <div className="set-carousel" style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'8px', scrollbarWidth:'thin' as any, scrollbarColor:'#D1D1D6 transparent' }}>
+            <div style={{ marginBottom:'12px', position:'relative' }}>
+              <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:-200,behavior:'smooth'})}}
+                style={{ position:'absolute', left:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'#fff', border:'1px solid #E5E5EA', boxShadow:'0 2px 8px rgba(0,0,0,.1)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#666' }}>‹</button>
+              <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:200,behavior:'smooth'})}}
+                style={{ position:'absolute', right:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'#fff', border:'1px solid #E5E5EA', boxShadow:'0 2px 8px rgba(0,0,0,.1)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#666' }}>›</button>
+              <div className="set-carousel" style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'4px', padding:'0 20px', scrollbarWidth:'none' as any }}>
                 {(lang==='JP'
                   ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
                   : lang==='FR'

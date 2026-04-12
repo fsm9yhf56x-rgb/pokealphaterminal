@@ -735,7 +735,12 @@ export function Encyclopedie() {
           {/* Series populaires */}
           {!loading && filSet==='all' && browseMode==='all' && (
             <div style={{ display:'flex', gap:'6px', marginBottom:'12px', overflowX:'auto' as const, paddingBottom:'4px', scrollbarWidth:'none' as any }}>
-              {['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06'].filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
+              {(lang==='JP'
+                ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
+                : lang==='FR'
+                ? ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
+                : ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
+              ).filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
                 const nm = allCards.find(c=>c.setId===sid)?.setName||sid
                 const ct = allCards.filter(c=>c.setId===sid).length
                 return (

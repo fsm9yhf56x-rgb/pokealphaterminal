@@ -796,25 +796,29 @@ export function Encyclopedie() {
           {/* Search + sort + view */}
           {/* Series populaires */}
           {!loading && filSet==='all' && browseMode==='all' && (
-            <div style={{ display:'flex', gap:'6px', marginBottom:'12px', overflowX:'auto' as const, paddingBottom:'4px', scrollbarWidth:'none' as any }}>
-              {(lang==='JP'
-                ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
-                : lang==='FR'
-                ? ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
-                : ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
-              ).filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
-                const nm = allCards.find(c=>c.setId===sid)?.setName||sid
-                const ct = allCards.filter(c=>c.setId===sid).length
-                return (
-                  <button key={sid} onClick={()=>{setFilSet(sid);setFilEra('all');setPage(0)}}
-                    style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
-                    {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                    {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?<><span style={{ color:'#2E9E6A', fontWeight:700 }}>{ow}</span>/{ct}</>:ct })()}</span>
-                  </button>
-                )
-              })}
+            <div style={{ position:'relative', marginBottom:'12px' }}>
+              <div style={{ position:'absolute', right:0, top:0, bottom:'4px', width:'50px', background:'linear-gradient(to right, rgba(255,255,255,0), #fff)', zIndex:2, pointerEvents:'none', borderRadius:'0 8px 8px 0' }}/>
+              <div style={{ position:'absolute', left:0, top:0, bottom:'4px', width:'20px', background:'linear-gradient(to left, rgba(255,255,255,0), #fff)', zIndex:2, pointerEvents:'none', borderRadius:'8px 0 0 8px', opacity:0, transition:'opacity .2s' }} className="scroll-fade-left"/>
+              <div style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'4px', paddingRight:'40px', scrollbarWidth:'none' as any, msOverflowStyle:'none' as any, WebkitOverflowScrolling:'touch' as any }}>
+                {(lang==='JP'
+                  ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
+                  : lang==='FR'
+                  ? ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
+                  : ['sv03.5','base1','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
+                ).filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
+                  const nm = allCards.find(c=>c.setId===sid)?.setName||sid
+                  const ct = allCards.filter(c=>c.setId===sid).length
+                  return (
+                    <button key={sid} onClick={()=>{setFilSet(sid);setFilEra('all');setPage(0)}}
+                      style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
+                      {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                      {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?<><span style={{ color:'#2E9E6A', fontWeight:700 }}>{ow}</span>/{ct}</>:ct })()}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 

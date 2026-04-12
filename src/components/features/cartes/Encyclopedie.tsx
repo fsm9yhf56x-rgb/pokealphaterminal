@@ -959,7 +959,10 @@ export function Encyclopedie() {
                     })()}
                   </div>
                   <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
-                    {b.sets.slice(0,4).map(st=>(<span key={st.id} style={{ fontSize:'9px', color:'#AEAEB2', background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px' }}>{st.name}</span>))}
+                    {b.sets.slice(0,4).map(st=>{
+                      const enSet = allCards.find(c=>c.setId===st.id)?.enSetName
+                      return (<span key={st.id} style={{ fontSize:'9px', color:'#AEAEB2', background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px' }}>{lang==='JP'&&enSet?enSet:st.name}</span>)
+                    })}
                     {b.sets.length>4&&<span style={{ fontSize:'9px', color:'#AEAEB2', padding:'2px 4px' }}>+{b.sets.length-4}</span>}
                   </div>
                 </div>
@@ -982,7 +985,7 @@ export function Encyclopedie() {
                     onMouseEnter={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#F5F5F7';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}}
                     onMouseLeave={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}}>
                     {setLogos[st.id]&&<img src={setLogos[st.id]} alt="" style={{ height:'16px', maxWidth:'60px', objectFit:'contain', opacity:filSet===st.id?.9:.5 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                    {st.name} <span style={{ opacity:.5 }}>({(()=>{const ow=allCards.filter(c=>c.setId===st.id&&isOwned(c)).length; return ow>0?<><span style={{ color:filSet===st.id?'#BBF7D0':'#2E9E6A' }}>{ow}</span>/{st.count}</>:st.count})()})</span>
+                    <span>{st.name}{lang==='JP'&&(()=>{const en=allCards.find(c=>c.setId===st.id)?.enSetName;return en?<span style={{ color:'#AEAEB2', fontSize:'10px', marginLeft:'4px' }}>{en}</span>:null})()}</span> <span style={{ opacity:.5 }}>({(()=>{const ow=allCards.filter(c=>c.setId===st.id&&isOwned(c)).length; return ow>0?<><span style={{ color:filSet===st.id?'#BBF7D0':'#2E9E6A' }}>{ow}</span>/{st.count}</>:st.count})()})</span>
                   </div>
                 ))}
               </div>
@@ -1095,8 +1098,9 @@ export function Encyclopedie() {
                         </div>
                         <div style={{ fontSize:cfg.subSize, color:ERA_COLORS[card.era]||'#BBBBBB', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>
                           {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'11px', maxWidth:'40px', objectFit:'contain', verticalAlign:'middle', marginRight:'3px', opacity:.6 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                          {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ opacity:.5 }}> ({card.enSetName})</span>}
+                          {card.setName}
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
+                          {lang==='JP'&&card.enSetName&&<span style={{ color:'#AEAEB2', marginLeft:'4px', fontSize:'9px' }}>{card.enSetName}</span>}
                         </div>
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
@@ -1171,7 +1175,7 @@ export function Encyclopedie() {
                     </div>
                     <div style={{ fontSize:'11px', color:'#86868B', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'5px' }}>
                       {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                      {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ opacity:.5 }}> ({card.enSetName})</span>}
+                      {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ color:'#AEAEB2', marginLeft:'4px' }}>({card.enSetName})</span>}
                     </div>
                     <div>{rc&&<span style={{ fontSize:'9px', fontWeight:600, padding:'2px 6px', borderRadius:'4px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{card.rarity}</span>}</div>
                     <div style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-data)', textAlign:'right' as const }}>#{card.localId}</div>

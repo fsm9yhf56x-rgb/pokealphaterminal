@@ -563,6 +563,20 @@ export function Encyclopedie() {
   useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
   useEffect(() => { setPage(0); setVisibleCount(CHUNK_SIZE) }, [search, filSet, filRarity, sort])
 
+  // Pre-build JP search index (cached, only recalculated when allCards or dict changes)
+  const jpSearchIndex = useMemo(() => {
+    if (lang !== 'JP' || !Object.keys(jpEnDict).length) return null
+    const index = new Map<string, string>()
+    allCards.forEach(c => {
+      const names = jpToNames(c.name, jpEnDict)
+      const parts = [c.name.toLowerCase(), c.setName.toLowerCase(), c.localId]
+      if (names) { parts.push(names.en.toLowerCase()); parts.push(names.fr.toLowerCase()) }
+      if ((c as any).enSetName) parts.push((c as any).enSetName.toLowerCase())
+      index.set(c.id, parts.join('|'))
+    })
+    return index
+  }, [allCards, jpEnDict, lang])
+
   const filtered = useMemo(() => {
     let r = allCards
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
@@ -570,15 +584,14 @@ export function Encyclopedie() {
     if (filRarity!=='all') r = r.filter(c=>c.rarity===filRarity)
     if (search) {
       const q=search.toLowerCase()
-      r = r.filter(c=>{
-        if (c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q) return true
-        if (lang==='JP' && Object.keys(jpEnDict).length>0) {
-          const names = jpToNames(c.name, jpEnDict)
-          if (names && (names.en.toLowerCase().includes(q) || names.fr.toLowerCase().includes(q))) return true
-          if (c.enSetName && c.enSetName.toLowerCase().includes(q)) return true
-        }
-        return false
-      })
+      if (jpSearchIndex) {
+        r = r.filter(c => {
+          const indexed = jpSearchIndex.get(c.id)
+          return indexed ? indexed.includes(q) : false
+        })
+      } else {
+        r = r.filter(c=>c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q)
+      }
     }
     // Auto sort by number when a specific set is filtered
     if (filSet !== 'all') {
@@ -810,7 +823,7 @@ export function Encyclopedie() {
               <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', color:'#CCC', fontSize:'15px', pointerEvents:'none' }}>{String.fromCharCode(8981)}</span>
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 onFocus={()=>setSearchFocus(true)} onBlur={()=>setTimeout(()=>setSearchFocus(false),200)}
-                placeholder={lang==='JP' ? 'Nom de la carte (japonais)...' : 'Rechercher une carte, un set...'}
+                placeholder={lang==='JP' ? 'Rechercher (japonais, anglais ou français)...' : 'Rechercher une carte, un set...'}
                 style={{ width:'100%', height:'38px', padding:'0 32px', border:'1px solid '+(searchFocus&&search.length>=2?'#1D1D1F':'#EBEBEB'), borderRadius:searchFocus&&searchSuggs.length>0?'9px 9px 0 0':'9px', fontSize:'13px', color:'#111', outline:'none', background:'#fff', boxSizing:'border-box' as const, fontFamily:'var(--font-sans)', transition:'border-color .15s' }}/>
               {search && (
                 <button onClick={()=>setSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#CCC', cursor:'pointer', fontSize:'16px', padding:0, lineHeight:1, zIndex:2 }}>{String.fromCharCode(215)}</button>

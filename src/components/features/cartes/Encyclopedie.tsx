@@ -192,7 +192,7 @@ export function Encyclopedie() {
     try { const slim = updated.map(c => c.image&&c.image.startsWith('data:')?{...c,image:''}:c); localStorage.setItem('pka_portfolio', JSON.stringify(slim)) } catch {}
     // Si connecté, sauvegarder dans Supabase
     if (user) {
-      await supabase.from('portfolio_cards').insert({
+      const { error } = await supabase.from('portfolio_cards').insert({
         user_id: user.id,
         name: newCard.name,
         set_name: newCard.set,
@@ -200,11 +200,12 @@ export function Encyclopedie() {
         card_number: newCard.number,
         rarity: newCard.rarity,
         lang: newCard.lang,
-        condition_raw: newCard.condition,
-        quantity: newCard.qty,
-        buy_price: newCard.buyPrice,
-        image_url: newCard.image,
+        condition: newCard.condition || 'Raw',
+        qty: newCard.qty || 1,
+        buy_price: newCard.buyPrice || 0,
+        image_url: newCard.image || '',
       })
+      if (error) console.error('Supabase insert error:', error.message)
     }
     setToast(card.name + ' ajouté')
     setTimeout(() => setToast(''), 2000)

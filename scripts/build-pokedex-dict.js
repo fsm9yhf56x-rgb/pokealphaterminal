@@ -6,10 +6,10 @@ async function fetchJSON(url) {
 }
 
 async function main() {
-  console.log('═══ Building Pokédex JP→EN dictionary ═══\n')
+  console.log('═══ Building Pokédex JP→EN+FR dictionary ═══\n')
 
   const all = await fetchJSON('https://pokeapi.co/api/v2/pokemon-species?limit=1500')
-  const dict = {}
+  const dict = {} // { jpName: { en: "...", fr: "..." } }
   let count = 0
 
   for (const species of all.results) {
@@ -18,10 +18,11 @@ async function main() {
 
     const jpNames = data.names.filter(n => n.language.name === 'ja' || n.language.name === 'ja-Hrkt')
     const enName = data.names.find(n => n.language.name === 'en')?.name
+    const frName = data.names.find(n => n.language.name === 'fr')?.name
 
     if (enName) {
       jpNames.forEach(n => {
-        if (n.name) dict[n.name] = enName
+        if (n.name) dict[n.name] = { en: enName, fr: frName || enName }
       })
     }
 
@@ -30,16 +31,18 @@ async function main() {
     await sleep(25)
   }
 
-  console.log(`\n${Object.keys(dict).length} JP→EN entries`)
+  console.log(`\n${Object.keys(dict).length} entries`)
 
-  // Write as compact JSON
   fs.writeFileSync('public/data/pokedex-jp-en.json', JSON.stringify(dict))
   const size = (fs.statSync('public/data/pokedex-jp-en.json').size / 1024).toFixed(0)
   console.log(`pokedex-jp-en.json: ${size} KB`)
 
   // Sanity
-  const checks = ['リザードン','ピカチュウ','フシギダネ','ゼニガメ','ミュウツー','ブラッキー','レックウザ','ゲンガー']
-  checks.forEach(jp => console.log(`  ${jp} → ${dict[jp] || 'MISSING'}`))
+  const checks = ['リザードン','ピカチュウ','フシギダネ','ミュウツー','ブラッキー','ゲンガー']
+  checks.forEach(jp => {
+    const v = dict[jp]
+    console.log(`  ${jp} → EN: ${v?.en || '?'} | FR: ${v?.fr || '?'}`)
+  })
 
   console.log('\n✅ Done')
 }

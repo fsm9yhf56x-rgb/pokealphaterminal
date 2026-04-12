@@ -1,6 +1,7 @@
 'use client'
 
 import { getCardImageUrl } from '@/lib/cardImages'
+import { supabase } from '@/lib/supabase'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -379,6 +380,56 @@ export function Encyclopedie() {
     setAllCards([]); setFilSet('all'); setFilEra('all')
     setPage(0); setSelId(null); setDetail(null); setEnDetail(null)
 
+    // JP: charger depuis notre BDD Supabase (22k+ cartes)
+    const loadFromSupabase = async (): Promise<{sets: {id:string;name:string;releaseDate?:string|null}[]; cards: EnrichedCard[]}|null> => {
+      try {
+        // Charger les sets JP
+        const { data: setsData } = await supabase.from('tcg_sets').select('*').eq('lang', 'JP').order('id')
+        if (!setsData || setsData.length === 0) return null
+
+        // Charger les cartes JP par batch
+        let allDbCards: any[] = []
+        let from = 0
+        const batchSize = 1000
+        while (true) {
+          const { data } = await supabase.from('tcg_cards').select('*').eq('lang', 'JP').range(from, from + batchSize - 1)
+          if (!data || data.length === 0) break
+          allDbCards.push(...data)
+          from += batchSize
+          if (data.length < batchSize) break
+        }
+
+        if (allDbCards.length === 0) return null
+
+        const setMap = new Map(setsData.map((s: any) => [s.id, s]))
+        const enriched: EnrichedCard[] = allDbCards.map((c: any) => {
+          const setId = c.set_id || ''
+          const set = setMap.get(setId)
+          const cleanSetId = setId.replace('jp-', '')
+          const year = set?.release_date ? parseInt(set.release_date.slice(0,4)) || 0 : 0
+          const era = setIdToEra(cleanSetId) !== 'Autre' ? setIdToEra(cleanSetId) : yearToEra(year)
+          return {
+            id: c.id,
+            localId: c.local_id || '',
+            name: c.name || '',
+            image: c.image_local || getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id }),
+            rarity: c.rarity || '',
+            setId: cleanSetId,
+            setName: set?.name || cleanSetId,
+            year,
+            era,
+          }
+        })
+
+        const sets = setsData.map((s: any) => ({
+          id: s.id.replace('jp-', ''),
+          name: s.name,
+          releaseDate: s.release_date,
+        }))
+
+        return { sets, cards: enriched }
+      } catch(e) { console.error('Supabase JP load error:', e); return null }
+    }
     const loadFromStatic = async (): Promise<{sets: {id:string;name:string;releaseDate?:string|null}[]; cards: EnrichedCard[]}|null> => {
       try {
         const [staticSets, staticCards] = await Promise.all([getSets(lang), getCards(lang)])
@@ -437,12 +488,20 @@ export function Encyclopedie() {
       })
     }
 
-    loadFromStatic().then(result => {
+    // JP → Supabase d'abord (22k+ cartes), sinon TCGDex
+    const mainLoad = lang === 'JP' ? loadFromSupabase() : loadFromStatic()
+    mainLoad.then(result => {
       if (result && result.cards.length > 0) {
         setAllCards(result.cards); setLoadMsg(''); setLoading(false)
       } else {
-        return loadFromAPI().then(cards => {
-          setAllCards(cards); setLoadMsg(''); setLoading(false)
+        return loadFromStatic().then(result2 => {
+          if (result2 && result2.cards.length > 0) {
+            setAllCards(result2.cards); setLoadMsg(''); setLoading(false)
+          } else {
+            return loadFromAPI().then(cards => {
+              setAllCards(cards); setLoadMsg(''); setLoading(false)
+            })
+          }
         })
       }
     }).catch(() => {

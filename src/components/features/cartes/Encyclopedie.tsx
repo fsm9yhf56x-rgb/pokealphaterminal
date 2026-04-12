@@ -188,8 +188,11 @@ export function Encyclopedie() {
     }
     const updated = [...portfolio, newCard]
     setPortfolioLocal(updated)
-    await pkaDbSet('portfolio', updated)
-    try { const slim = updated.map(c => c.image&&c.image.startsWith('data:')?{...c,image:''}:c); localStorage.setItem('pka_portfolio', JSON.stringify(slim)) } catch {}
+    // Si connecté → Supabase uniquement (pas de local pour éviter les fantômes)
+    if (!user) {
+      await pkaDbSet('portfolio', updated)
+      try { const slim = updated.map(c => c.image&&c.image.startsWith('data:')?{...c,image:''}:c); localStorage.setItem('pka_portfolio', JSON.stringify(slim)) } catch {}
+    }
     // Si connecté, sauvegarder dans Supabase
     if (user) {
       const { error } = await supabase.from('portfolio_cards').insert({

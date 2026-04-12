@@ -2005,7 +2005,7 @@ export function Holdings() {
                                     }}>
                                     <div style={{ borderRadius:'12px', overflow:'hidden', border:'1px solid #E5E5EA', position:'relative' }}>
                                       {gi.image?(
-                                        <img src={(gi.image.replace(/\/low\.(webp|jpg|png)$/,''))+'/low.webp'} alt={gi.name}
+                                        <img src={gi.image} alt={gi.name}
                                           style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block', filter:'grayscale(1)' }}
                                           onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                       ):(
@@ -2170,7 +2170,7 @@ export function Holdings() {
                             }}>
                             <div style={{ position:'relative',width:'100%',aspectRatio:'63/88',overflow:'hidden',borderRadius:'10px' }}>
                               {gi.image?(
-                                <img src={(gi.image.replace(/\/low\.(webp|jpg|png)$/,''))+'/low.webp'} alt={gi.name}
+                                <img src={gi.image} alt={gi.name}
                                   style={{ position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(1)',borderRadius:'10px' }}
                                   onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                               ):(

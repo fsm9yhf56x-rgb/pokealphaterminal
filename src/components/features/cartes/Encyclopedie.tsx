@@ -488,20 +488,13 @@ export function Encyclopedie() {
       })
     }
 
-    // JP → Supabase d'abord (22k+ cartes), sinon TCGDex
-    const mainLoad = lang === 'JP' ? loadFromSupabase() : loadFromStatic()
-    mainLoad.then(result => {
+    // Même flow pour toutes les langues : static JSON → API fallback
+    loadFromStatic().then(result => {
       if (result && result.cards.length > 0) {
         setAllCards(result.cards); setLoadMsg(''); setLoading(false)
       } else {
-        return loadFromStatic().then(result2 => {
-          if (result2 && result2.cards.length > 0) {
-            setAllCards(result2.cards); setLoadMsg(''); setLoading(false)
-          } else {
-            return loadFromAPI().then(cards => {
-              setAllCards(cards); setLoadMsg(''); setLoading(false)
-            })
-          }
+        return loadFromAPI().then(cards => {
+          setAllCards(cards); setLoadMsg(''); setLoading(false)
         })
       }
     }).catch(() => {

@@ -638,7 +638,7 @@ export function Encyclopedie() {
       const d = await fetchCardDetail(lang, id)
       setDetail(d); setDetLoading(false)
     }
-  }, [selId, lang])
+  }, [selId, lang, allCards])
 
   const selCard = allCards.find(c=>c.id===selId)
 

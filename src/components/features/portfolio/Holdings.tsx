@@ -2178,8 +2178,10 @@ export function Holdings() {
 
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
-                                  <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
-                                  <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
+                                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'4px' }}>
+                                    <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
+                                    {card.qty>1&&<span style={{ fontSize:'10px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>×{card.qty}</span>}
+                                  </div>
                                   {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
@@ -2188,7 +2190,7 @@ export function Holdings() {
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
                                   </div>
                                   {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
-                                    <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'3px' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
                                       {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
                                       {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
                                     </div>

@@ -560,12 +560,20 @@ export function Holdings() {
       const sc = portfolio.filter(c => c.set === setName)
       const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
       if (!sid) return
+      // For edition sets, use parent set logo
+      const parentSid = sid.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
       const lang = sc[0]?.lang === 'JP' ? 'ja' : sc[0]?.lang === 'EN' ? 'en' : 'fr'
       try {
-        const cacheKey = 'pka_logo_' + sid
+        // Check if parent logo already cached
+        if (parentSid !== sid) {
+          const parentCacheKey = 'pka_logo_' + parentSid
+          const parentCached = localStorage.getItem(parentCacheKey)
+          if (parentCached) { setSetLogos(prev => ({ ...prev, [setName]: parentCached })); return }
+        }
+        const cacheKey = 'pka_logo_' + parentSid
         const cached = localStorage.getItem(cacheKey)
         if (cached) { setSetLogos(prev => ({ ...prev, [setName]: cached })); const cb=localStorage.getItem('pka_block_'+sid); if(cb){ setSetBlocks(prev=>({...prev,[setName]:cb})); return } }
-        const res = await fetch('https://api.tcgdex.net/v2/' + lang + '/sets/' + sid)
+        const res = await fetch('https://api.tcgdex.net/v2/' + lang + '/sets/' + parentSid)
         if (!res.ok) return
         const data = await res.json()
         const logo = data.logo || data.symbol || ''

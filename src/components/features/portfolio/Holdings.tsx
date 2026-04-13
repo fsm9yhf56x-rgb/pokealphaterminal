@@ -444,9 +444,17 @@ export function Holdings() {
   useEffect(() => {
     setSetsLoading(true)
     setLiveSets([])
-    fetchSets(addForm.lang)
-      .then(sets => { setLiveSets(sets); setSetsLoading(false) })
-      .catch(() => setSetsLoading(false))
+    fetch('/data/sets-' + addForm.lang + '.json')
+      .then(r => r.json())
+      .then(sets => {
+        const mapped = sets.map((s: any) => ({ id: s.id, name: s.name + ' (' + s.total + ')', cardCount: s.total }))
+        setLiveSets(mapped)
+        setSetsLoading(false)
+      })
+      .catch(() => {
+        // Fallback TCGDex
+        fetchSets(addForm.lang).then(sets => { setLiveSets(sets); setSetsLoading(false) }).catch(() => setSetsLoading(false))
+      })
     // Re-fetch cartes si un set est déjà sélectionné
     if (addForm.setId) {
       setCardsLoading(true)
@@ -1599,30 +1607,6 @@ export function Holdings() {
 
 
 
-              {/* Variant selector */}
-              <div style={{ marginBottom:'14px' }}>
-                <div className="opt-label">Variante</div>
-                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' as const }}>
-                  {(()=>{
-                    const wotcSets = ['base1','base2','base3','base5','gym1','gym2','neo1','neo2','neo3','neo4']
-                    const isWotc = wotcSets.includes(addForm.setId)
-                    const isSV = addForm.setId?.startsWith('sv')
-                    const isSWSH = addForm.setId?.startsWith('swsh')
-                    const isSM = addForm.setId?.startsWith('sm')
-                    const opts = isWotc ? ['Normal','Holofoil']
-                      : isSV ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Alt Art','Special Art Rare','Illustration Rare','Hyper Rare']
-                      : isSWSH ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Alt Art','Rainbow Rare','Gold','Trainer Gallery']
-                      : isSM ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Rainbow Rare','Gold']
-                      : ['Normal','Holofoil','Reverse Holofoil','Full Art']
-                    return opts.map(v=>(
-                      <button key={v} onClick={()=>setAddForm(p=>({...p,variant:v}))}
-                        style={{ padding:'7px 12px', borderRadius:'8px', border:'1.5px solid '+(addForm.variant===v?'#1D1D1F':'#E5E5EA'), background:addForm.variant===v?'#1D1D1F':'#fff', color:addForm.variant===v?'#fff':'#86868B', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                        {v}
-                      </button>
-                    ))
-                  })()}
-                </div>
-              </div>
               <div style={{ marginBottom:'14px' }}>
                 <div className="opt-label">Etat</div>
                 {/* Segmented control iOS-style */}

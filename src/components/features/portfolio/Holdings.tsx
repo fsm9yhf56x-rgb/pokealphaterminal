@@ -2152,9 +2152,7 @@ export function Holdings() {
                                     <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
                                   </div>
                                 })()}
-                                {/* Edition badge */}
-                                {card.setId?.includes('-shadowless')&&<div style={{ position:'absolute', top:'6px', left:'6px', zIndex:3, background:'linear-gradient(135deg,#1a1a2e,#16213e)', color:'#e2e8f0', fontSize:'7px', fontWeight:700, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.04em', boxShadow:'0 2px 6px rgba(0,0,0,.3)', border:'1px solid rgba(255,255,255,.15)' }}>{card.setId?.includes('-ns')?'SHADOWLESS':'1ST ED.'}</div>}
-                                {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<div style={{ position:'absolute', top:'6px', left:'6px', zIndex:3, background:'linear-gradient(135deg,#b8860b,#daa520,#ffd700)', color:'#1a1200', fontSize:'7px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.04em', boxShadow:'0 2px 6px rgba(0,0,0,.2)', border:'1px solid rgba(218,165,32,.4)' }}>1ST EDITION</div>}
+
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
@@ -2165,7 +2163,8 @@ export function Holdings() {
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
-                                    
+                                    {card.setId?.includes('-shadowless')&&<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:card.setId?.includes('-ns')?'#e2e8f0':'#1a1a2e', color:card.setId?.includes('-ns')?'#334155':'#e2e8f0', border:card.setId?.includes('-ns')?'1px solid #cbd5e1':'1px solid rgba(255,255,255,.15)' }}>{card.setId?.includes('-ns')?'SHADOWLESS':'1ST ED.'}</span>}
+                                    {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<span style={{ fontSize:'7px', fontWeight:800, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:'linear-gradient(135deg,#b8860b,#daa520,#ffd700)', color:'#1a1200', border:'1px solid rgba(218,165,32,.4)' }}>1ST EDITION</span>}
                                   </div>
                                 </div>
                                 </div>

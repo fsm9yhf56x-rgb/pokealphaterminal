@@ -398,13 +398,17 @@ export function Holdings() {
     const langs=[...new Set(portfolio.map(c=>c.lang||'FR'))] as ('EN'|'FR'|'JP')[]
     langs.forEach(async lang=>{
       try {
-        const sets=await fetchSets(lang)
-        setSetTotalsMap(prev=>{
-          const next={...prev}
-          sets.forEach(set=>{ if(set.total&&set.id){ next[set.id]=set.total; next[set.name]=set.total; next[set.name.toLowerCase()]=set.total } })
-          try{ localStorage.setItem(cacheKey,JSON.stringify(next)) }catch(e){}
-          return next
-        })
+        // Load from local JSON first (includes editions)
+        const localRes = await fetch('/data/sets-' + lang + '.json')
+        if (localRes.ok) {
+          const localSets = await localRes.json()
+          setSetTotalsMap(prev=>{
+            const next={...prev}
+            localSets.forEach((set: any)=>{ if(set.total&&set.id){ next[set.id]=set.total; next[set.name]=set.total; next[set.name.toLowerCase()]=set.total } })
+            try{ localStorage.setItem(cacheKey,JSON.stringify(next)) }catch(e){}
+            return next
+          })
+        }
       } catch(e){}
     })
   },[portfolio.length])

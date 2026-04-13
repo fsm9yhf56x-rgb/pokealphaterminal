@@ -222,6 +222,29 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
+  // ── Animated counter ──
+  const [displayValue, setDisplayValue] = useState(0)
+  const [valuePulse, setValuePulse] = useState(false)
+  const prevTotal = useRef(0)
+  useEffect(() => {
+    const target = totalCur
+    const from = prevTotal.current
+    if (from === target) { setDisplayValue(target); return }
+    setValuePulse(true)
+    setTimeout(() => setValuePulse(false), 600)
+    const duration = 800
+    const start = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      setDisplayValue(Math.round((from + (target - from) * eased) * 100) / 100)
+      if (progress < 1) requestAnimationFrame(tick)
+      else prevTotal.current = target
+    }
+    requestAnimationFrame(tick)
+  }, [totalCur])
+
   // ── Prix depuis cache Supabase ──
   const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
   const pricesFetched = useRef<string|false>(false)
@@ -1074,6 +1097,12 @@ export function Holdings() {
         }
 
         /* Compteur EUR animé */
+        @keyframes pricePulse {
+          0% { transform: scale(1) }
+          30% { transform: scale(1.04) }
+          100% { transform: scale(1) }
+        }
+        .price-pulse { animation: pricePulse .5s cubic-bezier(.34,1.4,.64,1); }
         @keyframes valueReveal {
           0%{opacity:0;transform:translateY(12px);filter:blur(4px)}
           100%{opacity:1;transform:translateY(0);filter:blur(0)}
@@ -1689,11 +1718,11 @@ export function Holdings() {
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'12px', marginBottom:'14px' }}>
             <div>
               <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }} className='section-reveal'>Portfolio</div>
-              <div className="value-hero" style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
+              <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                 {portfolio.length>0 ? (
                   <>
                     <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
-                    <span>{totalCur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span style={{ transition:'color .3s', color:valuePulse?'#2E9E6A':'#1D1D1F' }}>{displayValue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </>
                 ) : <span style={{ color:'#C7C7CC' }}>---</span>}
               </div>

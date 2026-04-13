@@ -2178,7 +2178,7 @@ export function Holdings() {
                                 {card.image?(
                                   <img src={card.image} alt={card.name}
                                     style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
-                                    onError={e=>{ (e.target as HTMLImageElement).style.display='none' }}/>
+                                    onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null }}/>
                                 ):(
                                   <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}18,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>

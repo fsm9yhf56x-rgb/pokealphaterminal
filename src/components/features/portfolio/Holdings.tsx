@@ -2037,10 +2037,11 @@ export function Holdings() {
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
                                     <div>
-                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#1D1D1F':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none', display:'flex', alignItems:'center', gap:'6px' }}>
-                                      <span style={{ fontSize:'13px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1EC}\u{1F1E7}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
-                                      {setName}</div>
-                                      {setBlocks[setName]?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{setBlocks[setName]}</div>:null}
+                                      <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'2px' }}>
+                                        <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1EC}\u{1F1E7}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
+                                        {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
+                                      </div>
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
@@ -2185,9 +2186,8 @@ export function Holdings() {
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
+                                    {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST ED.</span>:null}
                                     {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
-                                    {card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns')&&<span className="ed-badge ed-1st-edition">1ST EDITION</span>}
-                                    {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<span className="ed-badge ed-1st-edition">1ST EDITION</span>}
                                   </div>
                                 </div>
                                 </div>

@@ -47,23 +47,11 @@
     "edition": "1st Edition",
     "ptSlug": "team-rocket"
   },
-  "gym1-unlimited": {
-    "name": "Gym Heroes (Unlimited)",
-    "parent": "gym1",
-    "edition": "Unlimited",
-    "ptSlug": "gym-heroes"
-  },
   "gym1-1st": {
     "name": "Gym Heroes (1st Edition)",
     "parent": "gym1",
     "edition": "1st Edition",
     "ptSlug": "gym-heroes"
-  },
-  "gym2-unlimited": {
-    "name": "Gym Challenge (Unlimited)",
-    "parent": "gym2",
-    "edition": "Unlimited",
-    "ptSlug": "gym-challenge"
   },
   "gym2-1st": {
     "name": "Gym Challenge (1st Edition)",
@@ -71,23 +59,11 @@
     "edition": "1st Edition",
     "ptSlug": "gym-challenge"
   },
-  "neo1-unlimited": {
-    "name": "Neo Genesis (Unlimited)",
-    "parent": "neo1",
-    "edition": "Unlimited",
-    "ptSlug": "neo-genesis"
-  },
   "neo1-1st": {
     "name": "Neo Genesis (1st Edition)",
     "parent": "neo1",
     "edition": "1st Edition",
     "ptSlug": "neo-genesis"
-  },
-  "neo2-unlimited": {
-    "name": "Neo Discovery (Unlimited)",
-    "parent": "neo2",
-    "edition": "Unlimited",
-    "ptSlug": "neo-discovery"
   },
   "neo2-1st": {
     "name": "Neo Discovery (1st Edition)",
@@ -95,23 +71,11 @@
     "edition": "1st Edition",
     "ptSlug": "neo-discovery"
   },
-  "neo3-unlimited": {
-    "name": "Neo Revelation (Unlimited)",
-    "parent": "neo3",
-    "edition": "Unlimited",
-    "ptSlug": "neo-revelation"
-  },
   "neo3-1st": {
     "name": "Neo Revelation (1st Edition)",
     "parent": "neo3",
     "edition": "1st Edition",
     "ptSlug": "neo-revelation"
-  },
-  "neo4-unlimited": {
-    "name": "Neo Destiny (Unlimited)",
-    "parent": "neo4",
-    "edition": "Unlimited",
-    "ptSlug": "neo-destiny"
   },
   "neo4-1st": {
     "name": "Neo Destiny (1st Edition)",

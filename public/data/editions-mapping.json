@@ -1,0 +1,140 @@
+{
+  "base1-unlimited": {
+    "name": "Base Set (Unlimited)",
+    "parent": "base1",
+    "edition": "Unlimited",
+    "ptSlug": "base-set"
+  },
+  "base1-shadowless": {
+    "name": "Base Set (Shadowless)",
+    "parent": "base1",
+    "edition": "Shadowless",
+    "ptSlug": "base-set-shadowless"
+  },
+  "base1-1st": {
+    "name": "Base Set (1st Edition)",
+    "parent": "base1",
+    "edition": "1st Edition",
+    "ptSlug": "base-set"
+  },
+  "jungle-unlimited": {
+    "name": "Jungle (Unlimited)",
+    "parent": "base2",
+    "edition": "Unlimited",
+    "ptSlug": "jungle"
+  },
+  "jungle-1st": {
+    "name": "Jungle (1st Edition)",
+    "parent": "base2",
+    "edition": "1st Edition",
+    "ptSlug": "jungle"
+  },
+  "fossil-unlimited": {
+    "name": "Fossil (Unlimited)",
+    "parent": "base3",
+    "edition": "Unlimited",
+    "ptSlug": "fossil"
+  },
+  "fossil-1st": {
+    "name": "Fossil (1st Edition)",
+    "parent": "base3",
+    "edition": "1st Edition",
+    "ptSlug": "fossil"
+  },
+  "rocket-unlimited": {
+    "name": "Team Rocket (Unlimited)",
+    "parent": "base5",
+    "edition": "Unlimited",
+    "ptSlug": "team-rocket"
+  },
+  "rocket-1st": {
+    "name": "Team Rocket (1st Edition)",
+    "parent": "base5",
+    "edition": "1st Edition",
+    "ptSlug": "team-rocket"
+  },
+  "gym1-unlimited": {
+    "name": "Gym Heroes (Unlimited)",
+    "parent": "gym1",
+    "edition": "Unlimited",
+    "ptSlug": "gym-heroes"
+  },
+  "gym1-1st": {
+    "name": "Gym Heroes (1st Edition)",
+    "parent": "gym1",
+    "edition": "1st Edition",
+    "ptSlug": "gym-heroes"
+  },
+  "gym2-unlimited": {
+    "name": "Gym Challenge (Unlimited)",
+    "parent": "gym2",
+    "edition": "Unlimited",
+    "ptSlug": "gym-challenge"
+  },
+  "gym2-1st": {
+    "name": "Gym Challenge (1st Edition)",
+    "parent": "gym2",
+    "edition": "1st Edition",
+    "ptSlug": "gym-challenge"
+  },
+  "neo1-unlimited": {
+    "name": "Neo Genesis (Unlimited)",
+    "parent": "neo1",
+    "edition": "Unlimited",
+    "ptSlug": "neo-genesis"
+  },
+  "neo1-1st": {
+    "name": "Neo Genesis (1st Edition)",
+    "parent": "neo1",
+    "edition": "1st Edition",
+    "ptSlug": "neo-genesis"
+  },
+  "neo2-unlimited": {
+    "name": "Neo Discovery (Unlimited)",
+    "parent": "neo2",
+    "edition": "Unlimited",
+    "ptSlug": "neo-discovery"
+  },
+  "neo2-1st": {
+    "name": "Neo Discovery (1st Edition)",
+    "parent": "neo2",
+    "edition": "1st Edition",
+    "ptSlug": "neo-discovery"
+  },
+  "neo3-unlimited": {
+    "name": "Neo Revelation (Unlimited)",
+    "parent": "neo3",
+    "edition": "Unlimited",
+    "ptSlug": "neo-revelation"
+  },
+  "neo3-1st": {
+    "name": "Neo Revelation (1st Edition)",
+    "parent": "neo3",
+    "edition": "1st Edition",
+    "ptSlug": "neo-revelation"
+  },
+  "neo4-unlimited": {
+    "name": "Neo Destiny (Unlimited)",
+    "parent": "neo4",
+    "edition": "Unlimited",
+    "ptSlug": "neo-destiny"
+  },
+  "neo4-1st": {
+    "name": "Neo Destiny (1st Edition)",
+    "parent": "neo4",
+    "edition": "1st Edition",
+    "ptSlug": "neo-destiny"
+  },
+  "base4": {
+    "name": "Base Set 2",
+    "parent": "base4",
+    "edition": "Unlimited",
+    "ptSlug": "base-set-2"
+  },
+  "ecard1-lc": {
+    "name": "Legendary Collection",
+    "parent": "ecard1",
+    "edition": "Unlimited",
+    "ptSlug": "legendary-collection"
+  }
+}

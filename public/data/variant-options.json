@@ -1,0 +1,51 @@
+{
+  "wotc": [
+    "Normal",
+    "Holofoil"
+  ],
+  "ex": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil"
+  ],
+  "dp-hgss": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil"
+  ],
+  "bw-xy": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil",
+    "Full Art"
+  ],
+  "sm": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil",
+    "Full Art",
+    "Rainbow Rare",
+    "Gold"
+  ],
+  "swsh": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil",
+    "Full Art",
+    "Alt Art",
+    "Rainbow Rare",
+    "Gold",
+    "Trainer Gallery"
+  ],
+  "sv": [
+    "Normal",
+    "Holofoil",
+    "Reverse Holofoil",
+    "Full Art",
+    "Alt Art",
+    "Special Art Rare",
+    "Illustration Rare",
+    "Hyper Rare",
+    "Gold"
+  ]
+}

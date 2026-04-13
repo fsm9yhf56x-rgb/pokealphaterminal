@@ -17,7 +17,7 @@ type CardItem = {
   condition: string; graded: boolean; imageStatus?: 'pending'|'approved'|'rejected'
   buyPrice: number; curPrice: number; qty: number
   psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean
-  image?: string; setTotal?: number; setId?: string
+  image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
 }
 
 const ENCYCLOPEDIA: CardItem[] = [
@@ -200,8 +200,8 @@ export function Holdings() {
   const [nameValidated, setNameValidated] = useState(false)
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
-    condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string;
-  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
+    condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string; edition:string; variant:string;
+  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<string|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
@@ -427,7 +427,7 @@ export function Holdings() {
         condition:'Raw', graded:false, buyPrice:'', qty:1,
         year:c.year??new Date().getFullYear(),
         image:c.image??'', setTotal:c.setTotal??0,
-        number:c.number??'', rarity:c.rarity??'',
+        number:c.number??'', rarity:c.rarity??'', edition:c.edition??'Unlimited', variant:c.variant??'Normal',
       })
       setAddOpen(true)
     } catch {}
@@ -908,13 +908,15 @@ export function Holdings() {
       image:resolvedImage||undefined,
       setId:addForm.setId||undefined,
       setTotal:addForm.setTotal||undefined,
+      edition:addForm.edition||'Unlimited',
+      variant:addForm.variant||'Normal',
     }
     setPortfolio(prev=>{
       const next=[...prev,newCard]
       return next
     })
     setAddOpen(false); setAddSuggs([]); setNameValidated(false)
-    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:''})
+    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
@@ -1596,6 +1598,52 @@ export function Holdings() {
 
 
 
+              {/* Edition selector — only for WotC sets */}
+              {(()=>{
+                const wotcSets = ['base1','base2','base3','base5','gym1','gym2','neo1','neo2','neo3','neo4']
+                const needsEdition = wotcSets.includes(addForm.setId)
+                if (!needsEdition) return null
+                const editions = addForm.setId === 'base1' 
+                  ? [{k:'Unlimited',l:'Unlimited'},{k:'Shadowless',l:'Shadowless'},{k:'1st Edition',l:'1st Edition'}]
+                  : [{k:'Unlimited',l:'Unlimited'},{k:'1st Edition',l:'1st Edition'}]
+                return (
+                  <div style={{ marginBottom:'14px' }}>
+                    <div className="req-label">Édition *</div>
+                    <div style={{ display:'flex', gap:'6px' }}>
+                      {editions.map(ed=>(
+                        <button key={ed.k} onClick={()=>setAddForm(p=>({...p,edition:ed.k}))}
+                          style={{ flex:1, padding:'10px 8px', borderRadius:'10px', border:'1.5px solid '+(addForm.edition===ed.k?'#1D1D1F':'#E5E5EA'), background:addForm.edition===ed.k?'#1D1D1F':'#fff', color:addForm.edition===ed.k?'#fff':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                          {ed.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+              {/* Variant selector */}
+              <div style={{ marginBottom:'14px' }}>
+                <div className="opt-label">Variante</div>
+                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' as const }}>
+                  {(()=>{
+                    const wotcSets = ['base1','base2','base3','base5','gym1','gym2','neo1','neo2','neo3','neo4']
+                    const isWotc = wotcSets.includes(addForm.setId)
+                    const isSV = addForm.setId?.startsWith('sv')
+                    const isSWSH = addForm.setId?.startsWith('swsh')
+                    const isSM = addForm.setId?.startsWith('sm')
+                    const opts = isWotc ? ['Normal','Holofoil']
+                      : isSV ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Alt Art','Special Art Rare','Illustration Rare','Hyper Rare']
+                      : isSWSH ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Alt Art','Rainbow Rare','Gold','Trainer Gallery']
+                      : isSM ? ['Normal','Holofoil','Reverse Holofoil','Full Art','Rainbow Rare','Gold']
+                      : ['Normal','Holofoil','Reverse Holofoil','Full Art']
+                    return opts.map(v=>(
+                      <button key={v} onClick={()=>setAddForm(p=>({...p,variant:v}))}
+                        style={{ padding:'7px 12px', borderRadius:'8px', border:'1.5px solid '+(addForm.variant===v?'#1D1D1F':'#E5E5EA'), background:addForm.variant===v?'#1D1D1F':'#fff', color:addForm.variant===v?'#fff':'#86868B', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                        {v}
+                      </button>
+                    ))
+                  })()}
+                </div>
+              </div>
               <div style={{ marginBottom:'14px' }}>
                 <div className="opt-label">Etat</div>
                 {/* Segmented control iOS-style */}

@@ -561,7 +561,26 @@ export function Encyclopedie() {
       if (!b.sets.find(st=>st.id===c.setId)) b.sets.push({ id:c.setId, name:c.setName, count:0 })
       b.sets.find(st=>st.id===c.setId)!.count++
     })
-    return [...map.entries()].sort((a,b)=>ERA_ORDER.indexOf(a[0])-ERA_ORDER.indexOf(b[0])).map(([,v])=>v)
+    return [...map.entries()].sort((a,b)=>ERA_ORDER.indexOf(a[0])-ERA_ORDER.indexOf(b[0])).map(([,v])=>{
+      // Sort sets within each bloc: originals first, then editions (-1st, -shadowless)
+      v.sets.sort((a,b) => {
+        const aBase = a.id.replace(/-1st$|-shadowless$|-shadowless-ns$/,'')
+        const bBase = b.id.replace(/-1st$|-shadowless$|-shadowless-ns$/,'')
+        // Group by base set
+        if (aBase !== bBase) return aBase.localeCompare(bBase)
+        // Within same base: original first, then editions
+        const aEdition = a.id.includes('-') ? 1 : 0
+        const bEdition = b.id.includes('-') ? 1 : 0
+        if (aEdition !== bEdition) return aEdition - bEdition
+        // Shadowless before 1st ed
+        if (a.id.includes('-shadowless-ns')) return -1
+        if (b.id.includes('-shadowless-ns')) return 1
+        if (a.id.includes('-shadowless')) return -1
+        if (b.id.includes('-shadowless')) return 1
+        return a.name.localeCompare(b.name)
+      })
+      return v
+    })
   }, [allCards])
 
   const rarities = useMemo(() =>

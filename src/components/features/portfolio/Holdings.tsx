@@ -2037,7 +2037,9 @@ export function Holdings() {
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
                                     <div>
-                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#1D1D1F':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
+                                      <div style={{ fontSize:'14px', fontWeight:700, color:isComplete?'#1D1D1F':'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none', display:'flex', alignItems:'center', gap:'6px' }}>
+                                      <span style={{ fontSize:'13px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1EC}\u{1F1E7}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
+                                      {setName}</div>
                                       {setBlocks[setName]?<div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginTop:'1px' }}>{setBlocks[setName]}</div>:null}
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}

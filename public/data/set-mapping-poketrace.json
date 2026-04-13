@@ -118,7 +118,6 @@
   "sm10": "unbroken-bonds",
   "sm11": "unified-minds",
   "base5": "team-rocket",
-  "base1-unlimited": "base-set",
   "base1-shadowless": "base-set-shadowless",
   "jungle-unlimited": "jungle",
   "jungle-1st": "jungle",
@@ -135,5 +134,6 @@
   "ecard1-lc": "legendary-collection",
   "base2-1st": "jungle",
   "base3-1st": "fossil",
-  "base5-1st": "team-rocket"
+  "base5-1st": "team-rocket",
+  "base1-shadowless-ns": "base-set-shadowless"
 }

@@ -1309,7 +1309,7 @@ export function Holdings() {
         .ed-badge { display:inline-flex; align-items:center; font-size:7px; font-weight:700; padding:2px 6px; border-radius:4px; font-family:var(--font-data); letter-spacing:.04em; line-height:1.2; white-space:nowrap; }
         .ed-1st { background:#1a1a2e; color:#c4b5fd; border:1px solid rgba(196,181,253,.25); }
         .ed-shadowless { background:#f0f4ff; color:#4338ca; border:1px solid rgba(67,56,202,.2); }
-        .ed-1st-edition { background:linear-gradient(135deg,#92702a,#c9a84c,#f0d875); color:#1a1200; border:1px solid rgba(201,168,76,.4); }
+        .ed-1st-edition { background:#1a1a2e; color:#c4b5fd; border:1px solid rgba(196,181,253,.25); }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
         .req-label { font-size:10px;font-weight:600;color:#1D1D1F;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
         .opt-label { font-size:10px;font-weight:500;color:#86868B;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }

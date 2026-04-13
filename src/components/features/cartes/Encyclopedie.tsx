@@ -1357,6 +1357,12 @@ export function Encyclopedie() {
                           {selCard&&setBlocks[selCard.setId]?setBlocks[selCard.setId]+' · ':''}
                           {detail.set?.releaseDate ? detail.set.releaseDate.slice(0,4) : ''}
                         </div>
+                        {selCard&&(selCard.setId?.includes('-shadowless')||selCard.setId?.includes('-1st'))&&(
+                          <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'4px', flexWrap:'wrap' as const }}>
+                            {(selCard.setId?.includes('-shadowless')&&!selCard.setId?.includes('-ns'))||selCard.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                            {selCard.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
+                          </div>
+                        )}
                       </div>
                     </div>
 

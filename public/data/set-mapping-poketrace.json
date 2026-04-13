@@ -138,5 +138,11 @@
   "neo3-1st": "neo-revelation",
   "neo4-unlimited": "neo-destiny",
   "neo4-1st": "neo-destiny",
-  "ecard1-lc": "legendary-collection"
+  "ecard1-lc": "legendary-collection",
+  "base2-1st": "jungle",
+  "base2-unlimited": "jungle",
+  "base3-1st": "fossil",
+  "base3-unlimited": "fossil",
+  "base5-1st": "team-rocket",
+  "base5-unlimited": "team-rocket"
 }

@@ -149,7 +149,7 @@ export function Holdings() {
               condition: c.condition || 'Raw', graded: c.graded || false,
               buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
               qty: c.qty || 1,
-              image: c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : (c.image_url || undefined),
+              image: c.image_url || (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : undefined),
               setId: c.set_id || undefined, favorite: c.is_favorite || false,
               notes: c.notes || undefined,
             }))
@@ -247,6 +247,14 @@ export function Holdings() {
           }
         })
         setPriceMap(map)
+        // Update curPrice on portfolio cards
+        setPortfolio(prev => prev.map(c => {
+          const numKey = c.set.toLowerCase() + '|' + c.number
+          const nameKey = c.name.toLowerCase()
+          const price = map[numKey]?.top || map[nameKey]?.top
+          if (price && price !== c.curPrice) return { ...c, curPrice: price }
+          return c
+        }))
       })
       .catch(() => {})
   }, [portfolioLoaded, portfolio.length])

@@ -731,13 +731,13 @@ export function Holdings() {
 
   // ── Animated counter ──
   const [displayValue, setDisplayValue] = useState(0)
-  const [valuePulse, setValuePulse] = useState(false)
+  const [valuePulse, setValuePulse] = useState<false|'up'|'down'>(false)
   const prevTotal = useRef(0)
   useEffect(() => {
     const target = totalCur
     const from = prevTotal.current
     if (from === target) { setDisplayValue(target); return }
-    setValuePulse(true)
+    setValuePulse(target > from ? 'up' : 'down')
     setTimeout(() => setValuePulse(false), 600)
     const duration = 800
     const start = performance.now()
@@ -1722,7 +1722,7 @@ export function Holdings() {
                 {portfolio.length>0 ? (
                   <>
                     <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
-                    <span style={{ transition:'color .3s', color:valuePulse?'#2E9E6A':'#1D1D1F' }}>{displayValue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span style={{ transition:'color .3s', color:valuePulse==='up'?'#2E9E6A':valuePulse==='down'?'#E03020':'#1D1D1F' }}>{displayValue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </>
                 ) : <span style={{ color:'#C7C7CC' }}>---</span>}
               </div>

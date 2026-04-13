@@ -222,7 +222,47 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
+  // ── Prix depuis cache Supabase ──
+  const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
+  const pricesFetched = useRef(false)
+  useEffect(() => {
+    if (!portfolioLoaded || pricesFetched.current || portfolio.length === 0) return
+    pricesFetched.current = true
+    fetch('/api/prices')
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (!data) return
+        const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
+        data.forEach((p: any) => {
+          // Match by card_name (lowercase) — could match multiple cards
+          const key = (p.card_name || '').toLowerCase()
+          if (!map[key] || (p.top_price && (!map[key].top || p.top_price > map[key].top))) {
+            map[key] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+          }
+          // Also index by card_number prefix (e.g. "010" from "010/102")
+          if (p.card_number) {
+            const num = p.card_number.split('/')[0]
+            const numKey = p.set_name?.toLowerCase() + '|' + num
+            map[numKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+          }
+        })
+        setPriceMap(map)
+      })
+      .catch(() => {})
+  }, [portfolioLoaded, portfolio.length])
+
+  const getPrice = (card: { name: string; set: string; number: string }): number | null => {
+    // Try by set+number first (most precise)
+    const numKey = card.set.toLowerCase() + '|' + card.number
+    if (priceMap[numKey]?.top) return priceMap[numKey].top
+    // Fallback by name
+    const nameKey = card.name.toLowerCase()
+    if (priceMap[nameKey]?.top) return priceMap[nameKey].top
+    return null
+  }
+
   const [fullSetCards, setFullSetCards] = useState<TCGCard[]>([])
+
   const [fullSetLoading, setFullSetLoading] = useState(false)
   const [shelfSetCards, setShelfSetCards] = useState<Record<string, TCGCard[]>>({})
   const [setLogos, setSetLogos] = useState<Record<string, string>>({})
@@ -2055,6 +2095,7 @@ export function Holdings() {
                                   {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
+                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>${p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div> : null })()}
                                   <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
                                     <span style={{ fontSize:'12px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}

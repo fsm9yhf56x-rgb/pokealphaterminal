@@ -250,12 +250,16 @@ export function Holdings() {
           }
         })
         setPriceMap(map)
-        // Update curPrice on portfolio cards
+        // Update curPrice on portfolio cards (USD → EUR conversion)
+        const USD_TO_EUR = 0.92
         setPortfolio(prev => prev.map(c => {
           const numKey = c.set.toLowerCase() + '|' + c.number
           const nameKey = c.name.toLowerCase()
-          const price = map[numKey]?.top || map[nameKey]?.top
-          if (price && price !== c.curPrice) return { ...c, curPrice: price }
+          const priceUSD = map[numKey]?.top || map[nameKey]?.top
+          if (priceUSD) {
+            const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
+            if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
+          }
           return c
         }))
       })
@@ -263,12 +267,13 @@ export function Holdings() {
   }, [portfolioLoaded, portfolio.length])
 
   const getPrice = (card: { name: string; set: string; number: string }): number | null => {
+    const USD_TO_EUR = 0.92
     // Try by set+number first (most precise)
     const numKey = card.set.toLowerCase() + '|' + card.number
-    if (priceMap[numKey]?.top) return priceMap[numKey].top
+    if (priceMap[numKey]?.top) return Math.round(priceMap[numKey].top! * USD_TO_EUR * 100) / 100
     // Fallback by name
     const nameKey = card.name.toLowerCase()
-    if (priceMap[nameKey]?.top) return priceMap[nameKey].top
+    if (priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
     return null
   }
 
@@ -1684,13 +1689,18 @@ export function Holdings() {
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'12px', marginBottom:'14px' }}>
             <div>
               <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }} className='section-reveal'>Portfolio</div>
-              <div style={{ fontSize:'32px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1px', lineHeight:1 }}>
-                {portfolio.length>0?'EUR '+totalCur.toLocaleString('fr-FR'):'---'}
+              <div className="value-hero" style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
+                {portfolio.length>0 ? (
+                  <>
+                    <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
+                    <span>{totalCur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </>
+                ) : <span style={{ color:'#C7C7CC' }}>---</span>}
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'6px' }}>
-                {portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:500, color:'#4ECCA3' }}>+{totalROI}% | +EUR {totalGain.toLocaleString('fr-FR')}</span>}
-                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#48484A' }}>{portfolio.length} carte{portfolio.length!==1?'s':''}</span>}
-                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#48484A' }}>Aucune carte - commencez votre collection</span>}
+              <div className="value-hero-sub" style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'8px' }}>
+                {portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
+                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</span>}
+                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commencez votre collection</span>}
               </div>
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
@@ -2106,7 +2116,7 @@ export function Holdings() {
                                   {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
-                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>${p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div> : null })()}
+                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
                                   <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
                                     <span style={{ fontSize:'12px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}

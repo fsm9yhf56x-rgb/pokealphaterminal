@@ -224,10 +224,13 @@ export function Holdings() {
   const [scannerOpen,  setScannerOpen]  = useState(false)
   // ── Prix depuis cache Supabase ──
   const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
-  const pricesFetched = useRef(false)
+  const pricesFetched = useRef<string|false>(false)
   useEffect(() => {
-    if (!portfolioLoaded || pricesFetched.current || portfolio.length === 0) return
-    pricesFetched.current = true
+    if (!portfolioLoaded || portfolio.length === 0) return
+    // Re-fetch si nouvelles cartes ajoutées
+    const portfolioKey = portfolio.map(c => c.name).sort().join(',')
+    if (pricesFetched.current === portfolioKey) return
+    pricesFetched.current = portfolioKey as any
     fetch('/api/prices')
       .then(r => r.json())
       .then(({ data }) => {

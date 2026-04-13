@@ -1065,7 +1065,16 @@ export function Encyclopedie() {
                 {setLogos[filSet]&&<img src={setLogos[filSet]} alt="" style={{ height:'48px', maxWidth:'200px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                 <div style={{ flex:1, minWidth:'200px' }}>
                   <div style={{ fontSize:'18px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px' }}>{setInfo?.name||filSet}</div>
-                  {setBlocks[filSet]&&<div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'8px' }}>{setBlocks[filSet]}</div>}
+                  {setBlocks[filSet]&&<div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{setBlocks[filSet]}</div>}
+                  {(filSet.includes('-shadowless')||filSet.includes('-1st'))&&(
+                    <div style={{ display:'flex', alignItems:'center', gap:'4px', marginBottom:'6px', flexWrap:'wrap' as const }}>
+                      {(filSet.includes('-shadowless')&&!filSet.includes('-ns'))||filSet.includes('-1st')?<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                      {filSet.includes('-shadowless')?<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
+                      <span style={{ fontSize:'10px', color:'#AEAEB2', fontFamily:'var(--font-display)', marginLeft:'4px' }}>
+                        {filSet.includes('-shadowless')&&!filSet.includes('-ns')?'1st print run, no drop shadow on art box + 1st Edition stamp':filSet.includes('-shadowless')&&filSet.includes('-ns')?'1st print run, no drop shadow on art box, no 1st Ed. stamp':filSet.includes('-1st')?'First Edition print run with 1st Edition stamp':''}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap' as const }}>
                     <div style={{ height:'6px', flex:1, minWidth:'120px', maxWidth:'240px', background:'#E5E5EA', borderRadius:'3px', overflow:'hidden' }}>
                       <div style={{ height:'100%', width:pct+'%', background:pct===100?'#2E9E6A':pct>50?'#F5A623':'#E03020', borderRadius:'3px', transition:'width .4s ease' }}/>

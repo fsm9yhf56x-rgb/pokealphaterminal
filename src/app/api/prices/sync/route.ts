@@ -14,7 +14,7 @@ async function ptFetch(path: string) {
     headers: { 'X-API-Key': POKETRACE_KEY },
   })
   if (r.status === 429) {
-    await sleep(5000)
+    await sleep(10000)
     const retry = await fetch(`${BASE}${path}`, {
       headers: { 'X-API-Key': POKETRACE_KEY },
     })
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
         cursor = d2.pagination?.nextCursor
         if (!d2.pagination?.hasMore) break
       }
-      await sleep(3000)
+      await sleep(6000)
     } catch (e: any) {
       errors.push(`${setId}: ${e.message}`)
     }

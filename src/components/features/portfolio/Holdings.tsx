@@ -1404,8 +1404,8 @@ export function Holdings() {
                       </div>
                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px' }}>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.set}</span>
-                        {spotCard.setId?.includes('-shadowless-ns')&&<span className="ed-badge ed-shadowless" style={{ marginLeft:'6px' }}>SHADOWLESS</span>}
-                        {spotCard.setId?.includes('-shadowless')&&!spotCard.setId?.includes('-ns')&&<span className="ed-badge ed-1st" style={{ marginLeft:'6px' }}>1ST ED.</span>}
+                        {spotCard.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless" style={{ marginLeft:'6px' }}>SHADOWLESS</span>}
+                        {spotCard.setId?.includes('-shadowless')&&!spotCard.setId?.includes('-ns')&&<span className="ed-badge ed-1st-edition" style={{ marginLeft:'4px' }}>1ST EDITION</span>}
                         {spotCard.setId?.includes('-1st')&&!spotCard.setId?.includes('shadowless')&&<span className="ed-badge ed-1st-edition" style={{ marginLeft:'6px' }}>1ST EDITION</span>}
                         <span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>#{spotCard.number||'???'}</span>
@@ -2183,8 +2183,8 @@ export function Holdings() {
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
-                                    {card.setId?.includes('-shadowless-ns')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
-                                    {card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns')&&<span className="ed-badge ed-1st">1ST ED.</span>}
+                                    {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
+                                    {card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns')&&<span className="ed-badge ed-1st-edition">1ST EDITION</span>}
                                     {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<span className="ed-badge ed-1st-edition">1ST EDITION</span>}
                                   </div>
                                 </div>

@@ -449,8 +449,8 @@ export function Holdings() {
       setAddSuggs([])
       if(!ghostClickRef.current) setAddForm(p=>({...p, name:''}))
       ghostClickRef.current = false
-      fetchCardsForSet(addForm.lang, addForm.setId)
-        .then(cards => { setLiveCards(cards); setCardsLoading(false) })
+      getCardsForSet(addForm.lang as 'EN'|'FR'|'JP', addForm.setId)
+        .then(cards => { setLiveCards(staticToTCGCards(cards, addForm.setId, addForm.lang, (l,si,lid) => getCardImageUrl({lang:l,setId:si,localId:lid})) as any); setCardsLoading(false) })
         .catch(() => setCardsLoading(false))
     }
   }, [addForm.lang])
@@ -801,12 +801,12 @@ export function Holdings() {
     setLiveCards([])
     if (id) {
       setCardsLoading(true)
-      fetchCardsForSet(addForm.lang, id)
-        .then(cards => { setLiveCards(cards); setCardsLoading(false) })
+      getCardsForSet(addForm.lang as 'EN'|'FR'|'JP', id)
+        .then(cards => { setLiveCards(staticToTCGCards(cards, id, addForm.lang, (l,s,lid) => getCardImageUrl({lang:l,setId:s,localId:lid})) as any); setCardsLoading(false) })
         .catch(() => setCardsLoading(false))
       // Fetch FR cards en parallele pour reference JP
       if (addForm.lang === 'JP') {
-        fetchCardsForSet('FR', id)
+        getCardsForSet('FR', id).then(c => staticToTCGCards(c, id, 'FR', (l,si,lid) => getCardImageUrl({lang:l,setId:si,localId:lid})))
           .then(frCards => {
             const map: Record<string,string> = {}
             frCards.forEach((c,i) => { if(c.name) map[c.name] = c.name })
@@ -2051,7 +2051,7 @@ export function Holdings() {
                                       const lang2=setCards[0]?.lang||'FR'
                                       setAddForm(p=>({...p, set:setName, setId:sid2, lang:lang2, name:gi.name, number:gi.number, image:gi.image||''}))
                                       setNameValidated(true)
-                                      if(sid2){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(lang2,sid2).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                                      if(sid2){ setCardsLoading(true); setLiveCards([]); getCardsForSet(lang2 as 'EN'|'FR'|'JP',sid2).then(cards=>{setLiveCards(staticToTCGCards(cards,sid2,lang2,(l,s,lid)=>getCardImageUrl({lang:l,setId:s,localId:lid})) as any);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
                                       setAddOpen(true)
                                     }}>
                                     <div style={{ borderRadius:'12px', overflow:'hidden', border:'1px solid #E5E5EA', position:'relative' }}>
@@ -2130,7 +2130,7 @@ export function Holdings() {
                                 const lang=setCards[0]?.lang||'FR'
                                 const sid=setCards.find(c=>c.setId)?.setId || liveSets.find(ls=>ls.name===setName)?.id || liveSets.find(ls=>ls.name.toLowerCase()===setName.toLowerCase())?.id || ''
                                 setAddForm(p=>({...p, set:setName, setId:sid, lang}))
-                                if(sid){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(addForm.lang,sid).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                                if(sid){ setCardsLoading(true); setLiveCards([]); getCardsForSet(addForm.lang as 'EN'|'FR'|'JP',sid).then(cards=>{setLiveCards(staticToTCGCards(cards,sid,addForm.lang,(l,si,lid)=>getCardImageUrl({lang:l,setId:si,localId:lid})) as any);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
                                 setAddOpen(true)
                               }}
                               style={{ flexShrink:0, width:'180px', aspectRatio:'63/88', borderRadius:'12px', border:'1.5px dashed #C8C5C0', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .15s' }}
@@ -2220,7 +2220,7 @@ export function Holdings() {
                               const lang2=sc2[0]?.lang||'FR'
                               setAddForm(p=>({...p, set:binderSet||'', setId:sid2, lang:lang2, name:gi.name, number:gi.number, image:gi.image||''}))
                               setNameValidated(true)
-                              if(sid2){ setCardsLoading(true); setLiveCards([]); fetchCardsForSet(lang2,sid2).then(cards=>{setLiveCards(cards);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
+                              if(sid2){ setCardsLoading(true); setLiveCards([]); getCardsForSet(lang2 as 'EN'|'FR'|'JP',sid2).then(cards=>{setLiveCards(staticToTCGCards(cards,sid2,lang2,(l,s,lid)=>getCardImageUrl({lang:l,setId:s,localId:lid})) as any);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
                               setAddOpen(true)
                             }}>
                             <div style={{ position:'relative',width:'100%',aspectRatio:'63/88',overflow:'hidden',borderRadius:'10px' }}>
@@ -2675,7 +2675,7 @@ export function Holdings() {
                 setAddSetName(found.name)
                 setAddSetLoading(true)
                 setAddSetCards([])
-                fetchCardsForSet(addSetLang,found.id).then(cards=>{setAddSetCards(cards);setAddSetLoading(false)}).catch(()=>setAddSetLoading(false))
+                getCardsForSet(addSetLang as 'EN'|'FR'|'JP',found.id).then(cards=>{setAddSetCards(staticToTCGCards(cards,found.id,addSetLang,(l,si,lid)=>getCardImageUrl({lang:l,setId:si,localId:lid})) as any);setAddSetLoading(false)}).catch(()=>setAddSetLoading(false))
               }}
                 style={{ width:'100%',appearance:'none' as const,background:'#F5F5F7',borderRadius:'10px',border:'1px solid #E5E5EA',padding:'10px 36px 10px 12px',color:addSetId?'#1D1D1F':'#AEAEB2',fontSize:'13px',fontFamily:'var(--font-display)',outline:'none',cursor:'pointer' }}>
                 <option value=''>Sélectionner une série...</option>

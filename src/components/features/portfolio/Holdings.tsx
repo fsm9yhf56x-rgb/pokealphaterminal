@@ -447,7 +447,7 @@ export function Holdings() {
     fetch('/data/sets-' + addForm.lang + '.json')
       .then(r => r.json())
       .then(sets => {
-        const mapped = sets.map((s: any) => ({ id: s.id, name: s.name + ' (' + s.total + ')', cardCount: s.total }))
+        const mapped = sets.map((s: any) => ({ id: s.id, name: s.name, cardCount: s.total }))
         setLiveSets(mapped)
         setSetsLoading(false)
       })

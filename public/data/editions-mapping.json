@@ -11,12 +11,6 @@
     "edition": "Shadowless",
     "ptSlug": "base-set-shadowless"
   },
-  "base1-1st": {
-    "name": "Base Set (1st Edition)",
-    "parent": "base1",
-    "edition": "1st Edition",
-    "ptSlug": "base-set"
-  },
   "jungle-unlimited": {
     "name": "Jungle (Unlimited)",
     "parent": "base2",

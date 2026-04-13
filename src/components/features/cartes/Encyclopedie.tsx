@@ -831,7 +831,7 @@ export function Encyclopedie() {
                 {(lang==='JP'
                   ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
                   : lang==='FR'
-                  ? ['sv03.5','base1','base1-shadowless','base1-shadowless-ns','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
+                  ? ['sv03.5','base1','base1-1st','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
                   : ['sv03.5','base1','base1-shadowless','base1-shadowless-ns','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
                 ).filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
                   const nm = allCards.find(c=>c.setId===sid)?.setName||sid

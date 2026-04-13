@@ -1143,6 +1143,12 @@ export function Encyclopedie() {
                           {cardSize!=='S' && <span style={{ fontFamily:'monospace', marginLeft:'4px' }}>#{card.localId}</span>}
                           {lang==='JP'&&card.enSetName&&<span style={{ color:'#AEAEB2', marginLeft:'4px', fontSize:'9px' }}>{card.enSetName}</span>}
                         </div>
+                        {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&cardSize!=='S'&&(
+                          <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
+                            {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                            {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
+                          </div>
+                        )}
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
                           return (

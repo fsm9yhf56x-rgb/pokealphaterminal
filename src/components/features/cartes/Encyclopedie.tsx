@@ -689,7 +689,11 @@ export function Encyclopedie() {
       }
       setDetLoading(false)
     } else {
-      const d = await fetchCardDetail(lang, id)
+      let d = await fetchCardDetail(lang, id)
+      if(!d) {
+        const cleanId = id.replace(/-shadowless-ns-|-shadowless-|-1st-/, '-')
+        if(cleanId !== id) d = await fetchCardDetail(lang, cleanId)
+      }
       setDetail(d); setDetLoading(false)
     }
   }, [selId, lang, allCards])

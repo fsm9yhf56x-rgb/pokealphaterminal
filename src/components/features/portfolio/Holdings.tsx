@@ -222,29 +222,6 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
-  // ── Animated counter ──
-  const [displayValue, setDisplayValue] = useState(0)
-  const [valuePulse, setValuePulse] = useState(false)
-  const prevTotal = useRef(0)
-  useEffect(() => {
-    const target = totalCur
-    const from = prevTotal.current
-    if (from === target) { setDisplayValue(target); return }
-    setValuePulse(true)
-    setTimeout(() => setValuePulse(false), 600)
-    const duration = 800
-    const start = performance.now()
-    const tick = (now: number) => {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
-      setDisplayValue(Math.round((from + (target - from) * eased) * 100) / 100)
-      if (progress < 1) requestAnimationFrame(tick)
-      else prevTotal.current = target
-    }
-    requestAnimationFrame(tick)
-  }, [totalCur])
-
   // ── Prix depuis cache Supabase ──
   const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
   const pricesFetched = useRef<string|false>(false)
@@ -751,6 +728,29 @@ export function Holdings() {
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
+
+  // ── Animated counter ──
+  const [displayValue, setDisplayValue] = useState(0)
+  const [valuePulse, setValuePulse] = useState(false)
+  const prevTotal = useRef(0)
+  useEffect(() => {
+    const target = totalCur
+    const from = prevTotal.current
+    if (from === target) { setDisplayValue(target); return }
+    setValuePulse(true)
+    setTimeout(() => setValuePulse(false), 600)
+    const duration = 800
+    const start = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      setDisplayValue(Math.round((from + (target - from) * eased) * 100) / 100)
+      if (progress < 1) requestAnimationFrame(tick)
+      else prevTotal.current = target
+    }
+    requestAnimationFrame(tick)
+  }, [totalCur])
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)

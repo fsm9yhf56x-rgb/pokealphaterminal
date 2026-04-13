@@ -791,13 +791,27 @@ export function Holdings() {
     if(binderSort!=='number'||!binderSet||binderSet==='__all__'||fullSetCards.length===0||binderFilter!=='all'||setSearch){
       return binderFilteredFinal.map(c=>({type:'owned' as const,card:c}))
     }
-    const ownedMap = new Map<string,CardItem>()
-    binderFiltered.forEach(c=>{ ownedMap.set(c.number,c) })
-    return fullSetCards.map(fc=>{
-      const owned = ownedMap.get(fc.localId||'')
-      if(owned) return { type:'owned' as const, card:owned }
-      return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:fc.image||'', rarity:fc.rarity||'' }
+    const ownedByNum = new Map<string,CardItem[]>()
+    binderFiltered.forEach(c=>{ const k=c.number; if(!ownedByNum.has(k)) ownedByNum.set(k,[]); ownedByNum.get(k)!.push(c) })
+    const usedIds = new Set<string>()
+    const result: typeof gridItems = []
+    fullSetCards.forEach(fc=>{
+      const num = fc.localId||''
+      const arr = ownedByNum.get(num)
+      if(arr){
+        arr.forEach(owned=>{
+          if(!usedIds.has(owned.id)){
+            usedIds.add(owned.id)
+            result.push({ type:'owned' as const, card:{ ...owned, image: owned.image || fc.image || '' } })
+          }
+        })
+      } else {
+        result.push({ type:'ghost' as const, name:fc.name, number:num, image:fc.image||'', rarity:fc.rarity||'' })
+      }
     })
+    // Ajouter les cartes owned sans match (numéro manquant dans fullSet)
+    binderFiltered.forEach(c=>{ if(!usedIds.has(c.id)) result.push({ type:'owned' as const, card:c }) })
+    return result
   }
   const gridItems = buildGridItems()
   const pageItems = gridItems.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)

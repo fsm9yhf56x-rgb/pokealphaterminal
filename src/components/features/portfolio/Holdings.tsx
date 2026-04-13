@@ -2053,9 +2053,10 @@ export function Holdings() {
                                     )}
                                     <div>
                                       <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
-                                      <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'2px' }}>
-                                        <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1EC}\u{1F1E7}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', flexWrap:'wrap' }}>
+                                        <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
+                                        {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; return (<>{(sid.includes('-shadowless')&&!sid.includes('-ns'))||sid.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{sid.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
                                       </div>
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}

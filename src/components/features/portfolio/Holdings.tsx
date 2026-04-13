@@ -1310,10 +1310,10 @@ export function Holdings() {
         .colbtn:active { transform:scale(.92);transition-duration:.06s; }
         .remove-btn { pointer-events:all !important; }
         /* Edition badges */
-        .ed-badge { display:inline-flex; align-items:center; font-size:7px; font-weight:700; padding:2px 6px; border-radius:4px; font-family:var(--font-data); letter-spacing:.04em; line-height:1.2; white-space:nowrap; }
-        .ed-1st { background:#1a1a2e; color:#c4b5fd; border:1px solid rgba(196,181,253,.25); }
-        .ed-shadowless { background:#f0f4ff; color:#4338ca; border:1px solid rgba(67,56,202,.2); }
-        .ed-1st-edition { background:#1a1a2e; color:#c4b5fd; border:1px solid rgba(196,181,253,.25); }
+        .ed-badge { display:inline-flex; align-items:center; font-size:8px; font-weight:700; padding:2px 5px; border-radius:3px; font-family:var(--font-data); letter-spacing:.03em; line-height:1; white-space:nowrap; vertical-align:middle; }
+        .ed-1st { background:linear-gradient(135deg,#1a1a2e,#2d2b55); color:#d4c5ff; border:none; }
+        .ed-shadowless { background:linear-gradient(135deg,#e8eeff,#dde4ff); color:#4338ca; border:none; }
+        .ed-1st-edition { background:linear-gradient(135deg,#1a1a2e,#2d2b55); color:#d4c5ff; border:none; }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
         .req-label { font-size:10px;font-weight:600;color:#1D1D1F;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
         .opt-label { font-size:10px;font-weight:500;color:#86868B;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
@@ -2181,14 +2181,18 @@ export function Holdings() {
                                   <span style={{ position:'absolute', bottom:'3px', right:'4px', fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                                   <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
-                                  <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px', flexWrap:'wrap' }}>
-                                    <span style={{ fontSize:'12px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
-                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
-                                    {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
+                                  <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
+                                    <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                                    {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
-                                    {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST ED.</span>:null}
-                                    {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
                                   </div>
+                                  {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
+                                    <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'3px' }}>
+                                      {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
+                                      {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
+                                    </div>
+                                  )}
                                 </div>
                                 </div>
                                 <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}

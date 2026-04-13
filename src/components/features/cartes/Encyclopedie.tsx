@@ -844,7 +844,7 @@ export function Encyclopedie() {
 
           {/* Search + sort + view */}
           {/* Series populaires */}
-          {!loading && filSet==='all' && browseMode==='all' && (
+          {!loading && browseMode==='all' && (
             <div style={{ marginBottom:'12px', position:'relative' }}>
               <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:-200,behavior:'smooth'})}}
                 style={{ position:'absolute', left:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'#fff', border:'1px solid #E5E5EA', boxShadow:'0 2px 8px rgba(0,0,0,.1)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#666' }}>‹</button>

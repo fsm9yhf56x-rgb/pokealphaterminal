@@ -2176,9 +2176,9 @@ export function Holdings() {
                                 <div onClick={()=>{ setSpotCard(card); setEditQty(null) }} style={{ borderRadius:'12px', overflow:'hidden', border:`${borderW} solid ${borderColor}`, boxShadow:`0 2px 8px rgba(0,0,0,.08)`, position:'relative', cursor:'pointer' }}>
                                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
-                                  <img src={card.image.replace(/\/(high|low)\.(webp|jpg|png)$/,'')} alt={card.name}
+                                  <img src={card.image} alt={card.name}
                                     style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
-                                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.dataset.retried) { t.style.display='none' } else { t.dataset.retried='1'; t.src=t.src.replace(/\.webp$/,'.jpg') } }}/>
+                                    onError={e=>{ const t=e.target as HTMLImageElement; if(t.dataset.retried) return; t.dataset.retried='1'; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg') }}/>
                                 ):(
                                   <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}18,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>

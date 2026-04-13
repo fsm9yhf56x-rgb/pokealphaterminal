@@ -2147,12 +2147,18 @@ export function Holdings() {
                                 )
                               }
                               const card=item.card
+                              return ((()=>{
+                              const gn=card.graded?parseFloat(card.condition.replace(/[^0-9.]/g,'')):0
+                              const borderColor=card.graded?(gn>=10?'#D4AF37':gn>=8?'#B0B0B0':gn>=5?'#A0724A':'#555'):`${ec2}25`
+                              const borderW=card.graded?'2.5px':'1px'
+                              const gradeBg=gn>=10?'linear-gradient(135deg,#B8942F,#D4AF37,#F5ECA0,#D4AF37)':gn>=8?'linear-gradient(135deg,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#E0BFA0,#C4956A)':'#555'
+                              const gradeFg=gn>=10?'#1a1200':gn>=8?'#333':gn>=5?'#2a1800':'#fff'
                               return(
                               <div key={card.id}
                                 style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'visible', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
                                 onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,.1)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                                 onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}>
-                                <div onClick={()=>{ setSpotCard(card); setEditQty(null) }} style={{ borderRadius:'12px', overflow:'hidden', border:`1px solid ${ec2}25`, boxShadow:`0 2px 8px rgba(0,0,0,.08)`, position:'relative', cursor:'pointer' }}>
+                                <div onClick={()=>{ setSpotCard(card); setEditQty(null) }} style={{ borderRadius:'12px', overflow:'hidden', border:`${borderW} solid ${borderColor}`, boxShadow:`0 2px 8px rgba(0,0,0,.08)`, position:'relative', cursor:'pointer' }}>
                                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
                                   <img src={card.image} alt={card.name}
@@ -2163,28 +2169,16 @@ export function Holdings() {
                                     <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
                                   </div>
                                 )}
-                                {/* Badge gradé sur l'image */}
-                                {card.graded&&(()=>{
-                                  const gn=parseFloat(card.condition.replace(/[^0-9.]/g,''))
-                                  const bg=gn>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn>=8?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#48484A'
-                                  const fg=gn>=10?'#1a1200':gn>=8?'#333':gn>=5?'#2a1800':'#fff'
-                                  const sh=gn>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn>=8?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
-                                  return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg, color:fg, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh, letterSpacing:'.03em', overflow:'visible', border:gn>=10?'1px solid rgba(212,175,55,.4)':gn>=8?'1px solid rgba(168,168,168,.4)':gn>=5?'1px solid rgba(160,114,74,.3)':'none', backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none' }}>
-                                    {gn>=5&&<div style={{ position:'absolute', inset:0, borderRadius:'5px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
-                                    {gn>=10&&<div className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
-                                    <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
-                                  </div>
-                                })()}
-
+                                {card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, backdropFilter:'blur(4px)', fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backdropFilter:'blur(4px)' }}>EN ATTENTE</div>}
-                                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'4px' }}>
+                                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
-                                    {card.qty>1&&<span style={{ fontSize:'10px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>×{card.qty}</span>}
+                                    {card.graded&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 5px', borderRadius:'4px', background:gradeBg, color:gradeFg, fontFamily:'var(--font-data)', letterSpacing:'.02em', flexShrink:0, backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none', position:'relative', overflow:'hidden' }}>{gn>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{card.condition}</span></span>}
                                   </div>
-                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
+                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div> : null })()}
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
-                                    <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
+                                    <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
@@ -2204,7 +2198,7 @@ export function Holdings() {
                                   <span style={{ background:'#fff', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'5px 14px', fontSize:'10px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)', pointerEvents:'none' }}>Retirer</span>
                                 </div>
                               </div>
-                              )
+                              )})())
                             })}
                             {/* Carte + ajout */}
                             <div onClick={()=>{

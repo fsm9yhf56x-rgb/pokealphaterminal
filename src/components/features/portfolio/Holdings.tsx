@@ -2162,7 +2162,7 @@ export function Holdings() {
                               }
                               const card=item.card
                               return ((()=>{
-                              const inFullSet=!!(binderSet&&binderSet!=='__all__')
+                              const inFullSet=!!(binderSet)
                               const gn=card.graded?parseFloat(card.condition.replace(/[^0-9.]/g,'')):0
                               const borderColor=inFullSet&&card.graded?(gn>=10?'#D4AF37':gn>=8?'#B0B0B0':gn>=5?'#A0724A':'#555'):`${ec2}25`
                               const borderW=inFullSet&&card.graded?'2.5px':'1px'

@@ -1395,6 +1395,8 @@ export function Holdings() {
                       </div>
                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px' }}>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.set}</span>
+                        {spotCard.setId?.includes('-shadowless')&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:spotCard.setId?.includes('-ns')?'#e2e8f0':'#1a1a2e', color:spotCard.setId?.includes('-ns')?'#334155':'#e2e8f0', border:spotCard.setId?.includes('-ns')?'1px solid #cbd5e1':'1px solid rgba(255,255,255,.15)', marginLeft:'6px' }}>{spotCard.setId?.includes('-ns')?'SHADOWLESS':'1ST ED.'}</span>}
+                        {spotCard.setId?.includes('-1st')&&!spotCard.setId?.includes('shadowless')&&<span style={{ fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:'linear-gradient(135deg,#b8860b,#daa520,#ffd700)', color:'#1a1200', border:'1px solid rgba(218,165,32,.4)', marginLeft:'6px' }}>1ST EDITION</span>}
                         <span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>#{spotCard.number||'???'}</span>
                         {spotCard.rarity&&<><span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span><span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.rarity}</span></>}

@@ -1305,6 +1305,11 @@ export function Holdings() {
         .colbtn:hover { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
         .colbtn:active { transform:scale(.92);transition-duration:.06s; }
         .remove-btn { pointer-events:all !important; }
+        /* Edition badges */
+        .ed-badge { display:inline-flex; align-items:center; font-size:7px; font-weight:700; padding:2px 6px; border-radius:4px; font-family:var(--font-data); letter-spacing:.04em; line-height:1.2; white-space:nowrap; }
+        .ed-1st { background:#1a1a2e; color:#c4b5fd; border:1px solid rgba(196,181,253,.25); }
+        .ed-shadowless { background:#f0f4ff; color:#4338ca; border:1px solid rgba(67,56,202,.2); }
+        .ed-1st-edition { background:linear-gradient(135deg,#92702a,#c9a84c,#f0d875); color:#1a1200; border:1px solid rgba(201,168,76,.4); }
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
         .req-label { font-size:10px;font-weight:600;color:#1D1D1F;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
         .opt-label { font-size:10px;font-weight:500;color:#86868B;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
@@ -1395,8 +1400,9 @@ export function Holdings() {
                       </div>
                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px' }}>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.set}</span>
-                        {spotCard.setId?.includes('-shadowless')&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:spotCard.setId?.includes('-ns')?'#e2e8f0':'#1a1a2e', color:spotCard.setId?.includes('-ns')?'#334155':'#e2e8f0', border:spotCard.setId?.includes('-ns')?'1px solid #cbd5e1':'1px solid rgba(255,255,255,.15)', marginLeft:'6px' }}>{spotCard.setId?.includes('-ns')?'SHADOWLESS':'1ST ED.'}</span>}
-                        {spotCard.setId?.includes('-1st')&&!spotCard.setId?.includes('shadowless')&&<span style={{ fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:'linear-gradient(135deg,#b8860b,#daa520,#ffd700)', color:'#1a1200', border:'1px solid rgba(218,165,32,.4)', marginLeft:'6px' }}>1ST EDITION</span>}
+                        {spotCard.setId?.includes('-shadowless-ns')&&<span className="ed-badge ed-shadowless" style={{ marginLeft:'6px' }}>SHADOWLESS</span>}
+                        {spotCard.setId?.includes('-shadowless')&&!spotCard.setId?.includes('-ns')&&<span className="ed-badge ed-1st" style={{ marginLeft:'6px' }}>1ST ED.</span>}
+                        {spotCard.setId?.includes('-1st')&&!spotCard.setId?.includes('shadowless')&&<span className="ed-badge ed-1st-edition" style={{ marginLeft:'6px' }}>1ST EDITION</span>}
                         <span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
                         <span style={{ fontSize:'12px', color:'#86868B' }}>#{spotCard.number||'???'}</span>
                         {spotCard.rarity&&<><span style={{ fontSize:'12px', color:'#C7C7CC' }}>{String.fromCharCode(183)}</span><span style={{ fontSize:'12px', color:'#86868B' }}>{spotCard.rarity}</span></>}
@@ -2173,8 +2179,9 @@ export function Holdings() {
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'10px', color:'#86868B' }}>{card.rarity}</span>}
                                     {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
-                                    {card.setId?.includes('-shadowless')&&<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:card.setId?.includes('-ns')?'#e2e8f0':'#1a1a2e', color:card.setId?.includes('-ns')?'#334155':'#e2e8f0', border:card.setId?.includes('-ns')?'1px solid #cbd5e1':'1px solid rgba(255,255,255,.15)' }}>{card.setId?.includes('-ns')?'SHADOWLESS':'1ST ED.'}</span>}
-                                    {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<span style={{ fontSize:'7px', fontWeight:800, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em', background:'linear-gradient(135deg,#b8860b,#daa520,#ffd700)', color:'#1a1200', border:'1px solid rgba(218,165,32,.4)' }}>1ST EDITION</span>}
+                                    {card.setId?.includes('-shadowless-ns')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
+                                    {card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns')&&<span className="ed-badge ed-1st">1ST ED.</span>}
+                                    {card.setId?.includes('-1st')&&!card.setId?.includes('shadowless')&&<span className="ed-badge ed-1st-edition">1ST EDITION</span>}
                                   </div>
                                 </div>
                                 </div>

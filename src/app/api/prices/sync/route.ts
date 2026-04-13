@@ -37,10 +37,11 @@ async function incUsage(count: number) {
   await supabase.from('api_usage').update({ calls_used: (data?.calls_used || 0) + count }).eq('date', today)
 }
 
-function getTier(topPrice: number | null, hasGraded: boolean): string {
+function getTier(topPrice: number | null, hasGraded: boolean, ebayAvg?: number | null, tcgAvg?: number | null): string {
   if (hasGraded) return 'hot'
-  if (!topPrice || topPrice < 1) return 'cold'
-  if (topPrice >= 20) return 'hot'
+  const price = topPrice || ebayAvg || tcgAvg || 0
+  if (price < 1) return 'cold'
+  if (price >= 20) return 'hot'
   return 'warm'
 }
 
@@ -98,8 +99,8 @@ export async function POST(request: Request) {
           ebay_avg7d: ebay?.avg7d || null, ebay_avg30d: ebay?.avg30d || null, ebay_sales: ebay?.saleCount || null,
           tcg_avg: tcg?.avg || null, tcg_low: tcg?.low || null, tcg_high: tcg?.high || null,
           tcg_avg7d: tcg?.avg7d || null, tcg_avg30d: tcg?.avg30d || null, tcg_sales: tcg?.saleCount || null,
-          top_price: card.topPrice || null, total_sales: card.totalSaleCount || null,
-          condition: 'NEAR_MINT', tier: getTier(card.topPrice, card.hasGraded),
+          top_price: card.topPrice || ebay?.avg || tcg?.avg || null, total_sales: card.totalSaleCount || null,
+          condition: 'NEAR_MINT', tier: getTier(card.topPrice, card.hasGraded, ebay?.avg, tcg?.avg),
           has_graded: card.hasGraded || false, psa10_avg: psa10?.avg || null, psa9_avg: psa9?.avg || null,
           fetched_at: new Date().toISOString(),
         }, { onConflict: 'poketrace_id,condition' })
@@ -125,8 +126,8 @@ export async function POST(request: Request) {
             ebay_avg7d: ebay?.avg7d || null, ebay_avg30d: ebay?.avg30d || null, ebay_sales: ebay?.saleCount || null,
             tcg_avg: tcg?.avg || null, tcg_low: tcg?.low || null, tcg_high: tcg?.high || null,
             tcg_avg7d: tcg?.avg7d || null, tcg_avg30d: tcg?.avg30d || null, tcg_sales: tcg?.saleCount || null,
-            top_price: card.topPrice || null, total_sales: card.totalSaleCount || null,
-            condition: 'NEAR_MINT', tier: getTier(card.topPrice, card.hasGraded),
+            top_price: card.topPrice || ebay?.avg || tcg?.avg || null, total_sales: card.totalSaleCount || null,
+            condition: 'NEAR_MINT', tier: getTier(card.topPrice, card.hasGraded, ebay?.avg, tcg?.avg),
             has_graded: card.hasGraded || false, psa10_avg: psa10?.avg || null,
             fetched_at: new Date().toISOString(),
           }, { onConflict: 'poketrace_id,condition' })

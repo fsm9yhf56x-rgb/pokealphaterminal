@@ -1598,28 +1598,7 @@ export function Holdings() {
 
 
 
-              {/* Edition selector — only for WotC sets */}
-              {(()=>{
-                const wotcSets = ['base1','base2','base3','base5','gym1','gym2','neo1','neo2','neo3','neo4']
-                const needsEdition = wotcSets.includes(addForm.setId)
-                if (!needsEdition) return null
-                const editions = addForm.setId === 'base1' 
-                  ? [{k:'Unlimited',l:'Unlimited'},{k:'Shadowless',l:'Shadowless'},{k:'1st Edition',l:'1st Edition'}]
-                  : [{k:'Unlimited',l:'Unlimited'},{k:'1st Edition',l:'1st Edition'}]
-                return (
-                  <div style={{ marginBottom:'14px' }}>
-                    <div className="req-label">Édition *</div>
-                    <div style={{ display:'flex', gap:'6px' }}>
-                      {editions.map(ed=>(
-                        <button key={ed.k} onClick={()=>setAddForm(p=>({...p,edition:ed.k}))}
-                          style={{ flex:1, padding:'10px 8px', borderRadius:'10px', border:'1.5px solid '+(addForm.edition===ed.k?'#1D1D1F':'#E5E5EA'), background:addForm.edition===ed.k?'#1D1D1F':'#fff', color:addForm.edition===ed.k?'#fff':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                          {ed.l}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })()}
+
               {/* Variant selector */}
               <div style={{ marginBottom:'14px' }}>
                 <div className="opt-label">Variante</div>

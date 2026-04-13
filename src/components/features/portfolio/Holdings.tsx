@@ -1974,7 +1974,8 @@ export function Holdings() {
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
                       const resolvedTotal=total||(setIdKey?setTotalsMap[setIdKey]:0)||setTotalsMap[setName]||setTotalsMap[setName.toLowerCase()]||0
-                      const pct=resolvedTotal>0?Math.round((setCards.length/resolvedTotal)*100):null
+                      const uniqueNums=new Set(setCards.map(c=>c.number)).size
+                      const pct=resolvedTotal>0?Math.round((uniqueNums/resolvedTotal)*100):null
                       const totalForDisplay=resolvedTotal
                       const ec2=EC[setCards[0]?.type??'fire']??'#888'
                       const isComplete=pct===100
@@ -2063,7 +2064,7 @@ export function Holdings() {
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                    <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{setCards.length}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
+                                    <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids);setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}
                                       onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>

@@ -355,7 +355,7 @@ export function Holdings() {
               qty: card.qty, buy_price: card.buyPrice || null,
               current_price: card.curPrice || null, is_favorite: card.favorite || false,
               condition: card.condition || 'NM', graded: card.graded || false,
-              image_url: card.image || null, updated_at: new Date().toISOString(),
+              image_url: cleanImageUrl(card.image) || null, updated_at: new Date().toISOString(),
             }).eq('id', card.id)
           })
         }
@@ -804,11 +804,11 @@ export function Holdings() {
         arr.forEach(owned=>{
           if(!usedIds.has(owned.id)){
             usedIds.add(owned.id)
-            result.push({ type:'owned' as const, card:{ ...owned, image: owned.image || fc.image || '' } })
+            result.push({ type:'owned' as const, card:{ ...owned, image: cleanImageUrl(owned.image) || cleanImageUrl(fc.image) || '' } })
           }
         })
       } else {
-        result.push({ type:'ghost' as const, name:fc.name, number:num, image:fc.image||'', rarity:fc.rarity||'' })
+        result.push({ type:'ghost' as const, name:fc.name, number:num, image:cleanImageUrl(fc.image)||'', rarity:fc.rarity||'' })
       }
     })
     // Ajouter les cartes owned sans match (numéro manquant dans fullSet)
@@ -1384,7 +1384,7 @@ export function Holdings() {
                     {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#1D1D1F', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
                     <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:'#EBEBEB', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
                       {spotCard.image ? (
-                        <img src={spotCard.image} alt={spotCard.name}
+                        <img src={cleanImageUrl(spotCard.image)} alt={spotCard.name}
                           onClick={e=>{e.stopPropagation();setCardZoom(true)}}
                           style={{ width:'100%', height:'100%', objectFit:'cover', position:'relative', zIndex:1, cursor:'zoom-in' }}
                           onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else if(t.src.includes('high')) t.src=t.src.replace('high','low'); else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}/>
@@ -1535,7 +1535,7 @@ export function Holdings() {
                         onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,.08)';e.currentTarget.style.borderColor='#E03020'}}
                         onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';e.currentTarget.style.borderColor='#E5E5EA'}}>
                         {card.image?(
-                          <img src={`${card.image.replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={card.name}
+                          <img src={`${cleanImageUrl(card.image).replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={card.name}
                             loading="lazy"
                             style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
                             onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
@@ -1993,7 +1993,7 @@ export function Holdings() {
                             return shelfGhosts.map(fc => {
                               const owned = ownedMap.get(fc.localId||'')
                               if(owned) return { type:'owned' as const, card:owned }
-                              return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:fc.image||'', rarity:fc.rarity||'' }
+                              return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:cleanImageUrl(fc.image)||'', rarity:fc.rarity||'' }
                             })
                           })()
                         : filteredSetCards.sort((a,b)=>{
@@ -2146,7 +2146,7 @@ export function Holdings() {
                                     }}>
                                     <div style={{ borderRadius:'12px', overflow:'hidden', border:'1px solid #E5E5EA', position:'relative' }}>
                                       {gi.image?(
-                                        <img src={gi.image} alt={gi.name}
+                                        <img src={cleanImageUrl(gi.image)} alt={gi.name}
                                           style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block', filter:'grayscale(1)' }}
                                           onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                       ):(
@@ -2318,7 +2318,7 @@ export function Holdings() {
                             }}>
                             <div style={{ position:'relative',width:'100%',aspectRatio:'63/88',overflow:'hidden',borderRadius:'10px' }}>
                               {gi.image?(
-                                <img src={gi.image} alt={gi.name}
+                                <img src={cleanImageUrl(gi.image)} alt={gi.name}
                                   style={{ position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(1)',borderRadius:'10px' }}
                                   onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                               ):(
@@ -2568,7 +2568,7 @@ export function Holdings() {
                           <div style={{ position:'absolute', inset:0, background:`linear-gradient(145deg,${ec}18,${ec}06)` }}/>
                           {/* Image */}
                           {card.image ? (
-                            <img src={card.image} alt={card.name}
+                            <img src={cleanImageUrl(card.image)} alt={card.name}
                               style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
                               onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg'); else { t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} } }}/>
                           ) : (
@@ -2727,7 +2727,7 @@ export function Holdings() {
         {cardZoom&&spotCard&&spotCard.image&&(
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', cursor:'zoom-out', animation:'fadeUp .2s ease-out' }}
             onClick={()=>setCardZoom(false)}>
-            <img src={spotCard.image} alt={spotCard.name}
+            <img src={cleanImageUrl(spotCard.image)} alt={spotCard.name}
               style={{ maxHeight:'90vh', maxWidth:'90vw', objectFit:'contain', borderRadius:'16px', boxShadow:'0 32px 80px rgba(0,0,0,.4)', animation:'illuminate .3s ease-out' }}
               onError={e=>{ const t=e.target as HTMLImageElement; if(t.src.includes('.webp')) t.src=t.src.replace('.webp','.jpg') }}/>
           </div>

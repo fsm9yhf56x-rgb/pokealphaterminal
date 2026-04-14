@@ -2386,6 +2386,12 @@ export function Holdings() {
 
                               
                             </div>
+                            {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
+                              <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
+                                {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
+                                {card.setId?.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}
+                              </div>
+                            )}
                           </div>
                           {card.graded&&(()=>{
                             const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))

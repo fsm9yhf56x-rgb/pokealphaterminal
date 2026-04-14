@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
+import { cleanImageUrl } from '@/lib/cardImages'
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -113,10 +114,7 @@ export function Holdings() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
-  const cleanImageUrl = (url: string|undefined): string => {
-    if (!url) return ''
-    return url.replace('https://jtheycxwbkweehfezyem.supabase.co/storage/v1/object/public/card-images', 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev')
-  }
+
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)

@@ -2,7 +2,6 @@ const R2_BASE = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
 const TCGDEX_BASE = 'https://assets.tcgdex.net'
 const OLD_SUPABASE = 'https://jtheycxwbkweehfezyem.supabase.co/storage/v1/object/public/card-images'
 
-/** Nettoie toute URL legacy Supabase Storage → R2 */
 export function cleanImageUrl(url: string | undefined): string {
   if (!url) return ''
   if (url.includes(OLD_SUPABASE)) return url.replace(OLD_SUPABASE, R2_BASE)
@@ -18,17 +17,14 @@ export function getCardImageUrl(opts: {
 }): string {
   const { lang, setId, localId, cardId, image } = opts
   const langCode = lang === 'EN' ? 'en' : lang === 'FR' ? 'fr' : lang === 'JP' ? 'jp' : lang.toLowerCase()
-  if (langCode === 'jp' && cardId) {
-    return `${R2_BASE}/jp/${setId || 'unknown'}/${cardId}.jpg`
-  }
-  if (langCode === 'jp' && setId && localId) {
-    return `${R2_BASE}/jp/${setId}/${localId}.jpg`
-  }
-  if (setId && localId) {
-    return `${R2_BASE}/${langCode}/${setId}/${localId}.webp`
-  }
+  if (langCode === 'jp' && cardId) return `${R2_BASE}/jp/${setId || 'unknown'}/${cardId}.jpg`
+  if (langCode === 'jp' && setId && localId) return `${R2_BASE}/jp/${setId}/${localId}.jpg`
+  if (setId && localId) return `${R2_BASE}/${langCode}/${setId}/${localId}.webp`
   if (image) {
-    return cleanImageUrl(image.includes('/high.webp') ? image : `${image}/high.webp`)
+    const cleaned = cleanImageUrl(image)
+    // Si l'URL finit déjà par une extension, ne pas ajouter /high.webp
+    if (cleaned.match(/\.(webp|jpg|png)$/)) return cleaned
+    return cleaned.includes('/high.webp') ? cleaned : `${cleaned}/high.webp`
   }
   return ''
 }
@@ -47,7 +43,12 @@ export function getCardImageWithFallback(opts: {
     fallback = `${TCGDEX_BASE}/${langCode}/${opts.setId}/${opts.localId}/high.webp`
   }
   if (opts.image) {
-    fallback = cleanImageUrl(opts.image.includes('/high.webp') ? opts.image : `${opts.image}/high.webp`)
+    const cleaned = cleanImageUrl(opts.image)
+    if (cleaned.match(/\.(webp|jpg|png)$/)) {
+      fallback = cleaned
+    } else {
+      fallback = cleaned.includes('/high.webp') ? cleaned : `${cleaned}/high.webp`
+    }
   }
   if ((opts.lang === 'JP' || opts.lang === 'FR') && opts.setId && opts.localId) {
     fallback = `${R2_BASE}/en/${opts.setId}/${opts.localId}.webp`

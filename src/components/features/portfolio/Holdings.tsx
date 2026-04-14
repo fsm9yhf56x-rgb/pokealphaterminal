@@ -1919,8 +1919,7 @@ export function Holdings() {
                     {(binderSet!==null)&&[6,7,8,9].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
                     ))}
-                    <button onClick={()=>setBinderPage(p=>Math.max(0,p-1))} disabled={binderPage===0} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage===0?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage===0?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8249;</button>
-                    <button onClick={()=>setBinderPage(p=>Math.min(binderPages-1,p+1))} disabled={binderPage>=binderPages-1} style={{ width:'28px', height:'28px', borderRadius:'7px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:binderPage>=binderPages-1?'rgba(29,29,31,.16)':'rgba(29,29,31,.45)', cursor:binderPage>=binderPages-1?'default':'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8250;</button>
+
                   </div>
                 </div>
 

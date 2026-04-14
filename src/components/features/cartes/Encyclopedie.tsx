@@ -216,6 +216,31 @@ export function Encyclopedie() {
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
+  const [priceMap, setPriceMap] = useState<Record<string, { top: number|null }>>({})
+  useEffect(() => {
+    fetch('/api/prices').then(r=>r.json()).then(({ data }) => {
+      if(!data) return
+      const map: Record<string, { top: number|null }> = {}
+      data.forEach((p: any) => {
+        const nameKey = (p.card_name||'').toLowerCase()
+        if(!map[nameKey]||(p.top_price&&(!map[nameKey].top||p.top_price>map[nameKey].top!))) map[nameKey] = { top: p.top_price }
+        const numParts = (p.card_number||'').split('/')
+        if(numParts[0] && p.set_name) {
+          const numKey = p.set_name.toLowerCase()+'|'+numParts[0]
+          if(!map[numKey]||(p.top_price&&(!map[numKey].top||p.top_price>map[numKey].top!))) map[numKey] = { top: p.top_price }
+        }
+      })
+      setPriceMap(map)
+    }).catch(()=>{})
+  }, [])
+  const getPrice = (card: { name: string; setName?: string; localId?: string }): number|null => {
+    const USD_TO_EUR = 0.92
+    const numKey = (card.setName||'').toLowerCase()+'|'+(card.localId||'')
+    if(priceMap[numKey]?.top) return Math.round(priceMap[numKey].top! * USD_TO_EUR * 100) / 100
+    const nameKey = card.name.toLowerCase()
+    if(priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
+    return null
+  }
 
   // ── Custom card images (user uploads) ──
   const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
@@ -1437,10 +1462,18 @@ export function Encyclopedie() {
 
                     {/* Owned + set completion */}
                     {selCard && (()=>{
+                      const cardPrice = selCard ? getPrice(selCard) : null
                       const setTotal = allCards.filter(c=>c.setId===selCard.setId).length
                       const setOwned = allCards.filter(c=>c.setId===selCard.setId && isOwned(c)).length
                       const pct = setTotal>0 ? Math.round(setOwned/setTotal*100) : 0
-                      return setTotal>0 ? (
+                      return (<>
+                      {cardPrice && (
+                        <div style={{ background:'linear-gradient(135deg,#F0FFF4,#E8F5E9)', borderRadius:'10px', padding:'12px', marginBottom:'10px', border:'1px solid rgba(46,158,106,.15)' }}>
+                          <div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Prix marché (estimé)</div>
+                          <div style={{ fontSize:'22px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)', letterSpacing:'-0.5px' }}>{cardPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
+                        </div>
+                      )}
+                      {setTotal>0 ? (
                         <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px', marginBottom:'12px' }}>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
                             <span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>Complétion du set</span>
@@ -1450,7 +1483,8 @@ export function Encyclopedie() {
                             <div style={{ width:pct+'%', height:'100%', borderRadius:'2px', background:pct===100?'linear-gradient(90deg,#C9A84C,#D4AF37)':'#E03020', transition:'width .3s' }}/>
                           </div>
                         </div>
-                      ) : null
+                      ) : null}
+                    </>)
                     })()}
 
                     {selCard && isOwned(selCard) ? (

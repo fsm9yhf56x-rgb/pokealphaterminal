@@ -113,6 +113,10 @@ export function Holdings() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
+  const cleanImageUrl = (url: string|undefined): string => {
+    if (!url) return ''
+    return url.replace('https://jtheycxwbkweehfezyem.supabase.co/storage/v1/object/public/card-images', 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev')
+  }
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
@@ -2177,7 +2181,7 @@ export function Holdings() {
                                 <div onClick={()=>{ setSpotCard(card); setEditQty(null) }} style={{ borderRadius:'12px', overflow:'hidden', border:`${borderW} solid ${borderColor}`, boxShadow:`0 2px 8px rgba(0,0,0,.08)`, position:'relative', cursor:'pointer' }}>
                                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
-                                  <img src={card.image} alt={card.name}
+                                  <img src={cleanImageUrl(card.image)} alt={card.name}
                                     style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
                                     onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null }}/>
                                 ):(

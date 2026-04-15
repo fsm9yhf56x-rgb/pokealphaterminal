@@ -278,7 +278,13 @@ export function Holdings() {
           const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
           const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
-          const priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
+          let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
+          // 1st Edition >= Shadowless price floor
+          if (sid.includes('-1st') && slug) {
+            const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
+            const shadowlessPrice = map[shadowlessKey]?.top
+            if (shadowlessPrice && (!priceUSD || priceUSD < shadowlessPrice)) priceUSD = shadowlessPrice
+          }
           if (priceUSD) {
             const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
             if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }

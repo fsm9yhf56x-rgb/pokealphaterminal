@@ -9,15 +9,20 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-async function getEbayToken(): Promise<string | null> {
-  const auth = Buffer.from(EBAY_APP_ID + ':' + EBAY_CERT_ID).toString('base64')
-  const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + auth },
-    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
-  })
-  const d = await r.json()
-  return d.access_token || null
+async function getEbayToken(): Promise<{ token: string | null; error?: string }> {
+  try {
+    const auth = Buffer.from(EBAY_APP_ID + ':' + EBAY_CERT_ID).toString('base64')
+    const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + auth },
+      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
+    })
+    const d = await r.json()
+    if (d.access_token) return { token: d.access_token }
+    return { token: null, error: JSON.stringify(d).substring(0, 200) }
+  } catch (e: any) {
+    return { token: null, error: e.message }
+  }
 }
 
 function buildQuery(cardName: string, setName: string, edition?: string): string {
@@ -53,8 +58,8 @@ export async function POST(request: Request) {
   if (!EBAY_APP_ID || !EBAY_CERT_ID) {
     return NextResponse.json({ error: 'eBay env vars missing', hasAppId: !!EBAY_APP_ID, hasCertId: !!EBAY_CERT_ID }, { status: 500 })
   }
-  const token = await getEbayToken()
-  if (!token) return NextResponse.json({ error: 'eBay auth failed' }, { status: 500 })
+  const { token, error: authError } = await getEbayToken()
+  if (!token) return NextResponse.json({ error: 'eBay auth failed', detail: authError, appIdLen: EBAY_APP_ID.length, certIdLen: EBAY_CERT_ID.length }, { status: 500 })
 
   const results: any[] = []
 

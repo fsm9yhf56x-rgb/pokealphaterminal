@@ -291,11 +291,18 @@ export function Holdings() {
           const key = p.set_slug + '|' + variant + '|' + num
           if (!details[key]) details[key] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
           const d = details[key]
-          const isPT = p.source !== 'ebay'
-          if (isPT) {
-            if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
-            if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
-            if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
+          // Store all sources regardless of origin
+          if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
+          if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
+          if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
+          // Also index by slug without variant (for Unlimited/Holofoil matching)
+          const dk2 = p.set_slug + '||' + num
+          if (variant && dk2 !== key) {
+            if (!details[dk2]) details[dk2] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
+            const d2 = details[dk2]
+            if (p.ebay_avg && (!d2.ebay || p.ebay_avg > d2.ebay)) d2.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
+            if (p.tcg_avg && (!d2.tcg || p.tcg_avg > d2.tcg)) d2.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
+            if (p.top_price && (!d2.poketrace || p.top_price > d2.poketrace)) d2.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
           }
           // Weighted average: eBay 40%, TCG 30%, Cardmarket 30% (when available)
           const sources = [d.ebay, d.tcg, d.cardmarket].filter(Boolean) as number[]
@@ -305,6 +312,20 @@ export function Holdings() {
             d.estimated = Math.round(sources.reduce((s, p, i) => s + p * (weights[i] || 0), 0) / totalW * 100) / 100
           } else if (d.poketrace) {
             d.estimated = d.poketrace
+          }
+          // Update estimated for no-variant key too
+          if (variant && details[dk2]) {
+            const d2e = details[dk2]
+            const sp2: [number,number][] = []
+            if (d2e.ebay) sp2.push([d2e.ebay, 0.4])
+            if (d2e.tcg) sp2.push([d2e.tcg, 0.3])
+            if (d2e.cardmarket) sp2.push([d2e.cardmarket, 0.3])
+            if (sp2.length > 0) {
+              const tw2 = sp2.reduce((a,[,w])=>a+w,0)
+              d2e.estimated = Math.round(sp2.reduce((a,[p,w])=>a+p*w,0) / tw2 * 100) / 100
+            } else if (d2e.poketrace) {
+              d2e.estimated = d2e.poketrace
+            }
           }
         })
         setPriceDetails(details)

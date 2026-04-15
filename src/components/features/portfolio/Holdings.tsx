@@ -290,11 +290,14 @@ export function Holdings() {
           const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
           let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
-          // 1st Edition >= Shadowless price floor
+          // 1st Edition: use eBay if PokeTrace is lower than Shadowless, then apply floor
           if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
             const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
             const shadowlessPrice = map[shadowlessKey]?.top
-            if (shadowlessPrice && (!priceUSD || priceUSD < shadowlessPrice)) priceUSD = shadowlessPrice
+            // Check if there's a better eBay price for 1st Edition
+            const ebayVarKey = slug + '|1st_Edition_Holofoil|' + c.number
+            const allPrices = [priceUSD, map[ebayVarKey]?.top, shadowlessPrice].filter(Boolean) as number[]
+            if (allPrices.length) priceUSD = Math.max(...allPrices)
           }
           if (priceUSD) {
             const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
@@ -310,21 +313,31 @@ export function Holdings() {
     const USD_TO_EUR = 0.92
     const sid = (card as any).setId || ''
     const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-    // Try variant match first
     const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+    let priceUSD: number | null = null
+    // Try variant match
     if (varHint && slug) {
       const varKey = slug + '|' + varHint + '|' + card.number
-      if (priceMap[varKey]?.top) return Math.round(priceMap[varKey].top! * USD_TO_EUR * 100) / 100
+      if (priceMap[varKey]?.top) priceUSD = priceMap[varKey].top!
     }
     // Try slug+number
-    if (slug) {
+    if (!priceUSD && slug) {
       const slugKey = slug + '|' + card.number
-      if (priceMap[slugKey]?.top) return Math.round(priceMap[slugKey].top! * USD_TO_EUR * 100) / 100
+      if (priceMap[slugKey]?.top) priceUSD = priceMap[slugKey].top!
     }
     // Fallback by name
-    const nameKey = card.name.toLowerCase()
-    if (priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
-    return null
+    if (!priceUSD) {
+      const nameKey = card.name.toLowerCase()
+      if (priceMap[nameKey]?.top) priceUSD = priceMap[nameKey].top!
+    }
+    // 1st Edition: take max of variant, eBay, and Shadowless floor
+    if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
+      const shadowlessKey = slug + '|Unlimited_Holofoil|' + card.number
+      const ebayKey = slug + '|1st_Edition_Holofoil|' + card.number
+      const all = [priceUSD, priceMap[shadowlessKey]?.top, priceMap[ebayKey]?.top].filter(Boolean) as number[]
+      if (all.length) priceUSD = Math.max(...all)
+    }
+    return priceUSD ? Math.round(priceUSD * USD_TO_EUR * 100) / 100 : null
   }
 
   const [fullSetCards, setFullSetCards] = useState<TCGCard[]>([])

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const EBAY_APP_ID = process.env.EBAY_APP_ID!
-const EBAY_CERT_ID = process.env.EBAY_CERT_ID!
+const EBAY_APP_ID = process.env.EBAY_APP_ID || ''
+const EBAY_CERT_ID = process.env.EBAY_CERT_ID || ''
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
@@ -50,6 +50,9 @@ export async function POST(request: Request) {
   if (!cards.length) return NextResponse.json({ error: 'No cards provided' }, { status: 400 })
   if (cards.length > 20) return NextResponse.json({ error: 'Max 20 cards per request' }, { status: 400 })
 
+  if (!EBAY_APP_ID || !EBAY_CERT_ID) {
+    return NextResponse.json({ error: 'eBay env vars missing', hasAppId: !!EBAY_APP_ID, hasCertId: !!EBAY_CERT_ID }, { status: 500 })
+  }
   const token = await getEbayToken()
   if (!token) return NextResponse.json({ error: 'eBay auth failed' }, { status: 500 })
 

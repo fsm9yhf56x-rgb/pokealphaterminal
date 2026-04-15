@@ -254,11 +254,13 @@ export function Holdings() {
         setMappingRef.current = mapping
         const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
         data.forEach((p: any) => {
-          // Index by set_slug + card_number (unique per edition)
+          // Index by set_slug + card_number (unique per edition) — keep highest price
           if (p.card_number && p.set_slug) {
             const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
             const slugKey = p.set_slug + '|' + num
-            map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+            if (!map[slugKey] || (p.top_price && (!map[slugKey].top || p.top_price > map[slugKey].top))) {
+              map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+            }
           }
           // Also index by card_name as fallback (use LOWEST price to be conservative)
           const key = (p.card_name || '').toLowerCase()

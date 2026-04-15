@@ -327,18 +327,20 @@ export function Holdings() {
             const allPrices = [priceUSD, map[ebayVarKey]?.top, shadowlessPrice].filter(Boolean) as number[]
             if (allPrices.length) priceUSD = Math.max(...allPrices)
           }
-          // Fallback: use priceDetails average if main matching failed
-          if (!priceUSD && slug) {
-            const varH = varHint || ''
-            const detKey = slug + '|' + varH + '|' + c.number
-            const det = details[detKey]
-            if (det) {
-              const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
-              if (srcs.length) priceUSD = Math.round(srcs.reduce((a,b)=>a+b,0) / srcs.length / USD_TO_EUR * 100) / 100
-            }
+          // Use weighted average from priceDetails as the display price
+          const varH = varHint || ''
+          const detKey = slug + '|' + varH + '|' + c.number
+          const det = details[detKey]
+          let priceEUR: number | null = null
+          if (det?.estimated) {
+            priceEUR = det.estimated
+          } else if (priceUSD) {
+            priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
+          } else if (det) {
+            const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
+            if (srcs.length) priceEUR = Math.round(srcs.reduce((a,b)=>a+b,0) / srcs.length * 100) / 100
           }
-          if (priceUSD) {
-            const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
+          if (priceEUR) {
             if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
           }
           return c

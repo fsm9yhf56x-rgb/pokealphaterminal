@@ -217,29 +217,91 @@ export function Encyclopedie() {
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
   const [priceMap, setPriceMap] = useState<Record<string, { top: number|null }>>({})
+  const [priceDetails, setPriceDetails] = useState<Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }>>({})
+  const [setMapping, setSetMapping] = useState<Record<string,string>>({})
+  useEffect(() => {
+    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).then(d=>setSetMapping(d)).catch(()=>{})
+  }, [])
   useEffect(() => {
     fetch('/api/prices').then(r=>r.json()).then(({ data }) => {
       if(!data) return
+      const USD_EUR = 0.92
       const map: Record<string, { top: number|null }> = {}
+      const details: Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }> = {}
       data.forEach((p: any) => {
+        // Standard map by name
         const nameKey = (p.card_name||'').toLowerCase()
         if(!map[nameKey]||(p.top_price&&(!map[nameKey].top||p.top_price>map[nameKey].top!))) map[nameKey] = { top: p.top_price }
-        const numParts = (p.card_number||'').split('/')
-        if(numParts[0] && p.set_name) {
-          const numKey = p.set_name.toLowerCase()+'|'+numParts[0]
-          if(!map[numKey]||(p.top_price&&(!map[numKey].top||p.top_price>map[numKey].top!))) map[numKey] = { top: p.top_price }
+        // Map by slug+variant+number
+        if (p.card_number && p.set_slug) {
+          const num = p.card_number.split('/')[0].replace(/^0+/,'') || '0'
+          const isPT = p.source !== 'ebay'
+          // Variant key
+          if (p.variant) {
+            const vk = p.set_slug + '|' + p.variant + '|' + num
+            if (!map[vk] || (isPT && (map[vk] as any)._src === 'ebay') || (isPT === ((map[vk] as any)._src !== 'ebay') && p.top_price > (map[vk].top||0))) {
+              map[vk] = { top: p.top_price, _src: isPT ? 'pt' : 'ebay' } as any
+            }
+          }
+          // Slug key
+          const sk = p.set_slug + '|' + num
+          if (!map[sk] || (isPT && (map[sk] as any)._src === 'ebay') || (isPT === ((map[sk] as any)._src !== 'ebay') && p.top_price > (map[sk].top||0))) {
+            map[sk] = { top: p.top_price, _src: isPT ? 'pt' : 'ebay' } as any
+          }
+          // Details by slug+variant+number
+          const variant = p.variant || ''
+          const dk = p.set_slug + '|' + variant + '|' + num
+          if (!details[dk]) details[dk] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
+          const d = details[dk]
+          if (isPT) {
+            if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
+            if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
+            if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
+          }
+          const sources = [d.ebay, d.tcg, d.cardmarket].filter(Boolean) as number[]
+          if (sources.length > 0) {
+            const weights = [d.ebay ? 0.4 : 0, d.tcg ? 0.3 : 0, d.cardmarket ? 0.3 : 0]
+            const totalW = weights.reduce((a,b) => a+b, 0) || 1
+            d.estimated = Math.round(sources.reduce((s,p,i) => s + p * (weights[i]||0), 0) / totalW * 100) / 100
+          } else if (d.poketrace) {
+            d.estimated = d.poketrace
+          }
         }
       })
       setPriceMap(map)
+      setPriceDetails(details)
     }).catch(()=>{})
   }, [])
-  const getPrice = (card: { name: string; setName?: string; localId?: string }): number|null => {
+  const getPrice = (card: { name: string; setName?: string; localId?: string; setId?: string }): number|null => {
     const USD_TO_EUR = 0.92
-    const numKey = (card.setName||'').toLowerCase()+'|'+(card.localId||'')
-    if(priceMap[numKey]?.top) return Math.round(priceMap[numKey].top! * USD_TO_EUR * 100) / 100
+    const sid = (card as any).setId || ''
+    const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+    // Try variant
+    if (varHint && slug) {
+      const vk = slug + '|' + varHint + '|' + (card.localId||'')
+      if (priceMap[vk]?.top) return Math.round(priceMap[vk].top! * USD_TO_EUR * 100) / 100
+    }
+    // Try slug+number
+    if (slug) {
+      const sk = slug + '|' + (card.localId||'')
+      if (priceMap[sk]?.top) return Math.round(priceMap[sk].top! * USD_TO_EUR * 100) / 100
+    }
+    // Try details estimated
+    const dk = slug + '|' + varHint + '|' + (card.localId||'')
+    const det = priceDetails[dk]
+    if (det?.estimated) return det.estimated
+    // Fallback by name
     const nameKey = card.name.toLowerCase()
     if(priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
     return null
+  }
+  const getPriceDetail = (card: { name: string; setName?: string; localId?: string; setId?: string }): { ebay: number|null; tcg: number|null; cardmarket: number|null; estimated: number|null } | null => {
+    const sid = (card as any).setId || ''
+    const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+    const dk = slug + '|' + varHint + '|' + (card.localId||'')
+    return priceDetails[dk] || null
   }
 
   // ── Custom card images (user uploads) ──
@@ -1467,12 +1529,34 @@ export function Encyclopedie() {
                       const setOwned = allCards.filter(c=>c.setId===selCard.setId && isOwned(c)).length
                       const pct = setTotal>0 ? Math.round(setOwned/setTotal*100) : 0
                       return (<>
-                      {cardPrice && (
-                        <div style={{ background:'linear-gradient(135deg,#F0FFF4,#E8F5E9)', borderRadius:'10px', padding:'12px', marginBottom:'10px', border:'1px solid rgba(46,158,106,.15)' }}>
-                          <div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Prix marché (estimé)</div>
-                          <div style={{ fontSize:'22px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)', letterSpacing:'-0.5px' }}>{cardPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
-                        </div>
-                      )}
+                      {(()=>{
+                        const det = selCard ? getPriceDetail(selCard) : null
+                        const sources = det ? [
+                          { label: 'eBay', price: det.ebay, icon: '🔴' },
+                          { label: 'TCGPlayer', price: det.tcg, icon: '🔵' },
+                          { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
+                        ].filter(s => s.price) : []
+                        return (cardPrice || sources.length > 0) ? (
+                          <div style={{ background:'linear-gradient(135deg,#F0FFF4,#E8F5E9)', borderRadius:'10px', padding:'12px', marginBottom:'10px', border:'1px solid rgba(46,158,106,.15)' }}>
+                            <div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Prix marché (estimé)</div>
+                            <div style={{ fontSize:'22px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{(cardPrice || 0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
+                            {sources.length > 0 && (
+                              <div style={{ borderTop:'1px solid rgba(46,158,106,.15)', paddingTop:'8px' }}>
+                                <div style={{ fontSize:'9px', color:'#86868B', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'6px' }}>Prix par source</div>
+                                {sources.map(s=>(
+                                  <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'3px 0' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
+                                      <span style={{ fontSize:'9px' }}>{s.icon}</span>
+                                      <span style={{ fontSize:'11px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>{s.label}</span>
+                                    </div>
+                                    <span style={{ fontSize:'12px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{s.price!.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : null
+                      })()}
                       {setTotal>0 ? (
                         <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px', marginBottom:'12px' }}>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>

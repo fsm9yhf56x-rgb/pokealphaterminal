@@ -152,6 +152,7 @@ export async function GET(request: Request) {
             set_slug: ptSlug,
             set_name: card.set?.name,
             poketrace_id: card.id,
+            variant: card.variant || null,
             market: card.market || 'US',
             currency: card.currency || 'USD',
             ebay_avg: ebay?.avg || null,

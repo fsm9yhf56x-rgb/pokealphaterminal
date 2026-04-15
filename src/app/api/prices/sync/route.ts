@@ -98,6 +98,7 @@ export async function POST(request: Request) {
         await supabase.from('prices').upsert({
           card_name: card.name, card_number: card.cardNumber,
           set_slug: ptSlug, set_name: card.set?.name, poketrace_id: card.id,
+            variant: card.variant || null,
           market: card.market || 'US', currency: card.currency || 'USD',
           ebay_avg: ebay?.avg || null, ebay_low: ebay?.low || null, ebay_high: ebay?.high || null,
           ebay_avg7d: ebay?.avg7d || null, ebay_avg30d: ebay?.avg30d || null, ebay_sales: ebay?.saleCount || null,
@@ -125,6 +126,7 @@ export async function POST(request: Request) {
           await supabase.from('prices').upsert({
             card_name: card.name, card_number: card.cardNumber,
             set_slug: ptSlug, set_name: card.set?.name, poketrace_id: card.id,
+            variant: card.variant || null,
             market: card.market || 'US', currency: card.currency || 'USD',
             ebay_avg: ebay?.avg || null, ebay_low: ebay?.low || null, ebay_high: ebay?.high || null,
             ebay_avg7d: ebay?.avg7d || null, ebay_avg30d: ebay?.avg30d || null, ebay_sales: ebay?.saleCount || null,

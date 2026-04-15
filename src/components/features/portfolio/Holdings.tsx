@@ -272,10 +272,13 @@ export function Holdings() {
         // Update curPrice on portfolio cards (USD → EUR conversion)
         const USD_TO_EUR = 0.92
         setPortfolio(prev => prev.map(c => {
-          const slug = setMappingRef.current[c.setId||''] || setMappingRef.current[(c.setId||'').replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+          const sid = c.setId || ''
+          const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+          const varHint = sid.includes('-1st') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+          const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
           const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
-          const priceUSD = map[slugKey]?.top || map[nameKey]?.top
+          const priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
           if (priceUSD) {
             const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
             if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }

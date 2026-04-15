@@ -258,11 +258,13 @@ export function Encyclopedie() {
             if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
             if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
           }
-          const sources = [d.ebay, d.tcg, d.cardmarket].filter(Boolean) as number[]
-          if (sources.length > 0) {
-            const weights = [d.ebay ? 0.4 : 0, d.tcg ? 0.3 : 0, d.cardmarket ? 0.3 : 0]
-            const totalW = weights.reduce((a,b) => a+b, 0) || 1
-            d.estimated = Math.round(sources.reduce((s,p,i) => s + p * (weights[i]||0), 0) / totalW * 100) / 100
+          const srcPairs: [number, number][] = []
+          if (d.ebay) srcPairs.push([d.ebay, 0.4])
+          if (d.tcg) srcPairs.push([d.tcg, 0.3])
+          if (d.cardmarket) srcPairs.push([d.cardmarket, 0.3])
+          if (srcPairs.length > 0) {
+            const totalW = srcPairs.reduce((a, [,w]) => a + w, 0)
+            d.estimated = Math.round(srcPairs.reduce((a, [p,w]) => a + p * w, 0) / totalW * 100) / 100
           } else if (d.poketrace) {
             d.estimated = d.poketrace
           }
@@ -1249,6 +1251,7 @@ export function Encyclopedie() {
                             {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
+                        {(()=>{ const gp = getPrice(card); return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{gp.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
                           return (

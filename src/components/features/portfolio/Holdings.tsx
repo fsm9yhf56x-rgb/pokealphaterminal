@@ -249,7 +249,7 @@ export function Holdings() {
     fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})).then((mapping: Record<string,string>) => {
       setMappingRef.current = mapping
       const cleanSet = (s: string) => s.replace(/-shadowless(-ns)?|-1st/g, '')
-      const slugs = [...new Set(setIds.map(sid => mapping[sid] || mapping[cleanSet(sid)] || '').filter(Boolean))]
+      const slugs = [...new Set(setIds.map(sid => mapping[sid as string] || mapping[cleanSet(sid as string)] || '').filter(Boolean))]
       return fetch('/api/prices?sets=' + slugs.join(',')).then(r=>r.json()).catch(()=>({data:null}))
     }).then(({ data }: any) => {
         if (!data) return

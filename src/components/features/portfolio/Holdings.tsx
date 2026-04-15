@@ -226,6 +226,7 @@ export function Holdings() {
   const [scannerOpen,  setScannerOpen]  = useState(false)
   // ── Prix depuis cache Supabase ──
   const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
+  const [priceDetails, setPriceDetails] = useState<Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }>>({})
   const pricesFetched = useRef<string|false>(false)
   const setMappingRef = useRef<Record<string,string>>({})
   useEffect(() => {
@@ -280,6 +281,33 @@ export function Holdings() {
           }
         })
         setPriceMap(map)
+        // Build per-source detail map for spotlight
+        const details: Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }> = {}
+        const USD_EUR = 0.92
+        data.forEach((p: any) => {
+          if (!p.card_number || !p.set_slug) return
+          const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
+          const variant = p.variant || ''
+          const key = p.set_slug + '|' + variant + '|' + num
+          if (!details[key]) details[key] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
+          const d = details[key]
+          const isPT = p.source !== 'ebay'
+          if (isPT) {
+            if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
+            if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
+            if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
+          }
+          // Weighted average: eBay 40%, TCG 30%, Cardmarket 30% (when available)
+          const sources = [d.ebay, d.tcg, d.cardmarket].filter(Boolean) as number[]
+          if (sources.length > 0) {
+            const weights = [d.ebay ? 0.4 : 0, d.tcg ? 0.3 : 0, d.cardmarket ? 0.3 : 0].filter((_, i) => sources[i] !== undefined)
+            const totalW = weights.reduce((a, b) => a + b, 0) || 1
+            d.estimated = Math.round(sources.reduce((s, p, i) => s + p * (weights[i] || 0), 0) / totalW * 100) / 100
+          } else if (d.poketrace) {
+            d.estimated = d.poketrace
+          }
+        })
+        setPriceDetails(details)
         // Update curPrice on portfolio cards (USD → EUR conversion)
         const USD_TO_EUR = 0.92
         setPortfolio(prev => prev.map(c => {
@@ -1493,19 +1521,47 @@ export function Holdings() {
                     </div>
                     <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
                     {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'14px' }}>
-                      {[
-                        {l:'Achat',v:'EUR '+spotCard.buyPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
-                        {l:'Marché',v:'EUR '+spotCard.curPrice.toLocaleString('fr-FR'),c:'#1D1D1F'},
-                        {l:'ROI',v:spotCard.buyPrice>0?'+'+roi+'%':'---',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
-                        {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'#48484A'},
-                      ].map(st=>(
-                        <div key={st.l} style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px' }}>
-                          <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500 }}>{st.l}</div>
-                          <div style={{ fontSize:'14px', fontWeight:600, color:st.c, fontFamily:'var(--font-display)', marginTop:'2px' }}>{st.v}</div>
+                    {(()=>{
+                      const sid = spotCard.setId || ''
+                      const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+                      const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+                      const dKey = slug + '|' + varHint + '|' + spotCard.number
+                      const det = priceDetails[dKey] || { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
+                      const sources = [
+                        { label: 'eBay', price: det.ebay, color: '#E53238', icon: '🔴' },
+                        { label: 'TCGPlayer', price: det.tcg, color: '#1D4ED8', icon: '🔵' },
+                        { label: 'Cardmarket', price: det.cardmarket, color: '#FF7900', icon: '🟠' },
+                      ].filter(s => s.price)
+                      return <>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'10px' }}>
+                          {[
+                            {l:'Achat',v:spotCard.buyPrice>0?spotCard.buyPrice.toLocaleString('fr-FR')+' €':'---',c:'#1D1D1F'},
+                            {l:'Marché (est.)',v:spotCard.curPrice>0?spotCard.curPrice.toLocaleString('fr-FR')+' €':'---',c:'#1D1D1F'},
+                            {l:'ROI',v:spotCard.buyPrice>0?(roi>=0?'+':'')+roi+'%':'---',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
+                            {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'#48484A'},
+                          ].map(st=>(
+                            <div key={st.l} style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px' }}>
+                              <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500 }}>{st.l}</div>
+                              <div style={{ fontSize:'14px', fontWeight:600, color:st.c, fontFamily:'var(--font-display)', marginTop:'2px' }}>{st.v}</div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                        {sources.length > 0 && (
+                          <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'12px', marginBottom:'14px' }}>
+                            <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'8px' }}>Prix par source</div>
+                            {sources.map(s=>(
+                              <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0' }}>
+                                <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                                  <span style={{ fontSize:'10px' }}>{s.icon}</span>
+                                  <span style={{ fontSize:'12px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>{s.label}</span>
+                                </div>
+                                <span style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{s.price!.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    })()}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', padding:'10px 0', borderTop:'1px solid #F0F0F5', borderBottom:'1px solid #F0F0F5' }}>
                       <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>

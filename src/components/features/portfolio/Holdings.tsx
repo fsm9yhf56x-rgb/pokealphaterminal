@@ -327,6 +327,16 @@ export function Holdings() {
             const allPrices = [priceUSD, map[ebayVarKey]?.top, shadowlessPrice].filter(Boolean) as number[]
             if (allPrices.length) priceUSD = Math.max(...allPrices)
           }
+          // Fallback: use priceDetails average if main matching failed
+          if (!priceUSD && slug) {
+            const varH = varHint || ''
+            const detKey = slug + '|' + varH + '|' + c.number
+            const det = details[detKey]
+            if (det) {
+              const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
+              if (srcs.length) priceUSD = Math.round(srcs.reduce((a,b)=>a+b,0) / srcs.length / USD_TO_EUR * 100) / 100
+            }
+          }
           if (priceUSD) {
             const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
             if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
@@ -1519,7 +1529,21 @@ export function Holdings() {
                         <span style={{ fontSize:'14px' }}>{spotCard.lang==='EN'?'\u{1F1FA}\u{1F1F8}':spotCard.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                       </div>
                     </div>
-                    <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {spotCard.curPrice.toLocaleString('fr-FR')}</div>
+                    {(()=>{
+                      let displayPrice = spotCard.curPrice
+                      if (!displayPrice) {
+                        const sid = spotCard.setId || ''
+                        const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+                        const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+                        const dKey = slug + '|' + varHint + '|' + spotCard.number
+                        const det = priceDetails[dKey]
+                        if (det) {
+                          const sources = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
+                          if (sources.length) displayPrice = Math.round(sources.reduce((a,b)=>a+b,0)/sources.length*100)/100
+                        }
+                      }
+                      return <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {displayPrice.toLocaleString('fr-FR')}</div>
+                    })()}
                     {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
                     {(()=>{
                       const sid = spotCard.setId || ''

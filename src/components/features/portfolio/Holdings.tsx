@@ -831,9 +831,11 @@ export function Holdings() {
   }
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()
+    console.log('removeCard called, user:', user?.email, 'card.id:', card.id)
     deletedIds.current.add(card.id)
     setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
     if (user) {
+      console.log('DELETE: sending to Supabase...')
       if (card.id.startsWith('u')) {
         // Local ID — delete by name + set + user
         supabase.from('portfolio_cards').delete()

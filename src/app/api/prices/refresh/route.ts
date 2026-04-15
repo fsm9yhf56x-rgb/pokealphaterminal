@@ -123,6 +123,7 @@ export async function POST(request: Request) {
           condition: 'NEAR_MINT', tier: getTier(topPrice),
           has_graded: card.hasGraded || false, psa10_avg: psa10?.avg || null,
           fetched_at: new Date().toISOString(),
+            source: 'poketrace',
         }, { onConflict: 'poketrace_id,condition' })
         totalCards++
       }

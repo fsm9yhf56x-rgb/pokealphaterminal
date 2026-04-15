@@ -174,6 +174,7 @@ export async function GET(request: Request) {
             has_graded: card.hasGraded || false,
             psa10_avg: psa10?.avg || null,
             fetched_at: new Date().toISOString(),
+            source: 'poketrace',
           }, { onConflict: 'poketrace_id,condition' })
           totalCards++
         }

@@ -256,6 +256,7 @@ export function Encyclopedie() {
           if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
           if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
           if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
+          if (p.cardmarket_avg && (!d.cardmarket || p.cardmarket_avg > d.cardmarket)) d.cardmarket = Math.round(p.cardmarket_avg * 100) / 100
           // Also index by slug without variant
           const dk2 = p.set_slug + '||' + num
           if (variant && dk2 !== dk) {

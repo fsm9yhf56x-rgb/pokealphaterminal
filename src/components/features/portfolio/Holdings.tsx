@@ -1572,6 +1572,10 @@ export function Holdings() {
                         { label: 'TCGPlayer', price: det.tcg, color: '#1D4ED8', icon: '🔵' },
                         { label: 'Cardmarket', price: det.cardmarket, color: '#FF7900', icon: '🟠' },
                       ].filter(s => s.price)
+                      // If no individual sources but poketrace has a price, show it
+                      if (sources.length === 0 && det?.poketrace) {
+                        sources.push({ label: 'PokeTrace', price: det.poketrace, color: '#4CAF50', icon: '🟢' })
+                      }
                       return <>
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'10px' }}>
                           {[

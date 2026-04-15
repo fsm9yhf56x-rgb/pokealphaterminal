@@ -1539,6 +1539,10 @@ export function Encyclopedie() {
                           { label: 'TCGPlayer', price: det.tcg, icon: '🔵' },
                           { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
                         ].filter(s => s.price) : []
+                        // If no individual sources but poketrace has a price, show it
+                        if (sources.length === 0 && det?.poketrace) {
+                          sources.push({ label: 'PokeTrace', price: det.poketrace, icon: '🟢' })
+                        }
                         return (cardPrice || sources.length > 0) ? (
                           <div style={{ background:'linear-gradient(135deg,#F0FFF4,#E8F5E9)', borderRadius:'10px', padding:'12px', marginBottom:'10px', border:'1px solid rgba(46,158,106,.15)' }}>
                             <div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Prix marché (estimé)</div>

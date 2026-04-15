@@ -280,13 +280,13 @@ export function Holdings() {
         setPortfolio(prev => prev.map(c => {
           const sid = c.setId || ''
           const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-          const varHint = sid.includes('-1st') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+          const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
           const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
           const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
           let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
           // 1st Edition >= Shadowless price floor
-          if (sid.includes('-1st') && slug) {
+          if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
             const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
             const shadowlessPrice = map[shadowlessKey]?.top
             if (shadowlessPrice && (!priceUSD || priceUSD < shadowlessPrice)) priceUSD = shadowlessPrice
@@ -306,7 +306,7 @@ export function Holdings() {
     const sid = (card as any).setId || ''
     const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
     // Try variant match first
-    const varHint = sid.includes('-1st') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
     if (varHint && slug) {
       const varKey = slug + '|' + varHint + '|' + card.number
       if (priceMap[varKey]?.top) return Math.round(priceMap[varKey].top! * USD_TO_EUR * 100) / 100

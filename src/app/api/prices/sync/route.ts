@@ -65,7 +65,9 @@ export async function POST(request: Request) {
   
   if (setsToSync.length === 0) {
     const { data: portfolioSets } = await supabase.from('portfolio_cards').select('set_id')
-    const uniqueSets = [...new Set((portfolioSets || []).map((c: any) => c.set_id).filter(Boolean))]
+    const rawSets = [...new Set((portfolioSets || []).map((c: any) => c.set_id).filter(Boolean))]
+    const cleanSet = (s: string) => s.replace(/-shadowless(-ns)?|-1st/g, '')
+    const uniqueSets = [...new Set(rawSets.map(cleanSet))]
     setsToSync = uniqueSets.filter(s => setMapping[s])
   }
 

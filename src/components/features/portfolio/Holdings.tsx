@@ -243,12 +243,15 @@ export function Holdings() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sets: setIds })
-    }).catch(() => {}) // fire-and-forget, don't block display
+    }).catch(() => {})
 
-    fetch('/api/prices')
-      .then(r => r.json())
-      .then(({ data }) => {
+    // Load set mapping + prices in parallel, then match
+    Promise.all([
+      fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})),
+      fetch('/api/prices').then(r=>r.json()).catch(()=>({data:null}))
+    ]).then(([mapping, { data }]) => {
         if (!data) return
+        setMappingRef.current = mapping
         const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
         data.forEach((p: any) => {
           // Index by set_slug + card_number (unique per edition)
@@ -257,9 +260,9 @@ export function Holdings() {
             const slugKey = p.set_slug + '|' + num
             map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
           }
-          // Also index by card_name as fallback
+          // Also index by card_name as fallback (use LOWEST price to be conservative)
           const key = (p.card_name || '').toLowerCase()
-          if (!map[key] || (p.top_price && (!map[key].top || p.top_price > map[key].top))) {
+          if (!map[key] || (p.top_price && (!map[key].top || p.top_price < map[key].top))) {
             map[key] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
           }
         })

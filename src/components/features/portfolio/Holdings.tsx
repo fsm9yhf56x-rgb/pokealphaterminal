@@ -227,6 +227,10 @@ export function Holdings() {
   // ── Prix depuis cache Supabase ──
   const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
   const pricesFetched = useRef<string|false>(false)
+  const setMappingRef = useRef<Record<string,string>>({})
+  useEffect(() => {
+    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).then(d=>{ setMappingRef.current = d }).catch(()=>{})
+  }, [])
   useEffect(() => {
     if (!portfolioLoaded || portfolio.length === 0) return
     // Re-fetch si nouvelles cartes ajoutées
@@ -247,25 +251,26 @@ export function Holdings() {
         if (!data) return
         const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
         data.forEach((p: any) => {
-          // Match by card_name (lowercase) — could match multiple cards
+          // Index by set_slug + card_number (unique per edition)
+          if (p.card_number && p.set_slug) {
+            const num = p.card_number.split('/')[0]
+            const slugKey = p.set_slug + '|' + num
+            map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+          }
+          // Also index by card_name as fallback
           const key = (p.card_name || '').toLowerCase()
           if (!map[key] || (p.top_price && (!map[key].top || p.top_price > map[key].top))) {
             map[key] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
-          }
-          // Also index by card_number prefix (e.g. "010" from "010/102")
-          if (p.card_number) {
-            const num = p.card_number.split('/')[0]
-            const numKey = p.set_name?.toLowerCase() + '|' + num
-            map[numKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
           }
         })
         setPriceMap(map)
         // Update curPrice on portfolio cards (USD → EUR conversion)
         const USD_TO_EUR = 0.92
         setPortfolio(prev => prev.map(c => {
-          const numKey = c.set.toLowerCase() + '|' + c.number
+          const slug = setMappingRef.current[c.setId||''] || setMappingRef.current[(c.setId||'').replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+          const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
-          const priceUSD = map[numKey]?.top || map[nameKey]?.top
+          const priceUSD = map[slugKey]?.top || map[nameKey]?.top
           if (priceUSD) {
             const priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
             if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }

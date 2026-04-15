@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const names = searchParams.get('names')?.split(',').map(n => n.trim()).filter(Boolean)
   const setSlug = searchParams.get('set')
   
-  let query = supabase.from('prices').select('card_name, card_number, set_slug, set_name, ebay_avg, tcg_avg, top_price, tier, has_graded, psa10_avg, fetched_at')
+  let query = supabase.from('prices').select('card_name, card_number, set_slug, set_name, ebay_avg, tcg_avg, top_price, tier, has_graded, psa10_avg, fetched_at, poketrace_id')
   
   if (names?.length) {
     query = query.in('card_name', names)

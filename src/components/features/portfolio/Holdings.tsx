@@ -258,15 +258,19 @@ export function Holdings() {
           // Index by set_slug + variant + card_number
           if (p.card_number && p.set_slug) {
             const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
+            const isPT = p.source !== 'ebay'
             if (p.variant) {
               const varKey = p.set_slug + '|' + p.variant + '|' + num
-              if (!map[varKey] || (p.top_price && p.top_price > (map[varKey].top||0))) {
-                map[varKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+              const ex = map[varKey]
+              // PokeTrace prioritaire (ventes réelles) > eBay (listings actifs)
+              if (!ex || (isPT && (ex as any)._src === 'ebay') || (isPT === ((ex as any)._src !== 'ebay') && p.top_price && p.top_price > (ex.top||0))) {
+                map[varKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier, _src: isPT ? 'pt' : 'ebay' } as any
               }
             }
             const slugKey = p.set_slug + '|' + num
-            if (!map[slugKey] || (p.top_price && p.top_price > (map[slugKey].top||0))) {
-              map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
+            const exS = map[slugKey]
+            if (!exS || (isPT && (exS as any)._src === 'ebay') || (isPT === ((exS as any)._src !== 'ebay') && p.top_price && p.top_price > (exS.top||0))) {
+              map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier, _src: isPT ? 'pt' : 'ebay' } as any
             }
           }
           // Also index by card_name as fallback (use LOWEST price to be conservative)

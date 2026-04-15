@@ -279,20 +279,20 @@ export function Encyclopedie() {
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
     const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
-    // Try variant
+    // Priority 1: weighted average from priceDetails (most accurate)
+    const dk = slug + '|' + varHint + '|' + (card.localId||'')
+    const det = priceDetails[dk]
+    if (det?.estimated) return det.estimated
+    // Priority 2: variant match
     if (varHint && slug) {
       const vk = slug + '|' + varHint + '|' + (card.localId||'')
       if (priceMap[vk]?.top) return Math.round(priceMap[vk].top! * USD_TO_EUR * 100) / 100
     }
-    // Try slug+number
+    // Priority 3: slug+number
     if (slug) {
       const sk = slug + '|' + (card.localId||'')
       if (priceMap[sk]?.top) return Math.round(priceMap[sk].top! * USD_TO_EUR * 100) / 100
     }
-    // Try details estimated
-    const dk = slug + '|' + varHint + '|' + (card.localId||'')
-    const det = priceDetails[dk]
-    if (det?.estimated) return det.estimated
     // Fallback by name
     const nameKey = card.name.toLowerCase()
     if(priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100

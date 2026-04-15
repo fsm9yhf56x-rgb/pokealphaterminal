@@ -354,6 +354,20 @@ export function Holdings() {
     const sid = (card as any).setId || ''
     const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
     const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+    // Priority 1: weighted average from priceDetails
+    const varH = varHint || ''
+    const detKey = (setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || '') + '|' + varH + '|' + card.number
+    const det = priceDetails[detKey]
+    if (det?.estimated) {
+      let est = det.estimated
+      // 1st Edition floor: must be >= Shadowless
+      if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
+        const shadowDk = slug + '|Unlimited_Holofoil|' + card.number
+        const shadowEst = priceDetails[shadowDk]?.estimated
+        if (shadowEst && est < shadowEst) est = shadowEst
+      }
+      return est
+    }
     let priceUSD: number | null = null
     // Try variant match
     if (varHint && slug) {
@@ -370,7 +384,7 @@ export function Holdings() {
       const nameKey = card.name.toLowerCase()
       if (priceMap[nameKey]?.top) priceUSD = priceMap[nameKey].top!
     }
-    // 1st Edition: take max of variant, eBay, and Shadowless floor
+    // 1st Edition floor
     if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
       const shadowlessKey = slug + '|Unlimited_Holofoil|' + card.number
       const ebayKey = slug + '|1st_Edition_Holofoil|' + card.number

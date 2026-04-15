@@ -285,8 +285,6 @@ export function Holdings() {
           const slugKey = slug + '|' + c.number
           const nameKey = c.name.toLowerCase()
           let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
-          if (c.name === 'Charizard') console.log('PRICE MATCH:', c.name, 'setId:', sid, 'varKey:', varKey, '->', map[varKey]?.top, 'slugKey:', slugKey, '->', map[slugKey]?.top, 'nameKey:', nameKey, '->', map[nameKey]?.top, 'FINAL:', priceUSD)
-          if (c.name === 'Charizard') console.log('PRICE MATCH:', c.name, 'setId:', sid, 'varKey:', varKey, '->', map[varKey]?.top, 'slugKey:', slugKey, '->', map[slugKey]?.top, 'nameKey:', nameKey, '->', map[nameKey]?.top, 'FINAL:', priceUSD)
           // 1st Edition >= Shadowless price floor
           if (sid.includes('-1st') && slug) {
             const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
@@ -303,11 +301,21 @@ export function Holdings() {
       .catch(() => {})
   }, [portfolioLoaded, portfolio.length])
 
-  const getPrice = (card: { name: string; set: string; number: string }): number | null => {
+  const getPrice = (card: { name: string; set: string; number: string; setId?: string }): number | null => {
     const USD_TO_EUR = 0.92
-    // Try by set+number first (most precise)
-    const numKey = card.set.toLowerCase() + '|' + card.number
-    if (priceMap[numKey]?.top) return Math.round(priceMap[numKey].top! * USD_TO_EUR * 100) / 100
+    const sid = (card as any).setId || ''
+    const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
+    // Try variant match first
+    const varHint = sid.includes('-1st') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : null
+    if (varHint && slug) {
+      const varKey = slug + '|' + varHint + '|' + card.number
+      if (priceMap[varKey]?.top) return Math.round(priceMap[varKey].top! * USD_TO_EUR * 100) / 100
+    }
+    // Try slug+number
+    if (slug) {
+      const slugKey = slug + '|' + card.number
+      if (priceMap[slugKey]?.top) return Math.round(priceMap[slugKey].top! * USD_TO_EUR * 100) / 100
+    }
     // Fallback by name
     const nameKey = card.name.toLowerCase()
     if (priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100

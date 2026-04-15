@@ -245,15 +245,13 @@ export function Holdings() {
       body: JSON.stringify({ sets: setIds })
     }).catch(() => {})
 
-    // Load set mapping + prices in parallel, then match
-    Promise.all([
-      fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})),
-    ]).then(([mapping]) => {
+    // Load set mapping then fetch prices for portfolio sets
+    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})).then((mapping: Record<string,string>) => {
       setMappingRef.current = mapping
       const cleanSet = (s: string) => s.replace(/-shadowless(-ns)?|-1st/g, '')
       const slugs = [...new Set(setIds.map(sid => mapping[sid] || mapping[cleanSet(sid)] || '').filter(Boolean))]
       return fetch('/api/prices?sets=' + slugs.join(',')).then(r=>r.json()).catch(()=>({data:null}))
-    }).then(({ data }) => {
+    }).then(({ data }: any) => {
         if (!data) return
         const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
         data.forEach((p: any) => {

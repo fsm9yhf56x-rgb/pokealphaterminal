@@ -253,7 +253,7 @@ export function Holdings() {
         data.forEach((p: any) => {
           // Index by set_slug + card_number (unique per edition)
           if (p.card_number && p.set_slug) {
-            const num = p.card_number.split('/')[0]
+            const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
             const slugKey = p.set_slug + '|' + num
             map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
           }

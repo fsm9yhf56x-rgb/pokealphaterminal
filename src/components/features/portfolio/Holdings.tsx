@@ -248,10 +248,13 @@ export function Holdings() {
     // Load set mapping + prices in parallel, then match
     Promise.all([
       fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})),
-      fetch('/api/prices').then(r=>r.json()).catch(()=>({data:null}))
-    ]).then(([mapping, { data }]) => {
+    ]).then(([mapping]) => {
+      setMappingRef.current = mapping
+      const cleanSet = (s: string) => s.replace(/-shadowless(-ns)?|-1st/g, '')
+      const slugs = [...new Set(setIds.map(sid => mapping[sid] || mapping[cleanSet(sid)] || '').filter(Boolean))]
+      return fetch('/api/prices?sets=' + slugs.join(',')).then(r=>r.json()).catch(()=>({data:null}))
+    }).then(({ data }) => {
         if (!data) return
-        setMappingRef.current = mapping
         const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
         data.forEach((p: any) => {
           // Index by set_slug + variant + card_number

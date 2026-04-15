@@ -286,6 +286,7 @@ export function Holdings() {
           const nameKey = c.name.toLowerCase()
           let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
           if (c.name === 'Charizard') console.log('PRICE MATCH:', c.name, 'setId:', sid, 'varKey:', varKey, '->', map[varKey]?.top, 'slugKey:', slugKey, '->', map[slugKey]?.top, 'nameKey:', nameKey, '->', map[nameKey]?.top, 'FINAL:', priceUSD)
+          if (c.name === 'Charizard') console.log('PRICE MATCH:', c.name, 'setId:', sid, 'varKey:', varKey, '->', map[varKey]?.top, 'slugKey:', slugKey, '->', map[slugKey]?.top, 'nameKey:', nameKey, '->', map[nameKey]?.top, 'FINAL:', priceUSD)
           // 1st Edition >= Shadowless price floor
           if (sid.includes('-1st') && slug) {
             const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number

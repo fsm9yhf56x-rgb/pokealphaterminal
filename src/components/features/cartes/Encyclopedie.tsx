@@ -298,7 +298,7 @@ export function Encyclopedie() {
     if(priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
     return null
   }
-  const getPriceDetail = (card: { name: string; setName?: string; localId?: string; setId?: string }): { ebay: number|null; tcg: number|null; cardmarket: number|null; estimated: number|null } | null => {
+  const getPriceDetail = (card: { name: string; setName?: string; localId?: string; setId?: string }): { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null } | null => {
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
     const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''

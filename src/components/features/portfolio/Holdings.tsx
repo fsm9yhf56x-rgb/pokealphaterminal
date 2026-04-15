@@ -233,6 +233,14 @@ export function Holdings() {
     const portfolioKey = portfolio.map(c => c.name).sort().join(',')
     if (pricesFetched.current === portfolioKey) return
     pricesFetched.current = portfolioKey as any
+    // Event-driven: check if prices need refresh, then fetch
+    const setIds = [...new Set(portfolio.map(c => c.setId).filter(Boolean))]
+    fetch('/api/prices/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sets: setIds })
+    }).catch(() => {}) // fire-and-forget, don't block display
+
     fetch('/api/prices')
       .then(r => r.json())
       .then(({ data }) => {

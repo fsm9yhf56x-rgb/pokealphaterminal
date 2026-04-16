@@ -90,6 +90,27 @@ export async function POST(request: Request) {
                   })
                   .eq('id', byName[0].id)
                 totalUpdated++
+              } else {
+                // No PokeTrace row exists — create a new row with just Cardmarket data
+                const cardNumberFormatted = card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0')
+                await supabase.from('prices').insert({
+                  card_name: cardData.name,
+                  card_number: cardNumberFormatted,
+                  set_slug: slug,
+                  set_name: setData.name,
+                  poketrace_id: 'tcgdex-' + slug + '-' + card.localId,
+                  market: 'EU',
+                  currency: 'EUR',
+                  cardmarket_avg: cm.avg || null,
+                  cardmarket_low: cm.low || null,
+                  cardmarket_trend: cm.trend || null,
+                  top_price: cm.avg || cm.trend || null,
+                  condition: 'NEAR_MINT',
+                  tier: (cm.avg || 0) >= 20 ? 'hot' : (cm.avg || 0) >= 1 ? 'warm' : 'cold',
+                  source: 'tcgdex',
+                  fetched_at: new Date().toISOString(),
+                })
+                totalUpdated++
               }
             }
           }

@@ -1621,15 +1621,19 @@ export function Holdings() {
                                 <span style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{s.price!.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
                               </div>
                             ))}
-                            {!det?.cardmarket && (
+                            {!det?.cardmarket && (()=>{
+                              const sidSpot = spotCard.setId || ''
+                              const isVariant = sidSpot.includes('-shadowless') || sidSpot.includes('-1st')
+                              return (
                               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0', opacity:0.4 }}>
                                 <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
                                   <span style={{ fontSize:'10px' }}>🟠</span>
                                   <span style={{ fontSize:'12px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>Cardmarket</span>
                                 </div>
-                                <span style={{ fontSize:'11px', fontStyle:'italic', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>Bientôt</span>
+                                <span style={{ fontSize:'11px', fontStyle:'italic', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{isVariant ? 'Non disponible' : 'Bientôt'}</span>
                               </div>
-                            )}
+                              )
+                            })()}
                           </div>
                         )}
                       </>

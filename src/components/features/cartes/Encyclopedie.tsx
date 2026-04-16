@@ -326,7 +326,13 @@ export function Encyclopedie() {
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
     const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
     const dk = slug + '|' + varHint + '|' + (card.localId||'')
-    return priceDetails[dk] || null
+    // Fallback to Holofoil/Normal for non-shadowless cards
+    if (priceDetails[dk]) return priceDetails[dk]
+    const dkHolo = slug + '|Holofoil|' + (card.localId||'')
+    if (priceDetails[dkHolo]) return priceDetails[dkHolo]
+    const dkNormal = slug + '|Normal|' + (card.localId||'')
+    if (priceDetails[dkNormal]) return priceDetails[dkNormal]
+    return null
   }
 
   // ── Custom card images (user uploads) ──

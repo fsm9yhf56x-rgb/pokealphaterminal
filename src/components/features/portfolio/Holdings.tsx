@@ -1589,7 +1589,9 @@ export function Holdings() {
                       const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
                       const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
                       const dKey = slug + '|' + varHint + '|' + spotCard.number
-                      const det = priceDetails[dKey] || { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
+                      // Fallback to Holofoil variant for Base Set non-shadowless cards
+                      const dKeyHolo = slug + '|Holofoil|' + spotCard.number
+                      const det = priceDetails[dKey]?.ebay ? priceDetails[dKey] : (priceDetails[dKeyHolo] || priceDetails[dKey] || { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null })
                       const sources = [
                         { label: 'eBay', price: det.ebay, color: '#E53238', icon: '🔴' },
                         { label: 'TCGPlayer', price: det.tcg, color: '#1D4ED8', icon: '🔵' },

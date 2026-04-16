@@ -8,47 +8,47 @@ const supabase = createClient(
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-// TCGdex set ID → our set_slug mapping
-const TCGDEX_TO_SLUG: Record<string, string> = {
-  'base1': 'base-set',
-  'base2': 'jungle',
-  'base3': 'fossil',
-  'base4': 'base-set-2',
-  'base5': 'team-rocket',
-  'gym1': 'gym-heroes',
-  'gym2': 'gym-challenge',
-  'neo1': 'neo-genesis',
-  'neo2': 'neo-discovery',
-  'neo3': 'neo-revelation',
-  'neo4': 'neo-destiny',
-  'base6': 'legendary-collection',
-  'ecard1': 'expedition',
-  'ecard2': 'aquapolis',
-  'ecard3': 'skyridge',
+// Slug converter — TCGdex set ID to our PokeTrace-style slug
+function tcgdexIdToSlug(id: string, name: string): string {
+  // Known mappings first
+  const known: Record<string, string> = {
+    'base1': 'base-set', 'base2': 'jungle', 'base3': 'fossil',
+    'base4': 'base-set-2', 'base5': 'team-rocket',
+    'gym1': 'gym-heroes', 'gym2': 'gym-challenge',
+    'neo1': 'neo-genesis', 'neo2': 'neo-discovery',
+    'neo3': 'neo-revelation', 'neo4': 'neo-destiny',
+    'base6': 'legendary-collection',
+    'ecard1': 'expedition', 'ecard2': 'aquapolis', 'ecard3': 'skyridge',
+  }
+  if (known[id]) return known[id]
+  // Default: slugify the name
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 export async function POST(request: Request) {
-  const { sets = Object.keys(TCGDEX_TO_SLUG) } = await request.json().catch(() => ({}))
+  const { sets = [], lang = 'en' } = await request.json().catch(() => ({}))
   
   let totalUpdated = 0
   let totalCards = 0
   const errors: string[] = []
 
   for (const tcgdexSetId of sets) {
-    const slug = TCGDEX_TO_SLUG[tcgdexSetId]
-    if (!slug) continue
 
     try {
       // Fetch set card list
-      const setR = await fetch(`https://api.tcgdex.net/v2/en/sets/${tcgdexSetId}`)
+      const setR = await fetch(`https://api.tcgdex.net/v2/${lang}/sets/${tcgdexSetId}`)
       if (!setR.ok) { errors.push(`Set ${tcgdexSetId}: ${setR.status}`); continue }
       const setData = await setR.json()
+      const slug = tcgdexIdToSlug(tcgdexSetId, setData.name || tcgdexSetId)
       const cards = setData.cards || []
 
       for (const card of cards) {
         const cardId = `${tcgdexSetId}-${card.localId}`
         try {
-          const cardR = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`)
+          const cardR = await fetch(`https://api.tcgdex.net/v2/${lang}/cards/${cardId}`)
           if (!cardR.ok) continue
           const cardData = await cardR.json()
           const cm = cardData.pricing?.cardmarket

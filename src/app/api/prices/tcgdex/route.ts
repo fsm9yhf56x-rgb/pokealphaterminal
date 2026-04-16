@@ -55,41 +55,43 @@ export async function POST(request: Request) {
 
           if (cm && (cm.avg || cm.trend)) {
             totalCards++
-            // Update existing price row with Cardmarket data
-            const { data: existing } = await supabase.from('prices')
+            // Update ALL variants of this card (PokeTrace stores 1st Edition, Unlimited separately)
+            // Cardmarket price from TCGdex is the same reference across variants
+            const { data: allVariants } = await supabase.from('prices')
               .select('id')
               .eq('set_slug', slug)
               .eq('card_number', card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0'))
-              .eq('source', 'poketrace')
-              .limit(1)
-
-            if (existing?.length) {
-              await supabase.from('prices')
-                .update({
-                  cardmarket_avg: cm.avg || null,
-                  cardmarket_low: cm.low || null,
-                  cardmarket_trend: cm.trend || null,
-                })
-                .eq('id', existing[0].id)
-              totalUpdated++
-            } else {
-              // Also try matching by card name
-              const { data: byName } = await supabase.from('prices')
-                .select('id')
-                .eq('set_slug', slug)
-                .ilike('card_name', cardData.name)
-                .eq('source', 'poketrace')
-                .limit(1)
-
-              if (byName?.length) {
+            
+            if (allVariants?.length) {
+              for (const v of allVariants) {
                 await supabase.from('prices')
                   .update({
                     cardmarket_avg: cm.avg || null,
                     cardmarket_low: cm.low || null,
                     cardmarket_trend: cm.trend || null,
                   })
-                  .eq('id', byName[0].id)
+                  .eq('id', v.id)
                 totalUpdated++
+              }
+            } else {
+              // Also try matching by card name
+              const { data: byName } = await supabase.from('prices')
+                .select('id')
+                .eq('set_slug', slug)
+                .ilike('card_name', cardData.name)
+                .limit(10)
+
+              if (byName?.length) {
+                for (const bn of byName) {
+                  await supabase.from('prices')
+                    .update({
+                      cardmarket_avg: cm.avg || null,
+                      cardmarket_low: cm.low || null,
+                      cardmarket_trend: cm.trend || null,
+                    })
+                    .eq('id', bn.id)
+                  totalUpdated++
+                }
               } else {
                 // No PokeTrace row exists — create a new row with just Cardmarket data
                 const cardNumberFormatted = card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0')

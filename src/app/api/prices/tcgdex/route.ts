@@ -55,15 +55,21 @@ export async function POST(request: Request) {
 
           if (cm && (cm.avg || cm.trend)) {
             totalCards++
-            // Update ALL variants of this card (PokeTrace stores 1st Edition, Unlimited separately)
-            // Cardmarket price from TCGdex is the same reference across variants
-            const { data: allVariants } = await supabase.from('prices')
-              .select('id')
+            // Only update non-variant rows (TCGdex doesn't distinguish 1st Ed/Shadowless)
+            // For shadowless/1st edition variants, Cardmarket is "Non disponible"
+            const { data: allRows } = await supabase.from('prices')
+              .select('id, set_slug, variant')
               .eq('set_slug', slug)
               .eq('card_number', card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0'))
             
-            if (allVariants?.length) {
-              for (const v of allVariants) {
+            // Filter: only non-shadowless slugs AND skip variants specific to 1st Ed
+            const eligible = (allRows || []).filter(r => 
+              !r.set_slug.includes('shadowless') &&
+              r.variant !== '1st_Edition_Holofoil'
+            )
+            
+            if (eligible.length) {
+              for (const v of eligible) {
                 await supabase.from('prices')
                   .update({
                     cardmarket_avg: cm.avg || null,

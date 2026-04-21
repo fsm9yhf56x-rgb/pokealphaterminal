@@ -1,0 +1,31 @@
+name: Sync TCGdex → R2
+
+on:
+  schedule:
+    - cron: '0 4 1 * *'  # le 1er du mois à 4h UTC
+  workflow_dispatch:     # bouton manuel dans GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Sync new cards to R2
+        run: node scripts/sync-new-cards-to-r2.js
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: pokealphaterminal-images
+          NEXT_PUBLIC_R2_PUBLIC_URL: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev

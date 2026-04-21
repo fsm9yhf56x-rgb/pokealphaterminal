@@ -151,7 +151,7 @@ export function Holdings() {
               condition: c.condition || 'Raw', graded: c.graded || false,
               buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
               qty: c.qty || 1,
-              image: c.image_url || (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : undefined),
+              image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
               setId: c.set_id || undefined, favorite: c.is_favorite || false,
               notes: c.notes || undefined,
             }))

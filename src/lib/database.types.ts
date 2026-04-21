@@ -33,7 +33,6 @@ export interface PortfolioCard {
   buy_date: string | null
   current_price: number | null
   image_url: string | null
-  image_local: string | null
   notes: string | null
   is_favorite: boolean
   created_at: string
@@ -60,8 +59,8 @@ export interface TcgCard {
   rarity: string | null
   card_type: string | null
   hp: number | null
-  image_url: string | null
-  image_local: string | null
+  has_image: boolean
+  image_synced_at: string | null
   synced_at: string
 }
 

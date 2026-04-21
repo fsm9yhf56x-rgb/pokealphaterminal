@@ -582,7 +582,7 @@ export function Encyclopedie() {
             id: c.id,
             localId: c.local_id || '',
             name: c.name || '',
-            image: c.image_local || getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id }),
+            image: getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id }),
             rarity: c.rarity || '',
             setId: cleanSetId,
             setName: set?.name || cleanSetId,

@@ -3,19 +3,24 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import AuthModal from './AuthModal'
+import { useRouter } from 'next/navigation'
+import { useIsAdmin } from '@/lib/useIsAdmin'
 
 export default function UserMenu() {
   const { user, profile, loading, signOut, isPro } = useAuth()
   const [authOpen, setAuthOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+
+  return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   if (loading) return <div style={{width:'32px',height:'32px',borderRadius:'50%',background:'#F0F0F0'}}/>
@@ -74,6 +79,7 @@ export default function UserMenu() {
             {label:'Mon profil',action:()=>setMenuOpen(false)},
             {label:'Paramètres',action:()=>setMenuOpen(false)},
             ...(!isPro?[{label:'Passer Pro ✦',action:()=>setMenuOpen(false)}]:[]),
+            ...(isAdmin?[{label:'Admin ⚙',action:()=>{setMenuOpen(false);router.push('/admin')}}]:[]),
           ].map((item,i)=>(
             <button key={i} onClick={item.action} style={{
               width:'100%',padding:'10px 16px',border:'none',background:'transparent',

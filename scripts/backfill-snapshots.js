@@ -33,17 +33,8 @@ const PAGE_SIZE = 1000;
 const BATCH_INSERT_SIZE = 500;
 
 function deriveCardRef(row) {
-  // set_slug is like "base-set", "jungle", etc. — no lang prefix.
-  // We don't have a lang column in prices — fallback heuristic:
-  //   - if set_slug starts with "jp-" or "fr-" → use that
-  //   - else default 'en'
-  let lang = 'en';
-  const slug = row.set_slug || 'unknown';
-  if (slug.startsWith('jp-') || slug.startsWith('fr-')) {
-    lang = slug.slice(0, 2);
-  }
-  const cardNum = row.card_number || 'unknown';
-  return `${lang}-${slug}-${cardNum}`;
+  // card_ref = poketrace_id (guaranteed unique per row in prices)
+  return row.poketrace_id;
 }
 
 function rowToSnapshots(row) {

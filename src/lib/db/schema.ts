@@ -690,6 +690,40 @@ export type Database = {
         }
         Relationships: []
       }
+      prices_v2: {
+        Row: {
+          card_name: string | null
+          card_number: string | null
+          card_ref: string | null
+          cardmarket_avg: number | null
+          cardmarket_low: number | null
+          cardmarket_trend: number | null
+          condition: string | null
+          currency: string | null
+          ebay_avg: number | null
+          ebay_high: number | null
+          ebay_low: number | null
+          ebay_sales: number | null
+          fetched_at: string | null
+          has_graded: boolean | null
+          id: string | null
+          market: string | null
+          poketrace_id: string | null
+          psa10_avg: number | null
+          psa9_avg: number | null
+          set_name: string | null
+          set_slug: string | null
+          source: string | null
+          tcg_avg: number | null
+          tcg_high: number | null
+          tcg_low: number | null
+          tcg_sales: number | null
+          tier: string | null
+          top_price: number | null
+          variant: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       refresh_prices_latest: { Args: never; Returns: undefined }

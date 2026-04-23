@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const set = searchParams.get('set')
   const sets = searchParams.get('sets')?.split(',').filter(Boolean)
   
-  let query = supabase.from('prices')
+  let query = supabase.from('prices_v2')
     .select('card_name, card_number, set_slug, set_name, ebay_avg, tcg_avg, top_price, tier, has_graded, psa10_avg, fetched_at, poketrace_id, variant, source, cardmarket_avg, cardmarket_low, cardmarket_trend')
   
   if (set) {

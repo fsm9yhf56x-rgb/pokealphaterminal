@@ -145,13 +145,14 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
         const trimHigh = Math.max(1, Math.floor(prices.length * 0.2))
         const trimmed = prices.length > 5 ? prices.slice(trimLow, -trimHigh) : prices
         const avg = Math.round((trimmed.reduce((s: number, p: number) => s + p, 0) / trimmed.length) * 100) / 100
+        const poketraceId = 'ebay-' + card.setSlug + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
 
         await supabase.from('prices').upsert({
           card_name: card.name,
           card_number: card.number ? card.number.padStart(3, '0') + '/102' : null,
           set_slug: card.setSlug,
           set_name: setName,
-          poketrace_id: 'ebay-' + card.setSlug + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
+          poketrace_id: poketraceId,
           market: 'US', currency: 'USD',
           ebay_avg: avg, ebay_low: trimmed[0], ebay_high: trimmed[trimmed.length - 1],
           ebay_sales: prices.length, top_price: avg,
@@ -163,7 +164,7 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
         }, { onConflict: 'poketrace_id,condition' })
 
         snapshots.push({
-          card_ref: `en-${card.setSlug || 'unknown'}-${card.number || '0'}`,
+          card_ref: poketraceId,
           source: 'ebay',
           variant:
             card.edition === '1st' ? '1st_ed' :

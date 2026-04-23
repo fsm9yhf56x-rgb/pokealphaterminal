@@ -21,8 +21,7 @@ export function buildPoketraceSnapshots(
   const psa10 = card.prices?.ebay?.PSA_10;
   const psa9 = card.prices?.ebay?.PSA_9;
 
-  const lang = setId?.match(/^(en|fr|jp)-/)?.[1] || 'en';
-  const cardRef = `${lang}-${ptSlug}-${card.cardNumber || 'unknown'}`;
+  const cardRef = card.id; // = poketrace_id on prices table
 
   const topPrice =
     ebay?.avg && tcg?.avg

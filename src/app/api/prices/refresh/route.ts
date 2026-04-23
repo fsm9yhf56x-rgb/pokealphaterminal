@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
         // Dual-write: poketrace raw snapshot
         snapshots.push({
-          card_ref: `${(s.setId?.match(/^(en|fr|jp)-/)?.[1] || 'en')}-${s.slug}-${card.cardNumber || 'unknown'}`,
+          card_ref: card.id,
           source: 'poketrace',
           variant: 'raw',
           price_avg: topPrice ?? null,
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
         // Dual-write: PSA10 snapshot if available
         if (psa10?.avg) {
           snapshots.push({
-            card_ref: `${(s.setId?.match(/^(en|fr|jp)-/)?.[1] || 'en')}-${s.slug}-${card.cardNumber || 'unknown'}`,
+            card_ref: card.id,
             source: 'poketrace',
             variant: 'psa10',
             price_avg: psa10.avg,

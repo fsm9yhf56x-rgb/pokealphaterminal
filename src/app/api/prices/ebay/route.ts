@@ -87,12 +87,13 @@ export async function POST(request: Request) {
       const price = extractPrice(items, minPrice)
 
       if (price.avg) {
+        const poketraceId = 'ebay-' + (card.setSlug || 'base') + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
         await supabase.from('prices').upsert({
           card_name: card.name,
           card_number: card.number ? card.number.padStart(3, '0') + '/102' : null,
           set_slug: card.setSlug || 'ebay-lookup',
           set_name: card.set,
-          poketrace_id: 'ebay-' + (card.setSlug || 'base') + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
+          poketrace_id: poketraceId,
           market: 'US',
           currency: 'USD',
           ebay_avg: price.avg,
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
           card.edition === 'shadowless' ? 'shadowless' :
           'raw'
         snapshots.push({
-          card_ref: `en-${card.setSlug || 'unknown'}-${card.number || '0'}`,
+          card_ref: poketraceId,
           source: 'ebay',
           variant,
           price_avg: price.avg,

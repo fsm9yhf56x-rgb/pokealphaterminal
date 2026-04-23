@@ -61,7 +61,7 @@ export async function POST(request: Request) {
             totalCards++
 
             snapshots.push({
-              card_ref: `${lang}-${tcgdexSetId}-${card.localId}`,
+              card_ref: `tcgdex-${slug}-${card.localId}`,
               source: 'cardmarket',
               variant: 'raw',
               price_avg: cm.avg ?? null,

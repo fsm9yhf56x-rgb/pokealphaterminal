@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+/**
+ * @deprecated Use `getAnonClient()` from './db' instead for typed access.
+ * Kept for backward compatibility with existing imports.
+ */
+import { getAnonClient } from './db';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = getAnonClient();

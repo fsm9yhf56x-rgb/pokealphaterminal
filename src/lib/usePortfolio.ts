@@ -107,9 +107,20 @@ export function usePortfolio() {
       return newCard
     }
 
+    // DB requires: name, condition, qty (NOT NULL). Provide safe defaults.
+    if (!card.name) {
+      console.error('Add card error: name is required')
+      return null
+    }
     const { data, error } = await supabase
       .from('portfolio_cards')
-      .insert({ ...card, user_id: user.id })
+      .insert({
+        ...card,
+        user_id: user.id,
+        name: card.name,
+        condition: card.condition ?? 'Raw',
+        qty: card.qty ?? 1,
+      })
       .select()
       .single()
 

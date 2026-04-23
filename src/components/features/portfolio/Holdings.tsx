@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
-import { cleanImageUrl } from '@/lib/cardImages'
+
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getCardImageUrl } from '@/lib/cardImages'
+import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { ShareSheet } from './ShareSheet'
@@ -1391,14 +1391,12 @@ export function Holdings() {
           100%{background-position:-200% center}
         }
 
-
         /* ── VITRINE CARD ENTRANCE ── */
         @keyframes showcaseReveal {
           0% { opacity:0; transform:translateY(40px) scale(.9); }
           60% { opacity:1; transform:translateY(-6px) scale(1.02); }
           100% { opacity:1; transform:translateY(0) scale(1); }
         }
-
 
         /* ── GRADE VISUAL ── */
         @keyframes metalShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
@@ -1842,7 +1840,6 @@ export function Holdings() {
                   )}
                 </div>
               </div>
-
 
 
 

@@ -20,7 +20,8 @@
 export type Lang = 'EN' | 'FR' | 'JP';
 
 export interface CardImageParams {
-  lang: Lang;
+  /** Accepts 'EN'|'FR'|'JP' (canonical) or any string (permissive, normalized internally). */
+  lang: Lang | string;
   setId: string;       // "base1" or "en-base1" (prefix auto-stripped)
   localId: string;     // "1", "001", "SWSH-001", etc.
 }

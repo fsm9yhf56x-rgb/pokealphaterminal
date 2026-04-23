@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { writeSnapshots } from '@/lib/prices/writer'
+import type { PriceSnapshot } from '@/lib/prices/types'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -35,6 +37,8 @@ export async function POST(request: Request) {
   let totalCards = 0
   const errors: string[] = []
 
+  const snapshots: PriceSnapshot[] = []
+
   for (const tcgdexSetId of sets) {
 
     try {
@@ -55,6 +59,20 @@ export async function POST(request: Request) {
 
           if (cm && (cm.avg || cm.trend)) {
             totalCards++
+
+            snapshots.push({
+              card_ref: `${lang}-${tcgdexSetId}-${card.localId}`,
+              source: 'cardmarket',
+              variant: 'raw',
+              price_avg: cm.avg ?? null,
+              price_low: cm.low ?? null,
+              currency: 'EUR',
+              source_meta: {
+                card_name: cardData.name,
+                tcgdex_set_id: tcgdexSetId,
+                cardmarket_trend: cm.trend ?? null,
+              },
+            })
             // Only update non-variant rows (TCGdex doesn't distinguish 1st Ed/Shadowless)
             // For shadowless/1st edition variants, Cardmarket is "Non disponible"
             const { data: allRows } = await supabase.from('prices')
@@ -128,6 +146,14 @@ export async function POST(request: Request) {
       }
     } catch (e: any) {
       errors.push(`${tcgdexSetId}: ${e.message}`)
+    }
+  }
+
+  if (snapshots.length > 0) {
+    try {
+      await writeSnapshots(snapshots)
+    } catch (err: any) {
+      console.warn('[tcgdex] writeSnapshots failed (non-fatal):', err?.message)
     }
   }
 

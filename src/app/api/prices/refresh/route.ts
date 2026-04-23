@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { writeSnapshots } from '@/lib/prices/writer'
+import type { PriceSnapshot } from '@/lib/prices/types'
 import { getUsage } from '@/lib/api-usage'
 
 export const dynamic = 'force-dynamic'
@@ -83,6 +85,8 @@ export async function POST(request: Request) {
   let callsUsed = 0
   let totalCards = 0
 
+  const snapshots: PriceSnapshot[] = []
+
   for (const s of stale) {
     if (callsUsed >= budget) break
 
@@ -120,6 +124,44 @@ export async function POST(request: Request) {
           fetched_at: new Date().toISOString(),
             source: 'poketrace',
         }, { onConflict: 'poketrace_id,condition' })
+
+        // Dual-write: poketrace raw snapshot
+        snapshots.push({
+          card_ref: `${(s.setId?.match(/^(en|fr|jp)-/)?.[1] || 'en')}-${s.slug}-${card.cardNumber || 'unknown'}`,
+          source: 'poketrace',
+          variant: 'raw',
+          price_avg: topPrice ?? null,
+          price_low: ebay?.low ?? tcg?.low ?? null,
+          price_high: ebay?.high ?? tcg?.high ?? null,
+          nb_sales: card.totalSaleCount ?? null,
+          currency: card.currency || 'USD',
+          source_meta: {
+            poketrace_id: card.id,
+            card_name: card.name,
+            variant_label: card.variant || null,
+            ebay_avg: ebay?.avg ?? null,
+            tcg_avg: tcg?.avg ?? null,
+          },
+        })
+
+        // Dual-write: PSA10 snapshot if available
+        if (psa10?.avg) {
+          snapshots.push({
+            card_ref: `${(s.setId?.match(/^(en|fr|jp)-/)?.[1] || 'en')}-${s.slug}-${card.cardNumber || 'unknown'}`,
+            source: 'poketrace',
+            variant: 'psa10',
+            price_avg: psa10.avg,
+            price_low: psa10.low ?? null,
+            price_high: psa10.high ?? null,
+            nb_sales: psa10.saleCount ?? null,
+            currency: card.currency || 'USD',
+            source_meta: {
+              poketrace_id: card.id,
+              card_name: card.name,
+            },
+          })
+        }
+
         totalCards++
       }
 
@@ -131,6 +173,14 @@ export async function POST(request: Request) {
   }
 
   await incUsage(callsUsed)
+
+  if (snapshots.length > 0) {
+    try {
+      await writeSnapshots(snapshots)
+    } catch (err: any) {
+      console.warn('[refresh] writeSnapshots failed (non-fatal):', err?.message)
+    }
+  }
 
   return NextResponse.json({
     refreshed: true,

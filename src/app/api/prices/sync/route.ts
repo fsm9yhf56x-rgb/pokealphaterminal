@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { writeSnapshots } from '@/lib/prices/writer'
+import type { PriceSnapshot } from '@/lib/prices/types'
+import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
 import { getUsage } from '@/lib/api-usage'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +42,7 @@ function getTier(topPrice: number | null, hasGraded: boolean, ebayAvg?: number |
   return 'warm'
 }
 
+
 export async function POST(request: Request) {
   const { budget = 30, sets = [] } = await request.json().catch(() => ({}))
   
@@ -70,6 +74,8 @@ export async function POST(request: Request) {
   let totalCards = 0
   let callsUsed = 0
   const errors: string[] = []
+
+  const snapshots: PriceSnapshot[] = []
 
   for (const setId of setsToSync) {
     if (callsUsed >= available) break
@@ -104,6 +110,7 @@ export async function POST(request: Request) {
           fetched_at: new Date().toISOString(),
             source: 'poketrace',
         }, { onConflict: 'poketrace_id,condition' })
+        snapshots.push(...buildPoketraceSnapshots(card, ptSlug, setId))
         totalCards++
       }
 
@@ -133,6 +140,7 @@ export async function POST(request: Request) {
             fetched_at: new Date().toISOString(),
             source: 'poketrace',
           }, { onConflict: 'poketrace_id,condition' })
+          snapshots.push(...buildPoketraceSnapshots(card, ptSlug, setId))
           totalCards++
         }
         cursor = d2.pagination?.nextCursor
@@ -145,6 +153,14 @@ export async function POST(request: Request) {
   }
 
   await incUsage(callsUsed)
+
+  if (snapshots.length > 0) {
+    try {
+      await writeSnapshots(snapshots)
+    } catch (err: any) {
+      console.warn('[sync] writeSnapshots failed (non-fatal):', err?.message)
+    }
+  }
 
   return NextResponse.json({
     success: true, callsUsed,

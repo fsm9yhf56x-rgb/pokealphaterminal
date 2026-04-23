@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { writeSnapshots } from '@/lib/prices/writer'
+import type { PriceSnapshot, PriceVariant } from '@/lib/prices/types'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -69,6 +71,8 @@ export async function POST(request: Request) {
 
   const results: any[] = []
 
+  const snapshots: PriceSnapshot[] = []
+
   for (const card of cards) {
     const q = buildQuery(card.name, card.set, card.number, card.edition)
     const minPrice = getMinPrice(card.edition)
@@ -103,6 +107,26 @@ export async function POST(request: Request) {
           fetched_at: new Date().toISOString(),
         }, { onConflict: 'poketrace_id,condition' })
 
+        const variant: PriceVariant =
+          card.edition === '1st' ? '1st_ed' :
+          card.edition === 'shadowless' ? 'shadowless' :
+          'raw'
+        snapshots.push({
+          card_ref: `en-${card.setSlug || 'unknown'}-${card.number || '0'}`,
+          source: 'ebay',
+          variant,
+          price_avg: price.avg,
+          price_low: price.low,
+          price_high: price.high,
+          nb_sales: price.count,
+          currency: 'USD',
+          source_meta: {
+            card_name: card.name,
+            listings_count: items.length,
+            ebay_query: q,
+          },
+        })
+
         results.push({ name: card.name, set: card.set, edition: card.edition, ebayQuery: q, price, listings: items.length })
       } else {
         results.push({ name: card.name, set: card.set, edition: card.edition, price: null, listings: items.length })
@@ -111,6 +135,14 @@ export async function POST(request: Request) {
       await sleep(500)
     } catch (e: any) {
       results.push({ name: card.name, error: e.message })
+    }
+  }
+
+  if (snapshots.length > 0) {
+    try {
+      await writeSnapshots(snapshots)
+    } catch (err: any) {
+      console.warn('[ebay] writeSnapshots failed (non-fatal):', err?.message)
     }
   }
 

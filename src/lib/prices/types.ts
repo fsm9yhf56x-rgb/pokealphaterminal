@@ -52,14 +52,14 @@ export interface PriceSnapshot {
   /** Variant of the card (raw, graded, 1st ed, etc.) */
   variant: PriceVariant;
 
-  // Prices — all optional, each source reports what it can
-  price_avg?: number;
-  price_low?: number;
-  price_high?: number;
-  price_median?: number;
+  // Prices — optional, each source reports what it can (null allowed for DB-compat)
+  price_avg?: number | null;
+  price_low?: number | null;
+  price_high?: number | null;
+  price_median?: number | null;
 
   // Volume
-  nb_sales?: number;
+  nb_sales?: number | null;
   /** Number of days the stats span (7, 30, 90, 365) */
   period_days?: number;
 

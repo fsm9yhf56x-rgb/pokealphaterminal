@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { writeSnapshots } from '@/lib/prices/writer'
+import type { PriceSnapshot } from '@/lib/prices/types'
+import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
 import { getUsage } from '@/lib/api-usage'
 
 export const dynamic = 'force-dynamic'
@@ -69,6 +72,8 @@ async function getEbayToken(): Promise<string | null> {
 async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: number }> {
   const token = await getEbayToken()
   if (!token) return { calls: 0, filled: 0 }
+
+  const snapshots: PriceSnapshot[] = []
 
   // Find cards with missing prices or 1st Edition with suspicious low prices
   const { data: gaps } = await supabase.from('prices')
@@ -156,11 +161,37 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
           source: 'ebay',
           fetched_at: new Date().toISOString(),
         }, { onConflict: 'poketrace_id,condition' })
+
+        snapshots.push({
+          card_ref: `en-${card.setSlug || 'unknown'}-${card.number || '0'}`,
+          source: 'ebay',
+          variant:
+            card.edition === '1st' ? '1st_ed' :
+            card.edition === 'shadowless' ? 'shadowless' :
+            'raw',
+          price_avg: avg,
+          price_low: trimmed[0],
+          price_high: trimmed[trimmed.length - 1],
+          nb_sales: prices.length,
+          currency: 'USD',
+          source_meta: {
+            card_name: card.name,
+          },
+        })
+
         filled++
       }
       await sleep(500)
     } catch {}
   }
+  if (snapshots.length > 0) {
+    try {
+      await writeSnapshots(snapshots)
+    } catch (err: any) {
+      console.warn('[cron/ebayFillGaps] writeSnapshots failed (non-fatal):', err?.message)
+    }
+  }
+
   return { calls, filled }
 }
 
@@ -220,6 +251,7 @@ export async function GET(request: Request) {
   let setsProcessed = 0
   let setsSkipped = 0
   const errors: string[] = []
+  const snapshotsGet: PriceSnapshot[] = []
 
   for (const setId of setsToSync) {
     if (callsUsed >= budget) break
@@ -287,6 +319,7 @@ export async function GET(request: Request) {
             fetched_at: new Date().toISOString(),
             source: 'poketrace',
           }, { onConflict: 'poketrace_id,condition' })
+          snapshotsGet.push(...buildPoketraceSnapshots(card, ptSlug, setId))
           totalCards++
         }
 
@@ -309,6 +342,14 @@ export async function GET(request: Request) {
   let ebayResult = { calls: 0, filled: 0 }
   if (ebayBudget > 0) {
     ebayResult = await ebayFillGaps(ebayBudget)
+  }
+
+  if (snapshotsGet.length > 0) {
+    try {
+      await writeSnapshots(snapshotsGet)
+    } catch (err: any) {
+      console.warn('[cron/GET] writeSnapshots failed (non-fatal):', err?.message)
+    }
   }
 
   return NextResponse.json({

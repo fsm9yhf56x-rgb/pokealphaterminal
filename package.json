@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "sync-data": "node scripts/sync-tcgdex.js"
+    "sync-data": "node scripts/sync-tcgdex.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",
@@ -28,6 +31,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitest/ui": "^4.1.5",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.3",
@@ -36,6 +40,7 @@
     "prettier": "^3.2.5",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.5"
   }
 }

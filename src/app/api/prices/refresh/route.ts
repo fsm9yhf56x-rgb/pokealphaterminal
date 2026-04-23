@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { getUsage } from '@/lib/api-usage'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -14,14 +15,6 @@ async function ptFetch(path: string) {
   const r = await fetch(`${BASE}${path}`, { headers: { 'X-API-Key': POKETRACE_KEY } })
   if (r.status === 429) { await sleep(10000); return fetch(`${BASE}${path}`, { headers: { 'X-API-Key': POKETRACE_KEY } }) }
   return r
-}
-
-async function getUsage(): Promise<{ used: number; max: number }> {
-  const today = new Date().toISOString().slice(0, 10)
-  const { data } = await supabase.from('api_usage').select('*').eq('date', today).single()
-  if (data) return { used: data.calls_used ?? 0, max: data.max_calls ?? 250 }
-  await supabase.from('api_usage').insert({ date: today, calls_used: 0, max_calls: 250 })
-  return { used: 0, max: 250 }
 }
 
 async function incUsage(count: number) {

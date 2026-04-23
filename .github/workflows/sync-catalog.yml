@@ -1,0 +1,55 @@
+name: Sync Catalog (TCGdex → R2 + DB)
+
+on:
+  schedule:
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: 'Langue à synchroniser (en, fr, ou vide = les deux)'
+        required: false
+        default: ''
+        type: string
+      set:
+        description: 'Set spécifique (ex: en-base1)'
+        required: false
+        default: ''
+        type: string
+      dry:
+        description: 'Dry run (simulation)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run sync-catalog
+        run: |
+          ARGS="--trigger=cron"
+          if [ -n "${{ inputs.lang }}" ]; then ARGS="$ARGS --lang=${{ inputs.lang }}"; fi
+          if [ -n "${{ inputs.set }}" ]; then ARGS="$ARGS --set=${{ inputs.set }}"; fi
+          if [ "${{ inputs.dry }}" = "true" ]; then ARGS="$ARGS --dry"; fi
+          echo "Running: node scripts/sync-catalog.js $ARGS"
+          node scripts/sync-catalog.js $ARGS
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: pokealphaterminal-images

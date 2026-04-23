@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getAdminClient } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const POKETRACE_KEY = process.env.POKETRACE_API_KEY!
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const BASE = 'https://api.poketrace.com/v1'
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const supabase = getAdminClient()
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 async function ptFetch(path: string) {
@@ -26,7 +27,7 @@ async function ptFetch(path: string) {
 async function getUsage(): Promise<{ used: number; max: number }> {
   const today = new Date().toISOString().slice(0, 10)
   const { data } = await supabase.from('api_usage').select('*').eq('date', today).single()
-  if (data) return { used: data.calls_used, max: data.max_calls }
+  if (data) return { used: data.calls_used ?? 0, max: data.max_calls ?? 250 }
   await supabase.from('api_usage').insert({ date: today, calls_used: 0, max_calls: 250 })
   return { used: 0, max: 250 }
 }

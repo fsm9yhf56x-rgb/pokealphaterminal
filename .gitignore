@@ -13,3 +13,6 @@ scripts/.poketrace-progress.json
 scripts/.r2-migration-progress.json
 scripts/sync.log
 scripts/*.log
+
+# Supabase CLI runtime files
+supabase/.temp/

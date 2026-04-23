@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getAdminClient } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 const EBAY_APP_ID = process.env.EBAY_APP_ID || ''
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID || ''
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const supabase = getAdminClient()
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 async function getEbayToken(): Promise<string | null> {

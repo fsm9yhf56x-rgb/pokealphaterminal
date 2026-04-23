@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/auth-admin';
+import RefreshButton from './RefreshButton';
 import {
   getSystemStats,
   getSetsWithGaps,
@@ -23,8 +24,11 @@ export default async function AdminPage() {
     <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto', fontFamily: 'system-ui' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 600, margin: 0 }}>Admin Dashboard</h1>
-        <div style={{ fontSize: 13, color: '#6e6e73' }}>
-          Logged in as <strong>{user?.email}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 13, color: '#6e6e73' }}>
+            Logged in as <strong>{user?.email}</strong>
+          </div>
+          <RefreshButton />
         </div>
       </div>
 
@@ -101,7 +105,7 @@ export default async function AdminPage() {
       {/* Prix overview */}
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Prix — Overview</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
           <div>
             <div style={{ fontSize: 12, color: '#6e6e73', marginBottom: 6 }}>Par source (sur 5000 échantillonnés)</div>
             {prices.bySource.map((s) => (
@@ -162,6 +166,37 @@ export default async function AdminPage() {
         </table>
       </section>
 
+      {/* External tools */}
+      <section style={{ marginTop: 32, marginBottom: 32 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Outils externes</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <ExternalLink
+            label="Supabase"
+            desc="DB, auth, storage"
+            href="https://supabase.com/dashboard/project/jtheycxwbkweehfezyem"
+            icon="🗄"
+          />
+          <ExternalLink
+            label="GitHub Actions"
+            desc="Sync workflows"
+            href="https://github.com/fsm9yhf56x-rgb/pokealphaterminal/actions"
+            icon="⚙"
+          />
+          <ExternalLink
+            label="Cloudflare R2"
+            desc="Images bucket"
+            href="https://dash.cloudflare.com/f7155f5c8c83f3528736c91ce3a505c4/r2/default/buckets/pokealphaterminal-images"
+            icon="☁"
+          />
+          <ExternalLink
+            label="Vercel"
+            desc="Deployments"
+            href="https://vercel.com/dashboard"
+            icon="▲"
+          />
+        </div>
+      </section>
+
       <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e5ea', fontSize: 12, color: '#86868b' }}>
         PokéAlpha Terminal · Admin dashboard · Data refreshed on each page load
       </div>
@@ -200,6 +235,34 @@ function StatusPill({ status }: { status: string }) {
     }}>
       {status}
     </span>
+  );
+}
+
+function ExternalLink({ label, desc, href, icon }: { label: string; desc: string; href: string; icon: string }) {
+  return (
+    <a
+    
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        padding: 14,
+        background: '#f5f5f7',
+        borderRadius: 10,
+        textDecoration: 'none',
+        color: '#1D1D1F',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        transition: 'all 0.15s',
+      }}
+    >
+      <span style={{ fontSize: 22 }}>{icon}</span>
+      <div>
+        <div style={{ fontWeight: 600, fontSize: 14 }}>{label} ↗</div>
+        <div style={{ fontSize: 12, color: '#6e6e73' }}>{desc}</div>
+      </div>
+    </a>
   );
 }
 

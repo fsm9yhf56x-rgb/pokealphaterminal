@@ -1,7 +1,9 @@
 /**
- * @deprecated Use `getAnonClient()` from './db' instead for typed access.
- * Kept for backward compatibility with existing imports.
+ * Browser-side Supabase client (cookie-based session, SSR-compatible).
+ *
+ * Historical API: exports `supabase` as a singleton so existing client
+ * components can `import { supabase } from '@/lib/supabase'` unchanged.
  */
-import { getAnonClient } from './db';
+import { getBrowserSupabase } from './supabase-browser';
 
-export const supabase = getAnonClient();
+export const supabase = getBrowserSupabase();

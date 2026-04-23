@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { getCardImageUrl } from '@/lib/cardImages'
+import { getCardImageUrl } from '@/lib/images'
 
 type Tier = 'S' | 'A' | 'B'
 type FilterTier = 'all' | Tier

@@ -1,6 +1,6 @@
 'use client'
 
-import { getCardImageUrl } from '@/lib/cardImages'
+import { getCardImageUrl } from '@/lib/images'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
 

@@ -11,7 +11,8 @@
     "sync-data": "node scripts/sync-tcgdex.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"\u2705 src/lib/db/schema.ts regenerated\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",

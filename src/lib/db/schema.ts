@@ -39,6 +39,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_prices_20260423: {
+        Row: {
+          card_name: string | null
+          card_number: string | null
+          cardmarket_avg: number | null
+          cardmarket_low: number | null
+          cardmarket_trend: number | null
+          condition: string | null
+          created_at: string | null
+          currency: string | null
+          ebay_avg: number | null
+          ebay_avg30d: number | null
+          ebay_avg7d: number | null
+          ebay_high: number | null
+          ebay_low: number | null
+          ebay_sales: number | null
+          fetched_at: string | null
+          has_graded: boolean | null
+          id: string | null
+          market: string | null
+          poketrace_id: string | null
+          psa10_avg: number | null
+          psa9_avg: number | null
+          set_name: string | null
+          set_slug: string | null
+          source: string | null
+          tcg_avg: number | null
+          tcg_avg30d: number | null
+          tcg_avg7d: number | null
+          tcg_high: number | null
+          tcg_low: number | null
+          tcg_sales: number | null
+          tier: string | null
+          top_price: number | null
+          total_sales: number | null
+          variant: string | null
+        }
+        Insert: {
+          card_name?: string | null
+          card_number?: string | null
+          cardmarket_avg?: number | null
+          cardmarket_low?: number | null
+          cardmarket_trend?: number | null
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          ebay_avg?: number | null
+          ebay_avg30d?: number | null
+          ebay_avg7d?: number | null
+          ebay_high?: number | null
+          ebay_low?: number | null
+          ebay_sales?: number | null
+          fetched_at?: string | null
+          has_graded?: boolean | null
+          id?: string | null
+          market?: string | null
+          poketrace_id?: string | null
+          psa10_avg?: number | null
+          psa9_avg?: number | null
+          set_name?: string | null
+          set_slug?: string | null
+          source?: string | null
+          tcg_avg?: number | null
+          tcg_avg30d?: number | null
+          tcg_avg7d?: number | null
+          tcg_high?: number | null
+          tcg_low?: number | null
+          tcg_sales?: number | null
+          tier?: string | null
+          top_price?: number | null
+          total_sales?: number | null
+          variant?: string | null
+        }
+        Update: {
+          card_name?: string | null
+          card_number?: string | null
+          cardmarket_avg?: number | null
+          cardmarket_low?: number | null
+          cardmarket_trend?: number | null
+          condition?: string | null
+          created_at?: string | null
+          currency?: string | null
+          ebay_avg?: number | null
+          ebay_avg30d?: number | null
+          ebay_avg7d?: number | null
+          ebay_high?: number | null
+          ebay_low?: number | null
+          ebay_sales?: number | null
+          fetched_at?: string | null
+          has_graded?: boolean | null
+          id?: string | null
+          market?: string | null
+          poketrace_id?: string | null
+          psa10_avg?: number | null
+          psa9_avg?: number | null
+          set_name?: string | null
+          set_slug?: string | null
+          source?: string | null
+          tcg_avg?: number | null
+          tcg_avg30d?: number | null
+          tcg_avg7d?: number | null
+          tcg_high?: number | null
+          tcg_low?: number | null
+          tcg_sales?: number | null
+          tier?: string | null
+          top_price?: number | null
+          total_sales?: number | null
+          variant?: string | null
+        }
+        Relationships: []
+      }
       api_usage: {
         Row: {
           calls_used: number | null
@@ -289,6 +400,54 @@ export type Database = {
         }
         Relationships: []
       }
+      prices_snapshots: {
+        Row: {
+          card_ref: string
+          currency: string
+          fetched_at: string
+          id: string
+          nb_sales: number | null
+          period_days: number | null
+          price_avg: number | null
+          price_high: number | null
+          price_low: number | null
+          price_median: number | null
+          source: string
+          source_meta: Json | null
+          variant: string
+        }
+        Insert: {
+          card_ref: string
+          currency?: string
+          fetched_at?: string
+          id?: string
+          nb_sales?: number | null
+          period_days?: number | null
+          price_avg?: number | null
+          price_high?: number | null
+          price_low?: number | null
+          price_median?: number | null
+          source: string
+          source_meta?: Json | null
+          variant?: string
+        }
+        Update: {
+          card_ref?: string
+          currency?: string
+          fetched_at?: string
+          id?: string
+          nb_sales?: number | null
+          period_days?: number | null
+          price_avg?: number | null
+          price_high?: number | null
+          price_low?: number | null
+          price_median?: number | null
+          source?: string
+          source_meta?: Json | null
+          variant?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -514,7 +673,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      prices_latest: {
+        Row: {
+          card_ref: string | null
+          currency: string | null
+          fetched_at: string | null
+          nb_sales: number | null
+          period_days: number | null
+          price_avg: number | null
+          price_high: number | null
+          price_low: number | null
+          price_median: number | null
+          source: string | null
+          source_meta: Json | null
+          variant: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

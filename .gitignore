@@ -16,3 +16,9 @@ scripts/*.log
 
 # Supabase CLI runtime files
 supabase/.temp/
+
+# macOS
+.DS_Store
+
+# Local DB backups
+backups/

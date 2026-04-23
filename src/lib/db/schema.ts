@@ -692,7 +692,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      refresh_prices_latest: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

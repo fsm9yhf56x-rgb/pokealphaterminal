@@ -10,6 +10,10 @@
  *   - pro-gated  : when the user picks 90d/1y/all without Pro, auto-revert to 30d
  *
  * Pure SVG rendering — no Recharts dependency.
+ *
+ * Input: accepts EITHER a resolved `card_ref` OR `setId`+`localId`
+ * (which resolves to `tcgdex-{setId}-{localId}` — same convention as
+ * /api/prices/tcgdex uses when seeding prices_snapshots).
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -46,7 +50,12 @@ const TIMEFRAMES: { key: PriceTimeframe; label: string; pro: boolean }[] = [
 // ─────────────────────────────────────────────────────────────────────────
 
 export interface PriceHistoryChartProps {
-  card_ref: string | null | undefined
+  /** Direct PokeTrace-style card_ref. Takes priority over setId/localId. */
+  card_ref?: string | null
+  /** Alternative: set slug (e.g. 'base1', 'base1-shadowless'). Combined with localId. */
+  setId?: string | null
+  /** Alternative: local card id within the set (e.g. '4'). */
+  localId?: string | null
   cardName?: string
   cardSubtitle?: string // e.g. "Base Set · #4 · 1st Edition"
   /** Pro flag from useAuth(); determines whether Pro timeframes are accessible. */
@@ -55,6 +64,8 @@ export interface PriceHistoryChartProps {
   defaultTimeframe?: PriceTimeframe
   /** Shown in lieu of card_ref if the lookup returns insufficient_data. */
   currency?: string
+  /** If true, render nothing while data is insufficient (default: false, shows progress state). */
+  hideWhenInsufficient?: boolean
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -566,16 +577,27 @@ function RealChart({ points, currency }: { points: PricePoint[]; currency: strin
 
 export function PriceHistoryChart({
   card_ref,
+  setId,
+  localId,
   cardName,
   cardSubtitle,
   isPro = false,
   defaultTimeframe = '30d',
   currency: currencyProp,
+  hideWhenInsufficient = false,
 }: PriceHistoryChartProps) {
   const [timeframe, setTimeframe] = useState<PriceTimeframe>(defaultTimeframe)
   const [showProToast, setShowProToast] = useState(false)
 
-  const { data, loading, error } = usePriceHistory({ card_ref, timeframe })
+  // Resolve card_ref: explicit prop wins, else derive from setId+localId
+  // using the deterministic tcgdex convention (see /api/prices/tcgdex).
+  const effectiveCardRef = useMemo<string | null>(() => {
+    if (card_ref) return card_ref
+    if (setId && localId) return `tcgdex-${setId}-${localId}`
+    return null
+  }, [card_ref, setId, localId])
+
+  const { data, loading, error } = usePriceHistory({ card_ref: effectiveCardRef, timeframe })
 
   // If server returned 403 PRO_REQUIRED (shouldn't normally happen since we gate client-side too),
   // fall back to 30d. useEffect so we don't setState during render.
@@ -588,6 +610,9 @@ export function PriceHistoryChart({
   const currency = data?.currency || currencyProp || 'USD'
   const showInsufficient = !loading && data && data.insufficient_data
   const showChart = !loading && data && !data.insufficient_data && data.consolidated.length >= 2
+
+  // Opt-in: hide entirely until real data exists (prevents noisy placeholder state)
+  if (hideWhenInsufficient && !loading && (!data || data.insufficient_data)) return null
 
   // Hero price: current value from stats
   const heroPrice = data?.stats.current ?? null

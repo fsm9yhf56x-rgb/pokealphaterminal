@@ -1,6 +1,7 @@
 'use client'
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
+import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
 
@@ -153,7 +154,7 @@ export function Encyclopedie() {
   const [filSet,     setFilSet]      = useState('all')
   const [filRarity,  setFilRarity]   = useState('all')
   const [sort,       setSort]        = useState<SortKey>('set')
-  const { user } = useAuth()
+  const { user, isPro } = useAuth()
   const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [view,       setView]        = useState<ViewMode>('grid')
@@ -1607,6 +1608,16 @@ export function Encyclopedie() {
                           </div>
                         ) : null
                       })()}
+                      {selCard?.setId && selCard?.localId ? (
+                        <div style={{ marginBottom:'12px' }}>
+                          <PriceHistoryChart
+                            setId={selCard.setId}
+                            localId={selCard.localId}
+                            isPro={isPro}
+                            hideWhenInsufficient
+                          />
+                        </div>
+                      ) : null}
                       {setTotal>0 ? (
                         <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px', marginBottom:'12px' }}>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>

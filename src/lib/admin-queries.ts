@@ -60,7 +60,7 @@ export async function getSystemStats(): Promise<SystemStats> {
       supa.from('tcg_cards').select('*', { count: 'exact', head: true }),
       supa.from('tcg_cards').select('*', { count: 'exact', head: true }).eq('has_image', true),
       supa.from('tcg_sets').select('*', { count: 'exact', head: true }),
-      supa.from('_deprecated_prices').select('*', { count: 'exact', head: true }),
+      supa.from('prices_v2').select('*', { count: 'exact', head: true }),
       supa.from('portfolio_cards').select('*', { count: 'exact', head: true }),
       supa.from('profiles').select('*', { count: 'exact', head: true }),
     ]);
@@ -186,10 +186,10 @@ export async function getPricesOverview(): Promise<PricesOverview> {
   const supa = getAdminClient();
 
   const [totalRows, priceRows, lastRow] = await Promise.all([
-    supa.from('_deprecated_prices').select('*', { count: 'exact', head: true }),
-    supa.from('_deprecated_prices').select('source, tier').limit(5000),
+    supa.from('prices_v2').select('*', { count: 'exact', head: true }),
+    supa.from('prices_v2').select('source, tier').limit(5000),
     supa
-      .from('_deprecated_prices')
+      .from('prices_v2')
       .select('fetched_at')
       .order('fetched_at', { ascending: false })
       .limit(1)

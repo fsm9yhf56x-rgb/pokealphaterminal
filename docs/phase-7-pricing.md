@@ -88,3 +88,20 @@ git reset --hard HEAD~1  # if not pushed
 # OR
 git revert HEAD          # if already pushed
 ```
+
+## Post-Phase 7 verification (2026-04-24)
+
+**Claim from earlier investigation**: "236 duplicate rows in prices"
+
+**Verdict after audit**: FALSE POSITIVE.
+
+The 236 "duplicates" counted by `COUNT(*) - COUNT(DISTINCT (set_slug, card_number, variant))`
+were caused by NULL handling in GROUP BY (NULL = NULL evaluates to NULL,
+so rows with `card_number IS NULL` merged incorrectly).
+
+Checking by the true unique key `poketrace_id`:
+- Total rows: 29 638
+- Unique poketrace_id: 29 638
+- Duplicates: 0
+
+The database is clean. No cleanup needed.

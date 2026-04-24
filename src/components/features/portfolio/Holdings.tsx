@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
+import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
 
@@ -112,7 +113,7 @@ export function Holdings() {
   }
 
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, isPro } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
 
   const [binderSet,   setBinderSet]   = useState<string|null>(null)
@@ -1604,19 +1605,24 @@ export function Holdings() {
                         { label: 'Cardmarket', price: det.cardmarket, color: '#FF7900', icon: '🟠' },
                       ].filter(s => s.price)
                       return <>
-                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'10px' }}>
-                          {[
-                            {l:'Achat',v:spotCard.buyPrice>0?spotCard.buyPrice.toLocaleString('fr-FR')+' €':'---',c:'#1D1D1F'},
-                            {l:'Marché (est.)',v:spotCard.curPrice>0?spotCard.curPrice.toLocaleString('fr-FR')+' €':'---',c:'#1D1D1F'},
-                            {l:'ROI',v:spotCard.buyPrice>0?(roi>=0?'+':'')+roi+'%':'---',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
-                            {l:'PSA Pop',v:spotCard.psa?spotCard.psa.toLocaleString():'---',c:'#48484A'},
-                          ].map(st=>(
+                        {(()=>{
+                          const statsCells = [
+                            spotCard.buyPrice>0 && {l:'Achat',v:spotCard.buyPrice.toLocaleString('fr-FR')+' €',c:'#1D1D1F'},
+                            spotCard.curPrice>0 && {l:'Marché (est.)',v:spotCard.curPrice.toLocaleString('fr-FR')+' €',c:'#1D1D1F'},
+                            spotCard.buyPrice>0 && {l:'ROI',v:(roi>=0?'+':'')+roi+'%',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
+                            spotCard.psa ? {l:'PSA Pop',v:spotCard.psa.toLocaleString(),c:'#48484A'} : null,
+                          ].filter(Boolean) as {l:string;v:string;c:string}[]
+                          if (statsCells.length === 0) return null
+                          const cols = statsCells.length === 1 ? '1fr' : '1fr 1fr'
+                          return <div style={{ display:'grid', gridTemplateColumns:cols, gap:'8px', marginBottom:'10px' }}>
+                          {statsCells.map(st=>(
                             <div key={st.l} style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px' }}>
                               <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500 }}>{st.l}</div>
                               <div style={{ fontSize:'14px', fontWeight:600, color:st.c, fontFamily:'var(--font-display)', marginTop:'2px' }}>{st.v}</div>
                             </div>
                           ))}
                         </div>
+                        })()}
                         {sources.length > 0 && (
                           <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'12px', marginBottom:'14px' }}>
                             <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'8px' }}>Prix par source</div>
@@ -1646,6 +1652,16 @@ export function Holdings() {
                         )}
                       </>
                     })()}
+                    {spotCard.setId && spotCard.number ? (
+                      <div style={{ marginBottom:'14px' }}>
+                        <PriceHistoryChart
+                          setId={spotCard.setId}
+                          localId={spotCard.number}
+                          isPro={isPro}
+                          hideWhenInsufficient
+                        />
+                      </div>
+                    ) : null}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', padding:'10px 0', borderTop:'1px solid #F0F0F5', borderBottom:'1px solid #F0F0F5' }}>
                       <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
@@ -1660,8 +1676,7 @@ export function Holdings() {
                       </div>
                     </div>
                     <div style={{ display:'flex', gap:'8px' }}>
-                      <button onClick={()=>router.push('/alpha')} style={{ flex:2, padding:'11px', borderRadius:'9px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Voir signal</button>
-                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#E8E8ED', color:'#48484A', border:'1.5px solid #D1CEC9', fontSize:'13px', cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
                       <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:favs.has(spotCard.id)?'#FFF0F0':'#E8E8ED', border:`1px solid ${favs.has(spotCard.id)?'rgba(224,48,32,.25)':'#E5E5EA'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s' }}
                         onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.06)'}}
                         onMouseLeave={e=>{e.currentTarget.style.transform=''}}>

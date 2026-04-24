@@ -27,6 +27,17 @@
   --green:          #2E9E6A;
   --green-light:    #F0FFF6;
   --green-border:   #AAEEC8;
+  /* ── Semantic tokens (Strict Bloomberg) ────────── */
+  /* USE THESE — not raw --green/--red — for any perf or factual color */
+  --perf-up:        #1D9E75;
+  --perf-up-soft:   #E1F5EE;
+  --perf-down:      #E03020;
+  --perf-down-soft: #FDEDEA;
+  --accent:         #E03020;
+  --accent-soft:    rgba(224,48,32,0.06);
+  --premium:        #D4AF37;
+  --premium-soft:   #F5ECA0;
+  --premium-dark:   #8B7320;
 
   --sidebar-width:  220px;
   --header-height:  52px;

@@ -40,11 +40,27 @@ const config: Config = {
           border:  '#FFD8D0',
           hover:   '#C82010',
         },
-        // Semantic
+        // Semantic (legacy — kept for existing usage)
         green: {
           DEFAULT: '#2E9E6A',
           light:   '#F0FFF6',
           border:  '#AAEEC8',
+        },
+        // Semantic (Strict Bloomberg — use these for NEW usage)
+        perf: {
+          up:        '#1D9E75',
+          'up-soft': '#E1F5EE',
+          down:      '#E03020',
+          'down-soft':'#FDEDEA',
+        },
+        accent: {
+          DEFAULT: '#E03020',
+          soft:    'rgba(224,48,32,0.06)',
+        },
+        premium: {
+          DEFAULT: '#D4AF37',
+          soft:    '#F5ECA0',
+          dark:    '#8B7320',
         },
         // TCG Signal tiers
         tier: {

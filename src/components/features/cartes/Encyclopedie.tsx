@@ -2,6 +2,7 @@
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { SNOW } from '@/lib/design/colors'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
 
@@ -1575,12 +1576,12 @@ export function Encyclopedie() {
                           { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
                         ].filter(s => s.price) : []
                         return (cardPrice || sources.length > 0) ? (
-                          <div style={{ background:'linear-gradient(135deg,#F0FFF4,#E8F5E9)', borderRadius:'10px', padding:'12px', marginBottom:'10px', border:'1px solid rgba(46,158,106,.15)' }}>
-                            <div style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Prix marché (estimé)</div>
-                            <div style={{ fontSize:'22px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{(cardPrice || 0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
+                          <div style={{ background:SNOW.surface, borderRadius:'10px', padding:'12px', marginBottom:'10px', border:`1px solid ${SNOW.borderSoft}` }}>
+                            <div style={{ fontSize:'9px', color:SNOW.muted, fontFamily:'var(--font-display)', marginBottom:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontWeight:500 }}>Prix marché</div>
+                            <div style={{ fontSize:'22px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{(cardPrice || 0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
                             {sources.length > 0 && (
-                              <div style={{ borderTop:'1px solid rgba(46,158,106,.15)', paddingTop:'8px' }}>
-                                <div style={{ fontSize:'9px', color:'#86868B', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'6px' }}>Prix par source</div>
+                              <div style={{ borderTop:`1px solid ${SNOW.borderSoft}`, paddingTop:'8px' }}>
+                                <div style={{ fontSize:'9px', color:SNOW.muted, textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'6px' }}>Prix par source</div>
                                 {sources.map(s=>(
                                   <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'3px 0' }}>
                                     <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>

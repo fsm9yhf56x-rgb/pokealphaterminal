@@ -10,6 +10,7 @@ import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
 
@@ -1582,7 +1583,7 @@ export function Holdings() {
                       }
                       return <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {displayPrice.toLocaleString('fr-FR')}</div>
                     })()}
-                    {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:'#4ECCA3', fontWeight:500, marginBottom:'16px' }}>+{roi}% | +EUR {gain.toLocaleString('fr-FR')}</div>}
+                    {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:roi>=0?PERF.up:PERF.down, fontWeight:500, marginBottom:'16px' }}>{roi>=0?'+':''}{roi}% | {gain>=0?'+':''}EUR {gain.toLocaleString('fr-FR')}</div>}
                     {(()=>{
                       const sid = spotCard.setId || ''
                       const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
@@ -2409,7 +2410,7 @@ export function Holdings() {
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                     {inFullSet&&card.graded&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 5px', borderRadius:'4px', background:gradeBg, color:gradeFg, fontFamily:'var(--font-data)', letterSpacing:'.02em', flexShrink:0, backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none', position:'relative', overflow:'hidden' }}>{gn>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{card.condition}</span></span>}
                                   </div>
-                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div> : null })()}
+                                  {(()=>{ const p = getPrice(card); return p ? <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', marginTop:'1px' }}>{p.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div> : null })()}
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}

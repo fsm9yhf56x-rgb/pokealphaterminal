@@ -123,7 +123,7 @@ async function main() {
 
   // Count total rows to process
   const { count: totalRows } = await supabase
-    .from('prices')
+    .from('_deprecated_prices')
     .select('*', { count: 'exact', head: true });
 
   console.log(`📊 ${totalRows} rows in prices\n`);
@@ -135,7 +135,7 @@ async function main() {
 
   while (offset < totalRows) {
     const { data: rows, error } = await supabase
-      .from('prices')
+      .from('_deprecated_prices')
       .select('*')
       .order('id')
       .range(offset, offset + PAGE_SIZE - 1);

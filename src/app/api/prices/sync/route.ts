@@ -95,7 +95,7 @@ export async function POST(request: Request) {
         const psa10 = card.prices?.ebay?.PSA_10
         const psa9 = card.prices?.ebay?.PSA_9
 
-        await supabase.from('prices').upsert({
+        await supabase.from('_deprecated_prices').upsert({
           card_name: card.name, card_number: card.cardNumber,
           set_slug: ptSlug, set_name: card.set?.name, poketrace_id: card.id,
             variant: card.variant || null,
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
           const ebay = card.prices?.ebay?.NEAR_MINT
           const tcg = card.prices?.tcgplayer?.NEAR_MINT
           const psa10 = card.prices?.ebay?.PSA_10
-          await supabase.from('prices').upsert({
+          await supabase.from('_deprecated_prices').upsert({
             card_name: card.name, card_number: card.cardNumber,
             set_slug: ptSlug, set_name: card.set?.name, poketrace_id: card.id,
             variant: card.variant || null,

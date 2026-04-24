@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
       if (price.avg) {
         const poketraceId = 'ebay-' + (card.setSlug || 'base') + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
-        await supabase.from('prices').upsert({
+        await supabase.from('_deprecated_prices').upsert({
           card_name: card.name,
           card_number: card.number ? card.number.padStart(3, '0') + '/102' : null,
           set_slug: card.setSlug || 'ebay-lookup',

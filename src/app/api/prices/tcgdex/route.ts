@@ -75,7 +75,7 @@ export async function POST(request: Request) {
             })
             // Only update non-variant rows (TCGdex doesn't distinguish 1st Ed/Shadowless)
             // For shadowless/1st edition variants, Cardmarket is "Non disponible"
-            const { data: allRows } = await supabase.from('prices')
+            const { data: allRows } = await supabase.from('_deprecated_prices')
               .select('id, set_slug, variant')
               .eq('set_slug', slug)
               .eq('card_number', card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0'))
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
             
             if (eligible.length) {
               for (const v of eligible) {
-                await supabase.from('prices')
+                await supabase.from('_deprecated_prices')
                   .update({
                     cardmarket_avg: cm.avg || null,
                     cardmarket_low: cm.low || null,
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
               }
             } else {
               // Also try matching by card name
-              const { data: byName } = await supabase.from('prices')
+              const { data: byName } = await supabase.from('_deprecated_prices')
                 .select('id')
                 .eq('set_slug', slug)
                 .ilike('card_name', cardData.name)
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
               if (byName?.length) {
                 for (const bn of byName) {
-                  await supabase.from('prices')
+                  await supabase.from('_deprecated_prices')
                     .update({
                       cardmarket_avg: cm.avg || null,
                       cardmarket_low: cm.low || null,
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
               } else {
                 // No PokeTrace row exists — create a new row with just Cardmarket data
                 const cardNumberFormatted = card.localId.padStart(3, '0') + '/' + String(cards.length).padStart(3, '0')
-                await supabase.from('prices').insert({
+                await supabase.from('_deprecated_prices').insert({
                   card_name: cardData.name,
                   card_number: cardNumberFormatted,
                   set_slug: slug,

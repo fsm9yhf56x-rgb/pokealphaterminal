@@ -86,7 +86,7 @@ async function syncSet(setSlug, progress) {
         ? Math.round((ebay.avg * 0.5 + tcg.avg * 0.5) * 100) / 100
         : ebay?.avg || tcg?.avg || null
 
-      await sb.from('prices').upsert({
+      await sb.from('_deprecated_prices').upsert({
         card_name: card.name,
         card_number: card.cardNumber,
         set_slug: card.set?.slug || setSlug,

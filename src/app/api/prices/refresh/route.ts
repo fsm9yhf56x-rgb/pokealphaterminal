@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const stale: typeof slugs = []
   for (const s of slugs) {
     const { data: latest } = await supabase
-      .from('prices')
+      .from('_deprecated_prices')
       .select('fetched_at, tier')
       .eq('set_slug', s.slug)
       .eq('tier', 'hot')
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         const psa10 = card.prices?.ebay?.PSA_10
         const topPrice = card.topPrice || ebay?.avg || tcg?.avg || null
 
-        await supabase.from('prices').upsert({
+        await supabase.from('_deprecated_prices').upsert({
           card_name: card.name, card_number: card.cardNumber,
           set_slug: s.slug, set_name: card.set?.name, poketrace_id: card.id,
           variant: card.variant || null,

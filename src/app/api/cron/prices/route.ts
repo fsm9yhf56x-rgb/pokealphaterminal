@@ -76,14 +76,14 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
   const snapshots: PriceSnapshot[] = []
 
   // Find cards with missing prices or 1st Edition with suspicious low prices
-  const { data: gaps } = await supabase.from('prices')
+  const { data: gaps } = await supabase.from('_deprecated_prices')
     .select('card_name, card_number, set_slug, variant, top_price')
     .or('top_price.is.null,top_price.lt.1')
     .eq('condition', 'NEAR_MINT')
     .limit(budget * 2)
 
   // Also find 1st Edition cards priced lower than their Shadowless counterpart
-  const { data: firstEds } = await supabase.from('prices')
+  const { data: firstEds } = await supabase.from('_deprecated_prices')
     .select('card_name, card_number, set_slug, variant, top_price')
     .eq('variant', '1st_Edition_Holofoil')
     .not('top_price', 'is', null)
@@ -104,7 +104,7 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
     if (cardsToFill.length >= budget) break
     if (cardsToFill.find(c => c.name === fe.card_name && c.edition === '1st')) continue
     // Check if there's a Shadowless version priced higher
-    const { data: shadowless } = await supabase.from('prices')
+    const { data: shadowless } = await supabase.from('_deprecated_prices')
       .select('top_price')
       .eq('card_name', fe.card_name)
       .eq('set_slug', fe.set_slug)
@@ -147,7 +147,7 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
         const avg = Math.round((trimmed.reduce((s: number, p: number) => s + p, 0) / trimmed.length) * 100) / 100
         const poketraceId = 'ebay-' + card.setSlug + '-' + (card.edition || 'std') + '-' + (card.number || card.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
 
-        await supabase.from('prices').upsert({
+        await supabase.from('_deprecated_prices').upsert({
           card_name: card.name,
           card_number: card.number ? card.number.padStart(3, '0') + '/102' : null,
           set_slug: card.setSlug,
@@ -235,7 +235,7 @@ export async function GET(request: Request) {
 
   // ── Check which sets need sync based on tier ──
   const { data: existingPrices } = await supabase
-    .from('prices')
+    .from('_deprecated_prices')
     .select('set_slug, tier, fetched_at')
     .order('fetched_at', { ascending: false })
 
@@ -290,7 +290,7 @@ export async function GET(request: Request) {
           const psa10 = card.prices?.ebay?.PSA_10
           const topPrice = card.topPrice || ebay?.avg || tcg?.avg || null
 
-          await supabase.from('prices').upsert({
+          await supabase.from('_deprecated_prices').upsert({
             card_name: card.name,
             card_number: card.cardNumber,
             set_slug: ptSlug,

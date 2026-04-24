@@ -22,7 +22,7 @@ async function firstRowCols(name) {
     'portfolio_cards',
     'tcg_sets',
     'tcg_cards',
-    'prices',
+    '_deprecated_prices',
     'card_prices',
     'wishlist',
     'badges',
@@ -94,7 +94,7 @@ async function firstRowCols(name) {
   }
 
   // prices
-  for (const t of ['prices', 'card_prices']) {
+  for (const t of ['_deprecated_prices', 'card_prices']) {
     if (tableStatus[t]?.exists && tableStatus[t].count > 0) {
       sep(`💰 ${t} — COLONNES + ÉCHANTILLON`);
       const sample = await firstRowCols(t);

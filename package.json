@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"✅ src/lib/db/schema.ts regenerated\""
+    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"✅ src/lib/db/schema.ts regenerated\"",
+    "psa:scrape": "node scripts/scrape-psa-set.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",
@@ -22,9 +23,6 @@
     "dotenv": "^17.4.2",
     "html2canvas": "^1.4.1",
     "next": "14.2.3",
-    "puppeteer": "^24.42.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^3.5.0"
@@ -40,6 +38,9 @@
     "eslint-config-prettier": "^9.1.0",
     "postcss": "^8",
     "prettier": "^3.2.5",
+    "puppeteer": "^24.42.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",

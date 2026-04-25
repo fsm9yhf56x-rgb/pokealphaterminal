@@ -97,3 +97,83 @@ export interface Badge {
   badge_name: string
   earned_at: string
 }
+
+// ─── PSA Pop Reports (added 2026-04-24) ─────────────────
+export interface PsaCardMapping {
+  card_ref: string
+  psa_spec_id: string
+  psa_set_id: string
+  psa_card_name: string | null
+  psa_card_number: string | null
+  confidence: number
+  variety: string | null
+  manually_verified: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface PsaPopReport {
+  id: number
+  card_ref: string
+  psa_spec_id: string
+  pop_1: number | null
+  pop_1_5: number | null
+  pop_2: number | null
+  pop_2_5: number | null
+  pop_3: number | null
+  pop_3_5: number | null
+  pop_4: number | null
+  pop_4_5: number | null
+  pop_5: number | null
+  pop_5_5: number | null
+  pop_6: number | null
+  pop_6_5: number | null
+  pop_7: number | null
+  pop_7_5: number | null
+  pop_8: number | null
+  pop_8_5: number | null
+  pop_9: number | null
+  pop_9_5: number | null
+  pop_10: number | null
+  pop_10_plus: number | null
+  pop_authentic: number | null
+  pop_qualifier: Record<string, number> | null
+  pop_total: number
+  variety: string | null
+  subject_name: string | null
+  card_number: string | null
+  source_url: string
+  scraped_at: string
+}
+
+export interface PsaPopLatest {
+  card_ref: string
+  psa_spec_id: string
+  variety: string | null
+  subject_name: string | null
+  card_number: string | null
+  pop_8: number | null
+  pop_8_5: number | null
+  pop_9: number | null
+  pop_9_5: number | null
+  pop_10: number | null
+  pop_10_plus: number | null
+  pop_total: number
+  scraped_at: string
+  pct_gem_mint: number
+  pct_high_grade: number
+  gem_mint_tier: 'very_rare' | 'rare' | 'uncommon' | 'common'
+}
+
+export type PsaScrapeStatus = 'pending' | 'processing' | 'done' | 'failed' | 'skipped'
+
+export interface PsaScrapeQueueItem {
+  card_ref: string
+  priority: number
+  status: PsaScrapeStatus
+  attempts: number
+  last_attempt_at: string | null
+  last_error: string | null
+  scheduled_for: string
+  created_at: string
+}

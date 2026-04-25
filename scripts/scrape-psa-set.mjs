@@ -195,13 +195,14 @@ async function main() {
   await sb.from('sync_logs').insert({
     job_name: `psa_pop_${setId}`,
     status: 'success',
-    metadata: {
+    finished_at: new Date().toISOString(),
+    stats: {
       setId,
       heading_id: config.headingId,
       label: config.label,
       items_processed: rows.length,
       duration_ms: Date.now() - startTime,
-      stats,
+      mapping_stats: stats,
     },
   }).then(({ error: e }) => {
     if (e) console.warn('⚠️  sync_logs insert failed (non-fatal):', e.message)

@@ -60,6 +60,50 @@ export const PSA_HEADINGS = {
   hgss2:  { headingId: 98581,  label: 'Pokemon Heartgold & Soulsilver Unleashed' },
   hgss3:  { headingId: 98630,  label: 'Pokemon Heartgold & Soulsilver Undaunted' },
   hgss4:  { headingId: 97792,  label: 'Pokemon Heartgold & Soulsilver Triumphant' },
+  // BW era (2011-2013) - main sets
+  col1:           { headingId: 98660,  label: 'Pokemon Call of Legends' },
+  bw1:            { headingId: 100559, label: 'Pokemon Black & White' },
+  bw2:            { headingId: 101680, label: 'Pokemon Black & White Emerging Powers' },
+  bw3:            { headingId: 102646, label: 'Pokemon Black & White Noble Victories' },
+  bw4:            { headingId: 103390, label: 'Pokemon Black & White Next Destinies' },
+  bw5:            { headingId: 104076, label: 'Pokemon Black & White Dark Explorers' },
+  bw6:            { headingId: 107134, label: 'Pokemon Black & White Dragons Exalted' },
+  bw7:            { headingId: 108112, label: 'Pokemon Black & White Boundaries Crossed' },
+  bw8:            { headingId: 109064, label: 'Pokemon Black & White Plasma Storm' },
+  bw9:            { headingId: 112538, label: 'Pokemon Black & White Plasma Freeze' },
+  bw10:           { headingId: 115640, label: 'Pokemon Black & White Plasma Blast' },
+  bw11:           { headingId: 116903, label: 'Pokemon Black & White Legendary Treasures' },
+  rc:             { headingId: 118232, label: 'Pokemon Black & White Legendary Treasures Radiant Collection' },
+  dv1:            { headingId: 108140, label: 'Pokemon Black & White Dragon Vault' },
+  // BW Promos (3 separate yearly headings)
+  'bwp-2011':     { headingId: 101538, label: 'Pokemon Black & White Promo 2011' },
+  'bwp-2012':     { headingId: 111823, label: 'Pokemon Black & White Promo 2012' },
+  'bwp-2013':     { headingId: 114698, label: 'Pokemon Black & White Promo 2013' },
+  // BW Decks & Trainer Kits
+  'bw-theme':     { headingId: 270331, label: 'Pokemon Black & White Theme Deck' },
+  'bw-tk-excadrill': { headingId: 204526, label: 'Pokemon BW Trainer Kit Excadrill' },
+  'bw-tk-zoroark':   { headingId: 194770, label: 'Pokemon BW Trainer Kit Zoroark' },
+  // Battle Arena Decks 2013
+  'ba-keldeo':    { headingId: 228402, label: 'Pokemon Battle Arena Keldeo VS Rayquaza' },
+  'ba-xerneas':   { headingId: 249451, label: 'Pokemon Battle Arena Xerneas vs Yveltal' },
+  'ba-energies':  { headingId: 326433, label: 'Pokemon Battle Deck Energies' },
+  // Generic Pokemon Promos & Insert Cards
+  'pkmn-promo-2011': { headingId: 150731, label: 'Pokemon Promo 2011' },
+  'pkmn-promo-2013': { headingId: 151573, label: 'Pokemon Promo 2013' },
+  'insert-2011':  { headingId: 238590, label: 'Pokemon Insert Cards 2011' },
+  'insert-2012':  { headingId: 238592, label: 'Pokemon Insert Cards 2012' },
+  'insert-2013':  { headingId: 238589, label: 'Pokemon Insert Cards 2013' },
+  // McDonald's Collections
+  'mcd-2011':     { headingId: 101683, label: "Pokemon McDonald's Collection 2011" },
+  'mcd-2012':     { headingId: 129432, label: "Pokemon McDonald's Collection 2012" },
+  // Special / League / Worlds
+  'league-2011':  { headingId: 201209, label: 'Pokemon League Play! Promo' },
+  'illusion-2011':{ headingId: 117652, label: "Pokemon World of Illusion's Promo" },
+  'worlds-2011':  { headingId: 100095, label: 'Pokemon World Championships Promo 2011' },
+  'worlds-2012':  { headingId: 112945, label: 'Pokemon World Championships Promo 2012' },
+  'worlds-2013-promo': { headingId: 297671, label: 'Pokemon World Championship Promo 2013' },
+  'worlds-2013-deck':  { headingId: 153515, label: 'Pokemon World Championship Deck Promo 2013' },
+
 
 }
 

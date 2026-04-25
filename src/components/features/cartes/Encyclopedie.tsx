@@ -304,7 +304,7 @@ export function Encyclopedie() {
     const USD_TO_EUR = 0.92
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : (sid.includes('-shadowless') && !sid.includes('-shadowless-ns')) ? 'Unlimited_Holofoil' : ''
     // Priority 1: weighted average from priceDetails (most accurate)
     const dk = slug + '|' + varHint + '|' + (card.localId||'')
     const det = priceDetails[dk]
@@ -327,7 +327,7 @@ export function Encyclopedie() {
   const getPriceDetail = (card: { name: string; setName?: string; localId?: string; setId?: string }): { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null } | null => {
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
+    const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : (sid.includes('-shadowless') && !sid.includes('-shadowless-ns')) ? 'Unlimited_Holofoil' : ''
     const dk = slug + '|' + varHint + '|' + (card.localId||'')
     const dkHolo = slug + '|Holofoil|' + (card.localId||'')
     const dkNormal = slug + '|Normal|' + (card.localId||'')
@@ -1198,10 +1198,10 @@ export function Encyclopedie() {
                   {setBlocks[filSet]&&<div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{setBlocks[filSet]}</div>}
                   {(filSet.includes('-shadowless')||filSet.includes('-1st'))&&(
                     <div style={{ display:'flex', alignItems:'center', gap:'4px', marginBottom:'6px', flexWrap:'wrap' as const }}>
-                      {(filSet.includes('-shadowless')&&!filSet.includes('-ns'))||filSet.includes('-1st')?<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                      {filSet.includes('-shadowless-ns')||filSet.includes('-1st')?<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
                       {filSet.includes('-shadowless')?<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 6px', borderRadius:'4px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                       <span style={{ fontSize:'10px', color:'#AEAEB2', fontFamily:'var(--font-display)', marginLeft:'4px' }}>
-                        {filSet.includes('-shadowless')&&!filSet.includes('-ns')?'1st print run, no drop shadow on art box + 1st Edition stamp':filSet.includes('-shadowless')&&filSet.includes('-ns')?'1st print run, no drop shadow on art box, no 1st Ed. stamp':filSet.includes('-1st')?'First Edition print run with 1st Edition stamp':''}
+                        {filSet.includes('-shadowless-ns')?'1st print run, no drop shadow on art box + 1st Edition stamp':(filSet.includes('-shadowless')&&!filSet.includes('-shadowless-ns'))?'1st print run, no drop shadow on art box, no 1st Ed. stamp':filSet.includes('-1st')?'First Edition print run with 1st Edition stamp':''}
                       </span>
                     </div>
                   )}
@@ -1284,7 +1284,7 @@ export function Encyclopedie() {
                         </div>
                         {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&cardSize!=='S'&&(
                           <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
-                            {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                            {card.setId?.includes('-shadowless-ns')||card.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
                             {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
@@ -1490,7 +1490,7 @@ export function Encyclopedie() {
                         </div>
                         {selCard&&(selCard.setId?.includes('-shadowless')||selCard.setId?.includes('-1st'))&&(
                           <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'4px', flexWrap:'wrap' as const }}>
-                            {(selCard.setId?.includes('-shadowless')&&!selCard.setId?.includes('-ns'))||selCard.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                            {selCard.setId?.includes('-shadowless-ns')||selCard.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
                             {selCard.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}

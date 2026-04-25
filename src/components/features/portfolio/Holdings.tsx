@@ -10,6 +10,7 @@ import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -1660,6 +1661,14 @@ export function Holdings() {
                           localId={spotCard.number}
                           isPro={isPro}
                           hideWhenInsufficient
+                        />
+                      </div>
+                    ) : null}
+                    {spotCard.setId && spotCard.number ? (
+                      <div style={{ marginBottom:'14px' }}>
+                        <PsaPopBlock
+                          cardId={spotCard.setId + '-' + spotCard.number}
+                          hideWhenEmpty
                         />
                       </div>
                     ) : null}

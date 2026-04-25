@@ -134,7 +134,10 @@ export async function fetchPsaSetWithBrowser({ categoryId, headingId, start = 0,
 
     // ─── Now POST from inside the browser (with valid cookies) ───
     log(`POST /Pop/GetSetItems (cat=${categoryId}, heading=${headingId}, start=${start}, length=${length})...`)
-    result = await page.evaluate(async (cat, head, st, len) => {
+    const RETRY_DELAYS_MS = [60_000, 300_000]  // 1min, then 5min
+    let attempt = 0
+    while (true) {
+      result = await page.evaluate(async (cat, head, st, len) => {
       const body = new URLSearchParams({
         draw: '1',
         start: String(st),
@@ -161,6 +164,16 @@ export async function fetchPsaSetWithBrowser({ categoryId, headingId, start = 0,
       try { json = JSON.parse(text) } catch (_) {}
       return { ok, status, json, textPreview: text.slice(0, 300) }
     }, categoryId, headingId, start, length)
+      if (result.ok && result.json) break
+      if (result.status === 429 && attempt < RETRY_DELAYS_MS.length) {
+        const waitMs = RETRY_DELAYS_MS[attempt]
+        console.log(`  [psa-fetcher] ⚠️  Rate limited (HTTP 429). Waiting ${waitMs / 1000}s before retry...`)
+        await new Promise(r => setTimeout(r, waitMs))
+        attempt++
+        continue
+      }
+      break  // not 429, or exhausted retries
+    }
   } finally {
     await browser.close()
   }

@@ -42,6 +42,25 @@ export const PSA_HEADINGS = {
   ex14:    { headingId: 87132,  label: 'Pokemon EX Crystal Guardians' },
   ex15:    { headingId: 87126,  label: 'Pokemon EX Dragon Frontiers' },
   ex16:    { headingId: 87122,  label: 'Pokemon EX Power Keepers' },
+  // DP era (2007-2010)
+  dp1:    { headingId: 90106,  label: 'Pokemon Diamond & Pearl' },
+  dp2:    { headingId: 101066, label: 'Pokemon Diamond & Pearl Mysterious Treasures' },
+  dp3:    { headingId: 90102,  label: 'Pokemon Diamond & Pearl Secret Wonders' },
+  dp4:    { headingId: 90090,  label: 'Pokemon Diamond & Pearl Great Encounters' },
+  dp5:    { headingId: 90091,  label: 'Pokemon Diamond & Pearl Majestic Dawn' },
+  dp6:    { headingId: 90098,  label: 'Pokemon Diamond & Pearl Legends Awakened' },
+  dp7:    { headingId: 90097,  label: 'Pokemon Diamond & Pearl Stormfront' },
+  // Platinum era
+  pl1:    { headingId: 98626,  label: 'Pokemon Platinum' },
+  pl2:    { headingId: 94032,  label: 'Pokemon Platinum Rising Rivals' },
+  pl3:    { headingId: 90094,  label: 'Pokemon Platinum Supreme Victors' },
+  pl4:    { headingId: 90105,  label: 'Pokemon Platinum Arceus' },
+  // HGSS era
+  hgss1:  { headingId: 96083,  label: 'Pokemon Heartgold & Soulsilver' },
+  hgss2:  { headingId: 98581,  label: 'Pokemon Heartgold & Soulsilver Unleashed' },
+  hgss3:  { headingId: 98630,  label: 'Pokemon Heartgold & Soulsilver Undaunted' },
+  hgss4:  { headingId: 97792,  label: 'Pokemon Heartgold & Soulsilver Triumphant' },
+
 }
 
 export function getPsaConfig(setId) {

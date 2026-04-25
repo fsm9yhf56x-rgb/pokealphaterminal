@@ -75,7 +75,7 @@ async function simulateHumanBehavior(page) {
  * @param {boolean} [args.verbose]
  * @returns {Promise<{ data: Array, recordsTotal: number, source: string }>}
  */
-export async function fetchPsaSetWithBrowser({ categoryId, headingId, verbose = true }) {
+export async function fetchPsaSetWithBrowser({ categoryId, headingId, start = 0, length = 500, verbose = true }) {
   const log = (...a) => verbose && console.log('  [psa-fetcher]', ...a)
 
   log('Launching browser...')
@@ -133,12 +133,12 @@ export async function fetchPsaSetWithBrowser({ categoryId, headingId, verbose = 
     log('✅ Cloudflare challenge cleared')
 
     // ─── Now POST from inside the browser (with valid cookies) ───
-    log(`POST /Pop/GetSetItems (cat=${categoryId}, heading=${headingId})...`)
-    result = await page.evaluate(async (cat, head) => {
+    log(`POST /Pop/GetSetItems (cat=${categoryId}, heading=${headingId}, start=${start}, length=${length})...`)
+    result = await page.evaluate(async (cat, head, st, len) => {
       const body = new URLSearchParams({
         draw: '1',
-        start: '0',
-        length: '500',
+        start: String(st),
+        length: String(len),
         'search[value]': '',
         headingID: String(head),
         categoryID: String(cat),
@@ -160,7 +160,7 @@ export async function fetchPsaSetWithBrowser({ categoryId, headingId, verbose = 
       let json = null
       try { json = JSON.parse(text) } catch (_) {}
       return { ok, status, json, textPreview: text.slice(0, 300) }
-    }, categoryId, headingId)
+    }, categoryId, headingId, start, length)
   } finally {
     await browser.close()
   }
@@ -176,4 +176,40 @@ export async function fetchPsaSetWithBrowser({ categoryId, headingId, verbose = 
     recordsTotal: result.json.recordsTotal || 0,
     source: 'puppeteer-stealth',
   }
+}
+
+
+/**
+ * Fetch a PSA pop set with automatic pagination.
+ * Loops with start += 500 until the page returns less than 500 rows
+ * or we've fetched all recordsTotal entries.
+ */
+export async function fetchPsaSetAllPages({ categoryId, headingId, verbose = true }) {
+  const log = (...a) => verbose && console.log('  [psa-fetcher]', ...a)
+  const PAGE = 500
+  const all = []
+  let recordsTotal = 0
+  let start = 0
+  let pageNum = 1
+
+  while (true) {
+    log(`Page ${pageNum} (start=${start})`)
+    const r = await fetchPsaSetWithBrowser({ categoryId, headingId, start, length: PAGE, verbose: false })
+    all.push(...r.data)
+    recordsTotal = r.recordsTotal
+    log(`  → got ${r.data.length} rows (cumulative: ${all.length}/${recordsTotal})`)
+
+    if (r.data.length < PAGE) break              // no more pages
+    if (all.length >= recordsTotal) break        // safety check
+    if (pageNum >= 5) {                          // hard cap (2,500 rows)
+      log(`  ⚠️  Reached page cap (5), stopping`)
+      break
+    }
+
+    start += PAGE
+    pageNum += 1
+    await new Promise(r => setTimeout(r, 2500))  // rate-limit between pages
+  }
+
+  return { data: all, recordsTotal, source: 'puppeteer-stealth-paginated' }
 }

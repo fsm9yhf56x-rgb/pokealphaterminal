@@ -18,7 +18,7 @@ import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 import { mapToCardRef, stripSubjectSuffix } from './lib/psa-mapper.mjs'
 import { getPsaConfig } from './lib/psa-headings.mjs'
-import { fetchPsaSetWithBrowser } from './lib/psa-fetcher.mjs'
+import { fetchPsaSetAllPages } from './lib/psa-fetcher.mjs'
 
 // ─── CLI args ───────────────────────────────────────────
 const args = Object.fromEntries(
@@ -45,7 +45,7 @@ const sb = createClient(supabaseUrl, supabaseKey)
 // ─── Fetch PSA data (via Puppeteer + stealth) ──────────
 async function fetchPsaSet({ categoryId, headingId, label }) {
   console.log(`📡 Fetching PSA pop for "${label}" (heading=${headingId})...`)
-  const { data, recordsTotal, source } = await fetchPsaSetWithBrowser({
+  const { data, recordsTotal, source } = await fetchPsaSetAllPages({
     categoryId,
     headingId,
     verbose: true,

@@ -2,6 +2,7 @@
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW } from '@/lib/design/colors'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
@@ -1616,6 +1617,14 @@ export function Encyclopedie() {
                             localId={selCard.localId}
                             isPro={isPro}
                             hideWhenInsufficient
+                          />
+                        </div>
+                      ) : null}
+                      {selCard?.setId && selCard?.localId ? (
+                        <div style={{ marginBottom:'12px' }}>
+                          <PsaPopBlock
+                            cardId={`${selCard.setId}-${selCard.localId}`}
+                            hideWhenEmpty
                           />
                         </div>
                       ) : null}

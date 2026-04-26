@@ -221,6 +221,66 @@ export const PSA_HEADINGS = {
   'worlds-2018':           { headingId: 163538, label: 'Pokemon World Championship Promo 2018' },
   'worlds-2018-bis':       { headingId: 319339, label: 'Pokemon World Championships Promo 2018 (bis)' },
   'worlds-2019':           { headingId: 170281, label: 'Pokemon World Championships Promo 2019' },
+  // SWSH era (2020-2022) - main sets
+  swsh1:                   { headingId: 172689, label: 'Pokemon Sword & Shield' },
+  swsh2:                   { headingId: 175662, label: 'Pokemon Sword & Shield Rebel Clash' },
+  swsh3:                   { headingId: 178554, label: 'Pokemon Sword & Shield Darkness Ablaze' },
+  swsh35:                  { headingId: 181110, label: "Pokemon Sword & Shield Champion's Path" },
+  swsh4:                   { headingId: 185226, label: 'Pokemon Sword & Shield Vivid Voltage' },
+  swsh45:                  { headingId: 189160, label: 'Pokemon Sword & Shield Shining Fates' },
+  swsh5:                   { headingId: 189690, label: 'Pokemon Sword & Shield Battle Styles' },
+  swsh6:                   { headingId: 194169, label: 'Pokemon Sword & Shield Chilling Reign' },
+  swsh7:                   { headingId: 198449, label: 'Pokemon Sword & Shield Evolving Skies' },
+  swsh75:                  { headingId: 200625, label: 'Pokemon Celebrations' },
+  swsh8:                   { headingId: 202811, label: 'Pokemon Sword & Shield Fusion Strike' },
+  swsh9:                   { headingId: 207756, label: 'Pokemon Sword & Shield Brilliant Stars' },
+  swsh10:                  { headingId: 213500, label: 'Pokemon Sword & Shield Astral Radiance' },
+  swsh11:                  { headingId: 219830, label: 'Pokemon Sword & Shield Lost Origin' },
+  swsh12:                  { headingId: 222927, label: 'Pokemon Sword & Shield Silver Tempest' },
+  // Pokemon GO crossover
+  pgo:                     { headingId: 215716, label: 'Pokemon Go' },
+  // SWSH Black Star Promos (3 yearly)
+  'swshp-2020':            { headingId: 177191, label: 'Pokemon Swsh Black Star Promo 2020' },
+  'swshp-2021':            { headingId: 188712, label: 'Pokemon Swsh Black Star Promo 2021' },
+  'swshp-2022':            { headingId: 208600, label: 'Pokemon Swsh Black Star Promo 2022' },
+  // SM Promos continued (overlap)
+  'smp-2020':              { headingId: 176382, label: 'Pokemon SM Black Star Promo 2020' },
+  'smp-2021':              { headingId: 202192, label: 'Pokemon SM Black Star Promo 2021' },
+  // Battle Academy & Special Boxes
+  'battle-academy-2020':   { headingId: 180955, label: 'Pokemon Battle Academy 2020' },
+  'battle-academy-2022':   { headingId: 222696, label: 'Pokemon Battle Academy 2022' },
+  futsal:                  { headingId: 182005, label: 'Pokemon Futsal' },
+  'galar-friends':         { headingId: 220918, label: 'Pokemon Galar Pals Mini Tins' },
+  'galar-power':           { headingId: 285939, label: 'Pokemon Galar Power Mini Tins' },
+  'raid-battle':           { headingId: 280563, label: 'Pokemon Raid Battle' },
+  // Celebrations specials
+  'cele-classic':          { headingId: 200655, label: 'Pokemon Celebrations Classic Collection' },
+  'cele-upc':              { headingId: 202021, label: 'Pokemon Celebrations Ultra-Premium Collection' },
+  'cele-mini':             { headingId: 241697, label: 'Pokemon Celebrations Mini Tins' },
+  // 25th Anniversary
+  'asia-25th':             { headingId: 202700, label: 'Pokemon Asia 25th Anniversary Promo' },
+  'creatures-25th':        { headingId: 206589, label: 'Pokemon Card Game 25th Anniversary Creatures Deck' },
+  'first-partner':         { headingId: 191201, label: 'Pokemon First Partner Jumbos' },
+  // 2022 specials
+  'arceus-vstar-upc':      { headingId: 225542, label: 'Pokemon Arceus Vstar Ultra-Premium Collection' },
+  'intro-deck-swsh':       { headingId: 224446, label: 'Pokemon Sword & Shield Intro Deck' },
+  'mew-v-box':             { headingId: 224428, label: 'Pokemon Sword & Shield Mew V Box' },
+  'lucario-tyranitar':     { headingId: 256590, label: 'Pokemon Sword & Shield Lucario V & Tyranitar V Heavy Hitters' },
+  'fall-chest-2022':       { headingId: 233059, label: 'Pokemon Fall Collector Chest 2022' },
+  'sv-preorder-bonus':     { headingId: 226511, label: 'Pokemon Center Scarlet & Violet Pre-Order Bonus' },
+  'prize-pack-s1':         { headingId: 227310, label: 'Pokemon Play! Pokemon Prize Pack Series 1' },
+  'sinnoh-stars':          { headingId: 249131, label: 'Pokemon Sinnoh Stars Mini Tins' },
+  'worlds-2022':           { headingId: 225395, label: 'Pokemon World Championships Promo 2022' },
+  // Generic promos & inserts
+  'insert-2020':           { headingId: 239987, label: 'Pokemon Insert Cards 2020' },
+  'insert-2021':           { headingId: 239988, label: 'Pokemon Insert Cards 2021' },
+  'insert-2022':           { headingId: 224334, label: 'Pokemon Insert Cards 2022' },
+  'online-2020':           { headingId: 245850, label: 'Pokemon TCG Online Insert Code Cards 2020' },
+  'online-2021':           { headingId: 245818, label: 'Pokemon TCG Online Insert Code Cards 2021' },
+  'tcglive-2022':          { headingId: 238435, label: 'Pokemon TCG Live Insert Code Cards 2022' },
+  'mcd-2021':              { headingId: 188977, label: "Pokemon McDonald's Collection 2021" },
+  'mcd-2022':              { headingId: 219248, label: "Pokemon McDonald's Collection 2022" },
+
 
 
 

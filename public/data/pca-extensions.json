@@ -1,0 +1,1741 @@
+{
+  "generatedAt": "2026-04-26T16:16:10.897Z",
+  "source": "https://pcagrade.com/fr/rechercheCrt",
+  "count": 289,
+  "extensions": [
+    {
+      "uuid": "01996c7d-8766-9109-dae0-4953938f3319",
+      "name": "Mega Evolution",
+      "cardCount": 132,
+      "symbol": "MEG"
+    },
+    {
+      "uuid": "01996c84-520b-7117-a153-9409204fa4cd",
+      "name": "Mega Energies",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "019a2fe7-5b5a-a0e7-fa48-457968b1c166",
+      "name": "Phantasmal Flames",
+      "cardCount": 94,
+      "symbol": "PFL"
+    },
+    {
+      "uuid": "019bda90-18ef-fddf-60a9-f34f82b4fc4d",
+      "name": "Ascended Heroes",
+      "cardCount": 217,
+      "symbol": "ASC"
+    },
+    {
+      "uuid": "019ce6c7-c037-f564-bca7-f228408e8a0b",
+      "name": "Perfect Order",
+      "cardCount": 88,
+      "symbol": "POR"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cee5",
+      "name": "Base Set",
+      "cardCount": 102,
+      "symbol": "base1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cee6",
+      "name": "Jungle",
+      "cardCount": 64,
+      "symbol": "base2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cee7",
+      "name": "Fossil",
+      "cardCount": 62,
+      "symbol": "base3"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cee8",
+      "name": "Legendary Collection",
+      "cardCount": 110,
+      "symbol": "base6"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cee9",
+      "name": "Team Rocket",
+      "cardCount": 82,
+      "symbol": "base5"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceea",
+      "name": "Gym Heroes",
+      "cardCount": 132,
+      "symbol": "gym1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceeb",
+      "name": "Gym Challenge",
+      "cardCount": 132,
+      "symbol": "gym2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceec",
+      "name": "Neo Genesis",
+      "cardCount": 111,
+      "symbol": "neo1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceed",
+      "name": "Neo Discovery",
+      "cardCount": 75,
+      "symbol": "neo2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceee",
+      "name": "Neo Revelation",
+      "cardCount": 64,
+      "symbol": "neo3"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceef",
+      "name": "Neo Destiny",
+      "cardCount": 105,
+      "symbol": "neo4"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef0",
+      "name": "Expedition",
+      "cardCount": 165,
+      "symbol": "ecard1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef1",
+      "name": "Aquapolis",
+      "cardCount": 147,
+      "symbol": "ecard2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef2",
+      "name": "Skyridge",
+      "cardCount": 144,
+      "symbol": "ecard3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee6a",
+      "name": "Southern Islands",
+      "cardCount": 18,
+      "symbol": "si1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee71",
+      "name": "Base Set 2",
+      "cardCount": 130,
+      "symbol": "base4"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef3",
+      "name": "Ruby & Sapphire",
+      "cardCount": 109,
+      "symbol": "ex1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef4",
+      "name": "Sandstorm",
+      "cardCount": 100,
+      "symbol": "ex2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef5",
+      "name": "Dragon",
+      "cardCount": 97,
+      "symbol": "ex3"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef6",
+      "name": "Team Magma vs Team Aqua",
+      "cardCount": 95,
+      "symbol": "ex4"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef7",
+      "name": "Hidden Legends",
+      "cardCount": 101,
+      "symbol": "ex5"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef8",
+      "name": "FireRed & LeafGreen",
+      "cardCount": 112,
+      "symbol": "ex6"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cef9",
+      "name": "Team Rocket Returns",
+      "cardCount": 109,
+      "symbol": "ex7"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cefa",
+      "name": "Deoxys",
+      "cardCount": 107,
+      "symbol": "ex8"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cefb",
+      "name": "Emerald",
+      "cardCount": 106,
+      "symbol": "ex9"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cefc",
+      "name": "Unseen Forces",
+      "cardCount": 115,
+      "symbol": "ex10"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cefd",
+      "name": "Delta Species",
+      "cardCount": 113,
+      "symbol": "ex11"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cefe",
+      "name": "Legend Maker",
+      "cardCount": 92,
+      "symbol": "ex12"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5ceff",
+      "name": "Holon Phantoms",
+      "cardCount": 110,
+      "symbol": "ex13"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf00",
+      "name": "Crystal Guardians",
+      "cardCount": 100,
+      "symbol": "ex14"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf01",
+      "name": "Dragon Frontiers",
+      "cardCount": 101,
+      "symbol": "ex15"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf02",
+      "name": "Power Keepers",
+      "cardCount": 108,
+      "symbol": "ex16"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee86",
+      "name": "WB! Kids Poké Card Creator",
+      "cardCount": 5,
+      "symbol": null
+    },
+    {
+      "uuid": "018433e0-fb1d-4d86-b895-f0f3cef46f80",
+      "name": "Plusle Deck",
+      "cardCount": 12,
+      "symbol": "TK2-P"
+    },
+    {
+      "uuid": "018433e5-6c2c-5211-e1cf-80ee4b337c9c",
+      "name": "Minun Deck",
+      "cardCount": 12,
+      "symbol": "TK2-N"
+    },
+    {
+      "uuid": "018221cc-b818-8fd9-06c6-ea0a0e5b602f",
+      "name": "Latias Deck",
+      "cardCount": 10,
+      "symbol": "TK1-LA"
+    },
+    {
+      "uuid": "01822200-cf91-76be-bdac-ff71336e11ce",
+      "name": "Latios Deck",
+      "cardCount": 10,
+      "symbol": "TK1-LO"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf03",
+      "name": "Diamond & Pearl",
+      "cardCount": 130,
+      "symbol": "dp1"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf04",
+      "name": "Mysterious Treasures",
+      "cardCount": 123,
+      "symbol": "dp2"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf05",
+      "name": "Secret Wonders",
+      "cardCount": 132,
+      "symbol": "dp3"
+    },
+    {
+      "uuid": "018120eb-f5dc-fafa-c372-cebc83a5cf06",
+      "name": "Great Encounters",
+      "cardCount": 106,
+      "symbol": "dp4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee26",
+      "name": "Majestic Dawn",
+      "cardCount": 100,
+      "symbol": "dp5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee27",
+      "name": "Legends Awakened",
+      "cardCount": 146,
+      "symbol": "dp6"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee28",
+      "name": "Stormfront",
+      "cardCount": 100,
+      "symbol": "dp7"
+    },
+    {
+      "uuid": "01847053-dba7-6683-4790-e25319a2b5db",
+      "name": "Manaphy Deck",
+      "cardCount": 12,
+      "symbol": "TK3-M"
+    },
+    {
+      "uuid": "0184706e-88f0-01b1-8653-6a7545ff10e0",
+      "name": "Lucario Deck",
+      "cardCount": 11,
+      "symbol": "TK3-L"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee29",
+      "name": "Platinum",
+      "cardCount": 127,
+      "symbol": "pl1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2a",
+      "name": "Rising Rivals",
+      "cardCount": 111,
+      "symbol": "pl2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2b",
+      "name": "Supreme Victors",
+      "cardCount": 147,
+      "symbol": "pl3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2c",
+      "name": "Arceus",
+      "cardCount": 99,
+      "symbol": "Arceus"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7445",
+      "name": "Pokémon Rumble",
+      "cardCount": 16,
+      "symbol": null
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2d",
+      "name": "HeartGold & SoulSilver",
+      "cardCount": 123,
+      "symbol": "hgss1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2e",
+      "name": "Unleashed",
+      "cardCount": 95,
+      "symbol": "hgss2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee2f",
+      "name": "Undaunted",
+      "cardCount": 90,
+      "symbol": "hgss3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee30",
+      "name": "Triumphant",
+      "cardCount": 102,
+      "symbol": "hgss4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee91",
+      "name": "Gyarados Deck",
+      "cardCount": 30,
+      "symbol": "TK4-L"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7443",
+      "name": "Raichu Deck",
+      "cardCount": 30,
+      "symbol": "TK4-R"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee31",
+      "name": "Call of Legends",
+      "cardCount": 95,
+      "symbol": "col1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee32",
+      "name": "Black & White",
+      "cardCount": 114,
+      "symbol": "bw1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee33",
+      "name": "Emerging Powers",
+      "cardCount": 98,
+      "symbol": "bw2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee34",
+      "name": "Noble Victories",
+      "cardCount": 101,
+      "symbol": "bw3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee35",
+      "name": "Next Destinies",
+      "cardCount": 99,
+      "symbol": "bw4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee36",
+      "name": "Dark Explorers",
+      "cardCount": 108,
+      "symbol": "bw5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee37",
+      "name": "Dragons Exalted",
+      "cardCount": 124,
+      "symbol": "bw6"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee38",
+      "name": "Dragon Vault",
+      "cardCount": 20,
+      "symbol": "dv1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee39",
+      "name": "Boundaries Crossed",
+      "cardCount": 149,
+      "symbol": "bw7"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3a",
+      "name": "Plasma Storm",
+      "cardCount": 135,
+      "symbol": "bw8"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3b",
+      "name": "Plasma Freeze",
+      "cardCount": 116,
+      "symbol": "bw9"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3c",
+      "name": "Plasma Blast",
+      "cardCount": 101,
+      "symbol": "bw10"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3d",
+      "name": "Legendary Treasures",
+      "cardCount": 113,
+      "symbol": "bw11"
+    },
+    {
+      "uuid": "018471c8-416d-1253-be21-2d2ee494d284",
+      "name": "Excadrill Deck",
+      "cardCount": 30,
+      "symbol": "TK5-M"
+    },
+    {
+      "uuid": "01847515-875d-e362-5250-0d94e658e26d",
+      "name": "Zoroark Deck",
+      "cardCount": 30,
+      "symbol": "TK5-Z"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3e",
+      "name": "Kalos Starter Set",
+      "cardCount": 39,
+      "symbol": "xy0"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee3f",
+      "name": "XY",
+      "cardCount": 146,
+      "symbol": "xy1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee40",
+      "name": "Flashfire",
+      "cardCount": 106,
+      "symbol": "xy2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee41",
+      "name": "Furious Fists",
+      "cardCount": 111,
+      "symbol": "xy3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee42",
+      "name": "Phantom Forces",
+      "cardCount": 119,
+      "symbol": "xy4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee43",
+      "name": "Primal Clash",
+      "cardCount": 160,
+      "symbol": "xy5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee44",
+      "name": "Roaring Skies",
+      "cardCount": 108,
+      "symbol": "xy6"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee45",
+      "name": "Double Crisis",
+      "cardCount": 34,
+      "symbol": "dc1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee46",
+      "name": "Ancient Origins",
+      "cardCount": 98,
+      "symbol": "xy7"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee47",
+      "name": "Breakthrough",
+      "cardCount": 162,
+      "symbol": "xy8"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee48",
+      "name": "Breakpoint",
+      "cardCount": 122,
+      "symbol": "xy9"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee49",
+      "name": "Generations",
+      "cardCount": 83,
+      "symbol": "g1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4a",
+      "name": "Fates Collide",
+      "cardCount": 124,
+      "symbol": "xy10"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4b",
+      "name": "Steam Siege",
+      "cardCount": 114,
+      "symbol": "xy11"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5a",
+      "name": "Evolutions",
+      "cardCount": 108,
+      "symbol": "xy12"
+    },
+    {
+      "uuid": "01842f1f-361e-9a01-c9a9-769856ec9142",
+      "name": "Sylveon Deck",
+      "cardCount": 30,
+      "symbol": "TK6N"
+    },
+    {
+      "uuid": "01842f3b-9af2-f433-1b4a-35d693cc449c",
+      "name": "Noivern Deck",
+      "cardCount": 30,
+      "symbol": "TK6-B"
+    },
+    {
+      "uuid": "0184847b-9440-5009-f1af-59baa9273265",
+      "name": "Bisharp Deck",
+      "cardCount": 30,
+      "symbol": "TK7-S"
+    },
+    {
+      "uuid": "01848484-2581-b732-5d90-0815fad74ba8",
+      "name": "Wigglytuff Deck",
+      "cardCount": 30,
+      "symbol": "TK7-G"
+    },
+    {
+      "uuid": "018485f1-aadc-f748-f534-ad17293b3444",
+      "name": "Latias Deck",
+      "cardCount": 30,
+      "symbol": "TK8-LA"
+    },
+    {
+      "uuid": "018485f9-634e-7a40-cac6-e81628604275",
+      "name": "Latios Deck",
+      "cardCount": 30,
+      "symbol": "TK8-LO"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7430",
+      "name": "Pikachu Libre Deck",
+      "cardCount": 30,
+      "symbol": "2021.11.15"
+    },
+    {
+      "uuid": "0184d8dd-bf96-d62f-ebd7-1559e8f9bf6e",
+      "name": "Suicune Deck",
+      "cardCount": 30,
+      "symbol": "TK9-S"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5b",
+      "name": "Sun & Moon",
+      "cardCount": 149,
+      "symbol": "sm1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee65",
+      "name": "Guardians Rising",
+      "cardCount": 145,
+      "symbol": "sm2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee66",
+      "name": "Burning Shadows",
+      "cardCount": 147,
+      "symbol": "sm3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee67",
+      "name": "Shining Legends",
+      "cardCount": 73,
+      "symbol": "sm35"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee68",
+      "name": "Crimson Invasion",
+      "cardCount": 111,
+      "symbol": "sm4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee69",
+      "name": "Ultra Prism",
+      "cardCount": 156,
+      "symbol": "sm5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee6b",
+      "name": "Forbidden Light",
+      "cardCount": 131,
+      "symbol": "sm6"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee6c",
+      "name": "Celestial Storm",
+      "cardCount": 168,
+      "symbol": "sm7"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee6d",
+      "name": "Dragon Majesty",
+      "cardCount": 70,
+      "symbol": "sm75"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee6e",
+      "name": "Lost Thunder",
+      "cardCount": 214,
+      "symbol": "sm8"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee72",
+      "name": "Team Up",
+      "cardCount": 181,
+      "symbol": "sm9"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee73",
+      "name": "Detective Pikachu",
+      "cardCount": 18,
+      "symbol": "det1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee74",
+      "name": "Unbroken Bonds",
+      "cardCount": 214,
+      "symbol": "sm10"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee77",
+      "name": "Unified Minds",
+      "cardCount": 236,
+      "symbol": "sm11"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee78",
+      "name": "Hidden Fates",
+      "cardCount": 68,
+      "symbol": "sm115"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee79",
+      "name": "Cosmic Eclipse",
+      "cardCount": 236,
+      "symbol": "sm12"
+    },
+    {
+      "uuid": "0184d8f5-144f-4785-199f-03bb7990baed",
+      "name": "Sun & Moon Trainer Kit: Lycanroc & Alolan Raichu",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee75",
+      "name": "Lycanroc Deck",
+      "cardCount": 30,
+      "symbol": "TK10-L"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee76",
+      "name": "Alolan Raichu Deck",
+      "cardCount": 30,
+      "symbol": "tk10b"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee7f",
+      "name": "Sword & Shield",
+      "cardCount": 202,
+      "symbol": "swsh1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee81",
+      "name": "Rebel Clash",
+      "cardCount": 192,
+      "symbol": "swsh2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee82",
+      "name": "Darkness Ablaze",
+      "cardCount": 189,
+      "symbol": "swsh3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee83",
+      "name": "Champion's Path",
+      "cardCount": 73,
+      "symbol": "swsh35"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee85",
+      "name": "Vivid Voltage",
+      "cardCount": 185,
+      "symbol": "swsh4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee87",
+      "name": "Shining Fates",
+      "cardCount": 72,
+      "symbol": "swsh45"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee89",
+      "name": "Battle Styles",
+      "cardCount": 163,
+      "symbol": "swsh5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee90",
+      "name": "Pokémon Futsal Collection",
+      "cardCount": null,
+      "symbol": "fut"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee92",
+      "name": "Chilling Reign",
+      "cardCount": 198,
+      "symbol": "swsh6"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7422",
+      "name": "Evolving Skies",
+      "cardCount": 203,
+      "symbol": "swsh7"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7426",
+      "name": "Celebrations",
+      "cardCount": 25,
+      "symbol": "cel25"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e742b",
+      "name": "Celebrations - Classic Collection",
+      "cardCount": null,
+      "symbol": "cel25c"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7433",
+      "name": "Celebrations - Premium Collection",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e7431",
+      "name": "Fusion Strike",
+      "cardCount": 264,
+      "symbol": "swsh8"
+    },
+    {
+      "uuid": "018120eb-f5e6-03a6-2e93-6c1b1c1e743d",
+      "name": "Sword & Shield Set",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018151b1-df50-e63a-7d7f-c63b2c1e58cf",
+      "name": "Astral Radiance",
+      "cardCount": 189,
+      "symbol": "-"
+    },
+    {
+      "uuid": "01815844-ae65-ca32-b1c9-42f19f1a3d0c",
+      "name": "Brilliant Stars",
+      "cardCount": 172,
+      "symbol": "swsh9"
+    },
+    {
+      "uuid": "0181baa6-f6b0-05a0-3601-4d3466be40f3",
+      "name": "Pokémon GO",
+      "cardCount": 78,
+      "symbol": "pgo"
+    },
+    {
+      "uuid": "01831db6-4220-34ae-79f7-53509d62849f",
+      "name": "Lost Origin",
+      "cardCount": 196,
+      "symbol": "swsh11"
+    },
+    {
+      "uuid": "0183f5a0-58e3-5af0-3e92-c0b6a531b00d",
+      "name": "Lille Regional",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "0183f5a8-a067-d3c8-340b-fb01d7735cf5",
+      "name": "Gym Leader Challenge",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01843f2b-a875-5bf8-83cb-6369b8511033",
+      "name": "Silver Tempest",
+      "cardCount": 195,
+      "symbol": "swsh12"
+    },
+    {
+      "uuid": "0185cf80-9914-f044-b1df-2b5e22acedc8",
+      "name": "Crown Zenith",
+      "cardCount": 159,
+      "symbol": "crown"
+    },
+    {
+      "uuid": "018aff14-0e23-e03d-ba60-e3bc294586e2",
+      "name": "Arceus VSTAR Ultra-Premium Collection",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4c",
+      "name": "Promo XY | XY",
+      "cardCount": null,
+      "symbol": "xyp"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4d",
+      "name": "Promo Wizards",
+      "cardCount": null,
+      "symbol": "basep"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4e",
+      "name": "Promo EX",
+      "cardCount": null,
+      "symbol": "np"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee4f",
+      "name": "Promo D&P | DP",
+      "cardCount": null,
+      "symbol": "dpp"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee50",
+      "name": "Promo B&W | BW",
+      "cardCount": null,
+      "symbol": "bwp"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee51",
+      "name": "POP 1",
+      "cardCount": 17,
+      "symbol": "pop1"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee52",
+      "name": "POP 2",
+      "cardCount": 17,
+      "symbol": "pop2"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee53",
+      "name": "POP 3",
+      "cardCount": 17,
+      "symbol": "pop3"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee54",
+      "name": "POP 4",
+      "cardCount": 17,
+      "symbol": "pop4"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee55",
+      "name": "POP 5",
+      "cardCount": 17,
+      "symbol": "pop5"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee56",
+      "name": "POP 6",
+      "cardCount": 17,
+      "symbol": "pop6"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee57",
+      "name": "POP 8",
+      "cardCount": 17,
+      "symbol": "pop8"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee58",
+      "name": "POP 9",
+      "cardCount": 17,
+      "symbol": "pop9"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee59",
+      "name": "POP 7",
+      "cardCount": 17,
+      "symbol": "pop7"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5c",
+      "name": "Promo H&S | HGSS",
+      "cardCount": null,
+      "symbol": "hsp"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5d",
+      "name": "McDonald's 2016",
+      "cardCount": 12,
+      "symbol": "MCD16"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5e",
+      "name": "McDonald's 2015",
+      "cardCount": 12,
+      "symbol": "MCD15"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee5f",
+      "name": "McDonald's 2011",
+      "cardCount": 12,
+      "symbol": "MCD11"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee60",
+      "name": "McDonald's 2012",
+      "cardCount": 12,
+      "symbol": "MCD12"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee62",
+      "name": "McDonald's 2014",
+      "cardCount": 12,
+      "symbol": "MCD14"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee63",
+      "name": "Promo S&M | SM",
+      "cardCount": null,
+      "symbol": "SM0"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee64",
+      "name": "Art Academy",
+      "cardCount": null,
+      "symbol": "AC0"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee70",
+      "name": "Best of Game",
+      "cardCount": null,
+      "symbol": "BestOfGame"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee7a",
+      "name": "McDonald's 2017",
+      "cardCount": 12,
+      "symbol": "MCD17"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee7c",
+      "name": "McDonald's 2018",
+      "cardCount": 12,
+      "symbol": "MCD18"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee7d",
+      "name": "McDonald's 2019",
+      "cardCount": 12,
+      "symbol": "MCD19"
+    },
+    {
+      "uuid": "018120eb-f5dd-174c-2487-d2c5038bee88",
+      "name": "McDonald's 2021",
+      "cardCount": 25,
+      "symbol": "MCD21"
+    },
+    {
+      "uuid": "01814978-8772-943a-5278-5c54a8426a86",
+      "name": "Promo S&S | SWSH",
+      "cardCount": null,
+      "symbol": "swshp"
+    },
+    {
+      "uuid": "0181cde9-42a5-d968-2a96-f3ef318fc204",
+      "name": "Energize Your Game Cycle",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01833789-aaea-49df-9e4c-f7831a7a1902",
+      "name": "World Collection",
+      "cardCount": null,
+      "symbol": "pw10"
+    },
+    {
+      "uuid": "01833b52-b368-e071-69e7-58aa4fdf6010",
+      "name": "Kevin Nguyen",
+      "cardCount": null,
+      "symbol": "wcd04kn"
+    },
+    {
+      "uuid": "01833c0e-a20a-99ff-b288-790cdd00b40f",
+      "name": "Tsuguyoshi Yamato",
+      "cardCount": null,
+      "symbol": "wcd04ty"
+    },
+    {
+      "uuid": "01833c11-0efa-ab35-51c2-22552e24d1cc",
+      "name": "Reed Weichler",
+      "cardCount": null,
+      "symbol": "wcd04rw"
+    },
+    {
+      "uuid": "01833c11-c8e2-4994-9013-090b8d5f45a3",
+      "name": "Chris Fulop",
+      "cardCount": null,
+      "symbol": "wcd04cf"
+    },
+    {
+      "uuid": "01833b5e-c7b8-ea78-4d29-5b8b0f05c712",
+      "name": "Haruki Miyamoto",
+      "cardCount": null,
+      "symbol": "wcd19hm"
+    },
+    {
+      "uuid": "0183415d-e7a6-7a0a-6410-6f7b5988cd51",
+      "name": "Henry Brand",
+      "cardCount": null,
+      "symbol": "wcd19hb"
+    },
+    {
+      "uuid": "0183415e-3cbc-92b5-e621-b1608133e9f6",
+      "name": "Kaya Lichtleitner",
+      "cardCount": null,
+      "symbol": "wcd19kl"
+    },
+    {
+      "uuid": "0183415e-9505-15b0-805e-af49bd2a92d8",
+      "name": "Shintaro Ito",
+      "cardCount": null,
+      "symbol": "wcd19si"
+    },
+    {
+      "uuid": "01833c27-51a6-c75f-0f39-1e7d49a80da5",
+      "name": "Jeremy Maron",
+      "cardCount": null,
+      "symbol": "wcd05jm"
+    },
+    {
+      "uuid": "01833c27-bee2-8dba-c9a2-c82fda0e567e",
+      "name": "Takashi Yoneda",
+      "cardCount": null,
+      "symbol": "wcd05ty"
+    },
+    {
+      "uuid": "01833c28-4fb3-6767-06a9-9d62ca5b000b",
+      "name": "Curran Hill",
+      "cardCount": null,
+      "symbol": "wcd05ch"
+    },
+    {
+      "uuid": "01833c28-c67f-faef-a77f-e765ff988cec",
+      "name": "Michael Gonzalez",
+      "cardCount": null,
+      "symbol": "wcd05mg"
+    },
+    {
+      "uuid": "01833fab-2e76-e520-469e-2cb88b6172e3",
+      "name": "Jason Klaczynski",
+      "cardCount": null,
+      "symbol": "wcd06jk"
+    },
+    {
+      "uuid": "01833fab-d2af-2d15-4a9c-16d66b11a389",
+      "name": "Miska Saari",
+      "cardCount": null,
+      "symbol": "wcd06ms"
+    },
+    {
+      "uuid": "01833fac-729c-dc53-aecb-55347e164396",
+      "name": "Hiroki Yano",
+      "cardCount": null,
+      "symbol": "wcd06hy"
+    },
+    {
+      "uuid": "01833fad-14b1-9b97-8f5a-5198db53da60",
+      "name": "Jimmy Ballard",
+      "cardCount": null,
+      "symbol": "wcd06jb"
+    },
+    {
+      "uuid": "01833fb4-f25a-a32e-68b6-620493d6a321",
+      "name": "Jun Hasebe",
+      "cardCount": null,
+      "symbol": "wcd07jh"
+    },
+    {
+      "uuid": "01833fb5-9662-6afa-89e9-66951e9281b2",
+      "name": "Tom Roos",
+      "cardCount": null,
+      "symbol": "wcd07tr"
+    },
+    {
+      "uuid": "01833fb6-2ac1-4705-1cab-d153ad9b92d6",
+      "name": "Jeremy Scharff-Kim",
+      "cardCount": null,
+      "symbol": "wcd07js"
+    },
+    {
+      "uuid": "01833fb6-9fa0-ffcb-230e-96f44be6ea04",
+      "name": "Akira Miyazaki",
+      "cardCount": null,
+      "symbol": "wcd07am"
+    },
+    {
+      "uuid": "0183410e-7127-d66e-5d6b-d033335f6b12",
+      "name": "Tristan Robinson",
+      "cardCount": null,
+      "symbol": "wcd08tr"
+    },
+    {
+      "uuid": "0183410f-0709-b868-61bd-8a3886222975",
+      "name": "Dylan Lefavour",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01834110-4af6-e76b-cb84-93a2262f10d6",
+      "name": "Jason Klaczynski",
+      "cardCount": null,
+      "symbol": "wcd08jk"
+    },
+    {
+      "uuid": "01834110-eb53-0ce8-422e-38ccf87bdc2f",
+      "name": "Paul Atanassov",
+      "cardCount": null,
+      "symbol": "wcd08pa"
+    },
+    {
+      "uuid": "0183411d-8517-8290-023d-c327aafa68a4",
+      "name": "Yuta Komatsuda",
+      "cardCount": null,
+      "symbol": "wcd10yk"
+    },
+    {
+      "uuid": "0183411e-1d6d-a430-1a9e-c91662977aef",
+      "name": "Mychael Bryan",
+      "cardCount": null,
+      "symbol": "wcd10mb"
+    },
+    {
+      "uuid": "0183411e-bc6b-87a6-3119-24e8d8959b9a",
+      "name": "Yuka Furusawa",
+      "cardCount": null,
+      "symbol": "wcd10yf"
+    },
+    {
+      "uuid": "0183411f-3938-e7c8-c50e-7a55f1aaaa08",
+      "name": "Michael Pramawat",
+      "cardCount": null,
+      "symbol": "wcd10mp"
+    },
+    {
+      "uuid": "01834121-6c96-61b2-2e05-671609e8d90d",
+      "name": "Gustavo Wada",
+      "cardCount": null,
+      "symbol": "wcd11gw"
+    },
+    {
+      "uuid": "01834121-ed06-3f01-9385-f2db7a725ae1",
+      "name": "Christopher Kan",
+      "cardCount": null,
+      "symbol": "wcd11ck"
+    },
+    {
+      "uuid": "01834122-584f-f23b-24f8-e40573266d22",
+      "name": "Ross Cawthon",
+      "cardCount": null,
+      "symbol": "wcd11rc"
+    },
+    {
+      "uuid": "01834122-f693-e373-3be6-ddcc422ce374",
+      "name": "David Cohen",
+      "cardCount": null,
+      "symbol": "wcd11dc"
+    },
+    {
+      "uuid": "01834125-e5b2-705b-8acc-7bf306fa0840",
+      "name": "Igor Costa",
+      "cardCount": null,
+      "symbol": "wcd12ic"
+    },
+    {
+      "uuid": "01834126-95aa-c5d4-cb1e-c939de65a72d",
+      "name": "Shuto Itagaki",
+      "cardCount": null,
+      "symbol": "wcd12si"
+    },
+    {
+      "uuid": "01834127-10c6-46cd-07c2-bdd15e73d778",
+      "name": "Chase Moloney",
+      "cardCount": null,
+      "symbol": "wcd12cm"
+    },
+    {
+      "uuid": "01834127-9a57-2969-e83d-12a3eb58e8ef",
+      "name": "Zachary Bokhari",
+      "cardCount": null,
+      "symbol": "wcd12zb"
+    },
+    {
+      "uuid": "01834148-f29b-a5cd-5719-97cd6440b793",
+      "name": "Ian Whiton",
+      "cardCount": null,
+      "symbol": "wcd13iw"
+    },
+    {
+      "uuid": "01834149-7fd1-6a1f-11e5-5e26e039dccd",
+      "name": "Jason Klaczynski",
+      "cardCount": null,
+      "symbol": "wcd13jk"
+    },
+    {
+      "uuid": "01834149-ffbf-b06f-51ab-191357f69c7f",
+      "name": "Clément Lamberton",
+      "cardCount": null,
+      "symbol": "wcd13cl"
+    },
+    {
+      "uuid": "0183414a-93cb-58e9-1781-36a673071fe8",
+      "name": "Yugo Sato",
+      "cardCount": null,
+      "symbol": "wcd13ys"
+    },
+    {
+      "uuid": "0183414d-0137-81d7-ee7c-232ac801717c",
+      "name": "Haruto Kobayashi",
+      "cardCount": null,
+      "symbol": "wcd14yk"
+    },
+    {
+      "uuid": "0183414d-6e00-97f7-34a8-7daf81f4134a",
+      "name": "Trent Orndorff",
+      "cardCount": null,
+      "symbol": "wcd14to"
+    },
+    {
+      "uuid": "0183414d-ebd9-17fb-05e1-2e4161be67ba",
+      "name": "Andrew Estrada",
+      "cardCount": null,
+      "symbol": "wcd14ae"
+    },
+    {
+      "uuid": "0183414e-ae5f-083a-9438-8934a45e42d3",
+      "name": "Michikazu Tsuda",
+      "cardCount": null,
+      "symbol": "wcd14mt"
+    },
+    {
+      "uuid": "01834150-8689-6c45-dc6a-7ddbc07307f6",
+      "name": "Alejandro Ng-Guzman",
+      "cardCount": null,
+      "symbol": "wcd15an"
+    },
+    {
+      "uuid": "01834150-f1e0-1b8f-64ad-bc271a73ef32",
+      "name": "Rowan Stavenow",
+      "cardCount": null,
+      "symbol": "wcd15rs"
+    },
+    {
+      "uuid": "01834151-54d5-62f5-958a-01d5aefb6c70",
+      "name": "Patrick Martinez",
+      "cardCount": null,
+      "symbol": "wcd15pm"
+    },
+    {
+      "uuid": "01834151-f591-1a40-f7f0-a355313a2271",
+      "name": "Jacob Van Wagner",
+      "cardCount": null,
+      "symbol": "wcd15jvw"
+    },
+    {
+      "uuid": "01834153-6e56-76af-b66c-795644864e88",
+      "name": "Jesper Eriksen",
+      "cardCount": null,
+      "symbol": "wcd16je"
+    },
+    {
+      "uuid": "01834154-08af-e807-98a2-65539b04c18d",
+      "name": "Shintaro Ito",
+      "cardCount": null,
+      "symbol": "wcd16si"
+    },
+    {
+      "uuid": "01834154-7fc2-5c40-fc6c-83ad336af065",
+      "name": "Shuntu Sadahiro",
+      "cardCount": null,
+      "symbol": "wcf16ss"
+    },
+    {
+      "uuid": "01834155-023d-552a-28f5-a491fb4a1fa2",
+      "name": "Cody Walinski",
+      "cardCount": null,
+      "symbol": "wcd16cw"
+    },
+    {
+      "uuid": "01834156-a04d-1631-130e-a1cff8447522",
+      "name": "Zachary Bokhari",
+      "cardCount": null,
+      "symbol": "wcd17zb"
+    },
+    {
+      "uuid": "01834156-ff37-5eba-397b-d2885da72390",
+      "name": "Diego Cassiraga",
+      "cardCount": null,
+      "symbol": "wcd17dc"
+    },
+    {
+      "uuid": "01834157-7d84-c870-1bb7-097ec8581fd4",
+      "name": "Naoto Suzuki",
+      "cardCount": null,
+      "symbol": "wcd17ns"
+    },
+    {
+      "uuid": "01834157-d8ee-d870-191b-9d000af4feba",
+      "name": "Kabu Fukase",
+      "cardCount": null,
+      "symbol": "wcd17kf"
+    },
+    {
+      "uuid": "01834159-a28d-d2f8-2883-7980120c430c",
+      "name": "Robin Schulz",
+      "cardCount": null,
+      "symbol": "wcd18rs"
+    },
+    {
+      "uuid": "0183415a-214c-0143-4a90-b156da421576",
+      "name": "Pedro Eugenio Torres",
+      "cardCount": null,
+      "symbol": "wcd18pet"
+    },
+    {
+      "uuid": "0183415a-7d08-7e48-a9f5-c9de2695b44c",
+      "name": "Magnus Pedersen",
+      "cardCount": null,
+      "symbol": "wcd18mp"
+    },
+    {
+      "uuid": "0183415b-1283-c727-23f0-9e1f7c777df7",
+      "name": "Naohito Inoue",
+      "cardCount": null,
+      "symbol": "wcd18ni"
+    },
+    {
+      "uuid": "0183701e-a522-ecf8-11e3-05f68a2a070d",
+      "name": "McDonald's 2022",
+      "cardCount": 15,
+      "symbol": "mcd22"
+    },
+    {
+      "uuid": "0184430b-6ed6-2691-a930-8c9a69e558f6",
+      "name": "Pikachu World Collection 2000",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01855e70-ead7-f39e-d465-f2018d89a39b",
+      "name": "Promo S&V | SVP",
+      "cardCount": null,
+      "symbol": "sv"
+    },
+    {
+      "uuid": "01899c59-b14e-6dbf-0850-212f622e8341",
+      "name": "Ondřej Škubal",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a603a-6a82-19dc-32e1-7f36bc0750fc",
+      "name": "André Chiasson",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a6539-f3a9-5c98-11b0-2e5284856adb",
+      "name": "Sebastian Lashmet",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a6579-9948-35f3-46e5-9d7aec4e54b6",
+      "name": "Rikuto Ohashi",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01894a11-6e2a-d8ef-bf90-055bb1607fcc",
+      "name": "Prize Pack Series 1",
+      "cardCount": null,
+      "symbol": "PPS1"
+    },
+    {
+      "uuid": "01894de9-bf0b-cba8-ba9e-e54ab75656cd",
+      "name": "Trick or Trade 2022",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "0189792a-f90f-4d09-509a-3953fd098a6c",
+      "name": "Prize Pack Series 2",
+      "cardCount": null,
+      "symbol": "PPS2"
+    },
+    {
+      "uuid": "018a50bd-56e0-d87f-0e46-9e1ef2195c25",
+      "name": "Next Quest",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a5f1f-ea73-fda9-89d6-5d5de733b23a",
+      "name": "Groundbreakers",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a50d2-d40d-2115-eb73-409e5ed5b7f5",
+      "name": "Prize Pack Series 3",
+      "cardCount": null,
+      "symbol": "PPS3"
+    },
+    {
+      "uuid": "018a6523-5da0-f908-61fc-4ecca9c95d44",
+      "name": "Trick or Trade 2023",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018a6a69-0840-3827-58e7-13018c01b0ac",
+      "name": "McDonald's 2023",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018af01e-a4cf-3125-9c75-e49b20dcd41f",
+      "name": "Bulbasaur Deck",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018af5ab-8cbd-b245-c0d5-663aa5d22893",
+      "name": "Pikachu Deck",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018affd7-776c-a8ae-552c-e40db168e516",
+      "name": "Charmander Deck",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018affe9-67fd-a2cb-3134-055804994c1c",
+      "name": "Squirtle Deck",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018dc66d-ff9c-7fc9-023f-5676a2092372",
+      "name": "Prize Pack Series 4",
+      "cardCount": null,
+      "symbol": "PPS4"
+    },
+    {
+      "uuid": "018e37d3-d48e-475b-f4d4-1549481ac5ff",
+      "name": "Vance Kelley",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018e37d7-3205-1bf9-8fbb-d01b2b20f9a0",
+      "name": "Tord Reklev",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018e37da-d4ee-cd5f-6eb1-fc14bb10be9c",
+      "name": "Gabriel Fernandez",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018e37dc-a345-1391-d9a1-68d285983c22",
+      "name": "Shao Tong Yen",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018fa525-ed19-bb8d-9c86-9cc7d420ee3b",
+      "name": "Victory Medal (Battle Road promo)",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01916fc2-4854-0bf4-51f0-a646d3c57a2f",
+      "name": "Prize Pack Series 5",
+      "cardCount": null,
+      "symbol": "PPS5"
+    },
+    {
+      "uuid": "01917f65-56f4-4b79-cbdf-a5bd03d15352",
+      "name": "Trick or Trade 2024",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "01939b24-b11d-7156-426a-edfde244144b",
+      "name": "McDonald's 2024",
+      "cardCount": 15,
+      "symbol": null
+    },
+    {
+      "uuid": "0198120f-6f36-1719-d7c2-6d56728143a1",
+      "name": "Prize Pack Series 6",
+      "cardCount": null,
+      "symbol": "PPS6"
+    },
+    {
+      "uuid": "0198eb42-f46e-8305-e3bf-3b2836453a44",
+      "name": "Prize Pack Series 7",
+      "cardCount": null,
+      "symbol": "PPS7"
+    },
+    {
+      "uuid": "01996ce6-9ef0-3093-7335-1ee887bbfb1d",
+      "name": "M-E | MEP",
+      "cardCount": null,
+      "symbol": "MEP"
+    },
+    {
+      "uuid": "019ba1e3-d027-d1ee-3ee9-02fecc6d9be4",
+      "name": "Prize Pack Series 8",
+      "cardCount": null,
+      "symbol": "PPS8"
+    },
+    {
+      "uuid": "01870eb3-cfb3-0750-f2c0-167faa867933",
+      "name": "Scarlet & Violet",
+      "cardCount": 198,
+      "symbol": "sv1en"
+    },
+    {
+      "uuid": "01888bad-e010-e8d9-dc9a-9a25bcb1093e",
+      "name": "Paldea Evolved",
+      "cardCount": 193,
+      "symbol": "PAL"
+    },
+    {
+      "uuid": "01898db0-92a7-d47c-cd4a-b068749c84fd",
+      "name": "Obsidian Flames",
+      "cardCount": 197,
+      "symbol": "OBF"
+    },
+    {
+      "uuid": "018a50cc-7e0e-a710-6e5b-56d8665e0c6b",
+      "name": "151",
+      "cardCount": 165,
+      "symbol": "MEW"
+    },
+    {
+      "uuid": "018adbaf-2b4d-8a60-8569-0b3acc4658c3",
+      "name": "151 - Ultra Premium Collection",
+      "cardCount": null,
+      "symbol": null
+    },
+    {
+      "uuid": "018b4d52-b98e-087e-6e57-2064f0aba1cc",
+      "name": "Paradox Rift",
+      "cardCount": 182,
+      "symbol": "PAR"
+    },
+    {
+      "uuid": "018badf4-4863-45f8-5c00-ffbd3349015e",
+      "name": "Venusaur & Lugia ex Deck",
+      "cardCount": null,
+      "symbol": "CLV"
+    },
+    {
+      "uuid": "018badf9-170e-59dc-238f-3374e083e866",
+      "name": "Charizard & Ho-Oh ex Deck",
+      "cardCount": null,
+      "symbol": "CLC"
+    },
+    {
+      "uuid": "018badfe-5aab-abf3-e3c4-d134d1aabd23",
+      "name": "Blastoise & Suicune ex Deck",
+      "cardCount": null,
+      "symbol": "CLB"
+    },
+    {
+      "uuid": "018cf892-b1c3-fc3a-33b9-68323bc0870d",
+      "name": "Paldean Fates",
+      "cardCount": 91,
+      "symbol": "PAF"
+    },
+    {
+      "uuid": "018e0989-5d4c-94c4-5bcd-4c8e3ca0da0c",
+      "name": "Temporal Forces",
+      "cardCount": 162,
+      "symbol": "TEF"
+    },
+    {
+      "uuid": "018f6435-90fb-92dd-f37c-1f6a57abe057",
+      "name": "Twilight Masquerade",
+      "cardCount": 167,
+      "symbol": "TWM"
+    },
+    {
+      "uuid": "0191047c-faae-8372-acea-e34555d16915",
+      "name": "Shrouded Fable",
+      "cardCount": 64,
+      "symbol": "SFA"
+    },
+    {
+      "uuid": "0191219f-ec0d-24c9-134a-0fd99cded7b2",
+      "name": "Professor Program Energies",
+      "cardCount": 8,
+      "symbol": "SVE"
+    },
+    {
+      "uuid": "0191b16e-641e-fb53-007d-2ab7b4be92ff",
+      "name": "Stellar Crown",
+      "cardCount": 142,
+      "symbol": "SCR"
+    },
+    {
+      "uuid": "0192c936-ab36-dc59-de6c-9b32ea11b7d1",
+      "name": "Surging Sparks",
+      "cardCount": 191,
+      "symbol": "SSP"
+    },
+    {
+      "uuid": "01930b3f-1ade-c1bb-a0dc-cf2373869de5",
+      "name": "Scarlet & Violet Energies",
+      "cardCount": null,
+      "symbol": "SVE"
+    },
+    {
+      "uuid": "01934e2f-7876-7d00-92c7-ca2800a0f460",
+      "name": "Greninja ex - Ultra-Premium Collection",
+      "cardCount": null,
+      "symbol": "TWN"
+    },
+    {
+      "uuid": "01945abd-98e6-8564-3627-80bdec2d94dd",
+      "name": "Prismatic Evolutions",
+      "cardCount": 131,
+      "symbol": "PRE"
+    },
+    {
+      "uuid": "01959e79-4ae3-bcfc-ef8a-fbf1ee2bec0c",
+      "name": "Journey Together",
+      "cardCount": 159,
+      "symbol": "JTG"
+    },
+    {
+      "uuid": "0196e3b1-3a36-57b9-3307-ce0a1a3132d6",
+      "name": "Destined Rivals",
+      "cardCount": 182,
+      "symbol": "DRI"
+    },
+    {
+      "uuid": "0198122b-b27c-248b-1b8d-89a1199f1419",
+      "name": "Black Bolt",
+      "cardCount": 86,
+      "symbol": "BLK"
+    },
+    {
+      "uuid": "0198123d-e784-1d15-1a3d-d69458aea1d1",
+      "name": "White Flare",
+      "cardCount": 86,
+      "symbol": "WHT"
+    },
+    {
+      "uuid": "01847637-572e-8676-dab1-7b110a42532c",
+      "name": "Filler Cards",
+      "cardCount": null,
+      "symbol": null
+    }
+  ]
+}

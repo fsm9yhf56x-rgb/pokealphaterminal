@@ -158,6 +158,70 @@ export const PSA_HEADINGS = {
   'worlds-2016':           { headingId: 159553, label: 'Pokemon World Championships Promo 2016' },
   'worlds-2016-deck':      { headingId: 143516, label: 'Pokemon World Championships Deck Promo 2016' },
   'scrap-2014':            { headingId: 213174, label: 'Pokemon Scrap 2014' },
+  // SM era (2017) - main sets
+  sm1:                     { headingId: 141595, label: 'Pokemon Sun & Moon' },
+  sm2:                     { headingId: 143858, label: 'Pokemon Sun & Moon Guardians Rising' },
+  sm3:                     { headingId: 150963, label: 'Pokemon Sun & Moon Burning Shadows' },
+  sm35:                    { headingId: 152105, label: 'Pokemon Sun & Moon Shining Legends' },
+  sm4:                     { headingId: 153167, label: 'Pokemon Sun & Moon Crimson Invasion' },
+  // SM era (2018)
+  sm5:                     { headingId: 155531, label: 'Pokemon Sun & Moon Ultra Prism' },
+  sm6:                     { headingId: 157096, label: 'Pokemon Sun & Moon Forbidden Light' },
+  sm7:                     { headingId: 159060, label: 'Pokemon Sun & Moon Celestial Storm' },
+  sm75:                    { headingId: 160274, label: 'Pokemon Sun & Moon Dragon Majesty' },
+  sm8:                     { headingId: 161784, label: 'Pokemon Sun & Moon Lost Thunder' },
+  // SM era (2019)
+  sm9:                     { headingId: 163951, label: 'Pokemon Sun & Moon Team Up' },
+  sm10:                    { headingId: 166187, label: 'Pokemon Sun & Moon Unbroken Bonds' },
+  sm11:                    { headingId: 168480, label: 'Pokemon Sun & Moon Unified Minds' },
+  sm115:                   { headingId: 169494, label: 'Pokemon Sun & Moon Hidden Fates' },
+  sm12:                    { headingId: 171151, label: 'Pokemon Sun & Moon Cosmic Eclipse' },
+  // SM specials
+  det1:                    { headingId: 165816, label: 'Pokemon Sun & Moon Detective Pikachu' },
+  // SM Promos (3 yearly)
+  'smp-2017':              { headingId: 142125, label: 'Pokemon SM Black Star Promo 2017' },
+  'smp-2018':              { headingId: 157151, label: 'Pokemon SM Black Star Promo 2018' },
+  'smp-2019':              { headingId: 163809, label: 'Pokemon SM Black Star Promo 2019' },
+  // SM Trainer Kits
+  'sm-tk-aloraichu':       { headingId: 151139, label: 'Pokemon SM Trainer Kit Alolan Raichu' },
+  'sm-tk-lycanroc':        { headingId: 192704, label: 'Pokemon SM Trainer Kit Lycanroc' },
+  'sm-tk-aloninetales':    { headingId: 159061, label: 'Pokemon SM Trainer Kit Alolan Ninetales' },
+  'sm-tk-alosandslash':    { headingId: 159062, label: 'Pokemon SM Trainer Kit Alolan Sandslash' },
+  // 2017 specials
+  'ba-blackwhitekyurem':   { headingId: 153918, label: 'Pokemon Battle Arena Black Kyurem VS White Kyurem' },
+  'mega-powers':           { headingId: 144411, label: 'Pokemon Mega Powers Collection Promo' },
+  'premium-trainer-xy':    { headingId: 153615, label: 'Pokemon Premium Trainer XY Collection Promo' },
+  'pokken-2017':           { headingId: 298178, label: 'Pokemon Promo Pokken Tournament 2017' },
+  'xy-bt-2017':            { headingId: 273512, label: 'Pokemon XY Ancient Origins Reissue 2017' },
+  'xyp-2017':              { headingId: 141657, label: 'Pokemon XY Black Star Promo 2017' },
+  'xy-bp-2017':            { headingId: 246400, label: 'Pokemon XY Breakpoint Reissue 2017' },
+  'xy-br-2017':            { headingId: 246402, label: 'Pokemon XY Breakthrough Reissue 2017' },
+  // 2018 specials
+  'ba-mchar-mblast':       { headingId: 161510, label: 'Pokemon Battle Arena Mega Charizard X VS Mega Blastoise' },
+  'card-game-mtd':         { headingId: 233312, label: 'Pokemon Card Game Mini Trial Deck' },
+  // 2019 specials & Worlds Decks
+  'kanto-friends-mini':    { headingId: 169844, label: 'Pokemon Kanto Friends Mini Tins' },
+  'kanto-power-mini':      { headingId: 173124, label: 'Pokemon Kanto Power Mini Tins' },
+  'worlds-2019-fire':      { headingId: 313607, label: 'Pokemon 2019 World Championships Deck: Fire Box' },
+  'worlds-2019-mind':      { headingId: 313608, label: 'Pokemon 2019 World Championships Deck: Mind Blown' },
+  'worlds-2019-perf':      { headingId: 313609, label: 'Pokemon 2019 World Championships Deck: Perfection' },
+  'worlds-2019-pika':      { headingId: 313610, label: 'Pokemon 2019 World Championships Deck: Pikarom Judge' },
+  // Generic promos & inserts
+  'pkmn-promo-2018':       { headingId: 169075, label: 'Pokemon Promo 2018' },
+  'insert-2017':           { headingId: 231928, label: 'Pokemon Insert Cards 2017' },
+  'insert-2018':           { headingId: 238569, label: 'Pokemon Insert Cards 2018' },
+  'insert-2019':           { headingId: 237746, label: 'Pokemon Insert Cards 2019' },
+  'online-2017':           { headingId: 238574, label: 'Pokemon TCG Online Insert Code Cards 2017' },
+  'online-2018':           { headingId: 238572, label: 'Pokemon TCG Online Insert Code Cards 2018' },
+  'online-2019':           { headingId: 238487, label: 'Pokemon TCG Online Insert Code Cards 2019' },
+  'mcd-2017':              { headingId: 152023, label: "Pokemon McDonald's Collection 2017" },
+  'mcd-2018':              { headingId: 161829, label: "Pokemon McDonald's Collection 2018" },
+  'mcd-2019':              { headingId: 172983, label: "Pokemon McDonald's Collection 2019" },
+  'worlds-2017':           { headingId: 155462, label: 'Pokemon World Championships Promo 2017' },
+  'worlds-2018':           { headingId: 163538, label: 'Pokemon World Championship Promo 2018' },
+  'worlds-2018-bis':       { headingId: 319339, label: 'Pokemon World Championships Promo 2018 (bis)' },
+  'worlds-2019':           { headingId: 170281, label: 'Pokemon World Championships Promo 2019' },
+
 
 
 

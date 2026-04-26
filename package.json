@@ -13,7 +13,10 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"✅ src/lib/db/schema.ts regenerated\"",
-    "psa:scrape": "node scripts/scrape-psa-set.mjs"
+    "psa:scrape": "node scripts/scrape-psa-set.mjs",
+    "psa:scrape:hot": "node scripts/scrape-psa-tier.mjs --tier=hot",
+    "psa:scrape:warm": "node scripts/scrape-psa-tier.mjs --tier=warm",
+    "psa:scrape:cold": "node scripts/scrape-psa-tier.mjs --tier=cold"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1030.0",

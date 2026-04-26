@@ -36,10 +36,20 @@ if (!setId) {
   process.exit(1)
 }
 
-// ─── Init Supabase ──────────────────────────────────────
-const env = readFileSync('.env.local', 'utf-8')
-const supabaseUrl = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)[1].trim()
-const supabaseKey = env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)[1].trim()
+// ─── Init Supabase (works locally via .env.local OR via process.env in CI) ──
+let supabaseUrl, supabaseKey
+try {
+  const env = readFileSync('.env.local', 'utf-8')
+  supabaseUrl = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)[1].trim()
+  supabaseKey = env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)[1].trim()
+} catch {
+  supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+}
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  process.exit(1)
+}
 const sb = createClient(supabaseUrl, supabaseKey)
 
 // ─── Fetch PSA data (via Puppeteer + stealth) ──────────

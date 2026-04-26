@@ -1,0 +1,4846 @@
+[
+  {
+    "year": "1996",
+    "headingId": "55428",
+    "name": "Pokemon Japanese Basic",
+    "code": "PMCG1",
+    "setId": "jp-PMCG1",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1996",
+    "headingId": "161658",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-1996",
+    "setId": "jp-COIN-PROMO-1996",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1996",
+    "headingId": "61006",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-1996",
+    "setId": "jp-PROMO-1996",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "160975",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-1997",
+    "setId": "jp-COIN-PROMO-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "31802",
+    "name": "Pokemon Japanese Corocoro Comics Promo",
+    "code": "COROCORO-1997",
+    "setId": "jp-COROCORO-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "57618",
+    "name": "Pokemon Japanese Fossil",
+    "code": "PMCG3",
+    "setId": "jp-PMCG3",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1997",
+    "headingId": "255654",
+    "name": "Pokemon Japanese Fossil Test Issue",
+    "code": "PMCG3",
+    "setId": "jp-PMCG3",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1997",
+    "headingId": "58978",
+    "name": "Pokemon Japanese Jungle",
+    "code": "PMCG2",
+    "setId": "jp-PMCG2",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1997",
+    "headingId": "85534",
+    "name": "Pokemon Japanese Meiji Promo",
+    "code": "MEIJI-1997",
+    "setId": "jp-MEIJI-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "78769",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-1997",
+    "setId": "jp-PROMO-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "295583",
+    "name": "Pokemon Japanese Promo 7th Next Generation World Hobby Fair",
+    "code": "PROMO-7TH-NEXT-GENERATION-WORLD-HOBBY-FA-1997",
+    "setId": "jp-PROMO-7TH-NEXT-GENERATION-WORLD-HOBBY-FA-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1997",
+    "headingId": "61535",
+    "name": "Pokemon Japanese Rocket",
+    "code": "PMCG4",
+    "setId": "jp-PMCG4",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1997",
+    "headingId": "63349",
+    "name": "Pokemon Japanese Toyota Promo",
+    "code": "TOYOTA-1997",
+    "setId": "jp-TOYOTA-1997",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "228397",
+    "name": "Amada Pokemon Japanese Super DX Stickers",
+    "code": "AMADA-DX-STICKERS-1998",
+    "setId": "jp-AMADA-DX-STICKERS-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "54859",
+    "name": "Pokemon Japanese Ana Airways",
+    "code": "ANA-1998",
+    "setId": "jp-ANA-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "161655",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-1998",
+    "setId": "jp-COIN-PROMO-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "58310",
+    "name": "Pokemon Japanese Gym",
+    "code": "PMCG5",
+    "setId": "jp-PMCG5",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1998",
+    "headingId": "222028",
+    "name": "Pokemon Japanese Gym Deck",
+    "code": "PMCG-GYM-DECK",
+    "setId": "jp-PMCG-GYM-DECK",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1998",
+    "headingId": "137370",
+    "name": "Pokemon Japanese Hanada City Gym Deck",
+    "code": "HANADA-CITY-GYM-DECK-1998",
+    "setId": "jp-HANADA-CITY-GYM-DECK-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "236045",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-1998",
+    "setId": "jp-INSERT-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "138692",
+    "name": "Pokemon Japanese Kuchiba City Gym Deck",
+    "code": "KUCHIBA-CITY-GYM-DECK-1998",
+    "setId": "jp-KUCHIBA-CITY-GYM-DECK-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "59649",
+    "name": "Pokemon Japanese Meiji Promo",
+    "code": "MEIJI-1998",
+    "setId": "jp-MEIJI-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "138689",
+    "name": "Pokemon Japanese Nivi City Gym Deck",
+    "code": "NIVI-CITY-GYM-DECK-1998",
+    "setId": "jp-NIVI-CITY-GYM-DECK-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "79839",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-1998",
+    "setId": "jp-PROMO-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "81227",
+    "name": "Pokemon Japanese Promo Corocoro Comics",
+    "code": "PROMO-COROCORO-1998",
+    "setId": "jp-PROMO-COROCORO-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "81228",
+    "name": "Pokemon Japanese Promo Game Boy",
+    "code": "PROMO-GAMEBOY-1998",
+    "setId": "jp-PROMO-GAMEBOY-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "61375",
+    "name": "Pokemon Japanese Red/Green Gift Set",
+    "code": "RED-GREEN-GIFT",
+    "setId": "jp-RED-GREEN-GIFT",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1998",
+    "headingId": "139863",
+    "name": "Pokemon Japanese Tamamushi City Gym Deck",
+    "code": "TAMAMUSHI-CITY-GYM-DECK-1998",
+    "setId": "jp-TAMAMUSHI-CITY-GYM-DECK-1998",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998",
+    "headingId": "63623",
+    "name": "Pokemon Japanese Vending",
+    "code": "VENDING",
+    "setId": "jp-VENDING",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "101542",
+    "name": "Pokemon Japanese Bulbasaur Deck",
+    "code": "BULBASAUR-DECK",
+    "setId": "jp-BULBASAUR-DECK",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "55885",
+    "name": "Pokemon Japanese CD Promo",
+    "code": "CD-PROMO-1999",
+    "setId": "jp-CD-PROMO-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "160970",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-1999",
+    "setId": "jp-COIN-PROMO-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "79579",
+    "name": "Pokemon Japanese Corocoro Comics Promo",
+    "code": "COROCORO-1999",
+    "setId": "jp-COROCORO-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "337639",
+    "name": "Pokemon Japanese Gold, Silver, to A New World...",
+    "code": "GOLD-SILVER-TO-A-NEW-WORLD-1999",
+    "setId": "jp-GOLD-SILVER-TO-A-NEW-WORLD-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "136999",
+    "name": "Pokemon Japanese Guren Town Gym Deck",
+    "code": "GUREN-TOWN-GYM-DECK-1999",
+    "setId": "jp-GUREN-TOWN-GYM-DECK-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "58313",
+    "name": "Pokemon Japanese Gym 2",
+    "code": "PMCG6",
+    "setId": "jp-PMCG6",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "238484",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-1999",
+    "setId": "jp-INSERT-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "82168",
+    "name": "Pokemon Japanese Meiji Promo",
+    "code": "MEIJI-1999",
+    "setId": "jp-MEIJI-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "322307",
+    "name": "Pokemon Japanese Neo Promo",
+    "code": "NEO-PROMO",
+    "setId": "jp-NEO-PROMO",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "54858",
+    "name": "Pokemon Japanese Promo Ana Airways",
+    "code": "PROMO-ANA-AIRWAYS-1999",
+    "setId": "jp-PROMO-ANA-AIRWAYS-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "61004",
+    "name": "Pokemon Japanese Promo Pro Trainer Mag",
+    "code": "PROMO-PRO-TRAINER-MAG-1999",
+    "setId": "jp-PROMO-PRO-TRAINER-MAG-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "167711",
+    "name": "Pokemon Japanese Promo Secret Super Battle",
+    "code": "PROMO-SECRET-SUPER-BATTLE-1999",
+    "setId": "jp-PROMO-SECRET-SUPER-BATTLE-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "61071",
+    "name": "Pokemon Japanese Promo Southern Islands",
+    "code": "PROMO-SOUTHERN-ISLANDS-1999",
+    "setId": "jp-PROMO-SOUTHERN-ISLANDS-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "87370",
+    "name": "Pokemon Japanese Promo Tropical Mega Battle",
+    "code": "PROMO-TROPICAL-MEGA-BATTLE-1999",
+    "setId": "jp-PROMO-TROPICAL-MEGA-BATTLE-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "63632",
+    "name": "Pokemon Japanese Promo Video Starter",
+    "code": "PROMO-VIDEO-STARTER-1999",
+    "setId": "jp-PROMO-VIDEO-STARTER-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1999",
+    "headingId": "101749",
+    "name": "Pokemon Japanese Squirtle Deck",
+    "code": "SQUIRTLE-DECK",
+    "setId": "jp-SQUIRTLE-DECK",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "129403",
+    "name": "Pokemon Japanese Vending",
+    "code": "VENDING",
+    "setId": "jp-VENDING",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "1999",
+    "headingId": "137327",
+    "name": "Pokemon Japanese Yamabuki City Gym Deck",
+    "code": "YAMABUKI-CITY-GYM-DECK-1999",
+    "setId": "jp-YAMABUKI-CITY-GYM-DECK-1999",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "54860",
+    "name": "Pokemon Japanese Ana Airways",
+    "code": "ANA-2000",
+    "setId": "jp-ANA-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "55887",
+    "name": "Pokemon Japanese CD Promo",
+    "code": "CD-PROMO-2000",
+    "setId": "jp-CD-PROMO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "161659",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2000",
+    "setId": "jp-COIN-PROMO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "60070",
+    "name": "Pokemon Japanese Neo",
+    "code": "NEO-2000",
+    "setId": "jp-NEO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "60072",
+    "name": "Pokemon Japanese Neo 2",
+    "code": "NEO-2-2000",
+    "setId": "jp-NEO-2-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "60073",
+    "name": "Pokemon Japanese Neo 2 Promo",
+    "code": "NEO-2-PROMO-2000",
+    "setId": "jp-NEO-2-PROMO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "60074",
+    "name": "Pokemon Japanese Neo 3",
+    "code": "NEO-3-2000",
+    "setId": "jp-NEO-3-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "60075",
+    "name": "Pokemon Japanese Neo 3 Promo",
+    "code": "NEO-3-PROMO-2000",
+    "setId": "jp-NEO-3-PROMO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "102673",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2000",
+    "setId": "jp-PROMO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "81220",
+    "name": "Pokemon Japanese Promo Corocoro Comics",
+    "code": "PROMO-COROCORO-2000",
+    "setId": "jp-PROMO-COROCORO-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2000",
+    "headingId": "81100",
+    "name": "Pokemon Japanese Trainer Promo Lucky Stadium",
+    "code": "TRAINER-PROMO-LUCKY-STADIUM-2000",
+    "setId": "jp-TRAINER-PROMO-LUCKY-STADIUM-2000",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "120745",
+    "name": "Pokemon Japanese Chikorita Half Deck",
+    "code": "CHIKORITA-HALF-DECK-2001",
+    "setId": "jp-CHIKORITA-HALF-DECK-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "113550",
+    "name": "Pokemon Japanese Chikorita Side Deck",
+    "code": "CHIKORITA-SIDE-DECK-2001",
+    "setId": "jp-CHIKORITA-SIDE-DECK-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "160971",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2001",
+    "setId": "jp-COIN-PROMO-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "101505",
+    "name": "Pokemon Japanese E-Starter Deck",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2001",
+    "headingId": "99974",
+    "name": "Pokemon Japanese Expedition",
+    "code": "EXPEDITION-2001",
+    "setId": "jp-EXPEDITION-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "181685",
+    "name": "Pokemon Japanese Meiji Promo Battle Coins",
+    "code": "MEIJI-2001",
+    "setId": "jp-MEIJI-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "85675",
+    "name": "Pokemon Japanese Meiji Promo Silver Foil",
+    "code": "MEIJI-2001",
+    "setId": "jp-MEIJI-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "60076",
+    "name": "Pokemon Japanese Neo 4",
+    "code": "NEO-4-2001",
+    "setId": "jp-NEO-4-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "102685",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2001",
+    "setId": "jp-PROMO-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "81087",
+    "name": "Pokemon Japanese Promo Corocoro Comics",
+    "code": "PROMO-COROCORO-2001",
+    "setId": "jp-PROMO-COROCORO-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "83814",
+    "name": "Pokemon Japanese Promo Game Boy",
+    "code": "PROMO-GAMEBOY-2001",
+    "setId": "jp-PROMO-GAMEBOY-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "100094",
+    "name": "Pokemon Japanese Promo Tropical Mega Battle",
+    "code": "PROMO-TROPICAL-MEGA-BATTLE-2001",
+    "setId": "jp-PROMO-TROPICAL-MEGA-BATTLE-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "120752",
+    "name": "Pokemon Japanese Totodile Half Deck",
+    "code": "TOTODILE-HALF-DECK-2001",
+    "setId": "jp-TOTODILE-HALF-DECK-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "113552",
+    "name": "Pokemon Japanese Totodile Side Deck",
+    "code": "TOTODILE-SIDE-DECK-2001",
+    "setId": "jp-TOTODILE-SIDE-DECK-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "63661",
+    "name": "Pokemon Japanese VS",
+    "code": "VS-2001",
+    "setId": "jp-VS-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2001",
+    "headingId": "90592",
+    "name": "Pokemon Japanese Web",
+    "code": "WEB-2001",
+    "setId": "jp-WEB-2001",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "97791",
+    "name": "Pokemon Japanese Ecard Promo",
+    "code": "ECARD-PROMO-2002",
+    "setId": "jp-ECARD-PROMO-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "101619",
+    "name": "Pokemon Japanese McDonald's",
+    "code": "MCDONALD-S-2002",
+    "setId": "jp-MCDONALD-S-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "107165",
+    "name": "Pokemon Japanese McDonald's Promo",
+    "code": "MCDONALD-S-PROMO-2002",
+    "setId": "jp-MCDONALD-S-PROMO-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "163660",
+    "name": "Pokemon Japanese Meiji Promo",
+    "code": "MEIJI-2002",
+    "setId": "jp-MEIJI-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "100395",
+    "name": "Pokemon Japanese Mysterious Mountains",
+    "code": "MYSTERIOUS-MOUNTAINS-2002",
+    "setId": "jp-MYSTERIOUS-MOUNTAINS-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "100427",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2002",
+    "setId": "jp-PROMO-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "96748",
+    "name": "Pokemon Japanese Promo Fan Club",
+    "code": "PROMO-FAN-CLUB-2002",
+    "setId": "jp-PROMO-FAN-CLUB-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "96766",
+    "name": "Pokemon Japanese Promo Jr Rally",
+    "code": "PROMO-JR-RALLY-2002",
+    "setId": "jp-PROMO-JR-RALLY-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "83815",
+    "name": "Pokemon Japanese Promo Movie Dvd",
+    "code": "PROMO-MOVIE-DVD-2002",
+    "setId": "jp-PROMO-MOVIE-DVD-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "87369",
+    "name": "Pokemon Japanese Promo Spring Battle Road",
+    "code": "PROMO-SPRING-BATTLE-ROAD-2002",
+    "setId": "jp-PROMO-SPRING-BATTLE-ROAD-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "109779",
+    "name": "Pokemon Japanese Promo Trainers Magazine",
+    "code": "PROMO-TRAINERS-MAGAZINE-2002",
+    "setId": "jp-PROMO-TRAINERS-MAGAZINE-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "100396",
+    "name": "Pokemon Japanese Split Earth",
+    "code": "SPLIT-EARTH-2002",
+    "setId": "jp-SPLIT-EARTH-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "114452",
+    "name": "Pokemon Japanese the Town on No Map",
+    "code": "THE-TOWN-ON-NO-MAP-2002",
+    "setId": "jp-THE-TOWN-ON-NO-MAP-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "104314",
+    "name": "Pokemon Japanese Theater Limited VS",
+    "code": "THEATER-LIMITED-VS-2002",
+    "setId": "jp-THEATER-LIMITED-VS-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2002",
+    "headingId": "105654",
+    "name": "Pokemon Japanese Wind From the Sea",
+    "code": "WIND-FROM-THE-SEA-2002",
+    "setId": "jp-WIND-FROM-THE-SEA-2002",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "157378",
+    "name": "Pokemon Japanese Aqua Half Decks",
+    "code": "AQUA-HALF-DECKS-2003",
+    "setId": "jp-AQUA-HALF-DECKS-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "161629",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2003",
+    "setId": "jp-COIN-PROMO-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "171207",
+    "name": "Pokemon Japanese E-Battle Colosseum Double",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2003",
+    "headingId": "190522",
+    "name": "Pokemon Japanese E-Battle Ruby & Sapphire Promos",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2003",
+    "headingId": "166156",
+    "name": "Pokemon Japanese E-Battle Series 1",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2003",
+    "headingId": "162996",
+    "name": "Pokemon Japanese E-Battle Series 2",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2003",
+    "headingId": "256662",
+    "name": "Pokemon Japanese E-Reader Promo",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2003",
+    "headingId": "116940",
+    "name": "Pokemon Japanese Expansion Pack",
+    "code": "EXPANSION-PACK-2003",
+    "setId": "jp-EXPANSION-PACK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "130835",
+    "name": "Pokemon Japanese Flygon Constructed Starter Deck",
+    "code": "FLYGON-CONSTRUCTED-STARTER-DECK-2003",
+    "setId": "jp-FLYGON-CONSTRUCTED-STARTER-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "187738",
+    "name": "Pokemon Japanese Gift Box Latias Half Deck",
+    "code": "GIFT-BOX-LATIAS-HALF-DECK-2003",
+    "setId": "jp-GIFT-BOX-LATIAS-HALF-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "115646",
+    "name": "Pokemon Japanese Gift Box Latios Half Deck",
+    "code": "GIFT-BOX-LATIOS-HALF-DECK-2003",
+    "setId": "jp-GIFT-BOX-LATIOS-HALF-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "131756",
+    "name": "Pokemon Japanese Magma Deck Kit",
+    "code": "MAGMA-DECK-KIT-2003",
+    "setId": "jp-MAGMA-DECK-KIT-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "121479",
+    "name": "Pokemon Japanese Magma VS Aqua",
+    "code": "MAGMA-VS-AQUA-2003",
+    "setId": "jp-MAGMA-VS-AQUA-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "109099",
+    "name": "Pokemon Japanese Miracle of the Desert",
+    "code": "MIRACLE-OF-THE-DESERT-2003",
+    "setId": "jp-MIRACLE-OF-THE-DESERT-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "117299",
+    "name": "Pokemon Japanese Movie Commemoration VS Pack",
+    "code": "MOVIE-COMMEMORATION-VS-PACK-2003",
+    "setId": "jp-MOVIE-COMMEMORATION-VS-PACK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "123211",
+    "name": "Pokemon Japanese Mudkip Constructed Starter Deck",
+    "code": "MUDKIP-CONSTRUCTED-STARTER-DECK-2003",
+    "setId": "jp-MUDKIP-CONSTRUCTED-STARTER-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "190473",
+    "name": "Pokemon Japanese Pinball Ruby & Sapphire E-Reader Promos",
+    "code": "PINBALL-RUBY-SAPPHIRE-E-READER-PROMOS-2003",
+    "setId": "jp-PINBALL-RUBY-SAPPHIRE-E-READER-PROMOS-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "115710",
+    "name": "Pokemon Japanese Play Promo",
+    "code": "PLAY-PROMO-2003",
+    "setId": "jp-PLAY-PROMO-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "31716",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2003",
+    "setId": "jp-PROMO-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "113804",
+    "name": "Pokemon Japanese Promo Trainers Magazine",
+    "code": "PROMO-TRAINERS-MAGAZINE-2003",
+    "setId": "jp-PROMO-TRAINERS-MAGAZINE-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "116945",
+    "name": "Pokemon Japanese Rulers of the Heavens",
+    "code": "RULERS-OF-THE-HEAVENS-2003",
+    "setId": "jp-RULERS-OF-THE-HEAVENS-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "139378",
+    "name": "Pokemon Japanese Salamence Constructed Starter Deck",
+    "code": "SALAMENCE-CONSTRUCTED-STARTER-DECK-2003",
+    "setId": "jp-SALAMENCE-CONSTRUCTED-STARTER-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "126513",
+    "name": "Pokemon Japanese Torchic Constructed Starter Deck",
+    "code": "TORCHIC-CONSTRUCTED-STARTER-DECK-2003",
+    "setId": "jp-TORCHIC-CONSTRUCTED-STARTER-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2003",
+    "headingId": "131806",
+    "name": "Pokemon Japanese Treecko Constructed Starter Deck",
+    "code": "TREECKO-CONSTRUCTED-STARTER-DECK-2003",
+    "setId": "jp-TREECKO-CONSTRUCTED-STARTER-DECK-2003",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "123294",
+    "name": "Pokemon Japanese Black Deck Kit",
+    "code": "BLACK-DECK-KIT-2004",
+    "setId": "jp-BLACK-DECK-KIT-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "99977",
+    "name": "Pokemon Japanese Clash of the Blue Sky",
+    "code": "CLASH-OF-THE-BLUE-SKY-2004",
+    "setId": "jp-CLASH-OF-THE-BLUE-SKY-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "162979",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2004",
+    "setId": "jp-COIN-PROMO-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "126422",
+    "name": "Pokemon Japanese Deoxys Constructed Starter Deck",
+    "code": "DEOXYS-CONSTRUCTED-STARTER-DECK-2004",
+    "setId": "jp-DEOXYS-CONSTRUCTED-STARTER-DECK-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "190485",
+    "name": "Pokemon Japanese E-Battle Emerald",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "193718",
+    "name": "Pokemon Japanese E-Battle Emerald Map Puzzle",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "158798",
+    "name": "Pokemon Japanese E-Battle Firered & Leafgreen",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "190528",
+    "name": "Pokemon Japanese E-Battle Firered & Leafgreen Promos",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "171206",
+    "name": "Pokemon Japanese E-Battle Promos",
+    "code": "E",
+    "setId": "jp-E",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "98013",
+    "name": "Pokemon Japanese Flight of Legends",
+    "code": "FLIGHT-OF-LEGENDS-2004",
+    "setId": "jp-FLIGHT-OF-LEGENDS-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "126430",
+    "name": "Pokemon Japanese Gift Box Emerald",
+    "code": "GIFT-BOX-EMERALD-2004",
+    "setId": "jp-GIFT-BOX-EMERALD-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "142198",
+    "name": "Pokemon Japanese Metagross Constructed Starter Deck",
+    "code": "METAGROSS-CONSTRUCTED-STARTER-DECK-2004",
+    "setId": "jp-METAGROSS-CONSTRUCTED-STARTER-DECK-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "128615",
+    "name": "Pokemon Japanese Movie Commemoration VS Pack",
+    "code": "MOVIE-COMMEMORATION-VS-PACK-2004",
+    "setId": "jp-MOVIE-COMMEMORATION-VS-PACK-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "107924",
+    "name": "Pokemon Japanese Play Promo",
+    "code": "PLAY-PROMO-2004",
+    "setId": "jp-PLAY-PROMO-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "101747",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2004",
+    "setId": "jp-PROMO-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "119249",
+    "name": "Pokemon Japanese Rayquaza Constructed Starter Deck",
+    "code": "RAYQUAZA-CONSTRUCTED-STARTER-DECK-2004",
+    "setId": "jp-RAYQUAZA-CONSTRUCTED-STARTER-DECK-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "99180",
+    "name": "Pokemon Japanese Rocket Gang Strikes Back",
+    "code": "PMCG4",
+    "setId": "jp-PMCG4",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2004",
+    "headingId": "123551",
+    "name": "Pokemon Japanese Silver Deck Kit",
+    "code": "SILVER-DECK-KIT-2004",
+    "setId": "jp-SILVER-DECK-KIT-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "114820",
+    "name": "Pokemon Japanese Undone Seal",
+    "code": "UNDONE-SEAL-2004",
+    "setId": "jp-UNDONE-SEAL-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2004",
+    "headingId": "121478",
+    "name": "Pokemon Japanese Venusaur/Charizard/Blastoise Random Constructed Starter Deck",
+    "code": "VENUSAUR-CHARIZARD-BLASTOISE-RANDOM-CONS-2004",
+    "setId": "jp-VENUSAUR-CHARIZARD-BLASTOISE-RANDOM-CONS-2004",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "126429",
+    "name": "Pokemon Japanese Feraligatr Constructed Starter Deck",
+    "code": "FERALIGATR-CONSTRUCTED-STARTER-DECK-2005",
+    "setId": "jp-FERALIGATR-CONSTRUCTED-STARTER-DECK-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "101038",
+    "name": "Pokemon Japanese Gift Box Mew",
+    "code": "GIFT-BOX-MEW-2005",
+    "setId": "jp-GIFT-BOX-MEW-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "100014",
+    "name": "Pokemon Japanese Golden Sky, Silvery Ocean",
+    "code": "GOLDEN-SKY-SILVERY-OCEAN-2005",
+    "setId": "jp-GOLDEN-SKY-SILVERY-OCEAN-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "108426",
+    "name": "Pokemon Japanese Holon Research Tower",
+    "code": "HOLON-RESEARCH-TOWER-2005",
+    "setId": "jp-HOLON-RESEARCH-TOWER-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "121520",
+    "name": "Pokemon Japanese Holon Research Tower Fire",
+    "code": "HOLON-RESEARCH-TOWER-FIRE-2005",
+    "setId": "jp-HOLON-RESEARCH-TOWER-FIRE-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "121521",
+    "name": "Pokemon Japanese Holon Research Tower Lightning",
+    "code": "HOLON-RESEARCH-TOWER-LIGHTNING-2005",
+    "setId": "jp-HOLON-RESEARCH-TOWER-LIGHTNING-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "121522",
+    "name": "Pokemon Japanese Holon Research Tower Water",
+    "code": "HOLON-RESEARCH-TOWER-WATER-2005",
+    "setId": "jp-HOLON-RESEARCH-TOWER-WATER-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "117297",
+    "name": "Pokemon Japanese Master Kit",
+    "code": "MASTER-KIT-2005",
+    "setId": "jp-MASTER-KIT-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "126424",
+    "name": "Pokemon Japanese Meganium Constructed Starter Deck",
+    "code": "MEGANIUM-CONSTRUCTED-STARTER-DECK-2005",
+    "setId": "jp-MEGANIUM-CONSTRUCTED-STARTER-DECK-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "108671",
+    "name": "Pokemon Japanese Mirage Forest",
+    "code": "MIRAGE-FOREST-2005",
+    "setId": "jp-MIRAGE-FOREST-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "127449",
+    "name": "Pokemon Japanese Mirage's Mew Constructed Starter Deck",
+    "code": "MIRAGE-S-MEW-CONSTRUCTED-STARTER-DECK-2005",
+    "setId": "jp-MIRAGE-S-MEW-CONSTRUCTED-STARTER-DECK-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "109254",
+    "name": "Pokemon Japanese Movie VS Pack",
+    "code": "MOVIE-VS-PACK-2005",
+    "setId": "jp-MOVIE-VS-PACK-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "98070",
+    "name": "Pokemon Japanese Play Promo",
+    "code": "PLAY-PROMO-2005",
+    "setId": "jp-PLAY-PROMO-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "193711",
+    "name": "Pokemon Japanese Pokepark Blue",
+    "code": "POKEPARK-BLUE-2005",
+    "setId": "jp-POKEPARK-BLUE-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "134800",
+    "name": "Pokemon Japanese Pokepark Forest",
+    "code": "POKEPARK-FOREST-2005",
+    "setId": "jp-POKEPARK-FOREST-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "99434",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2005",
+    "setId": "jp-PROMO-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "125761",
+    "name": "Pokemon Japanese Quick Construction Packs",
+    "code": "QUICK-CONSTRUCTION-PACKS-2005",
+    "setId": "jp-QUICK-CONSTRUCTION-PACKS-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2005",
+    "headingId": "126425",
+    "name": "Pokemon Japanese Typhlosion Constructed Starter Deck",
+    "code": "TYPHLOSION-CONSTRUCTED-STARTER-DECK-2005",
+    "setId": "jp-TYPHLOSION-CONSTRUCTED-STARTER-DECK-2005",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "280169",
+    "name": "Ensky Pokemon Japanese Diamond & Pearl Hyper Sticker Collection 1",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2006",
+    "headingId": "203446",
+    "name": "Pokemon Japanese Black Star Promo Jungle Tours Jumbo",
+    "code": "BLACK-STAR-PROMO-JUNGLE-TOURS-JUMBO-2006",
+    "setId": "jp-BLACK-STAR-PROMO-JUNGLE-TOURS-JUMBO-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "171101",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2006",
+    "setId": "jp-COIN-PROMO-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "135673",
+    "name": "Pokemon Japanese Diamond & Pearl Space-Time Creation",
+    "code": "DIAMOND-PEARL-SPACE-TIME-CREATION-2006",
+    "setId": "jp-DIAMOND-PEARL-SPACE-TIME-CREATION-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "104456",
+    "name": "Pokemon Japanese Dragon Frontiers",
+    "code": "DRAGON-FRONTIERS-2006",
+    "setId": "jp-DRAGON-FRONTIERS-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "126421",
+    "name": "Pokemon Japanese Earth's Groudon EX Constructed Starter Deck",
+    "code": "EARTH-S-GROUDON-EX-CONSTRUCTED-STARTER-D-2006",
+    "setId": "jp-EARTH-S-GROUDON-EX-CONSTRUCTED-STARTER-D-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "202881",
+    "name": "Pokemon Japanese Entry Pack",
+    "code": "ENTRY-PACK-2006",
+    "setId": "jp-ENTRY-PACK-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "99982",
+    "name": "Pokemon Japanese Holon Phantoms",
+    "code": "HOLON-PHANTOMS-2006",
+    "setId": "jp-HOLON-PHANTOMS-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "132804",
+    "name": "Pokemon Japanese Imprison! Gardevoir EX Constructed Standard Deck",
+    "code": "IMPRISON-GARDEVOIR-EX-CONSTRUCTED-STANDA-2006",
+    "setId": "jp-IMPRISON-GARDEVOIR-EX-CONSTRUCTED-STANDA-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "86043",
+    "name": "Pokemon Japanese Miracle Crystal",
+    "code": "MIRACLE-CRYSTAL-2006",
+    "setId": "jp-MIRACLE-CRYSTAL-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "132458",
+    "name": "Pokemon Japanese Movie Commemoration VS Pack",
+    "code": "MOVIE-COMMEMORATION-VS-PACK-2006",
+    "setId": "jp-MOVIE-COMMEMORATION-VS-PACK-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "126420",
+    "name": "Pokemon Japanese Ocean's Kyogre EX Constructed Starter Deck",
+    "code": "OCEAN-S-KYOGRE-EX-CONSTRUCTED-STARTER-DE-2006",
+    "setId": "jp-OCEAN-S-KYOGRE-EX-CONSTRUCTED-STARTER-DE-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "89469",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2006",
+    "setId": "jp-PROMO-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2006",
+    "headingId": "125757",
+    "name": "Pokemon Japanese Shockwave!",
+    "code": "SHOCKWAVE-2006",
+    "setId": "jp-SHOCKWAVE-2006",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "104694",
+    "name": "Pokemon Japanese 10th Movie Commemoration Promo",
+    "code": "10TH-MOVIE-COMMEMORATION-PROMO-2007",
+    "setId": "jp-10TH-MOVIE-COMMEMORATION-PROMO-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "176460",
+    "name": "Pokemon Japanese Bastiodon the Defender Half Deck",
+    "code": "BASTIODON-THE-DEFENDER-HALF-DECK-2007",
+    "setId": "jp-BASTIODON-THE-DEFENDER-HALF-DECK-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "257551",
+    "name": "Pokemon Japanese Diamond & Pearl 7-Eleven Poke Ball Lottery Campaign",
+    "code": "DIAMOND-PEARL-7-ELEVEN-POKE-BALL-LOTTERY-2007",
+    "setId": "jp-DIAMOND-PEARL-7-ELEVEN-POKE-BALL-LOTTERY-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "292722",
+    "name": "Pokemon Japanese Diamond & Pearl Bastiodon the Defender",
+    "code": "DIAMOND-PEARL-BASTIODON-THE-DEFENDER-2007",
+    "setId": "jp-DIAMOND-PEARL-BASTIODON-THE-DEFENDER-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "105655",
+    "name": "Pokemon Japanese Diamond & Pearl Dawn Dash",
+    "code": "DIAMOND-PEARL-DAWN-DASH-2007",
+    "setId": "jp-DIAMOND-PEARL-DAWN-DASH-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "170462",
+    "name": "Pokemon Japanese Diamond & Pearl Dialga LV.X Constructed Standard Deck",
+    "code": "DIAMOND-PEARL-DIALGA-LV-X-CONSTRUCTED-ST-2007",
+    "setId": "jp-DIAMOND-PEARL-DIALGA-LV-X-CONSTRUCTED-ST-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "127459",
+    "name": "Pokemon Japanese Diamond & Pearl Moonlit Pursuit",
+    "code": "DIAMOND-PEARL-MOONLIT-PURSUIT-2007",
+    "setId": "jp-DIAMOND-PEARL-MOONLIT-PURSUIT-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "233587",
+    "name": "Pokemon Japanese Diamond & Pearl Moonlit Pursuit/Dawn Dash",
+    "code": "DIAMOND-PEARL-MOONLIT-PURSUIT-DAWN-DASH-2007",
+    "setId": "jp-DIAMOND-PEARL-MOONLIT-PURSUIT-DAWN-DASH-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "170461",
+    "name": "Pokemon Japanese Diamond & Pearl Palkia LV.X Constructed Standard Deck",
+    "code": "DIAMOND-PEARL-PALKIA-LV-X-CONSTRUCTED-ST-2007",
+    "setId": "jp-DIAMOND-PEARL-PALKIA-LV-X-CONSTRUCTED-ST-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "131819",
+    "name": "Pokemon Japanese Diamond & Pearl Secret of the Lakes",
+    "code": "DIAMOND-PEARL-SECRET-OF-THE-LAKES-2007",
+    "setId": "jp-DIAMOND-PEARL-SECRET-OF-THE-LAKES-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "100398",
+    "name": "Pokemon Japanese Diamond & Pearl Shining Darkness",
+    "code": "DIAMOND-PEARL-SHINING-DARKNESS-2007",
+    "setId": "jp-DIAMOND-PEARL-SHINING-DARKNESS-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "189926",
+    "name": "Pokemon Japanese Entry Pack '08",
+    "code": "ENTRY-PACK-08-2007",
+    "setId": "jp-ENTRY-PACK-08-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "139635",
+    "name": "Pokemon Japanese Magmortar VS Electivire Deck Kit",
+    "code": "MAGMORTAR-VS-ELECTIVIRE-DECK-KIT-2007",
+    "setId": "jp-MAGMORTAR-VS-ELECTIVIRE-DECK-KIT-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "87368",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2007",
+    "setId": "jp-PROMO-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "91251",
+    "name": "Pokemon Japanese Promo Summer Battle Road",
+    "code": "PROMO-SUMMER-BATTLE-ROAD-2007",
+    "setId": "jp-PROMO-SUMMER-BATTLE-ROAD-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "87372",
+    "name": "Pokemon Japanese Promo Winter Challenge",
+    "code": "PROMO-WINTER-CHALLENGE-2007",
+    "setId": "jp-PROMO-WINTER-CHALLENGE-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "170416",
+    "name": "Pokemon Japanese Rampardos the Attacker Half Deck",
+    "code": "RAMPARDOS-THE-ATTACKER-HALF-DECK-2007",
+    "setId": "jp-RAMPARDOS-THE-ATTACKER-HALF-DECK-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "272992",
+    "name": "Pokemon Japanese Secret of the Lakes Half Deck",
+    "code": "SECRET-OF-THE-LAKES-HALF-DECK-2007",
+    "setId": "jp-SECRET-OF-THE-LAKES-HALF-DECK-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2007",
+    "headingId": "105769",
+    "name": "Pokemon Japanese World Champions Pack",
+    "code": "WORLD-CHAMPIONS-PACK-2007",
+    "setId": "jp-WORLD-CHAMPIONS-PACK-2007",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "280701",
+    "name": "Ensky Pokemon Japanese Diamond & Pearl Hyper Sticker Collection 6",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2008",
+    "headingId": "115717",
+    "name": "Pokemon Japanese 11th Movie Commemoration Set",
+    "code": "11TH-MOVIE-COMMEMORATION-SET-2008",
+    "setId": "jp-11TH-MOVIE-COMMEMORATION-SET-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "105658",
+    "name": "Pokemon Japanese Bonds to the End of Time",
+    "code": "BONDS-TO-THE-END-OF-TIME-2008",
+    "setId": "jp-BONDS-TO-THE-END-OF-TIME-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "161412",
+    "name": "Pokemon Japanese Chimchar Half Deck",
+    "code": "CHIMCHAR-HALF-DECK-2008",
+    "setId": "jp-CHIMCHAR-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "167378",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2008",
+    "setId": "jp-COIN-PROMO-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "166399",
+    "name": "Pokemon Japanese Dialga Half Deck",
+    "code": "DIALGA-HALF-DECK-2008",
+    "setId": "jp-DIALGA-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "104691",
+    "name": "Pokemon Japanese Diamond & Pearl Cry From the Mysterious",
+    "code": "DIAMOND-PEARL-CRY-FROM-THE-MYSTERIOUS-2008",
+    "setId": "jp-DIAMOND-PEARL-CRY-FROM-THE-MYSTERIOUS-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "132139",
+    "name": "Pokemon Japanese Diamond & Pearl Heatran Half Deck",
+    "code": "DIAMOND-PEARL-HEATRAN-HALF-DECK-2008",
+    "setId": "jp-DIAMOND-PEARL-HEATRAN-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "126436",
+    "name": "Pokemon Japanese Diamond & Pearl Regigigas Half Deck",
+    "code": "DIAMOND-PEARL-REGIGIGAS-HALF-DECK-2008",
+    "setId": "jp-DIAMOND-PEARL-REGIGIGAS-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "189570",
+    "name": "Pokemon Japanese Diamond & Pearl Temple of Anger",
+    "code": "DIAMOND-PEARL-TEMPLE-OF-ANGER-2008",
+    "setId": "jp-DIAMOND-PEARL-TEMPLE-OF-ANGER-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "141196",
+    "name": "Pokemon Japanese Entry Pack '08 Raichu",
+    "code": "ENTRY-PACK-08-RAICHU-2008",
+    "setId": "jp-ENTRY-PACK-08-RAICHU-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "105652",
+    "name": "Pokemon Japanese Galactic's Conquest",
+    "code": "GALACTIC-S-CONQUEST-2008",
+    "setId": "jp-GALACTIC-S-CONQUEST-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "129742",
+    "name": "Pokemon Japanese Gallade Half Deck",
+    "code": "GALLADE-HALF-DECK-2008",
+    "setId": "jp-GALLADE-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "140264",
+    "name": "Pokemon Japanese Giratina Half Deck",
+    "code": "GIRATINA-HALF-DECK-2008",
+    "setId": "jp-GIRATINA-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "140265",
+    "name": "Pokemon Japanese Giratina vs. Dialga",
+    "code": "GIRATINA-VS-DIALGA-2008",
+    "setId": "jp-GIRATINA-VS-DIALGA-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "105617",
+    "name": "Pokemon Japanese Infernape Half Deck",
+    "code": "INFERNAPE-HALF-DECK-2008",
+    "setId": "jp-INFERNAPE-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "166398",
+    "name": "Pokemon Japanese Palkia Half Deck",
+    "code": "PALKIA-HALF-DECK-2008",
+    "setId": "jp-PALKIA-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "136625",
+    "name": "Pokemon Japanese Pikachu Half Deck",
+    "code": "PIKACHU-HALF-DECK-2008",
+    "setId": "jp-PIKACHU-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "161409",
+    "name": "Pokemon Japanese Piplup Half Deck",
+    "code": "PIPLUP-HALF-DECK-2008",
+    "setId": "jp-PIPLUP-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "96772",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2008",
+    "setId": "jp-PROMO-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "100000",
+    "name": "Pokemon Japanese Stormfront",
+    "code": "STORMFRONT-2008",
+    "setId": "jp-STORMFRONT-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2008",
+    "headingId": "161411",
+    "name": "Pokemon Japanese Turtwig Half Deck",
+    "code": "TURTWIG-HALF-DECK-2008",
+    "setId": "jp-TURTWIG-HALF-DECK-2008",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "272627",
+    "name": "Ensky Pokemon Japanese Diamond & Pearl Hyper Sticker Collection 11",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2009",
+    "headingId": "277222",
+    "name": "Ensky Pokemon Japanese Diamond & Pearl Hyper Sticker Collection 9",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2009",
+    "headingId": "90107",
+    "name": "Pokemon Japanese Advent of Arceus",
+    "code": "ADVENT-OF-ARCEUS-2009",
+    "setId": "jp-ADVENT-OF-ARCEUS-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "133067",
+    "name": "Pokemon Japanese Arceus LV.X Deck: Grass & Fire",
+    "code": "ARCEUS-LV-X-DECK-GRASS-FIRE-2009",
+    "setId": "jp-ARCEUS-LV-X-DECK-GRASS-FIRE-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "143141",
+    "name": "Pokemon Japanese Arceus LV.X Deck: Lightning & Psychic",
+    "code": "ARCEUS-LV-X-DECK-LIGHTNING-PSYCHIC-2009",
+    "setId": "jp-ARCEUS-LV-X-DECK-LIGHTNING-PSYCHIC-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "132559",
+    "name": "Pokemon Japanese Battle Starter Decks",
+    "code": "BATTLE-STARTER-DECKS-2009",
+    "setId": "jp-BATTLE-STARTER-DECKS-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "104672",
+    "name": "Pokemon Japanese Beat of the Frontier",
+    "code": "BEAT-OF-THE-FRONTIER-2009",
+    "setId": "jp-BEAT-OF-THE-FRONTIER-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "101618",
+    "name": "Pokemon Japanese Charizard Half Deck",
+    "code": "CHARIZARD-HALF-DECK-2009",
+    "setId": "jp-CHARIZARD-HALF-DECK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "109046",
+    "name": "Pokemon Japanese Design Contest Promo",
+    "code": "DESIGN-CONTEST-PROMO-2009",
+    "setId": "jp-DESIGN-CONTEST-PROMO-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "120743",
+    "name": "Pokemon Japanese Garchomp Half Deck",
+    "code": "GARCHOMP-HALF-DECK-2009",
+    "setId": "jp-GARCHOMP-HALF-DECK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "101622",
+    "name": "Pokemon Japanese Heartgold Collection",
+    "code": "HEARTGOLD-COLLECTION-2009",
+    "setId": "jp-HEARTGOLD-COLLECTION-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "150460",
+    "name": "Pokemon Japanese Leafeon VS Metagross Expert Deck: Leafeon Deck",
+    "code": "LEAFEON-VS-METAGROSS-EXPERT-DECK-LEAFEON-2009",
+    "setId": "jp-LEAFEON-VS-METAGROSS-EXPERT-DECK-LEAFEON-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "157307",
+    "name": "Pokemon Japanese Leafeon VS Metagross Expert Deck: Metagross Deck",
+    "code": "LEAFEON-VS-METAGROSS-EXPERT-DECK-METAGRO-2009",
+    "setId": "jp-LEAFEON-VS-METAGROSS-EXPERT-DECK-METAGRO-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "257101",
+    "name": "Pokemon Japanese Legend Energies",
+    "code": "LEGEND-ENERGIES-2009",
+    "setId": "jp-LEGEND-ENERGIES-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "130936",
+    "name": "Pokemon Japanese Melee! Pokemon Scramble",
+    "code": "MELEE-POKEMON-SCRAMBLE-2009",
+    "setId": "jp-MELEE-POKEMON-SCRAMBLE-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "126437",
+    "name": "Pokemon Japanese Mewtwo LV.X Collection Pack",
+    "code": "MEWTWO-LV-X-COLLECTION-PACK-2009",
+    "setId": "jp-MEWTWO-LV-X-COLLECTION-PACK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "119781",
+    "name": "Pokemon Japanese Movie Commemoration Random Pack",
+    "code": "MOVIE-COMMEMORATION-RANDOM-PACK-2009",
+    "setId": "jp-MOVIE-COMMEMORATION-RANDOM-PACK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "96771",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2009",
+    "setId": "jp-PROMO-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "134355",
+    "name": "Pokemon Japanese Regigigas LV.X Collection Pack",
+    "code": "REGIGIGAS-LV-X-COLLECTION-PACK-2009",
+    "setId": "jp-REGIGIGAS-LV-X-COLLECTION-PACK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "117667",
+    "name": "Pokemon Japanese Shaymin LV.X Collection Pack",
+    "code": "SHAYMIN-LV-X-COLLECTION-PACK-2009",
+    "setId": "jp-SHAYMIN-LV-X-COLLECTION-PACK-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2009",
+    "headingId": "101511",
+    "name": "Pokemon Japanese Soulsilver Collection",
+    "code": "SOULSILVER-COLLECTION-2009",
+    "setId": "jp-SOULSILVER-COLLECTION-2009",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "304824",
+    "name": "Ensky Pokemon Japanese Diamond & Pearl Hyper Sticker Collection DX Technique Best",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2010",
+    "headingId": "221422",
+    "name": "Pokemon Japanese Beginning Set",
+    "code": "BEGINNING-SET-2010",
+    "setId": "jp-BEGINNING-SET-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "97654",
+    "name": "Pokemon Japanese Black & White",
+    "code": "BLACK-WHITE-2010",
+    "setId": "jp-BLACK-WHITE-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "137421",
+    "name": "Pokemon Japanese Black & White Promo",
+    "code": "BLACK-WHITE-PROMO-2010",
+    "setId": "jp-BLACK-WHITE-PROMO-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "101600",
+    "name": "Pokemon Japanese Clash at the Summit",
+    "code": "CLASH-AT-THE-SUMMIT-2010",
+    "setId": "jp-CLASH-AT-THE-SUMMIT-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "200270",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2010",
+    "setId": "jp-COIN-PROMO-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "101528",
+    "name": "Pokemon Japanese Design Contest Promo",
+    "code": "DESIGN-CONTEST-PROMO-2010",
+    "setId": "jp-DESIGN-CONTEST-PROMO-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "193942",
+    "name": "Pokemon Japanese Journey Partners Collection Sheets",
+    "code": "JOURNEY-PARTNERS-COLLECTION-SHEETS-2010",
+    "setId": "jp-JOURNEY-PARTNERS-COLLECTION-SHEETS-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "123490",
+    "name": "Pokemon Japanese Lost Link",
+    "code": "LOST-LINK-2010",
+    "setId": "jp-LOST-LINK-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "98069",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2010",
+    "setId": "jp-PROMO-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "118535",
+    "name": "Pokemon Japanese Reviving Legends",
+    "code": "REVIVING-LEGENDS-2010",
+    "setId": "jp-REVIVING-LEGENDS-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "136457",
+    "name": "Pokemon Japanese Steelix Constructed Standard Deck",
+    "code": "STEELIX-CONSTRUCTED-STANDARD-DECK-2010",
+    "setId": "jp-STEELIX-CONSTRUCTED-STANDARD-DECK-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "153637",
+    "name": "Pokemon Japanese Tyranitar Constructed Standard Deck",
+    "code": "TYRANITAR-CONSTRUCTED-STANDARD-DECK-2010",
+    "setId": "jp-TYRANITAR-CONSTRUCTED-STANDARD-DECK-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2010",
+    "headingId": "320383",
+    "name": "Pokemon Japanese World Collection",
+    "code": "WORLD-COLLECTION-2010",
+    "setId": "jp-WORLD-COLLECTION-2010",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "151352",
+    "name": "Pokemon Japanese Battle Gift Set",
+    "code": "BATTLE-GIFT-SET-2011",
+    "setId": "jp-BATTLE-GIFT-SET-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "121569",
+    "name": "Pokemon Japanese Battle Strength",
+    "code": "BATTLE-STRENGTH-2011",
+    "setId": "jp-BATTLE-STRENGTH-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "124893",
+    "name": "Pokemon Japanese Battle Theme Deck Victini",
+    "code": "BATTLE-THEME-DECK-VICTINI-2011",
+    "setId": "jp-BATTLE-THEME-DECK-VICTINI-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "306561",
+    "name": "Pokemon Japanese Beginning Set Pikachu Version",
+    "code": "BEGINNING-SET-PIKACHU-VERSION-2011",
+    "setId": "jp-BEGINNING-SET-PIKACHU-VERSION-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "172691",
+    "name": "Pokemon Japanese Beginning Set+",
+    "code": "BEGINNING-SET-2011",
+    "setId": "jp-BEGINNING-SET-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "105275",
+    "name": "Pokemon Japanese Black & White Dark Rush",
+    "code": "BLACK-WHITE-DARK-RUSH-2011",
+    "setId": "jp-BLACK-WHITE-DARK-RUSH-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "105616",
+    "name": "Pokemon Japanese Black & White Hail Blizzard",
+    "code": "BLACK-WHITE-HAIL-BLIZZARD-2011",
+    "setId": "jp-BLACK-WHITE-HAIL-BLIZZARD-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "101755",
+    "name": "Pokemon Japanese Black & White Promo",
+    "code": "BLACK-WHITE-PROMO-2011",
+    "setId": "jp-BLACK-WHITE-PROMO-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "101530",
+    "name": "Pokemon Japanese Black & White Psycho Drive",
+    "code": "BLACK-WHITE-PSYCHO-DRIVE-2011",
+    "setId": "jp-BLACK-WHITE-PSYCHO-DRIVE-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "113310",
+    "name": "Pokemon Japanese Black & White Red Collection",
+    "code": "BLACK-WHITE-RED-COLLECTION-2011",
+    "setId": "jp-BLACK-WHITE-RED-COLLECTION-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "231020",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-2011",
+    "setId": "jp-INSERT-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "159052",
+    "name": "Pokemon Japanese Reshiram EX Battle Strength Deck",
+    "code": "RESHIRAM-EX-BATTLE-STRENGTH-DECK-2011",
+    "setId": "jp-RESHIRAM-EX-BATTLE-STRENGTH-DECK-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2011",
+    "headingId": "166206",
+    "name": "Pokemon Japanese Zekrom EX Battle Strength Deck",
+    "code": "ZEKROM-EX-BATTLE-STRENGTH-DECK-2011",
+    "setId": "jp-ZEKROM-EX-BATTLE-STRENGTH-DECK-2011",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "107974",
+    "name": "Pokemon Japanese Black & White Cold Flare",
+    "code": "BLACK-WHITE-COLD-FLARE-2012",
+    "setId": "jp-BLACK-WHITE-COLD-FLARE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "103904",
+    "name": "Pokemon Japanese Black & White Dragon Blade",
+    "code": "BLACK-WHITE-DRAGON-BLADE-2012",
+    "setId": "jp-BLACK-WHITE-DRAGON-BLADE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "103154",
+    "name": "Pokemon Japanese Black & White Dragon Blast",
+    "code": "BLACK-WHITE-DRAGON-BLAST-2012",
+    "setId": "jp-BLACK-WHITE-DRAGON-BLAST-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "105520",
+    "name": "Pokemon Japanese Black & White Dragon Selection",
+    "code": "BLACK-WHITE-DRAGON-SELECTION-2012",
+    "setId": "jp-BLACK-WHITE-DRAGON-SELECTION-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "107969",
+    "name": "Pokemon Japanese Black & White Freeze Bolt",
+    "code": "BLACK-WHITE-FREEZE-BOLT-2012",
+    "setId": "jp-BLACK-WHITE-FREEZE-BOLT-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "193974",
+    "name": "Pokemon Japanese Black & White National Beginning",
+    "code": "BLACK-WHITE-NATIONAL-BEGINNING-2012",
+    "setId": "jp-BLACK-WHITE-NATIONAL-BEGINNING-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "106648",
+    "name": "Pokemon Japanese Black & White Plasma Gale",
+    "code": "BLACK-WHITE-PLASMA-GALE-2012",
+    "setId": "jp-BLACK-WHITE-PLASMA-GALE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "105770",
+    "name": "Pokemon Japanese Black & White Promo",
+    "code": "BLACK-WHITE-PROMO-2012",
+    "setId": "jp-BLACK-WHITE-PROMO-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "109828",
+    "name": "Pokemon Japanese Black & White Spiral Force",
+    "code": "BLACK-WHITE-SPIRAL-FORCE-2012",
+    "setId": "jp-BLACK-WHITE-SPIRAL-FORCE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "121519",
+    "name": "Pokemon Japanese Black & White Team Plasma Battle Gift Set",
+    "code": "BLACK-WHITE-TEAM-PLASMA-BATTLE-GIFT-SET-2012",
+    "setId": "jp-BLACK-WHITE-TEAM-PLASMA-BATTLE-GIFT-SET-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "109825",
+    "name": "Pokemon Japanese Black & White Thunder Knuckle",
+    "code": "BLACK-WHITE-THUNDER-KNUCKLE-2012",
+    "setId": "jp-BLACK-WHITE-THUNDER-KNUCKLE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "132562",
+    "name": "Pokemon Japanese Black Kyurem EX Battle Strength Deck",
+    "code": "BLACK-KYUREM-EX-BATTLE-STRENGTH-DECK-2012",
+    "setId": "jp-BLACK-KYUREM-EX-BATTLE-STRENGTH-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "119628",
+    "name": "Pokemon Japanese Everyone's Exciting Battle",
+    "code": "EVERYONE-S-EXCITING-BATTLE-2012",
+    "setId": "jp-EVERYONE-S-EXCITING-BATTLE-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "140765",
+    "name": "Pokemon Japanese Garchomp Half Deck",
+    "code": "GARCHOMP-HALF-DECK-2012",
+    "setId": "jp-GARCHOMP-HALF-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "160561",
+    "name": "Pokemon Japanese Hydreigon Half Deck",
+    "code": "HYDREIGON-HALF-DECK-2012",
+    "setId": "jp-HYDREIGON-HALF-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "193973",
+    "name": "Pokemon Japanese Keldeo Battle Strength Deck",
+    "code": "KELDEO-BATTLE-STRENGTH-DECK-2012",
+    "setId": "jp-KELDEO-BATTLE-STRENGTH-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "128619",
+    "name": "Pokemon Japanese Master Deck Build Box EX",
+    "code": "MASTER-DECK-BUILD-BOX-EX-2012",
+    "setId": "jp-MASTER-DECK-BUILD-BOX-EX-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "194265",
+    "name": "Pokemon Japanese Team Plasma's Powered Half Deck",
+    "code": "TEAM-PLASMA-S-POWERED-HALF-DECK-2012",
+    "setId": "jp-TEAM-PLASMA-S-POWERED-HALF-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2012",
+    "headingId": "191774",
+    "name": "Pokemon Japanese White Kyurem EX Battle Strength Deck",
+    "code": "WHITE-KYUREM-EX-BATTLE-STRENGTH-DECK-2012",
+    "setId": "jp-WHITE-KYUREM-EX-BATTLE-STRENGTH-DECK-2012",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "114912",
+    "name": "Pokemon Japanese Black & White EX Battle Boost",
+    "code": "BLACK-WHITE-EX-BATTLE-BOOST-2013",
+    "setId": "jp-BLACK-WHITE-EX-BATTLE-BOOST-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "195405",
+    "name": "Pokemon Japanese Black & White Genesect Half Deck",
+    "code": "BLACK-WHITE-GENESECT-HALF-DECK-2013",
+    "setId": "jp-BLACK-WHITE-GENESECT-HALF-DECK-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "111639",
+    "name": "Pokemon Japanese Black & White Megalo Cannon",
+    "code": "BLACK-WHITE-MEGALO-CANNON-2013",
+    "setId": "jp-BLACK-WHITE-MEGALO-CANNON-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "130597",
+    "name": "Pokemon Japanese Black & White Mewtwo Half Deck",
+    "code": "BLACK-WHITE-MEWTWO-HALF-DECK-2013",
+    "setId": "jp-BLACK-WHITE-MEWTWO-HALF-DECK-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "114603",
+    "name": "Pokemon Japanese Black & White Promo",
+    "code": "BLACK-WHITE-PROMO-2013",
+    "setId": "jp-BLACK-WHITE-PROMO-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "109098",
+    "name": "Pokemon Japanese Black & White Shiny Collection",
+    "code": "BLACK-WHITE-SHINY-COLLECTION-2013",
+    "setId": "jp-BLACK-WHITE-SHINY-COLLECTION-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "132564",
+    "name": "Pokemon Japanese Blastoise + Kyurem EX Combo Deck",
+    "code": "BLASTOISE-KYUREM-EX-COMBO-DECK-2013",
+    "setId": "jp-BLASTOISE-KYUREM-EX-COMBO-DECK-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "117547",
+    "name": "Pokemon Japanese XY",
+    "code": "XY-2013",
+    "setId": "jp-XY-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "186177",
+    "name": "Pokemon Japanese XY Beginning Set",
+    "code": "XY-BEGINNING-SET-2013",
+    "setId": "jp-XY-BEGINNING-SET-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2013",
+    "headingId": "120187",
+    "name": "Pokemon Japanese XY Promo",
+    "code": "XY-PROMO-2013",
+    "setId": "jp-XY-PROMO-2013",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "167352",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2014",
+    "setId": "jp-COIN-PROMO-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "124895",
+    "name": "Pokemon Japanese Hyper Metal Chain Deck",
+    "code": "HYPER-METAL-CHAIN-DECK-2014",
+    "setId": "jp-HYPER-METAL-CHAIN-DECK-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "241151",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-2014",
+    "setId": "jp-INSERT-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "120128",
+    "name": "Pokemon Japanese M Charizard EX Mega Battle",
+    "code": "M-CHARIZARD-EX-MEGA-BATTLE-2014",
+    "setId": "jp-M-CHARIZARD-EX-MEGA-BATTLE-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "186174",
+    "name": "Pokemon Japanese Xerneas Half Deck",
+    "code": "XERNEAS-HALF-DECK-2014",
+    "setId": "jp-XERNEAS-HALF-DECK-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "126442",
+    "name": "Pokemon Japanese XY Gaia Volcano",
+    "code": "XY-GAIA-VOLCANO-2014",
+    "setId": "jp-XY-GAIA-VOLCANO-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "124295",
+    "name": "Pokemon Japanese XY Phantom Gate",
+    "code": "XY-PHANTOM-GATE-2014",
+    "setId": "jp-XY-PHANTOM-GATE-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "118674",
+    "name": "Pokemon Japanese XY Promo",
+    "code": "XY-PROMO-2014",
+    "setId": "jp-XY-PROMO-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "121563",
+    "name": "Pokemon Japanese XY Rising Fist",
+    "code": "XY-RISING-FIST-2014",
+    "setId": "jp-XY-RISING-FIST-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "127292",
+    "name": "Pokemon Japanese XY Super Legend Set",
+    "code": "XY-SUPER-LEGEND-SET-2014",
+    "setId": "jp-XY-SUPER-LEGEND-SET-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "126181",
+    "name": "Pokemon Japanese XY Tidal Storm",
+    "code": "XY-TIDAL-STORM-2014",
+    "setId": "jp-XY-TIDAL-STORM-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "119717",
+    "name": "Pokemon Japanese XY Wild Blaze",
+    "code": "XY-WILD-BLAZE-2014",
+    "setId": "jp-XY-WILD-BLAZE-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2014",
+    "headingId": "233978",
+    "name": "Pokemon Japanese Yveltal Half Deck",
+    "code": "YVELTAL-HALF-DECK-2014",
+    "setId": "jp-YVELTAL-HALF-DECK-2014",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "130839",
+    "name": "Pokemon Japanese Emboar EX VS Togekiss EX Deck Kit",
+    "code": "EMBOAR-EX-VS-TOGEKISS-EX-DECK-KIT-2015",
+    "setId": "jp-EMBOAR-EX-VS-TOGEKISS-EX-DECK-KIT-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "133428",
+    "name": "Pokemon Japanese Golduck Break + Palkia EX Combo Deck",
+    "code": "GOLDUCK-BREAK-PALKIA-EX-COMBO-DECK-2015",
+    "setId": "jp-GOLDUCK-BREAK-PALKIA-EX-COMBO-DECK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "130624",
+    "name": "Pokemon Japanese Legendary Shine Collection",
+    "code": "LEGENDARY-SHINE-COLLECTION-2015",
+    "setId": "jp-LEGENDARY-SHINE-COLLECTION-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "137420",
+    "name": "Pokemon Japanese M Master Deck Build Power Style",
+    "code": "M-MASTER-DECK-BUILD-POWER-STYLE-2015",
+    "setId": "jp-M-MASTER-DECK-BUILD-POWER-STYLE-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "186667",
+    "name": "Pokemon Japanese M Master Deck Build Speed Style",
+    "code": "M-MASTER-DECK-BUILD-SPEED-STYLE-2015",
+    "setId": "jp-M-MASTER-DECK-BUILD-SPEED-STYLE-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "128620",
+    "name": "Pokemon Japanese M Rayquaza EX Battle Deck",
+    "code": "M-RAYQUAZA-EX-BATTLE-DECK-2015",
+    "setId": "jp-M-RAYQUAZA-EX-BATTLE-DECK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "330551",
+    "name": "Pokemon Japanese Mega Mewtwo X & Mega Mewtwo Y Card Box",
+    "code": "MEGA-MEWTWO-X-MEGA-MEWTWO-Y-CARD-BOX-2015",
+    "setId": "jp-MEGA-MEWTWO-X-MEGA-MEWTWO-Y-CARD-BOX-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "132237",
+    "name": "Pokemon Japanese Noivern Break Evolution Pack",
+    "code": "NOIVERN-BREAK-EVOLUTION-PACK-2015",
+    "setId": "jp-NOIVERN-BREAK-EVOLUTION-PACK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "132236",
+    "name": "Pokemon Japanese Raichu Break Evolution Pack",
+    "code": "RAICHU-BREAK-EVOLUTION-PACK-2015",
+    "setId": "jp-RAICHU-BREAK-EVOLUTION-PACK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "129887",
+    "name": "Pokemon Japanese XY Bandit Ring",
+    "code": "XY-BANDIT-RING-2015",
+    "setId": "jp-XY-BANDIT-RING-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "131532",
+    "name": "Pokemon Japanese XY Blue Shock",
+    "code": "XY-BLUE-SHOCK-2015",
+    "setId": "jp-XY-BLUE-SHOCK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "275782",
+    "name": "Pokemon Japanese XY Break Battle Strength Deck",
+    "code": "XY-BREAK-BATTLE-STRENGTH-DECK-2015",
+    "setId": "jp-XY-BREAK-BATTLE-STRENGTH-DECK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "127305",
+    "name": "Pokemon Japanese XY Double Crisis",
+    "code": "XY-DOUBLE-CRISIS-2015",
+    "setId": "jp-XY-DOUBLE-CRISIS-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "127710",
+    "name": "Pokemon Japanese XY Emerald Break",
+    "code": "XY-EMERALD-BREAK-2015",
+    "setId": "jp-XY-EMERALD-BREAK-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "128401",
+    "name": "Pokemon Japanese XY Promo",
+    "code": "XY-PROMO-2015",
+    "setId": "jp-XY-PROMO-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "133427",
+    "name": "Pokemon Japanese XY Rage of the Broken Heavens",
+    "code": "XY-RAGE-OF-THE-BROKEN-HEAVENS-2015",
+    "setId": "jp-XY-RAGE-OF-THE-BROKEN-HEAVENS-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2015",
+    "headingId": "131549",
+    "name": "Pokemon Japanese XY Red Flash",
+    "code": "XY-RED-FLASH-2015",
+    "setId": "jp-XY-RED-FLASH-2015",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "188973",
+    "name": "Pokemon Japanese 20th Anniversary Ginza Tanaka Promo",
+    "code": "20TH-ANNIVERSARY-GINZA-TANAKA-PROMO-2016",
+    "setId": "jp-20TH-ANNIVERSARY-GINZA-TANAKA-PROMO-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "139101",
+    "name": "Pokemon Japanese Expansion 20th Anniversary",
+    "code": "EXPANSION-20TH-ANNIVERSARY-2016",
+    "setId": "jp-EXPANSION-20TH-ANNIVERSARY-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "236176",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-2016",
+    "setId": "jp-INSERT-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "135607",
+    "name": "Pokemon Japanese M Audino-EX Mega Battle Deck",
+    "code": "M-AUDINO-EX-MEGA-BATTLE-DECK-2016",
+    "setId": "jp-M-AUDINO-EX-MEGA-BATTLE-DECK-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "138758",
+    "name": "Pokemon Japanese Mythical & Legendary Dream Shine Collection",
+    "code": "MYTHICAL-LEGENDARY-DREAM-SHINE-COLLECTIO-2016",
+    "setId": "jp-MYTHICAL-LEGENDARY-DREAM-SHINE-COLLECTIO-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "136458",
+    "name": "Pokemon Japanese Premium Champion Pack",
+    "code": "PREMIUM-CHAMPION-PACK-2016",
+    "setId": "jp-PREMIUM-CHAMPION-PACK-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141030",
+    "name": "Pokemon Japanese SM Promo",
+    "code": "SM-PROMO-2016",
+    "setId": "jp-SM-PROMO-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141037",
+    "name": "Pokemon Japanese Sun & Moon Collection Moon",
+    "code": "SUN-MOON-COLLECTION-MOON-2016",
+    "setId": "jp-SUN-MOON-COLLECTION-MOON-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141038",
+    "name": "Pokemon Japanese Sun & Moon Collection Sun",
+    "code": "SUN-MOON-COLLECTION-SUN-2016",
+    "setId": "jp-SUN-MOON-COLLECTION-SUN-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141036",
+    "name": "Pokemon Japanese Sun & Moon Pikachu's New Friends",
+    "code": "SUN-MOON-PIKACHU-S-NEW-FRIENDS-2016",
+    "setId": "jp-SUN-MOON-PIKACHU-S-NEW-FRIENDS-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141876",
+    "name": "Pokemon Japanese Sun & Moon Premium Trainer Box",
+    "code": "SUN-MOON-PREMIUM-TRAINER-BOX-2016",
+    "setId": "jp-SUN-MOON-PREMIUM-TRAINER-BOX-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "141927",
+    "name": "Pokemon Japanese Sun & Moon Rockruff Full Power Deck",
+    "code": "SUN-MOON-ROCKRUFF-FULL-POWER-DECK-2016",
+    "setId": "jp-SUN-MOON-ROCKRUFF-FULL-POWER-DECK-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "142098",
+    "name": "Pokemon Japanese Sun & Moon Starter Set",
+    "code": "SUN-MOON-STARTER-SET-2016",
+    "setId": "jp-SUN-MOON-STARTER-SET-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "134872",
+    "name": "Pokemon Japanese XY Awakening Psychic King",
+    "code": "XY-AWAKENING-PSYCHIC-KING-2016",
+    "setId": "jp-XY-AWAKENING-PSYCHIC-KING-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "137215",
+    "name": "Pokemon Japanese XY Cruel Traitor",
+    "code": "XY-CRUEL-TRAITOR-2016",
+    "setId": "jp-XY-CRUEL-TRAITOR-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "137213",
+    "name": "Pokemon Japanese XY Fever-Burst Fighter",
+    "code": "XY-FEVER-BURST-FIGHTER-2016",
+    "setId": "jp-XY-FEVER-BURST-FIGHTER-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "134288",
+    "name": "Pokemon Japanese XY Pokekyun Collection",
+    "code": "XY-POKEKYUN-COLLECTION-2016",
+    "setId": "jp-XY-POKEKYUN-COLLECTION-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "133615",
+    "name": "Pokemon Japanese XY Promo",
+    "code": "XY-PROMO-2016",
+    "setId": "jp-XY-PROMO-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "134700",
+    "name": "Pokemon Japanese XY Starter Pack",
+    "code": "XY-STARTER-PACK-2016",
+    "setId": "jp-XY-STARTER-PACK-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2016",
+    "headingId": "136221",
+    "name": "Pokemon Japanese Zygarde EX Perfect Battle Deck",
+    "code": "ZYGARDE-EX-PERFECT-BATTLE-DECK-2016",
+    "setId": "jp-ZYGARDE-EX-PERFECT-BATTLE-DECK-2016",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "283091",
+    "name": "Lotte Pokemon Japanese Collector's I Choose You! Wafer Stickers",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2017",
+    "headingId": "165220",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2017",
+    "setId": "jp-COIN-PROMO-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "142008",
+    "name": "Pokemon Japanese SM Promo",
+    "code": "SM-PROMO-2017",
+    "setId": "jp-SM-PROMO-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "143959",
+    "name": "Pokemon Japanese Sun & Moon Alolan Moonlight",
+    "code": "SUN-MOON-ALOLAN-MOONLIGHT-2017",
+    "setId": "jp-SUN-MOON-ALOLAN-MOONLIGHT-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "144317",
+    "name": "Pokemon Japanese Sun & Moon Ash vs. Team Rocket Deck Kit",
+    "code": "SUN-MOON-ASH-VS-TEAM-ROCKET-DECK-KIT-2017",
+    "setId": "jp-SUN-MOON-ASH-VS-TEAM-ROCKET-DECK-KIT-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "152302",
+    "name": "Pokemon Japanese Sun & Moon Awakened Heroes",
+    "code": "SUN-MOON-AWAKENED-HEROES-2017",
+    "setId": "jp-SUN-MOON-AWAKENED-HEROES-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "151001",
+    "name": "Pokemon Japanese Sun & Moon Darkness That Consumes Light",
+    "code": "SUN-MOON-DARKNESS-THAT-CONSUMES-LIGHT-2017",
+    "setId": "jp-SUN-MOON-DARKNESS-THAT-CONSUMES-LIGHT-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "153288",
+    "name": "Pokemon Japanese Sun & Moon GX Battle Boost",
+    "code": "SUN-MOON-GX-BATTLE-BOOST-2017",
+    "setId": "jp-SUN-MOON-GX-BATTLE-BOOST-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "143012",
+    "name": "Pokemon Japanese Sun & Moon Islands Await You",
+    "code": "SUN-MOON-ISLANDS-AWAIT-YOU-2017",
+    "setId": "jp-SUN-MOON-ISLANDS-AWAIT-YOU-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "155429",
+    "name": "Pokemon Japanese Sun & Moon Solgaleo GX & Lunala GX Legendary Starter Set",
+    "code": "SUN-MOON-SOLGALEO-GX-LUNALA-GX-LEGENDARY-2017",
+    "setId": "jp-SUN-MOON-SOLGALEO-GX-LUNALA-GX-LEGENDARY-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "142286",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-2017",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "144544",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Facing A New Trial",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-FACING--2017",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-FACING--2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "151058",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Shining Legends",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-SHINING-2017",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-SHINING-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "150956",
+    "name": "Pokemon Japanese Sun & Moon Tapu Bulu GX Enhanced Starter Set",
+    "code": "SUN-MOON-TAPU-BULU-GX-ENHANCED-STARTER-S-2017",
+    "setId": "jp-SUN-MOON-TAPU-BULU-GX-ENHANCED-STARTER-S-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "150446",
+    "name": "Pokemon Japanese Sun & Moon to Have Seen the Battle Rainbow",
+    "code": "SUN-MOON-TO-HAVE-SEEN-THE-BATTLE-RAINBOW-2017",
+    "setId": "jp-SUN-MOON-TO-HAVE-SEEN-THE-BATTLE-RAINBOW-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "155511",
+    "name": "Pokemon Japanese Sun & Moon Ultra Moon",
+    "code": "SUN-MOON-ULTRA-MOON-2017",
+    "setId": "jp-SUN-MOON-ULTRA-MOON-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "155466",
+    "name": "Pokemon Japanese Sun & Moon Ultra Sun",
+    "code": "SUN-MOON-ULTRA-SUN-2017",
+    "setId": "jp-SUN-MOON-ULTRA-SUN-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "152303",
+    "name": "Pokemon Japanese Sun & Moon Ultradimensional Beasts",
+    "code": "SUN-MOON-ULTRADIMENSIONAL-BEASTS-2017",
+    "setId": "jp-SUN-MOON-ULTRADIMENSIONAL-BEASTS-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "143894",
+    "name": "Pokemon Japanese the Best of XY",
+    "code": "THE-BEST-OF-XY-2017",
+    "setId": "jp-THE-BEST-OF-XY-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "258702",
+    "name": "Pokemon Japanese Turtonator Half Deck",
+    "code": "TURTONATOR-HALF-DECK-2017",
+    "setId": "jp-TURTONATOR-HALF-DECK-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "192856",
+    "name": "Pokemon Japanese Ultra Sun & Ultra Moon Premium Trainer Box",
+    "code": "ULTRA-SUN-ULTRA-MOON-PREMIUM-TRAINER-BOX-2017",
+    "setId": "jp-ULTRA-SUN-ULTRA-MOON-PREMIUM-TRAINER-BOX-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2017",
+    "headingId": "142307",
+    "name": "Pokemon Japanese XY Promo",
+    "code": "XY-PROMO-2017",
+    "setId": "jp-XY-PROMO-2017",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "287999",
+    "name": "Lotte Pokemon Japanese the Power of US Coco Wafer Stickers",
+    "code": null,
+    "setId": null,
+    "inDb": false
+  },
+  {
+    "year": "2018",
+    "headingId": "171110",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2018",
+    "setId": "jp-COIN-PROMO-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "168221",
+    "name": "Pokemon Japanese Corocoro Aniki Promo",
+    "code": "COROCORO-ANIKI-PROMO-2018",
+    "setId": "jp-COROCORO-ANIKI-PROMO-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "164999",
+    "name": "Pokemon Japanese GX Starter Decks",
+    "code": "GX-STARTER-DECKS-2018",
+    "setId": "jp-GX-STARTER-DECKS-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "155528",
+    "name": "Pokemon Japanese SM Promo",
+    "code": "SM-PROMO-2018",
+    "setId": "jp-SM-PROMO-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "157805",
+    "name": "Pokemon Japanese Sun & Moon Dragon Storm",
+    "code": "SUN-MOON-DRAGON-STORM-2018",
+    "setId": "jp-SUN-MOON-DRAGON-STORM-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "163198",
+    "name": "Pokemon Japanese Sun & Moon Eevee GX Starter Set",
+    "code": "SUN-MOON-EEVEE-GX-STARTER-SET-2018",
+    "setId": "jp-SUN-MOON-EEVEE-GX-STARTER-SET-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "156380",
+    "name": "Pokemon Japanese Sun & Moon Forbidden Light",
+    "code": "SUN-MOON-FORBIDDEN-LIGHT-2018",
+    "setId": "jp-SUN-MOON-FORBIDDEN-LIGHT-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "158861",
+    "name": "Pokemon Japanese Sun & Moon Sky-Splitting Charisma",
+    "code": "SUN-MOON-SKY-SPLITTING-CHARISMA-2018",
+    "setId": "jp-SUN-MOON-SKY-SPLITTING-CHARISMA-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "162282",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Champion Road",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-CHAMPIO-2018",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-CHAMPIO-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "158860",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Dark Order",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-DARK-OR-2018",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-DARK-OR-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "160772",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Fairy Rise",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-FAIRY-R-2018",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-FAIRY-R-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "159218",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Thunderclap Spark",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-THUNDER-2018",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-THUNDER-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "156027",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Ultra Force",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-ULTRA-F-2018",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-ULTRA-F-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "161061",
+    "name": "Pokemon Japanese Sun & Moon Super-Burst Impact",
+    "code": "SUN-MOON-SUPER-BURST-IMPACT-2018",
+    "setId": "jp-SUN-MOON-SUPER-BURST-IMPACT-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "163092",
+    "name": "Pokemon Japanese Sun & Moon Tag Bolt",
+    "code": "SUN-MOON-TAG-BOLT-2018",
+    "setId": "jp-SUN-MOON-TAG-BOLT-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "162323",
+    "name": "Pokemon Japanese Sun & Moon Ultra Shiny GX",
+    "code": "SUN-MOON-ULTRA-SHINY-GX-2018",
+    "setId": "jp-SUN-MOON-ULTRA-SHINY-GX-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "165748",
+    "name": "Pokemon Japanese Tag Team GX Premium Trainer Box",
+    "code": "TAG-TEAM-GX-PREMIUM-TRAINER-BOX-2018",
+    "setId": "jp-TAG-TEAM-GX-PREMIUM-TRAINER-BOX-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2018",
+    "headingId": "201775",
+    "name": "Pokemon Japanese Ultra Sun & Ultra Moon Deck Build Boxes",
+    "code": "ULTRA-SUN-ULTRA-MOON-DECK-BUILD-BOXES-2018",
+    "setId": "jp-ULTRA-SUN-ULTRA-MOON-DECK-BUILD-BOXES-2018",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "177469",
+    "name": "Pokemon Japanese Extra Regulation Box",
+    "code": "EXTRA-REGULATION-BOX-2019",
+    "setId": "jp-EXTRA-REGULATION-BOX-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "165682",
+    "name": "Pokemon Japanese Family Pokemon Card Game",
+    "code": "FAMILY-POKEMON-CARD-GAME-2019",
+    "setId": "jp-FAMILY-POKEMON-CARD-GAME-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "168677",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-2019",
+    "setId": "jp-PROMO-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "172661",
+    "name": "Pokemon Japanese S Promo",
+    "code": "S-PROMO-2019",
+    "setId": "jp-S-PROMO-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "163897",
+    "name": "Pokemon Japanese SM Promo",
+    "code": "SM-PROMO-2019",
+    "setId": "jp-SM-PROMO-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "170665",
+    "name": "Pokemon Japanese Sun & Moon Alter Genesis",
+    "code": "SUN-MOON-ALTER-GENESIS-2019",
+    "setId": "jp-SUN-MOON-ALTER-GENESIS-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "166643",
+    "name": "Pokemon Japanese Sun & Moon Detective Pikachu",
+    "code": "SUN-MOON-DETECTIVE-PIKACHU-2019",
+    "setId": "jp-SUN-MOON-DETECTIVE-PIKACHU-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "165073",
+    "name": "Pokemon Japanese Sun & Moon Double Blaze",
+    "code": "SUN-MOON-DOUBLE-BLAZE-2019",
+    "setId": "jp-SUN-MOON-DOUBLE-BLAZE-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "169301",
+    "name": "Pokemon Japanese Sun & Moon Dream League",
+    "code": "SUN-MOON-DREAM-LEAGUE-2019",
+    "setId": "jp-SUN-MOON-DREAM-LEAGUE-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "164526",
+    "name": "Pokemon Japanese Sun & Moon Full Metal Wall",
+    "code": "SUN-MOON-FULL-METAL-WALL-2019",
+    "setId": "jp-SUN-MOON-FULL-METAL-WALL-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "165966",
+    "name": "Pokemon Japanese Sun & Moon GG End",
+    "code": "SUN-MOON-GG-END-2019",
+    "setId": "jp-SUN-MOON-GG-END-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "167601",
+    "name": "Pokemon Japanese Sun & Moon Miracle Twins",
+    "code": "SUN-MOON-MIRACLE-TWINS-2019",
+    "setId": "jp-SUN-MOON-MIRACLE-TWINS-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "168309",
+    "name": "Pokemon Japanese Sun & Moon Remix Bout",
+    "code": "SUN-MOON-REMIX-BOUT-2019",
+    "setId": "jp-SUN-MOON-REMIX-BOUT-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "166859",
+    "name": "Pokemon Japanese Sun & Moon Sky Legend",
+    "code": "SUN-MOON-SKY-LEGEND-2019",
+    "setId": "jp-SUN-MOON-SKY-LEGEND-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "163663",
+    "name": "Pokemon Japanese Sun & Moon Strength Expansion Pack Night Unison",
+    "code": "SUN-MOON-STRENGTH-EXPANSION-PACK-NIGHT-U-2019",
+    "setId": "jp-SUN-MOON-STRENGTH-EXPANSION-PACK-NIGHT-U-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "171183",
+    "name": "Pokemon Japanese Sun & Moon Tag Team GX All Stars",
+    "code": "SUN-MOON-TAG-TEAM-GX-ALL-STARS-2019",
+    "setId": "jp-SUN-MOON-TAG-TEAM-GX-ALL-STARS-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "250845",
+    "name": "Pokemon Japanese Sword & Shield Premium Trainer Box",
+    "code": "SWORD-SHIELD-PREMIUM-TRAINER-BOX-2019",
+    "setId": "jp-SWORD-SHIELD-PREMIUM-TRAINER-BOX-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "172685",
+    "name": "Pokemon Japanese Sword & Shield Shield",
+    "code": "SWORD-SHIELD-SHIELD-2019",
+    "setId": "jp-SWORD-SHIELD-SHIELD-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "172684",
+    "name": "Pokemon Japanese Sword & Shield Sword",
+    "code": "SWORD-SHIELD-SWORD-2019",
+    "setId": "jp-SWORD-SHIELD-SWORD-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "174000",
+    "name": "Pokemon Japanese Sword & Shield V Starter Set Fighting",
+    "code": "SWORD-SHIELD-V-STARTER-SET-FIGHTING-2019",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-SET-FIGHTING-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "173995",
+    "name": "Pokemon Japanese Sword & Shield V Starter Set Fire",
+    "code": "SWORD-SHIELD-V-STARTER-SET-FIRE-2019",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-SET-FIRE-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "173990",
+    "name": "Pokemon Japanese Sword & Shield V Starter Set Grass",
+    "code": "SWORD-SHIELD-V-STARTER-SET-GRASS-2019",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-SET-GRASS-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "173526",
+    "name": "Pokemon Japanese Sword & Shield V Starter Set Lightning",
+    "code": "SWORD-SHIELD-V-STARTER-SET-LIGHTNING-2019",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-SET-LIGHTNING-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "173999",
+    "name": "Pokemon Japanese Sword & Shield V Starter Set Water",
+    "code": "SWORD-SHIELD-V-STARTER-SET-WATER-2019",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-SET-WATER-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "174001",
+    "name": "Pokemon Japanese Sword & Shield Zacian + Zamazenta Box",
+    "code": "SWORD-SHIELD-ZACIAN-ZAMAZENTA-BOX-2019",
+    "setId": "jp-SWORD-SHIELD-ZACIAN-ZAMAZENTA-BOX-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "237409",
+    "name": "Pokemon Japanese Tag Team GX Deck Build Box",
+    "code": "TAG-TEAM-GX-DECK-BUILD-BOX-2019",
+    "setId": "jp-TAG-TEAM-GX-DECK-BUILD-BOX-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "167715",
+    "name": "Pokemon Japanese Tag Team Starter Set",
+    "code": "TAG-TEAM-STARTER-SET-2019",
+    "setId": "jp-TAG-TEAM-STARTER-SET-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2019",
+    "headingId": "164802",
+    "name": "Pokemon Japanese Trainer Battle Decks",
+    "code": "TRAINER-BATTLE-DECKS-2019",
+    "setId": "jp-TRAINER-BATTLE-DECKS-2019",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "179026",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2020",
+    "setId": "jp-COIN-PROMO-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "189689",
+    "name": "Pokemon Japanese Kanazawa Champion Curry Promo",
+    "code": "KANAZAWA-CHAMPION-CURRY-PROMO-2020",
+    "setId": "jp-KANAZAWA-CHAMPION-CURRY-PROMO-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "175853",
+    "name": "Pokemon Japanese S Promo",
+    "code": "S-PROMO-2020",
+    "setId": "jp-S-PROMO-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "244156",
+    "name": "Pokemon Japanese SM Promo",
+    "code": "SM-PROMO-2020",
+    "setId": "jp-SM-PROMO-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "182057",
+    "name": "Pokemon Japanese Sword & Shield Amazing Volt Tackle",
+    "code": "SWORD-SHIELD-AMAZING-VOLT-TACKLE-2020",
+    "setId": "jp-SWORD-SHIELD-AMAZING-VOLT-TACKLE-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "187043",
+    "name": "Pokemon Japanese Sword & Shield Blastoise Vmax Starter Set",
+    "code": "SWORD-SHIELD-BLASTOISE-VMAX-STARTER-SET-2020",
+    "setId": "jp-SWORD-SHIELD-BLASTOISE-VMAX-STARTER-SET-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "175882",
+    "name": "Pokemon Japanese Sword & Shield Charizard Vmax Starter Set",
+    "code": "SWORD-SHIELD-CHARIZARD-VMAX-STARTER-SET-2020",
+    "setId": "jp-SWORD-SHIELD-CHARIZARD-VMAX-STARTER-SET-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "188212",
+    "name": "Pokemon Japanese Sword & Shield Charizard Vmax Starter Set 2",
+    "code": "SWORD-SHIELD-CHARIZARD-VMAX-STARTER-SET--2020",
+    "setId": "jp-SWORD-SHIELD-CHARIZARD-VMAX-STARTER-SET--2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "175756",
+    "name": "Pokemon Japanese Sword & Shield Explosive Walker",
+    "code": "SWORD-SHIELD-EXPLOSIVE-WALKER-2020",
+    "setId": "jp-SWORD-SHIELD-EXPLOSIVE-WALKER-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "181122",
+    "name": "Pokemon Japanese Sword & Shield Grimmsnarl Vmax Starter Set",
+    "code": "SWORD-SHIELD-GRIMMSNARL-VMAX-STARTER-SET-2020",
+    "setId": "jp-SWORD-SHIELD-GRIMMSNARL-VMAX-STARTER-SET-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "179099",
+    "name": "Pokemon Japanese Sword & Shield Infinity Zone",
+    "code": "SWORD-SHIELD-INFINITY-ZONE-2020",
+    "setId": "jp-SWORD-SHIELD-INFINITY-ZONE-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "178313",
+    "name": "Pokemon Japanese Sword & Shield Legendary Heartbeat",
+    "code": "SWORD-SHIELD-LEGENDARY-HEARTBEAT-2020",
+    "setId": "jp-SWORD-SHIELD-LEGENDARY-HEARTBEAT-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "175661",
+    "name": "Pokemon Japanese Sword & Shield Rebellion Crash",
+    "code": "SWORD-SHIELD-REBELLION-CRASH-2020",
+    "setId": "jp-SWORD-SHIELD-REBELLION-CRASH-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "186040",
+    "name": "Pokemon Japanese Sword & Shield Shiny Star V",
+    "code": "SWORD-SHIELD-SHINY-STAR-V-2020",
+    "setId": "jp-SWORD-SHIELD-SHINY-STAR-V-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "188191",
+    "name": "Pokemon Japanese Sword & Shield V Starter Decks",
+    "code": "SWORD-SHIELD-V-STARTER-DECKS-2020",
+    "setId": "jp-SWORD-SHIELD-V-STARTER-DECKS-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "187044",
+    "name": "Pokemon Japanese Sword & Shield Venusaur Vmax Starter Set",
+    "code": "SWORD-SHIELD-VENUSAUR-VMAX-STARTER-SET-2020",
+    "setId": "jp-SWORD-SHIELD-VENUSAUR-VMAX-STARTER-SET-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "175376",
+    "name": "Pokemon Japanese Sword & Shield Vmax Rising",
+    "code": "SWORD-SHIELD-VMAX-RISING-2020",
+    "setId": "jp-SWORD-SHIELD-VMAX-RISING-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2020",
+    "headingId": "187538",
+    "name": "Pokemon Japanese Sword & Shield Vmax Special Set",
+    "code": "SWORD-SHIELD-VMAX-SPECIAL-SET-2020",
+    "setId": "jp-SWORD-SHIELD-VMAX-SPECIAL-SET-2020",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "199357",
+    "name": "Pokemon Japanese 25th Anniversary Collection",
+    "code": "25TH-ANNIVERSARY-COLLECTION-2021",
+    "setId": "jp-25TH-ANNIVERSARY-COLLECTION-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "236785",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-2021",
+    "setId": "jp-INSERT-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "201768",
+    "name": "Pokemon Japanese Promo Card Pack 25th Anniversary Edition",
+    "code": "PROMO-CARD-PACK-25TH-ANNIVERSARY-EDITION-2021",
+    "setId": "jp-PROMO-CARD-PACK-25TH-ANNIVERSARY-EDITION-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "189313",
+    "name": "Pokemon Japanese S Promo",
+    "code": "S-PROMO-2021",
+    "setId": "jp-S-PROMO-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "196709",
+    "name": "Pokemon Japanese Sword & Shield Blue Sky Stream",
+    "code": "SWORD-SHIELD-BLUE-SKY-STREAM-2021",
+    "setId": "jp-SWORD-SHIELD-BLUE-SKY-STREAM-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "193866",
+    "name": "Pokemon Japanese Sword & Shield Eevee Heroes",
+    "code": "SWORD-SHIELD-EEVEE-HEROES-2021",
+    "setId": "jp-SWORD-SHIELD-EEVEE-HEROES-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "193868",
+    "name": "Pokemon Japanese Sword & Shield Eevee Heroes Vmax Special Set",
+    "code": "SWORD-SHIELD-EEVEE-HEROES-VMAX-SPECIAL-S-2021",
+    "setId": "jp-SWORD-SHIELD-EEVEE-HEROES-VMAX-SPECIAL-S-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "193596",
+    "name": "Pokemon Japanese Sword & Shield Family Pokemon Card Game",
+    "code": "SWORD-SHIELD-FAMILY-POKEMON-CARD-GAME-2021",
+    "setId": "jp-SWORD-SHIELD-FAMILY-POKEMON-CARD-GAME-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "200269",
+    "name": "Pokemon Japanese Sword & Shield Fusion Arts",
+    "code": "SWORD-SHIELD-FUSION-ARTS-2021",
+    "setId": "jp-SWORD-SHIELD-FUSION-ARTS-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "193597",
+    "name": "Pokemon Japanese Sword & Shield Gengar Vmax High-Class Deck",
+    "code": "SWORD-SHIELD-GENGAR-VMAX-HIGH-CLASS-DECK-2021",
+    "setId": "jp-SWORD-SHIELD-GENGAR-VMAX-HIGH-CLASS-DECK-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "193598",
+    "name": "Pokemon Japanese Sword & Shield Inteleon Vmax High-Class Deck",
+    "code": "SWORD-SHIELD-INTELEON-VMAX-HIGH-CLASS-DE-2021",
+    "setId": "jp-SWORD-SHIELD-INTELEON-VMAX-HIGH-CLASS-DE-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "191964",
+    "name": "Pokemon Japanese Sword & Shield Jet-Black Spirit",
+    "code": "SWORD-SHIELD-JET-BLACK-SPIRIT-2021",
+    "setId": "jp-SWORD-SHIELD-JET-BLACK-SPIRIT-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "190716",
+    "name": "Pokemon Japanese Sword & Shield Peerless Fighters",
+    "code": "SWORD-SHIELD-PEERLESS-FIGHTERS-2021",
+    "setId": "jp-SWORD-SHIELD-PEERLESS-FIGHTERS-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "188406",
+    "name": "Pokemon Japanese Sword & Shield Rapid Strike Master",
+    "code": "SWORD-SHIELD-RAPID-STRIKE-MASTER-2021",
+    "setId": "jp-SWORD-SHIELD-RAPID-STRIKE-MASTER-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "191959",
+    "name": "Pokemon Japanese Sword & Shield Silver Lance",
+    "code": "SWORD-SHIELD-SILVER-LANCE-2021",
+    "setId": "jp-SWORD-SHIELD-SILVER-LANCE-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "191967",
+    "name": "Pokemon Japanese Sword & Shield Silver Lance & Jet-Black Spirit Jumbo Pack",
+    "code": "SWORD-SHIELD-SILVER-LANCE-JET-BLACK-SPIR-2021",
+    "setId": "jp-SWORD-SHIELD-SILVER-LANCE-JET-BLACK-SPIR-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "191940",
+    "name": "Pokemon Japanese Sword & Shield Single Strike & Rapid Strike Premium Trainer Boxes",
+    "code": "SWORD-SHIELD-SINGLE-STRIKE-RAPID-STRIKE--2021",
+    "setId": "jp-SWORD-SHIELD-SINGLE-STRIKE-RAPID-STRIKE--2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "188404",
+    "name": "Pokemon Japanese Sword & Shield Single Strike Master",
+    "code": "SWORD-SHIELD-SINGLE-STRIKE-MASTER-2021",
+    "setId": "jp-SWORD-SHIELD-SINGLE-STRIKE-MASTER-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "196861",
+    "name": "Pokemon Japanese Sword & Shield Skyscraping Perfection",
+    "code": "SWORD-SHIELD-SKYSCRAPING-PERFECTION-2021",
+    "setId": "jp-SWORD-SHIELD-SKYSCRAPING-PERFECTION-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "204941",
+    "name": "Pokemon Japanese Sword & Shield Start Deck 100",
+    "code": "SWORD-SHIELD-START-DECK-100-2021",
+    "setId": "jp-SWORD-SHIELD-START-DECK-100-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "204428",
+    "name": "Pokemon Japanese Sword & Shield Vmax Climax",
+    "code": "SWORD-SHIELD-VMAX-CLIMAX-2021",
+    "setId": "jp-SWORD-SHIELD-VMAX-CLIMAX-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2021",
+    "headingId": "206124",
+    "name": "Pokemon Japanese V-Union Special Card Set",
+    "code": "V",
+    "setId": "jp-V",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2021",
+    "headingId": "206371",
+    "name": "Pokemon Japanese Zacian & Zamazenta VS Eternatus Special Deck Set",
+    "code": "ZACIAN-ZAMAZENTA-VS-ETERNATUS-SPECIAL-DE-2021",
+    "setId": "jp-ZACIAN-ZAMAZENTA-VS-ETERNATUS-SPECIAL-DE-2021",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "225593",
+    "name": "Pokemon Japanese Charizard Vstar VS Rayquaza Vmax Special Deck Set",
+    "code": "CHARIZARD-VSTAR-VS-RAYQUAZA-VMAX-SPECIAL-2022",
+    "setId": "jp-CHARIZARD-VSTAR-VS-RAYQUAZA-VMAX-SPECIAL-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "213124",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2022",
+    "setId": "jp-COIN-PROMO-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "231968",
+    "name": "Pokemon Japanese Pin Promo",
+    "code": "PIN-PROMO-2022",
+    "setId": "jp-PIN-PROMO-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "206522",
+    "name": "Pokemon Japanese S Promo",
+    "code": "S-PROMO-2022",
+    "setId": "jp-S-PROMO-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "225438",
+    "name": "Pokemon Japanese SV Promo",
+    "code": "SV-PROMO-2022",
+    "setId": "jp-SV-PROMO-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "208916",
+    "name": "Pokemon Japanese Sword & Shield Battle Region",
+    "code": "SWORD-SHIELD-BATTLE-REGION-2022",
+    "setId": "jp-SWORD-SHIELD-BATTLE-REGION-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "213459",
+    "name": "Pokemon Japanese Sword & Shield Dark Phantasma",
+    "code": "SWORD-SHIELD-DARK-PHANTASMA-2022",
+    "setId": "jp-SWORD-SHIELD-DARK-PHANTASMA-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "210150",
+    "name": "Pokemon Japanese Sword & Shield Darkrai Vstar Starter Set",
+    "code": "SWORD-SHIELD-DARKRAI-VSTAR-STARTER-SET-2022",
+    "setId": "jp-SWORD-SHIELD-DARKRAI-VSTAR-STARTER-SET-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "218470",
+    "name": "Pokemon Japanese Sword & Shield Deoxys Vstar & Vmax High-Class Deck",
+    "code": "SWORD-SHIELD-DEOXYS-VSTAR-VMAX-HIGH-CLAS-2022",
+    "setId": "jp-SWORD-SHIELD-DEOXYS-VSTAR-VMAX-HIGH-CLAS-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "220055",
+    "name": "Pokemon Japanese Sword & Shield Incandescent Arcana",
+    "code": "SWORD-SHIELD-INCANDESCENT-ARCANA-2022",
+    "setId": "jp-SWORD-SHIELD-INCANDESCENT-ARCANA-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "217500",
+    "name": "Pokemon Japanese Sword & Shield Lost Abyss",
+    "code": "SWORD-SHIELD-LOST-ABYSS-2022",
+    "setId": "jp-SWORD-SHIELD-LOST-ABYSS-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "210107",
+    "name": "Pokemon Japanese Sword & Shield Lucario Vstar Starter Set",
+    "code": "SWORD-SHIELD-LUCARIO-VSTAR-STARTER-SET-2022",
+    "setId": "jp-SWORD-SHIELD-LUCARIO-VSTAR-STARTER-SET-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "222657",
+    "name": "Pokemon Japanese Sword & Shield Paradigm Trigger",
+    "code": "SWORD-SHIELD-PARADIGM-TRIGGER-2022",
+    "setId": "jp-SWORD-SHIELD-PARADIGM-TRIGGER-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "210750",
+    "name": "Pokemon Japanese Sword & Shield Space Juggler",
+    "code": "SWORD-SHIELD-SPACE-JUGGLER-2022",
+    "setId": "jp-SWORD-SHIELD-SPACE-JUGGLER-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "205870",
+    "name": "Pokemon Japanese Sword & Shield Star Birth",
+    "code": "SWORD-SHIELD-STAR-BIRTH-2022",
+    "setId": "jp-SWORD-SHIELD-STAR-BIRTH-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "210945",
+    "name": "Pokemon Japanese Sword & Shield Start Deck 100 Corocoro Comic Version",
+    "code": "SWORD-SHIELD-START-DECK-100-COROCORO-COM-2022",
+    "setId": "jp-SWORD-SHIELD-START-DECK-100-COROCORO-COM-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "210751",
+    "name": "Pokemon Japanese Sword & Shield Time Gazer",
+    "code": "SWORD-SHIELD-TIME-GAZER-2022",
+    "setId": "jp-SWORD-SHIELD-TIME-GAZER-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "224111",
+    "name": "Pokemon Japanese Sword & Shield Vstar Premium Trainer Box",
+    "code": "SWORD-SHIELD-VSTAR-PREMIUM-TRAINER-BOX-2022",
+    "setId": "jp-SWORD-SHIELD-VSTAR-PREMIUM-TRAINER-BOX-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "221263",
+    "name": "Pokemon Japanese Sword & Shield Vstar Special Set",
+    "code": "SWORD-SHIELD-VSTAR-SPECIAL-SET-2022",
+    "setId": "jp-SWORD-SHIELD-VSTAR-SPECIAL-SET-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "225772",
+    "name": "Pokemon Japanese Sword & Shield Vstar Universe",
+    "code": "SWORD-SHIELD-VSTAR-UNIVERSE-2022",
+    "setId": "jp-SWORD-SHIELD-VSTAR-UNIVERSE-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2022",
+    "headingId": "221393",
+    "name": "Pokemon Japanese Sword & Shield Zeraora Vstar & Vmax High-Class Deck",
+    "code": "SWORD-SHIELD-ZERAORA-VSTAR-VMAX-HIGH-CLA-2022",
+    "setId": "jp-SWORD-SHIELD-ZERAORA-VSTAR-VMAX-HIGH-CLA-2022",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2023",
+    "headingId": "252123",
+    "name": "Pokemon Japanese Clf-Trading Card Game Classic Venusaur & Lugia EX Deck",
+    "code": "CLF",
+    "setId": "jp-CLF",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "252127",
+    "name": "Pokemon Japanese Clk-Trading Card Game Classic Blastoise & Suicune EX Deck",
+    "code": "CLK",
+    "setId": "jp-CLK",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "252126",
+    "name": "Pokemon Japanese Cll-Trading Card Game Classic Charizard & HO-Oh EX Deck",
+    "code": "CLL",
+    "setId": "jp-CLL",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "237261",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2023",
+    "setId": "jp-COIN-PROMO-2023",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2023",
+    "headingId": "246157",
+    "name": "Pokemon Japanese Insert Cards",
+    "code": "INSERT-2023",
+    "setId": "jp-INSERT-2023",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2023",
+    "headingId": "233886",
+    "name": "Pokemon Japanese Sv1a-Triplet Beat",
+    "code": "SV1A",
+    "setId": "jp-SV1A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230290",
+    "name": "Pokemon Japanese Sv1s-Scarlet EX",
+    "code": "SV1S",
+    "setId": "jp-SV1S",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230288",
+    "name": "Pokemon Japanese Sv1v-Violet EX",
+    "code": "SV1V",
+    "setId": "jp-SV1V",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "241480",
+    "name": "Pokemon Japanese Sv2a-Pokemon 151",
+    "code": "SV2A",
+    "setId": "jp-SV2A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "236817",
+    "name": "Pokemon Japanese Sv2d-Clay Burst",
+    "code": "SV2D",
+    "setId": "jp-SV2D",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "236821",
+    "name": "Pokemon Japanese Sv2p-Snow Hazard",
+    "code": "SV2P",
+    "setId": "jp-SV2P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "249029",
+    "name": "Pokemon Japanese Sv3a-Raging Surf",
+    "code": "SV3A",
+    "setId": "jp-SV3A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "244384",
+    "name": "Pokemon Japanese SV3-Ruler of the Black Flame",
+    "code": "SV3",
+    "setId": "jp-SV3",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "255404",
+    "name": "Pokemon Japanese Sv4a-Shiny Treasure EX",
+    "code": "SV4A",
+    "setId": "jp-SV4A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "252104",
+    "name": "Pokemon Japanese Sv4k-Ancient Roar",
+    "code": "SV4K",
+    "setId": "jp-SV4K",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "252105",
+    "name": "Pokemon Japanese Sv4m-Future Flash",
+    "code": "SV4M",
+    "setId": "jp-SV4M",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230526",
+    "name": "Pokemon Japanese Sval-EX Starter Set: Fuecoco & Ampharos EX",
+    "code": "SVAL",
+    "setId": "jp-SVAL",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230351",
+    "name": "Pokemon Japanese Svam-EX Starter Set: Sprigatito & Lucario EX",
+    "code": "SVAM",
+    "setId": "jp-SVAM",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "231161",
+    "name": "Pokemon Japanese Svaw-EX Starter Set: Quaxly & Mimikyu EX",
+    "code": "SVAW",
+    "setId": "jp-SVAW",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230355",
+    "name": "Pokemon Japanese Svb-Premium Trainer Box EX",
+    "code": "SVB",
+    "setId": "jp-SVB",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "235890",
+    "name": "Pokemon Japanese Svc-EX Starter Set: Pikachu & Pawmot",
+    "code": "SVC",
+    "setId": "jp-SVC",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "245165",
+    "name": "Pokemon Japanese Svd-EX Start Deck",
+    "code": "SVD",
+    "setId": "jp-SVD",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "250167",
+    "name": "Pokemon Japanese Svel-Terastal Starter Set Skeledirge EX",
+    "code": "SVEL",
+    "setId": "jp-SVEL",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "250165",
+    "name": "Pokemon Japanese Svem-Terastal Starter Set Mewtwo EX",
+    "code": "SVEM",
+    "setId": "jp-SVEM",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "248643",
+    "name": "Pokemon Japanese Svf-Ruler of the Black Flame Deck Build Box",
+    "code": "SVF",
+    "setId": "jp-SVF",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "253653",
+    "name": "Pokemon Japanese Svg-Venusaur & Charizard & Blastoise Special Deck Set EX",
+    "code": "SVG",
+    "setId": "jp-SVG",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "230302",
+    "name": "Pokemon Japanese SV-P Promo",
+    "code": "SV-P",
+    "setId": "jp-SV-P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "242131",
+    "name": "Pokemon Japanese SVP1-EX Starter Set",
+    "code": "SVP1",
+    "setId": "jp-SVP1",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2023",
+    "headingId": "244835",
+    "name": "Pokemon Japanese WCS23-World Championships Yokohama Deck: Pikachu",
+    "code": "WCS23",
+    "setId": "jp-WCS23",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "273254",
+    "name": "Pokemon Japanese Coin Promo",
+    "code": "COIN-PROMO-2024",
+    "setId": "jp-COIN-PROMO-2024",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "2024",
+    "headingId": "264649",
+    "name": "Pokemon Japanese Sv5a-Crimson Haze",
+    "code": "SV5A",
+    "setId": "jp-SV5A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "260324",
+    "name": "Pokemon Japanese Sv5k-Wild Force",
+    "code": "SV5K",
+    "setId": "jp-SV5K",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "260322",
+    "name": "Pokemon Japanese Sv5m-Cyber Judge",
+    "code": "SV5M",
+    "setId": "jp-SV5M",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "272603",
+    "name": "Pokemon Japanese Sv6a-Night Wanderer",
+    "code": "SV6A",
+    "setId": "jp-SV6A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "268491",
+    "name": "Pokemon Japanese SV6-Transformation Mask",
+    "code": "SV6",
+    "setId": "jp-SV6",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "281224",
+    "name": "Pokemon Japanese Sv7a-Paradise Dragona",
+    "code": "SV7A",
+    "setId": "jp-SV7A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "275669",
+    "name": "Pokemon Japanese SV7-Stellar Miracle",
+    "code": "SV7",
+    "setId": "jp-SV7",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "288603",
+    "name": "Pokemon Japanese Sv8a-Terastal Fest EX",
+    "code": "SV8A",
+    "setId": "jp-SV8A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "284389",
+    "name": "Pokemon Japanese SV8-Super Electric Breaker",
+    "code": "SV8",
+    "setId": "jp-SV8",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "262397",
+    "name": "Pokemon Japanese Svhk-Ancient Koraidon Starter Deck",
+    "code": "SVHK",
+    "setId": "jp-SVHK",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "262862",
+    "name": "Pokemon Japanese Svhm-Future Miraidon Starter Deck",
+    "code": "SVHM",
+    "setId": "jp-SVHM",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "267292",
+    "name": "Pokemon Japanese Svi-Battle Academy",
+    "code": "SVI",
+    "setId": "jp-SVI",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "270833",
+    "name": "Pokemon Japanese Svjl-Battle Master Deck Terastal Charizard EX",
+    "code": "SVJL",
+    "setId": "jp-SVJL",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "270836",
+    "name": "Pokemon Japanese Svjp-Battle Master Deck Terastal Chien-Pao EX",
+    "code": "SVJP",
+    "setId": "jp-SVJP",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "278738",
+    "name": "Pokemon Japanese Svk-Stellar Miracle Deck Build Box",
+    "code": "SVK",
+    "setId": "jp-SVK",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "279693",
+    "name": "Pokemon Japanese Svln-Starter Deck Terastal Type: Stellar Sylveon EX",
+    "code": "SVLN",
+    "setId": "jp-SVLN",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "282800",
+    "name": "Pokemon Japanese Svls-Starter Deck Terastal Type: Stellar Ceruledge EX",
+    "code": "SVLS",
+    "setId": "jp-SVLS",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "288134",
+    "name": "Pokemon Japanese Svm-Start Deck Generations",
+    "code": "SVM",
+    "setId": "jp-SVM",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "261413",
+    "name": "Pokemon Japanese SV-P Promo",
+    "code": "SV-P",
+    "setId": "jp-SV-P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2024",
+    "headingId": "298346",
+    "name": "Pokemon Japanese-Basic Energies",
+    "code": "BASIC-ENERGIES",
+    "setId": "jp-BASIC-ENERGIES",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "312124",
+    "name": "Pokemon Japanese M1l-Mega Brave",
+    "code": "M1L",
+    "setId": "jp-M1L",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "312125",
+    "name": "Pokemon Japanese M1s-Mega Symphonia",
+    "code": "M1S",
+    "setId": "jp-M1S",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "323965",
+    "name": "Pokemon Japanese M2a-Mega Dream EX",
+    "code": "M2A",
+    "setId": "jp-M2A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "318095",
+    "name": "Pokemon Japanese M2-Inferno X",
+    "code": "M2",
+    "setId": "jp-M2",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "314066",
+    "name": "Pokemon Japanese MA-Premium Trainer Box Mega",
+    "code": "MA",
+    "setId": "jp-MA",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "316159",
+    "name": "Pokemon Japanese Mbd-Mega Starter Set Mega Diancie EX",
+    "code": "MBD",
+    "setId": "jp-MBD",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "316158",
+    "name": "Pokemon Japanese Mbg-Mega Starter Set Mega Gengar EX",
+    "code": "MBG",
+    "setId": "jp-MBG",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "326110",
+    "name": "Pokemon Japanese MC-Start Deck 100 Battle Collection",
+    "code": "MC",
+    "setId": "jp-MC",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "312898",
+    "name": "Pokemon Japanese M-P Promo",
+    "code": "M-P",
+    "setId": "jp-M-P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "326116",
+    "name": "Pokemon Japanese MP1-Start Deck 100 Battle Collection Corociao Version",
+    "code": "MP1",
+    "setId": "jp-MP1",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "296040",
+    "name": "Pokemon Japanese Sv0d-EX Starter Set Steven's Beldum & Metagross EX",
+    "code": "SV0D",
+    "setId": "jp-SV0D",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "296041",
+    "name": "Pokemon Japanese Sv0m-EX Starter Set Marnie's Morpeko & Grimmsnarl EX",
+    "code": "SV0M",
+    "setId": "jp-SV0M",
+    "inDb": false,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "301192",
+    "name": "Pokemon Japanese SV10-Glory of Team Rocket",
+    "code": "SV10",
+    "setId": "jp-SV10",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "305725",
+    "name": "Pokemon Japanese Sv11b-Black Bolt",
+    "code": "SV11B",
+    "setId": "jp-SV11B",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "305728",
+    "name": "Pokemon Japanese Sv11w-White Flare",
+    "code": "SV11W",
+    "setId": "jp-SV11W",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "297935",
+    "name": "Pokemon Japanese Sv9a-Heat Wave Arena",
+    "code": "SV9A",
+    "setId": "jp-SV9A",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "292980",
+    "name": "Pokemon Japanese SV9-Battle Partners",
+    "code": "SV9",
+    "setId": "jp-SV9",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "297732",
+    "name": "Pokemon Japanese Svn-Battle Partners Deck Build Box",
+    "code": "SVN",
+    "setId": "jp-SVN",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2025",
+    "headingId": "292983",
+    "name": "Pokemon Japanese SV-P Promo",
+    "code": "SV-P",
+    "setId": "jp-SV-P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2026",
+    "headingId": "329234",
+    "name": "Pokemon Japanese M3-Nullifying Zero",
+    "code": "M3",
+    "setId": "jp-M3",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2026",
+    "headingId": "333874",
+    "name": "Pokemon Japanese M4-Ninja Spinner",
+    "code": "M4",
+    "setId": "jp-M4",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "2026",
+    "headingId": "329237",
+    "name": "Pokemon Japanese M-P Promo",
+    "code": "M-P",
+    "setId": "jp-M-P",
+    "inDb": true,
+    "isVintageGen": false
+  },
+  {
+    "year": "1997-98",
+    "headingId": "258482",
+    "name": "Pokemon Japanese Promo",
+    "code": "PROMO-1997-98",
+    "setId": "jp-PROMO-1997-98",
+    "inDb": false,
+    "isVintageGen": true
+  },
+  {
+    "year": "1998-99",
+    "headingId": "31714",
+    "name": "Pokemon Japanese Pokemon Japanese Promo",
+    "code": "POKEMON-JAPANESE-PROMO-1998-99",
+    "setId": "jp-POKEMON-JAPANESE-PROMO-1998-99",
+    "inDb": false,
+    "isVintageGen": true
+  }
+]

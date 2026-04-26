@@ -152,7 +152,7 @@ function transformEntry(entry, setId, knownCardRefs, sourceUrl) {
 // ─── Main ───────────────────────────────────────────────
 async function main() {
   const startTime = Date.now()
-  const config = getPsaConfig(setId)
+  const config = await getPsaConfig(setId)
   const sourceUrl = `https://www.psacard.com/pop/tcg-cards/heading/${config.headingId}`
 
   // 1. Fetch PSA data

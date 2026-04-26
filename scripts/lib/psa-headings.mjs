@@ -396,14 +396,31 @@ export const PSA_HEADINGS = {
 
 }
 
-export function getPsaConfig(setId) {
+export async function getPsaConfig(setId) {
+  // Route to JP headings if setId has 'jp-' prefix
+  if (setId.startsWith('jp-')) {
+    const { PSA_HEADINGS_JP, PSA_JP_CATEGORY_ID } = await import('./psa-headings-jp.mjs')
+    const key = setId.replace(/^jp-/, '')
+    const entry = PSA_HEADINGS_JP[key]
+    if (!entry) {
+      throw new Error('No PSA JP mapping for setId=' + setId + ' (key=' + key + ')')
+    }
+    return { categoryId: PSA_JP_CATEGORY_ID, headingId: entry.headingId, label: entry.label, lang: 'JP' }
+  }
+
+  // Default: EN headings
   const entry = PSA_HEADINGS[setId]
   if (!entry) {
     throw new Error('No PSA mapping for setId=' + setId)
   }
-  return { categoryId: PSA_TCG_CATEGORY_ID, headingId: entry.headingId, label: entry.label }
+  return { categoryId: PSA_TCG_CATEGORY_ID, headingId: entry.headingId, label: entry.label, lang: 'EN' }
 }
 
 export function listMappedSets() {
   return Object.keys(PSA_HEADINGS)
+}
+
+export async function listMappedSetsJp() {
+  const { PSA_HEADINGS_JP } = await import('./psa-headings-jp.mjs')
+  return Object.keys(PSA_HEADINGS_JP).map(k => 'jp-' + k)
 }

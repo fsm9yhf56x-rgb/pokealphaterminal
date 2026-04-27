@@ -65,7 +65,7 @@ const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','
 const ERA_PREFIX: [string, string][] = [
   ['base','Original (WotC)'],['jungle','Original (WotC)'],['fossil','Original (WotC)'],
   ['teamrocket','Original (WotC)'],['gym','Original (WotC)'],['neo','Original (WotC)'],
-  ['si','Original (WotC)'],['lc','Original (WotC)'],['ecard','Original (WotC)'],
+  ['si1','Original (WotC)'],['lc','Original (WotC)'],['ecard','Original (WotC)'],
   ['expedition','Original (WotC)'],['aquapolis','Original (WotC)'],['skyridge','Original (WotC)'],
   ['ex','EX'],['pop','EX'],
   ['dp','DP / Platinum'],['pl','DP / Platinum'],['pt','DP / Platinum'],['hgss','DP / Platinum'],
@@ -77,7 +77,35 @@ const ERA_PREFIX: [string, string][] = [
 ]
 
 function setIdToEra(setId:string): string {
-  const low = setId.toLowerCase()
+  // Strip language prefix (jp-/fr-/en-) so JP sets like "jp-SV9" match "sv"
+  const stripped = setId.replace(/^(jp-|fr-|en-)/i, '')
+  const low = stripped.toLowerCase()
+
+  // Special-case JP-only sets that don't follow EN naming conventions
+  if (setId.toLowerCase().startsWith('jp-')) {
+    // Pokemon Japanese specific sets
+    if (low === 'si') return 'Sword & Shield'         // Special Illustration 2022
+    if (low === 'mc') return 'Scarlet & Violet'       // Mega Collection 2025
+    if (low.startsWith('m1') || low.startsWith('m2') || low.startsWith('m3') || low.startsWith('m4')) return 'Scarlet & Violet'  // Mega series
+    if (low === 'm-p' || low === 'mp1') return 'Scarlet & Violet'
+    if (low.startsWith('mb') || low === 'ma') return 'Scarlet & Violet'
+    if (low === 'wcs23') return 'Sword & Shield'
+    if (low === '20th') return 'Sun & Moon'           // 20th Anniversary 2016
+    if (low === 'pcg') return 'EX'                    // Pokemon Card Game era 2003
+    if (low === 'l1' || low === 'l1a' || low === 'l1b' || low === 'l2' || low === 'l3') return 'DP / Platinum'  // Legend era HGSS JP
+    if (low === 'adv1' || low === 'adv2' || low === 'adv3' || low === 'adv4' || low === 'adv5') return 'EX'  // Advance era
+    if (low === 'e1' || low === 'e2' || low === 'e3' || low === 'e4' || low === 'e5' || low === 'e6' || low === 'e7' || low === 'e8' || low === 'e9') return 'Original (WotC)'  // E-Card 2002-2003
+    // Vintage exclusives (toyota, corocoro, ana, meiji, etc.)
+    if (/^(toyota|corocoro|ana|meiji|coin-promo|insert|amada|pmcg|bulbasaur-deck|squirtle-deck|charmander-deck|pikachu-deck|red-green-gift|video-starter|cd-promo|vending|secret-super-battle|tropical-mega-battle|southern-islands|pro-trainer|gym-deck|hanada-city|kuchiba-city|nivi-city|tamamushi-city|guren-town|yamabuki-city|toko)/i.test(low)) {
+      return 'Original (WotC)'
+    }
+    // BW Promo sets
+    if (low === 'bwp' || low === 'bw' || low.startsWith('bk')) return 'Black & White'
+    if (low === 'br' || low === 'bb' || low === 'bd' || low === 'bk' || low === 'bgst' || low === 'bgsv') return 'Black & White'
+    if (low === 'btv') return 'Black & White'
+  }
+
+  // Standard EN/FR matching with stripped prefix
   for (const [prefix, era] of ERA_PREFIX) {
     if (low.startsWith(prefix)) return era
   }

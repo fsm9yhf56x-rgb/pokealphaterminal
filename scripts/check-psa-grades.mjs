@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
-const env = readFileSync('.env.local', 'utf-8')
-const url = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)[1].trim()
-const key = env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)[1].trim()
+// Priority 1: process.env (GitHub Actions / production)
+// Priority 2: .env.local (local dev)
+let url = process.env.NEXT_PUBLIC_SUPABASE_URL
+let key = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!url || !key) {
+  try {
+    const env = readFileSync('.env.local', 'utf-8')
+    url = url || env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)?.[1]?.trim()
+    key = key || env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)?.[1]?.trim()
+  } catch {}
+}
+if (!url || !key) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  process.exit(1)
+}
 const sb = createClient(url, key)
 
 // Sample row: Charizard Unlimited (base1-4 Holo)

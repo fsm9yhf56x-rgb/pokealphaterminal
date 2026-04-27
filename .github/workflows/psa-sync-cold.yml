@@ -5,6 +5,9 @@ on:
     - cron: '0 2 1 * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   scrape-cold:
     runs-on: ubuntu-latest

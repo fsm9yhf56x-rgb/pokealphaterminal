@@ -5,6 +5,9 @@ on:
     - cron: '0 5 * * 1'  # Monday 5h UTC weekly
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   scrape-warm-jp:
     runs-on: ubuntu-latest

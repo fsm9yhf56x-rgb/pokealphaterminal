@@ -5,6 +5,9 @@ on:
     - cron: '0 4 * * *'  # 4h UTC daily, 1h after EN HOT to avoid overlap
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   scrape-hot-jp:
     runs-on: ubuntu-latest

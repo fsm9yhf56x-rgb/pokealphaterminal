@@ -9,6 +9,9 @@ on:
 # We use matrix strategy to parallelize: split into 4 chunks of ~118 sets each.
 # Each chunk has its own runner, and they run in parallel.
 
+permissions:
+  contents: write
+
 jobs:
   scrape-cold-jp:
     runs-on: ubuntu-latest

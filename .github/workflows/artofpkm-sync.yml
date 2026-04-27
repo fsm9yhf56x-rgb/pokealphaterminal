@@ -5,6 +5,9 @@ on:
     - cron: '0 6 1 * *'  # 1st of month, 6h UTC (after PSA HOT/WARM, before COLD)
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   sync-artofpkm:
     runs-on: ubuntu-latest

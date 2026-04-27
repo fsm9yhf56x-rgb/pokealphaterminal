@@ -1,0 +1,77 @@
+name: Prices · PokeTrace sync
+
+on:
+  schedule:
+    # Toutes les 4h (UTC) — alimente le tier "hot" (>20€) et "warm" (1-20€)
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (no DB write)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: prices-poketrace
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync PokeTrace prices
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/cron/prices
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/cron/prices"
+          START_TS=$(date +%s)
+
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+            -X GET "$PROD_URL/api/cron/prices" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 600 \
+            --retry 2 --retry-delay 30 --retry-connrefused) || HTTP_CODE="000"
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          echo "📦 Response:"
+          cat response.json | head -c 2000
+          echo ""
+
+          # Compact JSON for log
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          # Fail si HTTP != 2xx (sauf 429 = rate-limited, géré comme warning)
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync OK"
+          elif [ "$HTTP_CODE" -eq 429 ]; then
+            echo "⚠️ Rate-limited (daily budget reached)"
+          else
+            echo "❌ Sync failed"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### 🟢 PokeTrace sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Body:" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

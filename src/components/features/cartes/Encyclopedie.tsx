@@ -1036,7 +1036,7 @@ export function Encyclopedie() {
                 style={{ position:'absolute', right:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'#fff', border:'1px solid #E5E5EA', boxShadow:'0 2px 8px rgba(0,0,0,.1)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#666' }}>›</button>
               <div className="set-carousel" style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'4px', padding:'0 20px', scrollbarWidth:'none' as any }}>
                 {(lang==='JP'
-                  ? ['M3','SV2a','SV8a','SV4a','SV11B','SV11W','SV3','SV1S','S12a','SV7']
+                  ? ['aopkm-587','aopkm-556','aopkm-552','aopkm-551','aopkm-520','aopkm-490','aopkm-585','aopkm-583','aopkm-579','aopkm-575','aopkm-6','aopkm-6-nr','aopkm-8','aopkm-9','aopkm-10','aopkm-31']
                   : lang==='FR'
                   ? ['sv03.5','base1','base1-1st','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
                   : ['sv03.5','base1','base1-shadowless','base1-shadowless-ns','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']

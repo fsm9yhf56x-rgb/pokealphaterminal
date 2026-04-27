@@ -1,0 +1,80 @@
+name: artofpkm Sync (monthly)
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'  # 1st of month, 6h UTC (after PSA HOT/WARM, before COLD)
+  workflow_dispatch:
+
+jobs:
+  sync-artofpkm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Puppeteer
+        run: npx puppeteer browsers install chrome
+
+      - name: Discover sets
+        run: node scripts/artofpkm-discover-sets.mjs
+
+      - name: Scrape all sets (cards + logos)
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: node scripts/scrape-artofpkm-all.mjs
+
+      - name: Extract logos
+        run: node scripts/extract-artofpkm-logos.mjs
+
+      - name: Import to DB
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/import-artofpkm-to-db.mjs
+
+      - name: Update logos in DB
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+          import('@supabase/supabase-js').then(async ({ createClient }) => {
+            const fs = await import('fs')
+            const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+            const logos = JSON.parse(fs.readFileSync('scripts/data/artofpkm-logos.json', 'utf-8'))
+            console.log(\`Updating \${logos.length} logos...\`)
+            let updated = 0
+            for (let i = 0; i < logos.length; i += 50) {
+              const batch = logos.slice(i, i + 50)
+              await Promise.all(batch.map(async l => {
+                const { error } = await sb.from('tcg_sets')
+                  .update({ logo_url: l.logoUrl, updated_at: new Date().toISOString() })
+                  .eq('id', \`aopkm-\${l.setId}\`)
+                if (!error) updated++
+              }))
+            }
+            console.log(\`Updated \${updated} logos\`)
+          })
+          "
+
+      - name: Rebuild static JSON
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/rebuild-static-data.mjs
+
+      - name: Commit and push (if changes)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/cards-JP.json public/data/sets-JP.json
+          git diff --staged --quiet || (git commit -m "chore(artofpkm): monthly auto-sync $(date +%Y-%m-%d)" && git push)

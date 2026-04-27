@@ -9,7 +9,7 @@ interface CacheMeta {
   ts: number       // last fetch timestamp
 }
 
-const DATA_VERSION = 2  // bump when public/data/*.json content changes substantially
+const DATA_VERSION = 3  // bump when public/data/*.json content changes substantially
 const TTL_MS = 24 * 60 * 60 * 1000  // 24h
 
 function openDb(): Promise<IDBDatabase> {

@@ -76,7 +76,37 @@ const ERA_PREFIX: [string, string][] = [
   ['sv','Scarlet & Violet'],
 ]
 
-function setIdToEra(setId:string): string {
+// Maps the `serie` field from sets-{LANG}.json (DB column tcg_sets.series)
+// to the human-readable era used by ERA_ORDER.
+const SERIES_TO_ERA: Record<string, string> = {
+  'base':  'Original (WotC)',
+  'neo':   'Original (WotC)',
+  'ecard': 'Original (WotC)',
+  'ex':    'EX',
+  'pop':   'EX',
+  'dp':    'DP / Platinum',
+  'pl':    'DP / Platinum',
+  'pt':    'DP / Platinum',
+  'hgss':  'DP / Platinum',
+  'col':   'DP / Platinum',
+  'bw':    'Black & White',
+  'dv':    'Black & White',
+  'xy':    'XY',
+  'g1':    'XY',
+  'dc':    'XY',
+  'sm':    'Sun & Moon',
+  'det':   'Sun & Moon',
+  'tg':    'Sun & Moon',
+  'swsh':  'Sword & Shield',
+  'cel':   'Sword & Shield',
+  'pgo':   'Sword & Shield',
+  'sv':    'Scarlet & Violet',
+  'mega':  'Scarlet & Violet',  // MEGA era 2025-2026 grouped with SV for now
+}
+
+function setIdToEra(setId:string, serie?:string|null): string {
+  // Priority 1: if serie is provided (from JSON), use it directly
+  if (serie && SERIES_TO_ERA[serie]) return SERIES_TO_ERA[serie]
   // Strip language prefix (jp-/fr-/en-) so JP sets like "jp-SV9" match "sv"
   const stripped = setId.replace(/^(jp-|fr-|en-)/i, '')
   const low = stripped.toLowerCase()
@@ -608,7 +638,7 @@ export function Encyclopedie() {
           const set = setMap.get(setId)
           const cleanSetId = setId.replace('jp-', '')
           const year = set?.release_date ? parseInt(set.release_date.slice(0,4)) || 0 : 0
-          const era = setIdToEra(cleanSetId) !== 'Autre' ? setIdToEra(cleanSetId) : yearToEra(year)
+          const era = setIdToEra(cleanSetId, (set as any)?.serie) !== 'Autre' ? setIdToEra(cleanSetId, (set as any)?.serie) : yearToEra(year)
           return {
             id: c.id,
             localId: c.local_id || '',
@@ -651,7 +681,7 @@ export function Encyclopedie() {
         Object.entries(staticCards).forEach(([sid, cards]) => {
           const set = setMap.get(sid)
           const year = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
-          const era = setIdToEra(sid) !== 'Autre' ? setIdToEra(sid) : yearToEra(year)
+          const era = setIdToEra(sid, (set as any)?.serie) !== 'Autre' ? setIdToEra(sid, (set as any)?.serie) : yearToEra(year)
           ;(cards as any[]).forEach(c => {
             const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
             enriched.push({
@@ -683,7 +713,7 @@ export function Encyclopedie() {
         const setId = c.id.substring(0, c.id.lastIndexOf('-')) || c.id
         const set = setMap.get(setId)
         const year = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
-        const era = setIdToEra(setId) !== 'Autre' ? setIdToEra(setId) : yearToEra(year)
+        const era = setIdToEra(setId, (set as any)?.serie) !== 'Autre' ? setIdToEra(setId, (set as any)?.serie) : yearToEra(year)
         return { ...c, setId, setName: set?.name ?? setId, year, era,
           enName: lang==='JP' ? enMap.get(setId+'-'+c.localId) : undefined,
           enImage: lang==='JP' ? enImgMap.get(setId+'-'+c.localId) : undefined }

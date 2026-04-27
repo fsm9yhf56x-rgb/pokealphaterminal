@@ -639,11 +639,14 @@ export function Encyclopedie() {
           const cleanSetId = setId.replace('jp-', '')
           const year = set?.release_date ? parseInt(set.release_date.slice(0,4)) || 0 : 0
           const era = setIdToEra(cleanSetId, (set as any)?.serie) !== 'Autre' ? setIdToEra(cleanSetId, (set as any)?.serie) : yearToEra(year)
+          // Priority 1: use image_url from DB (artofpkm) if present
+          // Priority 2: fallback to R2 hardcoded pattern (for legacy sets)
+          const imageUrl = c.image_url || getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id })
           return {
             id: c.id,
             localId: c.local_id || '',
             name: c.name || '',
-            image: getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id }),
+            image: imageUrl,
             rarity: c.rarity || '',
             setId: cleanSetId,
             setName: set?.name || cleanSetId,

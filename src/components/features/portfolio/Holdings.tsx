@@ -11,6 +11,8 @@ import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
+import { useCardConditions, CONDITION_ORDER, CONDITION_SHORT, CONDITION_LABELS } from '@/components/features/prices/hooks/useCardConditions'
+import type { CardCondition } from '@/components/features/prices/hooks/useCardConditions'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW, PERF } from '@/lib/design/colors'
@@ -1612,6 +1614,43 @@ export function Holdings() {
                           cardId={spotCard.setId + '-' + spotCard.number}
                           hideWhenEmpty
                         />
+                      </div>
+                    ) : null}
+                    {!spotCard.graded ? (
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px', padding:'10px 0', borderTop:'1px solid #F0F0F5' }}>
+                        <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>État</span>
+                        <div style={{ display:'flex', gap:'4px' }}>
+                          {(['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const).map(cond => {
+                            const isActive = (spotCard.condition || 'NEAR_MINT') === cond
+                            const short = CONDITION_SHORT[cond]
+                            return (
+                              <button
+                                key={cond}
+                                onClick={() => {
+                                  setPortfolio(prev => prev.map(c => c.id === spotCard.id ? { ...c, condition: cond } : c))
+                                  setSpotCard({ ...spotCard, condition: cond })
+                                  showToast(`${CONDITION_LABELS[cond]} - prix recalcule en arriere-plan`)
+                                }}
+                                title={CONDITION_LABELS[cond]}
+                                style={{
+                                  padding: '6px 10px',
+                                  borderRadius: '8px',
+                                  background: isActive ? '#1D1D1F' : '#F5F5F7',
+                                  border: 'none',
+                                  color: isActive ? '#fff' : '#48484A',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  fontFamily: 'var(--font-display)',
+                                  transition: 'all 0.15s',
+                                  letterSpacing: '0.02em',
+                                }}
+                              >
+                                {short}
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                     ) : null}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', padding:'10px 0', borderTop:'1px solid #F0F0F5', borderBottom:'1px solid #F0F0F5' }}>

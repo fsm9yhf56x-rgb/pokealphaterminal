@@ -1,0 +1,129 @@
+name: Prices · TCGdex / Cardmarket sync
+
+on:
+  schedule:
+    # Quotidien à 5h UTC (avant le cron Vercel PokeTrace de 6h)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: 'Language (en, fr, jp)'
+        required: false
+        default: 'en'
+
+concurrency:
+  group: prices-tcgdex
+  cancel-in-progress: false
+
+jobs:
+  sync-en:
+    name: Sync TCGdex EN (Cardmarket)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/prices/tcgdex (lang=en)
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/prices/tcgdex?lang=en"
+          START_TS=$(date +%s)
+
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+            -X GET "$PROD_URL/api/prices/tcgdex?lang=en" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 1500 \
+            --retry 1 --retry-delay 30) || HTTP_CODE="000"
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          echo "📦 Response:"
+          cat response.json | head -c 2000
+          echo ""
+
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync EN OK"
+          else
+            echo "❌ Sync EN failed"
+            exit 1
+          fi
+
+      - name: Summary EN
+        if: always()
+        run: |
+          echo "### 🇬🇧 TCGdex EN sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  sync-fr:
+    name: Sync TCGdex FR (Cardmarket)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: sync-en
+    if: always()
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/prices/tcgdex (lang=fr)
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/prices/tcgdex?lang=fr"
+          START_TS=$(date +%s)
+
+          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+            -X GET "$PROD_URL/api/prices/tcgdex?lang=fr" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 1500 \
+            --retry 1 --retry-delay 30) || HTTP_CODE="000"
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          echo "📦 Response:"
+          cat response.json | head -c 2000
+          echo ""
+
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync FR OK"
+          else
+            echo "❌ Sync FR failed"
+            exit 1
+          fi
+
+      - name: Summary FR
+        if: always()
+        run: |
+          echo "### 🇫🇷 TCGdex FR sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

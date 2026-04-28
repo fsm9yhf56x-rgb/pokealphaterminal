@@ -30,9 +30,48 @@ function tcgdexIdToSlug(id: string, name: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+// ── Auto-detect TCGdex set IDs from portfolio (when no explicit sets given) ──
+async function getPortfolioTcgdexSets(): Promise<string[]> {
+  const { data } = await supabase.from('portfolio_cards').select('set_id')
+  const rawSets = [...new Set((data || []).map((c: any) => c.set_id).filter(Boolean))]
+  // Strip our internal variant suffixes — TCGdex doesn't know about them
+  const cleaned = rawSets.map((s: string) => s.replace(/-shadowless(-ns)?|-1st/g, ''))
+  return [...new Set(cleaned)]
+}
+
+// Add Bearer auth check (CRON_SECRET) for protected GET trigger
+async function isAuthorizedCron(request: Request): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) return true // no secret configured = open
+  const auth = request.headers.get('authorization')
+  return auth === `Bearer ${cronSecret}`
+}
+
+// GET = cron entry point (auth required, auto-detects portfolio sets)
+export async function GET(request: Request) {
+  if (!(await isAuthorizedCron(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const { searchParams } = new URL(request.url)
+  const lang = searchParams.get('lang') || 'en'
+  const sets = await getPortfolioTcgdexSets()
+  if (!sets.length) {
+    return NextResponse.json({ skipped: true, reason: 'no portfolio sets' })
+  }
+  // Reuse the same processing path as POST by calling syncTcgdex directly
+  return syncTcgdex(sets, lang)
+}
+
 export async function POST(request: Request) {
-  const { sets = [], lang = 'en' } = await request.json().catch(() => ({}))
-  
+  let { sets = [], lang = 'en' } = await request.json().catch(() => ({}))
+  // Auto-detect if no sets given
+  if (!sets.length) {
+    sets = await getPortfolioTcgdexSets()
+  }
+  return syncTcgdex(sets, lang)
+}
+
+async function syncTcgdex(sets: string[], lang: string) {
   let totalUpdated = 0
   let totalCards = 0
   const errors: string[] = []

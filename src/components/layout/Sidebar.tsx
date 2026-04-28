@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useIsAdmin } from '@/lib/useIsAdmin'
 
 const NAV = [
   { href: '/terminal', label: 'Market Terminal', icon: '◈', desc: 'Indices & tendances'  },
@@ -13,6 +14,7 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const isAdmin = useIsAdmin()
 
   return (
     <aside style={{
@@ -175,6 +177,66 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Admin section (visible uniquement pour les admins) */}
+      {isAdmin && (
+        <div style={{
+          padding: '8px 10px 4px',
+          borderTop: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <div style={{
+            fontSize: '9px', color: 'var(--ink-faint)',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+            fontFamily: 'var(--font-display)', fontWeight: 500,
+            padding: '6px 10px 6px',
+          }}>
+            Admin
+          </div>
+          {[
+            { href: '/admin', label: 'Dashboard', icon: '◐' },
+            { href: '/admin/sync-status', label: 'Sync Status', icon: '◑' },
+          ].map(item => {
+            const active = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  marginBottom: '2px',
+                  textDecoration: 'none',
+                  background: active ? '#FFF0EE' : 'transparent',
+                  border: active ? '1px solid #FFD8D0' : '1px solid transparent',
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                <span style={{
+                  fontSize: '13px',
+                  color: active ? '#E03020' : 'var(--ink-faint)',
+                  width: '18px',
+                  textAlign: 'center',
+                  flexShrink: 0,
+                }}>
+                  {item.icon}
+                </span>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: active ? 500 : 400,
+                  color: active ? '#E03020' : 'var(--ink)',
+                  fontFamily: 'var(--font-display)',
+                }}>
+                  {item.label}
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      )}
 
       {/* Footer sidebar */}
       <div style={{

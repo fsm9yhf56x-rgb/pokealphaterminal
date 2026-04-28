@@ -64,6 +64,17 @@ interface Props {
     latestRunStatus: string | null
   }
   apiUsage: { used: number; max: number; date: string }
+  coverage: {
+    totalCardsInDb: number
+    cardsWithPrice: number
+    coveragePct: number
+    conditionsTotalRows: number
+    conditionsCards: number
+    conditionsBySource: Record<string, number>
+    conditionsByCondition: Record<string, number>
+    latestConditionAt: string | null
+    coverageBySource: Record<string, number>
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -117,7 +128,7 @@ function statusDot(status: string | null) {
 // Component
 // ─────────────────────────────────────────────────────────────
 export default function SyncStatusClient(props: Props) {
-  const { userEmail, jobs, logs, kpis, apiUsage } = props
+  const { userEmail, jobs, logs, kpis, apiUsage, coverage } = props
   const [familyFilter, setFamilyFilter] = useState<string>('all')
   const [selectedLog, setSelectedLog] = useState<SyncLog | null>(null)
   const [running, setRunning] = useState<string | null>(null)
@@ -243,6 +254,115 @@ export default function SyncStatusClient(props: Props) {
             background: usageColor,
             transition: 'width 0.3s',
           }} />
+        </div>
+      </div>
+
+      {/* ── Coverage Prix ── */}
+      <div style={{
+        background: tokens.surface,
+        border: `1px solid ${tokens.border}`,
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 24,
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: tokens.muted, marginBottom: 12 }}>
+          Coverage Prix
+        </div>
+        {/* Coverage globale */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Cartes pricées (toutes sources)</span>
+          <span style={{ fontFamily: tokens.fontMono, fontSize: 13, color: tokens.ink }}>
+            {coverage.cardsWithPrice.toLocaleString()} / {coverage.totalCardsInDb.toLocaleString()} ({coverage.coveragePct}%)
+          </span>
+        </div>
+        <div style={{ background: tokens.border, borderRadius: 6, height: 6, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{
+            width: `${Math.min(coverage.coveragePct, 100)}%`,
+            height: '100%',
+            background: coverage.coveragePct >= 60 ? tokens.green : coverage.coveragePct >= 30 ? tokens.amber : tokens.red,
+            transition: 'width 0.3s',
+          }} />
+        </div>
+
+        {/* Coverage par source */}
+        <div style={{ fontSize: 11, color: tokens.muted, marginBottom: 6, fontWeight: 500 }}>Par source</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          {Object.entries(coverage.coverageBySource).sort((a, b) => b[1] - a[1]).map(([src, count]) => (
+            <span key={src} style={{
+              padding: '4px 10px',
+              borderRadius: 6,
+              background: tokens.bg,
+              border: `1px solid ${tokens.border}`,
+              fontSize: 12,
+              fontFamily: tokens.fontMono,
+            }}>
+              {src} <span style={{ color: tokens.muted, marginLeft: 4 }}>{count.toLocaleString()}</span>
+            </span>
+          ))}
+        </div>
+
+        {/* Conditions stats */}
+        <div style={{ borderTop: `1px solid ${tokens.border}`, paddingTop: 12, marginTop: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 500 }}>Granularité par condition (NM/LP/MP/HP/DMG)</span>
+            <span style={{ fontFamily: tokens.fontMono, fontSize: 13, color: tokens.ink }}>
+              {coverage.conditionsCards.toLocaleString()} cartes · {coverage.conditionsTotalRows.toLocaleString()} rows
+            </span>
+          </div>
+
+          {coverage.conditionsCards > 0 ? (
+            <>
+              {/* Par source */}
+              <div style={{ fontSize: 11, color: tokens.muted, marginBottom: 4 }}>Sources</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                {Object.entries(coverage.conditionsBySource).sort((a, b) => b[1] - a[1]).map(([src, count]) => (
+                  <span key={src} style={{
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    background: tokens.bg,
+                    border: `1px solid ${tokens.border}`,
+                    fontSize: 12,
+                    fontFamily: tokens.fontMono,
+                  }}>
+                    {src} <span style={{ color: tokens.muted, marginLeft: 4 }}>{count.toLocaleString()}</span>
+                  </span>
+                ))}
+              </div>
+
+              {/* Par condition */}
+              <div style={{ fontSize: 11, color: tokens.muted, marginBottom: 4 }}>Distribution conditions</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                {['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'].map(cond => {
+                  const n = coverage.conditionsByCondition[cond] || 0
+                  const short = cond === 'NEAR_MINT' ? 'NM' : cond === 'LIGHTLY_PLAYED' ? 'LP' : cond === 'MODERATELY_PLAYED' ? 'MP' : cond === 'HEAVILY_PLAYED' ? 'HP' : 'DMG'
+                  return (
+                    <span key={cond} style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      background: n > 0 ? tokens.bg : tokens.surface,
+                      border: `1px solid ${tokens.border}`,
+                      fontSize: 12,
+                      fontFamily: tokens.fontMono,
+                      color: n > 0 ? tokens.ink : tokens.mutedSoft,
+                    }}>
+                      <span style={{ fontWeight: 600 }}>{short}</span>
+                      <span style={{ marginLeft: 6, color: tokens.muted }}>{n.toLocaleString()}</span>
+                    </span>
+                  )
+                })}
+              </div>
+
+              {coverage.latestConditionAt && (
+                <div style={{ fontSize: 11, color: tokens.muted, marginTop: 8, fontFamily: tokens.fontMono }}>
+                  Dernier snapshot condition : {relativeTime(coverage.latestConditionAt)}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: 12, color: tokens.muted, fontStyle: 'italic' }}>
+              Pas encore de données par condition. Les workflows PokeTrace doivent re-tourner avec le nouveau code.
+            </div>
+          )}
         </div>
       </div>
 

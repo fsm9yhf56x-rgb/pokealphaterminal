@@ -112,6 +112,55 @@ export default async function SyncStatusPage() {
     .eq('date', today)
     .single()
 
+  // ── Coverage Prix : stats agrégées des prix multi-source ──
+  const { count: totalCardsInDb } = await supabase
+    .from('tcg_cards')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: pricesV2Count } = await supabase
+    .from('prices_v2')
+    .select('*', { count: 'exact', head: true })
+    .not('top_price', 'is', null)
+
+  // Conditions stats
+  const { count: conditionsTotalRows } = await (supabase as any)
+    .from('prices_v2_by_condition')
+    .select('*', { count: 'exact', head: true })
+
+  const { data: conditionsBreakdown } = await (supabase as any)
+    .from('prices_v2_by_condition')
+    .select('card_ref, source, condition')
+    .limit(10000)
+
+  const conditionsCardsSet = new Set<string>()
+  const conditionsBySource: Record<string, number> = {}
+  const conditionsByCondition: Record<string, number> = {}
+  for (const row of (conditionsBreakdown || []) as any[]) {
+    conditionsCardsSet.add(row.card_ref)
+    conditionsBySource[row.source] = (conditionsBySource[row.source] || 0) + 1
+    conditionsByCondition[row.condition] = (conditionsByCondition[row.condition] || 0) + 1
+  }
+
+  // Latest condition snapshot (freshness check)
+  const { data: latestConditionRow } = await (supabase as any)
+    .from('prices_v2_by_condition')
+    .select('fetched_at')
+    .order('fetched_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Coverage by source (poketrace, ebay, tcgdex, cardmarket)
+  const { data: sourceBreakdown } = await supabase
+    .from('prices_v2')
+    .select('source')
+    .not('top_price', 'is', null)
+    .limit(50000)
+
+  const coverageBySource: Record<string, number> = {}
+  for (const row of (sourceBreakdown || []) as any[]) {
+    coverageBySource[row.source] = (coverageBySource[row.source] || 0) + 1
+  }
+
   return (
     <SyncStatusClient
       userEmail={user?.email || ''}
@@ -129,6 +178,17 @@ export default async function SyncStatusPage() {
         used: usage?.calls_used ?? 0,
         max: usage?.max_calls ?? 250,
         date: today,
+      }}
+      coverage={{
+        totalCardsInDb: totalCardsInDb ?? 0,
+        cardsWithPrice: pricesV2Count ?? 0,
+        coveragePct: totalCardsInDb ? Math.round((pricesV2Count ?? 0) / totalCardsInDb * 100) : 0,
+        conditionsTotalRows: conditionsTotalRows ?? 0,
+        conditionsCards: conditionsCardsSet.size,
+        conditionsBySource,
+        conditionsByCondition,
+        latestConditionAt: (latestConditionRow as any)?.fetched_at ?? null,
+        coverageBySource,
       }}
     />
   )

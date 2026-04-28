@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
 import { writeSnapshots } from '@/lib/prices/writer'
+import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
 import type { PriceSnapshot } from '@/lib/prices/types'
 
 export const dynamic = 'force-dynamic'
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ skipped: true, reason: 'no portfolio sets' })
   }
   // Reuse the same processing path as POST by calling syncTcgdex directly
-  return syncTcgdex(sets, lang)
+  return syncTcgdex(sets, lang, 'cron')
 }
 
 export async function POST(request: Request) {
@@ -71,7 +72,9 @@ export async function POST(request: Request) {
   return syncTcgdex(sets, lang)
 }
 
-async function syncTcgdex(sets: string[], lang: string) {
+async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'manual' = 'manual') {
+  const log = await startSyncLog(`prices_tcgdex_${lang}`, triggeredBy)
+  try {
   let totalUpdated = 0
   let totalCards = 0
   const errors: string[] = []
@@ -196,5 +199,11 @@ async function syncTcgdex(sets: string[], lang: string) {
     }
   }
 
+  const stats = { totalCards, totalUpdated, errorCount: errors.length, lang }
+  await finishSyncLog(log, errors.length > 0 ? 'partial' : 'success', stats, errors.length ? errors.slice(0,3).join(' | ') : null)
   return NextResponse.json({ totalCards, totalUpdated, errors: errors.length ? errors : undefined })
+  } catch (e: any) {
+    await finishSyncLog(log, 'error', null, e?.message ?? String(e))
+    throw e
+  }
 }

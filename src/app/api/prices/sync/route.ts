@@ -4,6 +4,7 @@ import { writeSnapshots } from '@/lib/prices/writer'
 import type { PriceSnapshot } from '@/lib/prices/types'
 import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
 import { getUsage } from '@/lib/api-usage'
+import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -45,7 +46,9 @@ function getTier(topPrice: number | null, hasGraded: boolean, ebayAvg?: number |
 
 export async function POST(request: Request) {
   const { budget = 30, sets = [] } = await request.json().catch(() => ({}))
-  
+  const log = await startSyncLog('prices_poketrace_sync', 'manual')
+
+  try {
   const usage = await getUsage()
   const available = Math.min(budget, usage.max - usage.used)
   if (available <= 0) {
@@ -162,10 +165,23 @@ export async function POST(request: Request) {
     }
   }
 
+  const stats = {
+    callsUsed,
+    callsRemaining: usage.max - usage.used - callsUsed,
+    totalCards,
+    setsProcessed: setsToSync.length,
+    errorCount: errors.length,
+  }
+  await finishSyncLog(log, errors.length > 0 ? 'partial' : 'success', stats, errors.length ? errors.slice(0,3).join(' | ') : null)
+
   return NextResponse.json({
     success: true, callsUsed,
     callsRemaining: usage.max - usage.used - callsUsed,
     totalCards, setsProcessed: setsToSync.length,
     errors: errors.length ? errors : undefined,
   })
+  } catch (e: any) {
+    await finishSyncLog(log, 'error', null, e?.message ?? String(e))
+    throw e
+  }
 }

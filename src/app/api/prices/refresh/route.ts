@@ -3,6 +3,7 @@ import { getAdminClient } from '@/lib/db'
 import { writeSnapshots } from '@/lib/prices/writer'
 import type { PriceSnapshot } from '@/lib/prices/types'
 import { getUsage } from '@/lib/api-usage'
+import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -35,6 +36,9 @@ function getTier(topPrice: number | null): string {
 export async function POST(request: Request) {
   const { sets = [] } = await request.json().catch(() => ({}))
   if (!sets.length) return NextResponse.json({ skipped: true, reason: 'no sets' })
+  const log = await startSyncLog('prices_poketrace_refresh', 'event')
+
+  try {
 
   // Load set mapping
   let setMapping: Record<string, string> = {}
@@ -182,6 +186,14 @@ export async function POST(request: Request) {
     }
   }
 
+  const stats = {
+    setsRefreshed: stale.length,
+    callsUsed,
+    totalCards,
+    callsRemaining: usage.max - usage.used - callsUsed,
+  }
+  await finishSyncLog(log, 'success', stats, null)
+
   return NextResponse.json({
     refreshed: true,
     setsRefreshed: stale.length,
@@ -189,4 +201,8 @@ export async function POST(request: Request) {
     totalCards,
     callsRemaining: usage.max - usage.used - callsUsed,
   })
+  } catch (e: any) {
+    await finishSyncLog(log, 'error', null, e?.message ?? String(e))
+    throw e
+  }
 }

@@ -4,6 +4,7 @@ import { writeSnapshots } from '@/lib/prices/writer'
 import type { PriceSnapshot } from '@/lib/prices/types'
 import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
 import { getUsage } from '@/lib/api-usage'
+import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -203,6 +204,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const triggeredBy = authHeader?.startsWith('Bearer ') ? 'cron' : 'manual'
+  const log = await startSyncLog('prices_poketrace_cron', triggeredBy as any)
+
+  try {
   const usage = await getUsage()
   const budget = Math.min(80, usage.max - usage.used) // max 80 req per cron run
   if (budget <= 0) {
@@ -353,6 +358,18 @@ export async function GET(request: Request) {
     }
   }
 
+  const stats = {
+    callsUsed,
+    callsRemaining: usage.max - usage.used - callsUsed,
+    totalCards,
+    setsProcessed,
+    setsSkipped,
+    ebayCalls: ebayResult.calls,
+    ebayFilled: ebayResult.filled,
+    errorCount: errors.length,
+  }
+  await finishSyncLog(log, errors.length > 0 ? 'partial' : 'success', stats, errors.length ? errors.slice(0,3).join(' | ') : null)
+
   return NextResponse.json({
     success: true,
     callsUsed,
@@ -364,4 +381,8 @@ export async function GET(request: Request) {
     ebay: ebayResult,
     nextRun: 'in 6 hours',
   })
+  } catch (e: any) {
+    await finishSyncLog(log, 'error', null, e?.message ?? String(e))
+    throw e
+  }
 }

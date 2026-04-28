@@ -52,6 +52,8 @@ const TIMEFRAMES: { key: PriceTimeframe; label: string; pro: boolean }[] = [
 export interface PriceHistoryChartProps {
   /** Direct PokeTrace-style card_ref. Takes priority over setId/localId. */
   card_ref?: string | null
+  /** Multiple card_refs to merge (PokeTrace UUID + tcgdex slug + ...). */
+  card_refs?: (string | null | undefined)[] | null
   /** Alternative: set slug (e.g. 'base1', 'base1-shadowless'). Combined with localId. */
   setId?: string | null
   /** Alternative: local card id within the set (e.g. '4'). */
@@ -577,6 +579,7 @@ function RealChart({ points, currency }: { points: PricePoint[]; currency: strin
 
 export function PriceHistoryChart({
   card_ref,
+  card_refs,
   setId,
   localId,
   cardName,
@@ -589,15 +592,36 @@ export function PriceHistoryChart({
   const [timeframe, setTimeframe] = useState<PriceTimeframe>(defaultTimeframe)
   const [showProToast, setShowProToast] = useState(false)
 
-  // Resolve card_ref: explicit prop wins, else derive from setId+localId
-  // using the deterministic tcgdex convention (see /api/prices/tcgdex).
-  const effectiveCardRef = useMemo<string | null>(() => {
-    if (card_ref) return card_ref
-    if (setId && localId) return `tcgdex-${setId}-${localId}`
-    return null
-  }, [card_ref, setId, localId])
+  // Resolve refs: build a list of all candidate card_refs to fetch and merge
+  const effectiveCardRefs = useMemo<string[]>(() => {
+    const list: string[] = []
+    if (card_ref) list.push(card_ref)
+    if (card_refs?.length) {
+      for (const r of card_refs) if (r) list.push(r)
+    }
+    if (setId && localId) {
+      // Generate candidates from setId/localId
+      // 1. tcgdex slug variant: 'base1' → 'base-set' (TCGdex stocke avec slug API, pas setId interne)
+      // 2. tcgdex setId direct (au cas où le slug match): 'base1-shadowless' → 'tcgdex-base1-shadowless-3'
+      // 3. cleaned setId (without -shadowless/-1st): for shared base prices
+      const cleanSet = setId.replace(/-shadowless(-ns)?|-1st/g, '')
+      list.push(`tcgdex-${setId}-${localId}`)
+      if (cleanSet !== setId) list.push(`tcgdex-${cleanSet}-${localId}`)
+      // Map setId → tcgdex slug (known mappings)
+      const slugMap: Record<string, string> = {
+        'base1': 'base-set', 'base2': 'jungle', 'base3': 'fossil',
+        'base4': 'base-set-2', 'base5': 'team-rocket',
+        'gym1': 'gym-heroes', 'gym2': 'gym-challenge',
+        'neo1': 'neo-genesis', 'neo2': 'neo-discovery',
+        'neo3': 'neo-revelation', 'neo4': 'neo-destiny',
+      }
+      const slug = slugMap[cleanSet]
+      if (slug) list.push(`tcgdex-${slug}-${localId}`)
+    }
+    return Array.from(new Set(list.filter(Boolean)))
+  }, [card_ref, card_refs?.join(','), setId, localId])
 
-  const { data, loading, error } = usePriceHistory({ card_ref: effectiveCardRef, timeframe })
+  const { data, loading, error } = usePriceHistory({ card_refs: effectiveCardRefs, timeframe })
 
   // If server returned 403 PRO_REQUIRED (shouldn't normally happen since we gate client-side too),
   // fall back to 30d. useEffect so we don't setState during render.

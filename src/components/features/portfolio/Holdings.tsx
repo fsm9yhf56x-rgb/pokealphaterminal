@@ -1660,7 +1660,7 @@ export function Holdings() {
                           setId={spotCard.setId}
                           localId={spotCard.number}
                           isPro={isPro}
-                          hideWhenInsufficient
+                          
                         />
                       </div>
                     ) : null}

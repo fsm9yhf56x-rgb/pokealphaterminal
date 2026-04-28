@@ -1677,7 +1677,7 @@ export function Encyclopedie() {
                             setId={selCard.setId}
                             localId={selCard.localId}
                             isPro={isPro}
-                            hideWhenInsufficient
+                            
                           />
                         </div>
                       ) : null}

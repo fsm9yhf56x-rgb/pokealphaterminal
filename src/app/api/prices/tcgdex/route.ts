@@ -40,6 +40,48 @@ async function getPortfolioTcgdexSets(): Promise<string[]> {
   return [...new Set(cleaned)]
 }
 
+// ── Auto-detect ALL TCGdex set IDs from tcg_cards (paginated cursor) ──
+// Returns the next batch of sets to sync, starting after the last processed set.
+async function getNextSetsBatch(lang: string, batchSize: number = 30): Promise<{ sets: string[]; cursor: string | null; total: number }> {
+  // 1. Get all distinct set_ids in tcg_cards for this lang
+  const langPrefix = lang.toLowerCase() + '-'
+  const { data: cards } = await supabase
+    .from('tcg_cards')
+    .select('set_id')
+    .eq('lang', lang.toUpperCase())
+  const allSets = [...new Set((cards || [])
+    .map((c: any) => c.set_id as string)
+    .filter(Boolean)
+    .map((s: string) => s.startsWith(langPrefix) ? s.slice(langPrefix.length) : s)
+    .map((s: string) => s.replace(/-shadowless(-ns)?|-1st/g, ''))
+  )].sort()
+
+  if (!allSets.length) return { sets: [], cursor: null, total: 0 }
+
+  // 2. Read last cursor from sync_logs
+  const { data: lastLog } = await supabase
+    .from('sync_logs')
+    .select('stats')
+    .eq('job_name', `prices_tcgdex_${lang}`)
+    .eq('status', 'success')
+    .order('finished_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const lastCursor = (lastLog?.stats as any)?.lastSet || null
+
+  // 3. Find next batch starting after lastCursor (or from start if cursor not found / cycle complete)
+  let startIdx = 0
+  if (lastCursor) {
+    const idx = allSets.indexOf(lastCursor)
+    startIdx = idx >= 0 ? idx + 1 : 0
+    if (startIdx >= allSets.length) startIdx = 0 // cycle back to start
+  }
+
+  const batch = allSets.slice(startIdx, startIdx + batchSize)
+  const newCursor = batch.length > 0 ? batch[batch.length - 1] : null
+  return { sets: batch, cursor: newCursor, total: allSets.length }
+}
+
 // Add Bearer auth check (CRON_SECRET) for protected GET trigger
 async function isAuthorizedCron(request: Request): Promise<boolean> {
   const cronSecret = process.env.CRON_SECRET
@@ -48,19 +90,20 @@ async function isAuthorizedCron(request: Request): Promise<boolean> {
   return auth === `Bearer ${cronSecret}`
 }
 
-// GET = cron entry point (auth required, auto-detects portfolio sets)
+// GET = cron entry point (auth required, paginated batch from tcg_cards)
 export async function GET(request: Request) {
   if (!(await isAuthorizedCron(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const { searchParams } = new URL(request.url)
   const lang = searchParams.get('lang') || 'en'
-  const sets = await getPortfolioTcgdexSets()
+  const batchSize = Number(searchParams.get('batch') || '30')
+  const { sets, cursor, total } = await getNextSetsBatch(lang, batchSize)
   if (!sets.length) {
-    return NextResponse.json({ skipped: true, reason: 'no portfolio sets' })
+    return NextResponse.json({ skipped: true, reason: 'no sets found in DB', total })
   }
-  // Reuse the same processing path as POST by calling syncTcgdex directly
-  return syncTcgdex(sets, lang, 'cron')
+  console.log(`[tcgdex/${lang}] batch ${sets.length}/${total} sets, cursor=${cursor}`)
+  return syncTcgdex(sets, lang, 'cron', cursor, total)
 }
 
 export async function POST(request: Request) {
@@ -72,7 +115,7 @@ export async function POST(request: Request) {
   return syncTcgdex(sets, lang)
 }
 
-async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'manual' = 'manual') {
+async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'manual' = 'manual', lastSet: string | null = null, totalSets: number = 0) {
   const log = await startSyncLog(`prices_tcgdex_${lang}`, triggeredBy)
   try {
   let totalUpdated = 0
@@ -260,9 +303,9 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
     }
   }
 
-  const stats = { totalCards, totalUpdated, errorCount: errors.length, lang }
+  const stats = { totalCards, totalUpdated, errorCount: errors.length, lang, lastSet, totalSets, currentBatch: sets.length, batchSets: sets }
   await finishSyncLog(log, errors.length > 0 ? 'partial' : 'success', stats, errors.length ? errors.slice(0,3).join(' | ') : null)
-  return NextResponse.json({ totalCards, totalUpdated, errors: errors.length ? errors : undefined })
+  return NextResponse.json({ totalCards, totalUpdated, lastSet, totalSets, currentBatch: sets.length, errors: errors.length ? errors : undefined })
   } catch (e: any) {
     await finishSyncLog(log, 'error', null, e?.message ?? String(e))
     throw e

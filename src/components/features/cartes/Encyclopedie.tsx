@@ -2,6 +2,7 @@
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW } from '@/lib/design/colors'
 import { supabase } from '@/lib/supabase'
@@ -277,87 +278,9 @@ export function Encyclopedie() {
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
-  const [priceMap, setPriceMap] = useState<Record<string, { top: number|null }>>({})
-  const [priceDetails, setPriceDetails] = useState<Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }>>({})
-  const [setMapping, setSetMapping] = useState<Record<string,string>>({})
-  useEffect(() => {
-    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).then(d=>setSetMapping(d)).catch(()=>{})
-  }, [])
-  useEffect(() => {
-    fetch('/api/prices').then(r=>r.json()).then(({ data }) => {
-      if(!data) return
-      const USD_EUR = 0.92
-      const map: Record<string, { top: number|null }> = {}
-      const details: Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }> = {}
-      data.forEach((p: any) => {
-        // Standard map by name
-        const nameKey = (p.card_name||'').toLowerCase()
-        if(!map[nameKey]||(p.top_price&&(!map[nameKey].top||p.top_price>map[nameKey].top!))) map[nameKey] = { top: p.top_price }
-        // Map by slug+variant+number
-        if (p.card_number && p.set_slug) {
-          const num = p.card_number.split('/')[0].replace(/^0+/,'') || '0'
-          const isPT = p.source !== 'ebay'
-          // Variant key
-          if (p.variant) {
-            const vk = p.set_slug + '|' + p.variant + '|' + num
-            if (!map[vk] || (isPT && (map[vk] as any)._src === 'ebay') || (isPT === ((map[vk] as any)._src !== 'ebay') && p.top_price > (map[vk].top||0))) {
-              map[vk] = { top: p.top_price, _src: isPT ? 'pt' : 'ebay' } as any
-            }
-          }
-          // Slug key
-          const sk = p.set_slug + '|' + num
-          if (!map[sk] || (isPT && (map[sk] as any)._src === 'ebay') || (isPT === ((map[sk] as any)._src !== 'ebay') && p.top_price > (map[sk].top||0))) {
-            map[sk] = { top: p.top_price, _src: isPT ? 'pt' : 'ebay' } as any
-          }
-          // Details by slug+variant+number
-          const variant = p.variant || ''
-          const dk = p.set_slug + '|' + variant + '|' + num
-          if (!details[dk]) details[dk] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
-          const d = details[dk]
-          if (p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
-          if (p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
-          if (p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
-          if (p.cardmarket_avg && (!d.cardmarket || p.cardmarket_avg > d.cardmarket)) d.cardmarket = Math.round(p.cardmarket_avg * 100) / 100
-          // Also index by slug without variant
-          const dk2 = p.set_slug + '||' + num
-          if (variant && dk2 !== dk) {
-            if (!details[dk2]) details[dk2] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
-            const d2 = details[dk2]
-            if (p.ebay_avg && (!d2.ebay || p.ebay_avg > d2.ebay)) d2.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
-            if (p.tcg_avg && (!d2.tcg || p.tcg_avg > d2.tcg)) d2.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
-            if (p.top_price && (!d2.poketrace || p.top_price > d2.poketrace)) d2.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
-          }
-          const srcPairs: [number, number][] = []
-          if (d.ebay) srcPairs.push([d.ebay, 0.4])
-          if (d.tcg) srcPairs.push([d.tcg, 0.3])
-          if (d.cardmarket) srcPairs.push([d.cardmarket, 0.3])
-          if (srcPairs.length > 0) {
-            const totalW = srcPairs.reduce((a, [,w]) => a + w, 0)
-            d.estimated = Math.round(srcPairs.reduce((a, [p,w]) => a + p * w, 0) / totalW * 100) / 100
-          } else if (d.poketrace) {
-            d.estimated = d.poketrace
-          }
-          // Update estimated for no-variant key too
-          const dk2e = p.set_slug + '||' + num
-          if (variant && details[dk2e]) {
-            const d2e = details[dk2e]
-            const sp2: [number,number][] = []
-            if (d2e.ebay) sp2.push([d2e.ebay, 0.4])
-            if (d2e.tcg) sp2.push([d2e.tcg, 0.3])
-            if (d2e.cardmarket) sp2.push([d2e.cardmarket, 0.3])
-            if (sp2.length > 0) {
-              const tw2 = sp2.reduce((a,[,w])=>a+w,0)
-              d2e.estimated = Math.round(sp2.reduce((a,[p,w])=>a+p*w,0) / tw2 * 100) / 100
-            } else if (d2e.poketrace) {
-              d2e.estimated = d2e.poketrace
-            }
-          }
-        }
-      })
-      setPriceMap(map)
-      setPriceDetails(details)
-    }).catch(()=>{})
-  }, [])
+  // ── Prix via hook centralisé useCardPrices ──
+  // Encyclopedie affiche toutes les cartes → setIds=null charge tous les prix
+  const { priceDetails, priceMap, setMapping } = useCardPrices(null, { byName: false })
   const getPrice = (card: { name: string; setName?: string; localId?: string; setId?: string }): number|null => {
     const USD_TO_EUR = 0.92
     const sid = (card as any).setId || ''

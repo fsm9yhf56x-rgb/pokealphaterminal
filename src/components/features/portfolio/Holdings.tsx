@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
@@ -10,6 +10,7 @@ import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
@@ -227,153 +228,79 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
-  // ── Prix depuis cache Supabase ──
-  const [priceMap, setPriceMap] = useState<Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }>>({})
-  const [priceDetails, setPriceDetails] = useState<Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }>>({})
-  const pricesFetched = useRef<string|false>(false)
-  const setMappingRef = useRef<Record<string,string>>({})
-  useEffect(() => {
-    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).then(d=>{ setMappingRef.current = d }).catch(()=>{})
-  }, [])
+  // ── Prix via hook centralisé useCardPrices ──
+  const portfolioSetIds = useMemo(
+    () => Array.from(new Set(portfolio.map(c => c.setId).filter(Boolean) as string[])),
+    [portfolio]
+  )
+  const {
+    priceDetails,
+    priceMap,
+    setMapping: hookSetMapping,
+    loading: pricesLoading,
+  } = useCardPrices(portfolioLoaded && portfolio.length > 0 ? portfolioSetIds : null, { byName: true })
+
+  // Keep a ref to the mapping for legacy synchronous lookups in getPrice()
+  const setMappingRef = useRef<Record<string, string>>({})
+  useEffect(() => { setMappingRef.current = hookSetMapping }, [hookSetMapping])
+
+  // Trigger event-driven refresh of stale Hot prices when portfolio changes
+  const refreshTriggered = useRef<string | false>(false)
   useEffect(() => {
     if (!portfolioLoaded || portfolio.length === 0) return
-    // Re-fetch si nouvelles cartes ajoutées
     const portfolioKey = portfolio.map(c => c.name).sort().join(',')
-    if (pricesFetched.current === portfolioKey) return
-    pricesFetched.current = portfolioKey as any
-    // Event-driven: check if prices need refresh, then fetch
-    const setIds = [...new Set(portfolio.map(c => c.setId).filter(Boolean))]
+    if (refreshTriggered.current === portfolioKey) return
+    refreshTriggered.current = portfolioKey as any
     fetch('/api/prices/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sets: setIds })
+      body: JSON.stringify({ sets: portfolioSetIds })
     }).catch(() => {})
+  }, [portfolioLoaded, portfolio.length, portfolioSetIds])
 
-    // Load set mapping then fetch prices for portfolio sets
-    fetch('/data/set-mapping-poketrace.json').then(r=>r.json()).catch(()=>({})).then((mapping: Record<string,string>) => {
-      setMappingRef.current = mapping
-      const cleanSet = (s: string) => s.replace(/-shadowless(-ns)?|-1st/g, '')
-      const slugs = [...new Set(setIds.map(sid => mapping[sid as string] || mapping[cleanSet(sid as string)] || '').filter(Boolean))]
-      return fetch('/api/prices?sets=' + slugs.join(',')).then(r=>r.json()).catch(()=>({data:null}))
-    }).then(({ data }: any) => {
-        if (!data) return
-        const map: Record<string, { ebay: number|null; tcg: number|null; top: number|null; tier: string }> = {}
-        data.forEach((p: any) => {
-          // Index by set_slug + variant + card_number
-          if (p.card_number && p.set_slug) {
-            const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
-            const isPT = p.source !== 'ebay'
-            if (p.variant) {
-              const varKey = p.set_slug + '|' + p.variant + '|' + num
-              const ex = map[varKey]
-              // PokeTrace prioritaire (ventes réelles) > eBay (listings actifs)
-              if (!ex || (isPT && (ex as any)._src === 'ebay') || (isPT === ((ex as any)._src !== 'ebay') && p.top_price && p.top_price > (ex.top||0))) {
-                map[varKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier, _src: isPT ? 'pt' : 'ebay' } as any
-              }
-            }
-            const slugKey = p.set_slug + '|' + num
-            const exS = map[slugKey]
-            if (!exS || (isPT && (exS as any)._src === 'ebay') || (isPT === ((exS as any)._src !== 'ebay') && p.top_price && p.top_price > (exS.top||0))) {
-              map[slugKey] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier, _src: isPT ? 'pt' : 'ebay' } as any
-            }
-          }
-          // Also index by card_name as fallback (use LOWEST price to be conservative)
-          const key = (p.card_name || '').toLowerCase()
-          if (!map[key] || (p.top_price && (!map[key].top || p.top_price < map[key].top))) {
-            map[key] = { ebay: p.ebay_avg, tcg: p.tcg_avg, top: p.top_price, tier: p.tier }
-          }
-        })
-        setPriceMap(map)
-        // Build per-source detail map for spotlight
-        const details: Record<string, { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null }> = {}
-        const USD_EUR = 0.92
-        data.forEach((p: any) => {
-          if (!p.card_number || !p.set_slug) return
-          const num = p.card_number.split('/')[0].replace(/^0+/, '') || '0'
-          const variant = p.variant || ''
-          const key = p.set_slug + '|' + variant + '|' + num
-          if (!details[key]) details[key] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
-          const d = details[key]
-          // Only store sold data from PokeTrace (not eBay Browse active listings)
-          const isPT = p.source !== 'ebay'
-          if (isPT && p.ebay_avg && (!d.ebay || p.ebay_avg > d.ebay)) d.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
-          if (isPT && p.tcg_avg && (!d.tcg || p.tcg_avg > d.tcg)) d.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
-          if (isPT && p.top_price && (!d.poketrace || p.top_price > d.poketrace)) d.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
-          if (p.cardmarket_avg && (!d.cardmarket || p.cardmarket_avg > d.cardmarket)) d.cardmarket = Math.round(p.cardmarket_avg * 100) / 100
-          // Also index by slug without variant (for Unlimited/Holofoil matching)
-          const dk2 = p.set_slug + '||' + num
-          if (variant && dk2 !== key) {
-            if (!details[dk2]) details[dk2] = { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
-            const d2 = details[dk2]
-            if (p.ebay_avg && (!d2.ebay || p.ebay_avg > d2.ebay)) d2.ebay = Math.round(p.ebay_avg * USD_EUR * 100) / 100
-            if (p.tcg_avg && (!d2.tcg || p.tcg_avg > d2.tcg)) d2.tcg = Math.round(p.tcg_avg * USD_EUR * 100) / 100
-            if (p.top_price && (!d2.poketrace || p.top_price > d2.poketrace)) d2.poketrace = Math.round(p.top_price * USD_EUR * 100) / 100
-          }
-          // Weighted average: eBay 40%, TCG 30%, Cardmarket 30% (when available)
-          const sources = [d.ebay, d.tcg, d.cardmarket].filter(Boolean) as number[]
-          if (sources.length > 0) {
-            const weights = [d.ebay ? 0.4 : 0, d.tcg ? 0.3 : 0, d.cardmarket ? 0.3 : 0].filter((_, i) => sources[i] !== undefined)
-            const totalW = weights.reduce((a, b) => a + b, 0) || 1
-            d.estimated = Math.round(sources.reduce((s, p, i) => s + p * (weights[i] || 0), 0) / totalW * 100) / 100
-          } else if (d.poketrace) {
-            d.estimated = d.poketrace
-          }
-          // Update estimated for no-variant key too
-          if (variant && details[dk2]) {
-            const d2e = details[dk2]
-            const sp2: [number,number][] = []
-            if (d2e.ebay) sp2.push([d2e.ebay, 0.4])
-            if (d2e.tcg) sp2.push([d2e.tcg, 0.3])
-            if (d2e.cardmarket) sp2.push([d2e.cardmarket, 0.3])
-            if (sp2.length > 0) {
-              const tw2 = sp2.reduce((a,[,w])=>a+w,0)
-              d2e.estimated = Math.round(sp2.reduce((a,[p,w])=>a+p*w,0) / tw2 * 100) / 100
-            } else if (d2e.poketrace) {
-              d2e.estimated = d2e.poketrace
-            }
-          }
-        })
-        setPriceDetails(details)
-        // Update curPrice on portfolio cards (USD → EUR conversion)
-        const USD_TO_EUR = 0.92
-        setPortfolio(prev => prev.map(c => {
-          const sid = c.setId || ''
-          const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-          const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : (sid.includes('-shadowless') && !sid.includes('-shadowless-ns')) ? 'Unlimited_Holofoil' : null
-          const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
-          const slugKey = slug + '|' + c.number
-          const nameKey = c.name.toLowerCase()
-          let priceUSD = (varKey && map[varKey]?.top) || map[slugKey]?.top || map[nameKey]?.top
-          // 1st Edition: use eBay if PokeTrace is lower than Shadowless, then apply floor
-          if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
-            const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
-            const shadowlessPrice = map[shadowlessKey]?.top
-            // Check if there's a better eBay price for 1st Edition
-            const ebayVarKey = slug + '|1st_Edition_Holofoil|' + c.number
-            const allPrices = [priceUSD, map[ebayVarKey]?.top, shadowlessPrice].filter(Boolean) as number[]
-            if (allPrices.length) priceUSD = Math.max(...allPrices)
-          }
-          // Use weighted average from priceDetails as the display price
-          const varH = varHint || ''
-          const detKey = slug + '|' + varH + '|' + c.number
-          const det = details[detKey]
-          let priceEUR: number | null = null
-          if (det?.estimated) {
-            priceEUR = det.estimated
-          } else if (priceUSD) {
-            priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
-          } else if (det) {
-            const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
-            if (srcs.length) priceEUR = Math.round(srcs.reduce((a,b)=>a+b,0) / srcs.length * 100) / 100
-          }
-          if (priceEUR) {
-            if (priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
-          }
-          return c
-        }))
-      })
-      .catch(() => {})
-  }, [portfolioLoaded, portfolio.length])
+  // Update curPrice on portfolio cards once prices are loaded
+  const curPriceApplied = useRef<string | false>(false)
+  useEffect(() => {
+    if (pricesLoading || Object.keys(priceMap).length === 0) return
+    const portfolioKey = portfolio.map(c => c.name).sort().join(',')
+    if (curPriceApplied.current === portfolioKey) return
+    curPriceApplied.current = portfolioKey as any
+
+    const USD_TO_EUR = 0.92
+    setPortfolio(prev => prev.map(c => {
+      const sid = c.setId || ''
+      const slug = hookSetMapping[sid] || hookSetMapping[sid.replace(/-shadowless(-ns)?|-1st/g, '')] || ''
+      const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns')
+        ? '1st_Edition_Holofoil'
+        : (sid.includes('-shadowless') && !sid.includes('-shadowless-ns')) ? 'Unlimited_Holofoil' : null
+      const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
+      const slugKey = slug + '|' + c.number
+      const nameKey = c.name.toLowerCase()
+      let priceUSD = (varKey && priceMap[varKey]?.top) || priceMap[slugKey]?.top || priceMap[nameKey]?.top
+      // 1st Edition: floor against Shadowless and check 1st-Ed eBay variant key
+      if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
+        const shadowlessKey = slug + '|Unlimited_Holofoil|' + c.number
+        const shadowlessPrice = priceMap[shadowlessKey]?.top
+        const ebayVarKey = slug + '|1st_Edition_Holofoil|' + c.number
+        const allPrices = [priceUSD, priceMap[ebayVarKey]?.top, shadowlessPrice].filter(Boolean) as number[]
+        if (allPrices.length) priceUSD = Math.max(...allPrices)
+      }
+      // Prefer weighted estimate from priceDetails when available
+      const detKey = slug + '|' + (varHint || '') + '|' + c.number
+      const det = priceDetails[detKey]
+      let priceEUR: number | null = null
+      if (det?.estimated) {
+        priceEUR = det.estimated
+      } else if (priceUSD) {
+        priceEUR = Math.round(priceUSD * USD_TO_EUR * 100) / 100
+      } else if (det) {
+        const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
+        if (srcs.length) priceEUR = Math.round((srcs.reduce((a, b) => a + b, 0) / srcs.length) * 100) / 100
+      }
+      if (priceEUR && priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
+      return c
+    }))
+  }, [pricesLoading, priceMap, priceDetails, portfolio.length])
 
   const getPrice = (card: { name: string; set: string; number: string; setId?: string }): number | null => {
     const USD_TO_EUR = 0.92

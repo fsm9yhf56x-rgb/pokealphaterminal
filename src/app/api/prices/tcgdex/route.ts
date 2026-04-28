@@ -99,22 +99,83 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
           const cardData = await cardR.json()
           const cm = cardData.pricing?.cardmarket
 
-          if (cm && (cm.avg || cm.trend)) {
+          if (cm && (cm.avg || cm.trend || cm['avg-holo'] || cm['trend-holo'])) {
             totalCards++
 
-            snapshots.push({
-              card_ref: `tcgdex-${slug}-${card.localId}`,
-              source: 'cardmarket',
-              variant: 'raw',
-              price_avg: cm.avg ?? null,
-              price_low: cm.low ?? null,
-              currency: 'EUR',
-              source_meta: {
-                card_name: cardData.name,
-                tcgdex_set_id: tcgdexSetId,
-                cardmarket_trend: cm.trend ?? null,
-              },
-            })
+            const cardRefBase = `tcgdex-${slug}-${card.localId}`
+            const baseMeta = {
+              card_name: cardData.name,
+              tcgdex_set_id: tcgdexSetId,
+              tcgdex_id_product: cm.idProduct ?? null,
+              lang,
+            }
+            const now = Date.now()
+
+            // ── RAW (non-holo unlimited) ──
+            if (cm.avg || cm.trend) {
+              const rawAvg = cm.avg ?? cm.trend ?? null
+              // Snapshot du jour
+              snapshots.push({
+                card_ref: cardRefBase,
+                source: 'cardmarket',
+                variant: 'raw',
+                price_avg: rawAvg,
+                price_low: cm.low ?? null,
+                currency: 'EUR',
+                source_meta: { ...baseMeta, cardmarket_trend: cm.trend ?? null, period_label: 'current' },
+              })
+              // Historique rétroactif (J-1, J-7, J-30) — synthetic flag
+              if (cm.avg1) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                price_avg: cm.avg1, period_days: 1, currency: 'EUR',
+                fetched_at: new Date(now - 1 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg1' },
+              })
+              if (cm.avg7) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                price_avg: cm.avg7, period_days: 7, currency: 'EUR',
+                fetched_at: new Date(now - 7 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg7' },
+              })
+              if (cm.avg30) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                price_avg: cm.avg30, period_days: 30, currency: 'EUR',
+                fetched_at: new Date(now - 30 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg30' },
+              })
+            }
+
+            // ── HOLO variant ──
+            const holoAvg = cm['avg-holo'] ?? cm['trend-holo'] ?? null
+            if (holoAvg) {
+              snapshots.push({
+                card_ref: cardRefBase,
+                source: 'cardmarket',
+                variant: 'holo',
+                price_avg: holoAvg,
+                price_low: cm['low-holo'] ?? null,
+                currency: 'EUR',
+                source_meta: { ...baseMeta, cardmarket_trend: cm['trend-holo'] ?? null, period_label: 'current' },
+              })
+              if (cm['avg1-holo']) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                price_avg: cm['avg1-holo'], period_days: 1, currency: 'EUR',
+                fetched_at: new Date(now - 1 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg1-holo' },
+              })
+              if (cm['avg7-holo']) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                price_avg: cm['avg7-holo'], period_days: 7, currency: 'EUR',
+                fetched_at: new Date(now - 7 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg7-holo' },
+              })
+              if (cm['avg30-holo']) snapshots.push({
+                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                price_avg: cm['avg30-holo'], period_days: 30, currency: 'EUR',
+                fetched_at: new Date(now - 30 * 24 * 60 * 60 * 1000),
+                source_meta: { ...baseMeta, synthetic: true, period_label: 'avg30-holo' },
+              })
+            }
             // Only update non-variant rows (TCGdex doesn't distinguish 1st Ed/Shadowless)
             // For shadowless/1st edition variants, Cardmarket is "Non disponible"
             const { data: allRows } = await supabase.from('_deprecated_prices')

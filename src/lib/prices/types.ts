@@ -24,6 +24,8 @@ export type PriceSource =
 
 export type PriceVariant =
   | 'raw'
+  | 'holo'
+  | 'reverse_holo'
   | 'psa10'
   | 'psa9'
   | 'psa8'

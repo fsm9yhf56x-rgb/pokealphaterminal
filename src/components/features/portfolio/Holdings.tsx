@@ -247,6 +247,19 @@ export function Holdings() {
   const setMappingRef = useRef<Record<string, string>>({})
   useEffect(() => { setMappingRef.current = hookSetMapping }, [hookSetMapping])
 
+  // Per-condition prices for the spotlight card (for auto-recompute curPrice)
+  // Note: relies on hookSetMapping (state from useCardPrices) for set slug resolution
+  const spotSetSlug = (() => {
+    if (!spotCard?.setId) return null
+    const sid = spotCard.setId
+    const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
+    return hookSetMapping[sid] || hookSetMapping[cleanSid] || null
+  })()
+  const _useCardConditionsParams: any = spotSetSlug && spotCard?.number
+    ? { setSlug: spotSetSlug, cardNumber: spotCard.number }
+    : null
+  const { conditions: spotConditions } = useCardConditions(_useCardConditionsParams)
+
   // Trigger event-driven refresh of stale Hot prices when portfolio changes
   const refreshTriggered = useRef<string | false>(false)
   useEffect(() => {
@@ -1627,9 +1640,28 @@ export function Holdings() {
                               <button
                                 key={cond}
                                 onClick={() => {
-                                  setPortfolio(prev => prev.map(c => c.id === spotCard.id ? { ...c, condition: cond } : c))
-                                  setSpotCard({ ...spotCard, condition: cond })
-                                  showToast(`${CONDITION_LABELS[cond]} - prix recalcule en arriere-plan`)
+                                  // Get the best price for this condition (TCG > eBay if both, else whichever exists)
+                                  const tcgPrice = spotConditions?.tcgplayer?.[cond]?.price_avg
+                                  const ebayPrice = spotConditions?.ebay?.[cond]?.price_avg
+                                  const tcgCcy = spotConditions?.tcgplayer?.[cond]?.currency || 'USD'
+                                  const ebayCcy = spotConditions?.ebay?.[cond]?.currency || 'USD'
+                                  const USD_TO_EUR = 0.92
+                                  let newPriceEur: number | null = null
+                                  if (tcgPrice != null) {
+                                    newPriceEur = tcgCcy === 'USD' ? tcgPrice * USD_TO_EUR : tcgPrice
+                                  } else if (ebayPrice != null) {
+                                    newPriceEur = ebayCcy === 'USD' ? ebayPrice * USD_TO_EUR : ebayPrice
+                                  }
+                                  const update = newPriceEur != null
+                                    ? { condition: cond, curPrice: Math.round(newPriceEur * 100) / 100 }
+                                    : { condition: cond }
+                                  setPortfolio(prev => prev.map(c => c.id === spotCard.id ? { ...c, ...update } : c))
+                                  setSpotCard({ ...spotCard, ...update })
+                                  if (newPriceEur != null) {
+                                    showToast(`${CONDITION_LABELS[cond]} · prix mis a jour : ${Math.round(newPriceEur)}€`)
+                                  } else {
+                                    showToast(`${CONDITION_LABELS[cond]} (pas de prix dispo pour cette condition)`)
+                                  }
                                 }}
                                 title={CONDITION_LABELS[cond]}
                                 style={{

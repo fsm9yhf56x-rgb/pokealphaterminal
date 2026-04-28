@@ -77,5 +77,53 @@ export function buildPoketraceSnapshots(
     });
   }
 
+  // Per-condition snapshots: 5 conditions × 2 sources = up to 10 extra snapshots per card
+  // (skipped silently when the source/condition has no data)
+  const CONDITIONS = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const;
+  for (const cond of CONDITIONS) {
+    const ebayCond = card.prices?.ebay?.[cond];
+    const tcgCond = card.prices?.tcgplayer?.[cond];
+    if (ebayCond?.avg) {
+      snaps.push({
+        card_ref: cardRef,
+        source: 'ebay',
+        variant: 'raw',
+        condition: cond,
+        price_avg: ebayCond.avg,
+        price_low: ebayCond.low ?? null,
+        price_high: ebayCond.high ?? null,
+        price_median: ebayCond.median7d ?? null,
+        nb_sales: ebayCond.saleCount ?? null,
+        currency: card.currency || 'USD',
+        source_meta: {
+          poketrace_id: card.id,
+          condition: cond,
+          ebay_avg7d: ebayCond.avg7d ?? null,
+          ebay_avg30d: ebayCond.avg30d ?? null,
+        },
+      });
+    }
+    if (tcgCond?.avg) {
+      snaps.push({
+        card_ref: cardRef,
+        source: 'tcgplayer' as any,
+        variant: 'raw',
+        condition: cond,
+        price_avg: tcgCond.avg,
+        price_low: tcgCond.low ?? null,
+        price_high: tcgCond.high ?? null,
+        price_median: tcgCond.median7d ?? null,
+        nb_sales: tcgCond.saleCount ?? null,
+        currency: card.currency || 'USD',
+        source_meta: {
+          poketrace_id: card.id,
+          condition: cond,
+          tcg_avg7d: tcgCond.avg7d ?? null,
+          tcg_avg30d: tcgCond.avg30d ?? null,
+        },
+      });
+    }
+  }
+
   return snaps;
 }

@@ -25,6 +25,7 @@ export async function writeSnapshots(snapshots: PriceSnapshot[]): Promise<void> 
     card_ref: s.card_ref,
     source: s.source,
     variant: s.variant,
+    condition: s.condition ?? null,
     price_avg: s.price_avg ?? null,
     price_low: s.price_low ?? null,
     price_high: s.price_high ?? null,
@@ -36,7 +37,9 @@ export async function writeSnapshots(snapshots: PriceSnapshot[]): Promise<void> 
     fetched_at: s.fetched_at?.toISOString() ?? new Date().toISOString(),
   }));
 
-  const { error } = await supabase.from('prices_snapshots').insert(rows);
+  // 'as any': la colonne 'condition' n'est pas encore reflétée dans les types
+  // Supabase générés. À régénérer avec: npx supabase gen types typescript
+  const { error } = await supabase.from('prices_snapshots').insert(rows as any);
   if (error) {
     throw new Error(`writeSnapshots failed: ${error.message}`);
   }

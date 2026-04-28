@@ -44,6 +44,14 @@ export type PriceVariant =
  * A single price data point for a card at a moment in time.
  * Maps directly to one row in `prices_snapshots`.
  */
+export type PriceCondition =
+  | 'NEAR_MINT'
+  | 'LIGHTLY_PLAYED'
+  | 'MODERATELY_PLAYED'
+  | 'HEAVILY_PLAYED'
+  | 'DAMAGED'
+  | 'POOR';
+
 export interface PriceSnapshot {
   /** Card identifier: e.g. "en-base1-4", "fr-base1-shadowless-4", "jp-20th-31651" */
   card_ref: string;
@@ -53,6 +61,8 @@ export interface PriceSnapshot {
 
   /** Variant of the card (raw, graded, 1st ed, etc.) */
   variant: PriceVariant;
+  /** Card condition (NEAR_MINT, LIGHTLY_PLAYED, MODERATELY_PLAYED, HEAVILY_PLAYED, DAMAGED). Optional — defaults to null. */
+  condition?: PriceCondition | null;
 
   // Prices — optional, each source reports what it can (null allowed for DB-compat)
   price_avg?: number | null;

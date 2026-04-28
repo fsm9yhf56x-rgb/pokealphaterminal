@@ -129,11 +129,12 @@ export async function POST(request: Request) {
             source: 'poketrace',
         }, { onConflict: 'poketrace_id,condition' })
 
-        // Dual-write: poketrace raw snapshot
+        // Dual-write: poketrace consolidated snapshot (NEAR_MINT, backwards-compat)
         snapshots.push({
           card_ref: card.id,
           source: 'poketrace',
           variant: 'raw',
+          condition: 'NEAR_MINT',
           price_avg: topPrice ?? null,
           price_low: ebay?.low ?? tcg?.low ?? null,
           price_high: ebay?.high ?? tcg?.high ?? null,
@@ -147,6 +148,43 @@ export async function POST(request: Request) {
             tcg_avg: tcg?.avg ?? null,
           },
         })
+
+        // Per-condition snapshots: NEAR_MINT/LIGHTLY_PLAYED/MODERATELY_PLAYED/HEAVILY_PLAYED/DAMAGED × eBay/TCGplayer
+        const CONDITIONS = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const
+        for (const cond of CONDITIONS) {
+          const ebayCond = card.prices?.ebay?.[cond]
+          const tcgCond = card.prices?.tcgplayer?.[cond]
+          if (ebayCond?.avg) {
+            snapshots.push({
+              card_ref: card.id,
+              source: 'ebay',
+              variant: 'raw',
+              condition: cond,
+              price_avg: ebayCond.avg,
+              price_low: ebayCond.low ?? null,
+              price_high: ebayCond.high ?? null,
+              price_median: ebayCond.median7d ?? null,
+              nb_sales: ebayCond.saleCount ?? null,
+              currency: card.currency || 'USD',
+              source_meta: { poketrace_id: card.id, condition: cond, ebay: true },
+            })
+          }
+          if (tcgCond?.avg) {
+            snapshots.push({
+              card_ref: card.id,
+              source: 'tcgplayer' as any,
+              variant: 'raw',
+              condition: cond,
+              price_avg: tcgCond.avg,
+              price_low: tcgCond.low ?? null,
+              price_high: tcgCond.high ?? null,
+              price_median: tcgCond.median7d ?? null,
+              nb_sales: tcgCond.saleCount ?? null,
+              currency: card.currency || 'USD',
+              source_meta: { poketrace_id: card.id, condition: cond, tcgplayer: true },
+            })
+          }
+        }
 
         // Dual-write: PSA10 snapshot if available
         if (psa10?.avg) {

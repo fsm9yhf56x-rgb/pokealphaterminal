@@ -109,7 +109,7 @@ async function cachedFetch(
  * - Recomputes stats.current/ath/atl from the merged consolidated.
  */
 function mergeResponses(responses: PriceHistoryResponse[]): PriceHistoryResponse {
-  const valid = responses.filter(r => r && !r.insufficient_data)
+  const valid = responses.filter(r => r != null)
   if (valid.length === 0) {
     // All insufficient → return the first (which has insufficient_data=true)
     return responses[0]
@@ -182,7 +182,7 @@ function mergeResponses(responses: PriceHistoryResponse[]): PriceHistoryResponse
     series,
     consolidated,
     stats,
-    insufficient_data: false,
+    insufficient_data: consolidated.length < (valid[0].min_points_required ?? 5),
     min_points_required: valid[0].min_points_required,
     min_days_span_required: valid[0].min_days_span_required,
     raw_count,

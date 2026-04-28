@@ -12,17 +12,68 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID || ''
 const supabase = getAdminClient()
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
+// ── eBay mode flags ─────────────────────────────────────
+// EBAY_USE_MARKETPLACE_INSIGHTS=true switches to sold listings (gated API)
+const USE_MI = process.env.EBAY_USE_MARKETPLACE_INSIGHTS === 'true'
+
+// Scope: Browse uses public api_scope; MI requires buy.marketplace.insights
+const EBAY_SCOPE = USE_MI
+  ? 'https://api.ebay.com/oauth/api_scope/buy.marketplace.insights'
+  : 'https://api.ebay.com/oauth/api_scope'
+
 async function getEbayToken(): Promise<string | null> {
   try {
     const auth = Buffer.from(EBAY_APP_ID + ':' + EBAY_CERT_ID).toString('base64')
     const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + auth },
-      body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope'
+      body: `grant_type=client_credentials&scope=${encodeURIComponent(EBAY_SCOPE)}`
     })
     const d = await r.json()
-    return d.access_token || null
-  } catch { return null }
+    if (!d.access_token) {
+      console.warn('[ebay] OAuth failed:', d.error_description || d.error || JSON.stringify(d))
+      return null
+    }
+    return d.access_token
+  } catch (e: any) {
+    console.warn('[ebay] getEbayToken crashed:', e?.message)
+    return null
+  }
+}
+
+// ── eBay search dispatchers ─────────────────────────────
+// In Browse mode: uses /buy/browse/v1/item_summary/search (active listings)
+// In MI mode: uses /buy/marketplace_insights/v1_beta/item_sales/search (sold listings 90d)
+async function searchActiveListings(token: string, q: string, minPrice: number) {
+  const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&category_ids=183454&filter=price:[${minPrice}..],conditionIds:{1000|1500|2000|2500|3000}&limit=20&sort=price`
+  const r = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + token, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
+  })
+  const d = await r.json()
+  return { items: d.itemSummaries || [], raw: d }
+}
+
+async function searchSoldListings(token: string, q: string, minPrice: number) {
+  // Marketplace Insights returns sold listings from the last 90 days
+  // Endpoint: GET /buy/marketplace_insights/v1_beta/item_sales/search
+  const url = `https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search?q=${encodeURIComponent(q)}&category_ids=183454&filter=price:[${minPrice}..],conditionIds:{1000|1500|2000|2500|3000}&limit=50`
+  const r = await fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + token, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
+  })
+  const d = await r.json()
+  // MI response shape uses `itemSales` (not `itemSummaries`) and each entry has lastSoldDate + lastSoldPrice
+  // Normalize to the same shape as Browse so extractPrice() can consume both
+  const items = (d.itemSales || []).map((it: any) => ({
+    price: it.lastSoldPrice || it.price,
+    lastSoldDate: it.lastSoldDate,
+    title: it.title,
+    soldQuantity: it.soldQuantity ?? 1,
+  }))
+  return { items, raw: d }
+}
+
+async function ebaySearch(token: string, q: string, minPrice: number) {
+  return USE_MI ? searchSoldListings(token, q, minPrice) : searchActiveListings(token, q, minPrice)
 }
 
 function buildQuery(cardName: string, setName: string, number?: string, edition?: string): string {
@@ -78,12 +129,7 @@ export async function POST(request: Request) {
     const minPrice = getMinPrice(card.edition)
 
     try {
-      const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&category_ids=183454&filter=price:[${minPrice}..],conditionIds:{1000|1500|2000|2500|3000}&limit=20&sort=price`
-      const r = await fetch(url, {
-        headers: { 'Authorization': 'Bearer ' + token, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }
-      })
-      const d = await r.json()
-      const items = d.itemSummaries || []
+      const { items } = await ebaySearch(token, q, minPrice)
       const price = extractPrice(items, minPrice)
 
       if (price.avg) {
@@ -125,6 +171,7 @@ export async function POST(request: Request) {
             card_name: card.name,
             listings_count: items.length,
             ebay_query: q,
+            ebay_mode: USE_MI ? 'sold' : 'active',
           },
         })
 

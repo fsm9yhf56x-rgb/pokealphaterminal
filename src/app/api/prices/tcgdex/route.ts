@@ -40,25 +40,43 @@ async function getPortfolioTcgdexSets(): Promise<string[]> {
   return [...new Set(cleaned)]
 }
 
-// ── Auto-detect ALL TCGdex set IDs from tcg_cards (paginated cursor) ──
-// Returns the next batch of sets to sync, starting after the last processed set.
+// ── Auto-detect TCGdex set IDs from tcg_sets (paginated cursor) ──
+// Sources from tcg_sets (848 entries) and filters out:
+//   - aopkm-* (Pokemon Card Asia, JP-only, not on TCGdex EN/FR)
+//   - en-2XXX / fr-2XXX (McDonald's collections — fragile data)
+//   - en-A*, en-B*, fr-A*, fr-B* (Pokemon TCG Pocket, different from physical TCG)
+// Strips lang prefixes (en-, fr-) to get true TCGdex IDs.
+// TODO: replace this with a proper canonical `sets` table (see backlog: SCHEMA OVERHAUL).
 async function getNextSetsBatch(lang: string, batchSize: number = 30): Promise<{ sets: string[]; cursor: string | null; total: number }> {
-  // 1. Get all distinct set_ids in tcg_cards for this lang
+  // 1. Get all set IDs from tcg_sets (the 848-entry registry)
+  const { data: setsRaw } = await supabase.from('tcg_sets').select('id')
+  const allRaw = (setsRaw || []).map((r: any) => r.id as string).filter(Boolean)
+
+  // 2. Filter out JP-only / Pocket / McDonalds
+  const filtered = allRaw.filter((id) => {
+    if (id.startsWith('aopkm-')) return false                    // Pokemon Card Asia (JP-only)
+    if (/^(en|fr)-2\d{3}/.test(id)) return false                 // McDonald's collections
+    if (/^(en|fr)-[AB]\d/.test(id)) return false                 // Pokemon TCG Pocket
+    return true
+  })
+
+  // 3. Strip lang prefix to get TCGdex-compatible IDs (e.g. "en-base1" -> "base1")
   const langPrefix = lang.toLowerCase() + '-'
-  const { data: cards } = await supabase
-    .from('tcg_cards')
-    .select('set_id')
-    .eq('lang', lang.toUpperCase())
-  const allSets = [...new Set((cards || [])
-    .map((c: any) => c.set_id as string)
-    .filter(Boolean)
-    .map((s: string) => s.startsWith(langPrefix) ? s.slice(langPrefix.length) : s)
-    .map((s: string) => s.replace(/-shadowless(-ns)?|-1st/g, ''))
+  const stripped = filtered.map((id) => {
+    if (id.startsWith('en-')) return id.slice(3)
+    if (id.startsWith('fr-')) return id.slice(3)
+    if (id.startsWith('jp-')) return id.slice(3)
+    return id
+  })
+
+  // 4. Deduplicate + clean variant suffixes + sort
+  const allSets = [...new Set(
+    stripped.map((s) => s.replace(/-shadowless(-ns)?|-1st/g, ''))
   )].sort()
 
   if (!allSets.length) return { sets: [], cursor: null, total: 0 }
 
-  // 2. Read last cursor from sync_logs
+  // 5. Read last cursor from sync_logs
   const { data: lastLog } = await supabase
     .from('sync_logs')
     .select('stats')
@@ -69,7 +87,7 @@ async function getNextSetsBatch(lang: string, batchSize: number = 30): Promise<{
     .maybeSingle()
   const lastCursor = (lastLog?.stats as any)?.lastSet || null
 
-  // 3. Find next batch starting after lastCursor (or from start if cursor not found / cycle complete)
+  // 6. Find next batch starting after lastCursor (or from start if cursor not found / cycle complete)
   let startIdx = 0
   if (lastCursor) {
     const idx = allSets.indexOf(lastCursor)

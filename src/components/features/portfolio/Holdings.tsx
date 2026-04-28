@@ -1640,15 +1640,6 @@ export function Holdings() {
                               <button
                                 key={cond}
                                 onClick={() => {
-                                  // DEBUG (temporaire) — voir l'etat reel des donnees au moment du click
-                                  console.log('[CONDITION_CLICK]', {
-                                    cond,
-                                    spotSetSlug,
-                                    spotCardNumber: spotCard.number,
-                                    hasSpotConditions: !!spotConditions,
-                                    spotConditions,
-                                    hookSetMappingKeys: Object.keys(hookSetMapping || {}).length,
-                                  })
                                   // Get the best price for this condition (TCG > eBay if both, else whichever exists)
                                   const tcgPrice = spotConditions?.tcgplayer?.[cond]?.price_avg
                                   const ebayPrice = spotConditions?.ebay?.[cond]?.price_avg

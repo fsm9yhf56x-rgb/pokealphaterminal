@@ -10,6 +10,7 @@ import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW, PERF } from '@/lib/design/colors'
@@ -1591,6 +1592,20 @@ export function Holdings() {
                         />
                       </div>
                     ) : null}
+                    {(() => {
+                      const sid = spotCard.setId || ''
+                      const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
+                      const slug = setMappingRef.current[sid] || setMappingRef.current[cleanSid] || ''
+                      return slug && spotCard.number ? (
+                        <div style={{ marginBottom:'14px' }}>
+                          <ConditionPriceTable
+                            setSlug={slug}
+                            cardNumber={spotCard.number}
+                            hideWhenEmpty
+                          />
+                        </div>
+                      ) : null
+                    })()}
                     {spotCard.setId && spotCard.number ? (
                       <div style={{ marginBottom:'14px' }}>
                         <PsaPopBlock

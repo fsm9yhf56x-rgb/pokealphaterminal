@@ -2,6 +2,7 @@
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW } from '@/lib/design/colors'
@@ -1604,6 +1605,20 @@ export function Encyclopedie() {
                           />
                         </div>
                       ) : null}
+                      {(() => {
+                        const sid = selCard?.setId || ''
+                        const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
+                        const slug = setMapping[sid] || setMapping[cleanSid] || ''
+                        return slug && selCard?.localId ? (
+                          <div style={{ marginBottom:'12px' }}>
+                            <ConditionPriceTable
+                              setSlug={slug}
+                              cardNumber={selCard.localId}
+                              hideWhenEmpty
+                            />
+                          </div>
+                        ) : null
+                      })()}
                       {selCard?.setId && selCard?.localId ? (
                         <div style={{ marginBottom:'12px' }}>
                           <PsaPopBlock

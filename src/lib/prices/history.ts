@@ -237,7 +237,10 @@ export async function buildPriceHistory(
 
   const days = TIMEFRAME_DAYS[timeframe];
   if (days !== null) {
-    const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
+    // +1 day buffer to include retroactive synthetic snapshots that are
+    // antedated to exactly N days ago (e.g. cardmarket avg30 → fetched_at = now - 30d).
+    // Without buffer, they'd fall just below the threshold and be excluded.
+    const since = new Date(Date.now() - (days + 1) * 24 * 3600 * 1000).toISOString();
     query = query.gte('fetched_at', since);
   }
 

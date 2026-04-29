@@ -12,6 +12,8 @@ import { useAuth } from '@/lib/useAuth'
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
+import { groupSetsByEra, filterCoreSets } from '@/lib/setGroups'
+import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 
 interface PortfolioCard {
@@ -1054,7 +1056,21 @@ export function Encyclopedie() {
             <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} disabled={loading}
               style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
               <option value="all">Toutes les séries{sets.length>0?` (${sets.length})`:''}</option>
-              {sets.map(s=><option key={s.id} value={s.id}>{s.name} ({s.count})</option>)}
+              {(() => {
+                // Build TCGSet[] from filtered sets (with count metadata preserved)
+                const tcgSets: TCGSet[] = sets.map(s => ({ id: s.id, name: s.name, lang: 'EN' as any, total: (s as any).count } as TCGSet))
+                const groups = groupSetsByEra(filterCoreSets(tcgSets))
+                return groups.map(g => (
+                  <optgroup key={g.label} label={g.label}>
+                    {g.sets.map(set => {
+                      const orig = sets.find(o => o.id === set.id)
+                      return orig ? (
+                        <option key={orig.id} value={orig.id}>{orig.name} ({orig.count})</option>
+                      ) : null
+                    })}
+                  </optgroup>
+                ))
+              })()}
             </select>
 
             <select className="fsel" value={filRarity} onChange={e=>{setFilRarity(e.target.value);setPage(0)}}

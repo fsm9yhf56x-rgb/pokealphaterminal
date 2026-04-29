@@ -1856,11 +1856,18 @@ export function Holdings() {
                     className={addForm.set?'req-field-ok':'req-field'}
                     style={{ width:'100%', appearance:'none' as const, background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 36px 10px 12px', color:addForm.set?'#1D1D1F':'#AEAEB2', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
-                    {liveSets.map(s=>(
-                      <option key={s.id} value={s.id} style={{background:'#fff',color:'#1D1D1F'}}>
-                        {s.name}{addForm.lang==='JP'&&frSetsMap[s.id]?' — '+frSetsMap[s.id]:''}{s.total?' ('+s.total+')':''}
-                      </option>
-                    ))}
+                    {(() => {
+                      const groups = groupSetsByEra(filterCoreSets(liveSets))
+                      return groups.map(g => (
+                        <optgroup key={g.label} label={g.label}>
+                          {g.sets.map(s => (
+                            <option key={s.id} value={s.id} style={{background:'#fff',color:'#1D1D1F'}}>
+                              {s.name}{addForm.lang==='JP'&&frSetsMap[s.id]?' — '+frSetsMap[s.id]:''}{s.total?' ('+s.total+')':''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                    })()}
                   </select>
                   <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg></div>
                 </div>

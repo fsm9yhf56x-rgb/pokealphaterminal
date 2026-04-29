@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
+import { groupSetsByEra, filterCoreSets } from '@/lib/setGroups'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
@@ -3015,9 +3016,18 @@ export function Holdings() {
               }}
                 style={{ width:'100%',appearance:'none' as const,background:'#F5F5F7',borderRadius:'10px',border:'1px solid #E5E5EA',padding:'10px 36px 10px 12px',color:addSetId?'#1D1D1F':'#AEAEB2',fontSize:'13px',fontFamily:'var(--font-display)',outline:'none',cursor:'pointer' }}>
                 <option value=''>Sélectionner une série...</option>
-                {addSetSets.map(ls=>(
-                  <option key={ls.id} value={ls.id} style={{background:'#fff',color:'#1D1D1F'}}>{ls.name}{ls.total?' ('+ls.total+')':''}</option>
-                ))}
+                {(() => {
+                  const groups = groupSetsByEra(filterCoreSets(addSetSets))
+                  return groups.map(g => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.sets.map(ls => (
+                        <option key={ls.id} value={ls.id} style={{background:'#fff',color:'#1D1D1F'}}>
+                          {ls.name}{ls.total ? ' (' + ls.total + ')' : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))
+                })()}
               </select>
             </div>
             {addSetLoading&&(

@@ -1,0 +1,118 @@
+/**
+ * Set grouping utility for organized dropdowns.
+ *
+ * Groups TCG sets by era (Wizards/Classic, Neo, e-card, EX, DP/Platinum, BW, XY, SM, SWSH, SV, etc.)
+ * and orders sets within each group with their variants (1st Edition, Shadowless) clustered
+ * right after the parent set.
+ *
+ * Use case: <select> dropdowns with <optgroup> for "Add a series" / "Add a card"
+ * forms in Holdings, Encyclopedie, etc.
+ */
+
+import type { TCGSet } from './tcgApi'
+
+// Era detection: maps a set ID prefix or pattern to a human-readable era label
+const ERAS: Array<{ label: string; matcher: (id: string) => boolean; order: number }> = [
+  { label: 'Classic (Wizards)', matcher: (id) => /^(base[1-5]|basep|jumbo|np)/.test(id), order: 1 },
+  { label: 'Gym (Wizards)', matcher: (id) => /^gym[12]/.test(id), order: 2 },
+  { label: 'Neo (Wizards)', matcher: (id) => /^neo[1-4]/.test(id), order: 3 },
+  { label: 'Legendary Collection', matcher: (id) => /^lc/.test(id), order: 4 },
+  { label: 'e-Card (Wizards)', matcher: (id) => /^ecard|^pop[1-2]/.test(id), order: 5 },
+  { label: 'EX', matcher: (id) => /^(ex[0-9]+|exu|exf|exr|tk-ex|pop[3-5])/.test(id), order: 6 },
+  { label: 'Diamond & Pearl / Platinum', matcher: (id) => /^(dp|pl|tk-dp|pop[6-9])/.test(id), order: 7 },
+  { label: 'HeartGold SoulSilver', matcher: (id) => /^(hgss|tk-hs|col1)/.test(id), order: 8 },
+  { label: 'Black & White', matcher: (id) => /^(bw|tk-bw|dv1|2011bw|2012bw|2013bw)/.test(id), order: 9 },
+  { label: 'XY', matcher: (id) => /^(xy|tk-xy|g1|2014xy|2015xy|2016xy|rc|dc1|wp)/.test(id), order: 10 },
+  { label: 'Sun & Moon', matcher: (id) => /^(sm|tk-sm|2017sm|2018sm|2019sm|sma|det1)/.test(id), order: 11 },
+  { label: 'Sword & Shield', matcher: (id) => /^(swsh|cel25|2021swsh|2022swsh)/.test(id), order: 12 },
+  { label: 'Scarlet & Violet', matcher: (id) => /^(sv|svp|2023sv|2024sv|sve)/.test(id), order: 13 },
+  { label: 'Mega Evolution', matcher: (id) => /^(me|mee|mep|B[12])/.test(id), order: 14 },
+  { label: 'Pokemon TCG Pocket', matcher: (id) => /^(A[0-9]|P-A|B[0-9])/.test(id), order: 15 },
+]
+
+/** Detect era for a given set ID. Variants (-1st, -shadowless) inherit parent era. */
+function detectEra(setId: string): { label: string; order: number } {
+  const cleanId = setId.replace(/-shadowless(-ns)?|-1st/g, '')
+  for (const era of ERAS) {
+    if (era.matcher(cleanId)) return { label: era.label, order: era.order }
+  }
+  return { label: 'Autres', order: 99 }
+}
+
+/** Get the parent set ID of a variant, or the ID itself if not a variant */
+function parentId(setId: string): string {
+  return setId.replace(/-shadowless(-ns)?|-1st/g, '')
+}
+
+/** Variant priority within a set group: parent → 1st Ed → Shadowless → Shadowless 1st Ed */
+function variantOrder(setId: string): number {
+  if (setId.endsWith('-shadowless-ns')) return 3
+  if (setId.endsWith('-shadowless')) return 2
+  if (setId.endsWith('-1st')) return 1
+  return 0 // parent (Unlimited)
+}
+
+export interface SetGroup {
+  label: string
+  order: number
+  sets: TCGSet[]
+}
+
+/**
+ * Group sets by era, with variants clustered next to their parent.
+ *
+ * Example output structure:
+ *   [
+ *     { label: 'Classic (Wizards)', sets: [base1, base1-1st, base1-shadowless, base2, base2-1st, ...] },
+ *     { label: 'Neo (Wizards)', sets: [neo1, neo1-1st, neo2, neo2-1st, ...] },
+ *     ...
+ *   ]
+ */
+export function groupSetsByEra(sets: TCGSet[]): SetGroup[] {
+  // Step 1: assign era to each set
+  const annotated = sets.map(s => ({
+    set: s,
+    era: detectEra(s.id),
+    parent: parentId(s.id),
+    variantOrder: variantOrder(s.id),
+  }))
+
+  // Step 2: bucket by era
+  const buckets = new Map<string, { order: number; items: typeof annotated }>()
+  for (const item of annotated) {
+    const key = item.era.label
+    if (!buckets.has(key)) {
+      buckets.set(key, { order: item.era.order, items: [] })
+    }
+    buckets.get(key)!.items.push(item)
+  }
+
+  // Step 3: within each bucket, sort by parent ID then by variant order
+  const groups: SetGroup[] = []
+  for (const [label, { order, items }] of buckets.entries()) {
+    items.sort((a, b) => {
+      if (a.parent !== b.parent) return a.parent.localeCompare(b.parent)
+      return a.variantOrder - b.variantOrder
+    })
+    groups.push({ label, order, sets: items.map(i => i.set) })
+  }
+
+  // Step 4: order groups by era order
+  groups.sort((a, b) => a.order - b.order)
+  return groups
+}
+
+/**
+ * Convenience: filter to only "core" sets (skip Trainer Kits, Promo, McDonalds, Jumbo, etc.)
+ * Used when we want a cleaner dropdown with only mainline expansions.
+ */
+export function filterCoreSets(sets: TCGSet[]): TCGSet[] {
+  return sets.filter(s => {
+    const id = s.id
+    if (/^tk-/.test(id)) return false              // Trainer kits
+    if (/^[0-9]+(sm|bw|xy|swsh|sv)/.test(id)) return false // McDonalds (2018sm, 2021swsh, etc.)
+    if (/^(jumbo|wp|np|mep|svp|smp|swshp|xyp|bwp|hgssp|dpp|basep|bwd|bwf|bwt|bwm|bws|bwo|bwh|smr|swshs|svm|exf|exr)$/.test(id)) return false
+    if (id.startsWith('aopkm')) return false        // Pokemon TCG Pocket (filtered earlier in pipeline)
+    return true
+  })
+}

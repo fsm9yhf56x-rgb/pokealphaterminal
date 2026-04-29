@@ -219,6 +219,119 @@ export const JP_SET_TRANSLATIONS: Record<string, string> = {
   'CS2b': 'Triplet Beat [Concept 2B]',
   'CS2.5': 'Triplet Beat [Concept 2.5]',
   'CS3.5': 'Triplet Beat [Concept 3.5]',
+
+  // ───────── SM Sun & Moon Era (Japanese sets) ─────────
+  // SM era JP : nombreux sets dont certains sont fusionnés en EN
+  'SM-P': 'Pikachu and New Friends Promo',
+  'SMP': 'SM Black Star Promos (JP)',
+  'SM1+': 'Sun & Moon Plus (Starter)',
+  'SM1S': 'Sun & Moon (Sun)',
+  'SM1M': 'Sun & Moon (Moon)',
+  'SM2+': 'Strength Expansion Pack',
+  'SM2K': 'Alolan Rays of Sun',
+  'SM2L': 'Alolan Moonlit Pursuit',
+  'SM3': 'Burning Shadows (JP: To Have Seen the Battle Rainbow)',
+  'SM3+': 'Awakened Heroes',
+  'SM3H': 'Light of Devourer',
+  'SM3N': 'Darkness That Consumes Light',
+  'SM4+': 'GX Battle Boost',
+  'SM4S': 'Awakened Heroes (Sun)',
+  'SM4A': 'Ultradimensional Beasts',
+  'SM5+': 'Ultra Sun (JP)',
+  'SM5S': 'Ultra Sun',
+  'SM5M': 'Ultra Moon',
+  'SM6': 'Forbidden Light',
+  'SM6+': 'Champion Road',
+  'SM6a': 'Dragon Storm',
+  'SM6b': 'Champion Road [b]',
+  'SM7': 'Thunderclap Spark',
+  'SM7a': 'Sky-Splitting Charisma',
+  'SM7b': 'Fairy Rise',
+  'SM8': 'Super-Burst Impact',
+  'SM8a': 'Dark Order',
+  'SM8b': 'GX Ultra Shiny',
+  'SM9': 'Tag Bolt',
+  'SM9a': 'Night Unison',
+  'SM9b': 'Full Metal Wall',
+  'SM10': 'Double Blaze',
+  'SM10a': 'GG End',
+  'SM10b': 'Sky Legend',
+  'SM11': 'Miracle Twin',
+  'SM11a': 'Remix Bout',
+  'SM11b': 'Dream League',
+  'SM12': 'Alter Genesis',
+  'SM12a': 'TAG TEAM GX All Stars',
+  'SMa': 'Detective Pikachu',                  // 名探偵ピカチュウ
+
+  // ───────── Sa (SM-Era Special Boxes / Concept Packs JP-only) ─────────
+  'Sa1': 'GX Starter Decks',
+
+  // ───────── S Sword & Shield Era (Japanese sets) ─────────
+  'S-P': 'SWSH Black Star Promos (JP)',
+  'S1H': 'Shield',                              // シールド (Starter Set)
+  'S1W': 'Sword',                               // ソード (Starter Set)
+  'S1a': 'VMAX Rising',                         // → "Vivid Voltage" partial
+  'S2': 'Rebellion Crash',                      // → "Rebel Clash" EN
+  'S2a': 'Explosive Walker',                    // → "Champion's Path" partial
+  'S3': 'Infinity Zone',                        // → "Vivid Voltage" partial
+  'S3a': 'Legendary Heartbeat',                 // → "Champion's Path" partial
+  'S4': 'Astonishing Volt Tackle',              // → "Battle Styles" partial
+  'S4a': 'Shiny Star V',                        // → "Shining Fates"
+  'S5I': 'Single Strike Master',                // → "Battle Styles" EN
+  'S5R': 'Rapid Strike Master',                 // → "Battle Styles" EN
+  'S5a': 'Matchless Fighters',                  // → "Battle Styles" partial
+  'S6H': 'Silver Lance',                        // → "Chilling Reign" partial
+  'S6K': 'Jet-Black Geist',                     // → "Chilling Reign" partial
+  'S6a': 'Eevee Heroes',                        // → "Evolving Skies" partial
+  'S7D': 'Skyscraping Perfect',                 // → "Evolving Skies" partial
+  'S7R': 'Blue Sky Stream',                     // → "Evolving Skies" partial
+  'S8': 'Fusion Arts',                          // → "Fusion Strike" EN
+  'S8a': '25th Anniversary Collection',         // → "Celebrations" EN
+  'S8b': 'VMAX Climax',                         // → "Brilliant Stars" partial
+  'S9': 'Star Birth',                           // → "Brilliant Stars" partial
+  'S9a': 'Battle Region',                       // → "Astral Radiance" partial
+  'S10D': 'Time Gazer',                         // → "Astral Radiance" partial
+  'S10P': 'Space Juggler',                      // → "Astral Radiance" partial
+  'S10a': 'Dark Phantasma',                     // → "Lost Origin" partial
+  'S10b': 'Pokémon GO',
+  'S11': 'Lost Abyss',                          // → "Lost Origin" EN partial
+  'S11a': 'Incandescent Arcana',                // → "Lost Origin" partial
+  'S12': 'Paradigm Trigger',                    // → "Silver Tempest" partial
+  'S12a': 'VSTAR Universe',                     // → "Crown Zenith" partial
+
+  // ───────── SV Scarlet & Violet Era (Japanese sets) ─────────
+  'SV-P': 'Scarlet & Violet Promos (JP)',
+  'SV1S': 'Scarlet ex',                         // → "Scarlet & Violet" Base EN partial
+  'SV1V': 'Violet ex',                          // → "Scarlet & Violet" Base EN partial
+  'SV1a': 'Triplet Beat',                       // → "Paldea Evolved" partial
+  'SV2P': 'Snow Hazard',                        // → "Obsidian Flames" partial
+  'SV2D': 'Clay Burst',                         // → "Obsidian Flames" partial
+  'SV2a': 'Pokemon Card 151',                   // → "151" EN
+  'SV3': 'Ruler of the Black Flame',            // → "Obsidian Flames" EN partial
+  'SV3a': 'Raging Surf',                        // → "Paradox Rift" partial
+  'SV4K': 'Ancient Roar',                       // → "Paradox Rift" partial
+  'SV4M': 'Future Flash',                       // → "Paradox Rift" partial
+  'SV4a': 'Shiny Treasure ex',                  // → "Paldean Fates" EN
+  'SV5K': 'Wild Force',                         // → "Temporal Forces" partial
+  'SV5M': 'Cyber Judge',                        // → "Temporal Forces" partial
+  'SV5a': 'Crimson Haze',                       // → "Twilight Masquerade" partial
+  'SV6': 'Mask of Change',                      // → "Twilight Masquerade" EN partial
+  'SV6a': 'Night Wanderer',                     // → "Shrouded Fable" partial
+  'SV7': 'Stellar Miracle',                     // → "Stellar Crown" partial
+  'SV7a': 'Paradise Dragona',                   // → "Stellar Crown" partial
+  'SV8': 'Super Electric Breaker',              // → "Surging Sparks" partial
+  'SV8a': 'Terastal Festival ex',               // → "Surging Sparks" partial
+  'SV9': 'Battle Partners',                     // → "Journey Together" partial
+  'SV9a': 'Heat Wave Arena',                    // → "Journey Together" partial
+  'SV10': 'Rocket Gang Glory',                  // → "Destined Rivals" partial
+  'SV11B': 'Black Bolt',                        // → "Black Bolt" EN
+  'SV11W': 'White Flare',                       // → "White Flare" EN
+  'SVK': 'Stella Miracle Deck Build BOX',
+  'SVLN': 'Sylveon ex Starter Set Stellar',
+  'SVLS': 'Soulsblaze ex Starter Set Stellar',
+
+  // ───────── SVa (SV-Era Special Boxes JP) ─────────
+  'sva': 'SV Promo Pack',                       // generic catchall
 }
 
 /**

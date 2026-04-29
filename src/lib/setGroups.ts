@@ -11,8 +11,10 @@
 
 import type { TCGSet } from './tcgApi'
 
-// Era detection: maps a set ID prefix or pattern to a human-readable era label
+// Era detection: maps a set ID prefix or pattern to a human-readable era label.
+// Covers FR/EN IDs (lowercase: base1, neo1, sm1...) AND JP IDs (uppercase: PMCG1, S1, SV1, SM1...).
 const ERAS: Array<{ label: string; matcher: (id: string) => boolean; order: number }> = [
+  // ───────── FR/EN eras (lowercase IDs from sets-EN.json / sets-FR.json) ─────────
   { label: 'Classic (Wizards)', matcher: (id) => /^(base[1-5]|basep|jumbo|np)/.test(id), order: 1 },
   { label: 'Gym (Wizards)', matcher: (id) => /^gym[12]/.test(id), order: 2 },
   { label: 'Neo (Wizards)', matcher: (id) => /^neo[1-4]/.test(id), order: 3 },
@@ -22,12 +24,29 @@ const ERAS: Array<{ label: string; matcher: (id: string) => boolean; order: numb
   { label: 'Diamond & Pearl / Platinum', matcher: (id) => /^(dp|pl|tk-dp|pop[6-9])/.test(id), order: 7 },
   { label: 'HeartGold SoulSilver', matcher: (id) => /^(hgss|tk-hs|col1)/.test(id), order: 8 },
   { label: 'Black & White', matcher: (id) => /^(bw|tk-bw|dv1|2011bw|2012bw|2013bw)/.test(id), order: 9 },
-  { label: 'XY', matcher: (id) => /^(xy|tk-xy|g1|2014xy|2015xy|2016xy|rc|dc1|wp)/.test(id), order: 10 },
-  { label: 'Sun & Moon', matcher: (id) => /^(sm|tk-sm|2017sm|2018sm|2019sm|sma|det1)/.test(id), order: 11 },
+  { label: 'XY', matcher: (id) => /^(xy[0-9]|tk-xy|g1|2014xy|2015xy|2016xy|rc|dc1|wp)/.test(id), order: 10 },
+  { label: 'Sun & Moon', matcher: (id) => /^(sm[0-9]|tk-sm|2017sm|2018sm|2019sm|sma|det1)/.test(id), order: 11 },
   { label: 'Sword & Shield', matcher: (id) => /^(swsh|cel25|2021swsh|2022swsh)/.test(id), order: 12 },
-  { label: 'Scarlet & Violet', matcher: (id) => /^(sv|svp|2023sv|2024sv|sve)/.test(id), order: 13 },
+  { label: 'Scarlet & Violet', matcher: (id) => /^(sv[0-9]|svp|2023sv|2024sv|sve)/.test(id), order: 13 },
   { label: 'Mega Evolution', matcher: (id) => /^(me|mee|mep|B[12])/.test(id), order: 14 },
   { label: 'Pokemon TCG Pocket', matcher: (id) => /^(A[0-9]|P-A|B[0-9])/.test(id), order: 15 },
+
+  // ───────── JP eras (uppercase IDs from sets-JP.json) ─────────
+  { label: '旧裏 Old Back (JP)', matcher: (id) => /^(PMCG|VS[0-9]|web[0-9])/.test(id), order: 21 },
+  { label: 'ネオ Neo (JP)', matcher: (id) => /^neo[0-9]/.test(id), order: 22 },
+  { label: 'eカード e-Card (JP)', matcher: (id) => /^E[0-9]/.test(id), order: 23 },
+  { label: 'ADV (JP)', matcher: (id) => /^ADV/.test(id), order: 24 },
+  { label: 'DP / PCG (JP)', matcher: (id) => /^(PCG|LL)/.test(id), order: 25 },
+  { label: 'LEGEND L (JP)', matcher: (id) => /^L[0-9P]/.test(id), order: 26 },
+  { label: 'BW (JP)', matcher: (id) => /^BW/.test(id), order: 27 },
+  { label: 'XY (JP)', matcher: (id) => /^XY/.test(id), order: 28 },
+  { label: 'SM Sun & Moon (JP)', matcher: (id) => /^(SM[0-9a-zA-Z]|sn[0-9])/.test(id), order: 29 },
+  { label: 'S Sword & Shield (JP)', matcher: (id) => /^S[0-9]/.test(id), order: 30 },
+  { label: 'SV Scarlet & Violet (JP)', matcher: (id) => /^SV[0-9a-zA-Z]/.test(id), order: 31 },
+  { label: 'sv Pokémon TCG Pocket (JP)', matcher: (id) => /^sv[a-z0-9]/.test(id), order: 32 },
+  { label: 'CP / CS Concept Packs (JP)', matcher: (id) => /^(CP[0-9]|CS[0-9])/.test(id), order: 33 },
+  { label: 'M Mega Evolution (JP)', matcher: (id) => /^M[0-9]/.test(id), order: 34 },
+  { label: 'Sa / SVa Spéciaux (JP)', matcher: (id) => /^(Sa|SVa|sva)/.test(id), order: 35 },
 ]
 
 /** Detect era for a given set ID. Variants (-1st, -shadowless) inherit parent era. */

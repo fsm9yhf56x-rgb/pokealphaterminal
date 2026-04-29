@@ -755,9 +755,26 @@ export function Holdings() {
   })
 
   // -- Fetch sets pour modal ajouter serie --
+  // Source : /data/sets-{lang}.json (enrichi avec variantes 1st Ed/Shadowless)
+  // Fallback : TCGdex API live si le JSON local n'existe pas
   useEffect(() => {
     if (!addSetOpen) return
-    fetchSets(addSetLang).then(sets => setAddSetSets(sets)).catch(() => {})
+    fetch('/data/sets-' + addSetLang + '.json')
+      .then(r => r.ok ? r.json() : Promise.reject('no local json'))
+      .then((arr: any[]) => {
+        const mapped: TCGSet[] = arr.map(s => ({
+          id: s.id,
+          name: s.name,
+          lang: addSetLang,
+          total: s.total,
+          releaseDate: s.releaseDate || undefined,
+        }))
+        setAddSetSets(mapped)
+      })
+      .catch(() => {
+        // Fallback TCGdex live
+        fetchSets(addSetLang).then(sets => setAddSetSets(sets)).catch(() => {})
+      })
   }, [addSetOpen, addSetLang])
 
   const mmDrag = useRef<{active:boolean;setN:string;total:number}>({active:false,setN:'',total:0})

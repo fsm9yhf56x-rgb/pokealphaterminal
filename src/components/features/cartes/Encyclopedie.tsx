@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/useAuth'
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
-import { groupSetsByEra, filterCoreSets } from '@/lib/setGroups'
+import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 
@@ -1064,9 +1064,13 @@ export function Encyclopedie() {
                   <optgroup key={g.label} label={g.label}>
                     {g.sets.map(set => {
                       const orig = sets.find(o => o.id === set.id)
-                      return orig ? (
-                        <option key={orig.id} value={orig.id}>{orig.name} ({orig.count})</option>
-                      ) : null
+                      if (!orig) return null
+                      const displayName = lang === 'JP'
+                        ? formatJPSetName({ id: orig.id, name: orig.name, lang: 'JP' as any } as any, tcgSets)
+                        : orig.name
+                      return (
+                        <option key={orig.id} value={orig.id}>{displayName} ({orig.count})</option>
+                      )
                     })}
                   </optgroup>
                 ))

@@ -122,6 +122,87 @@ export function groupSetsByEra(sets: TCGSet[]): SetGroup[] {
 }
 
 /**
+ * JP set ID → French translation lookup for historically important sets.
+ * Used to enrich JP set names in dropdowns: "拡張パック · Set de Base"
+ *
+ * Coverage: PMCG (Wizards JP), neo, VS, web (exclusive JP), E (e-Card),
+ * ADV (Ruby/Sapphire era), PCG (DP era), L/LL (HGSS era).
+ *
+ * Modern sets (SM, SWSH, SV) are not mapped — their JP names usually mirror EN.
+ */
+export const JP_SET_TRANSLATIONS: Record<string, string> = {
+  // PMCG - Wizards JP (Old Back era)
+  'PMCG1': 'Set de Base',
+  'PMCG2': 'Jungle',
+  'PMCG3': 'Fossile',
+  'PMCG4': 'Team Rocket',
+  'PMCG5': 'Gym Heroes',
+  'PMCG6': 'Gym Challenge',
+
+  // Neo Era
+  'neo1': 'Neo Genesis',
+  'neo2': 'Neo Discovery',
+  'neo3': 'Neo Revelation',
+  'neo4': 'Neo Destiny',
+
+  // Exclusivement JP
+  'VS1': 'Cards VS (JP only)',
+  'web1': 'Cards Web (JP only)',
+
+  // e-Card Era
+  'E1': 'Expedition Base Set',
+  'E2': 'Aquapolis',
+  'E3': 'Skyridge',
+  'E4': 'Mysterious Mountains (JP only)',
+
+  // ADV (Ruby & Sapphire) Era
+  'ADV1': 'Ruby & Sapphire',
+  'ADV2': 'Sandstorm',
+  'ADV3': 'Dragon',
+  'ADV4': 'Team Magma vs Team Aqua',
+  'ADV5': 'Hidden Legends',
+
+  // PCG (Diamond & Pearl, Platinum) Era
+  'PCG1': 'EX Deoxys',
+  'PCG2': 'EX Emerald',
+  'PCG3': 'EX Team Rocket Returns',
+  'PCG4': 'EX Unseen Forces',
+  'PCG5': 'EX Delta Species',
+  'PCG6': 'EX Legend Maker',
+  'PCG7': 'EX Holon Phantoms',
+  'PCG8': 'EX Crystal Guardians',
+  'PCG9': 'EX Dragon Frontiers',
+  'PCG10': 'World Champions Pack',
+
+  // LEGEND Era (HGSS)
+  'L1a': 'HeartGold Collection',
+  'L1b': 'SoulSilver Collection',
+  'L2': 'Reviving Legends',
+  'L3': 'Clash at the Summit',
+  'LL': 'Lost Link',
+}
+
+/**
+ * Enrich a TCG set with display info for JP language:
+ * - Adds French translation suffix if available in JP_SET_TRANSLATIONS
+ * - Adds [ID] suffix for disambiguation when set name is ambiguous (duplicate names like "Triplet Beat")
+ *
+ * Returns the formatted display name (without total — caller adds " (N)" separately).
+ */
+export function formatJPSetName(set: TCGSet, allSets: TCGSet[]): string {
+  const fr = JP_SET_TRANSLATIONS[set.id]
+  if (fr) {
+    return `${set.name} · ${fr}`
+  }
+  // Ambiguous? Check if multiple sets share the same name
+  const sameName = allSets.filter(s => s.name === set.name)
+  if (sameName.length > 1) {
+    return `${set.name} [${set.id}]`
+  }
+  return set.name
+}
+
+/**
  * Convenience: filter to only "core" sets (skip Trainer Kits, Promo, McDonalds, Jumbo, etc.)
  * Used when we want a cleaner dropdown with only mainline expansions.
  */

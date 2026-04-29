@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
-import { groupSetsByEra, filterCoreSets } from '@/lib/setGroups'
+import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
@@ -1857,14 +1857,20 @@ export function Holdings() {
                     style={{ width:'100%', appearance:'none' as const, background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 36px 10px 12px', color:addForm.set?'#1D1D1F':'#AEAEB2', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
                     {(() => {
-                      const groups = groupSetsByEra(filterCoreSets(liveSets))
+                      const filtered = filterCoreSets(liveSets)
+                      const groups = groupSetsByEra(filtered)
                       return groups.map(g => (
                         <optgroup key={g.label} label={g.label}>
-                          {g.sets.map(s => (
-                            <option key={s.id} value={s.id} style={{background:'#fff',color:'#1D1D1F'}}>
-                              {s.name}{addForm.lang==='JP'&&frSetsMap[s.id]?' — '+frSetsMap[s.id]:''}{s.total?' ('+s.total+')':''}
-                            </option>
-                          ))}
+                          {g.sets.map(set => {
+                            const displayName = addForm.lang === 'JP'
+                              ? formatJPSetName(set, filtered)
+                              : set.name + (frSetsMap[set.id] ? ' — ' + frSetsMap[set.id] : '')
+                            return (
+                              <option key={set.id} value={set.id} style={{background:'#fff',color:'#1D1D1F'}}>
+                                {displayName}{set.total ? ' (' + set.total + ')' : ''}
+                              </option>
+                            )
+                          })}
                         </optgroup>
                       ))
                     })()}
@@ -3041,14 +3047,20 @@ export function Holdings() {
                 style={{ width:'100%',appearance:'none' as const,background:'#F5F5F7',borderRadius:'10px',border:'1px solid #E5E5EA',padding:'10px 36px 10px 12px',color:addSetId?'#1D1D1F':'#AEAEB2',fontSize:'13px',fontFamily:'var(--font-display)',outline:'none',cursor:'pointer' }}>
                 <option value=''>Sélectionner une série...</option>
                 {(() => {
-                  const groups = groupSetsByEra(filterCoreSets(addSetSets))
+                  const filtered = filterCoreSets(addSetSets)
+                  const groups = groupSetsByEra(filtered)
                   return groups.map(g => (
                     <optgroup key={g.label} label={g.label}>
-                      {g.sets.map(ls => (
-                        <option key={ls.id} value={ls.id} style={{background:'#fff',color:'#1D1D1F'}}>
-                          {ls.name}{ls.total ? ' (' + ls.total + ')' : ''}
-                        </option>
-                      ))}
+                      {g.sets.map(ls => {
+                        const displayName = addSetLang === 'JP'
+                          ? formatJPSetName(ls, filtered)
+                          : ls.name
+                        return (
+                          <option key={ls.id} value={ls.id} style={{background:'#fff',color:'#1D1D1F'}}>
+                            {displayName}{ls.total ? ' (' + ls.total + ')' : ''}
+                          </option>
+                        )
+                      })}
                     </optgroup>
                   ))
                 })()}

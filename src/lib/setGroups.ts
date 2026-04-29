@@ -180,6 +180,45 @@ export const JP_SET_TRANSLATIONS: Record<string, string> = {
   'L2': 'Reviving Legends',
   'L3': 'Clash at the Summit',
   'LL': 'Lost Link',
+
+  // ───────── XY Era (Japanese sets) ─────────
+  // XY1a + XY1b = "XY Base Set" en EN
+  'XY1a': 'Collection X',
+  'XY1b': 'Collection Y',
+  'XY2': 'Wild Blaze',                       // → "Flashfire" partial EN
+  'XY3': 'Rising Fist',                      // → "Furious Fists" EN
+  'XY4': 'Phantom Gate',                     // → "Phantom Forces" EN
+  'XY5a': 'Tidal Storm / Gaia Volcano',      // → "Primal Clash" EN (2 JP sets combinés)
+  'XY6': 'Emerald Break',                    // → "Roaring Skies" EN partial
+  'XY7': 'Bandit Ring',                      // → "Ancient Origins" EN partial
+  'XY8a': 'Blue Shock',                      // → "BREAKthrough" EN partial
+  'XY8b': 'Red Flash',                       // → "BREAKthrough" EN partial
+  'XY9': 'Rage of Broken Heavens',           // → "BREAKpoint" EN
+  'XY10': 'Awakening Psychic King',          // → "Fates Collide" EN
+  'XY11a': 'Cruel Traitor',                  // → "Steam Siege" partial
+  'XY11': 'Explosive Fighter Xerneas',       // → "Steam Siege" EN
+  'XY12': 'Fever-Burst Fighter',             // → "Evolutions" EN partial
+
+  // ───────── CP / CS Concept Packs (Japanese exclusives) ─────────
+  'CP1': 'Double Crisis - Team Magma vs Team Aqua',
+  'CP2': 'Legendary Shine Collection',
+  'CP3': 'Pokekyun Collection',
+  'CP4': 'Premium Champion Pack EX×M×BREAK',
+  'CP5': 'Cruel Traitor [Concept Pack]',
+  'CP6': '20th Anniversary',                 // → "Generations" EN
+
+  // ───────── M Mega Evolution (Japanese exclusives) ─────────
+  'M1S': 'Mega Symphonia',
+  'M3': 'Munakizz Zero',                     // alt set, JP-only
+
+  // ───────── CS (Concept Sets duplicates "Triplet Beat" de SV) ─────────
+  'CS1a': 'Triplet Beat [Premium A]',
+  'CS1b': 'Triplet Beat [Premium B]',
+  'CS1.5': 'Triplet Beat [Concept 1.5]',
+  'CS2a': 'Triplet Beat [Concept 2A]',
+  'CS2b': 'Triplet Beat [Concept 2B]',
+  'CS2.5': 'Triplet Beat [Concept 2.5]',
+  'CS3.5': 'Triplet Beat [Concept 3.5]',
 }
 
 /**

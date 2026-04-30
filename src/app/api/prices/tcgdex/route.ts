@@ -49,7 +49,48 @@ async function getPortfolioTcgdexSets(): Promise<string[]> {
 //   - en-A*, en-B*, fr-A*, fr-B* (Pokemon TCG Pocket, different from physical TCG)
 // Strips lang prefixes (en-, fr-) to get true TCGdex IDs.
 // TODO: replace this with a proper canonical `sets` table (see backlog: SCHEMA OVERHAUL).
+// For JP, sets come directly from TCGdex (not from tcg_sets which has aopkm-* IDs that don't match)
+async function getJpSetsFromTcgdex(): Promise<string[]> {
+  try {
+    const r = await fetch('https://api.tcgdex.net/v2/ja/sets')
+    if (!r.ok) return []
+    const data: any[] = await r.json()
+    return data.map(s => s.id).filter(Boolean).sort()
+  } catch { return [] }
+}
+
 async function getNextSetsBatch(lang: string, batchSize: number = 30): Promise<{ sets: string[]; cursor: string | null; total: number }> {
+  // ── JP: bypass tcg_sets (incompatible IDs), use TCGdex directly ──
+  if (lang === 'ja' || lang === 'jp') {
+    const allJpSets = await getJpSetsFromTcgdex()
+    if (!allJpSets.length) return { sets: [], cursor: null, total: 0 }
+    
+    const { data: lastLog } = await supabase
+      .from('sync_logs')
+      .select('stats')
+      .eq('job_name', `prices_tcgdex_${lang}`)
+      .in('status', ['success', 'partial'])
+      .order('finished_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const lastCursor = (lastLog?.stats as any)?.lastSet || null
+    
+    let startIdx = 0
+    if (lastCursor) {
+      const idx = allJpSets.indexOf(lastCursor)
+      startIdx = idx >= 0 ? idx + 1 : 0
+      if (startIdx >= allJpSets.length) startIdx = 0
+    }
+    const batch = allJpSets.slice(startIdx, startIdx + batchSize)
+    const newCursor = batch.length > 0 ? batch[batch.length - 1] : null
+    return { sets: batch, cursor: newCursor, total: allJpSets.length }
+  }
+  
+  // ── EN/FR: existing logic from tcg_sets ──
+  return _getNextSetsBatchFromDb(lang, batchSize)
+}
+
+async function _getNextSetsBatchFromDb(lang: string, batchSize: number = 30): Promise<{ sets: string[]; cursor: string | null; total: number }> {
   // 1. Get all set IDs from tcg_sets (the 848-entry registry)
   const { data: setsRaw } = await supabase.from('tcg_sets').select('id')
   const allRaw = (setsRaw || []).map((r: any) => r.id as string).filter(Boolean)

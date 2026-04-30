@@ -169,14 +169,15 @@ function evaluateRules(stats: CardStats): AlphaSignal[] {
   const signals: AlphaSignal[] = []
   const meta = stats.latest_meta || {}
 
-  // Floor : on ignore les cartes < 1€ (bruit, faible utilité signal)
-  if (stats.current < 1) return signals
+  // Floor : on ignore les cartes < 5€ (en dessous, le bruit Cardmarket est trop fort)
+  if (stats.current < 5) return signals
+  if ((stats.avg_30d ?? stats.current) < 5) return signals
 
   // ── R1 : Brutal discount ──
   // Carte qui a chuté brutalement vs J-7. Souvent overcorrection = opportunité.
   if (stats.prev_7d != null && stats.prev_7d > 0) {
     const drop = (stats.current - stats.prev_7d) / stats.prev_7d
-    if (drop <= -0.20) {
+    if (drop <= -0.20 && drop >= -0.50) {
       const tier: 'S' | 'A' | 'B' = drop <= -0.35 ? 'S' : drop <= -0.25 ? 'A' : 'B'
       const target = Math.max(stats.avg_30d ?? stats.current, stats.prev_7d * 0.9)
       const upside = ((target - stats.current) / stats.current) * 100
@@ -202,7 +203,7 @@ function evaluateRules(stats: CardStats): AlphaSignal[] {
   // Carte stable mais en dessous de sa moyenne mensuelle = entrée propre.
   if (stats.avg_30d != null && stats.avg_30d > 0) {
     const discount = (stats.current - stats.avg_30d) / stats.avg_30d
-    if (discount <= -0.15 && stats.snapshots_count >= 5) {
+    if (discount <= -0.15 && discount >= -0.50 && stats.snapshots_count >= 5) {
       // Évite double-signaler avec R1 : skip si une chute brutale 7j déjà là
       const alreadyBrutal = signals.some((s) => s.rule === 'brutal_discount')
       if (!alreadyBrutal) {
@@ -232,8 +233,8 @@ function evaluateRules(stats: CardStats): AlphaSignal[] {
   // Hausse significative récente = la hype démarre.
   if (stats.prev_7d != null && stats.prev_7d > 0) {
     const change = (stats.current - stats.prev_7d) / stats.prev_7d
-    if (change >= 0.15) {
-      const tier: 'S' | 'A' | 'B' = change >= 0.30 ? 'S' : change >= 0.20 ? 'A' : 'B'
+    if (change >= 0.15 && change <= 0.80) {
+      const tier: 'S' | 'A' | 'B' = change >= 0.50 ? 'S' : change >= 0.30 ? 'A' : 'B'
       const target = stats.current * (1 + change * 0.5) // momentum continue à mi-régime
       const upside = ((target - stats.current) / stats.current) * 100
       signals.push(buildSignal({
@@ -312,14 +313,19 @@ function extractLocalId(cardRef: string): string | null {
 // ─── Tier balancing ────────────────────────────────────────────────
 
 function balanceTiers(signals: AlphaSignal[], targetTotal = 60): AlphaSignal[] {
-  // Sort par tier puis par |variation_pct| desc
-  const order = { S: 0, A: 1, B: 2 }
-  const sorted = signals.sort((x, y) => {
-    if (order[x.tier] !== order[y.tier]) return order[x.tier] - order[y.tier]
+  // Quotas par règle pour garantir la diversité (au lieu d'un sort global biaisé)
+  const tierOrder = { S: 0, A: 1, B: 2 }
+  const sortByQuality = (x: AlphaSignal, y: AlphaSignal) => {
+    if (tierOrder[x.tier] !== tierOrder[y.tier]) return tierOrder[x.tier] - tierOrder[y.tier]
     return Math.abs(y.variation_pct) - Math.abs(x.variation_pct)
-  })
-  // On garde les meilleurs jusqu'à targetTotal
-  return sorted.slice(0, targetTotal)
+  }
+  const PER_RULE = Math.ceil(targetTotal / 3)
+  const buckets = {
+    brutal_discount: signals.filter(s => s.rule === 'brutal_discount').sort(sortByQuality).slice(0, PER_RULE),
+    undervalued_30d: signals.filter(s => s.rule === 'undervalued_30d').sort(sortByQuality).slice(0, PER_RULE),
+    momentum_7d: signals.filter(s => s.rule === 'momentum_7d').sort(sortByQuality).slice(0, PER_RULE),
+  }
+  return [...buckets.brutal_discount, ...buckets.undervalued_30d, ...buckets.momentum_7d]
 }
 
 // ─── Persistence ────────────────────────────────────────────────────

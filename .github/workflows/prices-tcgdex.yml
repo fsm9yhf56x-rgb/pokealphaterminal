@@ -161,3 +161,73 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  sync-jp:
+    name: Sync TCGdex JP (Cardmarket)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: sync-fr
+    if: always()
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/prices/tcgdex (lang=jp)
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/prices/tcgdex?lang=jp"
+          START_TS=$(date +%s)
+
+          TOTAL_CARDS=0
+          TOTAL_UPDATED=0
+          LAST_HTTP=200
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "--- Run $i/10 ---"
+            HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+              -X GET "$PROD_URL/api/prices/tcgdex?lang=jp" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              --max-time 90 \
+              --retry 1 --retry-delay 5) || HTTP_CODE="000"
+            LAST_HTTP=$HTTP_CODE
+            CARDS=$(cat response.json | grep -o '"totalCards":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            UPDATED=$(cat response.json | grep -o '"totalUpdated":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            TOTAL_CARDS=$((TOTAL_CARDS + CARDS))
+            TOTAL_UPDATED=$((TOTAL_UPDATED + UPDATED))
+            echo "  HTTP $HTTP_CODE | cards=$CARDS updated=$UPDATED"
+            sleep 3
+          done
+          HTTP_CODE=$LAST_HTTP
+          echo "{\"totalCards\":$TOTAL_CARDS,\"totalUpdated\":$TOTAL_UPDATED,\"runs\":10}" > response.json
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          cat response.json | head -c 2000
+          echo ""
+
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync JP OK"
+          else
+            echo "❌ Sync JP failed"
+            exit 1
+          fi
+
+      - name: Summary JP
+        if: always()
+        run: |
+          echo "### 🇯🇵 TCGdex JP sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

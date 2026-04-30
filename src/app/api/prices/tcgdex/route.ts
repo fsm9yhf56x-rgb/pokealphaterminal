@@ -118,7 +118,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const { searchParams } = new URL(request.url)
-  const lang = searchParams.get('lang') || 'en'
+  const langInput = searchParams.get('lang') || 'en'
+  // Normalize 'jp' → 'ja' (TCGdex API uses ISO 639-1 code 'ja' for Japanese)
+  const lang = langInput.toLowerCase() === 'jp' ? 'ja' : langInput.toLowerCase()
   // Hobby tier max 60s — batch=5 (~25s) safe. Cron 4h pour absorber tous les sets.
   // 1 set/run = safe pour Hobby 60s (sets modernes 200+ cartes)
   const batchSize = Number(searchParams.get('batch') || '1')
@@ -131,7 +133,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let { sets = [], lang = 'en' } = await request.json().catch(() => ({}))
+  let { sets = [], lang: langInput = 'en' } = await request.json().catch(() => ({}))
+  // Normalize 'jp' → 'ja' for TCGdex API
+  let lang = String(langInput).toLowerCase() === 'jp' ? 'ja' : String(langInput).toLowerCase()
   // Auto-detect if no sets given
   if (!sets.length) {
     sets = await getPortfolioTcgdexSets()

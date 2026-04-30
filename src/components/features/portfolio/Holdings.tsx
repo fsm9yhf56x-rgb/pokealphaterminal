@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
+import { formatEUR } from '@/lib/formatPrice'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
@@ -1543,9 +1544,9 @@ export function Holdings() {
                           if (sources.length) displayPrice = Math.round(sources.reduce((a,b)=>a+b,0)/sources.length*100)/100
                         }
                       }
-                      return <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>EUR {displayPrice.toLocaleString('fr-FR')}</div>
+                      return <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>{formatEUR(displayPrice, 'big')}</div>
                     })()}
-                    {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:roi>=0?PERF.up:PERF.down, fontWeight:500, marginBottom:'16px' }}>{roi>=0?'+':''}{roi}% | {gain>=0?'+':''}EUR {gain.toLocaleString('fr-FR')}</div>}
+                    {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:roi>=0?PERF.up:PERF.down, fontWeight:500, marginBottom:'16px' }}>{roi>=0?'+':''}{roi}% | {formatEUR(gain, 'sign')}</div>}
                     {(()=>{
                       const sid = spotCard.setId || ''
                       const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
@@ -1570,8 +1571,8 @@ export function Holdings() {
                       return <>
                         {(()=>{
                           const statsCells = [
-                            spotCard.buyPrice>0 && {l:'Achat',v:spotCard.buyPrice.toLocaleString('fr-FR')+' €',c:'#1D1D1F'},
-                            spotCard.curPrice>0 && {l:'Marché (est.)',v:spotCard.curPrice.toLocaleString('fr-FR')+' €',c:'#1D1D1F'},
+                            spotCard.buyPrice>0 && {l:'Achat',v:formatEUR(spotCard.buyPrice, 'small'),c:'#1D1D1F'},
+                            spotCard.curPrice>0 && {l:'Marché (est.)',v:formatEUR(spotCard.curPrice, 'small'),c:'#1D1D1F'},
                             spotCard.buyPrice>0 && {l:'ROI',v:(roi>=0?'+':'')+roi+'%',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
                             spotCard.psa ? {l:'PSA Pop',v:spotCard.psa.toLocaleString(),c:'#48484A'} : null,
                           ].filter(Boolean) as {l:string;v:string;c:string}[]
@@ -2890,7 +2891,7 @@ export function Holdings() {
                           <div style={{ fontSize:'14px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', letterSpacing:'.06em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
                           {/* Prix */}
                           <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', letterSpacing:'-.02em', lineHeight:1, marginBottom:'8px' }}>
-                            {card.curPrice>0?card.curPrice.toLocaleString('fr-FR')+' €':'—'}
+                            {formatEUR(card.curPrice, 'small')}
                           </div>
                           {/* Meta */}
                           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>

@@ -13,6 +13,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
+import { formatEUR } from '@/lib/formatPrice'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 
@@ -1293,7 +1294,7 @@ export function Encyclopedie() {
                             {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
-                        {(()=>{ const gp = getPrice(card); return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{gp.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div> : null })()}
+                        {(()=>{ const gp = getPrice(card); return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{formatEUR(gp, 'small')}</div> : null })()}
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
                           return (
@@ -1584,7 +1585,7 @@ export function Encyclopedie() {
                         return (cardPrice || sources.length > 0) ? (
                           <div style={{ background:SNOW.surface, borderRadius:'10px', padding:'12px', marginBottom:'10px', border:`1px solid ${SNOW.borderSoft}` }}>
                             <div style={{ fontSize:'9px', color:SNOW.muted, fontFamily:'var(--font-display)', marginBottom:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontWeight:500 }}>Prix marché</div>
-                            <div style={{ fontSize:'22px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{(cardPrice || 0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</div>
+                            <div style={{ fontSize:'22px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{formatEUR(cardPrice, 'small')}</div>
                             {sources.length > 0 && (
                               <div style={{ borderTop:`1px solid ${SNOW.borderSoft}`, paddingTop:'8px' }}>
                                 <div style={{ fontSize:'9px', color:SNOW.muted, textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'6px' }}>Prix par source</div>
@@ -1594,7 +1595,7 @@ export function Encyclopedie() {
                                       <span style={{ fontSize:'9px' }}>{s.icon}</span>
                                       <span style={{ fontSize:'11px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>{s.label}</span>
                                     </div>
-                                    <span style={{ fontSize:'12px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{s.price!.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
+                                    <span style={{ fontSize:'12px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{formatEUR(s.price, 'small')}</span>
                                   </div>
                                 ))}
                                 {!det?.cardmarket && (()=>{

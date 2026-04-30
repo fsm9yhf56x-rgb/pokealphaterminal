@@ -1,4 +1,5 @@
 "use client"
+import { formatEUR } from '@/lib/formatPrice'
 
 interface CardItem {
   id:string; name:string; set:string; year:number; type:string;
@@ -110,12 +111,12 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
           </div>
 
           {/* Value */}
-          <div style={{ fontSize:'48px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>EUR {totalCur.toLocaleString('fr-FR')}</div>
+          <div style={{ fontSize:'48px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1 }}>{formatEUR(totalCur, 'big')}</div>
 
           {totalBuy>0&&(
             <div style={{ display:'inline-flex', alignItems:'center', gap:'6px', marginTop:'10px', background:'rgba(46,158,106,.1)', border:'1px solid rgba(46,158,106,.2)', borderRadius:'99px', padding:'4px 14px' }}>
               <Ic d={D.trend} c="#4ECCA3" s={14}/>
-              <span style={{ fontSize:'13px', color:'#4ECCA3', fontWeight:600, fontFamily:'var(--font-data)' }}>+{totalROI}% · +EUR {totalGain.toLocaleString('fr-FR')}</span>
+              <span style={{ fontSize:'13px', color:'#4ECCA3', fontWeight:600, fontFamily:'var(--font-data)' }}>+{totalROI}% · {formatEUR(totalGain, 'sign')}</span>
             </div>
           )}
 
@@ -185,7 +186,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
                     <Ic d={D.diamond} c="#C855D4" s={12}/>
                     <span style={{ fontSize:'10px', fontWeight:600, color:'#C855D4', fontFamily:'var(--font-display)' }}>{rarestCard.rarity}</span>
                   </div>}
-                  {rarestCard.curPrice>0&&<div style={{ fontSize:'24px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', marginTop:'10px' }}>{rarestCard.curPrice} EUR</div>}
+                  {rarestCard.curPrice>0&&<div style={{ fontSize:'24px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', marginTop:'10px' }}>{formatEUR(rarestCard.curPrice, 'big')}</div>}
                 </div>
               </div>
             </div>

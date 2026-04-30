@@ -1,4 +1,5 @@
 "use client"
+import { formatEUR } from '@/lib/formatPrice'
 
 import { useState, useRef, useCallback } from 'react'
 
@@ -39,7 +40,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     ? showcaseCards.length + ' piece' + (showcaseCards.length !== 1 ? 's' : '') + ' d\'exception'
     : isCard
     ? `${card!.set} · ${card!.rarity ?? ''}`
-    : `${portfolio.length} carte${portfolio.length !== 1 ? 's' : ''} · EUR ${totalCur.toLocaleString('fr-FR')}`
+    : `${portfolio.length} carte${portfolio.length !== 1 ? 's' : ''} · ${formatEUR(totalCur, 'big')}`
 
   const roi = isCard && card!.buyPrice > 0
     ? Math.round(((card!.curPrice - card!.buyPrice) / card!.buyPrice) * 100)
@@ -50,8 +51,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     : isCard
     ? `${card!.name} dans ma collection PokéAlpha Terminal ${card!.buyPrice > 0 ? '— ROI +' + roi + '%' : ''}`
     : context === 'wrapped'
-    ? `Mon Wrapped 2026 sur PokéAlpha Terminal — ${portfolio.length} cartes, EUR ${totalCur.toLocaleString('fr-FR')}`
-    : `Mon portfolio Pokemon TCG : EUR ${totalCur.toLocaleString('fr-FR')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur PokéAlpha`
+    ? `Mon Wrapped 2026 sur PokéAlpha Terminal — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
+    : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur PokéAlpha`
 
   const shareUrl = `https://pokealphaterminal.io?ref=${REFERRAL}`
 
@@ -192,7 +193,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginTop:'4px' }}>EUR {totalCur.toLocaleString('fr-FR')}</div>
+                  <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginTop:'4px' }}>{formatEUR(totalCur, 'big')}</div>
                   {totalBuy > 0 && <div style={{ fontSize:'12px', color:'#4ECCA3', fontWeight:600 }}>+{totalROI}%</div>}
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', marginTop:'2px' }}>{portfolio.length} cartes</div>
                 </>

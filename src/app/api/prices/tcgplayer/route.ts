@@ -110,7 +110,7 @@ async function getNextSetsBatch(
     .from('sync_logs')
     .select('stats')
     .eq('job_name', `prices_tcgplayer_${market.toLowerCase()}`)
-    .in('status', ['success', 'partial'])
+    .in('status', ['success', 'partial', 'error'])
     .order('finished_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -253,7 +253,7 @@ async function syncTcgplayer(
     }
 
     const status: 'success' | 'partial' | 'error' =
-      errors.length === sets.length && sets.length > 0
+      sets.length === 0
         ? 'error'
         : errors.length > 0
         ? 'partial'

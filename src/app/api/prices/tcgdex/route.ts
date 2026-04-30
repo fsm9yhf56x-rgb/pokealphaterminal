@@ -118,7 +118,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const lang = searchParams.get('lang') || 'en'
   // Hobby tier max 60s — batch=5 (~25s) safe. Cron 4h pour absorber tous les sets.
-  const batchSize = Number(searchParams.get('batch') || '5')
+  const batchSize = Number(searchParams.get('batch') || '3')
   const { sets, cursor, total } = await getNextSetsBatch(lang, batchSize)
   if (!sets.length) {
     return NextResponse.json({ skipped: true, reason: 'no sets found in DB', total })
@@ -307,8 +307,7 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
               }
             }
           }
-          // Respect TCGdex rate limits
-          await sleep(50)
+          // TCGdex rate limit non documente — pas de sleep
         } catch {}
       }
     } catch (e: any) {

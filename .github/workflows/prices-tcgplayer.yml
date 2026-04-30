@@ -1,0 +1,156 @@
+name: Prices · TCGPlayer (US + JP) sync
+
+on:
+  schedule:
+    # Toutes les 2h (1 set/run × 10 runs × 12 cycles/jour = 120 sets/jour, ~3-5j catalog complet)
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      market:
+        description: 'Market (EN, JP, both)'
+        required: false
+        default: 'both'
+
+concurrency:
+  group: prices-tcgplayer
+  cancel-in-progress: false
+
+jobs:
+  sync-en:
+    name: Sync TCGPlayer EN (US Pokemon)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ github.event_name == 'schedule' || inputs.market == 'EN' || inputs.market == 'both' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/prices/tcgplayer (market=EN)
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/prices/tcgplayer?market=EN"
+          START_TS=$(date +%s)
+
+          TOTAL_CARDS=0
+          TOTAL_UPDATED=0
+          LAST_HTTP=200
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "--- Run $i/10 ---"
+            HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+              -X GET "$PROD_URL/api/prices/tcgplayer?market=EN" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              --max-time 90 \
+              --retry 1 --retry-delay 5) || HTTP_CODE="000"
+            LAST_HTTP=$HTTP_CODE
+            CARDS=$(cat response.json | grep -o '"totalCards":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            UPDATED=$(cat response.json | grep -o '"totalUpdated":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            TOTAL_CARDS=$((TOTAL_CARDS + CARDS))
+            TOTAL_UPDATED=$((TOTAL_UPDATED + UPDATED))
+            echo "  HTTP $HTTP_CODE | cards=$CARDS updated=$UPDATED"
+            sleep 3
+          done
+          HTTP_CODE=$LAST_HTTP
+          echo "{\"totalCards\":$TOTAL_CARDS,\"totalUpdated\":$TOTAL_UPDATED,\"runs\":10}" > response.json
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          cat response.json | head -c 2000
+          echo ""
+
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync EN OK"
+          else
+            echo "❌ Sync EN failed"
+            exit 1
+          fi
+
+      - name: Summary EN
+        if: always()
+        run: |
+          echo "### 🇺🇸 TCGPlayer EN sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  sync-jp:
+    name: Sync TCGPlayer JP (Pokemon Japan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: sync-en
+    if: ${{ always() && (github.event_name == 'schedule' || inputs.market == 'JP' || inputs.market == 'both') }}
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger /api/prices/tcgplayer (market=JP)
+        id: trigger
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eo pipefail
+          echo "🚀 Calling $PROD_URL/api/prices/tcgplayer?market=JP"
+          START_TS=$(date +%s)
+
+          TOTAL_CARDS=0
+          TOTAL_UPDATED=0
+          LAST_HTTP=200
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "--- Run $i/10 ---"
+            HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+              -X GET "$PROD_URL/api/prices/tcgplayer?market=JP" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              --max-time 90 \
+              --retry 1 --retry-delay 5) || HTTP_CODE="000"
+            LAST_HTTP=$HTTP_CODE
+            CARDS=$(cat response.json | grep -o '"totalCards":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            UPDATED=$(cat response.json | grep -o '"totalUpdated":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            TOTAL_CARDS=$((TOTAL_CARDS + CARDS))
+            TOTAL_UPDATED=$((TOTAL_UPDATED + UPDATED))
+            echo "  HTTP $HTTP_CODE | cards=$CARDS updated=$UPDATED"
+            sleep 3
+          done
+          HTTP_CODE=$LAST_HTTP
+          echo "{\"totalCards\":$TOTAL_CARDS,\"totalUpdated\":$TOTAL_UPDATED,\"runs\":10}" > response.json
+
+          END_TS=$(date +%s)
+          DURATION=$((END_TS - START_TS))
+          echo "📡 HTTP $HTTP_CODE in ${DURATION}s"
+          cat response.json | head -c 2000
+          echo ""
+
+          BODY=$(cat response.json | tr -d '\n' | head -c 4000)
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body<<RESPEOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "RESPEOF" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Sync JP OK"
+          else
+            echo "❌ Sync JP failed"
+            exit 1
+          fi
+
+      - name: Summary JP
+        if: always()
+        run: |
+          echo "### 🇯🇵 TCGPlayer JP sync result" >> $GITHUB_STEP_SUMMARY
+          echo "- HTTP: \`${{ steps.trigger.outputs.http_code }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: \`${{ steps.trigger.outputs.duration }}s\`" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.trigger.outputs.body }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

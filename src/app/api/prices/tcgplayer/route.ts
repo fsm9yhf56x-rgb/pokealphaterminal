@@ -15,9 +15,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const TCGP_SEARCH = 'https://mp-search-api.tcgplayer.com/v1/search/request?q=&isList=true'
 const TCGP_HEADERS = {
   'Content-Type': 'application/json',
-  'User-Agent': 'Mozilla/5.0',
-  Origin: 'https://www.tcgplayer.com',
-  Referer: 'https://www.tcgplayer.com/',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Origin': 'https://www.tcgplayer.com',
+  'Referer': 'https://www.tcgplayer.com/',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'same-site',
 }
 
 function buildPayload(productLine: string, setName: string, from = 0, size = 100) {
@@ -50,12 +55,20 @@ async function fetchAllSetNames(productLine: string): Promise<{ slug: string; co
     headers: TCGP_HEADERS,
     body: JSON.stringify(buildPayload(productLine, '', 0, 1)),
   })
-  if (!r.ok) return []
+  console.log(`[tcgplayer] fetchAllSetNames(${productLine}) HTTP=${r.status}`)
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '')
+    console.error(`[tcgplayer] body sample: ${txt.slice(0, 200)}`)
+    return []
+  }
   const data = await r.json()
   const sets = data?.results?.[0]?.aggregations?.setName || []
-  return sets
+  const result = sets
     .map((s: any) => ({ slug: s.urlValue as string, count: Number(s.count) }))
     .filter((s: any) => s.slug && s.count > 0)
+    .sort((a: any, b: any) => a.slug.localeCompare(b.slug))
+  console.log(`[tcgplayer] discovered ${result.length} sets for ${productLine}`)
+  return result
 }
 
 async function fetchSetCards(productLine: string, setName: string): Promise<any[]> {

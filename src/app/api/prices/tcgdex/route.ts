@@ -57,7 +57,8 @@ async function getNextSetsBatch(lang: string, batchSize: number = 30): Promise<{
   // 2. Filter out JP-only / Pocket / McDonalds
   const filtered = allRaw.filter((id) => {
     if (id.startsWith('aopkm-')) return false                    // Pokemon Card Asia (JP-only)
-    if (/^(en|fr)-2\d{3}/.test(id)) return false                 // McDonald's collections
+    if (/^(en|fr)-2\d{3}/.test(id)) return false                 // McDonald's avec prefix lang
+    if (/^2\d{3}(sm|bw|xy|swsh|sv)/.test(id)) return false       // McDonald's sans prefix lang (ex: '2018sm')
     if (/^(en|fr)-[AB]\d/.test(id)) return false                 // Pokemon TCG Pocket
     return true
   })

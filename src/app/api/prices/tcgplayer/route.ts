@@ -68,9 +68,16 @@ async function fetchSetCards(productLine: string, setName: string): Promise<any[
       headers: TCGP_HEADERS,
       body: JSON.stringify(buildPayload(productLine, setName, from, SIZE)),
     })
-    if (!r.ok) break
+    if (!r.ok) {
+      console.error(`[tcgplayer] HTTP ${r.status} for set=${setName} from=${from}`)
+      const txt = await r.text().catch(() => '')
+      console.error(`[tcgplayer] body sample: ${txt.slice(0, 300)}`)
+      break
+    }
     const data = await r.json()
+    const totalRes = data?.results?.[0]?.totalResults
     const hits = data?.results?.[0]?.results || []
+    console.log(`[tcgplayer] set=${setName} from=${from} totalResults=${totalRes} hits=${hits.length}`)
     if (!hits.length) break
     all.push(...hits)
     if (hits.length < SIZE) break

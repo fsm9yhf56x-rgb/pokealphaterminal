@@ -2,8 +2,8 @@ name: Prices · TCGdex / Cardmarket sync
 
 on:
   schedule:
-    # Quotidien à 5h UTC (avant le cron Vercel PokeTrace de 6h)
-    - cron: '0 5 * * *'
+    # Toutes les heures (1 set/run × 24 = 24 sets/jour, ~14j pour catalog complet)
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       lang:
@@ -33,11 +33,28 @@ jobs:
           echo "🚀 Calling $PROD_URL/api/prices/tcgdex?lang=en"
           START_TS=$(date +%s)
 
-          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
-            -X GET "$PROD_URL/api/prices/tcgdex?lang=en" \
-            -H "Authorization: Bearer $CRON_SECRET" \
-            --max-time 1500 \
-            --retry 1 --retry-delay 30) || HTTP_CODE="000"
+          # Boucle 10x : 10 sets/run = 10x plus rapide pour cycler le catalog
+          TOTAL_CARDS=0
+          TOTAL_UPDATED=0
+          LAST_HTTP=200
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "--- Run $i/10 ---"
+            HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+              -X GET "$PROD_URL/api/prices/tcgdex?lang=en" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              --max-time 90 \
+              --retry 1 --retry-delay 5) || HTTP_CODE="000"
+            LAST_HTTP=$HTTP_CODE
+            CARDS=$(cat response.json | grep -o '"totalCards":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            UPDATED=$(cat response.json | grep -o '"totalUpdated":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            TOTAL_CARDS=$((TOTAL_CARDS + CARDS))
+            TOTAL_UPDATED=$((TOTAL_UPDATED + UPDATED))
+            echo "  HTTP $HTTP_CODE | cards=$CARDS updated=$UPDATED"
+            sleep 3
+          done
+          HTTP_CODE=$LAST_HTTP
+          echo "" > response.json
+          echo "{\"totalCards\":$TOTAL_CARDS,\"totalUpdated\":$TOTAL_UPDATED,\"runs\":10}" > response.json
 
           END_TS=$(date +%s)
           DURATION=$((END_TS - START_TS))
@@ -90,11 +107,28 @@ jobs:
           echo "🚀 Calling $PROD_URL/api/prices/tcgdex?lang=fr"
           START_TS=$(date +%s)
 
-          HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
-            -X GET "$PROD_URL/api/prices/tcgdex?lang=fr" \
-            -H "Authorization: Bearer $CRON_SECRET" \
-            --max-time 1500 \
-            --retry 1 --retry-delay 30) || HTTP_CODE="000"
+          # Boucle 10x : 10 sets/run
+          TOTAL_CARDS=0
+          TOTAL_UPDATED=0
+          LAST_HTTP=200
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "--- Run $i/10 ---"
+            HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+              -X GET "$PROD_URL/api/prices/tcgdex?lang=fr" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              --max-time 90 \
+              --retry 1 --retry-delay 5) || HTTP_CODE="000"
+            LAST_HTTP=$HTTP_CODE
+            CARDS=$(cat response.json | grep -o '"totalCards":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            UPDATED=$(cat response.json | grep -o '"totalUpdated":[0-9]*' | head -1 | cut -d: -f2 || echo 0)
+            TOTAL_CARDS=$((TOTAL_CARDS + CARDS))
+            TOTAL_UPDATED=$((TOTAL_UPDATED + UPDATED))
+            echo "  HTTP $HTTP_CODE | cards=$CARDS updated=$UPDATED"
+            sleep 3
+          done
+          HTTP_CODE=$LAST_HTTP
+          echo "" > response.json
+          echo "{\"totalCards\":$TOTAL_CARDS,\"totalUpdated\":$TOTAL_UPDATED,\"runs\":10}" > response.json
 
           END_TS=$(date +%s)
           DURATION=$((END_TS - START_TS))

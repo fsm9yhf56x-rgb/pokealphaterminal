@@ -118,7 +118,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const lang = searchParams.get('lang') || 'en'
   // Hobby tier max 60s — batch=5 (~25s) safe. Cron 4h pour absorber tous les sets.
-  const batchSize = Number(searchParams.get('batch') || '3')
+  // 1 set/run = safe pour Hobby 60s (sets modernes 200+ cartes)
+  const batchSize = Number(searchParams.get('batch') || '1')
   const { sets, cursor, total } = await getNextSetsBatch(lang, batchSize)
   if (!sets.length) {
     return NextResponse.json({ skipped: true, reason: 'no sets found in DB', total })
@@ -310,16 +311,28 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
           // TCGdex rate limit non documente — pas de sleep
         } catch {}
       }
+      // Streaming flush: ecrit les snapshots de ce set avant de passer au suivant
+      // (si timeout sur un set, les precedents sont sauves)
+      if (snapshots.length > 0) {
+        try {
+          await writeSnapshots(snapshots)
+          console.log(`[tcgdex/${lang}] flushed ${snapshots.length} snapshots for ${tcgdexSetId}`)
+          snapshots.length = 0  // reset pour le prochain set
+        } catch (err: any) {
+          console.warn('[tcgdex] writeSnapshots failed (non-fatal):', err?.message)
+        }
+      }
     } catch (e: any) {
       errors.push(`${tcgdexSetId}: ${e.message}`)
     }
   }
 
+  // Final flush (au cas ou il reste qqch)
   if (snapshots.length > 0) {
     try {
       await writeSnapshots(snapshots)
     } catch (err: any) {
-      console.warn('[tcgdex] writeSnapshots failed (non-fatal):', err?.message)
+      console.warn('[tcgdex] final writeSnapshots failed (non-fatal):', err?.message)
     }
   }
 

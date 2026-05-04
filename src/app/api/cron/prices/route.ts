@@ -167,6 +167,8 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
         snapshots.push({
           card_ref: poketraceId,
           source: 'ebay',
+          lang: 'EN',
+          condition: 'NEAR_MINT',
           variant:
             card.edition === '1st' ? '1st_ed' :
             card.edition === 'shadowless' ? 'shadowless' :

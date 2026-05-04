@@ -224,6 +224,8 @@ async function scrapeSet(setId, opts = {}) {
       snapshots.push({
         card_ref: card.id,
         source: 'ebay',
+        lang: 'EN',
+        condition: 'NEAR_MINT',
         variant: edition.label,
         price_avg: stats.avg,
         price_low: stats.low,

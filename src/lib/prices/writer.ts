@@ -26,6 +26,7 @@ export async function writeSnapshots(snapshots: PriceSnapshot[]): Promise<void> 
     source: s.source,
     variant: s.variant,
     condition: s.condition ?? null,
+    lang: s.lang ?? null,
     price_avg: s.price_avg ?? null,
     price_low: s.price_low ?? null,
     price_high: s.price_high ?? null,

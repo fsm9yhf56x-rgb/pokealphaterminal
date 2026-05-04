@@ -232,6 +232,7 @@ async function syncTcgplayer(
           snapshots.push({
             card_ref: cardRef,
             source: 'tcgplayer',
+            lang: market === 'JP' ? 'JA' : 'EN',
             variant,
             condition: 'NEAR_MINT',
             price_avg: card.marketPrice ?? null,

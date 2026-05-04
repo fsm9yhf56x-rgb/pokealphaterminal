@@ -33,7 +33,7 @@ export function buildPoketraceSnapshots(
   // Raw snapshot (aggregated top price)
   snaps.push({
     card_ref: cardRef,
-    source: 'poketrace',
+    source: 'poketrace', lang: 'EN',
     variant: 'raw',
     price_avg: topPrice,
     price_low: ebay?.low ?? tcg?.low ?? null,
@@ -52,7 +52,7 @@ export function buildPoketraceSnapshots(
   if (psa10?.avg) {
     snaps.push({
       card_ref: cardRef,
-      source: 'poketrace',
+      source: 'poketrace', lang: 'EN',
       variant: 'psa10',
       price_avg: psa10.avg,
       price_low: psa10.low ?? null,
@@ -66,7 +66,7 @@ export function buildPoketraceSnapshots(
   if (psa9?.avg) {
     snaps.push({
       card_ref: cardRef,
-      source: 'poketrace',
+      source: 'poketrace', lang: 'EN',
       variant: 'psa9',
       price_avg: psa9.avg,
       price_low: psa9.low ?? null,
@@ -86,7 +86,7 @@ export function buildPoketraceSnapshots(
     if (ebayCond?.avg) {
       snaps.push({
         card_ref: cardRef,
-        source: 'ebay',
+        source: 'ebay', lang: 'EN',
         variant: 'raw',
         condition: cond,
         price_avg: ebayCond.avg,
@@ -106,7 +106,7 @@ export function buildPoketraceSnapshots(
     if (tcgCond?.avg) {
       snaps.push({
         card_ref: cardRef,
-        source: 'tcgplayer' as any,
+        source: 'tcgplayer' as any, lang: 'EN',
         variant: 'raw',
         condition: cond,
         price_avg: tcgCond.avg,

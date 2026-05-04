@@ -22,3 +22,7 @@ supabase/.temp/
 
 # Local DB backups
 backups/
+
+# Backfill scripts progress files (local cache)
+.tcgdex-progress.json
+.rarity-progress.json

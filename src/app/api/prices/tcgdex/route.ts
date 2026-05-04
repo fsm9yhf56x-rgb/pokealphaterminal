@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
 import { writeSnapshots } from '@/lib/prices/writer'
+
+// Helper: lang TCGdex (lowercase) → DB enum (uppercase)
+function langToDb(l: string): 'EN' | 'FR' | 'JA' {
+  const u = l.toUpperCase()
+  if (u === 'JA' || u === 'JP') return 'JA'
+  if (u === 'EN') return 'EN'
+  if (u === 'FR') return 'FR'
+  return 'EN' // fallback
+}
+
 import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
 import type { PriceSnapshot } from '@/lib/prices/types'
 
@@ -229,7 +239,7 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
               // Snapshot du jour
               snapshots.push({
                 card_ref: cardRefBase,
-                source: 'cardmarket',
+                source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND',
                 variant: 'raw',
                 price_avg: rawAvg,
                 price_low: cm.low ?? null,
@@ -238,19 +248,19 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
               })
               // Historique rétroactif (J-1, J-7, J-30) — synthetic flag
               if (cm.avg1) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'raw',
                 price_avg: cm.avg1, period_days: 1, currency: 'EUR',
                 fetched_at: new Date(now - 1 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg1' },
               })
               if (cm.avg7) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'raw',
                 price_avg: cm.avg7, period_days: 7, currency: 'EUR',
                 fetched_at: new Date(now - 7 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg7' },
               })
               if (cm.avg30) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'raw',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'raw',
                 price_avg: cm.avg30, period_days: 30, currency: 'EUR',
                 fetched_at: new Date(now - 30 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg30' },
@@ -262,7 +272,7 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
             if (holoAvg) {
               snapshots.push({
                 card_ref: cardRefBase,
-                source: 'cardmarket',
+                source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND',
                 variant: 'holo',
                 price_avg: holoAvg,
                 price_low: cm['low-holo'] ?? null,
@@ -270,19 +280,19 @@ async function syncTcgdex(sets: string[], lang: string, triggeredBy: 'cron' | 'm
                 source_meta: { ...baseMeta, cardmarket_trend: cm['trend-holo'] ?? null, period_label: 'current' },
               })
               if (cm['avg1-holo']) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'holo',
                 price_avg: cm['avg1-holo'], period_days: 1, currency: 'EUR',
                 fetched_at: new Date(now - 1 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg1-holo' },
               })
               if (cm['avg7-holo']) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'holo',
                 price_avg: cm['avg7-holo'], period_days: 7, currency: 'EUR',
                 fetched_at: new Date(now - 7 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg7-holo' },
               })
               if (cm['avg30-holo']) snapshots.push({
-                card_ref: cardRefBase, source: 'cardmarket', variant: 'holo',
+                card_ref: cardRefBase, source: 'cardmarket', lang: langToDb(lang), condition: 'CARDMARKET_TREND', variant: 'holo',
                 price_avg: cm['avg30-holo'], period_days: 30, currency: 'EUR',
                 fetched_at: new Date(now - 30 * 24 * 60 * 60 * 1000),
                 source_meta: { ...baseMeta, synthetic: true, period_label: 'avg30-holo' },

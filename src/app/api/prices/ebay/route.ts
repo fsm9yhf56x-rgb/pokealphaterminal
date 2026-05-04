@@ -3,6 +3,17 @@ import { getAdminClient } from '@/lib/db'
 import { writeSnapshots } from '@/lib/prices/writer'
 import type { PriceSnapshot, PriceVariant } from '@/lib/prices/types'
 
+// Helper: infère lang depuis le slug du set (en-base1 → EN, jp-* → JA, aopkm-* → JA, fr-* → FR)
+function inferLangFromSlug(setSlug: string | null | undefined): 'EN' | 'FR' | 'JA' | null {
+  if (!setSlug) return null
+  const s = setSlug.toLowerCase()
+  if (s.startsWith('en-')) return 'EN'
+  if (s.startsWith('fr-')) return 'FR'
+  if (s.startsWith('jp-') || s.startsWith('aopkm-')) return 'JA'
+  return null
+}
+
+
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
@@ -161,6 +172,8 @@ export async function POST(request: Request) {
         snapshots.push({
           card_ref: poketraceId,
           source: 'ebay',
+          lang: inferLangFromSlug(card.setSlug) ?? 'EN',
+          condition: 'NEAR_MINT',
           variant,
           price_avg: price.avg,
           price_low: price.low,

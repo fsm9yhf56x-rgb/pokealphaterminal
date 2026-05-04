@@ -50,7 +50,10 @@ export type PriceCondition =
   | 'MODERATELY_PLAYED'
   | 'HEAVILY_PLAYED'
   | 'DAMAGED'
-  | 'POOR';
+  | 'POOR'
+  | 'CARDMARKET_TREND';
+
+export type PriceLang = 'EN' | 'FR' | 'JA';
 
 export interface PriceSnapshot {
   /** Card identifier: e.g. "en-base1-4", "fr-base1-shadowless-4", "jp-20th-31651" */
@@ -63,6 +66,9 @@ export interface PriceSnapshot {
   variant: PriceVariant;
   /** Card condition (NEAR_MINT, LIGHTLY_PLAYED, MODERATELY_PLAYED, HEAVILY_PLAYED, DAMAGED). Optional — defaults to null. */
   condition?: PriceCondition | null;
+
+  /** Card language (EN/FR/JA). Optional — defaults to null. */
+  lang?: PriceLang | null;
 
   // Prices — optional, each source reports what it can (null allowed for DB-compat)
   price_avg?: number | null;

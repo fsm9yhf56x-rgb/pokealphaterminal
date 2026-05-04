@@ -133,6 +133,7 @@ export async function POST(request: Request) {
         snapshots.push({
           card_ref: card.id,
           source: 'poketrace',
+          lang: 'EN',
           variant: 'raw',
           condition: 'NEAR_MINT',
           price_avg: topPrice ?? null,
@@ -163,6 +164,7 @@ export async function POST(request: Request) {
             snapshots.push({
               card_ref: card.id,
               source: src.source,
+              lang: 'EN',
               variant: 'raw',
               condition: cond,
               price_avg: cnd.avg,
@@ -181,6 +183,7 @@ export async function POST(request: Request) {
           snapshots.push({
             card_ref: card.id,
             source: 'poketrace',
+            lang: 'EN',
             variant: 'psa10',
             price_avg: psa10.avg,
             price_low: psa10.low ?? null,

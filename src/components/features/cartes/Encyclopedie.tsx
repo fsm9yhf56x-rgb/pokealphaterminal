@@ -625,7 +625,16 @@ export function Encyclopedie() {
             })
           })
         })
-        return { sets: staticSets as any[], cards: enriched }
+        // Dédup : certains JSON statiques contiennent des doublons (cartes avec préfixe lang
+        // et sans préfixe lang, ex: pl4-25 et en-pl4-25 pointent sur la même carte physique)
+        const seen = new Set<string>()
+        const dedupedCards = enriched.filter(c => {
+          const key = c.setId + ':' + c.localId
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        return { sets: staticSets as any[], cards: dedupedCards }
       } catch { return null }
     }
 

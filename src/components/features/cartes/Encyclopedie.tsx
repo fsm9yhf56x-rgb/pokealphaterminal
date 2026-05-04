@@ -1541,7 +1541,7 @@ export function Encyclopedie() {
                               <span style={{ fontSize:'11px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>{a.name}</span>
                               {a.damage!=null && <span style={{ fontSize:'12px', fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)' }}>{a.damage}</span>}
                             </div>
-                            {a.cost.length>0 && (
+                            {a.cost && a.cost.length>0 && (
                               <div style={{ display:'flex', gap:'3px', marginBottom: a.effect?'4px':'0' }}>
                                 {a.cost.slice(0,6).map((c,ci)=>(
                                   <span key={ci} style={{ width:'14px', height:'14px', borderRadius:'50%', background:`${TC[c]??'#AAA'}35`, border:`1px solid ${TC[c]??'#AAA'}70`, display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'7px' }}>●</span>

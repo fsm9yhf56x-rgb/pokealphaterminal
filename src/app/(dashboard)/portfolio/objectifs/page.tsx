@@ -1,4 +1,6 @@
 'use client'
+import { Objectifs } from '@/components/features/portfolio/objectifs/Objectifs'
 
-import { Objectifs } from '@/components/features/portfolio/Objectifs'
-export default function ObjectifsPage() { return <Objectifs /> }
+export default function ObjectifsPage() {
+  return <Objectifs />
+}

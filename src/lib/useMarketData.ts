@@ -12,7 +12,7 @@ export interface TickerItem {
 }
 
 export interface MarketIndex {
-  id: 'vintage_us' | 'sealed' | 'modern_fr' | 'graded'
+  id: 'vintage_us' | 'modern_fr' | 'modern_en' | 'japan'
   label: string
   ticker: string
   current: number
@@ -183,49 +183,33 @@ async function fetchTicker(): Promise<TickerItem[]> {
 }
 
 async function fetchIndices(): Promise<MarketIndex[]> {
-  // Pour V1 : indices construits depuis card_aliases JOIN prices_snapshots
-  // par catégorie (lang/rarity). Calculs côté front pour rester simple.
-  const indices: MarketIndex[] = [
-    {
-      id: 'vintage_us', label: 'PKA Vintage US', ticker: 'VNTG',
-      current: 0, change_24h_pct: 0, sparkline: [],
-      description: 'Sets vintage WOTC anglais',
-    },
-    {
-      id: 'sealed', label: 'PKA Sealed', ticker: 'SEAL',
-      current: 0, change_24h_pct: 0, sparkline: [],
-      description: 'Boosters et displays scellés',
-    },
-    {
-      id: 'modern_fr', label: 'PKA Modern FR', ticker: 'MODN',
-      current: 0, change_24h_pct: 0, sparkline: [],
-      description: 'Cartes Sword & Shield + SV françaises',
-    },
-    {
-      id: 'graded', label: 'PKA Graded PSA', ticker: 'GRAD',
-      current: 0, change_24h_pct: 0, sparkline: [],
-      description: 'Cartes notées PSA toutes éditions',
-    },
-  ]
+  // V2 : utilise la vue SQL market_indices_v1 (rolling window 7d, top N cards par valeur)
+  const { data, error } = await (supabase as any)
+    .from('market_indices_v1')
+    .select('*')
 
-  // Pour V1 : juste un avg simple sur les cartes correspondantes
-  // (queries plus sophistiquées dans V2)
-  for (const idx of indices) {
-    const filter = INDEX_FILTERS[idx.id]
-    let q = (supabase as any).from('prices_v2').select('top_price').limit(500)
-
-    if (filter.set_slugs) q = q.in('set_slug', filter.set_slugs)
-    if (filter.has_graded !== undefined) q = q.eq('has_graded', filter.has_graded)
-
-    const { data } = await q
-    if (data && data.length) {
-      const prices = data.map((r: any) => Number(r.top_price)).filter((n: number) => n > 0)
-      if (prices.length) {
-        idx.current = prices.reduce((s: number, p: number) => s + p, 0) / prices.length
-        idx.sparkline = generatePlaceholderSparkline(idx.current, 14)  // V1 placeholder
-      }
-    }
+  if (error || !data) {
+    console.warn('[indices] error', error?.message)
+    return []
   }
+
+  const indices: MarketIndex[] = data.map((row: any) => {
+    const meta = INDEX_META[row.index_id as keyof typeof INDEX_META]
+    if (!meta) return null
+    return {
+      id: row.index_id as MarketIndex['id'],
+      label: meta.label,
+      ticker: meta.ticker,
+      current: Number(row.current_value) || 0,
+      change_24h_pct: Number(row.change_24h_pct) || 0,
+      sparkline: Array.isArray(row.sparkline) ? row.sparkline.map((v: any) => Number(v)) : [],
+      description: meta.description,
+    }
+  }).filter(Boolean) as MarketIndex[]
+
+  // Tri logique : Vintage US, Modern FR, Modern EN, Japan
+  const order: Record<string, number> = { vintage_us: 0, modern_fr: 1, modern_en: 2, japan: 3 }
+  indices.sort((a, b) => (order[a.id] ?? 99) - (order[b.id] ?? 99))
 
   return indices
 }
@@ -355,23 +339,11 @@ async function fetchAlphaPreview(): Promise<AlphaSignalPreview[]> {
 
 /* ── Helpers ─────────────────────────────────── */
 
-const INDEX_FILTERS: Record<string, { set_slugs?: string[]; has_graded?: boolean }> = {
-  vintage_us: { set_slugs: ['base-set', 'jungle', 'fossil', 'team-rocket', 'gym-heroes', 'gym-challenge', 'neo-genesis', 'neo-discovery', 'neo-revelation', 'neo-destiny'] },
-  sealed: { set_slugs: [] },  // À enrichir avec sealed_products table V2
-  modern_fr: { set_slugs: ['ecarlate-et-violet', 'evolutions-a-paldea', 'faille-paradoxe', 'destinees-de-paldea', '151', 'astres-radieux'] },
-  graded: { has_graded: true },
-}
-
-function generatePlaceholderSparkline(current: number, days: number): number[] {
-  // Placeholder pour V1 — remplacé par vraie historique snapshots V2
-  const result: number[] = []
-  let v = current * 0.92
-  for (let i = 0; i < days; i++) {
-    v += (Math.random() - 0.45) * current * 0.02
-    result.push(Math.round(v))
-  }
-  result[result.length - 1] = Math.round(current)  // Force last = current
-  return result
+const INDEX_META: Record<string, { label: string; ticker: string; description: string }> = {
+  vintage_us: { label: 'PKA Vintage US',  ticker: 'VNTG', description: 'Top 100 cartes WOTC anglaises' },
+  modern_fr:  { label: 'PKA Modern FR',   ticker: 'MODFR', description: 'Top 100 cartes modernes françaises' },
+  modern_en:  { label: 'PKA Modern EN',   ticker: 'MODEN', description: 'Top 100 cartes modernes anglaises' },
+  japan:      { label: 'PKA Japan',        ticker: 'JPMK',  description: 'Top 50 cartes marché japonais' },
 }
 
 function getMarketStatus(): 'open' | 'closed' {

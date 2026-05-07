@@ -1,4 +1,6 @@
 'use client'
+import { MarketTerminal } from '@/components/features/market/terminal/MarketTerminal'
 
-import { MarketTerminal } from '@/components/features/market/MarketTerminal'
-export default function MarketPage() { return <MarketTerminal isPro={false} /> }
+export default function MarketPage() {
+  return <MarketTerminal isPro={false} />
+}

@@ -1,4 +1,6 @@
 'use client'
+import { Explorer } from '@/components/features/market/explorer/Explorer'
 
-import { CardExplorer } from '@/components/features/market/CardExplorer'
-export default function ExplorerPage() { return <CardExplorer /> }
+export default function ExplorerPage() {
+  return <Explorer />
+}

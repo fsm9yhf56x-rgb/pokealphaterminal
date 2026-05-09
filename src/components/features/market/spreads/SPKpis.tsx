@@ -1,6 +1,6 @@
 'use client'
 
-import type { UndervaluedSignal } from '@/lib/useUndervalued'
+import type { SpreadSignal } from '@/lib/useSpreads'
 
 interface Stats {
   total: number
@@ -8,14 +8,14 @@ interface Stats {
   aCount: number
   bCount: number
   avgUpside: number
-  bestSignal: UndervaluedSignal | null
+  bestSignal: SpreadSignal | null
 }
 
 /**
  * 4 KPIs résumé : Total signaux · S-tier · Avg upside · Top signal.
  * Donne le pulse global du marché en un coup d'œil.
  */
-export function SEKpis({
+export function SPKpis({
   stats, loading,
 }: {
   stats: Stats

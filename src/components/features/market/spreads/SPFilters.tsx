@@ -1,6 +1,6 @@
 'use client'
 
-import type { UndervaluedFilters, SignalTier } from '@/lib/useUndervalued'
+import type { SpreadFilters, SignalTier } from '@/lib/useSpreads'
 
 interface Stats {
   total: number
@@ -13,11 +13,11 @@ interface Stats {
  * Filtres pour les signaux : tier (S/A/B/Tous) + min upside + min confidence.
  * Layout horizontal compact avec sliders ergonomiques.
  */
-export function SEFilters({
+export function SPFilters({
   filters, updateFilter, resetFilters, stats,
 }: {
-  filters: UndervaluedFilters
-  updateFilter: <K extends keyof UndervaluedFilters>(k: K, v: UndervaluedFilters[K]) => void
+  filters: SpreadFilters
+  updateFilter: <K extends keyof SpreadFilters>(k: K, v: SpreadFilters[K]) => void
   resetFilters: () => void
   stats: Stats
 }) {

@@ -1,28 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { useUndervalued, type UndervaluedSignal } from '@/lib/useUndervalued'
-import { SEKpis } from './SEKpis'
-import { SEFilters } from './SEFilters'
-import { SEGrid } from './SEGrid'
-import { SEDrawer } from './SEDrawer'
-import { SEProGate } from './SEProGate'
+import { useSpreads, type SpreadSignal } from '@/lib/useSpreads'
+import { SPKpis } from './SPKpis'
+import { SPFilters } from './SPFilters'
+import { SPGrid } from './SPGrid'
+import { SPDrawer } from './SPDrawer'
+import { SPProGate } from './SPProGate'
 
 /**
  * Page Sous-Évalués : Alpha Signals = cartes avec écart prix EU/US arbitrage.
  * Pro gate : Free voit 1 carte, Pro voit toutes les cartes.
  */
-export function SousEvalues({ isPro = false }: { isPro?: boolean }) {
-  const { signals, stats, filters, updateFilter, resetFilters, loading, error } = useUndervalued()
-  const [selectedSignal, setSelectedSignal] = useState<UndervaluedSignal | null>(null)
+export function Spreads({ isPro = false }: { isPro?: boolean }) {
+  const { signals, stats, filters, updateFilter, resetFilters, loading, error } = useSpreads()
+  const [selectedSignal, setSelectedSignal] = useState<SpreadSignal | null>(null)
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <Header />
 
-      <SEKpis stats={stats} loading={loading} />
+      <SPKpis stats={stats} loading={loading} />
 
-      <SEFilters
+      <SPFilters
         filters={filters}
         updateFilter={updateFilter}
         resetFilters={resetFilters}
@@ -42,18 +42,18 @@ export function SousEvalues({ isPro = false }: { isPro?: boolean }) {
 
       {!loading && !error && signals.length > 0 && (
         <>
-          <SEGrid
+          <SPGrid
             signals={signals}
             isPro={isPro}
             onSelect={setSelectedSignal}
           />
           {!isPro && signals.length > 1 && (
-            <SEProGate hiddenCount={signals.length - 1} />
+            <SPProGate hiddenCount={signals.length - 1} />
           )}
         </>
       )}
 
-      <SEDrawer
+      <SPDrawer
         signal={selectedSignal}
         onClose={() => setSelectedSignal(null)}
       />
@@ -88,7 +88,7 @@ function Header() {
           fontFamily: 'var(--font-display)',
           letterSpacing: '-0.5px',
           margin: 0,
-        }}>Sous-évaluées</h1>
+        }}>Spreads</h1>
 
         <span style={{
           padding: '3px 8px',
@@ -100,7 +100,7 @@ function Header() {
           textTransform: 'uppercase',
           letterSpacing: '0.08em',
           borderRadius: '4px',
-        }}>Alpha Signals</span>
+        }}>Spread géographique</span>
       </div>
 
       <p style={{
@@ -109,7 +109,7 @@ function Header() {
         fontFamily: 'var(--font-display)',
         marginTop: '6px',
       }}>
-        Cartes avec un écart de prix entre Cardmarket EU et eBay US — opportunités d'arbitrage géo détectées automatiquement.
+        Spread = écart de prix entre Cardmarket EU et eBay US sur la même carte. Opportunités d'arbitrage détectées automatiquement par notre scanner.
       </p>
     </div>
   )

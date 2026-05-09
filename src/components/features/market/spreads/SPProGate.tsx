@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
  * Overlay de gate Pro affiché sous le grid de signaux.
  * Encourage la conversion en montrant clairement la valeur cachée.
  */
-export function SEProGate({ hiddenCount }: { hiddenCount: number }) {
+export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
   const router = useRouter()
 
   return (
@@ -72,7 +72,7 @@ export function SEProGate({ hiddenCount }: { hiddenCount: number }) {
             marginBottom: '12px',
           }}>
             <span>◆</span>
-            Pro · Alpha Signals
+            Pro · Spreads & Signals
           </div>
 
           <div style={{
@@ -92,7 +92,7 @@ export function SEProGate({ hiddenCount }: { hiddenCount: number }) {
             fontFamily: 'var(--font-display)',
             marginBottom: '4px',
           }}>
-            Débloquez tous les Alpha Signals en passant à Pro. Détection en temps réel, alertes prioritaires, et accès aux signaux S-tier exclusifs.
+            Débloquez tous les spreads en passant à Pro. Plus l'accès anticipé aux Alpha Signals (sous-cotation, momentum, set heat — bientôt disponibles).
           </div>
         </div>
 
@@ -154,7 +154,7 @@ export function SEProGate({ hiddenCount }: { hiddenCount: number }) {
         paddingTop: '20px',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
       }}>
-        <Chip>Tous les signaux S/A/B</Chip>
+        <Chip>Tous les spreads S/A/B</Chip>
         <Chip>Alertes temps réel</Chip>
         <Chip>Whale Tracker</Chip>
         <Chip>Dexy AI illimité</Chip>

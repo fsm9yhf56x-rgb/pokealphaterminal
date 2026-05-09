@@ -1,6 +1,7 @@
 'use client'
-import { SousEvalues } from '@/components/features/market/sous-evalues/SousEvalues'
+// Alias kept for backward compatibility — canonical route is /market/spreads
+import { Spreads } from '@/components/features/market/spreads/Spreads'
 
 export default function SousEvaluesPage() {
-  return <SousEvalues isPro={false} />
+  return <Spreads isPro={false} />
 }

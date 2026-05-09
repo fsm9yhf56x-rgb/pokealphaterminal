@@ -5,7 +5,7 @@ import { supabase } from './supabase'
 
 export type SignalTier = 'S' | 'A' | 'B'
 
-export interface UndervaluedSignal {
+export interface SpreadSignal {
   card_ref: string
   card_name: string
   set_name: string | null
@@ -23,13 +23,13 @@ export interface UndervaluedSignal {
   reason: string
 }
 
-export interface UndervaluedFilters {
+export interface SpreadFilters {
   tier: SignalTier | 'ALL'
   minUpside: number   // %
   minConfidence: number
 }
 
-const DEFAULT_FILTERS: UndervaluedFilters = {
+const DEFAULT_FILTERS: SpreadFilters = {
   tier: 'ALL',
   minUpside: 0,
   minConfidence: 0,
@@ -39,9 +39,9 @@ const DEFAULT_FILTERS: UndervaluedFilters = {
  * Hook qui charge tous les signaux sous-évalués depuis la vue SQL.
  * Filtres appliqués côté client (127 signaux ~30KB, négligeable).
  */
-export function useUndervalued() {
-  const [allSignals, setAllSignals] = useState<UndervaluedSignal[]>([])
-  const [filters, setFilters] = useState<UndervaluedFilters>(DEFAULT_FILTERS)
+export function useSpreads() {
+  const [allSignals, setAllSignals] = useState<SpreadSignal[]>([])
+  const [filters, setFilters] = useState<SpreadFilters>(DEFAULT_FILTERS)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,7 +58,7 @@ export function useUndervalued() {
           .select('*')
         if (qErr) throw new Error(qErr.message)
         if (cancelled) return
-        const enriched: UndervaluedSignal[] = (data || []).map((r: any) => ({
+        const enriched: SpreadSignal[] = (data || []).map((r: any) => ({
           card_ref: r.card_ref,
           card_name: r.card_name || 'Unknown',
           set_name: r.set_name,
@@ -78,7 +78,7 @@ export function useUndervalued() {
         setAllSignals(enriched)
       } catch (e: any) {
         if (cancelled) return
-        console.warn('[useUndervalued]', e)
+        console.warn('[useSpreads]', e)
         setError(e.message || 'Failed to load signals')
       } finally {
         if (!cancelled) setLoading(false)
@@ -107,7 +107,7 @@ export function useUndervalued() {
     bestSignal: allSignals[0] || null,
   }
 
-  function updateFilter<K extends keyof UndervaluedFilters>(k: K, v: UndervaluedFilters[K]) {
+  function updateFilter<K extends keyof SpreadFilters>(k: K, v: SpreadFilters[K]) {
     setFilters(prev => ({ ...prev, [k]: v }))
   }
 

@@ -2,16 +2,16 @@
 
 import { useEffect } from 'react'
 import { getCardImageUrl } from '@/lib/images'
-import type { UndervaluedSignal } from '@/lib/useUndervalued'
+import type { SpreadSignal } from '@/lib/useSpreads'
 
 /**
  * Drawer slide-in : détail complet du signal avec breakdown EU vs US,
  * confidence breakdown, et CTA "Voir sur eBay/Cardmarket".
  */
-export function SEDrawer({
+export function SPDrawer({
   signal, onClose,
 }: {
-  signal: UndervaluedSignal | null
+  signal: SpreadSignal | null
   onClose: () => void
 }) {
   const isOpen = signal !== null
@@ -95,7 +95,7 @@ export function SEDrawer({
               color: 'var(--ink-muted)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-            }}>Alpha Signal</span>
+            }}>Spread géographique</span>
           </div>
           <button
             onClick={onClose}

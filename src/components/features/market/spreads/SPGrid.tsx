@@ -1,18 +1,18 @@
 'use client'
 
 import { getCardImageUrl } from '@/lib/images'
-import type { UndervaluedSignal } from '@/lib/useUndervalued'
+import type { SpreadSignal } from '@/lib/useSpreads'
 
 /**
  * Grid de signaux : cartes avec image + tier badge + upside + confidence + reasoning.
  * Pro gate : Free → 1ère carte visible, 2-N blurées avec overlay.
  */
-export function SEGrid({
+export function SPGrid({
   signals, isPro, onSelect,
 }: {
-  signals: UndervaluedSignal[]
+  signals: SpreadSignal[]
   isPro: boolean
-  onSelect: (signal: UndervaluedSignal) => void
+  onSelect: (signal: SpreadSignal) => void
 }) {
   return (
     <div style={{
@@ -35,7 +35,7 @@ export function SEGrid({
 function SignalCard({
   signal, gated, onClick,
 }: {
-  signal: UndervaluedSignal
+  signal: SpreadSignal
   gated: boolean
   onClick: () => void
 }) {

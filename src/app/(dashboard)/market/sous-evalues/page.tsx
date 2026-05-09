@@ -1,4 +1,6 @@
 'use client'
+import { SousEvalues } from '@/components/features/market/sous-evalues/SousEvalues'
 
-import { SousEvalues } from '@/components/features/market/SousEvalues'
-export default function SousEvaluesPage() { return <SousEvalues isPro={true} /> }
+export default function SousEvaluesPage() {
+  return <SousEvalues isPro={false} />
+}

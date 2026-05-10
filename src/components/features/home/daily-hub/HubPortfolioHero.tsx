@@ -186,7 +186,7 @@ export function HubPortfolioHero({
       }}>
         {/* Left : value + meta */}
         <div style={{ minWidth: 0 }}>
-          {/* Top : label + see-more */}
+          {/* Top : label + status pill */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -201,6 +201,20 @@ export function HubPortfolioHero({
               fontWeight: 600,
               fontFamily: 'var(--font-display)',
             }}>Mon portfolio</span>
+            {hasData && stats.totalValue === 0 && (
+              <span style={{
+                fontSize: '9px',
+                fontWeight: 600,
+                color: '#E8C56A',
+                background: 'rgba(212, 175, 55, 0.14)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                padding: '2px 8px',
+                borderRadius: '999px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                fontFamily: 'var(--font-display)',
+              }}>Prix en attente</span>
+            )}
           </div>
 
           {/* Big value */}
@@ -220,7 +234,10 @@ export function HubPortfolioHero({
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
             }}>
-              {loading ? '—' : formatEUR(stats.totalValue)}
+              {loading ? '—'
+                : hasData && stats.totalValue === 0
+                  ? `${stats.cardsCount.toLocaleString('fr-FR')} cartes`
+                  : formatEUR(stats.totalValue)}
             </div>
 
             {hasData && stats.totalCost > 0 && (
@@ -255,6 +272,19 @@ export function HubPortfolioHero({
           }}>
             {loading ? <span>Chargement…</span>
               : !hasData ? <span>Ajoutez votre première carte</span>
+              : stats.totalValue === 0
+                ? (
+                  <span>
+                    Valorisation indisponible · {' '}
+                    <span style={{
+                      color: '#E8C56A',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-display)',
+                    }}>
+                      Service prix temporairement indisponible
+                    </span>
+                  </span>
+                )
               : stats.totalCost > 0
                 ? (
                   <>

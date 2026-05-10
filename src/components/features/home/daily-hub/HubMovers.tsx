@@ -17,13 +17,15 @@ interface MoverItem {
   name: string
   set_name: string | null
   value: number
-  gain: number
-  roiPct: number
+  gain: number | null     // null si pas de buy_price
+  roiPct: number | null   // null si pas de buy_price
 }
 
+type Mode = 'roi' | 'value'
+
 /**
- * Top movers portfolio : top 3 gagnants + top 1 perdant.
- * Vue rapide de qui rapporte / qui sous-performe dans la collection.
+ * Top movers portfolio : top par ROI si buy_price connu, sinon top par valeur.
+ * Adapte le format selon les données disponibles (pas de page vide gâchée).
  */
 export function HubMovers({
   cards, loading,
@@ -33,8 +35,9 @@ export function HubMovers({
 }) {
   const router = useRouter()
 
-  const { gainers, loser } = useMemo(() => {
-    const movers: MoverItem[] = cards
+  const { gainers, loser, mode } = useMemo(() => {
+    // First : try ROI mode (cards with buy_price)
+    const withROI: MoverItem[] = cards
       .filter(c => c.buy_price != null && c.buy_price > 0 && c.current_price != null)
       .map((c, i) => {
         const qty = c.qty || 1
@@ -43,7 +46,7 @@ export function HubMovers({
         const value = cur * qty
         const cost = buy * qty
         return {
-          id: String(c.id ?? `card-${i}`),
+          id: String(c.id ?? `roi-${i}`),
           name: c.name || 'Carte sans nom',
           set_name: c.set_name || null,
           value,
@@ -52,13 +55,35 @@ export function HubMovers({
         }
       })
 
-    const sorted = [...movers].sort((a, b) => b.roiPct - a.roiPct)
-    const gainers = sorted.slice(0, 3)
-    // Top 1 loser : the worst (last element if it's actually negative)
-    const last = sorted[sorted.length - 1]
-    const loser = last && last.roiPct < 0 ? last : null
+    if (withROI.length >= 3) {
+      const sorted = [...withROI].sort((a, b) => (b.roiPct ?? 0) - (a.roiPct ?? 0))
+      const last = sorted[sorted.length - 1]
+      return {
+        gainers: sorted.slice(0, 3),
+        loser: last && last.roiPct !== null && last.roiPct < 0 ? last : null,
+        mode: 'roi' as Mode,
+      }
+    }
 
-    return { gainers, loser }
+    // Fallback : sort by absolute value (current_price × qty)
+    const byValue: MoverItem[] = cards
+      .filter(c => c.current_price != null && c.current_price > 0)
+      .map((c, i) => {
+        const qty = c.qty || 1
+        const value = (c.current_price || 0) * qty
+        return {
+          id: String(c.id ?? `val-${i}`),
+          name: c.name || 'Carte sans nom',
+          set_name: c.set_name || null,
+          value,
+          gain: null,
+          roiPct: null,
+        }
+      })
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+
+    return { gainers: byValue, loser: null, mode: 'value' as Mode }
   }, [cards])
 
   return (
@@ -75,7 +100,7 @@ export function HubMovers({
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <SectionLabel>Top mouvements</SectionLabel>
+        <SectionLabel>{mode === 'roi' ? 'Top mouvements' : 'Top valeur'}</SectionLabel>
         <button
           onClick={() => router.push('/portfolio/performance')}
           style={{
@@ -95,23 +120,21 @@ export function HubMovers({
       {loading ? (
         <LoadingState />
       ) : gainers.length === 0 ? (
-        <EmptyState message="Ajoutez des cartes avec un prix d'achat pour voir les mouvements." />
+        <EmptyState />
       ) : (
         <>
-          {/* Gainers */}
-          <div>
-            {gainers.map((m, i) => (
-              <Row
-                key={m.id}
-                mover={m}
-                rank={i + 1}
-                isLast={i === gainers.length - 1 && !loser}
-                variant="up"
-              />
-            ))}
-          </div>
+          {gainers.map((m, i) => (
+            <Row
+              key={m.id}
+              mover={m}
+              rank={i + 1}
+              isLast={i === gainers.length - 1 && !loser}
+              variant={m.roiPct !== null && m.roiPct < 0 ? 'down' : 'up'}
+              mode={mode}
+            />
+          ))}
 
-          {/* Loser (1) */}
+          {/* Loser (1) - only in ROI mode */}
           {loser && (
             <>
               <div style={{
@@ -128,8 +151,23 @@ export function HubMovers({
                   fontFamily: 'var(--font-display)',
                 }}>À surveiller</span>
               </div>
-              <Row mover={loser} rank={null} isLast variant="down" />
+              <Row mover={loser} rank={null} isLast variant="down" mode="roi" />
             </>
+          )}
+
+          {/* Hint si mode value (pour pousser à renseigner buy_price) */}
+          {mode === 'value' && (
+            <div style={{
+              padding: '10px 16px',
+              borderTop: '1px solid var(--border)',
+              background: '#FAFAFA',
+              fontSize: '10px',
+              color: 'var(--ink-muted)',
+              fontFamily: 'var(--font-display)',
+              textAlign: 'center',
+            }}>
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Astuce :</span> renseigne tes prix d'achat pour suivre ton ROI réel.
+            </div>
           )}
         </>
       )}
@@ -140,16 +178,16 @@ export function HubMovers({
 /* ── Row ─────────────────────────────────── */
 
 function Row({
-  mover, rank, isLast, variant,
+  mover, rank, isLast, variant, mode,
 }: {
   mover: MoverItem
   rank: number | null
   isLast: boolean
   variant: 'up' | 'down'
+  mode: Mode
 }) {
   const isUp = variant === 'up'
   const color = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
-  const sign = mover.roiPct >= 0 ? '+' : ''
 
   return (
     <div
@@ -194,33 +232,47 @@ function Row({
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-        }}>
-          {[mover.set_name, formatEUR(mover.value)].filter(Boolean).join(' · ')}
-        </div>
+        }}>{mover.set_name || '—'}</div>
       </div>
 
-      {/* ROI + gain */}
+      {/* Right column : varies by mode */}
       <div style={{ textAlign: 'right' }}>
-        <div style={{
-          fontSize: '13px',
-          fontWeight: 600,
-          color,
-          fontFamily: 'var(--font-data, var(--font-display))',
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.1,
-        }}>
-          {isUp ? '▲' : '▼'} {sign}{mover.roiPct.toFixed(1)}%
-        </div>
-        <div style={{
-          fontSize: '10px',
-          color,
-          fontFamily: 'var(--font-data, var(--font-display))',
-          fontVariantNumeric: 'tabular-nums',
-          marginTop: '1px',
-          opacity: 0.85,
-        }}>
-          {sign}{formatEURcompact(mover.gain)}
-        </div>
+        {mode === 'roi' && mover.roiPct !== null ? (
+          <>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color,
+              fontFamily: 'var(--font-data, var(--font-display))',
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1.1,
+            }}>
+              {isUp ? '▲' : '▼'} {mover.roiPct >= 0 ? '+' : ''}{mover.roiPct.toFixed(1)}%
+            </div>
+            <div style={{
+              fontSize: '10px',
+              color,
+              fontFamily: 'var(--font-data, var(--font-display))',
+              fontVariantNumeric: 'tabular-nums',
+              marginTop: '1px',
+              opacity: 0.85,
+            }}>
+              {(mover.gain ?? 0) >= 0 ? '+' : ''}{formatEURcompact(mover.gain ?? 0)}
+            </div>
+          </>
+        ) : (
+          // Mode value : afficher la valeur en gros
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: 'var(--ink)',
+            fontFamily: 'var(--font-data, var(--font-display))',
+            fontVariantNumeric: 'tabular-nums',
+            letterSpacing: '-0.2px',
+          }}>
+            {formatEUR(mover.value)}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -240,7 +292,7 @@ function LoadingState() {
   )
 }
 
-function EmptyState({ message }: { message: string }) {
+function EmptyState() {
   return (
     <div style={{
       padding: '32px 20px',
@@ -249,7 +301,9 @@ function EmptyState({ message }: { message: string }) {
       color: 'var(--ink-muted)',
       fontFamily: 'var(--font-display)',
       lineHeight: 1.5,
-    }}>{message}</div>
+    }}>
+      Ajoutez des cartes à votre portfolio pour voir vos top valeurs.
+    </div>
   )
 }
 

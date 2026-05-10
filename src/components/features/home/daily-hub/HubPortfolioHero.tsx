@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import type { MarketIndex } from '@/lib/useMarketData'
 
 interface PortfolioCard {
@@ -9,6 +9,8 @@ interface PortfolioCard {
   current_price?: number | null
   buy_price?: number | null
   graded?: boolean | null
+  set_slug?: string | null
+  set_name?: string | null
 }
 
 /**
@@ -23,24 +25,68 @@ export function HubPortfolioHero({
   loading: boolean
 }) {
   const router = useRouter()
+  const cardRef = useRef<HTMLDivElement | null>(null)
+
+  // Tilt 3D effect (Apple-like)
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = cardRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width   // 0..1
+    const y = (e.clientY - rect.top) / rect.height   // 0..1
+    const rotateY = (x - 0.5) * 6   // ±3deg
+    const rotateX = -(y - 0.5) * 4  // ±2deg
+    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
+    // Pass position to mesh layer
+    el.style.setProperty('--mx', `${x * 100}%`)
+    el.style.setProperty('--my', `${y * 100}%`)
+  }
+
+  function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
+    const el = cardRef.current
+    if (!el) return
+    el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)'
+    el.style.removeProperty('--mx')
+    el.style.removeProperty('--my')
+  }
+
 
   const stats = useMemo(() => {
     let totalValue = 0
     let totalCost = 0
     let cardsCount = 0
     let gradedCount = 0
+    const setValueMap = new Map<string, number>()  // set_slug → value
+
     for (const c of cards) {
       const qty = c.qty || 1
       const cur = c.current_price ?? 0
       const buy = c.buy_price ?? 0
-      totalValue += cur * qty
+      const value = cur * qty
+      totalValue += value
       totalCost += buy * qty
       cardsCount += qty
       if (c.graded) gradedCount += qty
+      // Aggregate by set
+      const setKey = c.set_slug || c.set_name || 'unknown'
+      setValueMap.set(setKey, (setValueMap.get(setKey) || 0) + value)
     }
     const gain = totalValue - totalCost
     const roiPct = totalCost > 0 ? (gain / totalCost) * 100 : 0
-    return { totalValue, totalCost, gain, roiPct, cardsCount, gradedCount }
+
+    // Diversification : % du top set
+    let topSetPct = 0
+    let topSetName = ''
+    if (totalValue > 0) {
+      let max = 0
+      for (const [name, val] of setValueMap) {
+        if (val > max) { max = val; topSetName = name }
+      }
+      topSetPct = (max / totalValue) * 100
+    }
+    const setsCount = setValueMap.size
+
+    return { totalValue, totalCost, gain, roiPct, cardsCount, gradedCount, topSetPct, topSetName, setsCount }
   }, [cards])
 
   const sparklinePoints = useMemo(
@@ -56,27 +102,29 @@ export function HubPortfolioHero({
 
   return (
     <div
+      ref={cardRef}
       onClick={() => router.push('/portfolio')}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.18)'
+      }}
+      className="hero-card-bg"
       style={{
         position: 'relative',
-        background: 'linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%)',
+        background: 'linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 50%, #1F1F22 100%)',
+        backgroundSize: '200% 200%',
         borderRadius: '18px',
         padding: '28px 32px',
         cursor: 'pointer',
         overflow: 'hidden',
-        transition: 'all 0.2s ease',
+        transition: 'transform 0.15s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.2s ease',
         color: 'var(--surface)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.12)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
+        transformStyle: 'preserve-3d' as any,
+        willChange: 'transform',
       }}
     >
-      {/* Decorative gradient blob */}
+      {/* Decorative gradient blob (static) */}
       <div style={{
         position: 'absolute',
         top: '-40%',
@@ -88,6 +136,45 @@ export function HubPortfolioHero({
           : 'radial-gradient(circle, rgba(224,48,32,0.15) 0%, transparent 60%)',
         pointerEvents: 'none',
       }} />
+
+      {/* Animated mesh layer (subtle moving gradient) */}
+      <div className="hero-mesh" style={{
+        position: 'absolute',
+        inset: 0,
+        background: isUp
+          ? 'radial-gradient(circle at var(--mx, 30%) var(--my, 70%), rgba(91,196,149,0.12) 0%, transparent 50%)'
+          : 'radial-gradient(circle at var(--mx, 30%) var(--my, 70%), rgba(240,131,115,0.10) 0%, transparent 50%)',
+        pointerEvents: 'none',
+        opacity: 0.8,
+      }} />
+
+      {/* Subtle noise texture overlay */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'url("data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><filter id=%22n%22><feTurbulence baseFrequency=%221.2%22 numOctaves=%222%22/><feColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0%22/></filter><rect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/></svg>")',
+        opacity: 0.5,
+        pointerEvents: 'none',
+        mixBlendMode: 'overlay' as any,
+      }} />
+
+      <style>{`
+        @keyframes hero-mesh-drift {
+          0%   { --mx: 30%; --my: 70%; }
+          25%  { --mx: 70%; --my: 50%; }
+          50%  { --mx: 60%; --my: 80%; }
+          75%  { --mx: 35%; --my: 35%; }
+          100% { --mx: 30%; --my: 70%; }
+        }
+        @property --mx { syntax: '<percentage>'; inherits: false; initial-value: 30%; }
+        @property --my { syntax: '<percentage>'; inherits: false; initial-value: 70%; }
+        .hero-mesh { animation: hero-mesh-drift 14s ease-in-out infinite; }
+        @keyframes hero-bg-shift {
+          0%, 100% { background-position: 0% 0%; }
+          50%      { background-position: 100% 100%; }
+        }
+        .hero-card-bg { animation: hero-bg-shift 18s ease-in-out infinite; }
+      `}</style>
 
       <div style={{
         position: 'relative',
@@ -172,7 +259,7 @@ export function HubPortfolioHero({
                 ? (
                   <>
                     <span>
-                      Gain · <span style={{
+                      Gain latent · <span style={{
                         color: isUp ? '#5BC495' : '#F08373',
                         fontWeight: 500,
                         fontFamily: 'var(--font-data, var(--font-display))',
@@ -190,14 +277,25 @@ export function HubPortfolioHero({
                     )}
                   </>
                 )
-                : <span>Coût d'achat non renseigné</span>}
+                : (
+                  <span>
+                    Valeur estimée · {' '}
+                    <span style={{
+                      color: '#E8C56A',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-display)',
+                    }}>
+                      Renseigne tes prix d'achat pour calculer ton ROI →
+                    </span>
+                  </span>
+                )}
           </div>
 
-          {/* Bottom row : 3 mini-stats */}
+          {/* Bottom row : 4 mini-stats */}
           {hasData && (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '12px',
               paddingTop: '16px',
               borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -212,8 +310,18 @@ export function HubPortfolioHero({
                 accent={stats.gradedCount > 0}
               />
               <MiniStat
-                label="Coût total"
-                value={formatEUR(stats.totalCost)}
+                label="Sets"
+                value={stats.setsCount.toLocaleString('fr-FR')}
+              />
+              <MiniStat
+                label="Top set"
+                value={stats.topSetPct > 0 ? `${stats.topSetPct.toFixed(0)}%` : '—'}
+                accent={stats.topSetPct > 50}
+                hint={stats.topSetPct > 50
+                  ? 'Concentration élevée'
+                  : stats.topSetPct > 30
+                  ? 'Bien diversifié'
+                  : 'Très diversifié'}
               />
             </div>
           )}
@@ -375,11 +483,12 @@ function BenchmarkComparison({
 /* ── Mini-stat ──────────────────────────── */
 
 function MiniStat({
-  label, value, accent,
+  label, value, accent, hint,
 }: {
   label: string
   value: string
   accent?: boolean
+  hint?: string
 }) {
   return (
     <div>
@@ -399,7 +508,19 @@ function MiniStat({
         fontFamily: 'var(--font-data, var(--font-display))',
         fontVariantNumeric: 'tabular-nums',
         letterSpacing: '-0.2px',
+        lineHeight: 1.1,
       }}>{value}</div>
+      {hint && (
+        <div style={{
+          fontSize: '8px',
+          color: 'rgba(255,255,255,0.4)',
+          fontFamily: 'var(--font-display)',
+          marginTop: '2px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>{hint}</div>
+      )}
     </div>
   )
 }

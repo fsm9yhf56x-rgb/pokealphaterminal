@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
+import { HubStreak } from './HubStreak'
 
 /**
  * Header Daily Hub : salutation contextuelle + clock live + market status indicator.
@@ -59,6 +60,10 @@ export function HubHeader() {
           marginTop: '6px',
           textTransform: 'capitalize',
         }}>{dateStr}</p>
+
+        <div style={{ marginTop: '10px' }}>
+          <HubStreak />
+        </div>
       </div>
 
       {/* Right : market status + clock */}

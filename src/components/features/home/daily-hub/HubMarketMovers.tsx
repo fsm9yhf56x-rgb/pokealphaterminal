@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl } from '@/lib/images'
+import { usePortfolio } from '@/lib/usePortfolio'
 
 interface MarketMover {
   card_ref: string
@@ -14,30 +15,45 @@ interface MarketMover {
   price: number
   ebay_sales: number
   has_graded: boolean
+  inPortfolio: boolean   // ⭐ NEW : crossover flag
 }
 
 /**
- * Top movers du marché global : cartes les plus vendues / les plus chères en mouvement.
- * Différent de HubMovers (qui montre TES cartes) — ici c'est ce qui chauffe ailleurs.
+ * Top movers du marché global avec crossover portfolio.
+ * Si une carte du top marché est aussi dans ton portfolio, badge "DANS TON PORTFOLIO" gold.
  */
 export function HubMarketMovers() {
   const router = useRouter()
+  const portfolio = usePortfolio()
   const [movers, setMovers] = useState<MarketMover[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Build a Set of portfolio card identifiers for fast lookup
+  const portfolioCardSet = useMemo(() => {
+    const set = new Set<string>()
+    for (const c of portfolio.cards || []) {
+      // Match by card_ref OR by set_slug + card_number combination
+      if ((c as any).card_ref) set.add(String((c as any).card_ref))
+      if ((c as any).set_slug && (c as any).card_number) {
+        set.add(`${(c as any).set_slug}::${(c as any).card_number}`)
+      }
+      // Also match by name (loose) for cards where ref isn't aligned
+      if (c.name) set.add(c.name.toLowerCase().trim())
+    }
+    return set
+  }, [portfolio.cards])
 
   useEffect(() => {
     let cancelled = false
     loadMovers()
     async function loadMovers() {
       try {
-        // Get top cards by recent eBay sales activity + significant price
-        // Proxy for "what's hot" : high volume + meaningful value
         const { data, error } = await (supabase as any)
           .from('prices_v2')
           .select('card_ref, card_name, set_name, set_slug, card_number, top_price, ebay_avg, ebay_sales, has_graded')
-          .gt('ebay_sales', 8)        // strong volume
-          .gt('top_price', 30)        // not penny cards
-          .lt('top_price', 5000)      // not super outliers
+          .gt('ebay_sales', 8)
+          .gt('top_price', 30)
+          .lt('top_price', 5000)
           .order('ebay_sales', { ascending: false })
           .limit(8)
 
@@ -46,19 +62,27 @@ export function HubMarketMovers() {
           return
         }
 
-        // Pick 3 with diverse value range (low/mid/high) to feel curated
-        const all = (data || []).map((r: any) => ({
-          card_ref: r.card_ref,
-          card_name: r.card_name || 'Unknown',
-          set_name: r.set_name,
-          set_slug: r.set_slug,
-          card_number: r.card_number,
-          price: Number(r.top_price) || Number(r.ebay_avg) || 0,
-          ebay_sales: Number(r.ebay_sales) || 0,
-          has_graded: !!r.has_graded,
-        }))
+        const all = (data || []).map((r: any): MarketMover => {
+          const refMatch = portfolioCardSet.has(String(r.card_ref))
+          const slugMatch = r.set_slug && r.card_number
+            ? portfolioCardSet.has(`${r.set_slug}::${r.card_number}`)
+            : false
+          const nameMatch = r.card_name
+            ? portfolioCardSet.has(String(r.card_name).toLowerCase().trim())
+            : false
+          return {
+            card_ref: r.card_ref,
+            card_name: r.card_name || 'Unknown',
+            set_name: r.set_name,
+            set_slug: r.set_slug,
+            card_number: r.card_number,
+            price: Number(r.top_price) || Number(r.ebay_avg) || 0,
+            ebay_sales: Number(r.ebay_sales) || 0,
+            has_graded: !!r.has_graded,
+            inPortfolio: refMatch || slugMatch || nameMatch,
+          }
+        })
 
-        // Sort by volume, take top 3
         all.sort((a: MarketMover, b: MarketMover) => b.ebay_sales - a.ebay_sales)
         const picked = all.slice(0, 3)
         if (!cancelled) setMovers(picked)
@@ -67,7 +91,10 @@ export function HubMarketMovers() {
       }
     }
     return () => { cancelled = true }
-  }, [])
+  }, [portfolioCardSet])
+
+  // Count crossover for header
+  const crossoverCount = movers.filter(m => m.inPortfolio).length
 
   return (
     <div style={{
@@ -83,7 +110,23 @@ export function HubMarketMovers() {
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <SectionLabel>Marché en mouvement</SectionLabel>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <SectionLabel>Marché en mouvement</SectionLabel>
+          {crossoverCount > 0 && (
+            <span style={{
+              padding: '2px 7px',
+              background: 'rgba(212, 175, 55, 0.14)',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              borderRadius: '4px',
+              fontSize: '8px',
+              fontWeight: 700,
+              color: '#B8860B',
+              fontFamily: 'var(--font-display)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}>{crossoverCount} matché{crossoverCount > 1 ? 's' : ''}</span>
+          )}
+        </div>
         <button
           onClick={() => router.push('/market')}
           style={{
@@ -145,14 +188,23 @@ function Row({
         padding: '11px 16px',
         border: 'none',
         borderTop: '1px solid var(--border)',
-        background: 'transparent',
+        background: mover.inPortfolio ? 'rgba(212, 175, 55, 0.04)' : 'transparent',
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'background 0.1s',
         fontFamily: 'var(--font-display)',
+        position: 'relative',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = mover.inPortfolio
+          ? 'rgba(212, 175, 55, 0.08)'
+          : 'rgba(0,0,0,0.015)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = mover.inPortfolio
+          ? 'rgba(212, 175, 55, 0.04)'
+          : 'transparent'
+      }}
     >
       {/* Mini image */}
       <div style={{
@@ -162,6 +214,7 @@ function Row({
         borderRadius: '4px',
         overflow: 'hidden',
         flexShrink: 0,
+        position: 'relative',
       }}>
         {imgUrl && (
           <img
@@ -172,19 +225,61 @@ function Row({
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           />
         )}
+        {/* Star indicator if in portfolio */}
+        {mover.inPortfolio && (
+          <div style={{
+            position: 'absolute',
+            top: '-4px',
+            right: '-4px',
+            width: '14px',
+            height: '14px',
+            background: '#D4AF37',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '8px',
+            color: '#fff',
+            fontWeight: 700,
+            border: '2px solid var(--surface)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+          }}>★</div>
+        )}
       </div>
 
       {/* Name + meta */}
       <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: '12px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
           marginBottom: '3px',
-        }}>{mover.card_name}</div>
+        }}>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 500,
+            color: 'var(--ink)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            flex: 1,
+            minWidth: 0,
+          }}>{mover.card_name}</span>
+          {mover.inPortfolio && (
+            <span style={{
+              padding: '1px 5px',
+              background: '#D4AF37',
+              color: '#fff',
+              fontSize: '7px',
+              fontWeight: 700,
+              borderRadius: '3px',
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              flexShrink: 0,
+            }}>Tu en as</span>
+          )}
+        </div>
         <div style={{
           fontSize: '10px',
           color: 'var(--ink-muted)',

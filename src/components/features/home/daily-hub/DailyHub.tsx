@@ -4,15 +4,17 @@ import { usePortfolio } from '@/lib/usePortfolio'
 import { useMarketData } from '@/lib/useMarketData'
 import { useSpreads } from '@/lib/useSpreads'
 import { HubHeader } from './HubHeader'
+import { HubInsight } from './HubInsight'
 import { HubPortfolioHero } from './HubPortfolioHero'
 import { HubKpis } from './HubKpis'
 import { HubMovers } from './HubMovers'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
+import { HubMarketMovers } from './HubMarketMovers'
+import { HubAlerts } from './HubAlerts'
 
 /**
- * Daily Hub : page d'accueil quotidienne, vue à 5 secondes.
- * Réutilise les hooks existants (usePortfolio + useMarketData + useSpreads)
- * pour une vision agrégée sans query supplémentaire.
+ * Daily Hub V2 : page d'accueil quotidienne enrichie.
+ * Lecture progressive du JE → NOUS → MARCHÉ avec animations stagger.
  */
 export function DailyHub() {
   const portfolio = usePortfolio()
@@ -26,35 +28,85 @@ export function DailyHub() {
       margin: '0 auto',
       display: 'flex',
       flexDirection: 'column',
-      gap: '24px',
+      gap: '20px',
     }}>
-      <HubHeader />
+      {/* Stagger animations */}
+      <style>{`
+        @keyframes hub-fadein {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0);   }
+        }
+        .hub-stagger > * {
+          opacity: 0;
+          animation: hub-fadein 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+        }
+        .hub-stagger > *:nth-child(1) { animation-delay: 0ms; }
+        .hub-stagger > *:nth-child(2) { animation-delay: 80ms; }
+        .hub-stagger > *:nth-child(3) { animation-delay: 160ms; }
+        .hub-stagger > *:nth-child(4) { animation-delay: 240ms; }
+        .hub-stagger > *:nth-child(5) { animation-delay: 320ms; }
+        .hub-stagger > *:nth-child(6) { animation-delay: 400ms; }
+      `}</style>
 
-      <HubPortfolioHero
-        cards={portfolio.cards || []}
-        loading={portfolio.loading}
-      />
-
-      <HubKpis
-        topSpread={spreads.allSignals[0] || null}
-        topIndex={market.indices[0] || null}
-        cardsCount={portfolio.cards?.length || 0}
-        loading={market.loading || spreads.loading || portfolio.loading}
-      />
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '14px',
+      <div className="hub-stagger" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
       }}>
-        <HubMovers
+        {/* 1. Header (greeting + market status + clock) */}
+        <HubHeader />
+
+        {/* 2. Insight du jour (phrase intelligente) */}
+        <HubInsight
           cards={portfolio.cards || []}
-          loading={portfolio.loading}
+          spreads={spreads.allSignals}
+          indices={market.indices}
+          loading={portfolio.loading || spreads.loading || market.loading}
         />
-        <HubSpreadsTeaser
-          signals={spreads.allSignals.slice(0, 3)}
-          loading={spreads.loading}
+
+        {/* 3. Hero portfolio (sparkline + comparaison indice) */}
+        <HubPortfolioHero
+          cards={portfolio.cards || []}
+          indices={market.indices}
+          loading={portfolio.loading || market.loading}
         />
+
+        {/* 4. KPIs ligne (3 entrées rapides) */}
+        <HubKpis
+          topSpread={spreads.allSignals[0] || null}
+          topIndex={market.indices[0] || null}
+          cardsCount={portfolio.cards?.length || 0}
+          loading={market.loading || spreads.loading || portfolio.loading}
+        />
+
+        {/* 5. Personal grid : MES top mouvements + MES spreads */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gap: '14px',
+        }}>
+          <HubMovers
+            cards={portfolio.cards || []}
+            loading={portfolio.loading}
+          />
+          <HubSpreadsTeaser
+            signals={spreads.allSignals.slice(0, 3)}
+            loading={spreads.loading}
+          />
+        </div>
+
+        {/* 6. Market grid : LE marché global + ALERTES perso */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gap: '14px',
+        }}>
+          <HubMarketMovers />
+          <HubAlerts
+            cards={portfolio.cards || []}
+            loading={portfolio.loading}
+          />
+        </div>
       </div>
     </div>
   )

@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 
 /**
- * Header Daily Hub : salutation contextuelle (matin/après-midi/soir) + clock live.
- * Tone friendly mais pro. Pas d'emoji superflu.
+ * Header Daily Hub : salutation contextuelle + clock live + market status indicator.
  */
 export function HubHeader() {
   const { user } = useAuth()
@@ -20,6 +19,7 @@ export function HubHeader() {
   const firstName = getFirstName(user)
   const dateStr = formatLongDate(now)
   const timeStr = formatTime(now)
+  const marketStatus = getMarketStatus(now)
 
   return (
     <div style={{
@@ -61,8 +61,38 @@ export function HubHeader() {
         }}>{dateStr}</p>
       </div>
 
-      {/* Right : live clock */}
+      {/* Right : market status + clock */}
       <div style={{ textAlign: 'right' }}>
+        {/* Market status pill */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 10px',
+          background: marketStatus.bg,
+          border: `1px solid ${marketStatus.border}`,
+          borderRadius: '999px',
+          marginBottom: '8px',
+        }}>
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: marketStatus.color,
+            animation: marketStatus.live ? 'pulse-dot 2s ease-in-out infinite' : 'none',
+            boxShadow: marketStatus.live ? `0 0 0 0 ${marketStatus.color}` : 'none',
+          }} />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: 600,
+            color: marketStatus.color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontFamily: 'var(--font-display)',
+          }}>{marketStatus.label}</span>
+        </div>
+
+        {/* Clock */}
         <div style={{
           fontSize: '24px',
           fontWeight: 500,
@@ -81,6 +111,13 @@ export function HubHeader() {
           letterSpacing: '0.05em',
         }}>Heure locale</div>
       </div>
+
+      <style>{`
+        @keyframes pulse-dot {
+          0%, 100% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+          50%      { box-shadow: 0 0 0 6px transparent; opacity: 0.7; }
+        }
+      `}</style>
     </div>
   )
 }
@@ -97,14 +134,12 @@ function getGreeting(hour: number): string {
 function getFirstName(user: any): string | null {
   if (!user) return null
   const meta = user.user_metadata
-  // Try various fields where the first name might be stored
   const name = meta?.first_name
             || meta?.firstName
             || meta?.name?.split(' ')[0]
             || meta?.full_name?.split(' ')[0]
             || null
   if (!name) {
-    // Fallback : use email local part, capitalized
     const local = user.email?.split('@')[0]
     if (local) return capitalize(local.replace(/[._-]/g, ' ').split(' ')[0])
   }
@@ -128,4 +163,64 @@ function formatTime(d: Date): string {
   const h = d.getHours().toString().padStart(2, '0')
   const m = d.getMinutes().toString().padStart(2, '0')
   return `${h}:${m}`
+}
+
+interface MarketStatus {
+  label: string
+  color: string
+  bg: string
+  border: string
+  live: boolean
+}
+
+function getMarketStatus(d: Date): MarketStatus {
+  const day = d.getDay() // 0 = sunday, 6 = saturday
+  const hour = d.getHours()
+
+  // Weekend : marché actif (eBay/CM ouvrent 24/7 en réalité, mais on simule des heures de pic)
+  if (day === 0 || day === 6) {
+    if (hour >= 10 && hour < 23) {
+      return {
+        label: 'Pic activité',
+        color: '#1D9E75',
+        bg: 'rgba(29, 158, 117, 0.08)',
+        border: 'rgba(29, 158, 117, 0.2)',
+        live: true,
+      }
+    }
+    return {
+      label: 'Activité réduite',
+      color: '#86868B',
+      bg: 'rgba(134, 134, 139, 0.08)',
+      border: 'rgba(134, 134, 139, 0.2)',
+      live: false,
+    }
+  }
+
+  // Weekdays
+  if (hour >= 9 && hour < 18) {
+    return {
+      label: 'Marché actif',
+      color: '#1D9E75',
+      bg: 'rgba(29, 158, 117, 0.08)',
+      border: 'rgba(29, 158, 117, 0.2)',
+      live: true,
+    }
+  }
+  if (hour >= 18 && hour < 23) {
+    return {
+      label: 'Soirée active',
+      color: '#EF9F27',
+      bg: 'rgba(239, 159, 39, 0.08)',
+      border: 'rgba(239, 159, 39, 0.2)',
+      live: true,
+    }
+  }
+  return {
+    label: 'Activité réduite',
+    color: '#86868B',
+    bg: 'rgba(134, 134, 139, 0.08)',
+    border: 'rgba(134, 134, 139, 0.2)',
+    live: false,
+  }
 }

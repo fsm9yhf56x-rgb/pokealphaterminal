@@ -1,14 +1,14 @@
 /**
  * Drop-in replacement for Supabase data client.
  *
- * - Server-side: queries Neon directly via @neondatabase/serverless.
- * - Client-side: POSTs serialized queries to /api/db/query, which
- *   executes them server-side and returns the result.
+ * - Server-side: queries Neon directly (via dynamic import of ./sql).
+ * - Client-side: POSTs serialized queries to /api/db/query.
  *
- * This lets hooks like usePortfolio, useMarketData, etc. keep using
- * `supabase.from(...).select(...)` unchanged.
+ * The server-side ./sql import is dynamic and only loaded when IS_BROWSER
+ * is false. This prevents the @neondatabase/serverless module from being
+ * bundled into the browser, which would fail because DATABASE_URL is not
+ * available client-side.
  */
-import { sql } from './sql'
 
 const IS_BROWSER = typeof window !== 'undefined'
 
@@ -91,6 +91,8 @@ function buildQuery(table: string) {
   }
 
   // ── SERVER: build SQL and run directly via Neon ──
+  // sql is imported dynamically to avoid bundling @neondatabase/serverless
+  // into the client bundle.
   const escapeVal = (v: any): string => {
     if (v === null || v === undefined) return 'NULL'
     if (typeof v === 'number' || typeof v === 'boolean') return String(v)
@@ -128,6 +130,7 @@ function buildQuery(table: string) {
   }
 
   const executeServer = async (): Promise<any> => {
+    const { sql } = await import('./sql')
     let query = ''
     if (state.mode === 'select') {
       query = `SELECT ${state.columns} FROM ${quoteIdent(state.table)}`
@@ -230,9 +233,9 @@ export const db = {
   from: <T = any>(table: string) => buildQuery(table) as QueryBuilder<T>,
   rpc: async (fn: string, args: Record<string, any> = {}) => {
     if (IS_BROWSER) {
-      // RPC not yet supported via proxy. Add /api/db/rpc later if needed.
       return { data: null, error: { message: 'rpc() not supported in browser yet' } }
     }
+    const { sql } = await import('./sql')
     const argsStr = Object.values(args)
       .map((v) => (typeof v === 'string' ? `'${v.replace(/'/g, "''")}'` : String(v)))
       .join(',')

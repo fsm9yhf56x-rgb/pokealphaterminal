@@ -1,12 +1,9 @@
 /**
  * Better Auth — server-side configuration (lazy-init, build-safe).
  *
- * The auth instance is created on first ACTUAL USE (function call or
- * property-after-property access), not on the first property access.
- *
- * This is necessary because Next.js evaluates `auth.handler` at module
- * load time (in the catch-all route), and we don't want that to throw
- * when DATABASE_URL is missing at build time.
+ * The auth instance is created on first ACTUAL USE (function call),
+ * not on the first property access. This prevents Next.js page-data
+ * collection from crashing when env vars are missing at build time.
  */
 import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth'
 import { Pool } from '@neondatabase/serverless'
@@ -17,6 +14,26 @@ function buildAuth(): Auth<BetterAuthOptions> {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not set')
   }
+
+  // Build dynamic trustedOrigins list:
+  // - localhost (dev)
+  // - canonical prod domains
+  // - any *.vercel.app URL (covers all preview deployments)
+  // - VERCEL_URL injected at runtime (current deployment URL)
+  const trustedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://pokealphaterminal.vercel.app',
+    'https://pokealphaterminal.io',
+  ]
+
+  // Auto-add current Vercel deployment URL (always set on Vercel)
+  if (process.env.VERCEL_URL) {
+    trustedOrigins.push(`https://${process.env.VERCEL_URL}`)
+  }
+
+  // Optional: allow any Vercel preview via wildcard (Better Auth supports glob)
+  trustedOrigins.push('https://*.vercel.app')
 
   const options: BetterAuthOptions = {
     database: new Pool({ connectionString: process.env.DATABASE_URL }),
@@ -38,12 +55,7 @@ function buildAuth(): Auth<BetterAuthOptions> {
       updateAge: 60 * 60 * 24,
     },
 
-    trustedOrigins: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://pokealphaterminal.vercel.app',
-      'https://pokealphaterminal.io',
-    ],
+    trustedOrigins,
 
     baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
     secret: process.env.BETTER_AUTH_SECRET,
@@ -58,21 +70,11 @@ function getAuth(): Auth<BetterAuthOptions> {
 }
 
 // Lazy-init proxy.
-// Property access returns a wrapper that defers actual init until
-// the wrapper is itself called or its properties are accessed.
-// This way, `auth.handler` at module load doesn't trigger buildAuth().
 export const auth = new Proxy({} as Auth<BetterAuthOptions>, {
   get(_target, prop) {
-    // 'handler' is special: Next.js wraps it with toNextJsHandler at
-    // module load. We return a function that lazy-resolves at call time.
     if (prop === 'handler') {
-      return (request: Request) => {
-        return getAuth().handler(request)
-      }
+      return (request: Request) => getAuth().handler(request)
     }
-
-    // For 'api' (used by getCurrentUser, etc.), return a nested proxy
-    // that lazy-resolves on method call.
     if (prop === 'api') {
       return new Proxy({} as Auth<BetterAuthOptions>['api'], {
         get(_t, method) {
@@ -83,8 +85,6 @@ export const auth = new Proxy({} as Auth<BetterAuthOptions>, {
         },
       })
     }
-
-    // Other properties: evaluate eagerly (this WILL call buildAuth)
     return (getAuth() as any)[prop]
   },
 })

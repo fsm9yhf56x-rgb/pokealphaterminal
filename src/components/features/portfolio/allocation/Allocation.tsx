@@ -95,6 +95,13 @@ export function Allocation() {
     return <EmptyState />
   }
 
+  // Si on a des cartes mais aucune valorisation (current_price tous null/0)
+  // alors les composants Recharts (Treemap) crashent avec division par zero.
+  // On affiche un etat intermediaire propre.
+  if (agg.totalValue === 0) {
+    return <NoValuationState cardsCount={agg.cardsCount} />
+  }
+
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <Header />
@@ -103,6 +110,68 @@ export function Allocation() {
       <AllocTreemap agg={agg} />
       <AllocBreakdowns agg={agg} />
       <AllocTopHoldings agg={agg} />
+    </div>
+  )
+}
+
+function NoValuationState({ cardsCount }: { cardsCount: number }) {
+  return (
+    <div style={{
+      width: '100%',
+      maxWidth: '720px',
+      margin: '0 auto',
+      padding: '48px 32px',
+      textAlign: 'center',
+      fontFamily: 'var(--font-display)',
+    }}>
+      <p style={{
+        fontSize: '10px',
+        color: 'var(--ink-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        margin: '0 0 4px',
+      }}>Portfolio</p>
+      <h1 style={{
+        fontSize: '26px',
+        fontWeight: 600,
+        color: 'var(--ink)',
+        letterSpacing: '-0.5px',
+        margin: '0 0 8px',
+      }}>Allocation</h1>
+
+      <div style={{
+        marginTop: '32px',
+        padding: '32px 24px',
+        background: 'rgba(212, 175, 55, 0.06)',
+        border: '1px solid rgba(212, 175, 55, 0.25)',
+        borderRadius: '14px',
+      }}>
+        <div style={{ fontSize: '32px', marginBottom: '14px', opacity: 0.6 }}>{'◆'}</div>
+        <div style={{
+          fontSize: '16px',
+          fontWeight: 600,
+          color: 'var(--ink)',
+          marginBottom: '8px',
+        }}>Valorisation en attente</div>
+        <div style={{
+          fontSize: '13px',
+          color: 'var(--ink-muted)',
+          lineHeight: 1.6,
+          maxWidth: '480px',
+          margin: '0 auto 18px',
+        }}>
+          {cardsCount.toLocaleString('fr-FR')} carte{cardsCount > 1 ? 's' : ''} dans ton portfolio,
+          mais le service de prix est temporairement indisponible.
+          L’analyse d’allocation reviendra une fois la valorisation rétablie.
+        </div>
+        <div style={{
+          fontSize: '11px',
+          color: 'var(--ink-faint)',
+          fontStyle: 'italic',
+        }}>
+          En attendant, tu peux consulter tes Holdings dans la section Portfolio.
+        </div>
+      </div>
     </div>
   )
 }

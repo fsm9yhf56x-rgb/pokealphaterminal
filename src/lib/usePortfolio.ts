@@ -24,7 +24,7 @@ export function usePortfolio() {
   const [loading, setLoading] = useState(true)
   const [migrated, setMigrated] = useState(false)
 
-  // Load cards
+  // Load cards — depend on user.id (string) not user (object that changes ref each render)
   useEffect(() => {
     if (authLoading) return
 
@@ -35,7 +35,8 @@ export function usePortfolio() {
     }
 
     loadFromSupabase()
-  }, [user, authLoading])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading])
 
   async function loadFromSupabase() {
     setLoading(true)

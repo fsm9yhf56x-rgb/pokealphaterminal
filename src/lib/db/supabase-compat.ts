@@ -1,22 +1,33 @@
 /**
- * Drop-in replacement for Supabase data client, backed by Neon.
- * Supports the subset of Supabase API used in this codebase.
+ * Drop-in replacement for Supabase data client.
  *
- * Usage:
- *   import { db } from '@/lib/db/supabase-compat'
- *   const { data, error } = await db.from('tcg_cards').select('*').eq('id', cardId).single()
+ * - Server-side: queries Neon directly via @neondatabase/serverless.
+ * - Client-side: POSTs serialized queries to /api/db/query, which
+ *   executes them server-side and returns the result.
+ *
+ * This lets hooks like usePortfolio, useMarketData, etc. keep using
+ * `supabase.from(...).select(...)` unchanged.
  */
 import { sql } from './sql'
 
+const IS_BROWSER = typeof window !== 'undefined'
+
 type QueryResult<T> = { data: T | null; error: { message: string } | null }
-type QueryListResult<T> = { data: T[] | null; error: { message: string } | null; count?: number }
+type QueryListResult<T> = {
+  data: T[] | null
+  error: { message: string } | null
+  count?: number
+}
 
 interface QueryBuilder<T = any> {
   select: (cols?: string) => QueryBuilder<T>
   insert: (rows: any | any[]) => QueryBuilder<T>
   update: (values: any) => QueryBuilder<T>
   delete: () => QueryBuilder<T>
-  upsert: (rows: any | any[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) => QueryBuilder<T>
+  upsert: (
+    rows: any | any[],
+    opts?: { onConflict?: string; ignoreDuplicates?: boolean },
+  ) => QueryBuilder<T>
   eq: (col: string, val: any) => QueryBuilder<T>
   neq: (col: string, val: any) => QueryBuilder<T>
   gt: (col: string, val: any) => QueryBuilder<T>
@@ -38,7 +49,6 @@ interface QueryBuilder<T = any> {
 }
 
 function quoteIdent(name: string): string {
-  // Allow only safe identifier chars; reject anything weird
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
     throw new Error(`Invalid identifier: ${name}`)
   }
@@ -48,19 +58,39 @@ function quoteIdent(name: string): string {
 function buildQuery(table: string) {
   const state: any = {
     table,
-    mode: 'select' as 'select' | 'insert' | 'update' | 'delete' | 'upsert',
+    mode: 'select',
     columns: '*',
-    filters: [] as Array<{ col: string; op: string; val: any }>,
-    orderBy: null as { col: string; asc: boolean } | null,
-    limitN: null as number | null,
-    rangeFromTo: null as [number, number] | null,
-    insertRows: null as any[] | null,
-    updateValues: null as Record<string, any> | null,
-    upsertConflict: null as string | null,
+    filters: [],
+    orderBy: null,
+    limitN: null,
+    rangeFromTo: null,
+    insertRows: null,
+    updateValues: null,
+    upsertConflict: null,
     ignoreDuplicates: false,
     expectSingle: false,
   }
 
+  // ── BROWSER: serialize query and POST to /api/db/query ──
+  const executeViaFetch = async (): Promise<any> => {
+    try {
+      const res = await fetch('/api/db/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(state),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        return { data: null, error: json.error ?? { message: `HTTP ${res.status}` } }
+      }
+      return json
+    } catch (e: any) {
+      return { data: null, error: { message: e.message } }
+    }
+  }
+
+  // ── SERVER: build SQL and run directly via Neon ──
   const escapeVal = (v: any): string => {
     if (v === null || v === undefined) return 'NULL'
     if (typeof v === 'number' || typeof v === 'boolean') return String(v)
@@ -97,12 +127,14 @@ function buildQuery(table: string) {
     return ' WHERE ' + parts.join(' AND ')
   }
 
-  const execute = async (): Promise<any> => {
+  const executeServer = async (): Promise<any> => {
     let query = ''
     if (state.mode === 'select') {
       query = `SELECT ${state.columns} FROM ${quoteIdent(state.table)}`
       query += buildWhere()
-      if (state.orderBy) query += ` ORDER BY ${quoteIdent(state.orderBy.col)} ${state.orderBy.asc ? 'ASC' : 'DESC'}`
+      if (state.orderBy) {
+        query += ` ORDER BY ${quoteIdent(state.orderBy.col)} ${state.orderBy.asc ? 'ASC' : 'DESC'}`
+      }
       if (state.rangeFromTo) {
         const [from, to] = state.rangeFromTo
         query += ` LIMIT ${to - from + 1} OFFSET ${from}`
@@ -122,9 +154,14 @@ function buildQuery(table: string) {
         if (state.ignoreDuplicates) {
           query += ` ON CONFLICT DO NOTHING`
         } else if (state.upsertConflict) {
-          const conflictCols = state.upsertConflict.split(',').map((s: string) => quoteIdent(s.trim())).join(',')
+          const conflictCols = state.upsertConflict
+            .split(',')
+            .map((s: string) => quoteIdent(s.trim()))
+            .join(',')
           const updates = cols
-            .filter((c) => !state.upsertConflict!.split(',').map((s: string) => s.trim()).includes(c))
+            .filter(
+              (c) => !state.upsertConflict!.split(',').map((s: string) => s.trim()).includes(c),
+            )
             .map((c) => `${quoteIdent(c)} = EXCLUDED.${quoteIdent(c)}`)
             .join(',')
           query += ` ON CONFLICT (${conflictCols}) DO UPDATE SET ${updates}`
@@ -151,6 +188,8 @@ function buildQuery(table: string) {
       return { data: null, error: { message: e.message } }
     }
   }
+
+  const execute = () => (IS_BROWSER ? executeViaFetch() : executeServer())
 
   const builder: QueryBuilder = {
     select(cols = '*') { state.columns = cols.replace(/\s+/g, ' ').trim(); return builder },
@@ -190,12 +229,17 @@ function buildQuery(table: string) {
 export const db = {
   from: <T = any>(table: string) => buildQuery(table) as QueryBuilder<T>,
   rpc: async (fn: string, args: Record<string, any> = {}) => {
-    const argsStr = Object.values(args).map((v) => {
-      if (typeof v === 'string') return `'${v.replace(/'/g, "''")}'`
-      return String(v)
-    }).join(',')
+    if (IS_BROWSER) {
+      // RPC not yet supported via proxy. Add /api/db/rpc later if needed.
+      return { data: null, error: { message: 'rpc() not supported in browser yet' } }
+    }
+    const argsStr = Object.values(args)
+      .map((v) => (typeof v === 'string' ? `'${v.replace(/'/g, "''")}'` : String(v)))
+      .join(',')
     try {
-      const rows = await (sql as any).query(`SELECT * FROM ${fn.replace(/[^a-z0-9_]/gi, '')}(${argsStr})`)
+      const rows = await (sql as any).query(
+        `SELECT * FROM ${fn.replace(/[^a-z0-9_]/gi, '')}(${argsStr})`,
+      )
       return { data: rows, error: null }
     } catch (e: any) {
       return { data: null, error: { message: e.message } }

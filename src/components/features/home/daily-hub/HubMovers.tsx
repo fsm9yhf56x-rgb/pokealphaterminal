@@ -336,13 +336,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 /* ── Helpers ────────────────────────────── */
 
 function formatEUR(v: number): string {
-  if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
+  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
   return `€${v.toFixed(0)}`
 }
 
 function formatEURcompact(v: number): string {
   const abs = Math.abs(v)
   const sign = v < 0 ? '-' : ''
-  if (abs >= 1000) return `${sign}€${(abs / 1000).toFixed(1)}K`
+  if (abs >= 1000) return `${sign}€${Number(abs / 1000).toFixed(1)}K`
   return `${sign}€${abs.toFixed(0)}`
 }

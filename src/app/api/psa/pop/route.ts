@@ -38,9 +38,9 @@ export async function GET(req: NextRequest) {
       SELECT * FROM "psa_pop_latest"
       WHERE card_ref = ${cardRef}
       ORDER BY pop_total DESC NULLS LAST
-    `) as PsaPopVariant[]
+    `) as any[]
 
-    const allVariants = rows ?? []
+    const allVariants = (rows ?? []).map(coerceNumerics) as PsaPopVariant[]
     const variants = allVariants.filter((v) => isMainstreamVariety(v.variety))
     const exotic = allVariants.filter((v) => !isMainstreamVariety(v.variety))
     const premiumVariants = isPro ? exotic : []
@@ -66,3 +66,18 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+
+function coerceNumerics(row: any): any {
+  if (row === null || typeof row !== 'object') return row
+  const out: any = {}
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
+      const n = Number(v)
+      out[k] = Number.isFinite(n) ? n : v
+    } else {
+      out[k] = v
+    }
+  }
+  return out
+}
+

@@ -10,19 +10,19 @@ export function AllocConcentration({ agg }: { agg: AllocAggregates }) {
   const kpis = [
     {
       label: 'Top 1 carte',
-      value: `${(agg.topCardPct ?? 0).toFixed(1)}%`,
+      value: `${Number(agg.topCardPct ?? 0).toFixed(1)}%`,
       sub: agg.topHoldings[0] ? truncate(agg.topHoldings[0].name, 22) : '—',
       color: thresholdColor(agg.topCardPct, [40, 25]),  // >40% danger, >25% warn
     },
     {
       label: 'Top 5 cartes',
-      value: `${(agg.top5Pct ?? 0).toFixed(1)}%`,
+      value: `${Number(agg.top5Pct ?? 0).toFixed(1)}%`,
       sub: `${agg.cardsCount} carte${agg.cardsCount > 1 ? 's' : ''} au total`,
       color: thresholdColor(agg.top5Pct, [70, 50]),
     },
     {
       label: 'Indice HHI',
-      value: (agg.hhi ?? 0).toFixed(0),
+      value: Number(agg.hhi ?? 0).toFixed(0),
       sub: hhiHint(agg.hhi),
       color: thresholdColor(agg.hhi, [2500, 1500]),
     },

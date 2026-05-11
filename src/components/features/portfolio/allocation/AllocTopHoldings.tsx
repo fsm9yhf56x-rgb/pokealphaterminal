@@ -147,7 +147,7 @@ function Row({
           color: 'var(--ink-muted)',
           fontFamily: 'var(--font-data, var(--font-display))',
           marginTop: '2px',
-        }}>{(holding.weightPct ?? 0).toFixed(1)}%</div>
+        }}>{Number(holding.weightPct ?? 0).toFixed(1)}%</div>
       </div>
 
       {/* ROI */}
@@ -159,7 +159,7 @@ function Row({
           fontFamily: 'var(--font-data, var(--font-display))',
           lineHeight: 1.1,
         }}>
-          {hasNoBuy ? '—' : `${sign}${(holding.roiPct ?? 0).toFixed(1)}%`}
+          {hasNoBuy ? '—' : `${sign}${Number(holding.roiPct ?? 0).toFixed(1)}%`}
         </div>
         <div style={{
           fontSize: '10px',
@@ -209,7 +209,7 @@ function formatEUR(v: number): string {
 }
 
 function formatEURcompact(v: number): string {
-  if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`
-  if (v >= 1_000)     return `€${(v / 1_000).toFixed(1)}K`
-  return `€${(v ?? 0).toFixed(0)}`
+  if (v >= 1_000_000) return `€${Number(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000)     return `€${Number(v / 1_000).toFixed(1)}K`
+  return `€${Number(v ?? 0).toFixed(0)}`
 }

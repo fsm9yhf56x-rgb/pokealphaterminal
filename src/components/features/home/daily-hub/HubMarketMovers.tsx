@@ -396,6 +396,6 @@ function VolumeIcon() {
 }
 
 function formatEUR(v: number): string {
-  if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
+  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
   return `€${v.toFixed(0)}`
 }

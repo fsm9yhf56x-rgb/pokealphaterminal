@@ -125,7 +125,7 @@ function Row({ v }: { v: PsaPopVariant }) {
       <td style={S.tdLeft}>{variety}</td>
       <td style={S.tdNum}>{(v.pop_10 ?? 0).toLocaleString('fr-FR')}</td>
       <td style={S.tdNum}>{(v.pop_total ?? 0).toLocaleString('fr-FR')}</td>
-      <td style={S.tdNum}>{(v.pct_gem_mint ?? 0).toFixed(2)}%</td>
+      <td style={S.tdNum}>{Number(v.pct_gem_mint ?? 0).toFixed(2)}%</td>
       <td style={{ ...S.tdRight, padding: '8px 12px' }}>
         <span style={{ ...S.tierBadge, background: tier.bg, color: tier.ink }}>
           {labelForTier(v.gem_mint_tier)}

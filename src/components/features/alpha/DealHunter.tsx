@@ -182,13 +182,13 @@ export function DealHunter({ isPro = false }: { isPro?: boolean }) {
                     <div style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px' }}>
                       <div style={{ fontSize:'9px', color:'#AAA', textTransform:'uppercase', letterSpacing:'0.06em', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Listé</div>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.3px', lineHeight:1 }}>
-                        {deal.listed>=1000?`€ ${(deal.listed/1000).toFixed(1)}k`:`€ ${deal.listed}`}
+                        {deal.listed>=1000?`€ ${Number(deal.listed/1000).toFixed(1)}k`:`€ ${deal.listed}`}
                       </div>
                     </div>
                     <div style={{ background:'#F0FFF6', border:'1px solid #AAEEC8', borderRadius:'8px', padding:'8px 10px' }}>
                       <div style={{ fontSize:'9px', color:'#1A7A4A', textTransform:'uppercase', letterSpacing:'0.06em', fontFamily:'var(--font-display)', marginBottom:'3px' }}>Potentiel</div>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#2E9E6A', fontFamily:'var(--font-display)', letterSpacing:'-0.3px', lineHeight:1 }}>
-                        +{potential>=1000?`€ ${(potential/1000).toFixed(1)}k`:`€ ${potential}`}
+                        +{potential>=1000?`€ ${Number(potential/1000).toFixed(1)}k`:`€ ${potential}`}
                       </div>
                     </div>
                   </div>

@@ -190,7 +190,7 @@ function CardRow({
             fontFamily: 'var(--font-data, var(--font-display))',
             fontVariantNumeric: 'tabular-nums',
           }}>
-            {sign}{(card.change_pct ?? 0).toFixed(1)}%
+            {sign}{Number(card.change_pct ?? 0).toFixed(1)}%
           </span>
         </div>
       </div>
@@ -256,6 +256,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function formatEUR(v: number): string {
-  if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
-  return `€${(v ?? 0).toFixed(0)}`
+  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
+  return `€${Number(v ?? 0).toFixed(0)}`
 }

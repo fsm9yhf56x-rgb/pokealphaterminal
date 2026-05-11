@@ -26,3 +26,26 @@ backups/
 # Backfill scripts progress files (local cache)
 .tcgdex-progress.json
 .rarity-progress.json
+
+# === Migration backups (local rollback safety net) — Nov 2026 ===
+*.backup-pre-*
+*.backup-pre-better-auth
+*.backup-pre-neon
+
+# === Migration artifacts (too large for git) ===
+migrations/neon-migration/full-dump.sql
+migrations/neon-migration/full-dump.original.sql
+migrations/neon-migration/neon-ready.sql
+migrations/neon-migration/import.log
+
+# === Legacy scripts to refactor later ===
+scripts/regenerate-cards-json.js
+
+# === Misc local artifacts ===
+1,
+*.bak
+.env.local.backup-*
+
+# === Auto-generated, do not commit ===
+tsconfig.tsbuildinfo
+node_modules/

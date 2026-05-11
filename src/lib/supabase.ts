@@ -1,9 +1,16 @@
 /**
- * Browser-side Supabase client (cookie-based session, SSR-compatible).
+ * Compat shim — `supabase` is now backed by Neon (migration 11/05/26).
  *
- * Historical API: exports `supabase` as a singleton so existing client
- * components can `import { supabase } from '@/lib/supabase'` unchanged.
+ * Historical client components import this as:
+ *   `import { supabase } from '@/lib/supabase'`
+ * and call `.from(...).select(...)` etc.
+ *
+ * That API is preserved by the `db` object from supabase-compat.
+ *
+ * Auth methods (supabase.auth.*) are NOT supported here — those must use
+ * Better Auth client (`authClient`) or the server helpers in `@/lib/auth/*`.
  */
-import { getBrowserSupabase } from './supabase-browser';
+import { db } from './db/supabase-compat'
 
-export const supabase = getBrowserSupabase();
+// Re-export under the historical name so existing imports work unchanged
+export const supabase = db

@@ -128,7 +128,7 @@ export function usePortfolio() {
     if (error) { console.error('Add card error:', error); return null }
     setCards(prev => [data as PortfolioCard, ...prev])
     return data as PortfolioCard
-  }, [user, cards])
+  }, [user?.id, cards])
 
   const updateCard = useCallback(async (id: string, updates: Partial<PortfolioCard>) => {
     if (!user) {
@@ -145,7 +145,7 @@ export function usePortfolio() {
 
     if (error) console.error('Update card error:', error)
     else setCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
-  }, [user, cards])
+  }, [user?.id, cards])
 
   const deleteCard = useCallback(async (id: string) => {
     if (!user) {
@@ -162,7 +162,7 @@ export function usePortfolio() {
 
     if (error) console.error('Delete card error:', error)
     else setCards(prev => prev.filter(c => c.id !== id))
-  }, [user, cards])
+  }, [user?.id, cards])
 
   const toggleFavorite = useCallback(async (id: string) => {
     const card = cards.find(c => c.id === id)

@@ -190,7 +190,7 @@ export function Holdings() {
         setPortfolioLoaded(true)
       })
     }
-  }, [user, authLoading])
+  }, [user?.id, authLoading])
   const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
@@ -447,7 +447,7 @@ export function Holdings() {
         }
       }
     }, 500)
-  }, [portfolio, portfolioLoaded, user])
+  }, [portfolio, portfolioLoaded, user?.id])
   useEffect(() => {
     dbGet<CardItem[]>('showcase').then(data => {
       if (data && data.length > 0) setShowcase(data)

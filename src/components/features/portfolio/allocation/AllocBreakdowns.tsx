@@ -89,7 +89,7 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
         {colored.map((b) => (
           <div
             key={b.label}
-            title={`${b.label} : ${b.pct.toFixed(1)}%`}
+            title={`${b.label} : ${(b.pct ?? 0).toFixed(1)}%`}
             style={{
               width: `${Math.max(b.pct, 0.3)}%`,
               background: b.color,
@@ -134,7 +134,7 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
               fontFamily: 'var(--font-data, var(--font-display))',
               minWidth: '32px',
               textAlign: 'right',
-            }}>{b.pct.toFixed(1)}%</span>
+            }}>{(b.pct ?? 0).toFixed(1)}%</span>
             <span style={{
               fontSize: '11px',
               fontWeight: 500,
@@ -208,5 +208,5 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function formatEURcompact(v: number): string {
   if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000)     return `€${(v / 1_000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  return `€${(v ?? 0).toFixed(0)}`
 }

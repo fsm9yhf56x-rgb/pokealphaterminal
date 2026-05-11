@@ -161,11 +161,11 @@ function TreemapTooltip({ active, payload }: any) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
         <Row label="Valeur"   value={formatEUR(d.size)} />
-        <Row label="Poids"    value={`${d.pct.toFixed(1)}%`} />
+        <Row label="Poids"    value={`${(d.pct ?? 0).toFixed(1)}%`} />
         <Row label="Cartes"   value={`${d.count}`} />
         <Row
           label="ROI moyen"
-          value={`${d.avgROI >= 0 ? '+' : ''}${d.avgROI.toFixed(1)}%`}
+          value={`${d.avgROI >= 0 ? '+' : ''}${(d.avgROI ?? 0).toFixed(1)}%`}
           valueColor={d.avgROI >= 0 ? 'var(--perf-up)' : 'var(--perf-down)'}
         />
       </div>
@@ -270,5 +270,5 @@ function formatEUR(v: number): string {
 function formatEURcompact(v: number): string {
   if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000)     return `€${(v / 1_000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  return `€${(v ?? 0).toFixed(0)}`
 }

@@ -207,7 +207,7 @@ function formatRelative(then: Date, now: Date): string {
 
 function formatEUR(v: number): string {
   if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  return `€${(v ?? 0).toFixed(0)}`
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {

@@ -229,7 +229,7 @@ function SignalRow({
             fontSize: '11px',
             fontWeight: 600,
           }}>
-            +{upside.toFixed(0)}% upside
+            +{(upside ?? 0).toFixed(0)}% upside
           </span>
         )}
       </div>
@@ -337,5 +337,5 @@ const TIER_STYLES: Record<'S' | 'A' | 'B', { bg: string; color: string }> = {
 
 function formatEUR(v: number): string {
   if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  return `€${(v ?? 0).toFixed(0)}`
 }

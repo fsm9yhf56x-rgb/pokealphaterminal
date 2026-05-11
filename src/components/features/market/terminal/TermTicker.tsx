@@ -148,7 +148,7 @@ function TickerCell({ item }: { item: TickerItem }) {
           background: isUp ? 'rgba(91, 196, 149, 0.12)' : 'rgba(240, 131, 115, 0.12)',
           borderRadius: '3px',
         }}>
-          {isUp ? '▲' : '▼'} {sign}{item.change_pct.toFixed(1)}%
+          {isUp ? '▲' : '▼'} {sign}{(item.change_pct ?? 0).toFixed(1)}%
         </span>
       )}
     </div>
@@ -161,5 +161,5 @@ function truncate(s: string, n: number): string {
 
 function formatEUR(v: number): string {
   if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  return `€${(v ?? 0).toFixed(0)}`
 }

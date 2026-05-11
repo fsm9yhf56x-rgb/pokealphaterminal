@@ -98,7 +98,10 @@ export async function POST(req: Request) {
   try {
     // Build the SQL query + params
     const { query, params, expectSingle } = buildQuery(body, currentUserId, isUserTable)
-    const rows = await sql.query(query, params)
+    const rawRows = await sql.query(query, params)
+    // Neon returns PG NUMERIC/DECIMAL as strings. Coerce them to numbers
+    // so that React components calling .toFixed() etc. don't crash.
+    const rows = rawRows.map(coerceNumerics)
     if (expectSingle) {
       return NextResponse.json({ data: rows[0] ?? null, error: null })
     }
@@ -239,3 +242,22 @@ function buildQuery(
 
   throw new Error(`Unknown mode: ${mode}`)
 }
+
+// Convert numeric-looking string values to numbers.
+// Neon's @neondatabase/serverless returns PG NUMERIC/DECIMAL/BIGINT as
+// strings (preserves precision), but most React components expect numbers.
+function coerceNumerics(row: any): any {
+  if (row === null || typeof row !== 'object') return row
+  const out: any = {}
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
+      // Looks like a plain number (int or decimal). Parse it.
+      const n = Number(v)
+      out[k] = Number.isFinite(n) ? n : v
+    } else {
+      out[k] = v
+    }
+  }
+  return out
+}
+

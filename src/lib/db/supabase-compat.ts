@@ -181,7 +181,9 @@ function buildQuery(table: string) {
     }
 
     try {
-      const rows = await (sql as any).query(query)
+      const rawRows = await (sql as any).query(query)
+      // Neon returns NUMERIC/DECIMAL as strings - coerce to numbers
+      const rows = rawRows.map(coerceNumerics)
       if (state.expectSingle) {
         return { data: rows[0] ?? null, error: null }
       }
@@ -227,6 +229,20 @@ function buildQuery(table: string) {
   }
 
   return builder
+}
+
+function coerceNumerics(row: any): any {
+  if (row === null || typeof row !== 'object') return row
+  const out: any = {}
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
+      const n = Number(v)
+      out[k] = Number.isFinite(n) ? n : v
+    } else {
+      out[k] = v
+    }
+  }
+  return out
 }
 
 export const db = {

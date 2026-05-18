@@ -49,3 +49,8 @@ scripts/regenerate-cards-json.js
 # === Auto-generated, do not commit ===
 tsconfig.tsbuildinfo
 node_modules/
+
+# Vercel env pulls (NEVER commit these)
+.env.local.new
+.env.local.bak
+.env.*.local

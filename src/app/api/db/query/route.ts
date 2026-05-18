@@ -159,6 +159,10 @@ function buildQuery(
     if (!allFilters.length) return ''
     const parts = allFilters.map((f: any) => {
       const c = quoteIdent(f.col)
+      // 'or' is a special op : col is empty, val is "col1.op1.val1,col2.op2.val2"
+      if (f.op === 'or') {
+        return parseOrExpression(f.val as string, placeholder)
+      }
       switch (f.op) {
         case 'eq': return `${c} = ${placeholder(f.val)}`
         case 'neq': return `${c} <> ${placeholder(f.val)}`
@@ -181,6 +185,37 @@ function buildQuery(
       }
     })
     return ' WHERE ' + parts.join(' AND ')
+  }
+
+  function parseOrExpression(expr: string, placeholder: (v: any) => string): string {
+    // Parse "col1.op1.val1,col2.op2.val2,..." into "(col1 op1 val1) OR (col2 op2 val2)"
+    // Supports ops: eq, neq, gt, gte, lt, lte, is (with .null / .true / .false)
+    const opMap: Record<string, string> = {
+      eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=',
+    }
+    const conditions = expr.split(',').map((piece) => {
+      const dotIdx1 = piece.indexOf('.')
+      const dotIdx2 = piece.indexOf('.', dotIdx1 + 1)
+      if (dotIdx1 < 0 || dotIdx2 < 0) {
+        throw new Error(`Invalid or-expression piece: ${piece}`)
+      }
+      const col = piece.slice(0, dotIdx1)
+      const op = piece.slice(dotIdx1 + 1, dotIdx2)
+      const val = piece.slice(dotIdx2 + 1)
+      const cQ = quoteIdent(col)
+      if (op === 'is') {
+        if (val === 'null') return `${cQ} IS NULL`
+        if (val === 'true') return `${cQ} IS TRUE`
+        if (val === 'false') return `${cQ} IS FALSE`
+        throw new Error(`Invalid is value: ${val}`)
+      }
+      const sqlOp = opMap[op]
+      if (!sqlOp) throw new Error(`Unknown or-expression op: ${op}`)
+      // Coerce numeric strings to numbers for proper parameter binding
+      const v = /^-?\d+(\.\d+)?$/.test(val) ? Number(val) : val
+      return `${cQ} ${sqlOp} ${placeholder(v)}`
+    })
+    return '(' + conditions.join(' OR ') + ')'
   }
 
   if (mode === 'select') {

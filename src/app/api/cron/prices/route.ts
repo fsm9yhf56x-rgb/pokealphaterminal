@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { sql } from '@/lib/db/sql'
 import { writeSnapshots } from '@/lib/prices/writer'
 import type { PriceSnapshot } from '@/lib/prices/types'
 import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
@@ -77,19 +78,27 @@ async function ebayFillGaps(budget: number): Promise<{ calls: number; filled: nu
   const snapshots: PriceSnapshot[] = []
 
   // Find cards with missing prices or 1st Edition with suspicious low prices
-  const { data: gaps } = await supabase.from('_deprecated_prices')
-    .select('card_name, card_number, set_slug, variant, top_price')
-    .or('top_price.is.null,top_price.lt.1')
-    .eq('condition', 'NEAR_MINT')
-    .limit(budget * 2)
+  const gapsRows = await sql.query(
+    `SELECT card_name, card_number, set_slug, variant, top_price
+     FROM _deprecated_prices
+     WHERE (top_price IS NULL OR top_price < 1)
+       AND condition = $1
+     LIMIT $2`,
+    ['NEAR_MINT', budget * 2]
+  )
+  const gaps = gapsRows as Array<{ card_name: string; card_number: string | null; set_slug: string; variant: string | null; top_price: number | null }>
 
   // Also find 1st Edition cards priced lower than their Shadowless counterpart
-  const { data: firstEds } = await supabase.from('_deprecated_prices')
-    .select('card_name, card_number, set_slug, variant, top_price')
-    .eq('variant', '1st_Edition_Holofoil')
-    .not('top_price', 'is', null)
-    .order('top_price', { ascending: false })
-    .limit(20)
+  const firstEdsRows = await sql.query(
+    `SELECT card_name, card_number, set_slug, variant, top_price
+     FROM _deprecated_prices
+     WHERE variant = $1
+       AND top_price IS NOT NULL
+     ORDER BY top_price DESC
+     LIMIT 20`,
+    ['1st_Edition_Holofoil']
+  )
+  const firstEds = firstEdsRows as Array<{ card_name: string; card_number: string | null; set_slug: string; variant: string | null; top_price: number | null }>
 
   const cardsToFill: { name: string; number: string; setSlug: string; edition: string }[] = []
 

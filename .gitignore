@@ -57,3 +57,10 @@ node_modules/
 
 # Production env work file (never commit)
 .env.production.local
+
+# Temp/backup env files (never commit)
+.env.local.check
+.env.local.check2
+.env.production.local.bak
+.env.local.backup-*
+.env.local.new

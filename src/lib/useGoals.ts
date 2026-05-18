@@ -58,7 +58,7 @@ export function useGoals() {
   useEffect(() => {
     if (authLoading) return
     loadGoals()
-  }, [user, authLoading])
+  }, [user?.id, authLoading])
 
   async function loadGoals() {
     setLoading(true)
@@ -117,7 +117,7 @@ export function useGoals() {
     setTargets(updated)
     writeLS(LS_TARGETS, updated)
     return newTarget
-  }, [user, usingBDD, targets])
+  }, [user?.id, usingBDD, targets])
 
   const deleteTarget = useCallback(async (id: string) => {
     if (user && usingBDD) {
@@ -126,7 +126,7 @@ export function useGoals() {
     const updated = targets.filter(t => t.id !== id)
     setTargets(updated)
     writeLS(LS_TARGETS, updated)
-  }, [user, usingBDD, targets])
+  }, [user?.id, usingBDD, targets])
 
   /* ── Wishlist CRUD ─────────────────────────── */
   const addWishItem = useCallback(async (item: Omit<WishlistItem, 'id'>) => {
@@ -152,7 +152,7 @@ export function useGoals() {
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
     return newItem
-  }, [user, usingBDD, wishlist])
+  }, [user?.id, usingBDD, wishlist])
 
   const deleteWishItem = useCallback(async (id: string) => {
     if (user && usingBDD) {
@@ -161,7 +161,7 @@ export function useGoals() {
     const updated = wishlist.filter(w => w.id !== id)
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
-  }, [user, usingBDD, wishlist])
+  }, [user?.id, usingBDD, wishlist])
 
   const markAcquired = useCallback(async (id: string) => {
     if (user && usingBDD) {
@@ -170,7 +170,7 @@ export function useGoals() {
     const updated = wishlist.map(w => w.id === id ? { ...w, acquired: true } : w)
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
-  }, [user, usingBDD, wishlist])
+  }, [user?.id, usingBDD, wishlist])
 
   return {
     targets, wishlist, loading,

@@ -128,7 +128,7 @@ function HeatmapNode_(props: any) {
           opacity={0.85}
           style={{ pointerEvents: 'none' }}
         >
-          {isUp ? '▲' : '▼'} {variation >= 0 ? '+' : ''}{variation.toFixed(1)}%
+          {isUp ? '▲' : '▼'} {variation >= 0 ? '+' : ''}{Number(variation ?? 0).toFixed(1)}%
         </text>
       )}
     </g>
@@ -165,7 +165,7 @@ function HeatmapTooltip({ active, payload }: any) {
         <Row label="Cartes"   value={`${d.cards}`} />
         <Row
           label="Variation 24h"
-          value={`${d.variation >= 0 ? '+' : ''}${d.variation.toFixed(2)}%`}
+          value={`${d.variation >= 0 ? '+' : ''}${Number(d.variation ?? 0).toFixed(2)}%`}
           valueColor={trendColor}
         />
       </div>

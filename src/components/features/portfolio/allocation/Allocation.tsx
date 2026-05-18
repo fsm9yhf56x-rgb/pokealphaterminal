@@ -393,13 +393,13 @@ function computeAlerts(ctx: {
     alerts.push({
       level: 'danger',
       title: 'Concentration extrême',
-      message: `Une seule carte représente ${ctx.topCardPct.toFixed(0)}% du portefeuille. Diversification fortement recommandée.`,
+      message: `Une seule carte représente ${Number(ctx.topCardPct ?? 0).toFixed(0)}% du portefeuille. Diversification fortement recommandée.`,
     })
   } else if (ctx.top5Pct > 70) {
     alerts.push({
       level: 'warn',
       title: 'Top 5 cartes dominent',
-      message: `Les 5 premières cartes représentent ${ctx.top5Pct.toFixed(0)}% du portefeuille.`,
+      message: `Les 5 premières cartes représentent ${Number(ctx.top5Pct ?? 0).toFixed(0)}% du portefeuille.`,
     })
   }
 
@@ -413,7 +413,7 @@ function computeAlerts(ctx: {
       alerts.push({
         level: top.pct > 75 ? 'warn' : 'info',
         title: `Surexposition ${dim}`,
-        message: `${top.pct.toFixed(0)}% du portefeuille en "${top.label}".`,
+        message: `${Number(top.pct ?? 0).toFixed(0)}% du portefeuille en "${top.label}".`,
       })
     }
   }

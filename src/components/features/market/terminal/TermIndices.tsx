@@ -96,7 +96,7 @@ function IndexCard({ index }: { index: MarketIndex }) {
               fontFamily: 'var(--font-data, var(--font-display))',
               fontVariantNumeric: 'tabular-nums',
             }}>
-              {sign}{index.change_24h_pct.toFixed(2)}%
+              {sign}{Number(index.change_24h_pct ?? 0).toFixed(2)}%
             </span>
           </div>
         )}
@@ -159,9 +159,9 @@ function IndexCard({ index }: { index: MarketIndex }) {
 }
 
 function formatValue(v: number): string {
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`
-  if (v >= 1_000)     return `${(v / 1_000).toFixed(2)}K`
-  return v.toFixed(0)
+  if (v >= 1_000_000) return `${Number(v / 1_000_000).toFixed(2)}M`
+  if (v >= 1_000)     return `${Number(v / 1_000).toFixed(2)}K`
+  return Number(v ?? 0).toFixed(0)
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {

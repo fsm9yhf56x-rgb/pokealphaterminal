@@ -1,50 +1,38 @@
 /**
- * Typed Supabase clients for the app.
+ * Data clients for the app — backed by Neon (migration 11/05/26).
  *
- * - `getAnonClient()`  — for client-side/front (respects RLS). Safe to expose.
- * - `getAdminClient()` — for server-side routes & scripts. Bypasses RLS.
+ * - `getAnonClient()`  — for client-side. Auth is now Better Auth, not Supabase.
+ * - `getAdminClient()` — for server-side. Same Neon client (RLS is app-level).
  *
- * Both are lazy-initialized to avoid build-time crashes when env vars are
- * missing (e.g. during Vercel's page-data collection). See also
- * `export const dynamic = 'force-dynamic'` on API routes that use admin client.
+ * The returned object exposes a Supabase-compatible API (`.from().select()...`)
+ * so existing code doesn't need refactor. Under the hood it queries Neon.
+ *
+ * See: src/lib/db/supabase-compat.ts for the compatibility layer.
  */
-
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { db } from './db/supabase-compat';
 import type { Database } from './db/schema';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
+// We keep the TypedClient type for backwards compat with existing imports.
+// Cast is safe because `db` exposes the same subset of Supabase API that
+// the app actually uses (verified: .from().select/insert/update/delete/upsert,
+// .eq/.in/.gt/etc, .single/.maybeSingle, .order/.limit/.range, .rpc).
 export type TypedClient = SupabaseClient<Database>;
 
-// ── Lazy singletons (per-module, not per-request) ──
-let _anon: TypedClient | null = null;
-let _admin: TypedClient | null = null;
-
 /**
- * Anonymous client, safe for browsers. Uses NEXT_PUBLIC_SUPABASE_ANON_KEY.
- * Respects Row Level Security policies.
+ * Anonymous-equivalent client. Same Neon backend as admin.
+ * Authorization is now enforced at the application layer (middleware + queries),
+ * not via Postgres RLS bound to Supabase Auth.
  */
 export function getAnonClient(): TypedClient {
-  if (_anon) return _anon;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
-  _anon = createClient<Database>(url, key);
-  return _anon;
+  return db as unknown as TypedClient;
 }
 
 /**
- * Admin client with service_role key — FOR SERVER-SIDE ONLY.
- * Never expose this to browsers (it bypasses RLS).
- * Safe to call at import-time; real client is built on first use.
+ * Admin-equivalent client. Same Neon backend as anon.
+ * The distinction is preserved only to avoid breaking existing imports.
+ * Server-only code should still be guarded by auth checks in middleware.
  */
 export function getAdminClient(): TypedClient {
-  if (_admin) return _admin;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  }
-  _admin = createClient<Database>(url, key);
-  return _admin;
+  return db as unknown as TypedClient;
 }

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
+import { sql } from '@/lib/db/sql'
 import type { PsaPopResponse, PsaPopVariant } from '@/lib/psa/types'
 import { isMainstreamVariety } from '@/lib/psa/types'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/psa/pop?card_ref=base1-4
  *
  * Returns PSA population data for a card, split into:
- *   - variants:        mainstream (Unlimited / 1st Ed / Shadowless) — visible to all
- *   - premiumVariants: exotic (Black Dot Error, etc.) — Pro only, empty for free users
+ *   - variants:        mainstream — visible to all
+ *   - premiumVariants: exotic — Pro only
  */
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
@@ -18,54 +20,30 @@ export async function GET(req: NextRequest) {
   if (!cardRef) {
     return NextResponse.json(
       { error: 'Missing card_ref param', code: 'MISSING_PARAMS' },
-      { status: 400 }
+      { status: 400 },
     )
   }
 
-  // Init Supabase with cookies for auth
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {}, // no-op in route handlers
-      },
-    }
-  )
-
-  // Determine Pro status
+  // Determine Pro status (non-blocking — anon users can still see free data)
   let isPro = false
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_pro')
-        .eq('id', user.id)
-        .single()
-      isPro = profile?.is_pro ?? false
-    }
-  } catch (_) {
+    const userWithProfile = await getCurrentUserWithProfile()
+    isPro = userWithProfile?.isPro === true
+  } catch {
     isPro = false
   }
 
   try {
-    const { data, error } = await supabase
-      .from('psa_pop_latest')
-      .select('*')
-      .eq('card_ref', cardRef)
-      .order('pop_total', { ascending: false })
+    const rows = (await sql`
+      SELECT * FROM "psa_pop_latest"
+      WHERE card_ref = ${cardRef}
+      ORDER BY pop_total DESC NULLS LAST
+    `) as any[]
 
-    if (error) throw error
-
-    const allVariants = (data || []) as PsaPopVariant[]
-    const variants = allVariants.filter(v => isMainstreamVariety(v.variety))
-    const exotic = allVariants.filter(v => !isMainstreamVariety(v.variety))
-
+    const allVariants = (rows ?? []).map(coerceNumerics) as PsaPopVariant[]
+    const variants = allVariants.filter((v) => isMainstreamVariety(v.variety))
+    const exotic = allVariants.filter((v) => !isMainstreamVariety(v.variety))
     const premiumVariants = isPro ? exotic : []
-
     const visibleForCount = isPro ? allVariants : variants
     const totalGraded = visibleForCount.reduce((s, v) => s + (v.pop_total || 0), 0)
 
@@ -84,7 +62,22 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || 'Internal error', code: 'INTERNAL' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
+
+function coerceNumerics(row: any): any {
+  if (row === null || typeof row !== 'object') return row
+  const out: any = {}
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
+      const n = Number(v)
+      out[k] = Number.isFinite(n) ? n : v
+    } else {
+      out[k] = v
+    }
+  }
+  return out
+}
+

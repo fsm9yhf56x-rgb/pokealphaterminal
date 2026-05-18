@@ -1,46 +1,43 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { supabase } from './supabase';
-
+'use client'
 /**
- * Returns whether the currently logged-in user is an admin.
- * - null   → still loading (first mount)
- * - true   → logged in AND is_admin=true
- * - false  → not logged in OR not admin
+ * useIsAdmin hook — fetches /api/profile to determine admin status.
+ * Returns:
+ *   - null   → loading
+ *   - true   → logged in AND is_admin = true
+ *   - false  → not logged in OR not admin
  */
+import { useEffect, useState } from 'react'
+import { authClient } from './auth/client'
+
 export function useIsAdmin(): boolean | null {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { data: rawSession, isPending } = authClient.useSession()
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
 
   useEffect(() => {
-    let mounted = true;
-
-    async function check() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        if (mounted) setIsAdmin(false);
-        return;
-      }
-      const { data } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-      if (mounted) setIsAdmin(data?.is_admin === true);
+    if (isPending) {
+      setIsAdmin(null)
+      return
+    }
+    if (!rawSession?.user?.id) {
+      setIsAdmin(false)
+      return
     }
 
-    check();
-
-    // Also re-check on auth state change (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      check();
-    });
+    let mounted = true
+    fetch('/api/profile', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!mounted) return
+        setIsAdmin(data?.profile?.is_admin === true)
+      })
+      .catch(() => {
+        if (mounted) setIsAdmin(false)
+      })
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+      mounted = false
+    }
+  }, [rawSession?.user?.id, isPending])
 
-  return isAdmin;
+  return isAdmin
 }

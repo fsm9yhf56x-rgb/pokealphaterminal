@@ -160,7 +160,7 @@ function CardRow({
           {formatEUR(card.current_price)}
           {card.change_pct !== 0 && (
             <span style={{ marginLeft: '4px' }}>
-              ({card.change_pct >= 0 ? '+' : ''}{card.change_pct.toFixed(1)}%)
+              ({card.change_pct >= 0 ? '+' : ''}{Number(card.change_pct ?? 0).toFixed(1)}%)
             </span>
           )}
         </div>
@@ -239,6 +239,6 @@ function EmptyCard({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function formatEUR(v: number): string {
-  if (v >= 1000) return `€${(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
+  return `€${Number(v ?? 0).toFixed(0)}`
 }

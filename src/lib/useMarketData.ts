@@ -321,7 +321,7 @@ async function fetchAlphaPreview(): Promise<AlphaSignalPreview[]> {
   const { data, error } = await (supabase as any)
     .from('alpha_signals')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('computed_at', { ascending: false })
     .limit(3)
 
   if (error || !data) return []
@@ -331,9 +331,9 @@ async function fetchAlphaPreview(): Promise<AlphaSignalPreview[]> {
     card_name: r.card_name || 'Unknown',
     set_name: r.set_name || '',
     current_price: Number(r.current_price) || 0,
-    target_price: Number(r.target_price) || 0,
-    confidence: Number(r.confidence) || 0,
-    reason: r.reason || '',
+    target_price: Number(r.market_target) || 0,
+    confidence: Number(r.confidence_pct) || 0,
+    reason: r.ai_reason || '',
   }))
 }
 

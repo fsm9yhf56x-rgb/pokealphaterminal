@@ -54,3 +54,6 @@ node_modules/
 .env.local.new
 .env.local.bak
 .env.*.local
+
+# Production env work file (never commit)
+.env.production.local

@@ -29,6 +29,7 @@ export interface ExplorerResult {
   card_name: string
   set_name: string | null
   set_slug: string | null
+  tcgdex_set_id: string | null
   card_number: string | null
   lang: string | null
   rarity: string | null
@@ -139,8 +140,9 @@ export function useExplorerSearch() {
         card_name: r.card_name || 'Unknown',
         set_name: r.set_name,
         set_slug: r.set_slug,
+        tcgdex_set_id: r.tcgdex_set_id || null,
         card_number: r.card_number || null,
-        lang: null,  // V1 placeholder, enrichi en Vague 2
+        lang: r.lang || null,  // Resolved via set_aliases JOIN in prices_v2
         rarity: null,
         top_price: Number(r.top_price) || 0,
         cardmarket_trend: r.cardmarket_trend != null ? Number(r.cardmarket_trend) : null,

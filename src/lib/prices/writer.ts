@@ -4,6 +4,7 @@
  */
 
 import { getAdminClient } from '../db';
+import { sql } from '../db/sql';
 import type { Database } from '../db/schema';
 import type { PriceSnapshot } from './types';
 
@@ -44,6 +45,12 @@ export async function writeSnapshots(snapshots: PriceSnapshot[]): Promise<void> 
   if (error) {
     throw new Error(`writeSnapshots failed: ${error.message}`);
   }
+
+  // Refresh materialized view prices_latest in fire-and-forget mode.
+  // Non-blocking : even if it fails, the snapshots are already persisted.
+  refreshPricesLatest().catch((e) => {
+    console.warn('[writeSnapshots] refresh failed (non-fatal):', e?.message);
+  });
 }
 
 /**
@@ -52,11 +59,11 @@ export async function writeSnapshots(snapshots: PriceSnapshot[]): Promise<void> 
  * CONCURRENTLY variant allows reads during refresh.
  */
 export async function refreshPricesLatest(): Promise<void> {
-  const supabase = getAdminClient();
-  // Note: `CONCURRENTLY` requires the unique index we already created.
-  const { error } = await supabase.rpc('refresh_prices_latest');
-  if (error) {
-    // Fallback: no RPC function yet, just log for now
-    console.warn('refresh_prices_latest RPC not found — create it in SQL if needed:', error.message);
+  // Direct SQL call (server-side only). Bypasses the compat layer's rpc()
+  // which doesn't proxy to Neon properly.
+  try {
+    await sql.query('SELECT refresh_prices_latest()', []);
+  } catch (e: any) {
+    console.warn('[refreshPricesLatest] failed (non-fatal):', e?.message);
   }
 }

@@ -64,3 +64,6 @@ node_modules/
 .env.production.local.bak
 .env.local.backup-*
 .env.local.new
+
+# Legacy Supabase folder (archived 2026-05-18, no longer used)
+supabase/

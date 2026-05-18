@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getCardImageUrl } from '@/lib/images'
+import { getCardImageUrl, parseLocalId } from '@/lib/images'
 import type { ExplorerResult } from '@/lib/useExplorerSearch'
 
 /**
@@ -35,11 +35,11 @@ function CardTile({
 }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
-  const imgUrl = card.set_slug && card.card_number
+  const imgUrl = card.tcgdex_set_id && card.card_number
     ? getCardImageUrl({
         lang: (card.lang as any) || 'EN',
-        setId: card.set_slug,
-        localId: card.card_number,
+        setId: card.tcgdex_set_id,
+        localId: parseLocalId(card.card_number),
       })
     : ''
 

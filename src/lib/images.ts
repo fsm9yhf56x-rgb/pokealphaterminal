@@ -122,6 +122,21 @@ export function getCardImageUrl(params: CardImageParams): string {
 }
 
 /**
+ * Parses a raw card_number from prices_v2 into the localId expected by R2.
+ *   "001/100" -> "1"        (strip padding + total)
+ *   "4/102"   -> "4"
+ *   "TG01/TG30" -> "TG1"    (keep alpha prefix, strip numeric padding)
+ *   "SWSH001" -> "SWSH1"
+ *   "" or null -> ""
+ */
+export function parseLocalId(cardNumber: string | undefined | null): string {
+  if (!cardNumber) return '';
+  const beforeSlash = cardNumber.split('/')[0].trim();
+  if (!beforeSlash) return '';
+  return beforeSlash.replace(/^([A-Za-z]*)0+(\d)/, '$1$2');
+}
+
+/**
  * Same as getCardImageUrl but returns a low-res variant for thumbnails.
  * (Currently both return the same — R2 doesn't have low-res variants yet —
  * but having the function separate lets us add variants later without a

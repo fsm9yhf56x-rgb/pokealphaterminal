@@ -364,7 +364,8 @@ export function filterCoreSets(sets: TCGSet[]): TCGSet[] {
     if (/^tk-/.test(id)) return false              // Trainer kits
     if (/^[0-9]+(sm|bw|xy|swsh|sv)/.test(id)) return false // McDonalds (2018sm, 2021swsh, etc.)
     if (/^(jumbo|wp|np|mep|svp|smp|swshp|xyp|bwp|hgssp|dpp|basep|bwd|bwf|bwt|bwm|bws|bwo|bwh|smr|swshs|svm|exf|exr)$/.test(id)) return false
-    if (id.startsWith('aopkm')) return false        // Pokemon TCG Pocket (filtered earlier in pipeline)
+    // Note: 'aopkm' = Art of Pokemon, notre source JP via TCGdex (sets japonais legitimes).
+    // L'ancien filtre etait base sur une confusion avec Pokemon TCG Pocket.
     return true
   })
 }

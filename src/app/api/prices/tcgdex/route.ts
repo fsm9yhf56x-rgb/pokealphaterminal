@@ -36,11 +36,13 @@ function tcgdexIdToSlug(id: string, name: string): string {
     'ecard1': 'expedition', 'ecard2': 'aquapolis', 'ecard3': 'skyridge',
   }
   if (known[id]) return known[id]
-  // Default: slugify the name
-  return name.toLowerCase()
+  // Default: slugify the name (works for EN/FR with latin chars)
+  const slug = name.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+  // Fallback to lowercase TCGdex ID (necessary for JP where name is non-ASCII -> empty slug)
+  return slug || id.toLowerCase()
 }
 
 // ── Auto-detect TCGdex set IDs from portfolio (when no explicit sets given) ──
@@ -174,7 +176,7 @@ export async function GET(request: Request) {
   const lang = langInput.toLowerCase() === 'jp' ? 'ja' : langInput.toLowerCase()
   // Hobby tier max 60s — batch=5 (~25s) safe. Cron 4h pour absorber tous les sets.
   // 1 set/run = safe pour Hobby 60s (sets modernes 200+ cartes)
-  const batchSize = Number(searchParams.get('batch') || '1')
+  const batchSize = Number(searchParams.get('batch') || '10')
   const { sets, cursor, total } = await getNextSetsBatch(lang, batchSize)
   if (!sets.length) {
     return NextResponse.json({ skipped: true, reason: 'no sets found in DB', total })

@@ -1,0 +1,52 @@
+name: prices-ebay
+on:
+  schedule:
+    # Every 2 hours (matrix runs 3 langs sequentially)
+    - cron: '15 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: 'Language to sync (EN/FR/JP/all)'
+        required: false
+        default: 'all'
+      batch:
+        description: 'Batch size'
+        required: false
+        default: '30'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [EN, FR, JP]
+    steps:
+      - name: Sync eBay prices for ${{ matrix.lang }}
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BATCH: ${{ github.event.inputs.batch || '30' }}
+        run: |
+          # Skip if user specified a single lang and this isn't it
+          if [ -n "${{ github.event.inputs.lang }}" ] && [ "${{ github.event.inputs.lang }}" != "all" ] && [ "${{ github.event.inputs.lang }}" != "${{ matrix.lang }}" ]; then
+            echo "Skipping ${{ matrix.lang }} (user specified ${{ github.event.inputs.lang }})"
+            exit 0
+          fi
+
+          URL="https://pokealphaterminal.vercel.app/api/cron/prices-ebay?lang=${{ matrix.lang }}&batch=$BATCH&triggeredBy=cron"
+          echo "Calling: $URL"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$URL" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 90)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP: $HTTP_CODE"
+          echo "Body: $BODY"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Non-200 status: $HTTP_CODE"
+            exit 1
+          fi

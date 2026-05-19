@@ -23,18 +23,26 @@ export type PriceSource =
   | 'other';
 
 export type PriceVariant =
-  | 'raw'
-  | 'holo'
-  | 'reverse_holo'
-  | 'psa10'
-  | 'psa9'
-  | 'psa8'
-  | 'bgs10'
-  | 'cgc10'
-  | '1st_ed'
-  | 'shadowless'
-  | 'sealed'
-  | 'other';
+  // Raw card states
+  | 'raw' | 'holo' | 'reverse_holo'
+  | '1st_ed' | 'shadowless' | 'sealed' | 'other'
+  // PSA grades
+  | 'psa_10' | 'psa_9_5' | 'psa_9' | 'psa_8_5' | 'psa_8'
+  | 'psa_7' | 'psa_6' | 'psa_5' | 'psa_4' | 'psa_3' | 'psa_2' | 'psa_1'
+  // BGS grades (Beckett)
+  | 'bgs_10' | 'bgs_9_5' | 'bgs_9' | 'bgs_8_5' | 'bgs_8'
+  | 'bgs_7' | 'bgs_6' | 'bgs_5' | 'bgs_4' | 'bgs_3'
+  // CGC grades
+  | 'cgc_10' | 'cgc_9_5' | 'cgc_9' | 'cgc_8_5' | 'cgc_8'
+  | 'cgc_7' | 'cgc_6' | 'cgc_5'
+  // SGC grades
+  | 'sgc_10' | 'sgc_9_5' | 'sgc_9' | 'sgc_8' | 'sgc_7'
+  // PCA grades (France)
+  | 'pca_10' | 'pca_9' | 'pca_8' | 'pca_7'
+  // CCC grades (France)
+  | 'ccc_10' | 'ccc_9' | 'ccc_8' | 'ccc_7'
+  // Legacy compatibility (DO NOT REMOVE)
+  | 'psa10' | 'psa9' | 'psa8' | 'bgs10' | 'cgc10';
 
 // ─────────────────────────────────────────────────────────────
 // Main snapshot shape

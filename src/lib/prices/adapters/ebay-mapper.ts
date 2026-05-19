@@ -90,22 +90,27 @@ export interface CardForQuery {
 export function buildEbayQuery(card: CardForQuery): string {
   const parts: string[] = []
 
-  // Card name (always)
-  parts.push(card.name)
+  // 1. "Pokemon" anchor word (eBay scoring favors first words)
+  parts.push('Pokemon')
 
-  // Lang qualifier (CRITICAL for JP — eBay searches English titles)
+  // 2. Card name — strip apostrophes/quotes which eBay url-encoding can break
+  const cleanName = card.name.replace(/['']/g, '')
+  parts.push(cleanName)
+
+  // 3. Lang qualifier (CRITICAL for JP — eBay searches English titles)
   if (card.lang === 'JA') parts.push('Japanese')
   else if (card.lang === 'FR') parts.push('French')
 
-  // Set context if available
-  if (card.set_name) parts.push(card.set_name)
+  // 4. Set context — also strip apostrophes
+  if (card.set_name) parts.push(card.set_name.replace(/['']/g, ''))
 
-  // Card number for disambiguation
+  // 5. Card number for disambiguation
   if (card.local_id) parts.push(card.local_id)
   else if (card.card_number) parts.push(card.card_number.split('/')[0])
 
-  // Exclude pollution
-  parts.push('-custom', '-proxy', '-fake', '-lot', '-bundle', '-sticker', '-style', '-fan')
+  // Pollution filtered client-side via parseEbayTitle().hasPollution
+  // (eBay Browse scoring drops query → 0 results with too many -keyword exclusions,
+  //  esp. for niche cards like JP vintage with long queries)
 
   return parts.join(' ')
 }
@@ -114,11 +119,11 @@ export function buildEbayQuery(card: CardForQuery): string {
  * Build complete eBay Browse API URL.
  */
 export function buildEbayUrl(query: string, limit = 30): string {
+  // sort=price REMOVED: empirically causes 0 results on niche/JP queries
   const params = new URLSearchParams({
     q: query,
     category_ids: EBAY_POKEMON_CATEGORY,
     limit: String(limit),
-    sort: 'price',
   })
   return `https://api.ebay.com/buy/browse/v1/item_summary/search?${params}`
 }
@@ -197,7 +202,9 @@ export interface PriceAggregate {
  * Returns null if too few datapoints to be meaningful (< 3).
  */
 export function aggregatePrices(rawPrices: number[]): PriceAggregate | null {
-  if (rawPrices.length < 3) return null
+  // Lower threshold to 2 (was 3) — many niche cards (JP vintage, FR rare) have
+  // only 2-3 listings per variant after lang filter. IQR still meaningful at n=2.
+  if (rawPrices.length < 2) return null
 
   const sorted = [...rawPrices].sort((a, b) => a - b)
   const q1 = percentile(sorted, 0.25)
@@ -207,7 +214,7 @@ export function aggregatePrices(rawPrices: number[]): PriceAggregate | null {
   const upperBound = q3 + 1.5 * iqr
 
   const filtered = sorted.filter(p => p >= lowerBound && p <= upperBound)
-  if (filtered.length < 2) return null
+  if (filtered.length < 1) return null
 
   return {
     count: filtered.length,
@@ -250,23 +257,67 @@ export interface EbayListing {
  * @param fxRate - USD to EUR conversion rate
  */
 export function buildEbaySnapshots(
-  card: { card_ref: string; lang: 'EN' | 'FR' | 'JA' },
+  card: {
+    card_ref: string
+    lang: 'EN' | 'FR' | 'JA'
+    name?: string
+    set_name?: string | null
+    local_id?: string | null
+  },
   listings: EbayListing[],
   fxRate: number = 0.92,
 ): PriceSnapshot[] {
-  // Step 1: Filter pollution + parse each
+  // Pre-compute discriminators for title-level matching
+  const localIdPadded = card.local_id ? card.local_id.padStart(3, '0') : null
+  const localIdRaw = card.local_id || null
+  // Set keywords: split set_name into discriminant words (≥4 chars, exclude stopwords)
+  const setKeywords = card.set_name
+    ? card.set_name.toLowerCase()
+        .split(/[\s&\-]+/)
+        .filter(w => w.length >= 4 && !['series', 'with', 'from'].includes(w))
+    : []
+  // Card name words for fuzzy name matching
+  const nameWords = card.name
+    ? card.name.toLowerCase().split(/\s+/).filter(w => w.length >= 3)
+    : []
+
   const valid = listings
-    .map(l => ({ listing: l, parsed: parseEbayTitle(l.title) }))
-    .filter(({ parsed, listing }) => {
+    .map(l => ({ listing: l, parsed: parseEbayTitle(l.title), titleLower: l.title.toLowerCase() }))
+    .filter(({ parsed, listing, titleLower }) => {
       if (parsed.hasPollution) return false
       if (!listing.price_value || listing.price_value <= 0) return false
-      // For JP cards, listing must mention "Japanese"
+
+      // Lang qualifier (strict for JP, loose for FR — many FR listings omit "French")
       if (card.lang === 'JA' && !parsed.isJapanese) return false
-      // For FR cards, listing must mention "French" (loose)
-      if (card.lang === 'FR' && !parsed.isFrench && !parsed.isJapanese) {
-        // Keep "neutral" listings for FR (often EN sellers list FR cards without lang)
+      if (card.lang === 'FR' && parsed.isJapanese) return false
+      // For EN: reject listings that explicitly say "Japanese" or "French" (those are non-EN)
+      if (card.lang === 'EN' && (parsed.isJapanese || parsed.isFrench)) return false
+
+      // Name match: at least ONE name word in title (loose for vintage misspells)
+      if (nameWords.length > 0) {
+        const nameMatch = nameWords.some(w => titleLower.includes(w))
+        if (!nameMatch) return false
       }
-      return true
+
+      // Discriminator: set keyword OR local_id must appear (prevents same-name pollution)
+      let identifierMatched = setKeywords.length === 0 && !localIdPadded // if neither provided, allow
+
+      if (!identifierMatched && setKeywords.length > 0) {
+        if (setKeywords.some(k => titleLower.includes(k))) identifierMatched = true
+      }
+      if (!identifierMatched && localIdPadded) {
+        // Common eBay formats: "004/060", "#004", "No. 004", " 004 ", " 4/" (unpadded)
+        const patterns = [
+          new RegExp(`\\b${localIdPadded}/`),
+          new RegExp(`#${localIdPadded}\\b`),
+          new RegExp(`\\bno\\.?\\s*${localIdPadded}\\b`),
+          new RegExp(`\\b${localIdPadded}\\b`),
+          localIdRaw ? new RegExp(`\\b${localIdRaw}/`) : null,
+        ].filter(Boolean) as RegExp[]
+        if (patterns.some(p => p.test(listing.title))) identifierMatched = true
+      }
+
+      return identifierMatched
     })
 
   // Step 2: Group by (grade || condition)

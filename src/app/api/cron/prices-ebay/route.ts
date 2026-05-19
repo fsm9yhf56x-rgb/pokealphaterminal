@@ -1,12 +1,15 @@
 /**
- * Cron route : eBay listings → prices_snapshots
+ * Cron route: eBay Browse API → prices_snapshots
  *
- * Strategy: hybrid coverage
- *  - Top 1000 cartes by value : 1 query/card (high precision)
- *  - Rest : query per set (volume optimization)
+ * Multi-lang (EN/FR/JP) coverage of Pokemon cards via eBay US listings.
+ * Captures all variants (raw + graded) per card with title parsing.
  *
- * Budget: ~5000 eBay calls/day (free tier).
- * Cron every 2h : 50 cards/run × 12 runs/day = 600 cards/day = full top-1000 in ~2 days.
+ * Strategy:
+ *  - Cursor-based: continues from last successful tcg_cards.id
+ *  - Filters by lang via ?lang=EN|FR|JP (default = EN)
+ *  - Batch size via ?batch=N (default = 20, max ~50)
+ *  - Writes card_ref = tcg_cards.id directly (canonical from day one)
+ *  - Auto-fills card_aliases.ebay_card_ref for future mappings
  */
 
 import { NextResponse } from 'next/server'
@@ -29,16 +32,15 @@ const CRON_SECRET = process.env.CRON_SECRET
 const EBAY_APP_ID = process.env.EBAY_APP_ID || ''
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID || ''
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-// ── OAuth token cache (in-memory, refreshed per Lambda invocation) ──
+// ── OAuth token cache ────────────────────────────────────────────────
 let cachedToken: { value: string; expiresAt: number } | null = null
 
 async function getEbayToken(): Promise<string | null> {
-  if (cachedToken && Date.now() < cachedToken.expiresAt) {
-    return cachedToken.value
-  }
+  if (cachedToken && Date.now() < cachedToken.expiresAt) return cachedToken.value
   if (!EBAY_APP_ID || !EBAY_CERT_ID) return null
+
   try {
     const auth = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64')
     const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
@@ -53,7 +55,7 @@ async function getEbayToken(): Promise<string | null> {
     if (!d.access_token) return null
     cachedToken = {
       value: d.access_token,
-      expiresAt: Date.now() + (d.expires_in - 300) * 1000, // refresh 5min before
+      expiresAt: Date.now() + (d.expires_in - 300) * 1000,
     }
     return d.access_token
   } catch {
@@ -61,7 +63,7 @@ async function getEbayToken(): Promise<string | null> {
   }
 }
 
-// ── FX rate fetch ──
+// ── FX rate fetch ────────────────────────────────────────────────────
 async function getFxRate(from: string, to: string): Promise<number> {
   try {
     const rows = await sql.query(
@@ -72,46 +74,97 @@ async function getFxRate(from: string, to: string): Promise<number> {
     )
     return (rows[0] as any)?.rate ? Number((rows[0] as any).rate) : 0.92
   } catch {
-    return 0.92 // fallback USD/EUR
+    return 0.92
   }
 }
 
-// ── Card selection: top by value, with cursor ──
-async function getNextCardBatch(batchSize: number): Promise<CardForQuery[]> {
-  // Get last cursor
-  const lastLog = await sql.query(
-    `SELECT stats FROM sync_logs
-     WHERE job_name = 'prices_ebay'
-       AND status IN ('success', 'partial')
-     ORDER BY finished_at DESC LIMIT 1`,
-    []
-  )
-  const lastCardRef = ((lastLog[0] as any)?.stats as any)?.lastCardRef || null
-
-  // Fetch top cards by value (prefer ones with existing valuation, skip orphans)
-  const cards = await sql.query(
-    `SELECT c.card_ref AS card_ref, c.name, c.local_id, c.lang,
-            s.id AS set_id, s.name AS set_name
-     FROM tcg_cards c
-     LEFT JOIN tcg_sets s ON c.set_id = s.id
-     WHERE c.card_ref IS NOT NULL
-       AND ($1::text IS NULL OR c.card_ref > $1::text)
-     ORDER BY c.card_ref ASC
-     LIMIT $2`,
-    [lastCardRef, batchSize]
-  )
-
-  return cards.map((c: any) => ({
-    card_ref: c.card_ref,
-    name: c.name,
-    local_id: c.local_id,
-    set_id: c.set_id,
-    set_name: c.set_name,
-    lang: c.lang || 'EN',
-  })) as any
+// ── Card batch fetcher ───────────────────────────────────────────────
+interface DbCard {
+  id: string
+  set_id: string | null
+  local_id: string | null
+  name: string
+  lang: 'EN' | 'FR' | 'JP'
+  set_name: string | null
 }
 
-// ── Main handler ──
+async function getNextCardBatch(
+  lang: 'EN' | 'FR' | 'JP',
+  batchSize: number,
+): Promise<DbCard[]> {
+  // Resume cursor
+  const lastLog = await sql.query(
+    `SELECT stats FROM sync_logs
+     WHERE job_name = 'prices_ebay_' || LOWER($1::text)
+       AND status IN ('success', 'partial')
+     ORDER BY finished_at DESC LIMIT 1`,
+    [lang]
+  )
+  const lastCardId = ((lastLog[0] as any)?.stats as any)?.lastCardId || null
+
+  // Bloomberg-grade filter: only cards with eBay match potential
+  // EN/FR: rarity (rare+) AND exclude TCG Pocket sets (en-A*, en-B*, en-P-A*)
+  // JP: name suffix (ex/V/VMAX/VSTAR/GX) since rarity_normalized is NULL on JP
+  const tcgPocketExclusion = "AND NOT (c.set_id ~ '^(en|fr)-(A[0-9]|B[0-9]|P-A)')"
+  const rarityFilter = lang === 'JP'
+    ? "AND (c.name LIKE '% ex' OR c.name LIKE '% EX' OR c.name LIKE '% V' OR c.name LIKE '% VMAX' OR c.name LIKE '% VSTAR' OR c.name LIKE '% GX')"
+    : `AND c.rarity_normalized IN (
+        'rare', 'holo_rare', 'rare_holo',
+        'ultra_rare', 'double_rare',
+        'illustration_rare', 'special_illustration_rare',
+        'hyper_rare', 'shiny_rare', 'shiny_ultra_rare',
+        'radiant_rare', 'amazing_rare', 'secret_rare',
+        'ace_spec', 'prime', 'legend',
+        'classic_collection', 'black_white_rare', 'full_art_trainer'
+      ) ${tcgPocketExclusion}`
+
+  // For FR/JP cards, prefer the English set name (used by eBay listings)
+  // We bridge via set_aliases: get tcgdex_slug from our set, then re-lookup EN equivalent
+  const cards = await sql.query(
+    `SELECT
+        c.id, c.set_id, c.local_id, c.name, c.lang,
+        COALESCE(sa_en.name, s.name) AS set_name
+     FROM tcg_cards c
+     LEFT JOIN tcg_sets s ON c.set_id = s.id
+     LEFT JOIN set_aliases sa_local
+       ON sa_local.internal_set_id = c.set_id AND sa_local.lang = c.lang
+     LEFT JOIN set_aliases sa_en
+       ON sa_en.tcgdex_slug = sa_local.tcgdex_slug AND sa_en.lang = 'EN'
+     WHERE c.lang = $1::text
+       AND c.name IS NOT NULL
+       ${rarityFilter}
+       AND ($2::text IS NULL OR c.id > $2::text)
+     ORDER BY c.id ASC
+     LIMIT $3::int`,
+    [lang, lastCardId, batchSize]
+  )
+
+  return (cards as any[]).map((c) => ({
+    id: c.id,
+    set_id: c.set_id,
+    local_id: c.local_id,
+    name: c.name,
+    lang: c.lang,
+    set_name: c.set_name,
+  }))
+}
+
+// ── Record ebay_card_ref mapping into card_aliases ────────────────────
+async function recordEbayMapping(tcgCardId: string, ebayQuery: string): Promise<void> {
+  try {
+    // Only record if we don't already have an ebay_card_ref for this card
+    await sql.query(
+      `UPDATE card_aliases
+       SET ebay_card_ref = $1, updated_at = now()
+       WHERE tcg_card_id = $2 AND (ebay_card_ref IS NULL OR ebay_card_ref = '')`,
+      [ebayQuery, tcgCardId]
+    )
+  } catch {
+    // Non-fatal
+  }
+}
+
+// ── Main handler ─────────────────────────────────────────────────────
 export async function GET(request: Request) {
   // Auth
   const authHeader = request.headers.get('authorization') || ''
@@ -121,42 +174,53 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url)
-  const batchSize = Number(searchParams.get('batch') || '20')
+  const langParam = (searchParams.get('lang') || 'EN').toUpperCase()
+  const lang = (['EN', 'FR', 'JP'].includes(langParam) ? langParam : 'EN') as
+    | 'EN'
+    | 'FR'
+    | 'JP'
+  const batchSize = Math.min(Math.max(Number(searchParams.get('batch') || '20'), 1), 50)
   const triggeredBy = (searchParams.get('triggeredBy') || 'cron') as any
 
-  const log = await startSyncLog('prices_ebay', triggeredBy)
+  const jobName = `prices_ebay_${lang.toLowerCase()}`
+  const log = await startSyncLog(jobName, triggeredBy)
 
   try {
-    // Get eBay token
     const ebayToken = await getEbayToken()
     if (!ebayToken) {
       await finishSyncLog(log, 'error', null, 'eBay auth failed')
       return NextResponse.json({ error: 'eBay auth failed' }, { status: 500 })
     }
 
-    // Get FX rate
     const usdToEur = await getFxRate('USD', 'EUR')
 
-    // Fetch batch of cards to process
-    const cards = await getNextCardBatch(batchSize)
+    const cards = await getNextCardBatch(lang, batchSize)
     if (cards.length === 0) {
       await finishSyncLog(log, 'success', {
-        totalCards: 0,
-        message: 'No more cards to process — cycle complete, will restart',
+        lang,
+        message: 'No more cards — cycle complete (will restart on next run)',
       })
-      return NextResponse.json({ ok: true, totalCards: 0, message: 'cycle complete' })
+      return NextResponse.json({ ok: true, lang, totalCards: 0 })
     }
 
     const allSnapshots: any[] = []
     let processed = 0
     let withResults = 0
     const errors: string[] = []
-    let lastCardRef: string | null = null
+    let lastCardId: string | null = null
 
     for (const card of cards) {
       try {
-        const query = buildEbayQuery(card as any)
+        const cardForQuery: CardForQuery = {
+          name: card.name,
+          local_id: card.local_id,
+          set_id: card.set_id,
+          set_name: card.set_name,
+          lang: card.lang === 'JP' ? 'JA' : (card.lang as 'EN' | 'FR'),
+        }
+        const query = buildEbayQuery(cardForQuery)
         const url = buildEbayUrl(query, 30)
+
 
         const r = await fetch(url, {
           headers: {
@@ -166,9 +230,9 @@ export async function GET(request: Request) {
         })
 
         if (!r.ok) {
-          errors.push(`${card.card_ref}: HTTP ${r.status}`)
+          errors.push(`${card.id}: HTTP ${r.status}`)
           processed++
-          lastCardRef = card.card_ref as any
+          lastCardId = card.id
           continue
         }
 
@@ -183,31 +247,45 @@ export async function GET(request: Request) {
             condition: i.condition,
           }))
 
+
         if (listings.length >= 3) {
-          const snapshots = buildEbaySnapshots(card as any, listings, usdToEur)
-          allSnapshots.push(...snapshots)
-          if (snapshots.length > 0) withResults++
+          const snapshots = buildEbaySnapshots(
+            {
+              card_ref: card.id,
+              lang: cardForQuery.lang,
+              name: card.name,
+              set_name: card.set_name,
+              local_id: card.local_id,
+            },
+            listings,
+            usdToEur
+          )
+          if (snapshots.length > 0) {
+            allSnapshots.push(...snapshots)
+            withResults++
+            // Record canonical mapping (fire-and-forget)
+            recordEbayMapping(card.id, query).catch(() => {})
+          }
         }
 
         processed++
-        lastCardRef = (card as any).card_ref
-        await sleep(120) // rate limit safety
+        lastCardId = card.id
+        await sleep(150) // rate-limit safety (50ms minimum, 150 for headroom)
       } catch (e: any) {
-        errors.push(`${(card as any).card_ref}: ${e?.message || 'unknown'}`)
+        errors.push(`${card.id}: ${e?.message || 'unknown'}`)
         processed++
-        lastCardRef = (card as any).card_ref
+        lastCardId = card.id
       }
     }
 
-    if (allSnapshots.length > 0) {
-      await writeSnapshots(allSnapshots)
-    }
+    if (allSnapshots.length > 0) await writeSnapshots(allSnapshots)
 
     const stats = {
+      lang,
       processed,
       withResults,
       snapshotsWritten: allSnapshots.length,
-      lastCardRef,
+      lastCardId,
       errorCount: errors.length,
       errors: errors.slice(0, 10),
       fxRate: usdToEur,

@@ -23,6 +23,10 @@ function buildAuth(): Auth<BetterAuthOptions> {
   const trustedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://kodocards.com',
+    'https://www.kodocards.com',
+    'https://kodocards.fr',
+    'https://www.kodocards.fr',
     'https://pokealphaterminal.vercel.app',
     'https://pokealphaterminal.io',
   ]

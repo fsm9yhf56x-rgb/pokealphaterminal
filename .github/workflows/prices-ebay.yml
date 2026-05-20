@@ -33,7 +33,7 @@ jobs:
             exit 0
           fi
 
-          URL="https://pokealphaterminal.vercel.app/api/cron/prices-ebay?lang=${{ matrix.lang }}&batch=$BATCH&triggeredBy=cron"
+          URL="https://kodocards.com/api/cron/prices-ebay?lang=${{ matrix.lang }}&batch=$BATCH&triggeredBy=cron"
           echo "Calling: $URL"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$URL" \

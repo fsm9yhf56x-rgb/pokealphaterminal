@@ -12,7 +12,7 @@ const SUGGESTIONS = [
   "Stratégie pour un portfolio de €5,000 en TCG Pokémon",
 ]
 
-const SYSTEM_PROMPT = `Tu es Dexy, l'analyste TCG Pokémon IA de PokéAlpha Terminal. Tu es expert en:
+const SYSTEM_PROMPT = `Tu es Dexy, l'analyste TCG Pokémon IA de Kodo Cards. Tu es expert en:
 - Marchés cartes Pokémon (eBay, Cardmarket, TCGPlayer)
 - Analyse fondamentale: PSA Pop, rareté, sets OOP, reprint risk
 - Stratégies d'investissement TCG pour collectionneurs et investisseurs

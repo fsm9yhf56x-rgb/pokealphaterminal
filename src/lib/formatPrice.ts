@@ -1,5 +1,5 @@
 /**
- * formatEUR — centralise le formatage des prix en EUR pour PokéAlpha.
+ * formatEUR — centralise le formatage des prix en EUR pour Kodo Cards.
  *
  * Variantes :
  *   - 'big'    : "EUR 1 235"        (Spotlight, Wrapped header, ShareSheet)

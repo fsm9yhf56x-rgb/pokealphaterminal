@@ -98,7 +98,7 @@ function generateAlerts(
       id: 'welcome',
       variant: 'welcome',
       emoji: '🎯',
-      title: 'Bienvenue sur PokéAlpha',
+      title: 'Bienvenue sur Kodo Cards',
       detail: 'Ajoute ta première carte pour commencer à suivre ta collection et débloquer les alertes personnalisées.',
       href: '/portfolio',
       ctaLabel: 'Ajouter une carte',

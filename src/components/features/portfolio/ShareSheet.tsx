@@ -47,12 +47,12 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     : totalROI
 
   const tweetText = isShowcase
-    ? `Ma Vitrine PokéAlpha — ${showcaseCards.length} pieces d'exception`
+    ? `Ma Vitrine Kodo Cards — ${showcaseCards.length} pieces d'exception`
     : isCard
-    ? `${card!.name} dans ma collection PokéAlpha Terminal ${card!.buyPrice > 0 ? '— ROI +' + roi + '%' : ''}`
+    ? `${card!.name} dans ma collection Kodo Cards ${card!.buyPrice > 0 ? '— ROI +' + roi + '%' : ''}`
     : context === 'wrapped'
-    ? `Mon Wrapped 2026 sur PokéAlpha Terminal — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
-    : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur PokéAlpha`
+    ? `Mon Wrapped 2026 sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
+    : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur Kodo Cards`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
 
@@ -182,7 +182,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ display:'flex', alignItems:'center', gap:'4px', marginBottom:'6px' }}>
                 <div style={{ width:'14px', height:'14px', borderRadius:'4px', background:'linear-gradient(135deg,#E03020,#FF6644)', flexShrink:0 }} />
-                <span style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>PokéAlpha Terminal</span>
+                <span style={{ fontSize:'9px', color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)' }}>Kodo Cards</span>
               </div>
               <div style={{ fontSize:'15px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{title}</div>
               {isCard ? (

@@ -318,7 +318,7 @@ export function SPDrawer({
             lineHeight: 1.4,
             fontStyle: 'italic',
           }}>
-            ⚠ Ces signaux sont indicatifs. Vérifiez l'état exact de la carte, les variantes (1ère édition vs reprint), et les frais de port avant tout achat. PokéAlpha n'est pas responsable des décisions d'investissement.
+            ⚠ Ces signaux sont indicatifs. Vérifiez l'état exact de la carte, les variantes (1ère édition vs reprint), et les frais de port avant tout achat. Kodo Cards n'est pas responsable des décisions d'investissement.
           </div>
         </div>
       </div>

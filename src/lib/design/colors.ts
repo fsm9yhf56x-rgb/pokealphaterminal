@@ -1,5 +1,5 @@
 /**
- * PokéAlpha Design System — Semantic Colors (Strict Bloomberg rules)
+ * Kodo Cards Design System — Semantic Colors (Strict Bloomberg rules)
  *
  * ╔══════════════════════════════════════════════════════════════╗
  * ║  RULES                                                       ║

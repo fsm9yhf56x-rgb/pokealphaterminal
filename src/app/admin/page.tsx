@@ -214,7 +214,7 @@ export default async function AdminPage() {
       </section>
 
       <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #e5e5ea', fontSize: 12, color: '#86868b' }}>
-        PokéAlpha Terminal · Admin dashboard · Data refreshed on each page load
+        Kodo Cards · Admin dashboard · Data refreshed on each page load
       </div>
     </div>
   );

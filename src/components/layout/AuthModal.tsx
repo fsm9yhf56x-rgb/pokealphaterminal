@@ -67,7 +67,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         }}>
           <div style={{padding:'24px 24px 0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div>
-              <p style={{fontSize:'10px',color:'#AEAEB2',textTransform:'uppercase',letterSpacing:'.12em',margin:'0 0 4px',fontWeight:600,fontFamily:'var(--font-sora,Sora,system-ui)'}}>PokéAlpha Terminal</p>
+              <p style={{fontSize:'10px',color:'#AEAEB2',textTransform:'uppercase',letterSpacing:'.12em',margin:'0 0 4px',fontWeight:600,fontFamily:'var(--font-sora,Sora,system-ui)'}}>Kodo Cards</p>
               <h2 style={{fontSize:'22px',fontWeight:700,color:'#1D1D1F',margin:0,fontFamily:'var(--font-sora,Sora,system-ui)',letterSpacing:'-.3px'}}>
                 {mode==='login'?'Connexion':'Créer un compte'}
               </h2>

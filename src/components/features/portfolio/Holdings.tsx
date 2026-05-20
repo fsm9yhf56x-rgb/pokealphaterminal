@@ -3127,7 +3127,7 @@ export function Holdings() {
         <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.96)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(12px)' }}>
           <div style={{ maxWidth:'420px',width:'100%',textAlign:'center',animation:'welcomeIn .5s cubic-bezier(.34,1.2,.64,1)' }}>
             <div style={{ fontSize:'64px',marginBottom:'20px',animation:'burst .6s .2s cubic-bezier(.34,1.4,.64,1) both' }}>📖</div>
-            <div style={{ fontSize:'11px',fontWeight:700,color:'rgba(255,107,53,.8)',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur PokéAlpha Terminal</div>
+            <div style={{ fontSize:'11px',fontWeight:700,color:'rgba(255,107,53,.8)',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur Kodo Cards</div>
             <h2 style={{ fontSize:'28px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.15,marginBottom:'14px' }}>
               Votre collection mérite<br/>
               <span style={{ background:'linear-gradient(135deg,#FF6B35,#FFD700,#FF6B35)',backgroundSize:'200% 200%',animation:'shimmerG 3s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>d'être célébrée.</span>

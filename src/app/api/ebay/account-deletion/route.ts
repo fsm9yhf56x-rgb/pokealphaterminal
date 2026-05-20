@@ -12,7 +12,7 @@
  *
  * 2. POST (body: notification payload)
  *    → Real notification: a user has requested data deletion.
- *      We log it (Supabase) and return 200. PokéAlpha doesn't store eBay user PII
+ *      We log it (Supabase) and return 200. Kodo Cards doesn't store eBay user PII
  *      (we use client_credentials, not user OAuth), so no purge logic is required.
  *
  * Setup:
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     console.warn('[ebay/account-deletion] failed to log notification (non-fatal):', e?.message)
   }
 
-  // PokéAlpha does NOT store any eBay user PII (we use client_credentials OAuth, not user OAuth).
+  // Kodo Cards does NOT store any eBay user PII (we use client_credentials OAuth, not user OAuth).
   // No purge logic is necessary. We acknowledge receipt with 200.
   return NextResponse.json({ received: true }, { status: 200 })
 }

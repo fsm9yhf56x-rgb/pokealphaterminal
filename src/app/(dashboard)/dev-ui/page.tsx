@@ -55,7 +55,7 @@ export default function DevUIPage() {
         {/* Header */}
         <div style={{ borderBottom: '1px solid #EBEBEB', paddingBottom: '20px' }}>
           <p style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: 'Space Grotesk, system-ui' }}>
-            PokéAlpha Terminal
+            Kodo Cards
           </p>
           <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111', fontFamily: 'Space Grotesk, system-ui', letterSpacing: '-0.3px' }}>
             Design System
@@ -197,7 +197,7 @@ export default function DevUIPage() {
         {/* Footer */}
         <div style={{ borderTop: '1px solid #EBEBEB', paddingTop: '20px', textAlign: 'center' }}>
           <p style={{ fontSize: '11px', color: '#BBB', fontFamily: 'monospace' }}>
-            PokéAlpha Terminal · Design System · Bloc 02 ✓
+            Kodo Cards · Design System · Bloc 02 ✓
           </p>
         </div>
 

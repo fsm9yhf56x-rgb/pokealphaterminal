@@ -20,7 +20,7 @@ export function TopNav() {
 
         <Link href="/home" style={{ display:'flex', alignItems:'center', gap:'8px', textDecoration:'none', marginRight:'16px', flexShrink:0 }}>
           <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:'linear-gradient(135deg,#E03020,#FF6644)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', color:'#fff', fontWeight:700 }}>◆</div>
-          <span style={{ fontSize:'15px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>Poké<span style={{ color:'#E03020' }}>Alpha</span></span>
+          <span style={{ fontSize:'15px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>Kodo<span style={{ color:'#E03020' }}> Cards</span></span>
         </Link>
 
         {NAV.map(item => {

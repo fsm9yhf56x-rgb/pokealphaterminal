@@ -45,7 +45,7 @@ export function Sidebar() {
           letterSpacing: '-0.3px',
           lineHeight: 1.2,
         }}>
-          Poké<span style={{ color: '#E03020' }}>Alpha</span>
+          Kodo<span style={{ color: '#E03020' }}> Cards</span>
         </div>
         <div style={{
           fontFamily: 'var(--font-display)',

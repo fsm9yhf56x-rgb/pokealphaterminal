@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (challengeCode) {
     const crypto = require('crypto')
     const verificationToken = 'pokealpha_2026'
-    const endpoint = 'https://pokealphaterminal.vercel.app/api/ebay/deletion'
+    const endpoint = 'https://kodocards.com/api/ebay/deletion'
     const hash = crypto.createHash('sha256')
     hash.update(challengeCode + verificationToken + endpoint)
     return NextResponse.json({ challengeResponse: hash.digest('hex') })

@@ -24,7 +24,7 @@ export function ExplorerExportCSV({
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
 
-      const filename = `pokealpha-explorer-${formatDate()}.csv`
+      const filename = `kodocards-explorer-${formatDate()}.csv`
       const a = document.createElement('a')
       a.href = url
       a.download = filename

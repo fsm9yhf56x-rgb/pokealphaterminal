@@ -21,14 +21,15 @@ const spaceMono = Space_Mono({
 })
 export const metadata: Metadata = {
   title: {
-    default: 'PokéAlpha Terminal',
-    template: '%s | PokéAlpha Terminal',
+    default: 'Kodo Cards',
+    template: '%s | Kodo Cards',
   },
-  description: 'The Bloomberg of Pokémon Cards — real-time prices, AI signals, deal discovery.',
+  description: 'Le Bloomberg des cartes Pokémon — prix temps réel, signaux IA, détection d\'opportunités.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   openGraph: {
     type: 'website',
-    siteName: 'PokéAlpha Terminal',
+    siteName: 'Kodo Cards',
+    locale: 'fr_FR',
   },
 }
 interface RootLayoutProps {

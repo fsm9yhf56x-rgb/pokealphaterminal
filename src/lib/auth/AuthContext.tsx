@@ -26,18 +26,7 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx | null>(null)
 
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id:'1', email:'demo@pokealphaterminal.io', password:'demo1234',
-    name:'Dracaufeu', plan:'free', avatar:'D',
-    joinedAt:'2026-01-15', xp:1240, streak:7,
-  },
-  {
-    id:'2', email:'pro@pokealphaterminal.io', password:'pro1234',
-    name:'AshPro', plan:'pro', avatar:'A',
-    joinedAt:'2026-02-01', xp:3800, streak:21,
-  },
-]
+const MOCK_USERS: (User & { password: string })[] = []
 
 function initials(name: string) {
   return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
@@ -49,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('pat_user')
+      const stored = localStorage.getItem('kc_user')
       if (stored) setUser(JSON.parse(stored))
     } catch {}
     setLoading(false)
@@ -57,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const persist = (u: User|null) => {
     setUser(u)
-    if (u) localStorage.setItem('pat_user', JSON.stringify(u))
+    if (u) localStorage.setItem('kc_user', JSON.stringify(u))
     else    localStorage.removeItem('pat_user')
   }
 

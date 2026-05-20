@@ -18,7 +18,7 @@
  * Setup:
  *   - EBAY_VERIFICATION_TOKEN: 32-80 chars [a-zA-Z0-9_-], same value in eBay Alerts page
  *   - EBAY_DELETION_ENDPOINT: exact URL of this endpoint (must match what's saved on eBay)
- *     e.g. "https://pokealphaterminal.vercel.app/api/ebay/account-deletion"
+ *     e.g. "https://kodocards.com/api/ebay/account-deletion"
  */
 
 import { NextResponse } from 'next/server'

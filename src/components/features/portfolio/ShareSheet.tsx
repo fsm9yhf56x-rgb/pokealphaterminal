@@ -23,7 +23,7 @@ interface ShareSheetProps {
   showcase?: CardItem[]
 }
 
-const REFERRAL = 'POKEALPHA-' + Math.random().toString(36).slice(2,8).toUpperCase()
+const REFERRAL = 'KODOCARDS-' + Math.random().toString(36).slice(2,8).toUpperCase()
 
 export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, totalBuy, totalROI, totalGain, showToast, showcase }: ShareSheetProps) {
   const [generating, setGenerating] = useState(false)
@@ -54,7 +54,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     ? `Mon Wrapped 2026 sur PokéAlpha Terminal — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
     : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur PokéAlpha`
 
-  const shareUrl = `https://pokealphaterminal.io?ref=${REFERRAL}`
+  const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
 
   const generateImage = useCallback(async () => {
     if (!previewRef.current) return
@@ -73,7 +73,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     if (!imageUrl) return
     const a = document.createElement('a')
     a.href = imageUrl
-    a.download = `pokealpha-${isCard ? card!.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio'}.png`
+    a.download = `kodocards-${isCard ? card!.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio'}.png`
     a.click()
     showToast('Image sauvegardee')
   }, [imageUrl, isCard, card, showToast])
@@ -118,7 +118,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
         const data: ShareData = { title, text: tweetText, url: shareUrl }
         if (imageUrl) {
           const blob = await (await fetch(imageUrl)).blob()
-          const file = new File([blob], 'pokealpha.png', { type: 'image/png' })
+          const file = new File([blob], 'kodocards.png', { type: 'image/png' })
           if (navigator.canShare?.({ files: [file] })) data.files = [file]
         }
         await navigator.share(data)
@@ -198,7 +198,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,.35)', marginTop:'2px' }}>{portfolio.length} cartes</div>
                 </>
               )}
-              <div style={{ fontSize:'8px', color:'rgba(255,255,255,.25)', marginTop:'8px' }}>pokealphaterminal.io</div>
+              <div style={{ fontSize:'8px', color:'rgba(255,255,255,.25)', marginTop:'8px' }}>kodocards.com</div>
             </div>
           </div>
         </div>

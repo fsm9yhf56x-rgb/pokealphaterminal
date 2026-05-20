@@ -17,6 +17,7 @@ import { useCardConditions, CONDITION_ORDER, CONDITION_SHORT, CONDITION_LABELS }
 import type { CardCondition } from '@/components/features/prices/hooks/useCardConditions'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
+import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
 import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -1640,6 +1641,15 @@ export function Holdings() {
                         </div>
                       ) : null
                     })()}
+                    {spotCard.setId && spotCard.number ? (
+                      <div style={{ marginBottom:'14px' }}>
+                        <GradedPriceTable
+                          tcgCardId={spotCard.setId + '-' + spotCard.number}
+                          lang={spotCard.lang}
+                          hideWhenEmpty
+                        />
+                      </div>
+                    ) : null}
                     {spotCard.setId && spotCard.number ? (
                       <div style={{ marginBottom:'14px' }}>
                         <PsaPopBlock

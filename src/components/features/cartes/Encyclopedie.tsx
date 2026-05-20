@@ -3,6 +3,7 @@
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
+import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { SNOW } from '@/lib/design/colors'
@@ -1649,6 +1650,15 @@ export function Encyclopedie() {
                           </div>
                         ) : null
                       })()}
+                      {selCard?.setId && selCard?.localId ? (
+                        <div style={{ marginBottom:'12px' }}>
+                          <GradedPriceTable
+                            tcgCardId={`${selCard.setId}-${selCard.localId}`}
+                            lang={(selCard as any).lang}
+                            hideWhenEmpty
+                          />
+                        </div>
+                      ) : null}
                       {selCard?.setId && selCard?.localId ? (
                         <div style={{ marginBottom:'12px' }}>
                           <PsaPopBlock

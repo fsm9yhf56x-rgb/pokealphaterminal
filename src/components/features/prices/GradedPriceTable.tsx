@@ -129,7 +129,7 @@ export function GradedPriceTable({
           color: SNOW.muted,
           fontFamily: 'var(--font-display, sans-serif)',
         }}>
-          Prix gradés · eBay
+          Listings actifs · eBay
         </span>
         <span style={{
           fontSize: 10,
@@ -138,6 +138,19 @@ export function GradedPriceTable({
         }}>
           {sortedVariants.length} grade{sortedVariants.length > 1 ? 's' : ''}
         </span>
+      </div>
+
+      {/* Disclaimer */}
+      <div style={{
+        padding: '8px 14px',
+        background: '#FFF8E5',
+        borderBottom: `1px solid ${SNOW.borderSoft}`,
+        fontSize: 10,
+        color: '#8A6500',
+        fontFamily: 'var(--font-dm, sans-serif)',
+        lineHeight: 1.4,
+      }}>
+        Prix demandés (asks), pas des prix de vente conclus. Indicatif uniquement.
       </div>
 
       {/* Rows */}

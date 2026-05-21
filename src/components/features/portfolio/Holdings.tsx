@@ -18,6 +18,7 @@ import type { CardCondition } from '@/components/features/prices/hooks/useCardCo
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
+import { SpotlightV2 } from '@/components/features/spotlight/SpotlightV2'
 import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
 import { WrappedView } from './WrappedView'
@@ -1468,23 +1469,26 @@ export function Holdings() {
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
           const curQty=editQty??spotCard.qty
           return(
-            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:40, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
-              <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.03)', padding:'28px', maxWidth:'680px', width:'100%', animation:'fadeUp .25s ease-out', position:'relative' }} onClick={e=>e.stopPropagation()}>
-                <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'16px', right:'16px', width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:5, transition:'all .15s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                  onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
+              <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.03)', padding:'0', maxWidth:'1280px', width:'95vw', height:'90vh', animation:'kcSpringIn 0.5s cubic-bezier(.2,.85,.3,1.05)', position:'relative', display:'flex', flexDirection:'column' as const, overflow:'hidden' as const, isolation:'isolate' as const }} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'0', right:'-56px', width:'40px', height:'40px', borderRadius:'50%', background:'rgba(255,255,255,0.2)', backdropFilter:'blur(24px) saturate(200%)', WebkitBackdropFilter:'blur(24px) saturate(200%)', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.3)' }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.28)';e.currentTarget.style.transform='scale(1.08)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.18)';e.currentTarget.style.transform='scale(1)'}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
-                <div style={{ display:'flex', overflow:'hidden', margin:'-28px', borderRadius:'20px' }}>
-                  <div style={{ flexShrink:0, width:'250px', background:'#F5F5F7', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
-                  <div className="gem" style={{ background:'transparent', borderRadius:'14px', width:'100%' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
+                <div style={{ display:'flex', flex:1, minHeight:0, overflow:'hidden' as const }}>
+                  <div style={{ flexShrink:0, width:'380px', position:'relative' as const, background:'linear-gradient(180deg, #F8F8FA 0%, #EFEFF3 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 32px', overflow:'hidden' as const, borderTopLeftRadius:'20px', borderBottomLeftRadius:'20px' }}>
+                  <div style={{ position:'absolute' as const, top:'8%', left:'8%', width:'70%', height:'55%', background:'radial-gradient(circle, rgba(255,170,90,0.42) 0%, rgba(255,140,60,0.18) 35%, transparent 70%)', filter:'blur(50px)', pointerEvents:'none' as const, zIndex:0, animation:'kcHaloDrift 14s ease-in-out infinite' }} />
+                  <div style={{ position:'absolute' as const, bottom:'5%', right:'2%', width:'60%', height:'55%', background:'radial-gradient(circle, rgba(140,160,255,0.28) 0%, rgba(180,120,240,0.12) 40%, transparent 70%)', filter:'blur(60px)', pointerEvents:'none' as const, zIndex:0, animation:'kcHaloDrift 18s ease-in-out infinite reverse' }} />
+                  <div style={{ position:'absolute' as const, top:'-10%', right:'-5%', width:'40%', height:'40%', background:'radial-gradient(circle, rgba(255,200,140,0.2) 0%, transparent 70%)', filter:'blur(40px)', pointerEvents:'none' as const, zIndex:0 }} />
+                  <div className="gem kc-float" style={{ background:'transparent', borderRadius:'18px', width:'100%', maxWidth:'280px', position:'relative' as const, zIndex:1, filter:'drop-shadow(0 24px 40px rgba(0,0,0,.18)) drop-shadow(0 8px 16px rgba(0,0,0,.08)) drop-shadow(0 0 36px rgba(255,150,80,0.16))', transition:'filter .3s ease, transform .3s ease' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
                     {isHolo&&<div className="holo"/>}
                     <div className="hm"/>
                     
                     
                     
                     {spotCard.signal&&<div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#1D1D1F', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
-                    <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'12px', background:'#EBEBEB', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', maxHeight:'280px' }}>
+                    <div style={{ aspectRatio:'63/88', margin:'6px 6px 0', borderRadius:'14px', background:'#EBEBEB', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
                       {spotCard.image ? (
                         <img src={cleanImageUrl(spotCard.image)} alt={spotCard.name}
                           onClick={e=>{e.stopPropagation();setCardZoom(true)}}
@@ -1504,8 +1508,9 @@ export function Holdings() {
                     </div>
                   </div>
                   </div>
-                  <div style={{ flex:1, minWidth:0, padding:'28px 28px 24px' }}>
-                    <div style={{ paddingRight:'28px', marginBottom:'14px' }}>
+                  <div ref={(el)=>{ if(el) el.scrollTop=0 }} style={{ flex:1, minWidth:0, padding:0, overflowY:'auto' as const, display:'flex', flexDirection:'column' as const, scrollbarGutter:'stable' as const, background:'#F5F5F7' }}>
+                    <div style={{ padding: '18px 22px 0' }}>
+                    <div style={{ paddingRight:'28px', marginBottom:'10px', padding:'12px 18px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)', borderRadius:14, border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px' }}>
                         <div style={{ fontSize:'20px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{spotCard.name}</div>
                         {spotCard.graded&&(()=>{
@@ -1532,132 +1537,23 @@ export function Holdings() {
                         <span style={{ fontSize:'14px' }}>{spotCard.lang==='EN'?'\u{1F1FA}\u{1F1F8}':spotCard.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                       </div>
                     </div>
-                    {(()=>{
-                      let displayPrice = spotCard.curPrice
-                      if (!displayPrice) {
-                        const sid = spotCard.setId || ''
-                        const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-                        const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
-                        const dKey = slug + '|' + varHint + '|' + spotCard.number
-                        const det = priceDetails[dKey]
-                        if (det) {
-                          const sources = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
-                          if (sources.length) displayPrice = Math.round(sources.reduce((a,b)=>a+b,0)/sources.length*100)/100
-                        }
-                      }
-                      return <div style={{ fontSize:'32px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, marginBottom:'16px' }}>{formatEUR(displayPrice, 'big')}</div>
-                    })()}
-                    {spotCard.buyPrice>0&&<div style={{ fontSize:'16px', color:roi>=0?PERF.up:PERF.down, fontWeight:500, marginBottom:'16px' }}>{roi>=0?'+':''}{roi}% | {formatEUR(gain, 'sign')}</div>}
-                    {(()=>{
-                      const sid = spotCard.setId || ''
-                      const slug = setMappingRef.current[sid] || setMappingRef.current[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
-                      const varHint = sid.includes('-1st') || sid.includes('-shadowless-ns') ? '1st_Edition_Holofoil' : sid.includes('-shadowless') ? 'Unlimited_Holofoil' : ''
-                      const dKey = slug + '|' + varHint + '|' + spotCard.number
-                      const dKeyHolo = slug + '|Holofoil|' + spotCard.number
-                      const dKeyNormal = slug + '|Normal|' + spotCard.number
-                      // Merge all matches — priority: exact > Holofoil > Normal
-                      const candidates = [priceDetails[dKey], priceDetails[dKeyHolo], priceDetails[dKeyNormal]].filter(Boolean)
-                      const det = candidates.length ? candidates.reduce((acc, c) => ({
-                        ebay: acc.ebay || c.ebay,
-                        tcg: acc.tcg || c.tcg,
-                        cardmarket: acc.cardmarket || c.cardmarket,
-                        poketrace: acc.poketrace || c.poketrace,
-                        estimated: acc.estimated || c.estimated,
-                      }), { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }) : { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null }
-                      const sources = [
-                        { label: 'eBay', price: det.ebay, color: '#E53238', icon: '🔴' },
-                        { label: 'TCGPlayer', price: det.tcg, color: '#1D4ED8', icon: '🔵' },
-                        { label: 'Cardmarket', price: det.cardmarket, color: '#FF7900', icon: '🟠' },
-                      ].filter(s => s.price)
-                      return <>
-                        {(()=>{
-                          const statsCells = [
-                            spotCard.buyPrice>0 && {l:'Achat',v:formatEUR(spotCard.buyPrice, 'small'),c:'#1D1D1F'},
-                            spotCard.curPrice>0 && {l:'Marché (est.)',v:formatEUR(spotCard.curPrice, 'small'),c:'#1D1D1F'},
-                            spotCard.buyPrice>0 && {l:'ROI',v:(roi>=0?'+':'')+roi+'%',c:roi>0?'#2E9E6A':roi<0?'#E03020':'#86868B'},
-                            spotCard.psa ? {l:'PSA Pop',v:spotCard.psa.toLocaleString(),c:'#48484A'} : null,
-                          ].filter(Boolean) as {l:string;v:string;c:string}[]
-                          if (statsCells.length === 0) return null
-                          const cols = statsCells.length === 1 ? '1fr' : '1fr 1fr'
-                          return <div style={{ display:'grid', gridTemplateColumns:cols, gap:'8px', marginBottom:'10px' }}>
-                          {statsCells.map(st=>(
-                            <div key={st.l} style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px' }}>
-                              <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500 }}>{st.l}</div>
-                              <div style={{ fontSize:'14px', fontWeight:600, color:st.c, fontFamily:'var(--font-display)', marginTop:'2px' }}>{st.v}</div>
-                            </div>
-                          ))}
-                        </div>
-                        })()}
-                        {sources.length > 0 && (
-                          <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'12px', marginBottom:'14px' }}>
-                            <div style={{ fontSize:'9px', color:'#AEAEB2', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'8px' }}>Prix par source</div>
-                            {sources.map(s=>(
-                              <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0' }}>
-                                <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                                  <span style={{ fontSize:'10px' }}>{s.icon}</span>
-                                  <span style={{ fontSize:'12px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>{s.label}</span>
-                                </div>
-                                <span style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{s.price!.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
-                              </div>
-                            ))}
-                            {!det?.cardmarket && (()=>{
-                              const sidSpot = spotCard.setId || ''
-                              const isVariant = sidSpot.includes('-shadowless') || sidSpot.includes('-1st')
-                              return (
-                              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 0', opacity:0.4 }}>
-                                <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                                  <span style={{ fontSize:'10px' }}>🟠</span>
-                                  <span style={{ fontSize:'12px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>Cardmarket</span>
-                                </div>
-                                <span style={{ fontSize:'11px', fontStyle:'italic', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{isVariant ? 'Non disponible' : 'Bientôt'}</span>
-                              </div>
-                              )
-                            })()}
-                          </div>
-                        )}
-                      </>
-                    })()}
                     {spotCard.setId && spotCard.number ? (
-                      <div style={{ marginBottom:'14px' }}>
-                        <PriceHistoryChart
-                          setId={spotCard.setId}
-                          localId={spotCard.number}
-                          isPro={isPro}
-                          
-                        />
-                      </div>
-                    ) : null}
-                    {(() => {
-                      const sid = spotCard.setId || ''
-                      const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
-                      const slug = setMappingRef.current[sid] || setMappingRef.current[cleanSid] || ''
-                      return slug && spotCard.number ? (
-                        <div style={{ marginBottom:'14px' }}>
-                          <ConditionPriceTable
-                            setSlug={slug}
-                            cardNumber={spotCard.number}
-                            hideWhenEmpty
-                          />
-                        </div>
-                      ) : null
-                    })()}
-                    {spotCard.setId && spotCard.number ? (
-                      <div style={{ marginBottom:'14px' }}>
-                        <GradedPriceTable
-                          tcgCardId={spotCard.setId + '-' + spotCard.number}
-                          lang={spotCard.lang}
-                          hideWhenEmpty
-                        />
-                      </div>
-                    ) : null}
-                    {spotCard.setId && spotCard.number ? (
-                      <div style={{ marginBottom:'14px' }}>
-                        <PsaPopBlock
+                      <div style={{ marginTop:'12px' }}>
+                        <SpotlightV2
                           cardId={spotCard.setId + '-' + spotCard.number}
-                          hideWhenEmpty
+                          lang={spotCard.lang}
+                          portfolio={{
+                            qty: spotCard.qty,
+                            buyPrice: spotCard.buyPrice > 0 ? spotCard.buyPrice : null,
+                            acquiredAt: null,
+                            condition: spotCard.condition,
+                            graded: spotCard.graded,
+                          }}
+                          imageUrl={null}
                         />
                       </div>
                     ) : null}
+
                     {!spotCard.graded ? (
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px', padding:'10px 0', borderTop:'1px solid #F0F0F5' }}>
                         <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>État</span>
@@ -1714,26 +1610,29 @@ export function Holdings() {
                         </div>
                       </div>
                     ) : null}
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px', padding:'10px 0', borderTop:'1px solid #F0F0F5', borderBottom:'1px solid #F0F0F5' }}>
+                    <div style={{ padding: '0 22px 16px', background: '#F5F5F7' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', padding:'10px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', border:'1px solid rgba(255,255,255,0.55)' }}>
                       <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:'28px', height:'28px', borderRadius:'8px', background:'#F5F5F7', border:'none', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>-</button>
+                        <button onClick={()=>setEditQty(Math.max(1,curQty-1))} className="kc-glass-btn" style={{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', border:'1px solid rgba(255,255,255,0.6)', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', transition:'all .2s cubic-bezier(.2,.8,.2,1)' }}>-</button>
                         <span style={{ fontSize:'14px', fontWeight:600, color:'#1D1D1F', minWidth:'20px', textAlign:'center' as const, fontFamily:'var(--font-display)' }}>{curQty}</span>
-                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:'28px', height:'28px', borderRadius:'8px', background:'#F5F5F7', border:'none', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>+</button>
+                        <button onClick={()=>setEditQty(Math.min(99,curQty+1))} className="kc-glass-btn" style={{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', border:'1px solid rgba(255,255,255,0.6)', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', transition:'all .2s cubic-bezier(.2,.8,.2,1)' }}>+</button>
                         {editQty!==null&&editQty!==spotCard.qty&&(
-                          <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantité mise à jour') }} style={{ padding:'6px 12px', borderRadius:'8px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
+                          <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantité mise à jour') }} className="kc-glass-btn" style={{ padding:'6px 14px', borderRadius:'10px', background:'linear-gradient(180deg, #2A2A2D 0%, #1D1D1F 100%)', color:'#fff', border:'1px solid rgba(255,255,255,0.08)', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, boxShadow:'0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', transition:'all .2s cubic-bezier(.2,.8,.2,1)' }}>
                             OK
                           </button>
                         )}
                       </div>
                     </div>
                     <div style={{ display:'flex', gap:'8px' }}>
-                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:'11px', borderRadius:'9px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
-                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'9px', background:favs.has(spotCard.id)?'#FFF0F0':'#E8E8ED', border:`1px solid ${favs.has(spotCard.id)?'rgba(224,48,32,.25)':'#E5E5EA'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s' }}
+                      <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} className="kc-glass-btn" style={{ flex:1, padding:'12px', borderRadius:'12px', background:'linear-gradient(180deg, rgba(50,50,55,0.95) 0%, rgba(29,29,31,0.95) 100%)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', color:'#fff', border:'1px solid rgba(255,255,255,0.12)', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.2)', transition:'all .25s cubic-bezier(.2,.8,.2,1)' }}>Partager</button>
+                      <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:'44px', borderRadius:'12px', background:favs.has(spotCard.id)?'rgba(224,48,32,0.15)':'rgba(255,255,255,0.45)', backdropFilter:'blur(24px) saturate(200%)', WebkitBackdropFilter:'blur(24px) saturate(200%)', border:`1px solid ${favs.has(spotCard.id)?'rgba(224,48,32,.3)':'rgba(255,255,255,0.55)'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .25s cubic-bezier(.2,.8,.2,1)', boxShadow:favs.has(spotCard.id)?'0 4px 16px rgba(224,48,32,0.12), inset 0 1px 0 rgba(255,255,255,0.5)':'0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)' }}
                         onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.06)'}}
                         onMouseLeave={e=>{e.currentTarget.style.transform=''}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill={favs.has(spotCard.id)?'#E03020':'none'} stroke={favs.has(spotCard.id)?'#E03020':'#86868B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
                       </button>
+                    </div>
+                    </div>
                     </div>
                   </div>
                 </div>
@@ -1762,7 +1661,7 @@ export function Holdings() {
                   <div style={{ fontSize:'16px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter a la Vitrine</div>
                   <div style={{ fontSize:'11px', color:'#86868B', marginTop:'2px' }}>{showcase.length}/5 pieces exposees</div>
                 </div>
-                <button onClick={()=>setShowPickerForShowcase(false)} style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <button onClick={()=>setShowPickerForShowcase(false)} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
@@ -1837,7 +1736,7 @@ export function Holdings() {
                   <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
                   <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
                 </div>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{ width:'28px', height:'28px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
                   onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
                   onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -2464,7 +2363,7 @@ export function Holdings() {
                                     onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null }}/>
                                 ):(
                                   <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}18,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                                    <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
+                                    <div style={{ width:'26px', height:'26px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec2}CC,${ec2}55)` }}/>
                                   </div>
                                 )}
                                 {inFullSet&&card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, backdropFilter:'blur(4px)', fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
@@ -2708,7 +2607,7 @@ export function Holdings() {
                 {binderPages>1&&(
                   <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
                     {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{ width:'28px', height:'28px', borderRadius:'8px', background:i===binderPage?'#1D1D1F':'transparent', color:i===binderPage?'#fff':'#86868B', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:i===binderPage?600:500, cursor:'pointer', transition:'all .15s', fontFamily:'var(--font-data)' }}>{i+1}</div>
+                      <div key={i} onClick={()=>setBinderPage(i)} style={{ width:'26px', height:'26px', borderRadius:'8px', background:i===binderPage?'#1D1D1F':'transparent', color:i===binderPage?'#fff':'#86868B', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:i===binderPage?600:500, cursor:'pointer', transition:'all .15s', fontFamily:'var(--font-data)' }}>{i+1}</div>
                     ))}
                   </div>
                 )}

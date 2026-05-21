@@ -346,3 +346,152 @@ body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+
+/* === Kodo glassmorphism animations === */
+@keyframes kcHaloDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12px, -8px) scale(1.08); }
+  66% { transform: translate(-8px, 10px) scale(0.95); }
+}
+
+@keyframes kcGlassShine {
+  0% { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(200%); }
+}
+
+.kc-glass-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all .25s cubic-bezier(.2,.8,.2,1);
+}
+.kc-glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 30%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  pointer-events: none;
+  transform: translateX(-100%);
+}
+.kc-glass-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.kc-glass-btn:hover::before {
+  animation: kcGlassShine 0.9s cubic-bezier(.4,0,.2,1);
+}
+.kc-glass-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.kc-glass-card {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.kc-glass-pill {
+  background: rgba(245,245,247,0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.55);
+}
+
+
+/* === Kodo Glassmorphism Premium Hooks === */
+
+@keyframes kcShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes kcSpringIn {
+  0% { transform: scale(0.94) translateY(8px); opacity: 0; filter: blur(8px); }
+  60% { transform: scale(1.01) translateY(-2px); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes kcGlowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}
+
+@keyframes kcLoadingShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes kcFloat {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-3px) rotate(0.3deg); }
+}
+
+.kc-glass-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.5) !important;
+}
+.kc-glass-btn:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.1s;
+}
+
+.kc-glass-card-hover {
+  transition: all 0.3s cubic-bezier(.2,.8,.2,1);
+}
+.kc-glass-card-hover:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.55) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.kc-drawer-spring {
+  animation: kcSpringIn 0.5s cubic-bezier(.2,.85,.3,1.05);
+}
+
+.kc-loading-glass {
+  background: linear-gradient(90deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.4) 100%);
+  background-size: 200% 100%;
+  animation: kcLoadingShimmer 1.4s ease-in-out infinite;
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 14px;
+}
+
+.kc-halo-pulse {
+  animation: kcGlowPulse 4s ease-in-out infinite;
+}
+
+.kc-float {
+  animation: kcFloat 6s ease-in-out infinite;
+}
+
+.kc-toast-glass {
+  background: rgba(29,29,31,0.85) !important;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+}
+
+.kc-ring-card-hover {
+  transition: all 0.35s cubic-bezier(.2,.85,.3,1);
+}
+.kc-ring-card-hover:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.55) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
+}
+
+.kc-state-card-hover {
+  transition: all 0.25s cubic-bezier(.2,.8,.2,1);
+  cursor: default;
+}
+.kc-state-card-hover:hover {
+  background: rgba(255,255,255,0.6) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+}

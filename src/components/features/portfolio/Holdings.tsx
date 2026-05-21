@@ -200,6 +200,11 @@ export function Holdings() {
   const [vitrineSearch, setVitrineSearch] = useState('')
   const [vitrineFilter, setVitrineFilter] = useState('all')
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
+  useEffect(() => {
+    if (spotCard) document.body.classList.add('kc-modal-open')
+    else document.body.classList.remove('kc-modal-open')
+    return () => { document.body.classList.remove('kc-modal-open') }
+  }, [spotCard])
   const [editQty,     setEditQty]     = useState<number|null>(null)
   const [cardZoom,    setCardZoom]    = useState(false)
   const [favs,        setFavs]        = useState<Set<string>>(new Set())
@@ -262,7 +267,13 @@ export function Holdings() {
   const _useCardConditionsParams: any = spotSetSlug && spotCard?.number
     ? { setSlug: spotSetSlug, cardNumber: spotCard.number }
     : null
-  const { conditions: spotConditions } = useCardConditions(_useCardConditionsParams)
+  const [conditionsEnabled, setConditionsEnabled] = useState(false)
+  const { conditions: spotConditions } = useCardConditions(conditionsEnabled ? _useCardConditionsParams : null)
+  useEffect(() => {
+    if (!spotCard) { setConditionsEnabled(false); return }
+    const t = setTimeout(() => setConditionsEnabled(true), 600)
+    return () => clearTimeout(t)
+  }, [spotCard?.id])
 
   // Trigger event-driven refresh of stale Hot prices when portfolio changes
   const refreshTriggered = useRef<string | false>(false)
@@ -1469,7 +1480,7 @@ export function Holdings() {
           const isHolo=HOLO_RARITIES.includes(spotCard.rarity)
           const curQty=editQty??spotCard.qty
           return(
-            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
+            <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.65)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
               <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.03)', padding:'0', maxWidth:'1280px', width:'95vw', height:'90vh', animation:'kcSpringIn 0.5s cubic-bezier(.2,.85,.3,1.05)', position:'relative', display:'flex', flexDirection:'column' as const, overflow:'hidden' as const, isolation:'isolate' as const }} onClick={e=>e.stopPropagation()}>
                 <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'0', right:'-56px', width:'40px', height:'40px', borderRadius:'50%', background:'rgba(255,255,255,0.2)', backdropFilter:'blur(24px) saturate(200%)', WebkitBackdropFilter:'blur(24px) saturate(200%)', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.3)' }}
                   onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.28)';e.currentTarget.style.transform='scale(1.08)'}}
@@ -1510,7 +1521,7 @@ export function Holdings() {
                   </div>
                   <div ref={(el)=>{ if(el) el.scrollTop=0 }} style={{ flex:1, minWidth:0, padding:0, overflowY:'auto' as const, display:'flex', flexDirection:'column' as const, scrollbarGutter:'stable' as const, background:'#F5F5F7' }}>
                     <div style={{ padding: '18px 22px 0' }}>
-                    <div style={{ paddingRight:'28px', marginBottom:'10px', padding:'12px 18px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)', borderRadius:14, border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
+                    <div style={{ paddingRight:'28px', marginBottom:'10px', padding:'12px 18px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', borderRadius:14, border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px' }}>
                         <div style={{ fontSize:'20px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{spotCard.name}</div>
                         {spotCard.graded&&(()=>{
@@ -1611,7 +1622,7 @@ export function Holdings() {
                       </div>
                     ) : null}
                     <div style={{ padding: '0 22px 16px', background: '#F5F5F7' }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', padding:'10px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', border:'1px solid rgba(255,255,255,0.55)' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', padding:'10px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', border:'1px solid rgba(255,255,255,0.55)' }}>
                       <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                       <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                         <button onClick={()=>setEditQty(Math.max(1,curQty-1))} className="kc-glass-btn" style={{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', border:'1px solid rgba(255,255,255,0.6)', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', transition:'all .2s cubic-bezier(.2,.8,.2,1)' }}>-</button>

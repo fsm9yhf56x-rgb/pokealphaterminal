@@ -495,3 +495,42 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95) !important;
 }
+
+
+/* === Performance GPU hints pour glassmorphism === */
+.kc-section-card,
+[class*="kc-glass-card"] {
+  will-change: auto;
+  contain: layout style paint;
+}
+
+/* Réduit le coût GPU des halos animés */
+[style*="kcHaloDrift"] {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Évite le recalc backdrop-filter à chaque frame des halos */
+.kc-glass-stable {
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+
+/* === Pause toutes les animations infinies quand un modal/drawer est ouvert === */
+body.kc-modal-open .ticker-track,
+body.kc-modal-open .ticker-track *,
+body.kc-modal-open [style*="live-pulse"],
+body.kc-modal-open [style*="kcHaloDrift"],
+body.kc-modal-open .kc-halo-pulse,
+body.kc-modal-open .kc-float,
+body.kc-modal-open [class*="metalShift"] {
+  animation-play-state: paused !important;
+}
+
+/* Optionnel : opacifier le ticker derrière le modal pour clarifier l'isolation */
+body.kc-modal-open .ticker-track {
+  opacity: 0.5;
+  filter: blur(2px);
+  transition: opacity 0.3s, filter 0.3s;
+}

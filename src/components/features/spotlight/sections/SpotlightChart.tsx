@@ -61,7 +61,7 @@ export function SpotlightChart({ history }: Props) {
           {isUp ? '+ ' : '- '}{Math.abs(deltaAbs).toFixed(2).replace('.', ',')} € ({isUp ? '+' : ''}{delta.toFixed(1).replace('.', ',')} %)
         </span>
         <span style={{ fontSize: 13, color: SNOW.mutedLight }}>en {tab === '1a' ? '1 an' : tab}</span>
-        <div style={{ marginLeft: 'auto', display: 'inline-flex', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: '1px solid rgba(255,255,255,0.55)', borderRadius: 10, padding: 3, gap: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+        <div style={{ marginLeft: 'auto', display: 'inline-flex', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: 'none', borderRadius: 10, padding: 3, gap: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
           {(['7j', '30j', '90j', '1a'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '4px 9px', fontSize: 11, fontWeight: 500,

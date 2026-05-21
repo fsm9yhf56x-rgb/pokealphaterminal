@@ -202,9 +202,19 @@ export function Holdings() {
   const [vitrineFilter, setVitrineFilter] = useState('all')
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
   useEffect(() => {
-    if (spotCard) document.body.classList.add('kc-modal-open')
-    else document.body.classList.remove('kc-modal-open')
-    return () => { document.body.classList.remove('kc-modal-open') }
+    if (spotCard) {
+      document.body.classList.add('kc-modal-open')
+      document.body.classList.add('kc-modal-opening')
+      const t = setTimeout(() => document.body.classList.remove('kc-modal-opening'), 280)
+      return () => clearTimeout(t)
+    } else {
+      document.body.classList.remove('kc-modal-open')
+      document.body.classList.remove('kc-modal-opening')
+    }
+    return () => {
+      document.body.classList.remove('kc-modal-open')
+      document.body.classList.remove('kc-modal-opening')
+    }
   }, [spotCard])
   const [editQty,     setEditQty]     = useState<number|null>(null)
   const [cardZoom,    setCardZoom]    = useState(false)

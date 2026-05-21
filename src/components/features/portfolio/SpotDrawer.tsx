@@ -49,7 +49,14 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.65)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px' }} onClick={()=>{ setSpotCard(null); setEditQty(null); setCardZoom(false) }}>
-      <div style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.03)', padding:'0', maxWidth:'1280px', width:'95vw', height:'90vh', animation:'kcSpringIn 0.5s cubic-bezier(.2,.85,.3,1.05)', position:'relative', display:'flex', flexDirection:'column' as const, overflow:'hidden' as const, isolation:'isolate' as const }} onClick={e=>e.stopPropagation()}>
+      <div style={{ background:'rgba(255,255,255,0.88)', backdropFilter:'blur(40px) saturate(200%)', WebkitBackdropFilter:'blur(40px) saturate(200%)', borderRadius:'20px', border:'none', boxShadow:'0 24px 60px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,0.9)', padding:'0', maxWidth:'1280px', width:'95vw', height:'90vh', animation:'kcSpringIn 0.22s cubic-bezier(.2,.85,.3,1)', position:'relative', display:'flex', flexDirection:'column' as const, overflow:'hidden' as const, isolation:'isolate' as const }} onClick={e=>e.stopPropagation()}>
+        <div style={{ position:'absolute' as const, inset:0, overflow:'hidden' as const, borderRadius:'20px', pointerEvents:'none' as const, zIndex:0 }}>
+          <div style={{ position:'absolute' as const, top:'-10%', left:'-15%', width:'70%', height:'70%', background:'radial-gradient(circle, rgba(255,165,80,0.42) 0%, rgba(255,165,80,0.15) 40%, transparent 75%)', filter:'blur(110px)' }} />
+          <div style={{ position:'absolute' as const, top:'15%', right:'-15%', width:'70%', height:'70%', background:'radial-gradient(circle, rgba(110,150,255,0.36) 0%, rgba(110,150,255,0.12) 40%, transparent 75%)', filter:'blur(130px)' }} />
+          <div style={{ position:'absolute' as const, top:'40%', left:'10%', width:'80%', height:'60%', background:'radial-gradient(circle, rgba(195,135,245,0.3) 0%, rgba(195,135,245,0.1) 40%, transparent 75%)', filter:'blur(130px)' }} />
+          <div style={{ position:'absolute' as const, bottom:'-10%', right:'-10%', width:'70%', height:'60%', background:'radial-gradient(circle, rgba(0,210,150,0.28) 0%, rgba(0,210,150,0.1) 40%, transparent 75%)', filter:'blur(120px)' }} />
+          <div style={{ position:'absolute' as const, bottom:'10%', left:'-15%', width:'60%', height:'55%', background:'radial-gradient(circle, rgba(255,90,140,0.24) 0%, rgba(255,90,140,0.08) 40%, transparent 75%)', filter:'blur(120px)' }} />
+        </div>
         <button onClick={()=>{setSpotCard(null);setEditQty(null)}} style={{ position:'absolute', top:'0', right:'-56px', width:'40px', height:'40px', borderRadius:'50%', background:'rgba(255,255,255,0.2)', backdropFilter:'blur(24px) saturate(200%)', WebkitBackdropFilter:'blur(24px) saturate(200%)', border:'1px solid rgba(255,255,255,0.3)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.3)' }}
           onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.28)';e.currentTarget.style.transform='scale(1.08)'}}
           onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.18)';e.currentTarget.style.transform='scale(1)'}}>
@@ -57,12 +64,9 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
         </button>
 
         <div style={{ display:'flex', flex:1, minHeight:0, overflow:'hidden' as const }}>
-          <div style={{ flexShrink:0, width:'380px', position:'relative' as const, background:'linear-gradient(180deg, #F8F8FA 0%, #EFEFF3 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 32px', overflow:'hidden' as const, borderTopLeftRadius:'20px', borderBottomLeftRadius:'20px' }}>
-            <div style={{ position:'absolute' as const, top:'8%', left:'8%', width:'70%', height:'55%', background:'radial-gradient(circle, rgba(255,170,90,0.42) 0%, rgba(255,140,60,0.18) 35%, transparent 70%)', filter:'blur(50px)', pointerEvents:'none' as const, zIndex:0, animation:'kcHaloDrift 14s ease-in-out infinite' }} />
-            <div style={{ position:'absolute' as const, bottom:'5%', right:'2%', width:'60%', height:'55%', background:'radial-gradient(circle, rgba(140,160,255,0.28) 0%, rgba(180,120,240,0.12) 40%, transparent 70%)', filter:'blur(60px)', pointerEvents:'none' as const, zIndex:0, animation:'kcHaloDrift 18s ease-in-out infinite reverse' }} />
-            <div style={{ position:'absolute' as const, top:'-10%', right:'-5%', width:'40%', height:'40%', background:'radial-gradient(circle, rgba(255,200,140,0.2) 0%, transparent 70%)', filter:'blur(40px)', pointerEvents:'none' as const, zIndex:0 }} />
-
-            <div className="gem kc-float" style={{ background:'transparent', borderRadius:'18px', width:'100%', maxWidth:'280px', position:'relative' as const, zIndex:1, filter:'drop-shadow(0 24px 40px rgba(0,0,0,.18)) drop-shadow(0 8px 16px rgba(0,0,0,.08)) drop-shadow(0 0 36px rgba(255,150,80,0.16))', transition:'filter .3s ease, transform .3s ease' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
+          <div style={{ flexShrink:0, width:'380px', position:'relative' as const, background:'transparent', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 32px', overflow:'hidden' as const, borderTopLeftRadius:'20px', borderBottomLeftRadius:'20px' }}>
+                                    
+            <div className="gem" style={{ background:'transparent', borderRadius:'18px', width:'100%', maxWidth:'280px', position:'relative' as const, zIndex:1, filter:'drop-shadow(0 24px 40px rgba(0,0,0,.18)) drop-shadow(0 8px 16px rgba(0,0,0,.08)) drop-shadow(0 0 36px rgba(255,150,80,0.16))', transition:'filter .3s ease, transform .3s ease' }} onMouseMove={tiltCard} onMouseLeave={resetCard}>
               {isHolo && <div className="holo"/>}
               <div className="hm"/>
               {spotCard.signal && <div style={{ position:'absolute', top:'10px', right:'10px', zIndex:3, fontSize:'10px', fontWeight:700, background:TIER_BG[spotCard.signal], color:'#1D1D1F', padding:'3px 9px', borderRadius:'6px', fontFamily:'var(--font-display)' }}>Tier {spotCard.signal}</div>}
@@ -86,9 +90,9 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
             </div>
           </div>
 
-          <div ref={(el)=>{ if(el) el.scrollTop=0 }} style={{ flex:1, minWidth:0, padding:0, overflowY:'auto' as const, display:'flex', flexDirection:'column' as const, scrollbarGutter:'stable' as const }}>
+          <div ref={(el)=>{ if(el) el.scrollTop=0 }} style={{ flex:1, minWidth:0, padding:0, overflowY:'auto' as const, display:'flex', flexDirection:'column' as const, }}>
             <div style={{ padding: '18px 22px 0' }}>
-              <div style={{ marginBottom:'10px', padding:'12px 18px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', borderRadius:14, border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
+              <div style={{ marginBottom:'10px', padding:'12px 18px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', borderRadius:14, border:'none', boxShadow:'0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'10px' }}>
                   <div style={{ fontSize:'19px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{spotCard.name}</div>
                   {spotCard.graded && <div style={{ flexShrink:0, background:'linear-gradient(145deg,#D4AF37,#FFFAD0,#D4AF37)', color:'#5C4A12', fontSize:'10px', fontWeight:800, padding:'4px 10px', borderRadius:'6px', fontFamily:'var(--font-data)' }}>{spotCard.condition}</div>}
@@ -120,8 +124,8 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
               ) : null}
             </div>
 
-            <div style={{ padding: '0 22px 16px', background: '#F5F5F7' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', padding:'10px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', border:'1px solid rgba(255,255,255,0.55)' }}>
+            <div style={{ padding: '0 22px 16px', background: 'transparent' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px', padding:'10px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.45)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', boxShadow:'0 4px 24px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', border:'none' }}>
                 <span style={{ fontSize:'12px', color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
                 <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                   <button onClick={()=>setEditQty(Math.max(1,curQty-1))} className="kc-glass-btn" style={{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(200%)', WebkitBackdropFilter:'blur(20px) saturate(200%)', border:'1px solid rgba(255,255,255,0.6)', color:'#48484A', fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)', transition:'all .2s cubic-bezier(.2,.8,.2,1)' }}>-</button>

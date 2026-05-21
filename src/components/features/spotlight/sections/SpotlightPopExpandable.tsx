@@ -52,7 +52,7 @@ export function SpotlightPopExpandable({ cardId }: { cardId: string }) {
   const maxBar = Math.max(...counts)
 
   return (
-    <div className="kc-section-card" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.55)', boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)', padding: '14px 18px' }}>
+    <div className="kc-section-card" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRadius: 14, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)', padding: '14px 18px' }}>
       <h2 style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 500, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.1em', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' as const, paddingLeft: 12 }}>
         <span style={{ position: 'absolute' as const, left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 12, background: '#1D1D1F', borderRadius: 2 }} />
         Population gradée
@@ -69,7 +69,7 @@ export function SpotlightPopExpandable({ cardId }: { cardId: string }) {
           display: 'flex', alignItems: 'center', gap: 14, padding: 16,
           background: 'rgba(255,255,255,0.45)',
           backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderRadius: 14, border: '1px solid rgba(255,255,255,0.55)',
+          borderRadius: 14, border: 'none',
           cursor: 'pointer',
           boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)',
           overflow: 'hidden' as const,

@@ -100,7 +100,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         )}
 
         {card ? (
-          <SpotlightPopExpandable cardId={card.id} />
+          <SpotlightPopExpandable cardId={card.id} lang={card.lang} />
         ) : (
           <SkeletonBox height={100} />
         )}

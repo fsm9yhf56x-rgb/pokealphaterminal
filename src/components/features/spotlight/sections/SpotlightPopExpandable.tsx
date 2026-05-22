@@ -3,31 +3,56 @@
 import { useEffect, useState } from 'react'
 import { SNOW, FONT } from '../snowTokens'
 
-interface Variant { psa_spec_id: string; grades: Record<string, number>; total: number }
+interface Variant { psa_spec_id: string; variety: string | null; grades: Record<string, number>; total: number }
+
+/**
+ * Convertit `variety` PSA en label lisible.
+ * Convention PSA : variety=null = "Unlimited" (édition standard sans variété spéciale)
+ * Sinon : la variety telle quelle ("1st Edition", "Shadowless", "Reverse Holo", etc.)
+ */
+function varietyLabel(variety: string | null): string {
+  if (!variety || variety === 'null') return 'Unlimited'
+  return variety
+}
 
 const SHOWN = ['10', '9.5', '9', '8.5', '8', '7', '6', '≤5'] as const
 
-export function SpotlightPopExpandable({ cardId }: { cardId: string }) {
+export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?: string }) {
   const [variants, setVariants] = useState<Variant[]>([])
   const [loading, setLoading] = useState(true)
   const [tabIdx, setTabIdx] = useState(0)
   const [expanded, setExpanded] = useState(false)
 
+  const [langFallback, setLangFallback] = useState(false)
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetch(`/api/pop-report?card_id=${encodeURIComponent(cardId)}`)
+    setLangFallback(false)
+    const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : ''
+    fetch(`/api/pop-report?card_id=${encodeURIComponent(cardId)}${langParam}`)
       .then(r => r.json())
       .then(j => {
         if (cancelled) return
         setVariants(j?.variants || [])
+        setLangFallback(!!j?.langFallback)
         setLoading(false)
       })
       .catch(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [cardId])
+  }, [cardId, lang])
 
-  if (loading || variants.length === 0) return null
+  if (loading) return null
+  if (variants.length === 0) {
+    if (langFallback && (lang === 'FR' || lang === 'JP')) {
+      const langLabel = lang === 'FR' ? 'française' : 'japonaise'
+      return (
+        <div style={{ padding: '14px 22px', background: '#FFF8E6', border: '1px solid #FCD34D', borderRadius: 16, fontSize: 12, color: '#92400E', fontFamily: FONT.body, lineHeight: 1.55 }}>
+          <strong>Population PSA {langLabel} indisponible.</strong> PSA n'a pas gradé suffisamment d'exemplaires de cette carte dans cette langue pour publier une distribution.
+        </div>
+      )
+    }
+    return null
+  }
 
   const sel = variants[tabIdx] || variants[0]
   const total = sel.total
@@ -123,7 +148,7 @@ export function SpotlightPopExpandable({ cardId }: { cardId: string }) {
                   border: 'none', borderRadius: 6, cursor: 'pointer',
                   boxShadow: i === tabIdx ? '0 1px 3px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,1)' : 'none',
                   transition: 'all .15s ease',
-                }}>Spec {v.psa_spec_id}</button>
+                }} title={`Spec PSA ${v.psa_spec_id}`}>{varietyLabel(v.variety)}</button>
               ))}
             </div>
             <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, fontWeight: 500 }}>{total.toLocaleString('fr-FR')} cartes notées</span>

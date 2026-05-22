@@ -15,7 +15,7 @@ function varietyLabel(variety: string | null): string {
   return variety
 }
 
-const SHOWN = ['10', '9.5', '9', '8.5', '8', '7', '6', '≤5'] as const
+const SHOWN = ['10', '9', '8.5', '8', '7', '6', '≤5'] as const
 
 export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?: string }) {
   const [variants, setVariants] = useState<Variant[]>([])
@@ -58,8 +58,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
   const total = sel.total
   const pop10 = sel.grades['10'] || 0
   const pop9 = sel.grades['9'] || 0
-  const pop95 = sel.grades['9.5'] || 0
-  const pop9plus = pop10 + pop9 + pop95
+  const pop9plus = pop10 + pop9
   const gemRate = total > 0 ? (pop10 / total) * 100 : 0
   const nine_plus_pct = total > 0 ? (pop9plus / total) * 100 : 0
 
@@ -190,7 +189,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
               const lblColor = isPeak ? '#A32D2D' : isGem ? '#00A368' : SNOW.ink
               return (
                 <div key={g} title={`PSA ${g} · ${c.toLocaleString('fr-FR')}`} style={{
-                  position: 'absolute', bottom: 24, left: `${2 + i * 11.5}%`, width: '9.5%',
+                  position: 'absolute', bottom: 24, left: `${2 + i * 13.5}%`, width: '11.5%',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'transform .15s ease',
                 }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}>
                   <span style={{ position: 'absolute', width: '100%', textAlign: 'center' as const, top: -19, fontSize: 10, color: lblColor, fontFamily: FONT.data, fontWeight: 500, whiteSpace: 'nowrap' as const }}>{c === 0 ? '—' : c.toLocaleString('fr-FR')}</span>

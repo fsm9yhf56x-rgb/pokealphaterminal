@@ -23,8 +23,35 @@ export async function GET(req: NextRequest) {
   const lang = (req.nextUrl.searchParams.get('lang') || 'EN').toUpperCase() as 'EN' | 'FR' | 'JP'
   if (!cardId) return NextResponse.json({ error: 'card_id required' }, { status: 400 })
 
-  // Strip lang prefix (psa_pop_reports.card_ref is unprefixed)
-  const shortRef = cardId.replace(/^(en|fr|jp|aopkm)-/i, '')
+  // ─── Resolve card_ref according to language ───────────────────────
+  // EN/FR : cardId looks like 'en-base1-4' or 'fr-base1-4' → strip prefix → 'base1-4'
+  //         (psa_pop_reports stores these unprefixed)
+  // JP    : cardId looks like 'aopkm-490-201' → resolve via psa_set_mappings
+  //         to get 'jp-SV2A-201' format used by PSA
+  let shortRef: string
+
+  if (lang === 'JP') {
+    // Per-card resolution: numbering between TCGdex and PSA diverges,
+    // so we resolve card by card via psa_card_mappings
+    // (built by scripts/match-psa-jp-cards.mjs)
+    const mapping = await sql`
+      SELECT psa_card_ref FROM psa_card_mappings
+      WHERE tcg_card_id = ${cardId}
+        AND confidence IN ('verified', 'auto')
+      LIMIT 1
+    ` as Array<{ psa_card_ref: string }>
+
+    if (mapping.length === 0) {
+      // No PSA mapping for this JP card → honest fallback
+      return NextResponse.json({ variants: [], shortRef: null, lang, langFallback: true })
+    }
+
+    // psa_card_ref is already in 'jp-XXX-NNN' format
+    shortRef = mapping[0].psa_card_ref
+  } else {
+    // EN/FR : strip lang prefix
+    shortRef = cardId.replace(/^(en|fr|jp|aopkm)-/i, '')
+  }
 
   try {
     const rows = await sql`
@@ -56,16 +83,22 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Filtrer par langue
+    // Filtrer par langue (sauf pour JP : déjà filtré via le card_ref jp-XXX)
     const pattern = LANG_PATTERNS[lang]
     let variants = allVariants
     let langFallback = false
-    if (pattern) {
+
+    if (lang === 'JP') {
+      // Pour JP, le card_ref jp-XXX garantit déjà des cartes japonaises
+      // Pas de filtre supplémentaire nécessaire
+      if (allVariants.length === 0) {
+        langFallback = true
+      }
+    } else if (pattern) {
       if ('match' in pattern && pattern.match) {
-        // FR/JP : on garde uniquement les varieties qui matchent
+        // FR : on garde uniquement les varieties qui matchent
         variants = allVariants.filter(v => v.variety && pattern.match.test(v.variety))
         if (variants.length === 0) {
-          // Aucune pop pour cette langue → fallback signalé
           variants = []
           langFallback = true
         }

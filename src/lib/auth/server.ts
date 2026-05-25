@@ -7,6 +7,8 @@
  */
 import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth'
 import { Pool } from '@neondatabase/serverless'
+import { sendEmail } from '@/lib/email/resend'
+import ResetPasswordEmail from '@/emails/ResetPasswordEmail'
 
 let _auth: Auth<BetterAuthOptions> | null = null
 
@@ -45,6 +47,21 @@ function buildAuth(): Auth<BetterAuthOptions> {
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
+      sendResetPassword: async ({ user, url }) => {
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: 'Réinitialise ton mot de passe Kodo Cards',
+            react: ResetPasswordEmail({
+              userName: user.name ?? undefined,
+              resetUrl: url,
+            }),
+          })
+        } catch (err) {
+          console.error('[Better Auth] sendResetPassword failed', { email: user.email, error: err })
+          throw err
+        }
+      },
     },
 
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {

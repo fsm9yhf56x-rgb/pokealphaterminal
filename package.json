@@ -28,6 +28,8 @@
     "@react-email/render": "^2.0.8",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "better-auth": "^1.6.10",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/db'
+import { checkAdmin } from '@/lib/auth/helpers'
 import { writeSnapshots } from '@/lib/prices/writer'
 
 // Helper: lang TCGdex (lowercase) → DB enum (uppercase)
@@ -157,19 +158,21 @@ async function _getNextSetsBatchFromDb(lang: string, batchSize: number = 30): Pr
   return { sets: batch, cursor: newCursor, total: allSets.length }
 }
 
-// Add Bearer auth check (CRON_SECRET) for protected GET trigger
-async function isAuthorizedCron(request: Request): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return true // no secret configured = open
-  const auth = request.headers.get('authorization')
-  return auth === `Bearer ${cronSecret}`
-}
+// Lot DB-6 v0.9 : function isAuthorizedCron supprime (fail-open bug)
+// Remplace par check inline dans handlers : checkAdmin() OR Bearer CRON_SECRET
 
 // GET = cron entry point (auth required, paginated batch from tcg_cards)
 export async function GET(request: Request) {
-  if (!(await isAuthorizedCron(request))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Lot DB-6 v0.9 - Auth check Bedrock-grade (GH Actions cron OR admin manuel)
+  const authHeader = request.headers.get('authorization')
+  const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isCron) {
+    const { isAdmin } = await checkAdmin()
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
+
   const { searchParams } = new URL(request.url)
   const langInput = searchParams.get('lang') || 'en'
   // Normalize 'jp' → 'ja' (TCGdex API uses ISO 639-1 code 'ja' for Japanese)
@@ -186,6 +189,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Lot DB-6 v0.9 - Auth check Bedrock-grade (GH Actions cron OR admin manuel)
+  const authHeader = request.headers.get('authorization')
+  const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isCron) {
+    const { isAdmin } = await checkAdmin()
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   let { sets = [], lang: langInput = 'en' } = await request.json().catch(() => ({}))
   // Normalize 'jp' → 'ja' for TCGdex API
   let lang = String(langInput).toLowerCase() === 'jp' ? 'ja' : String(langInput).toLowerCase()

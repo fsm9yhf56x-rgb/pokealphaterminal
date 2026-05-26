@@ -5,6 +5,7 @@ import type { PriceSnapshot } from '@/lib/prices/types'
 import { buildPoketraceSnapshots } from '@/lib/prices/adapters/poketrace-mapper'
 import { getUsage } from '@/lib/api-usage'
 import { startSyncLog, finishSyncLog } from '@/lib/sync-logger'
+import { checkAdmin } from '@/lib/auth/helpers'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -45,6 +46,16 @@ function getTier(topPrice: number | null, hasGraded: boolean, ebayAvg?: number |
 
 
 export async function POST(request: Request) {
+  // Lot DB-6 v0.9 - Auth check Bedrock-grade (GH Actions cron OR admin manuel)
+  const authHeader = request.headers.get('authorization')
+  const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isCron) {
+    const { isAdmin } = await checkAdmin()
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   const { budget = 30, sets = [] } = await request.json().catch(() => ({}))
   const log = await startSyncLog('prices_poketrace_sync', 'manual')
 

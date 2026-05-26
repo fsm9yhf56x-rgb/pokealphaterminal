@@ -10,7 +10,7 @@
 
 DROP VIEW IF EXISTS prices_canonical CASCADE;
 
-CREATE VIEW prices_canonical AS
+CREATE OR REPLACE VIEW prices_canonical AS
 SELECT
   -- ── NEW: canonical FK to tcg_cards ────────────────────────────────────
   COALESCE(

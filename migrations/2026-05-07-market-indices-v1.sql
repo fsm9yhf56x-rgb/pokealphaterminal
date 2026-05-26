@@ -28,7 +28,7 @@ LEFT JOIN card_aliases ca_pt  ON ca_pt.poketrace_id::text = ps.card_ref;
 -- Step 2: Indices view (4 indices: Vintage US, Modern FR, Modern EN, Japan)
 DROP VIEW IF EXISTS market_indices_v1 CASCADE;
 
-CREATE VIEW market_indices_v1 AS
+CREATE OR REPLACE VIEW market_indices_v1 AS
 WITH
 index_sets AS (
   SELECT 'vintage_us' as index_id, unnest(ARRAY[

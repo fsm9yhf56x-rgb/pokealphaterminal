@@ -5,7 +5,7 @@
 
 DROP VIEW IF EXISTS prices_canonical CASCADE;
 
-CREATE VIEW prices_canonical AS
+CREATE OR REPLACE VIEW prices_canonical AS
 SELECT
   COALESCE(
     -- 1. Direct match if source writes tcg_cards.id format

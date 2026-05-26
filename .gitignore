@@ -68,3 +68,6 @@ node_modules/
 # Legacy Supabase folder (archived 2026-05-18, no longer used)
 supabase/
 .env.restore-test
+
+# Dumps SQL volumineux migration Supabase->Neon (11/05/26)
+migrations/neon-migration/*.sql

@@ -67,3 +67,4 @@ node_modules/
 
 # Legacy Supabase folder (archived 2026-05-18, no longer used)
 supabase/
+.env.restore-test

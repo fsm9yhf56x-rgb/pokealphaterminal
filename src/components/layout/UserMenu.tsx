@@ -3,14 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/useAuth'
-import AuthModal from './AuthModal'
 import { useRouter } from 'next/navigation'
 import { useIsAdmin } from '@/lib/useIsAdmin'
 
 export default function UserMenu() {
   const { user, profile, loading, signOut, isPro } = useAuth()
-  const [authOpen, setAuthOpen] = useState(false)
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -61,8 +58,6 @@ export default function UserMenu() {
           Inscription
         </Link>
       </div>
-      {/* Modal conservé pour usages contextuels futurs (ex: action protégée déclenche le modal) */}
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode={authMode} />
     </>
   )
 

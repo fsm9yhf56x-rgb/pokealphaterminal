@@ -71,18 +71,27 @@ function makePriceDetail(): PriceDetail {
 }
 
 /**
- * Recompute weighted estimated price from the breakdown.
- * eBay 40% / TCG 30% / Cardmarket 30%.
- * Falls back to poketrace top_price if no breakdown.
+ * Recompute estimated price using a bedrock deterministic hierarchy.
+ *
+ *   1. Cardmarket (EUR)        ← socle, FR+EN, ~29k cards via TCGdex
+ *   2. TCGPlayer (USD→EUR)     ← fallback when CM absent (already converted upstream)
+ *   3. PokeTrace top_price     ← last resort (already converted upstream)
+ *
+ * eBay is intentionally EXCLUDED from valuation:
+ *   - Active eBay Browse listings → live in Deal Hunter (asks, not sold).
+ *   - PokeTrace eBay sold avg → would mix variants/cards with CM (data quality
+ *     issue pending canonical schema overhaul). Stored in d.ebay for display
+ *     ("Réf. US sold") but never blended into the headline price.
+ *
+ * No weighted averages: CM and TCG often track different variants of the same
+ * card (holo vs reverse, etc.). Blending would inject noise, not accuracy.
+ * Cohérent avec le positionnement "cote française/EU".
  */
 function recomputeEstimated(d: PriceDetail): void {
-  const pairs: [number, number][] = []
-  if (d.ebay) pairs.push([d.ebay, 0.4])
-  if (d.tcg) pairs.push([d.tcg, 0.3])
-  if (d.cardmarket) pairs.push([d.cardmarket, 0.3])
-  if (pairs.length > 0) {
-    const totalW = pairs.reduce((a, [, w]) => a + w, 0)
-    d.estimated = Math.round((pairs.reduce((a, [p, w]) => a + p * w, 0) / totalW) * 100) / 100
+  if (d.cardmarket) {
+    d.estimated = d.cardmarket
+  } else if (d.tcg) {
+    d.estimated = d.tcg
   } else if (d.poketrace) {
     d.estimated = d.poketrace
   } else {

@@ -1,12 +1,13 @@
 name: prices-ebay
 on:
   schedule:
-    # Every 2 hours (matrix runs 3 langs sequentially)
-    - cron: '15 */2 * * *'
+    # Every 4 hours (matrix runs EN+FR sequentially)
+    # Optimisation beta v0.9 : JP coupe, freq 2h->4h
+    - cron: '15 */4 * * *'
   workflow_dispatch:
     inputs:
       lang:
-        description: 'Language to sync (EN/FR/JP/all)'
+        description: 'Language to sync (EN/FR/all)'
         required: false
         default: 'all'
       batch:
@@ -20,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lang: [EN, FR, JP]
+        lang: [EN, FR]
     steps:
       - name: Sync eBay prices for ${{ matrix.lang }}
         env:

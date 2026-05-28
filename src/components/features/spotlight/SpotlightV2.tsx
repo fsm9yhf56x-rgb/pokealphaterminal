@@ -6,6 +6,7 @@ import { SpotlightChart } from './sections/SpotlightChart'
 import { SpotlightTLDR } from './sections/SpotlightTLDR'
 import { SpotlightStates } from './sections/SpotlightStates'
 import { SpotlightPopExpandable } from './sections/SpotlightPopExpandable'
+import { JpPriceSoon } from './sections/JpPriceSoon'
 import { SNOW, FONT } from './snowTokens'
 
 export interface PortfolioContext {
@@ -59,6 +60,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
   const card = data?.card
   const prices = data?.prices
   const hasHistory = prices?.history && prices.history.length >= 2
+  const isJp = (lang || card?.lang || '').toString().toUpperCase().startsWith('J')
 
   return (
     <div style={{
@@ -73,12 +75,16 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
       <div style={{ position: 'relative' as const, zIndex: 1, display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
         {card && prices ? (
           <div style={GLASS_CARD}>
-            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hideTitle />
+            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hideTitle hidePrice={isJp} />
           </div>
         ) : (
           <SkeletonBox height={80} />
         )}
 
+        {isJp ? (
+          <JpPriceSoon cardId={cardId} />
+        ) : (
+        <>
         {hasHistory ? (
           <div style={GLASS_CARD}>
             <SpotlightChart history={prices!.history} />
@@ -97,6 +103,8 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           <SpotlightStates prices={prices} portfolio={portfolio} />
         ) : (
           <SkeletonBox height={140} />
+        )}
+        </>
         )}
 
         {card ? (

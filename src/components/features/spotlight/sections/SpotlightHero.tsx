@@ -34,9 +34,10 @@ interface Props {
   prices: { bySource: Record<string, PriceEntry[]>; marketEst: number | null }
   portfolio?: PortfolioContext | null
   hideTitle?: boolean
+  hidePrice?: boolean
 }
 
-export function SpotlightHero({ card, prices, portfolio, hideTitle }: Props) {
+export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice }: Props) {
   const userCondition = portfolio?.condition ? normalizeCondition(portfolio.condition) : 'NEAR_MINT'
   const userGraded = portfolio?.graded || false
 
@@ -90,6 +91,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle }: Props) {
         </>
       ) : null}
 
+      {!hidePrice ? (
       <div style={{ marginTop: hideTitle ? 0 : 10 }}>
         <div style={{ fontSize: 10, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display, marginBottom: 4 }}>
           {showPortfolio ? 'Ton exemplaire' : 'Prix de marché'} · {userStateLabel}{' '}
@@ -112,6 +114,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle }: Props) {
           </div>
         ) : null}
       </div>
+      ) : null}
     </div>
   )
 }

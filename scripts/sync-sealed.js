@@ -1,7 +1,9 @@
 const fs = require('fs')
 const path = require('path')
+require('dotenv').config({ path: '.env.local' })
 const API = 'https://www.pokemonpricetracker.com/api/v2/sealed-products'
-const KEY = 'pokeprice_free_bb247fce3372fe07c360232dbc639cddafa8d697c6b8ed51'
+const KEY = process.env.POKEMON_PRICE_TRACKER_API_KEY
+if (!KEY) { console.error('Missing POKEMON_PRICE_TRACKER_API_KEY in .env.local'); process.exit(1) }
 const OUT_JSON = path.join(__dirname, '..', 'public', 'data', 'sealed-products.json')
 const OUT_IMG = path.join(__dirname, '..', 'public', 'img', 'sealed')
 const delay = ms => new Promise(r => setTimeout(r, ms))

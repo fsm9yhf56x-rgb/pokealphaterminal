@@ -71,3 +71,5 @@ supabase/
 
 # Dumps SQL volumineux migration Supabase->Neon (11/05/26)
 migrations/neon-migration/*.sql
+r2-jp-progress.json
+r2-jp-errors.json

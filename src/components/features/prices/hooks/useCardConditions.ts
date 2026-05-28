@@ -53,18 +53,50 @@ const EMPTY_BREAKDOWN: ConditionBreakdown = { ebay: {}, tcgplayer: {} }
 /**
  * Hook to fetch per-condition prices for a card.
  *
- * @param cardRef - PokeTrace card ID (UUID like "019bff77-bef8-...")
- *                  or null/undefined to skip fetching
+ * Accepts either:
+ *   - a card_ref string (PokeTrace UUID like "019bff77-bef8-...")
+ *   - an object { cardRef? } or { setSlug, cardNumber } (resolved server-side)
+ *   - null/undefined to skip fetching
+ *
+ * Both callsites pass objects. Before this hook normalised them, the object
+ * reference was stringified to "[object Object]" via encodeURIComponent AND
+ * triggered a useEffect loop (new object identity on every render). Both
+ * bugs fixed by deriving a stable string query key.
  */
+type CardConditionsInput =
+  | string
+  | { cardRef?: string | null; setSlug?: string | null; cardNumber?: string | null }
+  | null
+  | undefined
+
+function buildQuery(input: CardConditionsInput): string | null {
+  if (!input) return null
+  if (typeof input === 'string') {
+    return input ? 'card_ref=' + encodeURIComponent(input) : null
+  }
+  if (input.cardRef) {
+    return 'card_ref=' + encodeURIComponent(input.cardRef)
+  }
+  if (input.setSlug && input.cardNumber) {
+    return 'set_slug=' + encodeURIComponent(input.setSlug)
+      + '&card_number=' + encodeURIComponent(input.cardNumber)
+  }
+  return null
+}
+
 export function useCardConditions(
-  cardRef: string | null | undefined
+  input: CardConditionsInput
 ): UseCardConditionsResult {
   const [conditions, setConditions] = useState<ConditionBreakdown | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Stable string key: prevents re-fetch loop when callers pass a new object
+  // reference on every render with the same logical content.
+  const query = buildQuery(input)
+
   useEffect(() => {
-    if (!cardRef) {
+    if (!query) {
       setConditions(null)
       setLoading(false)
       return
@@ -74,7 +106,7 @@ export function useCardConditions(
     setLoading(true)
     setError(null)
 
-    fetch(`/api/prices/conditions?card_ref=${encodeURIComponent(cardRef)}`)
+    fetch('/api/prices/conditions?' + query)
       .then(r => r.json())
       .then(json => {
         if (cancelled) return
@@ -93,7 +125,7 @@ export function useCardConditions(
       })
 
     return () => { cancelled = true }
-  }, [cardRef])
+  }, [query])
 
   const hasData = !!conditions && (
     Object.keys(conditions.ebay).length > 0 ||

@@ -1480,8 +1480,8 @@ export function Holdings() {
         .scan-line  { animation:scanLine 1.8s ease-in-out infinite alternate; }
       `}} />
 
-      <div style={{ background:'#F8F8FA', minHeight:'100vh', borderRadius:'16px', overflow:'hidden', position:'relative', paddingBottom:'40px' }}>
-        <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(ellipse at 15% 30%,rgba(255,107,53,.04) 0%,transparent 40%),radial-gradient(ellipse at 85% 70%,rgba(126,87,194,.04) 0%,transparent 40%)', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ background:'transparent', minHeight:'100vh', borderRadius:'16px', overflow:'visible', position:'relative', paddingBottom:'40px' }}>
+        {/* Bokeh AppShell traverse - pas de blob local */}
 
         {toast&&(
           <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(29,29,31,.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', color:'rgba(255,255,255,.95)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
@@ -1812,10 +1812,24 @@ export function Holdings() {
         )}
 
         {/* HEADER */}
-        <div style={{ position:'relative', zIndex:1, padding:'20px 28px 12px' }}>
+        <div style={{ position:'relative', zIndex:1, padding:'8px 0 12px' }}>
+          <div style={{
+            // Glass v5 card pour le hero du portfolio
+            background: 'rgba(255,255,255,0.62)',
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            borderRadius: 18,
+            border: 'none',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
+            padding: '20px 26px 18px',
+            marginBottom: 14,
+          }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'12px', marginBottom:'14px' }}>
             <div>
-              <div style={{ fontSize:'10px', fontWeight:500, color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px' }} className='section-reveal'>Portfolio</div>
+              <div style={{ fontSize:'10px', fontWeight:600, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px', display:'flex', alignItems:'center', gap:6 }} className='section-reveal'>
+                <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
+                Portfolio
+              </div>
               <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                 {portfolio.length>0 ? (
                   <>
@@ -1832,17 +1846,21 @@ export function Holdings() {
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
               {bestCard&&bestCard.buyPrice>0&&(
-                <div style={{ background:'#F5F5F7', border:'1px solid #E5E5EA', borderRadius:'10px', padding:'8px 14px' }}>
-                  <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Meilleure perf.</div>
-                  <div style={{ fontSize:'18px', fontWeight:600, color:'#D97706', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
-                  <div style={{ fontSize:'10px', color:'#48484A' }}>{bestCard.name}</div>
+                <div style={{ background:'rgba(255,248,229,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(212,175,55,0.25)', borderRadius:10, padding:'8px 14px' }}>
+                  <div style={{ fontSize:10, color:'#8A6500', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:4, fontWeight:600 }}>Meilleure perf.</div>
+                  <div style={{ fontSize:18, fontWeight:700, color:'#8A6500', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
+                  <div style={{ fontSize:10, color:'#6E6E73' }}>{bestCard.name}</div>
                 </div>
               )}
-              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'10px 18px', borderRadius:'12px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }} className='btn-shimmer' onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 8px 24px rgba(224,48,32,.3)'}}
-                onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>Partager</button>
+              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'11px 20px', borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6 }} onMouseEnter={e=>{e.currentTarget.style.background='#000';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.18)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Partager
+              </button>
             </div>
           </div>
-          <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+          </div>
+          <div style={{ display:'flex', gap:'6px', alignItems:'center', marginTop:14 }}>
             {([['binder','Binder'],['showcase','Vitrine'],['wrapped','Wrapped 2026']] as Array<[ViewMode,string]>).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={'vtab'+(view===v?' on':'')}>{l}</button>
             ))}
@@ -1928,10 +1946,23 @@ export function Holdings() {
           <div style={{ position:'relative', zIndex:1, padding:'0 20px 20px', animation:'fadeUp .3s ease-out' }}>
             <div style={{ background:'transparent', position:'relative' }}>
 
-              <div style={{ position:'relative', padding:'12px 0 10px' }}>
+              <div style={{
+                position:'relative',
+                padding:'14px 18px 14px',
+                marginBottom: 16,
+                background: 'rgba(255,255,255,0.62)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                borderRadius: 14,
+                border: 'none',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
+              }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)' }}>Ma Collection</div>
+                    <div style={{ fontSize:10, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
+                      <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
+                      Ma Collection
+                    </div>
                     <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)', marginTop:'2px' }}>
                   {binderSet
                     ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Toutes les séries</button>
@@ -2073,7 +2104,19 @@ export function Holdings() {
                             const s4col=isComplete?'linear-gradient(90deg,#FFD700,#FFF1A8,#FFD700,#C9A84C,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
                             const segs=[[s1pct,s1col],[s2pct,s2col],[s3pct,s3col],[s4pct,s4col]]
                             return (
-                              <div className='set-header' style={{ marginBottom:'12px', cursor:'pointer', opacity:dragSet===setName?.5:1, borderTop:dragOverSet===setName?'2px solid #E03020':'2px solid transparent', transition:'opacity .2s, border-color .2s' }}
+                              <div className='set-header' style={{
+                                marginBottom:'12px',
+                                cursor:'pointer',
+                                opacity:dragSet===setName?.5:1,
+                                borderTop:dragOverSet===setName?'2px solid #E03020':'2px solid transparent',
+                                transition:'opacity .2s, border-color .2s, transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s cubic-bezier(.2,.8,.2,1)',
+                                background: 'rgba(255,255,255,0.62)',
+                                backdropFilter: 'blur(20px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                                borderRadius: 14,
+                                padding: '14px 16px',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.025), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.35)',
+                              }}
                                 draggable
                                 onDragStart={e=>{setDragSet(setName);e.dataTransfer.effectAllowed='move'}}
                                 onDragEnd={()=>{setDragSet(null);setDragOverSet(null)}}

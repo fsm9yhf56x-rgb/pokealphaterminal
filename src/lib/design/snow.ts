@@ -110,24 +110,18 @@ export const SHADOW = {
 // Profondeur (border-top refraction + inset bottom shadow), texture subtle,
 // iridescence par micro-gradient.
 export const GLASS = {
-  /** Card glass standard — v6 LIQUID (alignement Spotlight, doux et feathered) */
+  /** Card glass standard — v7 (renforce pour lisibilite sur bokeh intense) */
   card: {
-    // Background : juste blanc translucide simple (pas de multi-couche complexe)
-    // Le verre Spotlight tire son charme du blur fort sur fond colore, pas des gradients internes
-    background: 'rgba(255,255,255,0.45)',
-    // Blur fort + saturation = effet Spotlight
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    // 0.62 au lieu de 0.45 pour rester lisible sur fond colore
+    background: 'rgba(255,255,255,0.62)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     borderRadius: RADIUS.lg,
-    // PAS de border epaisse (Spotlight n'en a pas)
     border: 'none',
     boxShadow: [
-      // Outer shadow subtle (decolle leger)
-      '0 4px 24px rgba(0,0,0,0.04)',
+      '0 4px 24px rgba(0,0,0,0.05)',
       '0 1px 3px rgba(0,0,0,0.03)',
-      // Refraction top (ligne lumiere subtle)
       'inset 0 1px 0 rgba(255,255,255,0.95)',
-      // Refraction bottom (epaisseur du verre)
       'inset 0 -1px 0 rgba(255,255,255,0.4)',
     ].join(', '),
   } as CSSProperties,

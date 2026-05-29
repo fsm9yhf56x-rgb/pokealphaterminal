@@ -8,15 +8,25 @@ import { HubInsight } from './HubInsight'
 import { HubPortfolioHero } from './HubPortfolioHero'
 import { HubKpis } from './HubKpis'
 import { HubMovers } from './HubMovers'
+import { HubAlerts } from './HubAlerts'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
-import { HubAlerts } from './HubAlerts'
 import { HubSparkles } from './HubSparkles'
 import { HubFooterQuote } from './HubFooterQuote'
+import { SNOW, FONT } from '@/lib/design/snow'
 
 /**
- * Daily Hub V3 (full hook mode) : page d'accueil quotidienne premium.
- * Lecture progressive JE -> NOUS -> MARCHE avec stagger animations + visual hooks.
+ * Daily Hub v1.0 (BEDROCK) Snow+ : page accueil collectionneur.
+ *
+ * Hierarchie:
+ *   1. Header (Bonjour, date, streak, market status)
+ *   2. Insight intelligent v1 (master set / wishlist / streak)
+ *   3. Portfolio Hero (valeur + ROI + sparkline)
+ *   4. KPIs (Master Set / Valeur / Ma collection)
+ *   5. Grille v1 [Top valeur · Du nouveau pour toi]
+ *   6. Separateur "Bientot disponible"
+ *   7. Grille SOON v2 [Alpha Signals · Marche en mouvement]
+ *   8. Quote du jour
  */
 export function DailyHub() {
   const portfolio = usePortfolio()
@@ -29,11 +39,11 @@ export function DailyHub() {
 
       <div style={{
         width: '100%',
-        maxWidth: '1100px',
+        maxWidth: 1100,
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
+        gap: 20,
       }}>
         <style>{`
           @keyframes hub-fadein {
@@ -51,15 +61,18 @@ export function DailyHub() {
           .hub-stagger > *:nth-child(5) { animation-delay: 320ms; }
           .hub-stagger > *:nth-child(6) { animation-delay: 400ms; }
           .hub-stagger > *:nth-child(7) { animation-delay: 480ms; }
+          .hub-stagger > *:nth-child(8) { animation-delay: 560ms; }
         `}</style>
 
         <div className="hub-stagger" style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '20px',
+          gap: 20,
         }}>
+          {/* 1. Header */}
           <HubHeader />
 
+          {/* 2. Insight intelligent v1 */}
           <HubInsight
             cards={portfolio.cards || []}
             spreads={spreads.allSignals}
@@ -67,12 +80,14 @@ export function DailyHub() {
             loading={portfolio.loading || spreads.loading || market.loading}
           />
 
+          {/* 3. Portfolio Hero (piece maitresse) */}
           <HubPortfolioHero
             cards={portfolio.cards || []}
             indices={market.indices}
             loading={portfolio.loading || market.loading}
           />
 
+          {/* 4. KPIs v1 (Master Set / Valeur / Ma collection) */}
           <HubKpis
             topSpread={spreads.allSignals[0] || null}
             topIndex={market.indices[0] || null}
@@ -80,36 +95,83 @@ export function DailyHub() {
             loading={market.loading || spreads.loading || portfolio.loading}
           />
 
+          {/* 5. Grille v1 - Ton portfolio */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '14px',
+            gap: 14,
           }}>
             <HubMovers
               cards={portfolio.cards || []}
               loading={portfolio.loading}
             />
-            <HubSpreadsTeaser
-              signals={spreads.allSignals}
-              loading={spreads.loading}
-            />
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '14px',
-          }}>
-            <HubMarketMovers />
             <HubAlerts
               cards={portfolio.cards || []}
               loading={portfolio.loading}
             />
           </div>
 
+          {/* 6. Separateur SOON v2 (label discret) */}
+          <SoonSectionLabel />
+
+          {/* 7. Grille SOON v2 */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+            gap: 14,
+          }}>
+            <HubSpreadsTeaser
+              signals={spreads.allSignals}
+              loading={spreads.loading}
+            />
+            <HubMarketMovers />
+          </div>
+
+          {/* 8. Quote du jour */}
           <HubFooterQuote />
         </div>
       </div>
     </>
+  )
+}
+
+/* ── Separateur SOON v2 (discret, marque la transition v1 → v2) ─── */
+
+function SoonSectionLabel() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      marginTop: 12,
+      marginBottom: 4,
+    }}>
+      <div style={{
+        flex: 1, height: 1,
+        background: `linear-gradient(90deg, transparent 0%, ${SNOW.borderSoft} 50%, transparent 100%)`,
+      }} />
+      <span style={{
+        fontSize: 10,
+        fontWeight: 700,
+        color: SNOW.mutedLight,
+        textTransform: 'uppercase',
+        letterSpacing: '0.14em',
+        fontFamily: FONT.display,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+      }}>
+        <span style={{
+          width: 5, height: 5, borderRadius: '50%',
+          background: SNOW.amberDark, opacity: 0.6,
+          display: 'inline-block',
+        }} />
+        Bientôt disponible
+      </span>
+      <div style={{
+        flex: 1, height: 1,
+        background: `linear-gradient(90deg, transparent 0%, ${SNOW.borderSoft} 50%, transparent 100%)`,
+      }} />
+    </div>
   )
 }

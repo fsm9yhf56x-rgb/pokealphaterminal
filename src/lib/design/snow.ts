@@ -106,48 +106,90 @@ export const SHADOW = {
   insetSubtle: 'inset 0 1px 0 rgba(255,255,255,0.7)',
 } as const
 
-// ─── Glass primitives ────────────────────────────────────────────────────────
-// Le secret sauce du Spotlight, désormais accessible partout.
+// ─── Glass primitives v2 — niveau Apple Vision Pro / Liquid Glass ────────────
+// Profondeur (border-top refraction + inset bottom shadow), texture subtle,
+// iridescence par micro-gradient.
 export const GLASS = {
-  /** Card glass standard (Spotlight cards) */
+  /** Card glass standard — v6 LIQUID (alignement Spotlight, doux et feathered) */
   card: {
+    // Background : juste blanc translucide simple (pas de multi-couche complexe)
+    // Le verre Spotlight tire son charme du blur fort sur fond colore, pas des gradients internes
     background: 'rgba(255,255,255,0.45)',
+    // Blur fort + saturation = effet Spotlight
     backdropFilter: 'blur(20px) saturate(180%)',
     WebkitBackdropFilter: 'blur(20px) saturate(180%)',
     borderRadius: RADIUS.lg,
+    // PAS de border epaisse (Spotlight n'en a pas)
     border: 'none',
-    boxShadow: `${SHADOW.card}, ${SHADOW.inset}`,
+    boxShadow: [
+      // Outer shadow subtle (decolle leger)
+      '0 4px 24px rgba(0,0,0,0.04)',
+      '0 1px 3px rgba(0,0,0,0.03)',
+      // Refraction top (ligne lumiere subtle)
+      'inset 0 1px 0 rgba(255,255,255,0.95)',
+      // Refraction bottom (epaisseur du verre)
+      'inset 0 -1px 0 rgba(255,255,255,0.4)',
+    ].join(', '),
   } as CSSProperties,
 
-  /** Version moins prononcée (sub-blocs, listes) */
+  /** Version moins prononcee (sub-blocs, listes) — v3 */
   cardSoft: {
-    background: 'rgba(255,255,255,0.55)',
-    backdropFilter: 'blur(12px) saturate(150%)',
-    WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.38) 100%)',
+    backdropFilter: 'blur(18px) saturate(170%)',
+    WebkitBackdropFilter: 'blur(18px) saturate(170%)',
     borderRadius: RADIUS.md,
-    border: `1px solid ${SNOW.borderSoft}`,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+    border: '1px solid rgba(255,255,255,0.6)',
+    boxShadow: [
+      '0 2px 6px rgba(0,0,0,0.03)',
+      'inset 0 1px 0 rgba(255,255,255,0.95)',
+      'inset 0 -1px 0 rgba(255,255,255,0.35)',
+    ].join(', '),
   } as CSSProperties,
 
-  /** Version overlay (modals, popovers) */
+  /** Version overlay (modals, popovers) — v2 dense */
   cardElevated: {
-    background: 'rgba(255,255,255,0.85)',
-    backdropFilter: 'blur(40px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.78) 100%)',
+    backdropFilter: 'blur(48px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(48px) saturate(200%)',
     borderRadius: RADIUS.xl,
-    border: 'none',
-    boxShadow: `${SHADOW.modal}, ${SHADOW.inset}`,
+    border: '0.5px solid rgba(255,255,255,0.6)',
+    boxShadow: [
+      '0 24px 80px rgba(0,0,0,0.16)',
+      '0 8px 24px rgba(0,0,0,0.08)',
+      'inset 0 1px 0 rgba(255,255,255,0.95)',
+      'inset 0 -1px 0 rgba(255,255,255,0.4)',
+    ].join(', '),
   } as CSSProperties,
 
-  /** Bouton glass (transparent + blur, ex: secondary action) */
+  /** Bouton glass — v2 */
   button: {
-    background: 'rgba(255,255,255,0.6)',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 100%)',
     backdropFilter: 'blur(20px) saturate(200%)',
     WebkitBackdropFilter: 'blur(20px) saturate(200%)',
-    border: `1px solid ${SNOW.border}`,
-    boxShadow: `0 2px 8px rgba(0,0,0,0.04), ${SHADOW.insetSubtle}`,
+    border: '0.5px solid rgba(255,255,255,0.6)',
+    boxShadow: [
+      '0 2px 8px rgba(0,0,0,0.04)',
+      'inset 0 1px 0 rgba(255,255,255,0.85)',
+    ].join(', '),
   } as CSSProperties,
 } as const
+
+/**
+ * Hover lift "Vision Pro" : translateY -2 + shadow plus ample
+ * + scale 1.005 (a peine). A appliquer via onMouseEnter/Leave.
+ */
+export const HOVER_LIFT_STYLE = {
+  transform: 'translateY(-2px) scale(1.005)',
+  boxShadow: [
+    '0 12px 40px rgba(0,0,0,0.08)',
+    '0 4px 12px rgba(0,0,0,0.04)',
+    'inset 0 1px 0 rgba(255,255,255,0.95)',
+    'inset 0 -1px 0 rgba(255,255,255,0.4)',
+  ].join(', '),
+} as const
+
+/** Transition douce pour les lift Vision Pro */
+export const HOVER_TRANSITION = 'transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s cubic-bezier(.16,1,.3,1)'
 
 // ─── Common transitions ──────────────────────────────────────────────────────
 export const TRANSITION = {

@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { HubStreak } from './HubStreak'
+import { SNOW, FONT, GLASS, RADIUS } from '@/lib/design/snow'
 
 /**
- * Header Daily Hub : salutation contextuelle + clock live + market status indicator.
+ * Header Daily Hub Snow+ : salutation + date + streak + market status + clock.
+ * Glass pills + typo display sora + cohérence v1.0.
  */
 export function HubHeader() {
   const { user } = useAuth()
@@ -27,94 +29,116 @@ export function HubHeader() {
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
-      gap: '16px',
+      gap: 16,
       flexWrap: 'wrap',
     }}>
-      {/* Left : greeting + name */}
+      {/* Left : greeting + date + streak */}
       <div>
         <p style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
+          fontSize: 10,
+          color: SNOW.mutedLight,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.12em',
           margin: '0 0 4px',
-          fontFamily: 'var(--font-display)',
-        }}>Daily Hub</p>
+          fontFamily: FONT.display,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}>
+          <span style={{
+            display: 'inline-block',
+            width: 3, height: 10,
+            background: SNOW.ink,
+            borderRadius: 2,
+          }} />
+          Daily Hub
+        </p>
 
         <h1 style={{
-          fontSize: '28px',
-          fontWeight: 600,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
-          letterSpacing: '-0.5px',
+          fontSize: 32,
+          fontWeight: 700,
+          color: SNOW.ink,
+          fontFamily: FONT.display,
+          letterSpacing: '-0.8px',
           margin: 0,
           lineHeight: 1.1,
         }}>
-          {greeting}{firstName ? `, ${firstName}` : ''}
+          {greeting}{firstName ? <>, <span style={{ color: SNOW.red }}>{firstName}</span></> : ''}
         </h1>
 
         <p style={{
-          fontSize: '12px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
-          marginTop: '6px',
+          fontSize: 13,
+          color: SNOW.muted,
+          fontFamily: FONT.body,
+          marginTop: 8,
+          marginBottom: 0,
           textTransform: 'capitalize',
-        }}>{dateStr}</p>
+        }}>
+          {dateStr}
+        </p>
 
-        <div style={{ marginTop: '10px' }}>
+        <div style={{ marginTop: 12 }}>
           <HubStreak />
         </div>
       </div>
 
-      {/* Right : market status + clock */}
+      {/* Right : market status pill glass + clock */}
       <div style={{ textAlign: 'right' }}>
-        {/* Market status pill */}
+        {/* Market status pill - glass v5 */}
         <div style={{
+          ...GLASS.cardSoft,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '4px 10px',
-          background: marketStatus.bg,
-          border: `1px solid ${marketStatus.border}`,
-          borderRadius: '999px',
-          marginBottom: '8px',
+          gap: 7,
+          padding: '5px 12px',
+          borderRadius: 999,
+          marginBottom: 10,
+          // Surchage légère - tinted vers la couleur du statut
+          background: `linear-gradient(180deg, ${withAlpha(marketStatus.color, 0.18)} 0%, ${withAlpha(marketStatus.color, 0.10)} 100%)`,
+          border: `1px solid ${withAlpha(marketStatus.color, 0.3)}`,
         }}>
           <span style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
+            width: 7, height: 7, borderRadius: '50%',
             background: marketStatus.color,
             animation: marketStatus.live ? 'pulse-dot 2s ease-in-out infinite' : 'none',
             boxShadow: marketStatus.live ? `0 0 0 0 ${marketStatus.color}` : 'none',
           }} />
           <span style={{
-            fontSize: '10px',
-            fontWeight: 600,
+            fontSize: 10,
+            fontWeight: 700,
             color: marketStatus.color,
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            fontFamily: 'var(--font-display)',
-          }}>{marketStatus.label}</span>
+            letterSpacing: '0.08em',
+            fontFamily: FONT.data,
+          }}>
+            {marketStatus.label}
+          </span>
         </div>
 
         {/* Clock */}
         <div style={{
-          fontSize: '24px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-data, var(--font-display))',
-          letterSpacing: '-0.4px',
+          fontSize: 28,
+          fontWeight: 600,
+          color: SNOW.ink,
+          fontFamily: FONT.data,
+          letterSpacing: '-0.5px',
           fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.1,
-        }}>{timeStr}</div>
+          lineHeight: 1,
+        }}>
+          {timeStr}
+        </div>
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
-          marginTop: '2px',
+          fontSize: 9,
+          color: SNOW.mutedLight,
+          fontFamily: FONT.display,
+          marginTop: 4,
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-        }}>Heure locale</div>
+          letterSpacing: '0.08em',
+          fontWeight: 600,
+        }}>
+          Heure locale
+        </div>
       </div>
 
       <style>{`
@@ -128,6 +152,17 @@ export function HubHeader() {
 }
 
 /* ── Helpers ─────────────────────────────── */
+
+function withAlpha(hex: string, alpha: number): string {
+  // hex peut etre "#RRGGBB" ou "rgba()" - on rebuild proprement
+  if (hex.startsWith('#')) {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+  return hex
+}
 
 function getGreeting(hour: number): string {
   if (hour < 6)  return 'Bonsoir'
@@ -173,59 +208,25 @@ function formatTime(d: Date): string {
 interface MarketStatus {
   label: string
   color: string
-  bg: string
-  border: string
   live: boolean
 }
 
 function getMarketStatus(d: Date): MarketStatus {
-  const day = d.getDay() // 0 = sunday, 6 = saturday
+  const day = d.getDay()
   const hour = d.getHours()
 
-  // Weekend : marché actif (eBay/CM ouvrent 24/7 en réalité, mais on simule des heures de pic)
   if (day === 0 || day === 6) {
     if (hour >= 10 && hour < 23) {
-      return {
-        label: 'Pic activité',
-        color: '#1D9E75',
-        bg: 'rgba(29, 158, 117, 0.08)',
-        border: 'rgba(29, 158, 117, 0.2)',
-        live: true,
-      }
+      return { label: 'Pic activité', color: '#26A65B', live: true }
     }
-    return {
-      label: 'Activité réduite',
-      color: '#86868B',
-      bg: 'rgba(134, 134, 139, 0.08)',
-      border: 'rgba(134, 134, 139, 0.2)',
-      live: false,
-    }
+    return { label: 'Activité réduite', color: SNOW.mutedLight, live: false }
   }
 
-  // Weekdays
   if (hour >= 9 && hour < 18) {
-    return {
-      label: 'Marché actif',
-      color: '#1D9E75',
-      bg: 'rgba(29, 158, 117, 0.08)',
-      border: 'rgba(29, 158, 117, 0.2)',
-      live: true,
-    }
+    return { label: 'Marché actif', color: '#26A65B', live: true }
   }
   if (hour >= 18 && hour < 23) {
-    return {
-      label: 'Soirée active',
-      color: '#EF9F27',
-      bg: 'rgba(239, 159, 39, 0.08)',
-      border: 'rgba(239, 159, 39, 0.2)',
-      live: true,
-    }
+    return { label: 'Soirée active', color: '#EF9F27', live: true }
   }
-  return {
-    label: 'Activité réduite',
-    color: '#86868B',
-    bg: 'rgba(134, 134, 139, 0.08)',
-    border: 'rgba(134, 134, 139, 0.2)',
-    live: false,
-  }
+  return { label: 'Activité réduite', color: SNOW.mutedLight, live: false }
 }

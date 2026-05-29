@@ -1,270 +1,370 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import type { SpreadSignal } from '@/lib/useSpreads'
-import type { MarketIndex } from '@/lib/useMarketData'
+import { useMemo } from 'react'
+import { usePortfolio } from '@/lib/usePortfolio'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 
 /**
- * 3 KPIs ligne : pulse rapide du marché + opportunité du jour.
- * Chaque KPI est cliquable et mène à sa section détaillée.
+ * 3 KPIs v1.0 collectionneur Snow+ : Master Set + Valeur portfolio + Cartes.
+ * Props existantes prises pour compat DailyHub mais logique interne re-orientee v1.
  */
 export function HubKpis({
   topSpread, topIndex, cardsCount, loading,
 }: {
-  topSpread: SpreadSignal | null
-  topIndex: MarketIndex | null
+  topSpread: any | null   // ignore - v2
+  topIndex: any | null    // ignore - v2
   cardsCount: number
   loading: boolean
 }) {
+  const portfolio = usePortfolio()
+  // Type local pour acceder aux champs optionnels (set_slug/set_name/graded)
+  const cards: Array<{
+    qty?: number
+    current_price?: number | null
+    buy_price?: number | null
+    graded?: boolean | null
+    set_slug?: string | null
+    set_name?: string | null
+  }> = (portfolio.cards || []) as any
+
+  const kpis = useMemo(() => {
+    // Calcul master-set le plus avance (heuristic: nb cartes par set)
+    const setStats = new Map<string, { name: string; count: number; value: number }>()
+    let totalValue = 0
+    let totalCost = 0
+    let gradedCount = 0
+
+    for (const c of cards) {
+      const qty = c.qty || 1
+      const cur = c.current_price ?? 0
+      const buy = c.buy_price ?? 0
+      totalValue += cur * qty
+      totalCost += buy * qty
+      if (c.graded) gradedCount += qty
+      const setKey = c.set_slug || c.set_name || 'unknown'
+      const setName = c.set_name || 'Set inconnu'
+      const ex = setStats.get(setKey)
+      if (ex) { ex.count += qty; ex.value += cur * qty }
+      else setStats.set(setKey, { name: setName, count: qty, value: cur * qty })
+    }
+    const roiPct = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : null
+
+    // Top set par count
+    let topSet: { name: string; count: number; value: number } | null = null
+    for (const s of setStats.values()) {
+      if (!topSet || s.count > topSet.count) topSet = s
+    }
+
+    return { totalValue, totalCost, roiPct, gradedCount, setsCount: setStats.size, topSet }
+  }, [cards])
+
   const router = useRouter()
 
   return (
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-      gap: '12px',
+      gap: 14,
     }}>
-      {/* KPI 1 : Top Spread du jour */}
+      {/* KPI 1 : Master Set en cours */}
       <KpiCard
-        label="Top opportunité"
-        value={loading ? '—' : topSpread ? `+${topSpread.upside_pct.toFixed(0)}%` : 'Aucune'}
-        sub={loading ? 'Chargement…' : topSpread
-          ? truncate(topSpread.card_name, 28)
-          : 'Pas de signal détecté'}
-        accent={topSpread ? 'var(--accent)' : 'var(--ink-faint)'}
-        href="/market/spreads"
-        clickable={!!topSpread}
-        loading={loading}
-        icon={<DiamondIcon />}
-      />
-
-      {/* KPI 2 : Indice marché phare */}
-      <KpiCard
-        label={topIndex ? topIndex.label : 'Indice marché'}
-        value={loading ? '—'
-          : topIndex && topIndex.current > 0
-            ? formatValue(topIndex.current)
-            : '—'}
+        icon={<TrophyIcon />}
+        accent="gold"
+        label="Master set en cours"
+        value={loading ? '—' : kpis.topSet ? `${kpis.topSet.count} cartes` : 'Aucun'}
         sub={loading ? 'Chargement…'
-          : topIndex && topIndex.change_24h_pct !== 0
-            ? <TrendBadge pct={topIndex.change_24h_pct} />
-            : 'Tendance stable'}
-        accent={topIndex && topIndex.change_24h_pct >= 0 ? 'var(--perf-up)' : 'var(--perf-down)'}
-        href="/market"
-        clickable={!!topIndex}
+          : kpis.topSet ? truncate(kpis.topSet.name, 30)
+          : 'Crée ton premier set'}
+        onClick={() => router.push('/portfolio?tab=mastersets')}
+        clickable={!!kpis.topSet || !loading}
         loading={loading}
-        icon={<ChartIcon />}
       />
 
-      {/* KPI 3 : Activité personnelle */}
+      {/* KPI 2 : Valeur portfolio */}
       <KpiCard
-        label="Mon activité"
+        icon={<EuroIcon />}
+        accent={kpis.roiPct === null ? 'neutral' : kpis.roiPct >= 0 ? 'green' : 'red'}
+        label="Valeur portfolio"
+        value={loading ? '—'
+          : kpis.totalValue > 0 ? formatValue(kpis.totalValue) + ' €'
+          : '—'}
+        sub={loading ? 'Chargement…'
+          : kpis.roiPct !== null
+            ? <TrendBadge pct={kpis.roiPct} />
+            : kpis.totalValue > 0 ? 'Renseigne ton coût pour le ROI'
+            : 'Ajoute des cartes avec prix'}
+        onClick={() => router.push('/portfolio')}
+        clickable
+        loading={loading}
+      />
+
+      {/* KPI 3 : Cartes (total + graded) */}
+      <KpiCard
+        icon={<StackIcon />}
+        accent="blue"
+        label="Ma collection"
         value={loading ? '—' : cardsCount.toLocaleString('fr-FR')}
         sub={loading ? 'Chargement…'
           : cardsCount === 0 ? 'Démarrer ma collection'
-          : cardsCount === 1 ? 'Carte dans le portfolio'
-          : 'Cartes dans le portfolio'}
-        accent="var(--ink)"
-        href="/portfolio"
+          : kpis.gradedCount > 0 ? `dont ${kpis.gradedCount} gradée${kpis.gradedCount > 1 ? 's' : ''}`
+          : kpis.setsCount > 1 ? `${kpis.setsCount} sets différents`
+          : 'Carte dans le portfolio'}
+        onClick={() => router.push('/portfolio')}
         clickable
         loading={loading}
-        icon={<StackIcon />}
       />
     </div>
   )
 }
 
-/* ── KPI Card ────────────────────────────── */
+/* ── KPI Card glass v5 ─────────────────────────────────────────────── */
 
 function KpiCard({
-  label, value, sub, accent, href, clickable, loading, icon,
+  icon, accent, label, value, sub, onClick, clickable, loading,
 }: {
+  icon: React.ReactNode
+  accent: 'green' | 'red' | 'gold' | 'blue' | 'neutral'
   label: string
   value: string
   sub: React.ReactNode
-  accent: string
-  href: string
+  onClick: () => void
   clickable: boolean
   loading: boolean
-  icon: React.ReactNode
 }) {
-  const router = useRouter()
+  const a = ACCENT[accent]
 
   return (
     <button
-      onClick={clickable ? () => router.push(href) : undefined}
+      onClick={clickable ? onClick : undefined}
       disabled={!clickable}
       style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '16px 18px',
+        ...GLASS.card,
+        padding: '16px 20px',
         cursor: clickable ? 'pointer' : 'default',
         textAlign: 'left',
-        fontFamily: 'var(--font-display)',
-        transition: 'all 0.15s ease',
+        fontFamily: FONT.body,
+        transition: 'transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s cubic-bezier(.2,.8,.2,1)',
         position: 'relative',
         overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.85)',
       }}
       onMouseEnter={(e) => {
         if (!clickable) return
-        e.currentTarget.style.borderColor = 'var(--ink)'
-        e.currentTarget.style.transform = 'translateY(-1px)'
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.04)'
+        e.currentTarget.style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={(e) => {
         if (!clickable) return
-        e.currentTarget.style.borderColor = 'var(--border)'
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
       }}
     >
       {/* Loading shimmer */}
       {loading && (
-        <>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.04) 50%, transparent 100%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer-kpi 1.4s ease-in-out infinite',
-            pointerEvents: 'none',
-          }} />
-          <style>{`
-            @keyframes shimmer-kpi {
-              0%   { background-position: 200% 0; }
-              100% { background-position: -200% 0; }
-            }
-          `}</style>
-        </>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%)',
+          animation: 'kcShimmer 1.4s ease-in-out infinite',
+          pointerEvents: 'none',
+        }} />
       )}
+
+      {/* Glow subtle accent dans le coin */}
+      <div style={{
+        position: 'absolute',
+        top: '-30%',
+        right: '-10%',
+        width: 140,
+        height: 140,
+        background: `radial-gradient(circle, ${a.glow} 0%, transparent 70%)`,
+        filter: 'blur(20px)',
+        pointerEvents: 'none',
+      }} />
 
       {/* Header : icon + label + arrow */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: '10px',
+        marginBottom: 12,
+        position: 'relative',
+        zIndex: 1,
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: 8,
         }}>
           <div style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '6px',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
+            width: 28, height: 28,
+            borderRadius: RADIUS.sm,
+            background: a.iconBg,
+            border: `1px solid ${a.iconBorder}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: accent,
-          }}>{icon}</div>
+            color: a.iconColor,
+          }}>
+            {icon}
+          </div>
           <span style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
+            fontSize: 10,
+            color: SNOW.muted,
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.08em',
             fontWeight: 600,
+            fontFamily: FONT.display,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-          }}>{label}</span>
+          }}>
+            {label}
+          </span>
         </div>
 
         {clickable && (
           <span style={{
-            fontSize: '12px',
-            color: 'var(--ink-faint)',
+            fontSize: 12,
+            color: SNOW.mutedLight,
           }}>→</span>
         )}
       </div>
 
       {/* Big value */}
       <div style={{
-        fontSize: '24px',
-        fontWeight: 600,
-        color: loading ? 'var(--ink-faint)' : accent,
-        fontFamily: 'var(--font-data, var(--font-display))',
-        letterSpacing: '-0.4px',
+        fontSize: 26,
+        fontWeight: 700,
+        color: loading ? SNOW.mutedExtraLight : a.valueColor,
+        fontFamily: FONT.display,
+        letterSpacing: '-0.5px',
         lineHeight: 1.1,
-        marginBottom: '4px',
+        marginBottom: 5,
         fontVariantNumeric: 'tabular-nums',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-      }}>{value}</div>
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        {value}
+      </div>
 
       {/* Sub-line */}
       <div style={{
-        fontSize: '11px',
-        color: 'var(--ink-muted)',
+        fontSize: 11,
+        color: SNOW.muted,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-      }}>{sub}</div>
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        {sub}
+      </div>
     </button>
   )
 }
 
-/* ── Trend badge ─────────────────────────── */
+/* ── Trend badge ─────────────────────────────────────────────────── */
 
 function TrendBadge({ pct }: { pct: number }) {
   const isUp = pct >= 0
-  const color = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
+  const color = isUp ? SNOW.green : SNOW.red
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '3px',
+      gap: 3,
       color,
       fontWeight: 600,
-      fontFamily: 'var(--font-data, var(--font-display))',
+      fontFamily: FONT.data,
       fontVariantNumeric: 'tabular-nums',
     }}>
-      {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{pct.toFixed(1)}% sur 24h
+      {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{pct.toFixed(1)}%
     </span>
   )
 }
 
-/* ── Icons ───────────────────────────────── */
+/* ── Icons ─────────────────────────────────────────────────────── */
 
-function DiamondIcon() {
+function TrophyIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-      <path d="M5.5 1l4 4-4 5-4-5 4-4z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
     </svg>
   )
 }
 
-function ChartIcon() {
+function EuroIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-      <path d="M1.5 9.5L4 6l2.5 2L9.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <path d="M7 4h2.5v2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 10h12M4 14h9"/>
+      <path d="M19 5a7 7 0 1 0 0 14"/>
     </svg>
   )
 }
 
 function StackIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-      <rect x="2" y="3" width="7" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.3" fill="none" />
-      <rect x="3" y="2" width="7" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.3" fill="none" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+      <line x1="12" y1="22.08" x2="12" y2="12"/>
     </svg>
   )
 }
 
-/* ── Helpers ─────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────── */
 
 function formatValue(v: number): string {
-  if (v >= 1_000_000) return `${Number(v / 1_000_000).toFixed(2)}M`
-  if (v >= 1_000)     return `${Number(v / 1_000).toFixed(2)}K`
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`
+  if (v >= 1_000) return `${(v / 1_000).toFixed(2)}K`
   return v.toFixed(0)
 }
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + '…' : s
+}
+
+/* ── Accent palettes ───────────────────────────────────────── */
+
+const ACCENT: Record<'green' | 'red' | 'gold' | 'blue' | 'neutral', {
+  iconBg: string; iconBorder: string; iconColor: string;
+  valueColor: string; glow: string;
+}> = {
+  green: {
+    iconBg: SNOW.greenLight,
+    iconBorder: 'rgba(38,166,91,0.2)',
+    iconColor: SNOW.green,
+    valueColor: SNOW.ink,
+    glow: 'rgba(38,166,91,0.10)',
+  },
+  red: {
+    iconBg: SNOW.redLight,
+    iconBorder: 'rgba(224,48,32,0.2)',
+    iconColor: SNOW.red,
+    valueColor: SNOW.ink,
+    glow: 'rgba(224,48,32,0.08)',
+  },
+  gold: {
+    iconBg: SNOW.amber,
+    iconBorder: 'rgba(212,175,55,0.25)',
+    iconColor: SNOW.amberDark,
+    valueColor: SNOW.ink,
+    glow: 'rgba(212,175,55,0.10)',
+  },
+  blue: {
+    iconBg: SNOW.blue,
+    iconBorder: 'rgba(24,95,165,0.2)',
+    iconColor: SNOW.blueDark,
+    valueColor: SNOW.ink,
+    glow: 'rgba(24,95,165,0.08)',
+  },
+  neutral: {
+    iconBg: SNOW.surface,
+    iconBorder: SNOW.border,
+    iconColor: SNOW.muted,
+    valueColor: SNOW.ink,
+    glow: 'rgba(110,110,115,0.06)',
+  },
 }

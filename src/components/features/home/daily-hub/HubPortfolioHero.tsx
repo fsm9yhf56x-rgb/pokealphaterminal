@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useRef } from 'react'
 import type { MarketIndex } from '@/lib/useMarketData'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION, SHADOW } from '@/lib/design/snow'
 
 interface PortfolioCard {
   qty?: number
@@ -14,8 +15,9 @@ interface PortfolioCard {
 }
 
 /**
- * Hero card portfolio : valeur + ROI + comparaison vs indice + sparkline 7j.
- * Pièce maîtresse du Daily Hub — info la plus importante, design premium.
+ * Hero card portfolio Snow+ : valeur + ROI + benchmark + sparkline 7j.
+ * Glass clair, hover tilt subtil, sparkline tons verts/rouges Snow+.
+ * Piece maitresse du Daily Hub v1.0.
  */
 export function HubPortfolioHero({
   cards, indices, loading,
@@ -27,36 +29,30 @@ export function HubPortfolioHero({
   const router = useRouter()
   const cardRef = useRef<HTMLDivElement | null>(null)
 
-  // Tilt 3D effect (Apple-like)
+  // Tilt 3D subtle (hook sublime garde de l'ancienne version)
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const el = cardRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width   // 0..1
-    const y = (e.clientY - rect.top) / rect.height   // 0..1
-    const rotateY = (x - 0.5) * 6   // ±3deg
-    const rotateX = -(y - 0.5) * 4  // ±2deg
-    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
-    // Pass position to mesh layer
-    el.style.setProperty('--mx', `${x * 100}%`)
-    el.style.setProperty('--my', `${y * 100}%`)
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    const rotateY = (x - 0.5) * 4  // ±2deg (plus subtle qu'avant)
+    const rotateX = -(y - 0.5) * 3
+    el.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
   }
 
-  function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
+  function handleMouseLeave() {
     const el = cardRef.current
     if (!el) return
-    el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)'
-    el.style.removeProperty('--mx')
-    el.style.removeProperty('--my')
+    el.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)'
   }
-
 
   const stats = useMemo(() => {
     let totalValue = 0
     let totalCost = 0
     let cardsCount = 0
     let gradedCount = 0
-    const setValueMap = new Map<string, number>()  // set_slug → value
+    const setValueMap = new Map<string, number>()
 
     for (const c of cards) {
       const qty = c.qty || 1
@@ -67,14 +63,12 @@ export function HubPortfolioHero({
       totalCost += buy * qty
       cardsCount += qty
       if (c.graded) gradedCount += qty
-      // Aggregate by set
       const setKey = c.set_slug || c.set_name || 'unknown'
       setValueMap.set(setKey, (setValueMap.get(setKey) || 0) + value)
     }
     const gain = totalValue - totalCost
     const roiPct = totalCost > 0 ? (gain / totalCost) * 100 : 0
 
-    // Diversification : % du top set
     let topSetPct = 0
     let topSetName = ''
     if (totalValue > 0) {
@@ -94,9 +88,7 @@ export function HubPortfolioHero({
     [stats.totalValue, stats.roiPct]
   )
 
-  // Pick the most relevant index for comparison (default to vintage_us)
   const benchmarkIndex = indices.find(i => i.id === 'vintage_us') || indices[0] || null
-
   const isUp = stats.gain >= 0
   const hasData = !loading && cards.length > 0
 
@@ -106,75 +98,34 @@ export function HubPortfolioHero({
       onClick={() => router.push('/portfolio')}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.18)'
-      }}
-      className="hero-card-bg"
       style={{
+        ...GLASS.card,
         position: 'relative',
-        background: 'linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 50%, #1F1F22 100%)',
-        backgroundSize: '200% 200%',
-        borderRadius: '18px',
         padding: '28px 32px',
         cursor: 'pointer',
         overflow: 'hidden',
-        transition: 'transform 0.15s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.2s ease',
-        color: 'var(--surface)',
+        transition: 'transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease',
         transformStyle: 'preserve-3d' as any,
         willChange: 'transform',
+        // entree animee
+        animation: 'fadeIn .5s ease both',
       }}
     >
-      {/* Decorative gradient blob (static) */}
-      <div style={{
-        position: 'absolute',
-        top: '-40%',
-        right: '-10%',
-        width: '60%',
-        height: '180%',
-        background: isUp
-          ? 'radial-gradient(circle, rgba(29,158,117,0.18) 0%, transparent 60%)'
-          : 'radial-gradient(circle, rgba(224,48,32,0.15) 0%, transparent 60%)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Animated mesh layer (subtle moving gradient) */}
-      <div className="hero-mesh" style={{
-        position: 'absolute',
-        inset: 0,
-        background: isUp
-          ? 'radial-gradient(circle at var(--mx, 30%) var(--my, 70%), rgba(91,196,149,0.12) 0%, transparent 50%)'
-          : 'radial-gradient(circle at var(--mx, 30%) var(--my, 70%), rgba(240,131,115,0.10) 0%, transparent 50%)',
-        pointerEvents: 'none',
-        opacity: 0.8,
-      }} />
-
-      {/* Subtle noise texture overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'url("data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><filter id=%22n%22><feTurbulence baseFrequency=%221.2%22 numOctaves=%222%22/><feColorMatrix values=%220 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0%22/></filter><rect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/></svg>")',
-        opacity: 0.5,
-        pointerEvents: 'none',
-        mixBlendMode: 'overlay' as any,
-      }} />
-
-      <style>{`
-        @keyframes hero-mesh-drift {
-          0%   { --mx: 30%; --my: 70%; }
-          25%  { --mx: 70%; --my: 50%; }
-          50%  { --mx: 60%; --my: 80%; }
-          75%  { --mx: 35%; --my: 35%; }
-          100% { --mx: 30%; --my: 70%; }
-        }
-        @property --mx { syntax: '<percentage>'; inherits: false; initial-value: 30%; }
-        @property --my { syntax: '<percentage>'; inherits: false; initial-value: 70%; }
-        .hero-mesh { animation: hero-mesh-drift 14s ease-in-out infinite; }
-        @keyframes hero-bg-shift {
-          0%, 100% { background-position: 0% 0%; }
-          50%      { background-position: 100% 100%; }
-        }
-        .hero-card-bg { animation: hero-bg-shift 18s ease-in-out infinite; }
-      `}</style>
+      {/* Blob decoratif coloré subtile (vert si gain, rouge si perte) */}
+      {hasData && stats.totalCost > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '-50%',
+          right: '-15%',
+          width: '60%',
+          height: '180%',
+          background: isUp
+            ? 'radial-gradient(circle, rgba(38,166,91,0.10) 0%, transparent 60%)'
+            : 'radial-gradient(circle, rgba(224,48,32,0.08) 0%, transparent 60%)',
+          pointerEvents: 'none',
+          filter: 'blur(20px)',
+        }} />
+      )}
 
       <div style={{
         position: 'relative',
@@ -194,26 +145,39 @@ export function HubPortfolioHero({
             marginBottom: '16px',
           }}>
             <span style={{
-              fontSize: '10px',
-              color: 'rgba(255,255,255,0.5)',
+              fontSize: 11,
+              color: SNOW.muted,
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               fontWeight: 600,
-              fontFamily: 'var(--font-display)',
-            }}>Mon portfolio</span>
+              fontFamily: FONT.display,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span style={{
+                display: 'inline-block',
+                width: 3,
+                height: 12,
+                background: SNOW.ink,
+                borderRadius: 2,
+              }} />
+              Mon portfolio
+            </span>
             {hasData && stats.totalValue === 0 && (
               <span style={{
-                fontSize: '9px',
-                fontWeight: 600,
-                color: '#E8C56A',
-                background: 'rgba(212, 175, 55, 0.14)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
-                padding: '2px 8px',
-                borderRadius: '999px',
+                fontSize: 9,
+                fontWeight: 700,
+                color: SNOW.amberDark,
+                background: SNOW.amber,
+                padding: '3px 8px',
+                borderRadius: 999,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                fontFamily: 'var(--font-display)',
-              }}>Prix en attente</span>
+                fontFamily: FONT.data,
+              }}>
+                Prix en attente
+              </span>
             )}
           </div>
 
@@ -221,16 +185,16 @@ export function HubPortfolioHero({
           <div style={{
             display: 'flex',
             alignItems: 'baseline',
-            gap: '12px',
-            marginBottom: '6px',
+            gap: 12,
+            marginBottom: 6,
             flexWrap: 'wrap',
           }}>
             <div style={{
-              fontSize: '40px',
-              fontWeight: 600,
-              color: 'var(--surface)',
-              fontFamily: 'var(--font-data, var(--font-display))',
-              letterSpacing: '-1px',
+              fontSize: 42,
+              fontWeight: 700,
+              color: SNOW.ink,
+              fontFamily: FONT.display,
+              letterSpacing: '-1.2px',
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
             }}>
@@ -244,14 +208,14 @@ export function HubPortfolioHero({
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
-                background: isUp ? 'rgba(91, 196, 149, 0.18)' : 'rgba(240, 131, 115, 0.18)',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: isUp ? '#5BC495' : '#F08373',
-                fontFamily: 'var(--font-data, var(--font-display))',
+                gap: 4,
+                padding: '5px 11px',
+                background: isUp ? SNOW.greenLight : SNOW.redLight,
+                borderRadius: RADIUS.md,
+                fontSize: 14,
+                fontWeight: 700,
+                color: isUp ? SNOW.green : SNOW.red,
+                fontFamily: FONT.data,
                 fontVariantNumeric: 'tabular-nums',
               }}>
                 {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{stats.roiPct.toFixed(1)}%
@@ -261,26 +225,22 @@ export function HubPortfolioHero({
 
           {/* Sub-line : gain + benchmark comparison */}
           <div style={{
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.55)',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '20px',
+            fontSize: 13,
+            color: SNOW.muted,
+            fontFamily: FONT.body,
+            marginBottom: 20,
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: 10,
             flexWrap: 'wrap',
           }}>
             {loading ? <span>Chargement…</span>
-              : !hasData ? <span>Ajoutez votre première carte</span>
+              : !hasData ? <span>Ajoute ta première carte pour démarrer</span>
               : stats.totalValue === 0
                 ? (
                   <span>
                     Valorisation indisponible · {' '}
-                    <span style={{
-                      color: '#E8C56A',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-display)',
-                    }}>
+                    <span style={{ color: SNOW.amberDark, fontWeight: 500 }}>
                       Service prix temporairement indisponible
                     </span>
                   </span>
@@ -289,11 +249,11 @@ export function HubPortfolioHero({
                 ? (
                   <>
                     <span>
-                      Gain latent · <span style={{
-                        color: isUp ? '#5BC495' : '#F08373',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-data, var(--font-display))',
-                      }}>{isUp ? '+' : ''}{formatEUR(stats.gain)}</span>
+                      Gain latent · <strong style={{
+                        color: isUp ? SNOW.green : SNOW.red,
+                        fontWeight: 600,
+                        fontFamily: FONT.data,
+                      }}>{isUp ? '+' : ''}{formatEUR(stats.gain)}</strong>
                     </span>
                     {benchmarkIndex && benchmarkIndex.change_24h_pct !== 0 && (
                       <>
@@ -310,11 +270,7 @@ export function HubPortfolioHero({
                 : (
                   <span>
                     Valeur estimée · {' '}
-                    <span style={{
-                      color: '#E8C56A',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-display)',
-                    }}>
+                    <span style={{ color: SNOW.amberDark, fontWeight: 500 }}>
                       Renseigne tes prix d'achat pour calculer ton ROI →
                     </span>
                   </span>
@@ -326,9 +282,9 @@ export function HubPortfolioHero({
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '12px',
-              paddingTop: '16px',
-              borderTop: '1px solid rgba(255,255,255,0.08)',
+              gap: 14,
+              paddingTop: 16,
+              borderTop: `1px solid ${SNOW.borderSoft}`,
             }}>
               <MiniStat
                 label="Cartes"
@@ -360,8 +316,8 @@ export function HubPortfolioHero({
         {/* Right : sparkline */}
         {hasData && (
           <div style={{
-            width: '180px',
-            height: '90px',
+            width: 180,
+            height: 90,
             flexShrink: 0,
             display: 'flex',
             flexDirection: 'column',
@@ -370,38 +326,42 @@ export function HubPortfolioHero({
           }}>
             <Sparkline points={sparklinePoints} isUp={isUp} />
             <div style={{
-              fontSize: '9px',
-              color: 'rgba(255,255,255,0.4)',
+              fontSize: 9,
+              color: SNOW.mutedLight,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              fontFamily: 'var(--font-display)',
-              marginTop: '6px',
+              fontFamily: FONT.display,
+              marginTop: 6,
               fontWeight: 600,
-            }}>7 derniers jours</div>
+            }}>
+              7 derniers jours
+            </div>
           </div>
         )}
       </div>
 
-      {/* Bottom-right see more (always visible) */}
+      {/* Bottom-right see more */}
       <div style={{
         position: 'absolute',
-        bottom: '14px',
-        right: '20px',
-        fontSize: '11px',
-        color: 'rgba(255,255,255,0.6)',
-        fontFamily: 'var(--font-display)',
+        bottom: 14,
+        right: 20,
+        fontSize: 11,
+        color: SNOW.muted,
+        fontFamily: FONT.body,
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: 4,
         zIndex: 2,
+        opacity: 0.7,
+        transition: TRANSITION.fast,
       }}>
-        Voir détails <span style={{ fontSize: '13px' }}>→</span>
+        Voir détails <span style={{ fontSize: 13 }}>→</span>
       </div>
     </div>
   )
 }
 
-/* ── Sparkline ──────────────────────────── */
+/* ── Sparkline (Snow+) ──────────────────── */
 
 function Sparkline({ points, isUp }: { points: number[]; isUp: boolean }) {
   const W = 180, H = 60
@@ -418,7 +378,6 @@ function Sparkline({ points, isUp }: { points: number[]; isUp: boolean }) {
     return { x, y }
   })
 
-  // Smooth path with cubic bezier
   let pathD = `M ${coords[0].x},${coords[0].y}`
   for (let i = 1; i < coords.length; i++) {
     const prev = coords[i - 1]
@@ -432,20 +391,20 @@ function Sparkline({ points, isUp }: { points: number[]; isUp: boolean }) {
 
   const areaD = `${pathD} L ${W},${H} L 0,${H} Z`
 
-  const color = isUp ? '#5BC495' : '#F08373'
-  const gradId = isUp ? 'sparkUp' : 'sparkDown'
+  // Snow+ green/red
+  const color = isUp ? SNOW.green : SNOW.red
+  const gradId = isUp ? 'sparkUpSnow' : 'sparkDownSnow'
 
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.35" />
+          <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={areaD}  fill={`url(#${gradId})`} />
-      <path d={pathD}  fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Final dot */}
+      <path d={pathD}  fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={coords[coords.length - 1].x} cy={coords[coords.length - 1].y} r="3" fill={color} />
       <circle cx={coords[coords.length - 1].x} cy={coords[coords.length - 1].y} r="3" fill={color}>
         <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite" />
@@ -455,14 +414,11 @@ function Sparkline({ points, isUp }: { points: number[]; isUp: boolean }) {
   )
 }
 
-/* ── Sparkline data generator ────────────── */
+/* ── Sparkline data generator (V1 mock) ───── */
 
 function generateSparklinePoints(currentValue: number, roiPct: number): number[] {
-  // V1 : approximation visuelle. Génère 7 points avec une trajectoire cohérente.
-  // V2 (futur) : utiliser portfolio_value_history table pour data réelle.
   if (currentValue === 0) return []
-  const trend = roiPct / 100 / 7 // daily trend approx
-  const startValue = currentValue / (1 + (roiPct / 100) * 0.5) // simulate progression
+  const startValue = currentValue / (1 + (roiPct / 100) * 0.5)
   const points: number[] = []
   const n = 7
   for (let i = 0; i < n; i++) {
@@ -471,12 +427,11 @@ function generateSparklinePoints(currentValue: number, roiPct: number): number[]
     const linear = startValue + (currentValue - startValue) * t
     points.push(linear + noise)
   }
-  // Ensure final point is exactly current value
   points[n - 1] = currentValue
   return points
 }
 
-/* ── Benchmark comparison ───────────────── */
+/* ── Benchmark comparison (Snow+) ────────── */
 
 function BenchmarkComparison({
   portfolioROI, indexLabel, indexROI,
@@ -487,30 +442,31 @@ function BenchmarkComparison({
 }) {
   const diff = portfolioROI - indexROI
   const isOutperforming = diff >= 0
-  const color = isOutperforming ? '#5BC495' : '#F08373'
+  const color = isOutperforming ? SNOW.green : SNOW.red
 
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '4px',
-      fontSize: '11px',
-      color: 'rgba(255,255,255,0.5)',
+      gap: 4,
+      fontSize: 12,
+      color: SNOW.muted,
+      fontFamily: FONT.body,
     }}>
       vs {indexLabel}
-      <span style={{
+      <strong style={{
         color,
         fontWeight: 600,
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontFamily: FONT.data,
         fontVariantNumeric: 'tabular-nums',
       }}>
         {isOutperforming ? '+' : ''}{diff.toFixed(1)} pts
-      </span>
+      </strong>
     </span>
   )
 }
 
-/* ── Mini-stat ──────────────────────────── */
+/* ── Mini-stat (Snow+) ─────────────────── */
 
 function MiniStat({
   label, value, accent, hint,
@@ -523,33 +479,39 @@ function MiniStat({
   return (
     <div>
       <div style={{
-        fontSize: '9px',
-        color: 'rgba(255,255,255,0.45)',
+        fontSize: 9,
+        color: SNOW.mutedLight,
         textTransform: 'uppercase',
-        letterSpacing: '0.06em',
+        letterSpacing: '0.08em',
         fontWeight: 600,
-        marginBottom: '4px',
-        fontFamily: 'var(--font-display)',
-      }}>{label}</div>
+        marginBottom: 4,
+        fontFamily: FONT.display,
+      }}>
+        {label}
+      </div>
       <div style={{
-        fontSize: '15px',
-        fontWeight: 600,
-        color: accent ? '#E8C56A' : 'var(--surface)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 16,
+        fontWeight: 700,
+        color: accent ? SNOW.amberDark : SNOW.ink,
+        fontFamily: FONT.data,
         fontVariantNumeric: 'tabular-nums',
-        letterSpacing: '-0.2px',
+        letterSpacing: '-0.3px',
         lineHeight: 1.1,
-      }}>{value}</div>
+      }}>
+        {value}
+      </div>
       {hint && (
         <div style={{
-          fontSize: '8px',
-          color: 'rgba(255,255,255,0.4)',
-          fontFamily: 'var(--font-display)',
-          marginTop: '2px',
+          fontSize: 9,
+          color: SNOW.mutedLight,
+          fontFamily: FONT.body,
+          marginTop: 2,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-        }}>{hint}</div>
+        }}>
+          {hint}
+        </div>
       )}
     </div>
   )

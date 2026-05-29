@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 
 interface PortfolioCard {
   id?: string | number
@@ -17,15 +18,14 @@ interface MoverItem {
   name: string
   set_name: string | null
   value: number
-  gain: number | null     // null si pas de buy_price
-  roiPct: number | null   // null si pas de buy_price
+  gain: number | null
+  roiPct: number | null
 }
 
 type Mode = 'roi' | 'value'
 
 /**
- * Top movers portfolio : top par ROI si buy_price connu, sinon top par valeur.
- * Adapte le format selon les données disponibles (pas de page vide gâchée).
+ * Top movers portfolio Snow+ : top ROI si buy_price connu, sinon top valeur.
  */
 export function HubMovers({
   cards, loading,
@@ -36,7 +36,6 @@ export function HubMovers({
   const router = useRouter()
 
   const { gainers, loser, mode } = useMemo(() => {
-    // First : try ROI mode (cards with buy_price)
     const withROI: MoverItem[] = cards
       .filter(c => c.buy_price != null && c.buy_price > 0 && c.current_price != null)
       .map((c, i) => {
@@ -65,7 +64,6 @@ export function HubMovers({
       }
     }
 
-    // Fallback : sort by absolute value (current_price × qty)
     const byValue: MoverItem[] = cards
       .filter(c => c.current_price != null && c.current_price > 0)
       .map((c, i) => {
@@ -88,33 +86,37 @@ export function HubMovers({
 
   return (
     <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
+      ...GLASS.card,
       overflow: 'hidden',
+      padding: 0,
     }}>
       {/* Header */}
       <div style={{
-        padding: '14px 16px 8px',
+        padding: '14px 18px 10px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <SectionLabel>{mode === 'roi' ? 'Top mouvements' : 'Top valeur'}</SectionLabel>
+        <SectionLabel accent={SNOW.red}>{mode === 'roi' ? 'Top mouvements' : 'Top valeur'}</SectionLabel>
         <button
           onClick={() => router.push('/portfolio/performance')}
           style={{
             background: 'transparent',
             border: 'none',
-            fontSize: '11px',
-            color: 'var(--ink-muted)',
+            fontSize: 11,
+            color: SNOW.muted,
             cursor: 'pointer',
-            fontFamily: 'var(--font-display)',
+            fontFamily: FONT.body,
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: 4,
+            transition: TRANSITION.fast,
           }}
-        >Voir tout <span>→</span></button>
+          onMouseEnter={(e) => (e.currentTarget.style.color = SNOW.ink)}
+          onMouseLeave={(e) => (e.currentTarget.style.color = SNOW.muted)}
+        >
+          Voir tout <span>→</span>
+        </button>
       </div>
 
       {loading ? (
@@ -134,39 +136,39 @@ export function HubMovers({
             />
           ))}
 
-          {/* Loser (1) - only in ROI mode */}
           {loser && (
             <>
               <div style={{
-                padding: '10px 16px 4px',
-                background: '#FAFAFA',
-                borderTop: '1px solid var(--border)',
+                padding: '10px 18px 4px',
+                background: 'rgba(255,255,255,0.4)',
+                borderTop: `1px solid ${SNOW.borderSoft}`,
               }}>
                 <span style={{
-                  fontSize: '9px',
-                  color: 'var(--ink-muted)',
+                  fontSize: 9,
+                  color: SNOW.mutedLight,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.08em',
                   fontWeight: 600,
-                  fontFamily: 'var(--font-display)',
-                }}>À surveiller</span>
+                  fontFamily: FONT.display,
+                }}>
+                  À surveiller
+                </span>
               </div>
               <Row mover={loser} rank={null} isLast variant="down" mode="roi" />
             </>
           )}
 
-          {/* Hint si mode value (pour pousser à renseigner buy_price) */}
           {mode === 'value' && (
             <div style={{
-              padding: '10px 16px',
-              borderTop: '1px solid var(--border)',
-              background: '#FAFAFA',
-              fontSize: '10px',
-              color: 'var(--ink-muted)',
-              fontFamily: 'var(--font-display)',
+              padding: '10px 18px',
+              borderTop: `1px solid ${SNOW.borderSoft}`,
+              background: 'rgba(255,255,255,0.4)',
+              fontSize: 10,
+              color: SNOW.muted,
+              fontFamily: FONT.body,
               textAlign: 'center',
             }}>
-              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Astuce :</span> renseigne tes prix d'achat pour suivre ton ROI réel.
+              <span style={{ color: SNOW.red, fontWeight: 600 }}>Astuce :</span> renseigne tes prix d'achat pour suivre ton ROI réel.
             </div>
           )}
         </>
@@ -175,7 +177,7 @@ export function HubMovers({
   )
 }
 
-/* ── Row ─────────────────────────────────── */
+/* ── Row ──────────────────────────────── */
 
 function Row({
   mover, rank, isLast, variant, mode,
@@ -187,7 +189,7 @@ function Row({
   mode: Mode
 }) {
   const isUp = variant === 'up'
-  const color = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
+  const color = isUp ? SNOW.green : SNOW.red
 
   return (
     <div
@@ -195,80 +197,80 @@ function Row({
         display: 'grid',
         gridTemplateColumns: '24px 1fr auto',
         alignItems: 'center',
-        gap: '12px',
-        padding: '11px 16px',
-        borderBottom: isLast ? 'none' : '1px solid var(--border)',
-        transition: 'background 0.1s',
+        gap: 12,
+        padding: '12px 18px',
+        borderBottom: isLast ? 'none' : `1px solid ${SNOW.borderSoft}`,
+        transition: 'background .15s ease',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.4)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
-      {/* Rank */}
       <div style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: rank === 1 ? color : 'var(--ink-faint)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 10,
+        fontWeight: 700,
+        color: rank === 1 ? color : SNOW.mutedExtraLight,
+        fontFamily: FONT.data,
         textAlign: 'center',
       }}>
         {rank ? rank.toString().padStart(2, '0') : '·'}
       </div>
 
-      {/* Name + meta */}
       <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: '12px',
+          fontSize: 13,
           fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
+          color: SNOW.ink,
+          fontFamily: FONT.body,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          marginBottom: '2px',
-        }}>{mover.name}</div>
+          marginBottom: 2,
+        }}>
+          {mover.name}
+        </div>
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
+          fontSize: 10,
+          color: SNOW.muted,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-        }}>{mover.set_name || '—'}</div>
+        }}>
+          {mover.set_name || '—'}
+        </div>
       </div>
 
-      {/* Right column : varies by mode */}
       <div style={{ textAlign: 'right' }}>
         {mode === 'roi' && mover.roiPct !== null ? (
           <>
             <div style={{
-              fontSize: '13px',
-              fontWeight: 600,
+              fontSize: 13,
+              fontWeight: 700,
               color,
-              fontFamily: 'var(--font-data, var(--font-display))',
+              fontFamily: FONT.data,
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1.1,
             }}>
               {isUp ? '▲' : '▼'} {mover.roiPct >= 0 ? '+' : ''}{mover.roiPct.toFixed(1)}%
             </div>
             <div style={{
-              fontSize: '10px',
+              fontSize: 10,
               color,
-              fontFamily: 'var(--font-data, var(--font-display))',
+              fontFamily: FONT.data,
               fontVariantNumeric: 'tabular-nums',
-              marginTop: '1px',
+              marginTop: 1,
               opacity: 0.85,
             }}>
               {(mover.gain ?? 0) >= 0 ? '+' : ''}{formatEURcompact(mover.gain ?? 0)}
             </div>
           </>
         ) : (
-          // Mode value : afficher la valeur en gros
           <div style={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            fontFamily: 'var(--font-data, var(--font-display))',
+            fontSize: 14,
+            fontWeight: 700,
+            color: SNOW.ink,
+            fontFamily: FONT.data,
             fontVariantNumeric: 'tabular-nums',
-            letterSpacing: '-0.2px',
+            letterSpacing: '-0.3px',
           }}>
             {formatEUR(mover.value)}
           </div>
@@ -278,28 +280,30 @@ function Row({
   )
 }
 
-/* ── States ─────────────────────────────── */
+/* ── States ──────────────────────────── */
 
 function LoadingState() {
   return (
     <div style={{
-      padding: '40px 16px',
+      padding: '40px 18px',
       textAlign: 'center',
-      fontSize: '11px',
-      color: 'var(--ink-faint)',
-      fontFamily: 'var(--font-display)',
-    }}>Chargement…</div>
+      fontSize: 11,
+      color: SNOW.mutedLight,
+      fontFamily: FONT.body,
+    }}>
+      Chargement…
+    </div>
   )
 }
 
 function EmptyState() {
   return (
     <div style={{
-      padding: '32px 20px',
+      padding: '40px 22px',
       textAlign: 'center',
-      fontSize: '11px',
-      color: 'var(--ink-muted)',
-      fontFamily: 'var(--font-display)',
+      fontSize: 12,
+      color: SNOW.muted,
+      fontFamily: FONT.body,
       lineHeight: 1.5,
     }}>
       Ajoutez des cartes à votre portfolio pour voir vos top valeurs.
@@ -307,42 +311,38 @@ function EmptyState() {
   )
 }
 
-/* ── Atoms ──────────────────────────────── */
+/* ── Atoms ───────────────────────────── */
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children, accent }: { children: React.ReactNode; accent: string }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-    }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
       <div style={{
-        width: '5px', height: '5px',
-        borderRadius: '50%',
-        background: 'var(--accent)',
+        width: 6, height: 6, borderRadius: '50%', background: accent,
       }} />
       <span style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10,
+        fontWeight: 700,
+        color: SNOW.muted,
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        fontFamily: 'var(--font-display)',
-      }}>{children}</span>
+        letterSpacing: '0.1em',
+        fontFamily: FONT.display,
+      }}>
+        {children}
+      </span>
     </div>
   )
 }
 
-/* ── Helpers ────────────────────────────── */
+/* ── Helpers ───────────────────────── */
 
 function formatEUR(v: number): string {
-  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
+  if (v >= 1000) return `${(v / 1000).toFixed(1)} K€`
+  return `${v.toFixed(0)} €`
 }
 
 function formatEURcompact(v: number): string {
   const abs = Math.abs(v)
   const sign = v < 0 ? '-' : ''
-  if (abs >= 1000) return `${sign}€${Number(abs / 1000).toFixed(1)}K`
-  return `${sign}€${abs.toFixed(0)}`
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)} K€`
+  return `${sign}${abs.toFixed(0)} €`
 }

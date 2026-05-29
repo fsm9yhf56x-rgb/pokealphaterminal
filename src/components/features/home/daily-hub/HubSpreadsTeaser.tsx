@@ -1,324 +1,167 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useMemo } from 'react'
-import { usePortfolio } from '@/lib/usePortfolio'
-import type { SpreadSignal } from '@/lib/useSpreads'
-
-interface PortfolioCard {
-  set_slug?: string | null
-  set_name?: string | null
-  qty?: number
-}
+import { useState } from 'react'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
+import { SoonBadge, SoonModal, SnowButton } from '@/components/ui/snow'
 
 /**
- * Teaser des top spreads avec personnalisation : priorise les sets que tu collectionnes.
- * Spreads matchant tes sets → poussés en haut + badge "Pour toi".
+ * Alpha Signals teaser - SOON v2.0
+ * Remplace l'ancien HubSpreadsTeaser (qui montrait des spreads detectes).
+ * Garde la signature des props pour compat DailyHub.
  */
-export function HubSpreadsTeaser({
-  signals, loading,
-}: {
-  signals: SpreadSignal[]
-  loading: boolean
-}) {
-  const router = useRouter()
-  const portfolio = usePortfolio()
-
-  // Build set frequency map from portfolio
-  const userSets = useMemo(() => {
-    const map = new Map<string, number>()  // set_slug → card count
-    for (const c of (portfolio.cards as PortfolioCard[]) || []) {
-      if (!c.set_slug) continue
-      map.set(c.set_slug, (map.get(c.set_slug) || 0) + (c.qty || 1))
-    }
-    return map
-  }, [portfolio.cards])
-
-  // Sort signals : matched (in user sets) first, then by tier/upside
-  const sortedSignals = useMemo(() => {
-    if (signals.length === 0) return []
-    const TIER_RANK: Record<string, number> = { S: 3, A: 2, B: 1 }
-    return [...signals].sort((a, b) => {
-      const aMatch = a.set_slug && userSets.has(a.set_slug) ? 1 : 0
-      const bMatch = b.set_slug && userSets.has(b.set_slug) ? 1 : 0
-      // Personalized first
-      if (aMatch !== bMatch) return bMatch - aMatch
-      // Then by tier
-      const tierDiff = (TIER_RANK[b.signal_tier] || 0) - (TIER_RANK[a.signal_tier] || 0)
-      if (tierDiff !== 0) return tierDiff
-      // Then by upside
-      return b.upside_pct - a.upside_pct
-    }).slice(0, 3)
-  }, [signals, userSets])
-
-  const personalizedCount = sortedSignals.filter(s =>
-    s.set_slug && userSets.has(s.set_slug)
-  ).length
+export function HubSpreadsTeaser({ signals, loading }: { signals: any[]; loading: boolean }) {
+  const [modalOpen, setModalOpen] = useState(false)
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      overflow: 'hidden',
-    }}>
-      {/* Header */}
-      <div style={{
-        padding: '14px 16px 8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <SectionLabel>Spreads du jour</SectionLabel>
-          {personalizedCount > 0 && (
-            <span style={{
-              padding: '2px 7px',
-              background: 'rgba(224, 48, 32, 0.08)',
-              border: '1px solid rgba(224, 48, 32, 0.2)',
-              borderRadius: '4px',
-              fontSize: '8px',
-              fontWeight: 700,
-              color: 'var(--accent)',
-              fontFamily: 'var(--font-display)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>{personalizedCount} pour toi</span>
-          )}
-        </div>
-        <button
-          onClick={() => router.push('/market/spreads')}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: '11px',
-            color: 'var(--ink-muted)',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-display)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >Voir tout <span>→</span></button>
-      </div>
-
-      {loading ? (
-        <LoadingState />
-      ) : sortedSignals.length === 0 ? (
-        <EmptyState />
-      ) : (
-        sortedSignals.map((s, i) => {
-          const isPersonalized = !!(s.set_slug && userSets.has(s.set_slug))
-          const cardsInSet = s.set_slug ? userSets.get(s.set_slug) || 0 : 0
-          return (
-            <Row
-              key={s.card_ref}
-              signal={s}
-              isPersonalized={isPersonalized}
-              cardsInSet={cardsInSet}
-              isLast={i === sortedSignals.length - 1}
-              onClick={() => router.push('/market/spreads')}
-            />
-          )
-        })
-      )}
-    </div>
-  )
-}
-
-/* ── Row ─────────────────────────────────── */
-
-function Row({
-  signal, isPersonalized, cardsInSet, isLast, onClick,
-}: {
-  signal: SpreadSignal
-  isPersonalized: boolean
-  cardsInSet: number
-  isLast: boolean
-  onClick: () => void
-}) {
-  const tierStyle = TIER_STYLES[signal.signal_tier]
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '36px 1fr auto',
-        gap: '12px',
-        width: '100%',
-        padding: '11px 16px',
-        border: 'none',
-        borderTop: '1px solid var(--border)',
-        background: isPersonalized ? 'rgba(224, 48, 32, 0.025)' : 'transparent',
-        cursor: 'pointer',
-        textAlign: 'left',
-        alignItems: 'center',
-        transition: 'background 0.1s',
-        fontFamily: 'var(--font-display)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = isPersonalized
-          ? 'rgba(224, 48, 32, 0.05)'
-          : 'rgba(0,0,0,0.015)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = isPersonalized
-          ? 'rgba(224, 48, 32, 0.025)'
-          : 'transparent'
-      }}
-    >
-      {/* Tier badge */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '32px',
-        height: '24px',
-        background: tierStyle.bg,
-        color: tierStyle.fg,
-        fontSize: '11px',
-        fontWeight: 700,
-        borderRadius: '5px',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        letterSpacing: '0.05em',
-      }}>{signal.signal_tier}</div>
-
-      {/* Name + meta */}
-      <div style={{ minWidth: 0 }}>
+    <>
+      <div
+        onClick={() => setModalOpen(true)}
+        style={{
+          ...GLASS.card,
+          overflow: 'hidden',
+          padding: 0,
+          cursor: 'pointer',
+          position: 'relative',
+          transition: 'transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s cubic-bezier(.2,.8,.2,1)',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+      >
+        {/* Glow violet en fond (accent v2) */}
         <div style={{
+          position: 'absolute',
+          top: '-30%', right: '-15%',
+          width: 280, height: 280,
+          background: 'radial-gradient(circle, rgba(38,33,92,0.10) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Header */}
+        <div style={{
+          padding: '14px 18px 10px',
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
-          marginBottom: '2px',
+          justifyContent: 'space-between',
+          position: 'relative',
+          zIndex: 1,
         }}>
-          <span style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: 'var(--ink)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            flex: 1,
-            minWidth: 0,
-          }}>{signal.card_name}</span>
-          {isPersonalized && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: SNOW.purpleDark,
+            }} />
             <span style={{
-              padding: '1px 5px',
-              background: 'var(--accent)',
-              color: '#fff',
-              fontSize: '7px',
+              fontSize: 10,
               fontWeight: 700,
-              borderRadius: '3px',
-              fontFamily: 'var(--font-display)',
-              letterSpacing: '0.05em',
+              color: SNOW.muted,
               textTransform: 'uppercase',
-              flexShrink: 0,
-            }}>Pour toi</span>
-          )}
+              letterSpacing: '0.1em',
+              fontFamily: FONT.display,
+            }}>
+              Alpha Signals
+            </span>
+          </div>
+          <SoonBadge version="v2.0" variant="inline" />
         </div>
+
+        {/* Preview mockup blurred (3 fake rows pour evoquer la feature) */}
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-data, var(--font-display))',
-          fontVariantNumeric: 'tabular-nums',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          padding: '6px 18px 18px',
+          position: 'relative',
+          zIndex: 1,
         }}>
-          {isPersonalized && cardsInSet > 0 ? (
-            <>
-              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                Tu as {cardsInSet} carte{cardsInSet > 1 ? 's' : ''} de ce set
+          <div style={{ filter: 'blur(2px)', opacity: 0.55, pointerEvents: 'none' }}>
+            {[
+              { name: 'Charizard Alt Art', src: 'EU €820', tgt: 'US €2,340', pct: '+185%' },
+              { name: 'Pikachu VMAX RA', src: 'EU €145', tgt: 'US €380', pct: '+162%' },
+              { name: 'Mewtwo V Alt', src: 'EU €92', tgt: 'US €235', pct: '+155%' },
+            ].map((row, i) => (
+              <div key={i} style={{
+                display: 'grid',
+                gridTemplateColumns: '24px 1fr auto',
+                gap: 12,
+                padding: '10px 0',
+                alignItems: 'center',
+                borderTop: i > 0 ? `1px solid ${SNOW.borderSoft}` : 'none',
+              }}>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, color: SNOW.purpleDark,
+                  background: SNOW.purple, padding: '3px 6px',
+                  borderRadius: 4, fontFamily: FONT.data,
+                  textAlign: 'center',
+                }}>S</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: SNOW.ink }}>{row.name}</div>
+                  <div style={{ fontSize: 10, color: SNOW.muted, fontFamily: FONT.data }}>
+                    {row.src} → {row.tgt}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 13, fontWeight: 700, color: SNOW.green,
+                  fontFamily: FONT.data, fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {row.pct}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Overlay teaser CTA */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: 16,
+            background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.85) 100%)',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 14px',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.7)',
+              backdropFilter: 'blur(12px)',
+              border: `1px solid ${SNOW.borderSoft}`,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={SNOW.purpleDark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span style={{
+                fontSize: 11, fontWeight: 600, color: SNOW.ink,
+                fontFamily: FONT.display,
+              }}>
+                Détection auto des cartes sous-évaluées
               </span>
-              <span style={{ color: 'var(--ink-faint)' }}> · </span>
-              EU {formatEUR(signal.price_eu)} <span style={{ color: 'var(--ink-faint)' }}>→</span> US {formatEUR(signal.price_us)}
-            </>
-          ) : (
-            <>EU {formatEUR(signal.price_eu)} <span style={{ color: 'var(--ink-faint)' }}>→</span> US {formatEUR(signal.price_us)}</>
-          )}
+            </div>
+            <span style={{
+              fontSize: 11, color: SNOW.muted, fontFamily: FONT.body,
+            }}>
+              Bientôt disponible · clique pour en savoir plus
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Upside */}
-      <div style={{
-        textAlign: 'right',
-        fontSize: '14px',
-        fontWeight: 700,
-        color: 'var(--perf-up)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        fontVariantNumeric: 'tabular-nums',
-      }}>
-        +{signal.upside_pct.toFixed(0)}%
-      </div>
-    </button>
+      <SoonModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        feature="Alpha Signals"
+        version="v2.0"
+        description="Le moteur Kodo détecte automatiquement les cartes sous-évaluées sur le marché européen vs US, classées par niveau de confiance (S/A/B) et upside réel."
+        bullets={[
+          'Comparaison temps-réel EU vs US, JP, FR',
+          'Tri par tier S/A/B selon confiance algorithmique',
+          'Filtres par condition, état, langue, source',
+          'Alertes push instantanées sur les nouveaux signaux',
+        ]}
+        brevoListId={null}
+      />
+    </>
   )
-}
-
-/* ── States ──────────────────────────────── */
-
-function LoadingState() {
-  return (
-    <div style={{
-      padding: '40px 16px',
-      textAlign: 'center',
-      fontSize: '11px',
-      color: 'var(--ink-faint)',
-      fontFamily: 'var(--font-display)',
-    }}>Détection des signaux…</div>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div style={{
-      padding: '32px 20px',
-      textAlign: 'center',
-      fontSize: '11px',
-      color: 'var(--ink-muted)',
-      fontFamily: 'var(--font-display)',
-      lineHeight: 1.5,
-    }}>
-      <div style={{ fontSize: '20px', opacity: 0.4, marginBottom: '6px' }}>◆</div>
-      Aucun spread détecté pour le moment.<br />
-      Le scanner s'exécute toutes les 4 heures.
-    </div>
-  )
-}
-
-/* ── Atoms ─────────────────────────────── */
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-    }}>
-      <div style={{
-        width: '5px', height: '5px',
-        borderRadius: '50%',
-        background: 'var(--accent)',
-      }} />
-      <span style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        fontFamily: 'var(--font-display)',
-      }}>{children}</span>
-    </div>
-  )
-}
-
-const TIER_STYLES: Record<'S' | 'A' | 'B', { bg: string; fg: string }> = {
-  S: { bg: '#FFF8E1', fg: '#B8860B' },
-  A: { bg: 'var(--perf-up-soft)', fg: 'var(--perf-up)' },
-  B: { bg: 'var(--surface)', fg: 'var(--ink-muted)' },
-}
-
-function formatEUR(v: number): string {
-  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
-  return `€${v.toFixed(0)}`
 }

@@ -1,14 +1,16 @@
 'use client'
 
 /**
- * AuthForm — composant partagé entre AuthModal et pages dédiées (/login, /signup).
- * v0.9 Infrastructure Solide · Lot B
+ * AuthForm — refonte Snow+ Spotlight pattern.
+ * Glass card + dégradé fond + animations Apple (fadeIn + slideUp + zoom).
+ * Logique métier 100% préservée (validate, submit, errors, Google OAuth, success).
  */
 
-import { useState, type FormEvent } from 'react'
+import { useState, useMemo, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/useAuth'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION, SHADOW } from '@/lib/design/snow'
 
 type Mode = 'login' | 'signup'
 type Variant = 'modal' | 'page'
@@ -42,6 +44,14 @@ export default function AuthForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  // Form "ready to submit" pour glow pulse sur le bouton
+  const formReady = useMemo(() => {
+    if (!email || !password) return false
+    if (!EMAIL_RE.test(email) || password.length < 8) return false
+    if (mode === 'signup' && (!name.trim() || !acceptCgu)) return false
+    return true
+  }, [email, password, name, acceptCgu, mode])
 
   function validate(): boolean {
     const errs: Record<string, string> = {}
@@ -99,44 +109,54 @@ export default function AuthForm({
   }
 
   const isModal = variant === 'modal'
-  const containerStyle: React.CSSProperties = isModal
-    ? {}
-    : {
-        width: '100%',
-        maxWidth: '420px',
-        margin: '0 auto',
-        background: '#fff',
-        borderRadius: '16px',
-        boxShadow: '0 1px 3px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06)',
-        padding: '32px 28px',
-        border: '1px solid var(--border)',
-      }
 
+  // Le layout (auth) porte deja le degrade + blobs. AuthForm ne fait que la card.
+
+  const cardStyle: React.CSSProperties = {
+    ...GLASS.card,
+    width: '100%',
+    maxWidth: 440,
+    padding: '36px 32px',
+    position: 'relative',
+    zIndex: 1,
+    animation: 'authCardEnter .45s cubic-bezier(.16,1,.3,1) both',
+  }
+
+  // ─── Success state (signup confirmation) ─────────────────────────────────
   if (success && mode === 'signup') {
-    return (
-      <div style={containerStyle}>
+    const successCard = (
+      <div style={isModal ? {} : cardStyle}>
         <div style={{ textAlign: 'center', padding: '8px 0' }}>
-          <div style={{ fontSize: '44px', marginBottom: '16px' }}>✉️</div>
+          <div style={{
+            width: 64, height: 64, margin: '0 auto 16px',
+            borderRadius: '50%', background: SNOW.greenLight,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'float 3s ease-in-out infinite',
+          }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={SNOW.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
           <h2 style={{
-            fontSize: '18px', fontWeight: 700, color: 'var(--ink)',
-            margin: '0 0 8px', fontFamily: 'var(--font-sora, system-ui)',
-            letterSpacing: '-0.3px',
+            fontSize: 20, fontWeight: 700, color: SNOW.ink,
+            margin: '0 0 8px', fontFamily: FONT.display, letterSpacing: '-0.3px',
           }}>
             Vérifie tes emails
           </h2>
           <p style={{
-            fontSize: '14px', color: 'var(--ink-muted)', margin: 0,
-            fontFamily: 'var(--font-dm, system-ui)', lineHeight: 1.6,
+            fontSize: 14, color: SNOW.muted, margin: 0,
+            fontFamily: FONT.body, lineHeight: 1.6,
           }}>
-            Un lien de confirmation a été envoyé à <strong style={{ color: 'var(--ink)' }}>{email}</strong>.
-            <br />Clique dessus pour activer ton compte.
+            Un lien de confirmation a été envoyé à <strong style={{ color: SNOW.ink }}>{email}</strong>.<br />
+            Clique dessus pour activer ton compte.
           </p>
           {!isModal && (
             <Link href="/login" style={{
-              display: 'inline-block', marginTop: '24px', padding: '10px 20px',
-              background: 'var(--ink)', color: '#fff', borderRadius: '10px',
-              fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-              fontFamily: 'var(--font-sora, system-ui)',
+              display: 'inline-block', marginTop: 24, padding: '11px 22px',
+              background: SNOW.ink, color: '#fff', borderRadius: RADIUS.md,
+              fontSize: 13, fontWeight: 600, textDecoration: 'none',
+              fontFamily: FONT.display, transition: TRANSITION.all,
             }}>
               Aller à la connexion
             </Link>
@@ -144,42 +164,68 @@ export default function AuthForm({
         </div>
       </div>
     )
+    return isModal ? successCard : (
+      <>
+        <style>{authStyles}</style>
+        {successCard}
+      </>
+    )
   }
 
-  return (
-    <div style={containerStyle}>
-      <style>{`
-        .af-input { transition: border-color .15s, box-shadow .15s; }
-        .af-input:focus { border-color: var(--ink) !important; box-shadow: 0 0 0 3px rgba(29,29,31,.08) !important; outline: none; }
-        .af-btn-primary { transition: all .15s; }
-        .af-btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
-        .af-btn-primary:active:not(:disabled) { transform: translateY(0); }
-        .af-btn-google { transition: all .15s; }
-        .af-btn-google:hover:not(:disabled) { background: var(--bg) !important; border-color: var(--border-strong) !important; }
-        .af-link { transition: color .1s; }
-        .af-link:hover { color: var(--ink) !important; }
-      `}</style>
+  // ─── Form ────────────────────────────────────────────────────────────────
+  const inputStyle = (hasError: boolean): React.CSSProperties => ({
+    width: '100%',
+    padding: '13px 14px',
+    borderRadius: RADIUS.md,
+    border: `1.5px solid ${hasError ? SNOW.red : 'rgba(229,229,234,0.8)'}`,
+    fontSize: 14,
+    color: SNOW.ink,
+    fontFamily: FONT.body,
+    boxSizing: 'border-box',
+    background: 'rgba(255,255,255,0.65)',
+    backdropFilter: 'blur(8px)',
+    transition: 'all .15s cubic-bezier(.2,.8,.2,1)',
+    outline: 'none',
+  })
 
+  const fieldErrorStyle: React.CSSProperties = {
+    fontSize: 12, color: SNOW.red, margin: '5px 2px 0',
+    fontFamily: FONT.body, animation: 'slideUp .2s ease',
+  }
+
+  const formContent = (
+    <>
       {!isModal && (
-        <div style={{ marginBottom: '24px' }}>
-          <p style={{
-            fontSize: '10px', color: 'var(--ink-faint)',
-            textTransform: 'uppercase', letterSpacing: '.12em',
-            margin: '0 0 6px', fontWeight: 600,
-            fontFamily: 'var(--font-sora, system-ui)',
+        <div style={{ marginBottom: 26 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            marginBottom: 12,
           }}>
-            Kodo Cards
-          </p>
+            <div style={{
+              width: 32, height: 32, borderRadius: 10,
+              background: SNOW.ink, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              animation: 'float 4s ease-in-out infinite',
+            }}>
+              <span style={{ color: '#fff', fontSize: 16, fontWeight: 800, fontFamily: FONT.display }}>K</span>
+            </div>
+            <span style={{
+              fontSize: 11, color: SNOW.muted, textTransform: 'uppercase',
+              letterSpacing: '0.16em', fontWeight: 600, fontFamily: FONT.display,
+            }}>
+              Kodo <span style={{ color: SNOW.red }}>Cards</span>
+            </span>
+          </div>
           <h1 style={{
-            fontSize: '24px', fontWeight: 700, color: 'var(--ink)',
-            margin: 0, fontFamily: 'var(--font-sora, system-ui)',
-            letterSpacing: '-0.4px',
+            fontSize: 28, fontWeight: 700, color: SNOW.ink,
+            margin: 0, fontFamily: FONT.display, letterSpacing: '-0.6px',
+            lineHeight: 1.2,
           }}>
-            {mode === 'login' ? 'Bon retour' : 'Créer un compte'}
+            {mode === 'login' ? 'Bon retour' : 'Crée ton compte'}
           </h1>
           <p style={{
-            fontSize: '14px', color: 'var(--ink-muted)',
-            margin: '6px 0 0', fontFamily: 'var(--font-dm, system-ui)',
+            fontSize: 14, color: SNOW.muted, margin: '8px 0 0',
+            fontFamily: FONT.body, lineHeight: 1.5,
           }}>
             {mode === 'login'
               ? 'Connecte-toi pour accéder à ta collection.'
@@ -195,15 +241,6 @@ export default function AuthForm({
             onClick={handleGoogle}
             disabled={loading}
             type="button"
-            style={{
-              width: '100%', padding: '12px', borderRadius: '10px',
-              border: '1px solid var(--border)', background: '#fff',
-              cursor: loading ? 'wait' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)',
-              fontFamily: 'var(--font-sora, system-ui)', marginBottom: '16px',
-              opacity: loading ? 0.6 : 1,
-            }}
           >
             <svg width="18" height="18" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -213,23 +250,22 @@ export default function AuthForm({
             </svg>
             Continuer avec Google
           </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '0 0 16px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 18px' }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(229,229,234,0.7)' }} />
             <span style={{
-              fontSize: '11px', color: 'var(--ink-faint)',
-              fontFamily: 'var(--font-dm, system-ui)',
+              fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.body,
+              letterSpacing: '0.02em',
             }}>
               ou par email
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            <div style={{ flex: 1, height: 1, background: 'rgba(229,229,234,0.7)' }} />
           </div>
         </>
       )}
 
       <form onSubmit={handleSubmit} noValidate>
         {mode === 'signup' && (
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: 12 }}>
             <input
               className="af-input"
               type="text"
@@ -239,23 +275,12 @@ export default function AuthForm({
               autoComplete="name"
               aria-label="Nom"
               aria-invalid={!!fieldErrors.name}
-              style={{
-                width: '100%', padding: '12px 14px', borderRadius: '10px',
-                border: `1px solid ${fieldErrors.name ? 'var(--red)' : 'var(--border)'}`,
-                fontSize: '14px', color: 'var(--ink)',
-                fontFamily: 'var(--font-dm, system-ui)',
-                boxSizing: 'border-box', background: 'var(--bg)',
-              }}
+              style={inputStyle(!!fieldErrors.name)}
             />
-            {fieldErrors.name && (
-              <p style={{ fontSize: '12px', color: 'var(--red)', margin: '4px 0 0', fontFamily: 'var(--font-dm, system-ui)' }}>
-                {fieldErrors.name}
-              </p>
-            )}
+            {fieldErrors.name && <p style={fieldErrorStyle}>{fieldErrors.name}</p>}
           </div>
         )}
-
-        <div style={{ marginBottom: '10px' }}>
+        <div style={{ marginBottom: 12 }}>
           <input
             className="af-input"
             type="email"
@@ -265,22 +290,11 @@ export default function AuthForm({
             autoComplete="email"
             aria-label="Email"
             aria-invalid={!!fieldErrors.email}
-            style={{
-              width: '100%', padding: '12px 14px', borderRadius: '10px',
-              border: `1px solid ${fieldErrors.email ? 'var(--red)' : 'var(--border)'}`,
-              fontSize: '14px', color: 'var(--ink)',
-              fontFamily: 'var(--font-dm, system-ui)',
-              boxSizing: 'border-box', background: 'var(--bg)',
-            }}
+            style={inputStyle(!!fieldErrors.email)}
           />
-          {fieldErrors.email && (
-            <p style={{ fontSize: '12px', color: 'var(--red)', margin: '4px 0 0', fontFamily: 'var(--font-dm, system-ui)' }}>
-              {fieldErrors.email}
-            </p>
-          )}
+          {fieldErrors.email && <p style={fieldErrorStyle}>{fieldErrors.email}</p>}
         </div>
-
-        <div style={{ marginBottom: mode === 'login' ? '8px' : '14px' }}>
+        <div style={{ marginBottom: mode === 'login' ? 10 : 16 }}>
           <input
             className="af-input"
             type="password"
@@ -290,85 +304,64 @@ export default function AuthForm({
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             aria-label="Mot de passe"
             aria-invalid={!!fieldErrors.password}
-            style={{
-              width: '100%', padding: '12px 14px', borderRadius: '10px',
-              border: `1px solid ${fieldErrors.password ? 'var(--red)' : 'var(--border)'}`,
-              fontSize: '14px', color: 'var(--ink)',
-              fontFamily: 'var(--font-dm, system-ui)',
-              boxSizing: 'border-box', background: 'var(--bg)',
-            }}
+            style={inputStyle(!!fieldErrors.password)}
           />
-          {fieldErrors.password && (
-            <p style={{ fontSize: '12px', color: 'var(--red)', margin: '4px 0 0', fontFamily: 'var(--font-dm, system-ui)' }}>
-              {fieldErrors.password}
-            </p>
-          )}
+          {fieldErrors.password && <p style={fieldErrorStyle}>{fieldErrors.password}</p>}
         </div>
 
         {mode === 'login' && (
-          <div style={{ textAlign: 'right', marginBottom: '14px' }}>
-            <Link
-              href="/forgot-password"
-              className="af-link"
-              style={{
-                fontSize: '12px', color: 'var(--ink-muted)',
-                fontFamily: 'var(--font-dm, system-ui)',
-                textDecoration: 'none', fontWeight: 500,
-              }}
-            >
+          <div style={{ textAlign: 'right', marginBottom: 16 }}>
+            <Link href="/forgot-password" className="af-link" style={{
+              fontSize: 12, color: SNOW.muted, fontFamily: FONT.body,
+              textDecoration: 'none', fontWeight: 500,
+            }}>
               Mot de passe oublié ?
             </Link>
           </div>
         )}
 
         {mode === 'signup' && (
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: 18 }}>
             <label style={{
-              display: 'flex', alignItems: 'flex-start', gap: '10px',
+              display: 'flex', alignItems: 'flex-start', gap: 10,
               cursor: 'pointer', userSelect: 'none',
             }}>
               <input
                 type="checkbox"
                 checked={acceptCgu}
                 onChange={(e) => setAcceptCgu(e.target.checked)}
-                aria-invalid={!!fieldErrors.cgu}
                 style={{
-                  width: '16px', height: '16px', marginTop: '2px',
-                  cursor: 'pointer', accentColor: 'var(--ink)',
-                  flexShrink: 0,
+                  width: 16, height: 16, marginTop: 2,
+                  cursor: 'pointer', accentColor: SNOW.ink, flexShrink: 0,
                 }}
               />
               <span style={{
-                fontSize: '12px', color: 'var(--ink-muted)',
-                fontFamily: 'var(--font-dm, system-ui)', lineHeight: 1.5,
+                fontSize: 12, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5,
               }}>
                 J'accepte les{' '}
-                <Link href="/legal/cgu" target="_blank" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
+                <Link href="/legal/cgu" target="_blank" style={{ color: SNOW.ink, textDecoration: 'underline' }}>
                   CGU
-                </Link>
-                {' '}et la{' '}
-                <Link href="/legal/confidentialite" target="_blank" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
+                </Link>{' '}et la{' '}
+                <Link href="/legal/confidentialite" target="_blank" style={{ color: SNOW.ink, textDecoration: 'underline' }}>
                   Politique de confidentialité
                 </Link>
               </span>
             </label>
             {fieldErrors.cgu && (
-              <p style={{ fontSize: '12px', color: 'var(--red)', margin: '6px 0 0 26px', fontFamily: 'var(--font-dm, system-ui)' }}>
-                {fieldErrors.cgu}
-              </p>
+              <p style={{ ...fieldErrorStyle, marginLeft: 26 }}>{fieldErrors.cgu}</p>
             )}
           </div>
         )}
 
         {error && (
           <div role="alert" style={{
-            padding: '10px 12px', borderRadius: '8px',
-            background: 'var(--red-light)', border: '1px solid var(--red-border)',
-            marginBottom: '12px',
+            padding: '11px 14px', borderRadius: RADIUS.md,
+            background: SNOW.redLight, border: `1px solid rgba(224,48,32,0.2)`,
+            marginBottom: 14, animation: 'slideUp .25s cubic-bezier(.2,.8,.2,1)',
           }}>
             <p style={{
-              fontSize: '12px', color: 'var(--red)', margin: 0,
-              fontFamily: 'var(--font-dm, system-ui)',
+              fontSize: 12, color: SNOW.red, margin: 0,
+              fontFamily: FONT.body, fontWeight: 500,
             }}>
               {error}
             </p>
@@ -376,16 +369,16 @@ export default function AuthForm({
         )}
 
         <button
-          className="af-btn-primary"
+          className={formReady && !loading ? 'af-btn-primary af-btn-pulse' : 'af-btn-primary'}
           type="submit"
           disabled={loading}
           style={{
-            width: '100%', padding: '13px', borderRadius: '10px',
-            border: 'none', background: 'var(--ink)', color: '#fff',
-            fontSize: '14px', fontWeight: 700,
+            width: '100%', padding: '14px', borderRadius: RADIUS.md,
+            border: 'none', background: SNOW.ink, color: '#fff',
+            fontSize: 14, fontWeight: 700,
             cursor: loading ? 'wait' : 'pointer',
-            fontFamily: 'var(--font-sora, system-ui)',
-            opacity: loading ? 0.7 : 1, letterSpacing: '-0.2px',
+            fontFamily: FONT.display, opacity: loading ? 0.7 : 1,
+            letterSpacing: '-0.2px',
           }}
         >
           {loading
@@ -395,9 +388,8 @@ export default function AuthForm({
       </form>
 
       <p style={{
-        textAlign: 'center', margin: '20px 0 0',
-        fontSize: '13px', color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-dm, system-ui)',
+        textAlign: 'center', margin: '22px 0 0',
+        fontSize: 13, color: SNOW.muted, fontFamily: FONT.body,
       }}>
         {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}{' '}
         {onSwitchMode ? (
@@ -410,31 +402,89 @@ export default function AuthForm({
               setFieldErrors({})
             }}
             style={{
-              background: 'none', border: 'none', color: 'var(--ink-muted)',
-              cursor: 'pointer', fontWeight: 600, fontSize: '13px',
-              fontFamily: 'var(--font-dm, system-ui)',
-              textDecoration: 'underline', padding: 0,
+              background: 'none', border: 'none', color: SNOW.ink,
+              cursor: 'pointer', fontWeight: 600, fontSize: 13,
+              fontFamily: FONT.body, textDecoration: 'underline', padding: 0,
             }}
           >
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
           </button>
         ) : (
-          <Link
-            href={mode === 'login' ? '/signup' : '/login'}
-            className="af-link"
+          <Link href={mode === 'login' ? '/signup' : '/login'} className="af-link"
             style={{
-              color: 'var(--ink-muted)', fontWeight: 600,
-              fontSize: '13px', fontFamily: 'var(--font-dm, system-ui)',
-              textDecoration: 'underline',
+              color: SNOW.ink, fontWeight: 600, fontSize: 13,
+              fontFamily: FONT.body, textDecoration: 'underline',
             }}
           >
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
           </Link>
         )}
       </p>
-    </div>
+    </>
+  )
+
+  // ─── Render variants ─────────────────────────────────────────────────────
+  if (isModal) {
+    return (
+      <>
+        <style>{authStyles}</style>
+        <div>{formContent}</div>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <style>{authStyles}</style>
+      <div style={cardStyle}>{formContent}</div>
+    </>
   )
 }
+
+// ─── CSS animations (inline pour porter avec le composant) ─────────────────
+const authStyles = `
+  @keyframes authCardEnter {
+    0% { opacity: 0; transform: translateY(20px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes authBtnPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(29,29,31,0); }
+    50% { box-shadow: 0 0 0 6px rgba(29,29,31,0.06); }
+  }
+  .af-input { transition: all .15s cubic-bezier(.2,.8,.2,1); }
+  .af-input:focus {
+    border-color: ${SNOW.ink} !important;
+    background: rgba(255,255,255,0.95) !important;
+    box-shadow: 0 0 0 3px rgba(29,29,31,0.06) !important;
+    outline: none;
+  }
+  .af-btn-primary { transition: all .2s cubic-bezier(.2,.8,.2,1); }
+  .af-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  }
+  .af-btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .af-btn-pulse { animation: authBtnPulse 2s ease-in-out infinite; }
+  .af-btn-google {
+    width: 100%; padding: 12px; border-radius: ${RADIUS.md}px;
+    border: 1px solid rgba(229,229,234,0.8);
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; font-size: 13px; font-weight: 600; color: ${SNOW.ink};
+    font-family: ${FONT.display}; margin-bottom: 16px;
+    transition: all .15s cubic-bezier(.2,.8,.2,1);
+  }
+  .af-btn-google:hover:not(:disabled) {
+    background: rgba(255,255,255,0.9);
+    border-color: ${SNOW.borderHover};
+    transform: translateY(-1px);
+  }
+  .af-btn-google:disabled { opacity: 0.6; cursor: wait; }
+  .af-link { transition: color .1s ease; }
+  .af-link:hover { color: ${SNOW.ink} !important; }
+`
 
 function translateError(msg: string): string {
   const lower = msg.toLowerCase()

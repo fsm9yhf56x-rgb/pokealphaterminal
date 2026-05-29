@@ -9,26 +9,49 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      // Dégradé Snow+ étendu sur TOUT le layout
-      background: 'linear-gradient(135deg, #FFE8E5 0%, #FFF5F0 30%, #F0F5FB 70%, #E8EEFB 100%)',
+      // Fond neutre Spotlight — les nappes bokeh apportent la couleur
+      background: '#FAFAFB',
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Blobs colorés décoratifs absolus */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden',
+      {/* 5 nappes bokeh Spotlight (alignées AppShell) */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0,
       }}>
+        {/* Orange top-left */}
         <div style={{
-          position: 'absolute', top: '-10%', left: '-10%',
-          width: 400, height: 400, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(224,48,32,0.18) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          position: 'absolute', top: '-15%', left: '-10%',
+          width: 520, height: 520, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,165,80,0.42) 0%, transparent 65%)',
+          filter: 'blur(110px)',
         }} />
+        {/* Bleu top-right */}
         <div style={{
-          position: 'absolute', bottom: '-15%', right: '-10%',
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(24,95,165,0.15) 0%, transparent 70%)',
-          filter: 'blur(60px)',
+          position: 'absolute', top: '-10%', right: '-12%',
+          width: 580, height: 580, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(110,150,255,0.36) 0%, transparent 65%)',
+          filter: 'blur(130px)',
+        }} />
+        {/* Violet centre */}
+        <div style={{
+          position: 'absolute', top: '30%', left: '40%',
+          width: 600, height: 600, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(195,135,245,0.3) 0%, transparent 65%)',
+          filter: 'blur(130px)',
+        }} />
+        {/* Vert bottom-right */}
+        <div style={{
+          position: 'absolute', bottom: '-15%', right: '-8%',
+          width: 540, height: 540, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,210,150,0.28) 0%, transparent 65%)',
+          filter: 'blur(120px)',
+        }} />
+        {/* Rose bottom-left */}
+        <div style={{
+          position: 'absolute', bottom: '-10%', left: '15%',
+          width: 480, height: 480, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,90,140,0.24) 0%, transparent 65%)',
+          filter: 'blur(120px)',
         }} />
       </div>
 

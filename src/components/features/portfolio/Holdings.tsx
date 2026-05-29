@@ -1963,15 +1963,33 @@ export function Holdings() {
                       <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
                       Ma Collection
                     </div>
-                    <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)', marginTop:'2px' }}>
-                  {binderSet
-                    ? <button onClick={()=>setBinderSet(null)} style={{ background:'none', border:'none', color:'rgba(255,107,53,.8)', cursor:'pointer', fontSize:'12px', fontFamily:'var(--font-display)', padding:0, display:'flex', alignItems:'center', gap:'4px' }}>← Toutes les séries</button>
-                    : <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
-                  }
-                  {binderSet && (
-                    <button onClick={()=>setBinderSet('__all__')} style={{ background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'11px', fontFamily:'var(--font-display)', padding:'0 0 0 10px', textDecoration:'underline' }}>
-                      Toute ma collection
-                    </button>
+                    <div style={{ fontSize:13, color:'#48484A', fontFamily:'var(--font-display)', marginTop:6 }}>
+                  {binderSet ? (
+                    // Breadcrumb glass quand on est dans une vue set/all
+                    <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 10px 5px 6px', background:'rgba(255,255,255,0.65)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:99, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+                      <button onClick={()=>setBinderSet(null)} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'transparent', border:'none', borderRadius:99, color:'#1D1D1F', fontSize:11, fontWeight:600, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .15s' }}
+                        onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,0,0,0.06)' }}
+                        onMouseLeave={e=>{ e.currentTarget.style.background='transparent' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        Mes séries
+                      </button>
+                      <span style={{ width:1, height:14, background:'rgba(0,0,0,0.08)' }} />
+                      <span style={{ fontSize:11, fontWeight:600, color:'#6E6E73', fontFamily:'var(--font-display)', padding:'0 4px' }}>
+                        {binderSet==='__all__' ? 'Toute ma collection' : binderSet}
+                      </span>
+                      {binderSet!=='__all__' && (
+                        <>
+                          <span style={{ width:1, height:14, background:'rgba(0,0,0,0.08)' }} />
+                          <button onClick={()=>setBinderSet('__all__')} style={{ padding:'4px 10px', background:'transparent', border:'none', borderRadius:99, color:'#6E6E73', fontSize:11, fontWeight:500, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .15s' }}
+                            onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,0,0,0.06)'; e.currentTarget.style.color='#1D1D1F' }}
+                            onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#6E6E73' }}>
+                            Voir tout
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
                   )}
                 </div>
                   </div>
@@ -1988,13 +2006,13 @@ export function Holdings() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
                       Ajouter une série
                     </button>}
-                    <button onClick={()=>setImportOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                    <button onClick={()=>setImportOpen(true)} style={{ padding:'7px 16px', borderRadius:10, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', color:'#1D1D1F', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:6, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}
+                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,0.95)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                       Importer
                     </button>
-                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
+                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'7px 16px', borderRadius:10, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', color:'#1D1D1F', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:6, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}
                       onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
                       onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -2166,7 +2184,7 @@ export function Holdings() {
                                       onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                                     </button>
-                                    <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:'11px', color:'#E03020', fontWeight:500, fontFamily:'var(--font-display)', padding:'3px 10px', borderRadius:'99px', background:'#FFF1EE', border:'1px solid rgba(224,48,32,.15)', transition:'all .2s', whiteSpace:'nowrap', cursor:'pointer' }}>Voir la série complète ›</span>
+                                    <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:11, color:'#1D1D1F', fontWeight:600, fontFamily:'var(--font-display)', padding:'5px 12px', borderRadius:99, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(229,229,234,0.6)', transition:'all .2s cubic-bezier(.2,.8,.2,1)', whiteSpace:'nowrap', cursor:'pointer', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>Voir la série complète ›</span>
                                   </div>
                                 </div>
                                 {resolvedTotal>0&&(
@@ -2520,10 +2538,24 @@ export function Holdings() {
                   </div>
                 </>)}
                 {binderPages>1&&(
-                  <div style={{ display:'flex', justifyContent:'center', gap:'6px', marginTop:'16px' }}>
-                    {Array.from({length:binderPages}).map((_,i)=>(
-                      <div key={i} onClick={()=>setBinderPage(i)} style={{ width:'26px', height:'26px', borderRadius:'8px', background:i===binderPage?'#1D1D1F':'transparent', color:i===binderPage?'#fff':'#86868B', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:i===binderPage?600:500, cursor:'pointer', transition:'all .15s', fontFamily:'var(--font-data)' }}>{i+1}</div>
-                    ))}
+                  <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:8, marginTop:20, padding:'10px 12px', background:'rgba(255,255,255,0.6)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:14, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)', width:'fit-content', margin:'20px auto 0' }}>
+                    <button onClick={()=>setBinderPage(Math.max(0,binderPage-1))} disabled={binderPage===0} style={{ width:28, height:28, borderRadius:8, border:'none', background:'transparent', cursor:binderPage===0?'default':'pointer', opacity:binderPage===0?.3:1, display:'flex', alignItems:'center', justifyContent:'center', color:'#1D1D1F', transition:'all .15s' }}
+                      onMouseEnter={e=>{ if(binderPage>0) e.currentTarget.style.background='rgba(0,0,0,0.05)' }}
+                      onMouseLeave={e=>{ e.currentTarget.style.background='transparent' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div style={{ display:'flex', gap:4 }}>
+                      {Array.from({length:binderPages}).map((_,i)=>(
+                        <div key={i} onClick={()=>setBinderPage(i)} style={{ minWidth:28, height:28, padding:'0 10px', borderRadius:8, background:i===binderPage?'#1D1D1F':'transparent', color:i===binderPage?'#fff':'#6E6E73', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:i===binderPage?700:500, cursor:'pointer', transition:'all .15s', fontFamily:'var(--font-data)' }}
+                          onMouseEnter={e=>{ if(i!==binderPage) e.currentTarget.style.background='rgba(0,0,0,0.05)' }}
+                          onMouseLeave={e=>{ if(i!==binderPage) e.currentTarget.style.background='transparent' }}>{i+1}</div>
+                      ))}
+                    </div>
+                    <button onClick={()=>setBinderPage(Math.min(binderPages-1,binderPage+1))} disabled={binderPage===binderPages-1} style={{ width:28, height:28, borderRadius:8, border:'none', background:'transparent', cursor:binderPage===binderPages-1?'default':'pointer', opacity:binderPage===binderPages-1?.3:1, display:'flex', alignItems:'center', justifyContent:'center', color:'#1D1D1F', transition:'all .15s' }}
+                      onMouseEnter={e=>{ if(binderPage<binderPages-1) e.currentTarget.style.background='rgba(0,0,0,0.05)' }}
+                      onMouseLeave={e=>{ e.currentTarget.style.background='transparent' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
                   </div>
                 )}
               </div>
@@ -2556,23 +2588,55 @@ export function Holdings() {
                 </button>
                 <button onClick={()=>{ setShareCtx('showcase'); setShareCard(null); setShareOpen(true) }}
                   disabled={showcase.length===0}
-                  style={{ padding:'9px 18px', borderRadius:'10px', background:showcase.length>0?'linear-gradient(135deg,#E03020,#FF4433)':'#E8E8ED', border:'none', color:showcase.length>0?'#fff':'#86868B', fontSize:'12px', fontWeight:600, cursor:showcase.length>0?'pointer':'default', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, transition:'all .2s' }}>
+                  style={{ padding:'10px 20px', borderRadius:12, background:showcase.length>0?'#1D1D1F':'rgba(0,0,0,0.05)', border:'none', color:showcase.length>0?'#fff':'#AEAEB2', fontSize:12, fontWeight:600, cursor:showcase.length>0?'pointer':'default', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6, opacity:showcase.length>0?1:.6 }}
+                  onMouseEnter={e=>{ if(showcase.length>0){ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)' } }}
+                  onMouseLeave={e=>{ if(showcase.length>0){ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' } }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   Partager ma Vitrine
                 </button>
                 <button onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else if(showcase.length>=5){ showToast('La vitrine est limitee a 5 pieces') }else{ setShowPickerForShowcase(true) } }}
-                  style={{ padding:'9px 18px', borderRadius:'10px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const }}>
-                  + Ajouter une carte
+                  style={{ padding:'10px 20px', borderRadius:12, background:'#1D1D1F', border:'none', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6 }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)' }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  Ajouter une carte
                 </button>
               </div>
             </div>
             {showcase.length===0?(
-              <div style={{ textAlign:'center', padding:'80px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'18px' }}>
-                <div style={{ fontSize:'15px', color:'#48484A', fontFamily:'var(--font-display)' }}>Vitrine vide</div>
-                <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'280px' }}>Exposez vos pieces maitresses. Partagez-les avec votre communaute.</div>
+              <div style={{
+                textAlign:'center',
+                padding:'72px 32px',
+                display:'flex', flexDirection:'column', alignItems:'center', gap:20,
+                background: 'rgba(255,255,255,0.62)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                borderRadius: 18,
+                border: 'none',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
+              }}>
+                {/* Icone decorative */}
+                <div style={{ width:64, height:64, borderRadius:16, background:'linear-gradient(135deg, rgba(255,180,90,0.18), rgba(255,140,60,0.12))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(255,140,60,0.12)' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#C53010" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+                  <div style={{ fontSize:18, color:'#1D1D1F', fontWeight:700, fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>Compose ta vitrine</div>
+                  <div style={{ fontSize:13, color:'#6E6E73', fontFamily:'var(--font-body)', maxWidth:340, lineHeight:1.5 }}>
+                    Tes 5 plus belles pieces, mises en lumiere comme dans un musee personnel.
+                  </div>
+                </div>
                 {portfolio.length>0&&(
-                  <button onClick={()=>setShowPickerForShowcase(true)} style={{ padding:'10px 22px', borderRadius:'10px', background:'#FFF1EE', border:'1px solid rgba(220,60,30,.3)', color:'#C53010', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  <button onClick={()=>setShowPickerForShowcase(true)} style={{ padding:'12px 24px', borderRadius:12, background:'#1D1D1F', border:'none', color:'#fff', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:8 }}
+                    onMouseEnter={e=>{ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.18)' }}
+                    onMouseLeave={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}>
                     Choisir depuis ma collection
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
+                )}
+                {portfolio.length===0&&(
+                  <div style={{ fontSize:11, color:'#AEAEB2', fontFamily:'var(--font-display)', textTransform:'uppercase' as const, letterSpacing:'.1em' }}>Ajoute d&apos;abord des cartes a ta collection</div>
                 )}
               </div>
             ):(

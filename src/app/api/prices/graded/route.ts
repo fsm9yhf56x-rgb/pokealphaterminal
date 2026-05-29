@@ -46,7 +46,7 @@ function normalizeVariant(pptKey: string): string {
   const m = pptKey.match(/^([a-z]+)(\d+)(?:_(\d+))?$/i)
   if (!m) return pptKey
   const [, slab, intPart, fracPart] = m
-  const grade = fracPart ? `${intPart}.${fracPart}` : intPart
+  const grade = fracPart ? `${intPart}_${fracPart}` : intPart
   return `${slab.toLowerCase()}_${grade}`
 }
 

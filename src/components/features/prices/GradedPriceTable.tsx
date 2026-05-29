@@ -1,16 +1,18 @@
 'use client'
 
 /**
- * GradedPriceTable — displays graded slab prices (PSA, CGC, BGS, SGC, PCA, CCC).
+ * GradedPriceTable — affiche les prix de ventes confirmees sur cartes gradees.
+ * Source: useCardGradedPrices -> /api/prices/graded -> graded_prices_ppt (real eBay sold).
  *
- * Reads from useCardGradedPrices hook (calls /api/prices/graded).
- * Falls back gracefully when no graded data is available.
- *
- * Design: Snow+ system, sibling to ConditionPriceTable.
- * Shows grade column, slab pill, price, sales count, freshness.
+ * Design Snow+ :
+ *  - Pills slab colores (PSA bleu / CGC rose / BGS vert / SGC violet)
+ *  - Badge confidence (high vert / medium ambre / low gris) a cote du prix
+ *  - Badge count "X ventes"
+ *  - Tri par prix decroissant (PSA10 en haut, plus naturel a lire)
+ *  - Filtre noise : masque grades < 2 ventes ET confidence=low
  */
 
-import { useCardGradedPrices, GRADE_VARIANT_ORDER, formatGradeLabel, getSlabCompany } from './hooks/useCardGradedPrices'
+import { useCardGradedPrices, formatGradeLabel, getSlabCompany } from './hooks/useCardGradedPrices'
 
 const SNOW = {
   bg: '#FFFFFF',
@@ -22,18 +24,38 @@ const SNOW = {
   mutedLight: '#86868B',
   red: '#E03020',
   green: '#26A65B',
-  // Slab company colors (subtle backgrounds)
+  amber: '#B8860B',
   psa: '#F0F4FA',
   cgc: '#FAF0F4',
   bgs: '#F4FAF0',
   sgc: '#F4F0FA',
   pca: '#FAF4F0',
   ccc: '#F0FAFA',
+  tag: '#F5F5F7',
 }
 
 const SLAB_BG: Record<string, string> = {
   PSA: SNOW.psa, CGC: SNOW.cgc, BGS: SNOW.bgs,
-  SGC: SNOW.sgc, PCA: SNOW.pca, CCC: SNOW.ccc,
+  SGC: SNOW.sgc, PCA: SNOW.pca, CCC: SNOW.ccc, TAG: SNOW.tag,
+}
+
+const CONFIDENCE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  high:   { bg: '#E8F5E9', color: '#1B5E20', label: 'confiance haute' },
+  medium: { bg: '#FFF8E1', color: '#7C5800', label: 'confiance moy.' },
+  low:    { bg: '#F5F5F7', color: '#6E6E73', label: 'confiance basse' },
+}
+
+interface GradedPriceData {
+  price_avg: number
+  price_low: number | null
+  price_high: number | null
+  currency: string
+  source: string
+  fetched_at: string
+  nb_sales: number | null
+  confidence?: string | null
+  market_trend?: string | null
+  median?: number | null
 }
 
 interface GradedPriceTableProps {
@@ -45,29 +67,22 @@ interface GradedPriceTableProps {
   usdToEur?: number
 }
 
-const USD_EUR_DEFAULT = 0.92
-
-function fmtPrice(value: number | null | undefined, currency: string, usdToEur: number): string {
+function fmtPrice(value: number | null | undefined): string {
   if (value == null) return '—'
-  const eur = currency === 'USD' ? value * usdToEur : value
-  if (eur >= 1000) return `${Math.round(eur).toLocaleString('fr-FR')} €`
-  if (eur >= 100) return `${Math.round(eur)} €`
-  return `${eur.toFixed(2)} €`
+  if (value >= 1000) return `${Math.round(value).toLocaleString('fr-FR')} €`
+  if (value >= 100) return `${Math.round(value)} €`
+  return `${value.toFixed(2)} €`
 }
 
-function fmtFreshness(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const hours = Math.floor(diff / 3_600_000)
-  if (hours < 1) return 'à l’instant'
-  if (hours < 24) return `il y a ${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `il y a ${days}j`
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+function shouldShow(p: GradedPriceData): boolean {
+  const lowConfidence = p.confidence === 'low'
+  const fewSales = (p.nb_sales ?? 0) < 2
+  return !(lowConfidence && fewSales)
 }
 
 export function GradedPriceTable({
   tcgCardId, setSlug, cardNumber, lang,
-  hideWhenEmpty = false, usdToEur = USD_EUR_DEFAULT,
+  hideWhenEmpty = false,
 }: GradedPriceTableProps) {
   const params = tcgCardId
     ? { tcgCardId, lang }
@@ -90,19 +105,28 @@ export function GradedPriceTable({
         fontFamily: 'var(--font-dm, sans-serif)', textAlign: 'center',
         background: SNOW.surface, borderRadius: 10,
       }}>
-        Aucun prix gradé disponible
+        Aucune vente gradée confirmée pour cette carte
       </div>
     )
   }
 
-  // Sort variants by GRADE_VARIANT_ORDER (psa_10 first, then desc), fallback alphabetical
-  const orderIdx = new Map(GRADE_VARIANT_ORDER.map((v, i) => [v, i]))
-  const sortedVariants = Object.keys(prices).sort((a, b) => {
-    const ia = orderIdx.get(a as any) ?? 999
-    const ib = orderIdx.get(b as any) ?? 999
-    if (ia !== ib) return ia - ib
-    return a.localeCompare(b)
-  })
+  const sortedVariants = Object.entries(prices as Record<string, GradedPriceData>)
+    .filter(([, p]) => shouldShow(p))
+    .sort(([, a], [, b]) => (b.price_avg || 0) - (a.price_avg || 0))
+    .map(([variant]) => variant)
+
+  if (sortedVariants.length === 0) {
+    if (hideWhenEmpty) return null
+    return (
+      <div style={{
+        padding: 12, fontSize: 12, color: SNOW.mutedLight,
+        fontFamily: 'var(--font-dm, sans-serif)', textAlign: 'center',
+        background: SNOW.surface, borderRadius: 10,
+      }}>
+        Données insuffisantes pour cette carte
+      </div>
+    )
+  }
 
   return (
     <div style={{
@@ -112,7 +136,6 @@ export function GradedPriceTable({
       overflow: 'hidden',
       fontFamily: 'var(--font-dm, sans-serif)',
     }}>
-      {/* Header */}
       <div style={{
         padding: '10px 14px',
         background: SNOW.surface,
@@ -129,7 +152,7 @@ export function GradedPriceTable({
           color: SNOW.muted,
           fontFamily: 'var(--font-display, sans-serif)',
         }}>
-          Listings actifs · eBay
+          Ventes gradées · eBay sold
         </span>
         <span style={{
           fontSize: 10,
@@ -140,36 +163,36 @@ export function GradedPriceTable({
         </span>
       </div>
 
-      {/* Disclaimer */}
       <div style={{
         padding: '8px 14px',
-        background: '#FFF8E5',
+        background: '#F4F8FA',
         borderBottom: `1px solid ${SNOW.borderSoft}`,
         fontSize: 10,
-        color: '#8A6500',
-        fontFamily: 'var(--font-dm, sans-serif)',
+        color: SNOW.muted,
         lineHeight: 1.4,
       }}>
-        Prix demandés (asks), pas des prix de vente conclus. Indicatif uniquement.
+        Prix observés sur ventes confirmées eBay (90 derniers jours). Conversion USD → EUR.
       </div>
 
-      {/* Rows */}
       <div>
         {sortedVariants.map((variant, i) => {
-          const p = prices[variant]
+          const p = prices[variant] as GradedPriceData
           const slab = getSlabCompany(variant)
+          const confKey = (p.confidence || 'low').toLowerCase()
+          const conf = CONFIDENCE_STYLE[confKey] || CONFIDENCE_STYLE.low
+
           return (
             <div key={variant} style={{
-              padding: '10px 14px',
+              padding: '11px 14px',
               display: 'grid',
-              gridTemplateColumns: '90px 1fr auto',
+              gridTemplateColumns: '76px 1fr auto',
               gap: 10,
               alignItems: 'center',
               borderBottom: i < sortedVariants.length - 1 ? `1px solid ${SNOW.borderSoft}` : 'none',
             }}>
               <span style={{
                 display: 'inline-block',
-                padding: '3px 8px',
+                padding: '4px 8px',
                 background: SLAB_BG[slab] || SNOW.surface,
                 color: SNOW.ink,
                 fontSize: 11,
@@ -180,15 +203,26 @@ export function GradedPriceTable({
               }}>
                 {formatGradeLabel(variant)}
               </span>
-              <span style={{
-                fontSize: 11,
-                color: SNOW.mutedLight,
-                fontFamily: 'var(--font-dm, sans-serif)',
-              }}>
-                {p.nb_sales ? `${p.nb_sales} vente${p.nb_sales > 1 ? 's' : ''}` : ''}
-                {' · '}
-                {fmtFreshness(p.fetched_at)}
-              </span>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: SNOW.muted }}>
+                  {p.nb_sales ? `${p.nb_sales} vente${p.nb_sales > 1 ? 's' : ''}` : ''}
+                </span>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '2px 6px',
+                  background: conf.bg,
+                  color: conf.color,
+                  fontSize: 9,
+                  fontWeight: 600,
+                  borderRadius: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}>
+                  {conf.label}
+                </span>
+              </div>
+
               <span style={{
                 fontSize: 14,
                 fontWeight: 600,
@@ -196,7 +230,7 @@ export function GradedPriceTable({
                 fontFamily: 'var(--font-data, monospace)',
                 textAlign: 'right',
               }}>
-                {fmtPrice(p.price_avg, p.currency, usdToEur)}
+                {fmtPrice(p.price_avg)}
               </span>
             </div>
           )

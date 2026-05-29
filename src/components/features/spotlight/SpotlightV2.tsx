@@ -94,7 +94,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         ) : null}
 
         {prices ? (
-          <SpotlightTLDR prices={prices} />
+          <SpotlightTLDR prices={prices} portfolio={portfolio} />
         ) : (
           <SkeletonBox height={60} />
         )}

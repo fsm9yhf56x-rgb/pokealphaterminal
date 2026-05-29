@@ -1525,68 +1525,152 @@ export function Holdings() {
 
         {/* SHOWCASE PICKER */}
         {showPickerForShowcase&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>{setShowPickerForShowcase(false);setVitrineSearch('');setVitrineFilter('all')}}>
-            <div style={{ background:'#fff', borderRadius:'20px', padding:'0', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'85vh', display:'flex', flexDirection:'column', overflow:'hidden' }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={()=>{setShowPickerForShowcase(false);setVitrineSearch('');setVitrineFilter('all')}}>
+            <div style={{
+              background:'rgba(255,255,255,0.78)',
+              backdropFilter:'blur(28px) saturate(180%)',
+              WebkitBackdropFilter:'blur(28px) saturate(180%)',
+              borderRadius:24,
+              padding:0,
+              maxWidth:560,
+              width:'100%',
+              animation:'fadeUp .25s ease-out',
+              maxHeight:'85vh',
+              display:'flex', flexDirection:'column' as const,
+              overflow:'hidden',
+              boxShadow:'0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.04)',
+              position:'relative',
+            }} onClick={e=>e.stopPropagation()}>
               {/* Header */}
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 20px', borderBottom:'1px solid #E5E5EA', flexShrink:0 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', padding:'22px 24px 16px', flexShrink:0 }}>
                 <div>
-                  <div style={{ fontSize:'16px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter a la Vitrine</div>
-                  <div style={{ fontSize:'11px', color:'#86868B', marginTop:'2px' }}>{showcase.length}/5 pieces exposees</div>
+                  <div style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px', lineHeight:1.2 }}>Choisis tes pieces maitresses</div>
+                  <div style={{ fontSize:11, color:'#86868B', marginTop:4, fontFamily:'var(--font-display)' }}>
+                    <span style={{ fontWeight:700, color:'#1D1D1F' }}>{showcase.length}/5</span> exposees · {5-showcase.length} restantes
+                  </div>
                 </div>
-                <button onClick={()=>setShowPickerForShowcase(false)} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', fontSize:'13px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <button onClick={()=>setShowPickerForShowcase(false)} style={{
+                  width:30, height:30, borderRadius:'50%',
+                  background:'rgba(255,255,255,0.6)',
+                  backdropFilter:'blur(8px)',
+                  WebkitBackdropFilter:'blur(8px)',
+                  border:'1px solid rgba(229,229,234,0.7)',
+                  color:'#48484A',
+                  cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                  boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.color='#fff'; e.currentTarget.style.transform='scale(1.05)' }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.6)'; e.currentTarget.style.color='#48484A'; e.currentTarget.style.transform='' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
               {(()=>{
                 const available = portfolio.filter(c=>!showcase.find(sc=>sc.id===c.id))
                 const filtered = available.filter(c=>{
                   const matchSearch = !vitrineSearch || c.name.toLowerCase().includes(vitrineSearch.toLowerCase()) || c.set.toLowerCase().includes(vitrineSearch.toLowerCase())
-                  const matchFilter = vitrineFilter==='all' || c.type===vitrineFilter || (vitrineFilter==='graded'&&c.graded) || (vitrineFilter==='rare'&&c.rarity&&['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare'].includes(c.rarity))
+                  const RARE_SET = ['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare']
+                  const matchFilter = vitrineFilter==='all'
+                    || vitrineFilter==='top'
+                    || (vitrineFilter==='rare' && c.rarity && RARE_SET.includes(c.rarity))
+                    || (vitrineFilter==='graded' && c.graded)
+                    || (vitrineFilter==='fr' && c.lang==='FR')
+                    || (vitrineFilter==='vintage' && c.year && c.year < 2010)
                   return matchSearch && matchFilter
+                }).sort((a,b)=>{
+                  // Top valeur = tri par prix decroissant
+                  if (vitrineFilter==='top') return (b.curPrice||0) - (a.curPrice||0)
+                  return 0
                 })
                 return available.length===0?(
-                <div style={{ textAlign:'center', padding:'40px 20px', color:'#86868B', fontSize:'13px', fontFamily:'var(--font-display)' }}>Toutes vos cartes sont dans la vitrine.</div>
+                <div style={{ textAlign:'center', padding:'60px 32px', display:'flex', flexDirection:'column' as const, alignItems:'center', gap:14 }}>
+                  <div style={{ width:56, height:56, borderRadius:16, background:'rgba(245,245,247,0.7)', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(229,229,234,0.7)' }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#48484A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                  </div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Vitrine complete</div>
+                  <div style={{ fontSize:12, color:'#86868B', maxWidth:280, lineHeight:1.5, fontFamily:'var(--font-body)' }}>Toutes tes cartes sont deja exposees. Retire d&apos;abord une piece pour en ajouter une autre.</div>
+                </div>
               ):(
                 <>
-                {/* Search + filters */}
-                <div style={{ padding:'12px 16px 0', flexShrink:0 }}>
-                  <div style={{ position:'relative', marginBottom:'10px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                {/* Search + filters glass */}
+                <div style={{ padding:'8px 20px 0', flexShrink:0 }}>
+                  <div style={{ position:'relative', marginBottom:12 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                     <input value={vitrineSearch} onChange={e=>setVitrineSearch(e.target.value)} placeholder="Rechercher une carte..."
-                      style={{ width:'100%', height:'38px', padding:'0 12px 0 36px', borderRadius:'10px', border:'1px solid #E5E5EA', background:'#F5F5F7', fontSize:'13px', color:'#1D1D1F', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' }}/>
+                      style={{
+                        width:'100%', height:42,
+                        padding:'0 14px 0 38px',
+                        borderRadius:12,
+                        border:'1px solid rgba(229,229,234,0.7)',
+                        background:'rgba(255,255,255,0.7)',
+                        backdropFilter:'blur(12px) saturate(180%)',
+                        WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                        fontSize:13, color:'#1D1D1F',
+                        fontFamily:'var(--font-display)',
+                        outline:'none', boxSizing:'border-box' as const,
+                        boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                        transition:'all .2s',
+                      }}
+                      onFocus={e=>{ e.currentTarget.style.borderColor='rgba(29,29,31,0.5)'; e.currentTarget.style.boxShadow='0 0 0 3px rgba(29,29,31,0.06), inset 0 1px 0 rgba(255,255,255,0.95)' }}
+                      onBlur={e=>{ e.currentTarget.style.borderColor='rgba(229,229,234,0.7)'; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}/>
                   </div>
-                  <div style={{ display:'flex', gap:'4px', flexWrap:'wrap', marginBottom:'4px' }}>
-                    {[{k:'all',l:'Toutes'},{k:'fire',l:'Feu'},{k:'water',l:'Eau'},{k:'psychic',l:'Psy'},{k:'grass',l:'Plante'},{k:'rare',l:'Rares'},{k:'graded',l:'Gradees'}].map(f=>(
-                      <button key={f.k} onClick={()=>setVitrineFilter(f.k)}
-                        style={{ padding:'5px 12px', borderRadius:'99px', border:`1px solid ${vitrineFilter===f.k?'#1D1D1F':'#E5E5EA'}`, background:vitrineFilter===f.k?'#1D1D1F':'transparent', color:vitrineFilter===f.k?'#fff':'#86868B', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+                    {[{k:'all',l:'Toutes'},{k:'top',l:'Top valeur'},{k:'rare',l:'Rares'},{k:'graded',l:'Gradees'},{k:'fr',l:'Francaises'},{k:'vintage',l:'Vintage'}].map(f=>(
+                      <button key={f.k} onClick={()=>setVitrineFilter(f.k)} style={{
+                        padding:'6px 13px',
+                        borderRadius:99,
+                        border: vitrineFilter===f.k ? '1px solid #1D1D1F' : '1px solid rgba(229,229,234,0.7)',
+                        background: vitrineFilter===f.k ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
+                        backdropFilter: vitrineFilter===f.k ? 'none' : 'blur(12px) saturate(180%)',
+                        WebkitBackdropFilter: vitrineFilter===f.k ? 'none' : 'blur(12px) saturate(180%)',
+                        color: vitrineFilter===f.k ? '#fff' : '#48484A',
+                        fontSize:10.5, fontWeight:700,
+                        cursor:'pointer',
+                        fontFamily:'var(--font-display)',
+                        letterSpacing:'0.04em',
+                        transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                        boxShadow: vitrineFilter===f.k ? '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      }}>
                         {f.l}
                       </button>
                     ))}
                   </div>
-                  <div style={{ fontSize:'10px', color:'#AEAEB2', fontFamily:'var(--font-display)', padding:'4px 0' }}>{filtered.length} carte{filtered.length!==1?'s':''} disponible{filtered.length!==1?'s':''}</div>
+                  <div style={{ fontSize:10, color:'#86868B', fontFamily:'var(--font-display)', padding:'4px 0 8px', letterSpacing:'0.05em' }}>
+                    <span style={{ fontWeight:700, color:'#1D1D1F' }}>{filtered.length}</span> carte{filtered.length!==1?'s':''} disponible{filtered.length!==1?'s':''}
+                  </div>
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px', padding:'8px 16px 16px', overflowY:'auto' as const }}>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, padding:'8px 20px 20px', overflowY:'auto' as const }}>
                   {filtered.slice(0,18).map(card=>{
                     const ec2=EC[card.type]??'#888'
                     return (
-                      <div key={card.id} onClick={()=>addToShowcase(card)}
-                        style={{ borderRadius:'14px', overflow:'hidden', cursor:'pointer', background:'#F5F5F7', border:'1px solid #E5E5EA', transition:'all .2s cubic-bezier(.22,.68,0,1.1)' }}
-                        onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,.08)';e.currentTarget.style.borderColor='#E03020'}}
-                        onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';e.currentTarget.style.borderColor='#E5E5EA'}}>
+                      <div key={card.id} onClick={()=>addToShowcase(card)} style={{
+                        borderRadius:14,
+                        overflow:'hidden',
+                        cursor:'pointer',
+                        background:'rgba(255,255,255,0.7)',
+                        backdropFilter:'blur(12px) saturate(180%)',
+                        WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                        border:'1px solid rgba(229,229,234,0.6)',
+                        boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                        transition:'all .25s cubic-bezier(.22,.68,0,1.1)',
+                      }}
+                        onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 12px 28px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(29,29,31,0.4)'; e.currentTarget.style.borderColor='rgba(29,29,31,0.4)' }}
+                        onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)'; e.currentTarget.style.borderColor='rgba(229,229,234,0.6)' }}>
                         {card.image?(
-                          <img src={`${cleanImageUrl(card.image).replace(/\/low\.(webp|jpg|png)$/,'')}/low.webp`} alt={card.name}
+                          <img src={cleanImageUrl(card.image)} alt={card.name}
                             loading="lazy"
                             style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
-                            onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+                            onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null; t.style.display='none' }}/>
                         ):(
                           <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}15,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:ec2, opacity:.4 }}/>
+                            <div style={{ width:24, height:24, borderRadius:'50%', background:ec2, opacity:.4 }}/>
                           </div>
                         )}
-                        <div style={{ padding:'8px' }}>
-                          <div style={{ fontSize:'11px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
-                          <div style={{ fontSize:'9px', color:'#86868B', marginTop:'2px' }}>{card.set}</div>
-                          {card.curPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:'4px' }}>{card.curPrice} EUR</div>}
+                        <div style={{ padding:'10px 10px 12px' }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', letterSpacing:'-0.1px' }}>{card.name}</div>
+                          <div style={{ fontSize:9, color:'#86868B', marginTop:2, fontFamily:'var(--font-display)' }}>{card.set}</div>
+                          {card.curPrice>0&&<div style={{ fontSize:11, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:5, letterSpacing:'-0.2px' }}>{card.curPrice} EUR</div>}
                         </div>
                       </div>
                     )
@@ -1599,7 +1683,7 @@ export function Holdings() {
           </div>
         )}
 
-        {/* ADD CARD MODAL */}
+                {/* ADD CARD MODAL */}
         {addOpen&&(
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}>
             <div className='add-modal' style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.06)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
@@ -2572,16 +2656,6 @@ export function Holdings() {
                 <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)' }}>{showcase.length===0?'Exposez vos plus belles pieces':showcase.length+' piece'+(showcase.length!==1?'s':'')+' exposee'+(showcase.length!==1?'s':'')}</div>
               </div>
               <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
-                <select value={showcaseBg} onChange={e=>setShowcaseBg(e.target.value)}
-                  style={{ height:'36px', padding:'0 28px 0 12px', borderRadius:'99px', background:'#F5F5F7', border:'1px solid #E5E5EA', color:'#1D1D1F', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', outline:'none', appearance:'none' as const, backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1L5 5L9 1\' stroke=\'%2348484A\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")', backgroundRepeat:'no-repeat', backgroundPosition:'right 10px center' }}>
-                  <option value="obsidienne">Obsidienne & Or</option>
-                  <option value="nuit">Nuit Etoilee</option>
-                  <option value="jade">Jade Imperial</option>
-                  <option value="pokedex">Interface Pokedex</option>
-                  <option value="holodex">Pokedex Holo</option>
-                  <option value="centre">Centre Pokemon</option>
-                  <option value="labo">Labo Pr. Chen</option>
-                </select>
                 <button onClick={()=>setShowInfo(v=>!v)}
                   style={{ padding:'0', width:'36px', height:'36px', borderRadius:'99px', background:showInfo?'#F5F5F7':'#F5F5F7', border:'1px solid #E5E5EA', color:showInfo?'#1D1D1F':'#AEAEB2', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{showInfo?<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z"/>:<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/>}</svg>

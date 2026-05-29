@@ -1,17 +1,16 @@
 /**
  * /api/spotlight?card_id=xxx&lang=FR
  *
- * Unified endpoint that returns ALL data needed for SpotlightV2:
- * - card info (name, set, rarity)
- * - multi-source latest prices (cardmarket + ebay raw + tcgplayer + estimated)
- * - portfolio context (if user owns it)
- * - prices history (sparkline data, cardmarket primarily)
+ * Unified endpoint that returns ALL data needed for SpotlightV2.
  *
- * Other endpoints stay separate for caching:
- * - /api/prices/conditions (existing)
- * - /api/prices/graded (existing)
- * - /api/pop-report (new)
- * - /api/activity (new)
+ * Sources mergees dans prices.bySource :
+ *   - cardmarket : prix raw NM (Cardmarket EUR via TCGdex)
+ *   - ebay       : eBay listings (asks, prices_canonical)
+ *   - tcgplayer  : prix raw TCGplayer (en USD->EUR)
+ *   - ppt_graded : NEW. eBay sold graded data via graded_prices_ppt (real sold)
+ *
+ * Le composant SpotlightStates lit bySource.ppt_graded pour les notes gradees.
+ * Le bloc raw NM continue de venir de bySource.cardmarket + bySource.ebay.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -20,6 +19,16 @@ import { neon } from '@neondatabase/serverless'
 export const dynamic = 'force-dynamic'
 
 const sql = neon(process.env.DATABASE_URL!)
+const USD_TO_EUR = 0.92
+
+// Convert PPT key (psa10, cgc8_5) -> spotlight variant (psa_10, cgc_8_5)
+function normalizeGradedVariant(pptKey: string): string {
+  const m = pptKey.match(/^([a-z]+)(\d+)(?:_(\d+))?$/i)
+  if (!m) return pptKey
+  const [, slab, intPart, fracPart] = m
+  const grade = fracPart ? `${intPart}_${fracPart}` : intPart
+  return `${slab.toLowerCase()}_${grade}`
+}
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams
@@ -62,7 +71,7 @@ export async function GET(req: NextRequest) {
     }
     const card = cardRows[0]
 
-    // 2. Multi-source latest prices (separated by source for the spec grid)
+    // 2. Multi-source latest prices (cardmarket / ebay / tcgplayer asks)
     const latestPrices = await sql`
       SELECT DISTINCT ON (source, variant, condition)
         source, variant, condition, price_avg, price_low, price_high,
@@ -74,7 +83,7 @@ export async function GET(req: NextRequest) {
       ORDER BY source, variant, condition, fetched_at DESC
     ` as Array<any>
 
-    // 2b. Cardmarket history (for sparkline chart)
+    // 2b. Cardmarket history (sparkline)
     const historyRows = await sql`
       SELECT fetched_at, price_avg
       FROM prices_canonical
@@ -85,13 +94,49 @@ export async function GET(req: NextRequest) {
       ORDER BY fetched_at ASC
       LIMIT 120
     ` as Array<any>
-    const history = historyRows.map(r => ({
-      date: r.fetched_at,
-      price: Number(r.price_avg),
-    }))
+    const history = historyRows.map(r => ({ date: r.fetched_at, price: Number(r.price_avg) }))
 
-    // Group by source: cardmarket / ebay / tcgplayer
-    const bySource: Record<string, any> = {}
+    // 2c. NEW: PPT graded prices (real eBay sold).
+    // Match via (set_name, card_number padded 3 digits)
+    const localId = card.local_id ?? cardId.split('-').pop() ?? '0'
+    const numberPrefix = String(localId).padStart(3, '0') + '/'
+    const pptRows = await sql`
+      SELECT card_name, card_number, raw_market_usd, total_sales, grades, fetched_at
+      FROM graded_prices_ppt
+      WHERE set_name = ${card.set_name}
+        AND card_number LIKE ${numberPrefix + '%'}
+      ORDER BY fetched_at DESC
+      LIMIT 1
+    ` as Array<any>
+
+    const pptGradedEntries: any[] = []
+    if (pptRows.length > 0) {
+      const grades = pptRows[0].grades || {}
+      for (const [pptKey, raw] of Object.entries(grades)) {
+        const g = raw as any
+        if (!g || g.smartPrice == null) continue
+        // Noise filter: low confidence + 1 vente = trop fragile, on n'expose pas
+        if (g.confidence === 'low' && (g.count ?? 0) < 2) continue
+
+        const variant = normalizeGradedVariant(pptKey)
+        pptGradedEntries.push({
+          variant,
+          condition: null,
+          price_avg: Math.round(Number(g.smartPrice) * USD_TO_EUR * 100) / 100,
+          price_low: g.min != null ? Math.round(Number(g.min) * USD_TO_EUR * 100) / 100 : null,
+          price_high: g.max != null ? Math.round(Number(g.max) * USD_TO_EUR * 100) / 100 : null,
+          currency: 'EUR',
+          nb_sales: g.count ?? null,
+          fetched_at: pptRows[0].fetched_at,
+          // metadata enriched (consumed if Spotlight needs)
+          confidence: g.confidence ?? null,
+          market_trend: g.marketTrend ?? null,
+        })
+      }
+    }
+
+    // 3. Group by source
+    const bySource: Record<string, any[]> = {}
     for (const r of latestPrices) {
       const key = r.source
       if (!bySource[key]) bySource[key] = []
@@ -106,11 +151,14 @@ export async function GET(req: NextRequest) {
         fetched_at: r.fetched_at,
       })
     }
+    if (pptGradedEntries.length > 0) {
+      bySource.ppt_graded = pptGradedEntries
+    }
 
-    // Compute "Marché estimé" = average of cardmarket-trend + ebay-raw-NM + tcgplayer
-    const cmTrend = bySource.cardmarket?.find((p: any) => p.variant === 'raw' && p.condition === 'CARDMARKET_TREND')
-    const ebayRawNm = bySource.ebay?.find((p: any) => p.variant === 'raw' && p.condition === 'NEAR_MINT')
-    const tcgPrice = bySource.tcgplayer?.find((p: any) => p.variant === 'raw' || p.variant === 'holo')
+    // 4. Marche estime (raw NM cross-source average, inchange)
+    const cmTrend = bySource.cardmarket?.find(p => p.variant === 'raw' && p.condition === 'CARDMARKET_TREND')
+    const ebayRawNm = bySource.ebay?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
+    const tcgPrice = bySource.tcgplayer?.find(p => p.variant === 'raw' || p.variant === 'holo')
     const sources = [cmTrend, ebayRawNm, tcgPrice].filter(Boolean) as any[]
     const marketEst = sources.length > 0
       ? sources.reduce((sum, p) => sum + p.price_avg, 0) / sources.length

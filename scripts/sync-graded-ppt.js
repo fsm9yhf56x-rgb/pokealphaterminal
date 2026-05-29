@@ -36,7 +36,7 @@ const PPT_BASE = 'https://www.pokemonpricetracker.com/api/v2'
 // ----------------------------------------------------------------------------
 const DEFAULT_SETS_EN = [
   // Vintage WOTC
-  'Base Set', 'Jungle', 'Fossil', 'Base Set 2', 'Team Rocket',
+  'Base Set', 'Base Set (Shadowless)', 'Jungle', 'Fossil', 'Base Set 2', 'Team Rocket',
   'Gym Heroes', 'Gym Challenge',
   'Neo Genesis', 'Neo Discovery', 'Neo Revelation', 'Neo Destiny',
   // Modern hot

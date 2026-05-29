@@ -42,7 +42,12 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice }:
   const userGraded = portfolio?.graded || false
 
   let userPriceEntry: PriceEntry | null = null
-  if (!userGraded) {
+  if (userGraded && portfolio?.condition) {
+    // BEDROCK: l'user a une carte gradee -> lookup ppt_graded avec variant key
+    // 'PSA 9' -> 'psa_9', 'CGC 9.5' -> 'cgc_9_5'
+    const variantKey = portfolio.condition.toLowerCase().replace(/\s+/g, '_').replace('.', '_')
+    userPriceEntry = (prices.bySource.ppt_graded || []).find(p => p.variant === variantKey) || null
+  } else if (!userGraded) {
     userPriceEntry = (prices.bySource.ebay || []).find(p => p.variant === 'raw' && p.condition === userCondition) || null
   }
 

@@ -42,7 +42,8 @@ export function SpotlightStates({ prices, portfolio }: Props) {
       rawByCond[r.condition] = r
     }
   }
-  const graded = (prices.bySource.ebay || []).filter(p => gradeFromVariant(p.variant))
+  // BEDROCK: prix gradés viennent de PPT (eBay sold real), fallback ebay (asks listings)
+  const graded = (prices.bySource.ppt_graded || prices.bySource.ebay || []).filter(p => gradeFromVariant(p.variant))
 
   const nm = rawByCond.NEAR_MINT
   const sortedGraded = [...graded].sort((a, b) => b.price_avg - a.price_avg)
@@ -89,12 +90,12 @@ export function SpotlightStates({ prices, portfolio }: Props) {
         {topGraded ? (
           <StateCard
             label={`Notée ${gradeFromVariant(topGraded.variant)!.n}/10 (${gradeFromVariant(topGraded.variant)!.tier})`}
-            tagText="Prix demandé"
-            tagKind="ask"
+            tagText="Prix réel"
+            tagKind="real"
             value={fmtPrice(topGraded.price_avg, topGraded.currency)}
-            highlight={gradeFromVariant(topGraded.variant)!.tier === 'CGC' && gradeFromVariant(topGraded.variant)!.n === '10'}
-            sub={`${topGraded.nb_sales || 0} listings actifs`}
-            subItalic="attention : prix demandés, pas vendus"
+            highlight={gradeFromVariant(topGraded.variant)!.tier === 'PSA' && gradeFromVariant(topGraded.variant)!.n === '10'}
+            sub={`${topGraded.nb_sales || 0} ventes confirmées sur eBay`}
+            subItalic="90 derniers jours"
           />
         ) : null}
       </div>

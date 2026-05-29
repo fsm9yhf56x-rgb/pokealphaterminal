@@ -1025,22 +1025,28 @@ export function Holdings() {
       setAddSuggs([...new Set(matches)].slice(0,6))
     }
   }
-  const handleSuggSelect = async (name:string) => {
+  const handleSuggSelect = (name:string) => {
+    // Validation SYNCHRONE: tout ce qui est dispo immédiatement (sans fetch réseau)
     const extra = encyclopediaLookup(name, addForm.set)
     const liveCard = liveCards.find(c=>c.name===name)
     const img = liveCard?.image ?? ''
     const num = liveCard?.localId ?? extra.number ?? ''
-    let rar = liveCard?.rarity ?? extra.rarity ?? ''
-    // Fetch détails pour récupérer rarity si manquant
-    if (!rar && liveCard) {
-      try {
-        const detail = await fetchCardDetail(addForm.lang as 'EN'|'FR'|'JP', liveCard.id)
-        if (detail?.rarity) rar = detail.rarity
-      } catch {}
-    }
+    const rar = liveCard?.rarity ?? extra.rarity ?? ''
     setAddForm(p=>({...p, name, type:extra.type??p.type, year:extra.year??p.year, image:img, number:num, rarity:rar}))
     setAddSuggs([])
     setNameValidated(true)
+    // Enrichissement async en arrière-plan: fetch rarity si manquante
+    // (n'attend pas, ne bloque pas la validation)
+    if (!rar && liveCard) {
+      fetchCardDetail(addForm.lang as 'EN'|'FR'|'JP', liveCard.id)
+        .then(detail => {
+          const newRarity = detail?.rarity
+          if (newRarity) {
+            setAddForm(prev => prev.name === name ? {...prev, rarity: newRarity} : prev)
+          }
+        })
+        .catch(() => {})
+    }
   }
   const handleConditionChange = (cond:string) => {
     if (cond === '__graded__') {

@@ -69,7 +69,7 @@ const saveJson = (path, obj) => fs.writeFileSync(path, JSON.stringify(obj, null,
 // Fetch 1 set entier depuis PPT
 // ----------------------------------------------------------------------------
 async function fetchSet(setName, lang) {
-  const url = `${PPT_BASE}/cards?set=${encodeURIComponent(setName)}&fetchAllInSet=true&includeEbay=true&language=${lang}`
+  const url = `${PPT_BASE}/cards?set=${encodeURIComponent(setName)}&fetchAllInSet=true&includeEbay=true&includeHistory=true&days=180&language=${lang}`
   const r = await fetch(url, { headers: { Authorization: 'Bearer ' + KEY } })
   const remaining = Number(r.headers.get('x-ratelimit-daily-remaining') || 0)
   const consumed = r.headers.get('x-api-calls-consumed') || '?'

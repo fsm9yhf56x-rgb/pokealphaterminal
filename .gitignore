@@ -75,3 +75,4 @@ r2-jp-progress.json
 r2-jp-errors.json
 /public/data/ppt-*.json
 graded-ppt-progress.json
+graded-ppt-progress.backup.json

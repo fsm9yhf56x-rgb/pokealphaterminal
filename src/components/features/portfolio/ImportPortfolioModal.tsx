@@ -112,11 +112,11 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
   return (
     <>
     <style dangerouslySetInnerHTML={{__html:`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}}/>
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}} onClick={onClose}>
-      <div style={{background:'#fff',borderRadius:'20px',width:'100%',maxWidth:'560px',maxHeight:'90vh',overflowY:'auto',boxShadow:'0 24px 60px rgba(0,0,0,.15),0 8px 20px rgba(0,0,0,.06)',border:'1px solid #E5E5EA'}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:'fixed',inset:0,background:'rgba(20,15,10,0.35)',backdropFilter:'blur(12px) saturate(150%)',WebkitBackdropFilter:'blur(12px) saturate(150%)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}} onClick={onClose}>
+      <div style={{background:'rgba(255,255,255,0.78)',backdropFilter:'blur(28px) saturate(180%)',WebkitBackdropFilter:'blur(28px) saturate(180%)',borderRadius:24,width:'100%',maxWidth:580,maxHeight:'90vh',overflowY:'auto' as const,boxShadow:'0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.04)',border:'none'}} onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'18px 22px',borderBottom:'1px solid #E5E5EA'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'22px 24px 16px'}}>
           <div>
             <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
               <Ic d={PATHS.upload} c="#1D1D1F" s={18}/>
@@ -125,10 +125,20 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
             <div style={{fontSize:'11px',color:'#86868B',marginTop:'3px',paddingLeft:'26px'}}>Migrez votre collection depuis d'autres plateformes</div>
           </div>
           {step!=='success'&&(
-            <button onClick={onClose} style={{width:'28px',height:'28px',borderRadius:'50%',background:'#F0F0F5',border:'none',color:'#86868B',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}
-              onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-              onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-              <Ic d={PATHS.x} c="currentColor" s={14}/>
+            <button onClick={onClose} style={{
+              width:30, height:30, borderRadius:'50%',
+              background:'rgba(255,255,255,0.6)',
+              backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+              border:'1px solid rgba(229,229,234,0.7)',
+              color:'#48484A',
+              cursor:'pointer',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+              boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff';e.currentTarget.style.transform='scale(1.05)'}}
+              onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.6)';e.currentTarget.style.color='#48484A';e.currentTarget.style.transform=''}}>
+              <Ic d={PATHS.x} c="currentColor" s={13}/>
             </button>
           )}
         </div>
@@ -159,16 +169,27 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'14px'}}>
                 {SOURCES.map(s=>(
                   <button key={s.id} onClick={()=>{setSelSrc(s.id);setStep('upload')}}
-                    style={{background:'#F5F5F7',border:'1px solid #E5E5EA',borderRadius:'14px',padding:'18px 14px',cursor:'pointer',textAlign:'center',transition:'all .15s'}}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,.06)'}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                    style={{
+                      background:'rgba(255,255,255,0.7)',
+                      backdropFilter:'blur(12px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                      border:'1px solid rgba(229,229,234,0.7)',
+                      borderRadius:14,
+                      padding:'20px 16px',
+                      cursor:'pointer',
+                      textAlign:'center' as const,
+                      transition:'all .25s cubic-bezier(.2,.85,.3,1)',
+                      boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    }}
+                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.95)';e.currentTarget.style.borderColor='rgba(29,29,31,0.4)';e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(29,29,31,0.3)'}}
+                    onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.7)';e.currentTarget.style.borderColor='rgba(229,229,234,0.7)';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
                     <div style={{marginBottom:'8px',opacity:.7}}><Ic d={s.icon} c="#1D1D1F" s={24}/></div>
                     <div style={{fontSize:'13px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:'3px'}}>{s.label}</div>
                     <div style={{fontSize:'10px',color:'#86868B'}}>{s.sub}</div>
                   </button>
                 ))}
               </div>
-              <div style={{display:'flex',gap:'8px',alignItems:'flex-start',background:'#F5F5F7',border:'1px solid #E5E5EA',borderRadius:'10px',padding:'10px 12px'}}>
+              <div style={{display:'flex',gap:8,alignItems:'flex-start',background:'rgba(245,245,247,0.6)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid rgba(229,229,234,0.6)',borderRadius:10,padding:'10px 12px'}}>
                 <Ic d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" c="#86868B" s={14}/>
                 <span style={{fontSize:'11px',color:'#86868B'}}>Importez un CSV generique — les colonnes seront detectees automatiquement.</span>
               </div>

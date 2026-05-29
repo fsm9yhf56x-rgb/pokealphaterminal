@@ -1416,10 +1416,13 @@ export function Holdings() {
         }
         /* ── HOOK HOVERS ── */
         /* ── ADD MODAL HOVERS ── */
-        .add-modal input:focus { border-color:#1D1D1F !important;box-shadow:0 0 0 3px rgba(29,29,31,.06) !important; }
-        .add-modal select:focus { border-color:#1D1D1F !important;box-shadow:0 0 0 3px rgba(29,29,31,.06) !important; }
-        .add-modal input:hover:not(:focus) { border-color:#C7C7CC !important; }
-        .add-modal select:hover { border-color:#C7C7CC !important; }
+        .add-modal input:focus { border-color:rgba(29,29,31,0.5) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,0.95) !important; outline:none !important; }
+        .add-modal select:focus { border-color:rgba(29,29,31,0.5) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,0.95) !important; outline:none !important; }
+        .add-modal input:hover:not(:focus) { border-color:rgba(0,0,0,0.18) !important; }
+        .add-modal select:hover:not(:focus) { border-color:rgba(0,0,0,0.18) !important; }
+        .add-modal input, .add-modal select, .add-modal textarea { outline:none !important; -webkit-appearance:none !important; appearance:none !important; }
+        .add-modal input::placeholder { color:#86868B !important; }
+        .add-modal input:-webkit-autofill { -webkit-box-shadow:0 0 0 1000px rgba(255,255,255,0.7) inset !important; -webkit-text-fill-color:#1D1D1F !important; }
 
         button:hover:not(:disabled) { filter:brightness(1.05); }
         .vtab:hover:not(.on) { background:#F0F0F5 !important;color:#48484A !important;border-color:#C7C7CC !important; }
@@ -1685,17 +1688,27 @@ export function Holdings() {
 
                 {/* ADD CARD MODAL */}
         {addOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}>
-            <div className='add-modal' style={{ background:'#fff', borderRadius:'20px', border:'1px solid #E5E5EA', boxShadow:'0 24px 60px rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.06)', padding:'24px', maxWidth:'520px', width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const }} onClick={e=>e.stopPropagation()}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}>
+            <div className='add-modal' style={{ background:'rgba(255,255,255,0.62)', backdropFilter:'blur(32px) saturate(180%)', WebkitBackdropFilter:'blur(32px) saturate(180%)', borderRadius:26, padding:26, maxWidth:540, width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const, boxShadow:'0 30px 80px rgba(0,0,0,0.22), 0 10px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.05)', border:'none' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
                   <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
                   <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
                 </div>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'#F0F0F5', border:'none', color:'#86868B', cursor:'pointer', fontSize:'13px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                  onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{
+                  width:30, height:30, borderRadius:'50%',
+                  background:'rgba(255,255,255,0.6)',
+                  backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+                  border:'1px solid rgba(229,229,234,0.7)',
+                  color:'#48484A',
+                  cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                  boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff';e.currentTarget.style.transform='scale(1.05)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.6)';e.currentTarget.style.color='#48484A';e.currentTarget.style.transform=''}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
@@ -1704,7 +1717,21 @@ export function Holdings() {
                 <div style={{ display:'flex', gap:'6px' }}>
                   {([{k:'FR' as const,flag:'\u{1F1EB}\u{1F1F7}',label:'Francais'},{k:'EN' as const,flag:'\u{1F1FA}\u{1F1F8}',label:'English'},{k:'JP' as const,flag:'\u{1F1EF}\u{1F1F5}',label:'\u65E5\u672C\u8A9E'}]).map(l=>(
                     <button key={l.k} onClick={()=>setAddForm(p=>({...p,lang:l.k}))}
-                      style={{ flex:1, padding:'10px 8px', borderRadius:'10px', border:`1.5px solid ${addForm.lang===l.k?'#1D1D1F':'#E5E5EA'}`, background:addForm.lang===l.k?'#1D1D1F':'#fff', color:addForm.lang===l.k?'#fff':'#86868B', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', transition:'all .15s' }}
+                      style={{
+                        flex:1, padding:'11px 8px',
+                        borderRadius:10,
+                        border: addForm.lang===l.k ? '1px solid #1D1D1F' : '1px solid rgba(229,229,234,0.7)',
+                        background: addForm.lang===l.k ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
+                        backdropFilter: addForm.lang===l.k ? 'none' : 'blur(12px) saturate(180%)',
+                        WebkitBackdropFilter: addForm.lang===l.k ? 'none' : 'blur(12px) saturate(180%)',
+                        color: addForm.lang===l.k ? '#fff' : '#48484A',
+                        fontSize:12, fontWeight:700,
+                        cursor:'pointer',
+                        fontFamily:'var(--font-display)',
+                        display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                        transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                        boxShadow: addForm.lang===l.k ? '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      }}
                       onMouseEnter={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
                       onMouseLeave={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
                       <span style={{ fontSize:'16px' }}>{l.flag}</span>
@@ -1720,7 +1747,24 @@ export function Holdings() {
                   <select value={addForm.setId}
                     onChange={e=>{ const found=liveSets.find(x=>x.id===e.target.value); if(found) handleSetChange(found.id,found.name) }}
                     className={addForm.set?'req-field-ok':'req-field'}
-                    style={{ width:'100%', appearance:'none' as const, background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 36px 10px 12px', color:addForm.set?'#1D1D1F':'#AEAEB2', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', cursor:'pointer' }}>
+                    style={{
+                      width:'100%',
+                      appearance:'none' as const,
+                      background:'rgba(255,255,255,0.92)',
+                      backdropFilter:'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(20px) saturate(180%)',
+                      borderRadius:12,
+                      border:'1px solid rgba(0,0,0,0.08)',
+                      padding:'12px 36px 12px 14px',
+                      color: addForm.set ? '#1D1D1F' : '#86868B',
+                      fontSize:13, fontWeight:500,
+                      fontFamily:'var(--font-display)',
+                      outline:'none', cursor:'pointer',
+                      boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' fill=\'none\'%3E%3Cpath d=\'M1 1L5 5L9 1\' stroke=\'%2348484A\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',
+                      backgroundRepeat:'no-repeat',
+                      backgroundPosition:'right 14px center',
+                    }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
                     {(() => {
                       const filtered = filterCoreSets(liveSets)
@@ -1755,9 +1799,24 @@ export function Holdings() {
                   <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
                     placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte…'}
                     className={addForm.name?'req-field-ok':'req-field'}
-                    style={{ width:'100%', background:nameValidated?'#fff':'#F5F5F7', borderRadius:'10px', border:`1px solid ${nameValidated?'#2E9E6A':'#E5E5EA'}`, padding:'10px 12px 10px '+(nameValidated?'32px':'12px'), color:'#1D1D1F', fontSize:'13px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
+                    style={{
+                      width:'100%',
+                      background: nameValidated ? 'rgba(46,158,106,0.06)' : 'rgba(255,255,255,0.92)',
+                      backdropFilter:'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(20px) saturate(180%)',
+                      borderRadius:12,
+                      border: `1px solid ${nameValidated ? 'rgba(46,158,106,0.45)' : 'rgba(0,0,0,0.08)'}`,
+                      padding: '12px 14px 12px '+(nameValidated ? '34px' : '14px'),
+                      color:'#1D1D1F',
+                      fontSize:13, fontWeight:500,
+                      fontFamily:'var(--font-display)',
+                      outline:'none',
+                      boxSizing:'border-box' as const,
+                      boxShadow: nameValidated ? '0 1px 2px rgba(46,158,106,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      transition:'all .2s',
+                    }}/>
                   {addSuggs.length>0&&(
-                    <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#fff', border:'1px solid #E5E5EA', borderRadius:'12px', overflow:'hidden', zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,.1)' }}>
+                    <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'rgba(255,255,255,0.92)', backdropFilter:'blur(24px) saturate(180%)', WebkitBackdropFilter:'blur(24px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', borderRadius:14, overflow:'hidden', zIndex:99, boxShadow:'0 12px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                       {addSuggs.map((s,i)=>(
                         <div key={i} onMouseDown={()=>handleSuggSelect(s)}
                           style={{ padding:'9px 14px', fontSize:'13px', color:'#3A3A3C', fontFamily:'var(--font-display)', cursor:'pointer', borderBottom:i<addSuggs.length-1?'1px solid rgba(29,29,31,.05)':'none', display:'flex', alignItems:'center', gap:'8px' }}
@@ -1781,12 +1840,12 @@ export function Holdings() {
               <div style={{ marginBottom:'14px' }}>
                 <div className="opt-label">Etat</div>
                 {/* Segmented control iOS-style */}
-                <div style={{ display:'flex', background:'#F0F0F5', borderRadius:'12px', padding:'3px', marginBottom:addForm.graded?'12px':'0' }}>
+                <div style={{ display:'flex', background:'rgba(0,0,0,0.04)', borderRadius:12, padding:3, marginBottom: addForm.graded ? 12 : 0, boxShadow:'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
                   {([{k:'Raw',l:'Raw (neuf)'},{k:'__graded__',l:'Grade'}] as const).map(opt=>{
                     const active = opt.k==='__graded__' ? addForm.graded : (!addForm.graded && addForm.condition===opt.k)
                     return (
                       <button key={opt.k} onClick={()=>handleConditionChange(opt.k)}
-                        style={{ flex:1, padding:'9px', borderRadius:'10px', border:'none', background:active?'#fff':'transparent', color:active?'#1D1D1F':'#86868B', fontSize:'12px', fontWeight:active?600:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s', boxShadow:active?'0 1px 3px rgba(0,0,0,.08)':'none' }}
+                        style={{ flex:1, padding:'10px', borderRadius:10, border:'none', background: active ? 'rgba(255,255,255,0.95)' : 'transparent', backdropFilter: active ? 'blur(12px) saturate(180%)' : 'none', WebkitBackdropFilter: active ? 'blur(12px) saturate(180%)' : 'none', color: active ? '#1D1D1F' : '#86868B', fontSize:12, fontWeight: active ? 700 : 500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', boxShadow: active ? '0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none' }}
                         onMouseEnter={e=>{if(!active)e.currentTarget.style.color='#48484A'}}
                         onMouseLeave={e=>{if(!active)e.currentTarget.style.color='#86868B'}}>
                         {opt.l}
@@ -1849,14 +1908,29 @@ export function Holdings() {
                     <span style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', fontSize:'13px', color:'#AEAEB2', fontFamily:'var(--font-data)', pointerEvents:'none' }}>EUR</span>
                     <input type="number" value={addForm.buyPrice} onChange={e=>setAddForm(p=>({...p,buyPrice:e.target.value}))}
                       placeholder="0.00"
-                      style={{ width:'100%', background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', padding:'10px 12px 10px 42px', color:'#1D1D1F', fontSize:'16px', fontWeight:600, fontFamily:'var(--font-data)', outline:'none', boxSizing:'border-box' as const }}/>
+                      style={{
+                      width:'100%',
+                      background:'rgba(255,255,255,0.92)',
+                      backdropFilter:'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(20px) saturate(180%)',
+                      borderRadius:12,
+                      border:'1px solid rgba(0,0,0,0.08)',
+                      padding:'12px 14px 12px 44px',
+                      color:'#1D1D1F',
+                      fontSize:16, fontWeight:600,
+                      fontFamily:'var(--font-data)',
+                      outline:'none',
+                      boxSizing:'border-box' as const,
+                      boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                      transition:'all .2s',
+                    }}/>
                   </div>
                   <div style={{ fontSize:'9px', color:'#AEAEB2', marginTop:'4px', fontFamily:'var(--font-display)' }}>Optionnel — permet le calcul du ROI</div>
                 </div>
                 {/* Quantité */}
                 <div style={{ width:'120px', flexShrink:0 }}>
                   <div className="opt-label">Quantite</div>
-                  <div style={{ display:'flex', alignItems:'center', background:'#F5F5F7', borderRadius:'10px', border:'1px solid #E5E5EA', overflow:'hidden' }}>
+                  <div style={{ display:'flex', alignItems:'center', background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', borderRadius:12, border:'1px solid rgba(0,0,0,0.08)', overflow:'hidden', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
                     <button onClick={()=>setAddForm(p=>({...p,qty:Math.max(1,p.qty-1)}))} style={{ width:'36px', height:'38px', background:'transparent', border:'none', borderRight:'1px solid #E5E5EA', color:addForm.qty>1?'#1D1D1F':'#AEAEB2', fontSize:'16px', cursor:addForm.qty>1?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center' }}
                       onMouseEnter={e=>{if(addForm.qty>1)e.currentTarget.style.background='#EDEDF0'}}
                       onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
@@ -1883,11 +1957,40 @@ export function Holdings() {
 
               <div style={{ display:'flex', gap:'8px' }}>
                 <button onClick={addCard} disabled={!canAdd}
-                  style={{ flex:1, padding:'13px', borderRadius:'11px', background:canAdd?'#1D1D1F':'#F0F0F5', color:canAdd?'#fff':'#AEAEB2', border:'none', fontSize:'14px', fontWeight:600, cursor:canAdd?'pointer':'default', fontFamily:'var(--font-display)', boxShadow:'none', transition:'all .2s' }}>
+                  style={{
+                    flex:1, padding:'14px 18px',
+                    borderRadius:12,
+                    background: canAdd ? '#1D1D1F' : 'rgba(0,0,0,0.05)',
+                    color: canAdd ? '#fff' : '#AEAEB2',
+                    border:'none',
+                    fontSize:14, fontWeight:700,
+                    cursor: canAdd ? 'pointer' : 'default',
+                    fontFamily:'var(--font-display)',
+                    transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                    letterSpacing:'0.02em',
+                    boxShadow: canAdd ? '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
+                  }}
+                  onMouseEnter={e=>{ if(canAdd){ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' } }}
+                  onMouseLeave={e=>{ if(canAdd){ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' } }}>
                   Ajouter {addForm.qty>1?addForm.qty+' exemplaires':'au portfolio'}
                 </button>
                 <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}
-                  style={{ padding:'13px 20px', borderRadius:'11px', background:'#F5F5F7', color:'#6E6E73', border:'1px solid #E5E5EA', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                  style={{
+                    padding:'14px 22px',
+                    borderRadius:12,
+                    background:'rgba(255,255,255,0.7)',
+                    backdropFilter:'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                    color:'#48484A',
+                    border:'1px solid rgba(229,229,234,0.7)',
+                    fontSize:14, fontWeight:600,
+                    cursor:'pointer',
+                    fontFamily:'var(--font-display)',
+                    transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                    boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                  }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.95)'; e.currentTarget.style.color='#1D1D1F' }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.7)'; e.currentTarget.style.color='#48484A' }}>
                   Annuler
                 </button>
               </div>
@@ -2972,32 +3075,72 @@ export function Holdings() {
 
                 {/* ADD SET MODAL */}
       {addSetOpen&&(
-        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px' }}
+        <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
           onClick={()=>setAddSetOpen(false)}>
-          <div style={{ background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.15)',padding:'24px',maxWidth:'480px',width:'100%',animation:'fadeUp .25s ease-out' }}
+          <div style={{
+            background:'rgba(255,255,255,0.78)',
+            backdropFilter:'blur(28px) saturate(180%)',
+            WebkitBackdropFilter:'blur(28px) saturate(180%)',
+            borderRadius:24,
+            padding:24,
+            maxWidth:500, width:'100%',
+            animation:'fadeUp .25s ease-out',
+            boxShadow:'0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.04)',
+          }}
             onClick={e=>e.stopPropagation()}>
-            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'18px' }}>
+
+            {/* Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22 }}>
               <div>
-                <div style={{ fontSize:'17px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>Ajouter une série complète</div>
-                <div style={{ fontSize:'10px',marginTop:'3px',color:'#AEAEB2',fontWeight:500 }}>Toutes les cartes seront ajoutées en Raw</div>
+                <div style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px', lineHeight:1.2 }}>Ajouter une serie complete</div>
+                <div style={{ fontSize:11, color:'#86868B', marginTop:6, fontFamily:'var(--font-display)' }}>Toutes les cartes seront ajoutees en Raw</div>
               </div>
-              <button onClick={()=>setAddSetOpen(false)} style={{ width:'28px',height:'28px',borderRadius:'50%',background:'#F0F0F5',border:'none',color:'#86868B',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <button onClick={()=>setAddSetOpen(false)} style={{
+                width:30, height:30, borderRadius:'50%',
+                background:'rgba(255,255,255,0.6)',
+                backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+                border:'1px solid rgba(229,229,234,0.7)',
+                color:'#48484A',
+                cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+              }}
+                onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.color='#fff'; e.currentTarget.style.transform='scale(1.05)' }}
+                onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.6)'; e.currentTarget.style.color='#48484A'; e.currentTarget.style.transform='' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <div style={{ marginBottom:'14px' }}>
-              <div style={{ fontSize:'10px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'6px' }}>Langue</div>
-              <div style={{ display:'flex',gap:'6px' }}>
-                {([{k:'FR' as const,flag:'\u{1F1EB}\u{1F1F7}',label:'Français'},{k:'EN' as const,flag:'\u{1F1FA}\u{1F1F8}',label:'English'},{k:'JP' as const,flag:'\u{1F1EF}\u{1F1F5}',label:'日本語'}]).map(l=>(
-                  <button key={l.k} onClick={()=>{setAddSetLang(l.k);setAddSetCards([]);setAddSetId('');setAddSetName('')}}
-                    style={{ flex:1,padding:'10px 8px',borderRadius:'10px',border:`1.5px solid ${addSetLang===l.k?'#1D1D1F':'#E5E5EA'}`,background:addSetLang===l.k?'#1D1D1F':'#fff',color:addSetLang===l.k?'#fff':'#86868B',fontSize:'12px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',transition:'all .15s' }}>
-                    <span style={{ fontSize:'16px' }}>{l.flag}</span>{l.label}
+
+            {/* Langue selector */}
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'0.12em', textTransform:'uppercase' as const, marginBottom:8 }}>Langue</div>
+              <div style={{ display:'flex', gap:6 }}>
+                {([{k:'FR' as const, flag:'\u{1F1EB}\u{1F1F7}', label:'Francais'},{k:'EN' as const, flag:'\u{1F1FA}\u{1F1F8}', label:'English'},{k:'JP' as const, flag:'\u{1F1EF}\u{1F1F5}', label:'\u65E5\u672C\u8A9E'}]).map(l=>(
+                  <button key={l.k} onClick={()=>{setAddSetLang(l.k);setAddSetCards([]);setAddSetId('');setAddSetName('')}} style={{
+                    flex:1, padding:'11px 8px',
+                    borderRadius:10,
+                    border: addSetLang===l.k ? '1px solid #1D1D1F' : '1px solid rgba(229,229,234,0.7)',
+                    background: addSetLang===l.k ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
+                    backdropFilter: addSetLang===l.k ? 'none' : 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: addSetLang===l.k ? 'none' : 'blur(12px) saturate(180%)',
+                    color: addSetLang===l.k ? '#fff' : '#48484A',
+                    fontSize:12, fontWeight:700,
+                    cursor:'pointer',
+                    fontFamily:'var(--font-display)',
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                    transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                    boxShadow: addSetLang===l.k ? '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                  }}>
+                    <span style={{ fontSize:16 }}>{l.flag}</span>{l.label}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ marginBottom:'14px' }}>
-              <div style={{ fontSize:'10px',fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'6px' }}>Série</div>
+
+            {/* Serie selector */}
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'#48484A', fontFamily:'var(--font-display)', letterSpacing:'0.12em', textTransform:'uppercase' as const, marginBottom:8 }}>Serie</div>
               <select value={addSetId} onChange={e=>{
                 const found=addSetSets.find(x=>x.id===e.target.value)
                 if(!found) return
@@ -3006,9 +3149,25 @@ export function Holdings() {
                 setAddSetLoading(true)
                 setAddSetCards([])
                 getCardsForSet(addSetLang as 'EN'|'FR'|'JP',found.id).then(cards=>{setAddSetCards(staticToTCGCards(cards,found.id,addSetLang,(l,si,lid)=>getCardImageUrl({lang:l,setId:si,localId:lid})) as any);setAddSetLoading(false)}).catch(()=>setAddSetLoading(false))
-              }}
-                style={{ width:'100%',appearance:'none' as const,background:'#F5F5F7',borderRadius:'10px',border:'1px solid #E5E5EA',padding:'10px 36px 10px 12px',color:addSetId?'#1D1D1F':'#AEAEB2',fontSize:'13px',fontFamily:'var(--font-display)',outline:'none',cursor:'pointer' }}>
-                <option value=''>Sélectionner une série...</option>
+              }} style={{
+                width:'100%',
+                appearance:'none' as const,
+                background:'rgba(255,255,255,0.7)',
+                backdropFilter:'blur(12px) saturate(180%)',
+                WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                borderRadius:12,
+                border:'1px solid rgba(229,229,234,0.7)',
+                padding:'12px 36px 12px 14px',
+                color: addSetId ? '#1D1D1F' : '#86868B',
+                fontSize:13, fontWeight:500,
+                fontFamily:'var(--font-display)',
+                outline:'none', cursor:'pointer',
+                boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' fill=\'none\'%3E%3Cpath d=\'M1 1L5 5L9 1\' stroke=\'%2348484A\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',
+                backgroundRepeat:'no-repeat',
+                backgroundPosition:'right 14px center',
+              }}>
+                <option value="">Selectionner une serie...</option>
                 {(() => {
                   const filtered = filterCoreSets(addSetSets)
                   const groups = groupSetsByEra(filtered)
@@ -3029,33 +3188,44 @@ export function Holdings() {
                 })()}
               </select>
             </div>
+
+            {/* Loading */}
             {addSetLoading&&(
-              <div style={{ textAlign:'center',padding:'20px 0',color:'#86868B',fontSize:'12px',fontFamily:'var(--font-display)' }}>
-                <div style={{ width:'20px',height:'20px',border:'2px solid #E5E5EA',borderTop:'2px solid #1D1D1F',borderRadius:'50%',animation:'spin .8s linear infinite',margin:'0 auto 8px' }}/>
+              <div style={{ textAlign:'center', padding:'24px 0', color:'#86868B', fontSize:12, fontFamily:'var(--font-display)' }}>
+                <div style={{ width:24, height:24, border:'2.5px solid rgba(0,0,0,0.08)', borderTop:'2.5px solid #1D1D1F', borderRadius:'50%', animation:'spin .8s linear infinite', margin:'0 auto 10px' }}/>
                 Chargement des cartes...
               </div>
             )}
+
+            {/* Cards count + progress + CTA */}
             {addSetCards.length>0&&!addSetLoading&&(()=>{
               const existingNums = new Set(portfolio.filter(c=>c.set===addSetName).map(c=>c.number))
               const alreadyOwned = addSetCards.filter(c=>existingNums.has(c.localId||'')).length
               const toAdd = addSetCards.length - alreadyOwned
               return (
                 <div>
-                  <div style={{ background:'#F5F5F7',borderRadius:'12px',padding:'14px',marginBottom:'14px' }}>
-                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px' }}>
-                      <span style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>{addSetCards.length} cartes</span>
-                      {alreadyOwned>0&&<span style={{ fontSize:'11px',color:'#86868B' }}>dont {alreadyOwned} déjà possédées</span>}
+                  <div style={{
+                    background:'rgba(255,255,255,0.7)',
+                    backdropFilter:'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                    border:'1px solid rgba(229,229,234,0.7)',
+                    borderRadius:14, padding:'16px 18px', marginBottom:14,
+                    boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                  }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                      <span style={{ fontSize:15, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px' }}>{addSetCards.length} cartes</span>
+                      {alreadyOwned>0&&<span style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-display)' }}>dont {alreadyOwned} deja possedees</span>}
                     </div>
-                    <div style={{ height:'6px',borderRadius:'3px',background:'#E8E8ED',overflow:'hidden',marginBottom:'10px' }}>
-                      <div style={{ width:addSetCards.length>0?Math.round(alreadyOwned/addSetCards.length*100)+'%':'0%',height:'100%',background:'linear-gradient(90deg,#ff6b35,#ff4433)',borderRadius:'3px',transition:'width .3s' }}/>
+                    <div style={{ height:6, borderRadius:3, background:'rgba(0,0,0,0.06)', overflow:'hidden', marginBottom:12 }}>
+                      <div style={{ width: addSetCards.length>0 ? Math.round(alreadyOwned/addSetCards.length*100)+'%' : '0%', height:'100%', background:'linear-gradient(90deg,#1D1D1F,#48484A)', borderRadius:3, transition:'width .3s' }}/>
                     </div>
-                    <div style={{ display:'flex',gap:'16px',fontSize:'11px' }}>
-                      {alreadyOwned>0&&<span style={{ color:'#2E9E6A',fontWeight:500 }}>{String.fromCharCode(10003)} {alreadyOwned} conservées</span>}
-                      <span style={{ color:'#0C447C',fontWeight:500 }}>+ {toAdd} nouvelles</span>
+                    <div style={{ display:'flex', gap:18, fontSize:11, fontFamily:'var(--font-display)' }}>
+                      {alreadyOwned>0&&<span style={{ color:'#2E9E6A', fontWeight:600 }}>✓ {alreadyOwned} conservees</span>}
+                      <span style={{ color:'#1D1D1F', fontWeight:600 }}>+ {toAdd} nouvelles</span>
                     </div>
                   </div>
                   <button onClick={()=>{
-                    if(toAdd===0){ showToast('Série déjà complète'); return }
+                    if(toAdd===0){ showToast('Serie deja complete'); return }
                     const newCards: CardItem[] = addSetCards
                       .filter(c=>!existingNums.has(c.localId||''))
                       .map(c=>({
@@ -3070,12 +3240,23 @@ export function Holdings() {
                       }))
                     setPortfolio(prev=>[...prev,...newCards])
                     setAddSetOpen(false)
-                    showToast(toAdd+' cartes ajoutées')
+                    showToast(toAdd+' cartes ajoutees')
+                  }} style={{
+                    width:'100%', padding:'14px 18px',
+                    borderRadius:12,
+                    background:'#1D1D1F',
+                    color:'#fff',
+                    border:'none',
+                    fontSize:14, fontWeight:700,
+                    cursor:'pointer',
+                    fontFamily:'var(--font-display)',
+                    transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                    letterSpacing:'0.02em',
+                    boxShadow:'0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)',
                   }}
-                    style={{ width:'100%',padding:'13px',borderRadius:'11px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'14px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'}}
-                    onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                    {toAdd>0?'Ajouter les '+toAdd+' cartes manquantes':'Série déjà complète'}
+                    onMouseEnter={e=>{ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' }}
+                    onMouseLeave={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' }}>
+                    {toAdd>0 ? 'Ajouter les '+toAdd+' cartes manquantes' : 'Serie deja complete'}
                   </button>
                 </div>
               )
@@ -3177,60 +3358,92 @@ export function Holdings() {
           reader.readAsDataURL(file)
         }
         return (
-          <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px' }}
+          <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}
             onClick={()=>{ if(!scannerLoad){ setScannerOpen(false); setScannerImg(null) } }}>
-            <div style={{ maxWidth:'380px',width:'100%',background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.15)',overflow:'hidden',animation:'fadeUp .25s ease-out' }} onClick={e=>e.stopPropagation()}>
+            <div style={{
+              maxWidth:'420px', width:'100%',
+              background:'rgba(255,255,255,0.78)',
+              backdropFilter:'blur(28px) saturate(180%)',
+              WebkitBackdropFilter:'blur(28px) saturate(180%)',
+              borderRadius:24,
+              overflow:'hidden',
+              boxShadow:'0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.04)',
+              animation:'fadeUp .25s ease-out',
+            }} onClick={e=>e.stopPropagation()}>
 
               {/* Header */}
-              <div style={{ padding:'18px 20px',borderBottom:'1px solid #E5E5EA',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div style={{ padding:'22px 24px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div>
-                  <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    <span style={{ fontSize:'16px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)' }}>Scanner une carte</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                    <div style={{ width:32, height:32, borderRadius:10, background:'rgba(245,245,247,0.7)', border:'1px solid rgba(229,229,234,0.7)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </div>
+                    <span style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px' }}>Scanner une carte</span>
                   </div>
-                  <div style={{ fontSize:'11px',color:'#86868B',marginTop:'3px',paddingLeft:'26px' }}>L'IA identifie automatiquement la carte</div>
+                  <div style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-display)', paddingLeft:42 }}>L&apos;IA identifie automatiquement la carte</div>
                 </div>
                 {!scannerLoad&&(
-                  <button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{ width:'28px',height:'28px',borderRadius:'50%',background:'#F0F0F5',border:'none',color:'#86868B',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.background='#E5E5EA';e.currentTarget.style.color='#1D1D1F'}}
-                    onMouseLeave={e=>{e.currentTarget.style.background='#F0F0F5';e.currentTarget.style.color='#86868B'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <button onClick={()=>{ setScannerOpen(false); setScannerImg(null) }} style={{
+                    width:30, height:30, borderRadius:'50%',
+                    background:'rgba(255,255,255,0.6)',
+                    backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+                    border:'1px solid rgba(229,229,234,0.7)',
+                    color:'#48484A',
+                    cursor:'pointer',
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                    boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                  }}
+                    onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.color='#fff'; e.currentTarget.style.transform='scale(1.05)' }}
+                    onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.6)'; e.currentTarget.style.color='#48484A'; e.currentTarget.style.transform='' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 )}
               </div>
 
-              <div style={{ padding:'20px' }}>
-                {/* Frame */}
-                <div style={{ position:'relative',width:'100%',aspectRatio:'3/4',borderRadius:'16px',border:`2px dashed ${scannerImg?'#2E9E6A':'#D2D2D7'}`,background:'#FAFAFA',overflow:'hidden',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center',cursor:scannerLoad?'default':'pointer',transition:'all .2s' }}
+              <div style={{ padding:'4px 24px 22px' }}>
+                {/* Frame dropzone glass */}
+                <div style={{
+                  position:'relative', width:'100%', aspectRatio:'3/4',
+                  borderRadius:18,
+                  border: `2px dashed ${scannerImg ? '#2E9E6A' : 'rgba(0,0,0,0.18)'}`,
+                  background:'rgba(255,255,255,0.5)',
+                  backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)',
+                  overflow:'hidden', marginBottom:14,
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  cursor: scannerLoad ? 'default' : 'pointer',
+                  transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                  boxShadow: scannerImg ? '0 4px 16px rgba(46,158,106,0.12), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.85)',
+                }}
                   onClick={()=>{if(!scannerLoad) fileRef.current?.click()}}
-                  onMouseEnter={e=>{if(!scannerImg&&!scannerLoad)e.currentTarget.style.borderColor='#86868B'}}
-                  onMouseLeave={e=>{if(!scannerImg&&!scannerLoad)e.currentTarget.style.borderColor='#D2D2D7'}}>
+                  onMouseEnter={e=>{ if(!scannerImg&&!scannerLoad){ e.currentTarget.style.borderColor='rgba(0,0,0,0.35)'; e.currentTarget.style.background='rgba(255,255,255,0.7)' } }}
+                  onMouseLeave={e=>{ if(!scannerImg&&!scannerLoad){ e.currentTarget.style.borderColor='rgba(0,0,0,0.18)'; e.currentTarget.style.background='rgba(255,255,255,0.5)' } }}>
                   {scannerImg ? (
-                    <img src={scannerImg} alt="scan" style={{ width:'100%',height:'100%',objectFit:'contain' }}/>
+                    <img src={scannerImg} alt="scan" style={{ width:'100%', height:'100%', objectFit:'contain' }}/>
                   ) : (
                     <div style={{ textAlign:'center' }}>
-                      <div style={{ width:'48px',height:'48px',borderRadius:'14px',background:'#F0F0F5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <div style={{ width:56, height:56, borderRadius:16, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(229,229,234,0.7)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', boxShadow:'0 4px 12px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                       </div>
-                      <div style={{ fontSize:'13px',color:'#48484A',fontFamily:'var(--font-display)',marginBottom:'4px' }}>Photographiez votre carte</div>
-                      <div style={{ fontSize:'11px',color:'#AEAEB2' }}>Cliquez ou glissez une photo</div>
+                      <div style={{ fontSize:14, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:4, letterSpacing:'-0.1px' }}>Photographiez votre carte</div>
+                      <div style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-display)' }}>Cliquez ou glissez une photo</div>
                     </div>
                   )}
                   {/* Corner marks */}
                   {!scannerImg&&!scannerLoad&&(
                     <>
-                      <div style={{ position:'absolute',top:'8px',left:'8px',width:'20px',height:'20px',borderTop:'2px solid #1D1D1F',borderLeft:'2px solid #1D1D1F',borderRadius:'2px 0 0 0' }}/>
-                      <div style={{ position:'absolute',top:'8px',right:'8px',width:'20px',height:'20px',borderTop:'2px solid #1D1D1F',borderRight:'2px solid #1D1D1F',borderRadius:'0 2px 0 0' }}/>
-                      <div style={{ position:'absolute',bottom:'8px',left:'8px',width:'20px',height:'20px',borderBottom:'2px solid #1D1D1F',borderLeft:'2px solid #1D1D1F',borderRadius:'0 0 0 2px' }}/>
-                      <div style={{ position:'absolute',bottom:'8px',right:'8px',width:'20px',height:'20px',borderBottom:'2px solid #1D1D1F',borderRight:'2px solid #1D1D1F',borderRadius:'0 0 2px 0' }}/>
+                      <div style={{ position:'absolute', top:10, left:10, width:22, height:22, borderTop:'2px solid #1D1D1F', borderLeft:'2px solid #1D1D1F', borderRadius:'2px 0 0 0' }}/>
+                      <div style={{ position:'absolute', top:10, right:10, width:22, height:22, borderTop:'2px solid #1D1D1F', borderRight:'2px solid #1D1D1F', borderRadius:'0 2px 0 0' }}/>
+                      <div style={{ position:'absolute', bottom:10, left:10, width:22, height:22, borderBottom:'2px solid #1D1D1F', borderLeft:'2px solid #1D1D1F', borderRadius:'0 0 0 2px' }}/>
+                      <div style={{ position:'absolute', bottom:10, right:10, width:22, height:22, borderBottom:'2px solid #1D1D1F', borderRight:'2px solid #1D1D1F', borderRadius:'0 0 2px 0' }}/>
                     </>
                   )}
                   {/* Loading overlay */}
                   {scannerLoad&&(
-                    <div style={{ position:'absolute',inset:0,background:'rgba(255,255,255,.9)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'10px' }}>
-                      <div style={{ width:'24px',height:'24px',border:'2px solid #E5E5EA',borderTop:'2px solid #1D1D1F',borderRadius:'50%',animation:'spin .8s linear infinite' }}/>
-                      <div style={{ fontSize:'12px',color:'#1D1D1F',fontWeight:600,fontFamily:'var(--font-display)' }}>Identification en cours</div>
-                      <div style={{ fontSize:'10px',color:'#86868B' }}>Analyse par IA...</div>
+                    <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.85)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', display:'flex', flexDirection:'column' as const, alignItems:'center', justifyContent:'center', gap:12 }}>
+                      <div style={{ width:28, height:28, border:'2.5px solid rgba(0,0,0,0.08)', borderTop:'2.5px solid #1D1D1F', borderRadius:'50%', animation:'spin .8s linear infinite' }}/>
+                      <div style={{ fontSize:12, color:'#1D1D1F', fontWeight:700, fontFamily:'var(--font-display)', letterSpacing:'0.02em' }}>Identification en cours</div>
+                      <div style={{ fontSize:10, color:'#86868B', fontFamily:'var(--font-display)' }}>Analyse par IA...</div>
                     </div>
                   )}
                 </div>
@@ -3240,29 +3453,62 @@ export function Holdings() {
                   onChange={e=>{ const f=e.target.files?.[0]; if(f) handleScan(f) }}/>
 
                 {/* Buttons */}
-                <div style={{ display:'flex',gap:'8px' }}>
+                <div style={{ display:'flex', gap:8 }}>
                   <button disabled={scannerLoad}
                     onClick={()=>fileRef.current?.click()}
-                    style={{ flex:1,padding:'13px',borderRadius:'12px',background:scannerLoad?'#F0F0F5':'#1D1D1F',border:'none',color:scannerLoad?'#AEAEB2':'#fff',fontSize:'13px',fontWeight:700,cursor:scannerLoad?'default':'pointer',fontFamily:'var(--font-display)',transition:'all .15s',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px' }}
-                    onMouseEnter={e=>{if(!scannerLoad)e.currentTarget.style.background='#333'}}
-                    onMouseLeave={e=>{if(!scannerLoad)e.currentTarget.style.background='#1D1D1F'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    style={{
+                      flex:1, padding:'14px 18px',
+                      borderRadius:12,
+                      background: scannerLoad ? 'rgba(0,0,0,0.05)' : '#1D1D1F',
+                      border:'none',
+                      color: scannerLoad ? '#AEAEB2' : '#fff',
+                      fontSize:13, fontWeight:700,
+                      cursor: scannerLoad ? 'default' : 'pointer',
+                      fontFamily:'var(--font-display)',
+                      transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:7,
+                      letterSpacing:'0.02em',
+                      boxShadow: scannerLoad ? 'none' : '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    }}
+                    onMouseEnter={e=>{ if(!scannerLoad){ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' } }}
+                    onMouseLeave={e=>{ if(!scannerLoad){ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' } }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     {scannerLoad ? 'Analyse...' : scannerImg ? 'Nouvelle photo' : 'Prendre une photo'}
                   </button>
                   {scannerImg&&!scannerLoad&&(
-                    <button onClick={()=>setScannerImg(null)}
-                      style={{ padding:'13px 18px',borderRadius:'12px',background:'#F5F5F7',border:'1px solid #E5E5EA',color:'#48484A',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.background='#EDEDF0'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='#F5F5F7'}}>
+                    <button onClick={()=>setScannerImg(null)} style={{
+                      padding:'14px 18px',
+                      borderRadius:12,
+                      background:'rgba(255,255,255,0.7)',
+                      backdropFilter:'blur(12px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                      border:'1px solid rgba(229,229,234,0.7)',
+                      color:'#48484A',
+                      fontSize:13, fontWeight:600,
+                      cursor:'pointer',
+                      fontFamily:'var(--font-display)',
+                      transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                      boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    }}
+                      onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.85)'; e.currentTarget.style.color='#1D1D1F' }}
+                      onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.7)'; e.currentTarget.style.color='#48484A' }}>
                       Effacer
                     </button>
                   )}
                 </div>
 
-                {/* Info */}
-                <div style={{ display:'flex',alignItems:'center',gap:'6px',marginTop:'12px',padding:'8px 10px',borderRadius:'8px',background:'#F5F5F7' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                  <span style={{ fontSize:'10px',color:'#86868B',fontFamily:'var(--font-display)',lineHeight:1.4 }}>Sur mobile, utilisez la camera. La carte sera identifiee par l'IA et pre-remplie dans le formulaire d'ajout.</span>
+                {/* Info banner glass */}
+                <div style={{
+                  display:'flex', alignItems:'flex-start', gap:8,
+                  marginTop:14,
+                  padding:'10px 12px',
+                  borderRadius:10,
+                  background:'rgba(245,245,247,0.6)',
+                  backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)',
+                  border:'1px solid rgba(229,229,234,0.6)',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span style={{ fontSize:10.5, color:'#48484A', fontFamily:'var(--font-display)', lineHeight:1.5 }}>Sur mobile, utilisez la camera. La carte sera identifiee par l&apos;IA et pre-remplie dans le formulaire d&apos;ajout.</span>
                 </div>
               </div>
             </div>

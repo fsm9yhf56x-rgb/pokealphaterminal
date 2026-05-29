@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams
   let cardId = params.get('card_id')
   const lang = (params.get('lang') || '').toUpperCase()
+  const conditionRaw = params.get('condition') || ''
 
   if (!cardId) {
     return NextResponse.json({ error: 'card_id required' }, { status: 400 })
@@ -83,18 +84,79 @@ export async function GET(req: NextRequest) {
       ORDER BY source, variant, condition, fetched_at DESC
     ` as Array<any>
 
-    // 2b. Cardmarket history (sparkline)
-    const historyRows = await sql`
-      SELECT fetched_at, price_avg
-      FROM prices_canonical
-      WHERE tcg_card_id = ${cardId}
-        AND source = 'cardmarket'
-        AND variant = 'raw'
-        AND price_avg > 0
-      ORDER BY fetched_at ASC
-      LIMIT 120
-    ` as Array<any>
-    const history = historyRows.map(r => ({ date: r.fetched_at, price: Number(r.price_avg) }))
+    // 2b. History selon condition de l'user
+    //  - User a un grade (PSA 9, CGC 10...) -> timeseries graded eBay sold (grades_history)
+    //  - User raw NM -> raw history TCGplayer (plus dense) si dispo, sinon Cardmarket fallback
+    let history: Array<{ date: string; price: number }> = []
+
+    // Detecte si condition = grade (ex: "PSA 9", "CGC 10")
+    const gradeMatch = conditionRaw.match(/^([A-Za-z]+)\s+(\d+(?:\.\d+)?)$/)
+    const isGraded = !!gradeMatch
+
+    if (isGraded) {
+      // Convert "PSA 9" -> "psa9", "CGC 9.5" -> "cgc9_5" (format key dans grades_history)
+      const slab = gradeMatch![1].toLowerCase()
+      const grade = gradeMatch![2].replace('.', '_')
+      const gradeKey = slab + grade
+
+      const gradedHistRows = await sql`
+        SELECT grades_history->${gradeKey} AS hist
+        FROM graded_prices_ppt
+        WHERE set_name = ${card.set_name}
+          AND card_number LIKE ${String(card.local_id ?? '').padStart(3, '0') + '/%'}
+        LIMIT 1
+      ` as Array<{ hist: Record<string, any> | null }>
+
+      const histObj = gradedHistRows[0]?.hist || {}
+      // Convert { "2025-12-18": { sevenDayAverage: 2691, average: 3000 }, ... } -> sorted array
+      const USD_TO_EUR = 0.92
+      history = Object.entries(histObj)
+        .map(([date, pt]: [string, any]) => ({
+          date,
+          price: Math.round((Number(pt.sevenDayAverage || pt.average || 0)) * USD_TO_EUR * 100) / 100,
+        }))
+        .filter(p => p.price > 0)
+        .sort((a, b) => a.date.localeCompare(b.date))
+    }
+
+    // Fallback raw : raw_history TCGplayer NM (dense) sinon Cardmarket (clairseme mais existant)
+    if (history.length === 0) {
+      // 1. Tente raw_history TCGplayer Near Mint (depuis graded_prices_ppt.raw_history)
+      const rawHistRows = await sql`
+        SELECT raw_history->'conditions'->'Near Mint'->'history' AS nm_hist
+        FROM graded_prices_ppt
+        WHERE set_name = ${card.set_name}
+          AND card_number LIKE ${String(card.local_id ?? '').padStart(3, '0') + '/%'}
+        LIMIT 1
+      ` as Array<{ nm_hist: Array<any> | null }>
+
+      const nmHist = rawHistRows[0]?.nm_hist
+      if (Array.isArray(nmHist) && nmHist.length > 0) {
+        const USD_TO_EUR = 0.92
+        history = nmHist
+          .map((p: any) => ({
+            date: typeof p.date === 'string' ? p.date : new Date(p.date).toISOString(),
+            price: Math.round(Number(p.market || 0) * USD_TO_EUR * 100) / 100,
+          }))
+          .filter(p => p.price > 0)
+          .sort((a, b) => a.date.localeCompare(b.date))
+      }
+    }
+
+    // 2. Si toujours rien, fallback Cardmarket historique (l'ancien comportement)
+    if (history.length === 0) {
+      const cmHistRows = await sql`
+        SELECT fetched_at, price_avg
+        FROM prices_canonical
+        WHERE tcg_card_id = ${cardId}
+          AND source = 'cardmarket'
+          AND variant = 'raw'
+          AND price_avg > 0
+        ORDER BY fetched_at ASC
+        LIMIT 120
+      ` as Array<any>
+      history = cmHistRows.map(r => ({ date: r.fetched_at, price: Number(r.price_avg) }))
+    }
 
     // 2c. NEW: PPT graded prices (real eBay sold).
     // Match via (set_name, card_number padded 3 digits)

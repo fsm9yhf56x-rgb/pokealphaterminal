@@ -50,6 +50,7 @@ export interface UseSpotlightDataResult {
 export function useSpotlightData(
   cardId: string | null | undefined,
   lang?: string | null,
+  condition?: string | null,
 ): UseSpotlightDataResult {
   const [data, setData] = useState<SpotlightData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -62,7 +63,8 @@ export function useSpotlightData(
     setError(null)
 
     const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : ''
-    fetch(`/api/spotlight?card_id=${encodeURIComponent(cardId)}${langParam}`)
+    const condParam = condition ? `&condition=${encodeURIComponent(condition)}` : ''
+    fetch(`/api/spotlight?card_id=${encodeURIComponent(cardId)}${langParam}${condParam}`)
       .then(r => r.json())
       .then(j => {
         if (cancelled) return
@@ -76,7 +78,7 @@ export function useSpotlightData(
         setLoading(false)
       })
     return () => { cancelled = true }
-  }, [cardId, lang])
+  }, [cardId, lang, condition])
 
   return { data, loading, error }
 }

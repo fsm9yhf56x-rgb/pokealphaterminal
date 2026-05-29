@@ -53,7 +53,7 @@ const SkeletonBox = ({ height, opacity = 0.5 }: { height: number; opacity?: numb
 )
 
 export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
-  const { data, loading, error } = useSpotlightData(cardId, lang)
+  const { data, loading, error } = useSpotlightData(cardId, lang, portfolio?.condition)
 
   if (error) return <div style={{ padding: 24, fontSize: 13, color: SNOW.red, fontFamily: FONT.body }}>Erreur : {error}</div>
 

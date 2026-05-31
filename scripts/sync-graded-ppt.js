@@ -27,7 +27,7 @@ if (!KEY) { console.error('Missing POKEMON_PRICE_TRACKER_API_KEY'); process.exit
 
 const PROGRESS = 'graded-ppt-progress.json'
 const SAFETY_MIN = 1000          // arrêt si credits journaliers <= 1000
-const THROTTLE_MS = 1200         // 50 req/min max (limite PPT = 60)
+const THROTTLE_MS = 2500         // 24 req/min (limite minute PPT atteinte a 60 -> on prend large)
 const PPT_BASE = 'https://www.pokemonpricetracker.com/api/v2'
 
 // ─── Job persistance (mode --job-id) ──────────────────────────────────────
@@ -293,9 +293,22 @@ async function upsertCard(pool, pptCard, lang) {
 
       if (!res.ok) {
         console.log(`❌ ${set.padEnd(40)} status=${res.status} credits=${res.remaining}`)
+        // Pour 429: on attend mais ne marque PAS le set comme errors en job mode (sera retraite plus tard).
+        // Pour autres erreurs: on log.
+        if (res.status === 429) {
+          console.log('   429 rate-limit minute, attente 70s puis pause batch...')
+          progress.errors.push({ set, language, status: 429, retry_later: true })
+          if (!useJobMode) saveJson(PROGRESS, progress)
+          await sleep(70000)
+          // En job mode: on stop le batch maintenant, le set reste dans items_pending
+          if (useJobMode) {
+            console.log('   Job mode: arret du batch pour eviter cascade 429. Set restera dans pending.')
+            break
+          }
+          continue
+        }
         progress.errors.push({ set, language, status: res.status, error: res.error?.slice(0, 200) })
-        saveJson(PROGRESS, progress)
-        if (res.status === 429) { console.log('   429, attente 60s...'); await sleep(60000); continue }
+        if (!useJobMode) saveJson(PROGRESS, progress)
         await sleep(THROTTLE_MS)
         continue
       }
@@ -332,17 +345,20 @@ async function upsertCard(pool, pptCard, lang) {
         if (useJobMode) {
           const newPending = (job.items_pending || []).filter(s => s !== set)
           const newCompleted = [...(job.items_completed || []), set]
+          const newCreditsConsumed = (job.credits_consumed || 0) + (cards.length * 2)
+          const newCardsInserted = (job.cards_inserted || 0) + upserted
           await updateJobInDb(pool, jobId, {
             items_pending_jsonb: newPending,
             items_completed_jsonb: newCompleted,
             items_done: newCompleted.length,
-            credits_consumed: (job.credits_consumed || 0) + (cards.length * 2),
-            cards_inserted: (job.cards_inserted || 0) + upserted,
+            credits_consumed: newCreditsConsumed,
+            cards_inserted: newCardsInserted,
           })
-          // Refresh local job state
+          // Refresh local job state pour la prochaine iteration (CUMUL CORRECT)
           job.items_pending = newPending
           job.items_completed = newCompleted
-          job.credits_consumed = (job.credits_consumed || 0) + (cards.length * 2)
+          job.credits_consumed = newCreditsConsumed
+          job.cards_inserted = newCardsInserted
         }
 
         // Safety stop temporel (workflow GH 30 min max)

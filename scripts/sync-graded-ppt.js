@@ -20,7 +20,7 @@
 
 require('dotenv').config({ path: '.env.local', quiet: true })
 const fs = require('fs')
-const { Pool } = require('@neondatabase/serverless')
+const { neon } = require('@neondatabase/serverless')
 
 const KEY = process.env.POKEMON_PRICE_TRACKER_API_KEY
 if (!KEY) { console.error('Missing POKEMON_PRICE_TRACKER_API_KEY'); process.exit(1) }
@@ -232,7 +232,15 @@ async function upsertCard(pool, pptCard, lang) {
 // Main
 // ----------------------------------------------------------------------------
 ;(async () => {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  const sqlNeon = neon(process.env.DATABASE_URL)
+  // Adapter: expose .query(sql, params) pour compat avec le code existant
+  const pool = {
+    query: async (text, params = []) => {
+      const rows = await sqlNeon.query(text, params)
+      return { rows }
+    },
+    end: async () => {}
+  }
 
   // ─── Resolve SETS list (mode job vs mode legacy) ────────────────────────
   let SETS, job, progress, done

@@ -42,8 +42,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           node -e "
-            require('dotenv').config();
-            const { neon } = require('@neondatabase/serverless');
+                        const { neon } = require('@neondatabase/serverless');
             const sql = neon(process.env.DATABASE_URL);
             (async () => {
               const r = await sql\`SELECT status, items_done, items_total, credits_consumed FROM sync_progress WHERE job_id='graded_ppt_en_full_coverage'\`;
@@ -73,8 +72,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           node -e "
-            require('dotenv').config();
-            const { neon } = require('@neondatabase/serverless');
+                        const { neon } = require('@neondatabase/serverless');
             const sql = neon(process.env.DATABASE_URL);
             (async () => {
               const r = await sql\`SELECT status, items_done, items_total, credits_consumed, cards_inserted, last_run_at, completed_at FROM sync_progress WHERE job_id='graded_ppt_en_full_coverage'\`;

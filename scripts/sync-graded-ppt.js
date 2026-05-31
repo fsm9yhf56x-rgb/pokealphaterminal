@@ -30,6 +30,10 @@ const SAFETY_MIN = 1000          // arrêt si credits journaliers <= 1000
 const THROTTLE_MS = 1200         // 50 req/min max (limite PPT = 60)
 const PPT_BASE = 'https://www.pokemonpricetracker.com/api/v2'
 
+// ─── Job persistance (mode --job-id) ──────────────────────────────────────
+const BATCH_SIZE_DEFAULT = 12  // sets par run (eviter de trop tirer le quota d'un coup)
+const CRON_BATCH_MAX_DURATION_MS = 25 * 60 * 1000  // 25 min max (workflow GH Actions = 30 min)
+
 // ----------------------------------------------------------------------------
 // Sets à syncer (vintage + modern hot EN par défaut)
 // Noms EXACTS comme retournés par PPT /api/v2/sets
@@ -58,12 +62,50 @@ function arg(name, def = null) {
 const onlySet = arg('set')
 const language = arg('language', 'english')
 const dryRun = args.includes('--dry-run')
-
-const SETS = onlySet ? [onlySet] : DEFAULT_SETS_EN
+const jobId = arg('job-id')              // ex: 'graded_ppt_en_full_coverage'
+const batchSize = parseInt(arg('batch-size', String(BATCH_SIZE_DEFAULT)), 10)
+const useJobMode = !!jobId
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const loadJson = (path, def) => fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf8')) : def
 const saveJson = (path, obj) => fs.writeFileSync(path, JSON.stringify(obj, null, 2))
+
+// ─── Job mode helpers (sync_progress in Neon) ─────────────────────────────
+async function loadJobFromDb(pool, jobId) {
+  const { rows } = await pool.query(
+    `SELECT job_id, status, items_pending, items_completed, items_errors,
+            items_done, items_total, items_failed, credits_consumed,
+            cards_inserted, cards_updated, credits_budget
+       FROM sync_progress WHERE job_id = $1`,
+    [jobId]
+  )
+  if (!rows[0]) throw new Error(`Job '${jobId}' introuvable dans sync_progress`)
+  return rows[0]
+}
+
+async function updateJobInDb(pool, jobId, updates) {
+  const setParts = []
+  const values = []
+  let idx = 1
+  for (const [k, v] of Object.entries(updates)) {
+    if (v === undefined) continue
+    if (k.endsWith('_jsonb')) {
+      const col = k.replace(/_jsonb$/, '')
+      setParts.push(`${col} = $${idx}::jsonb`)
+      values.push(JSON.stringify(v))
+    } else {
+      setParts.push(`${k} = $${idx}`)
+      values.push(v)
+    }
+    idx++
+  }
+  setParts.push(`last_run_at = NOW()`)
+  values.push(jobId)
+  await pool.query(
+    `UPDATE sync_progress SET ${setParts.join(', ')} WHERE job_id = $${idx}`,
+    values
+  )
+}
 
 // ----------------------------------------------------------------------------
 // Fetch 1 set entier depuis PPT
@@ -190,15 +232,42 @@ async function upsertCard(pool, pptCard, lang) {
 // Main
 // ----------------------------------------------------------------------------
 ;(async () => {
-  console.log(`\n=== sync-graded-ppt ===`)
-  console.log(`Language : ${language}`)
-  console.log(`Sets     : ${SETS.length} (${onlySet || 'default list'})`)
-  console.log(`Dry-run  : ${dryRun}`)
-  console.log()
-
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-  const progress = loadJson(PROGRESS, { done: [], errors: [] })
-  const done = new Set(progress.done)
+
+  // ─── Resolve SETS list (mode job vs mode legacy) ────────────────────────
+  let SETS, job, progress, done
+  const startedAt = Date.now()
+
+  if (useJobMode) {
+    console.log(`\n=== sync-graded-ppt (JOB MODE: ${jobId}) ===`)
+    job = await loadJobFromDb(pool, jobId)
+    if (job.status === 'completed') {
+      console.log(`Job deja completed. Nothing to do.`)
+      await pool.end()
+      return
+    }
+    const pending = Array.isArray(job.items_pending) ? job.items_pending : []
+    SETS = pending.slice(0, batchSize)  // batch de N sets
+    console.log(`Language       : ${language}`)
+    console.log(`Sets pending   : ${pending.length}`)
+    console.log(`Sets ce run    : ${SETS.length} (batch_size=${batchSize})`)
+    console.log(`Credits budget : ${job.credits_budget ?? 'N/A'}`)
+    console.log(`Credits used   : ${job.credits_consumed}`)
+    console.log()
+    // Marquer job 'running'
+    await updateJobInDb(pool, jobId, { status: 'running', started_at: job.started_at || new Date() })
+    done = new Set()  // tracking par run (vide; persistance via sync_progress)
+    progress = { done: [], errors: [] }
+  } else {
+    console.log(`\n=== sync-graded-ppt ===`)
+    console.log(`Language : ${language}`)
+    SETS = onlySet ? [onlySet] : DEFAULT_SETS_EN
+    console.log(`Sets     : ${SETS.length} (${onlySet || 'default list'})`)
+    console.log(`Dry-run  : ${dryRun}`)
+    console.log()
+    progress = loadJson(PROGRESS, { done: [], errors: [] })
+    done = new Set(progress.done)
+  }
 
   let cardsTotal = 0, cardsUpserted = 0, lastRemaining = 0
 
@@ -247,9 +316,32 @@ async function upsertCard(pool, pptCard, lang) {
         cardsTotal += cards.length
         done.add(key)
         progress.done = [...done]
-        saveJson(PROGRESS, progress)
+        if (!useJobMode) saveJson(PROGRESS, progress)
         const dt = Math.round((Date.now() - t0) / 1000)
         console.log(`✅ ${set.padEnd(40)} ${upserted}/${cards.length} cartes · ${dt}s · credits=${res.remaining} (consumed=${res.consumed})`)
+
+        // Mise a jour sync_progress apres chaque set OK (job mode)
+        if (useJobMode) {
+          const newPending = (job.items_pending || []).filter(s => s !== set)
+          const newCompleted = [...(job.items_completed || []), set]
+          await updateJobInDb(pool, jobId, {
+            items_pending_jsonb: newPending,
+            items_completed_jsonb: newCompleted,
+            items_done: newCompleted.length,
+            credits_consumed: (job.credits_consumed || 0) + (cards.length * 2),
+            cards_inserted: (job.cards_inserted || 0) + upserted,
+          })
+          // Refresh local job state
+          job.items_pending = newPending
+          job.items_completed = newCompleted
+          job.credits_consumed = (job.credits_consumed || 0) + (cards.length * 2)
+        }
+
+        // Safety stop temporel (workflow GH 30 min max)
+        if (useJobMode && (Date.now() - startedAt) > CRON_BATCH_MAX_DURATION_MS) {
+          console.log(`\n⏱️  Duree max atteinte (${Math.round((Date.now()-startedAt)/60000)} min), arret propre`)
+          break
+        }
       } else {
         console.log(`🔍 ${set.padEnd(40)} DRY-RUN ${cards.length} cartes seraient upserted · credits=${res.remaining}`)
       }
@@ -264,11 +356,25 @@ async function upsertCard(pool, pptCard, lang) {
     }
 
     console.log(`\n=== RÉCAP ===`)
-    console.log(`Sets traités     : ${done.size}`)
-    console.log(`Cartes upserted  : ${cardsUpserted}/${cardsTotal}`)
-    console.log(`Credits restants : ${lastRemaining}`)
-    console.log(`Erreurs          : ${progress.errors.length}`)
-    if (progress.errors.length) console.log(`  → voir ${PROGRESS}`)
+    console.log(`Sets traités ce run : ${done.size}`)
+    console.log(`Cartes upserted     : ${cardsUpserted}/${cardsTotal}`)
+    console.log(`Credits restants    : ${lastRemaining}`)
+    console.log(`Erreurs             : ${progress.errors.length}`)
+    if (progress.errors.length && !useJobMode) console.log(`  → voir ${PROGRESS}`)
+
+    // Job mode finalization
+    if (useJobMode && job) {
+      const pendingLeft = (job.items_pending || []).length
+      const finalStatus = pendingLeft === 0 ? 'completed' : (lastRemaining < SAFETY_MIN ? 'paused' : 'pending')
+      const completedAt = finalStatus === 'completed' ? new Date() : null
+      await updateJobInDb(pool, jobId, {
+        status: finalStatus,
+        items_errors_jsonb: progress.errors.slice(-50),  // garder dernieres erreurs
+        completed_at: completedAt,
+      })
+      console.log(`\nJob status: ${finalStatus} (${job.items_done}/${job.items_total} sets)`)
+      if (pendingLeft > 0) console.log(`Sets restants: ${pendingLeft}`)
+    }
   } finally {
     await pool.end()
   }

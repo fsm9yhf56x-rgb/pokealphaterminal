@@ -1,0 +1,83 @@
+name: Sync Graded PPT EN (4-day coverage)
+
+# Tourne chaque nuit à 00h05 UTC (= 1h05 Paris), juste apres reset quota PPT minuit UTC.
+# Le script traite 12 sets/run max ; SAFETY_MIN=1000 cr arrete proprement si quota bas.
+# Auto-resume via table sync_progress en BDD.
+# Stop natif quand job_id passe a status='completed'.
+
+on:
+  schedule:
+    - cron: '5 0 * * *'   # 00:05 UTC quotidien
+  workflow_dispatch:      # manual trigger
+    inputs:
+      batch_size:
+        description: 'Nombre de sets a traiter (default 12)'
+        default: '12'
+        required: false
+
+jobs:
+  sync:
+    name: Sync graded prices PPT EN
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: sync-graded-ppt-en
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund --prefer-offline
+
+      - name: Check job status before run
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node -e "
+            require('dotenv').config();
+            const { neon } = require('@neondatabase/serverless');
+            const sql = neon(process.env.DATABASE_URL);
+            (async () => {
+              const r = await sql\`SELECT status, items_done, items_total, credits_consumed FROM sync_progress WHERE job_id='graded_ppt_en_full_coverage'\`;
+              if (!r[0]) { console.log('Job introuvable. Exit.'); process.exit(0); }
+              console.log('Status:', r[0].status, '|', r[0].items_done, '/', r[0].items_total, 'sets');
+              console.log('Credits used:', r[0].credits_consumed);
+              if (r[0].status === 'completed') {
+                console.log('Job DEJA COMPLETED. Skip.');
+                process.exit(0);
+              }
+            })();
+          "
+
+      - name: Run sync batch
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKEMON_PRICE_TRACKER_API_KEY: ${{ secrets.POKEMON_PRICE_TRACKER_API_KEY }}
+        run: |
+          node scripts/sync-graded-ppt.js \
+            --job-id graded_ppt_en_full_coverage \
+            --language english \
+            --batch-size ${{ github.event.inputs.batch_size || '12' }}
+
+      - name: Status summary
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node -e "
+            require('dotenv').config();
+            const { neon } = require('@neondatabase/serverless');
+            const sql = neon(process.env.DATABASE_URL);
+            (async () => {
+              const r = await sql\`SELECT status, items_done, items_total, credits_consumed, cards_inserted, last_run_at, completed_at FROM sync_progress WHERE job_id='graded_ppt_en_full_coverage'\`;
+              console.log(JSON.stringify(r[0], null, 2));
+            })();
+          "

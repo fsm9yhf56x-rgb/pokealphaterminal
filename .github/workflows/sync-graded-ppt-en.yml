@@ -11,8 +11,8 @@ on:
   workflow_dispatch:      # manual trigger
     inputs:
       batch_size:
-        description: 'Nombre de sets a traiter (default 12)'
-        default: '12'
+        description: 'Nombre de sets a traiter (default 25)'
+        default: '25'
         required: false
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
           node scripts/sync-graded-ppt.js \
             --job-id graded_ppt_en_full_coverage \
             --language english \
-            --batch-size ${{ github.event.inputs.batch_size || '12' }}
+            --batch-size ${{ github.event.inputs.batch_size || '25' }}
 
       - name: Status summary
         if: always()

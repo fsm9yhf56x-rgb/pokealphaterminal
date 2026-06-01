@@ -892,28 +892,29 @@ export function Encyclopedie() {
         }
         .enc-card:hover .card-name { color: #000 !important; }
 
-        .srt { padding:5px 10px; border-radius:6px; border:none; background:transparent; color:#666; font-size:11px; font-weight:500; cursor:pointer; transition:all .12s; font-family:var(--font-display); }
-        .srt:hover { background:#EBEBEB; }
-        .srt.on { background:#111 !important; color:#fff !important; }
-        .rh { transition: background .12s; cursor:pointer; }
-        .rh:hover { background:#F7F7F7 !important; }
+        .srt { padding:6px 11px; border-radius:7px; border:none; background:transparent; color:#86868B; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s cubic-bezier(.2,.85,.3,1); font-family:var(--font-sora, Sora, sans-serif); }
+        .srt:hover { background:rgba(255,255,255,0.55); backdrop-filter:blur(10px); color:#1D1D1F; }
+        .srt.on { background:#1D1D1F !important; color:#FFFFFF !important; box-shadow:0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.14); }
+        .rh { transition: background .15s; cursor:pointer; }
+        .rh:hover { background:rgba(255,255,255,0.5) !important; }
         .rh:hover .rh-name { font-weight:600 !important; }
 
         .shimmer { background:linear-gradient(90deg,#F2F2F2 25%,#E8E8E8 50%,#F2F2F2 75%); background-size:800px 100%; animation:shimmer 1.4s infinite; }
 
-        .pgbtn { padding:6px 12px; border-radius:7px; border:1px solid #E8E8E8; background:#fff; color:#555; font-size:12px; cursor:pointer; font-family:var(--font-display); transition:all .12s; }
-        .pgbtn:disabled { color:#DDD; cursor:default; border-color:#F0F0F0; }
-        .pgbtn:not(:disabled):hover { background:#F5F5F5; transform:scale(1.04); }
+        .pgbtn { padding:7px 13px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6); backdrop-filter:blur(10px) saturate(180%); -webkit-backdrop-filter:blur(10px) saturate(180%); color:#1D1D1F; font-size:12px; font-weight:500; cursor:pointer; font-family:var(--font-sora, Sora, sans-serif); transition:all .15s cubic-bezier(.2,.85,.3,1); box-shadow:inset 0 1px 0 rgba(255,255,255,0.85); }
+        .pgbtn:disabled { color:#C7C7CC; cursor:default; border-color:rgba(0,0,0,0.04); background:rgba(255,255,255,0.3); }
+        .pgbtn:not(:disabled):hover { background:rgba(255,255,255,0.85); transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9); }
 
-        .fsel { height:34px; padding:0 10px; border:1px solid #EBEBEB; border-radius:7px; font-size:12px; outline:none; background:#fff; cursor:pointer; font-family:var(--font-display); color:#555; transition:border-color .15s; }
-        .fsel:focus, .fsel:hover { border-color:#BBBBBB; }
+        .fsel { height:36px; padding:0 12px; border:1px solid rgba(0,0,0,0.08); border-radius:9px; font-size:12px; outline:none; background:rgba(255,255,255,0.6); backdrop-filter:blur(10px) saturate(180%); -webkit-backdrop-filter:blur(10px) saturate(180%); cursor:pointer; font-family:var(--font-sora, Sora, sans-serif); color:#1D1D1F; font-weight:500; transition:all .15s cubic-bezier(.2,.85,.3,1); box-shadow:inset 0 1px 2px rgba(0,0,0,0.03); }
+        .fsel:focus, .fsel:hover { border-color:#1D1D1F; background:rgba(255,255,255,0.85); }
 
+        .enc-bloc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9) !important; }
         .lang-btn { transition: all .2s cubic-bezier(.34,1.4,.64,1) !important; }
         .lang-btn:active { animation: langBounce .35s ease-out; }
 
         .detail-panel { animation: panelIn .28s cubic-bezier(.34,1.2,.64,1); }
-        .attack-row { transition: background .12s; border-radius:8px; }
-        .attack-row:hover { background:#F0F0F0 !important; }
+        .attack-row { transition: background .15s; border-radius:8px; }
+        .attack-row:hover { background:rgba(0,0,0,0.04) !important; }
 
         .add-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1) !important; }
         .add-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow:0 4px 14px rgba(0,0,0,.18) !important; }
@@ -1131,7 +1132,7 @@ export function Encyclopedie() {
           {browseMode==='bloc'&&!selBloc&&!loading&&(
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'12px', marginBottom:'20px' }}>
               {blocs.map(b=>(
-                <div key={b.name} onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'12px', padding:'16px', cursor:'pointer', transition:'all .15s' }}
+                <div key={b.name} className="enc-bloc-card" onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'1px solid rgba(0,0,0,0.05)', borderRadius:14, padding:18, cursor:'pointer', transition:'all .25s cubic-bezier(.2,.85,.3,1)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.boxShadow=''}}>
                   {(()=>{ const logoSid = b.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'28px', maxWidth:'140px', objectFit:'contain', marginBottom:'6px' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                   <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{b.name}</div>
@@ -1148,7 +1149,7 @@ export function Encyclopedie() {
                   <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
                     {b.sets.slice(0,4).map(st=>{
                       const enSet = allCards.find(c=>c.setId===st.id)?.enSetName
-                      return (<span key={st.id} style={{ fontSize:'9px', color:'#AEAEB2', background:'#F5F5F7', padding:'2px 6px', borderRadius:'4px' }}>{lang==='JP'&&enSet?enSet:st.name}</span>)
+                      return (<span key={st.id} style={{ fontSize:'9px', color:'#86868B', background:'rgba(0,0,0,0.04)', padding:'3px 7px', borderRadius:6, fontWeight:500 }}>{lang==='JP'&&enSet?enSet:st.name}</span>)
                     })}
                     {b.sets.length>4&&<span style={{ fontSize:'9px', color:'#AEAEB2', padding:'2px 4px' }}>+{b.sets.length-4}</span>}
                   </div>
@@ -1159,7 +1160,7 @@ export function Encyclopedie() {
           {browseMode==='bloc'&&selBloc&&!loading&&(
             <div style={{ marginBottom:'20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
-                <button onClick={()=>{setSelBloc(null);setFilEra('all');setFilSet('all');setPage(0)}} style={{ background:'#F5F5F7', border:'none', borderRadius:'8px', padding:'6px 10px', cursor:'pointer', fontSize:'12px', color:'#48484A', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>{String.fromCharCode(8249)} Blocs</button>
+                <button onClick={()=>{setSelBloc(null);setFilEra('all');setFilSet('all');setPage(0)}} style={{ background:'rgba(255,255,255,0.55)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:9, padding:'7px 12px', cursor:'pointer', fontSize:12, fontWeight:500, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', display:'flex', alignItems:'center', gap:5, transition:'all .15s cubic-bezier(.2,.85,.3,1)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>{String.fromCharCode(8249)} Blocs</button>
                 {(()=>{ const logoSid = blocs.find(b=>b.name===selBloc)?.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'24px', maxWidth:'120px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                 <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{selBloc}</span>
               </div>
@@ -1337,8 +1338,8 @@ export function Encyclopedie() {
 
           {/* LIST */}
           {!loading && !loadErr && view==='list' && (
-            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'14px', overflow:'hidden' }}>
-              <div style={{ display:'grid', gridTemplateColumns:'40px minmax(0,2.5fr) minmax(0,1.2fr) 90px 55px 50px', padding:'9px 16px', background:'#FAFAFA', borderBottom:'1px solid #F0F0F0', gap:'8px' }}>
+            <div style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'1px solid rgba(0,0,0,0.05)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'40px minmax(0,2.5fr) minmax(0,1.2fr) 90px 55px 50px', padding:'10px 18px', background:'rgba(0,0,0,0.025)', borderBottom:'1px solid rgba(0,0,0,0.05)', gap:8 }}>
                 {['','Carte','Série','Rareté','N°',''].map((h,i)=>(
                   <div key={i} style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.07em', fontFamily:'var(--font-display)', textAlign:i>=4?'right' as const:'left' as const }}>{h}</div>
                 ))}
@@ -1423,7 +1424,7 @@ export function Encyclopedie() {
         {/* ── DETAIL PANEL ── */}
         {selId && (
           <div className="detail-panel" style={{ width:'285px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)', overflowY:'auto' as any }}>
-            <div style={{ background:'#fff', border:'1px solid #EBEBEB', borderRadius:'16px', overflow:'hidden', overflowY:'auto' as const, boxShadow:'0 8px 32px rgba(0,0,0,.07)' }}>
+            <div style={{ background:'rgba(255,255,255,0.78)', backdropFilter:'blur(18px) saturate(180%)', WebkitBackdropFilter:'blur(18px) saturate(180%)', border:'1px solid rgba(255,255,255,0.6)', borderRadius:18, overflow:'hidden', overflowY:'auto' as const, boxShadow:'0 12px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
 
               {detLoading ? (
                 <div style={{ padding:'50px 20px', textAlign:'center' }}>
@@ -1434,7 +1435,7 @@ export function Encyclopedie() {
               ) : detail ? (
                 <>
                   {/* Image haute résolution */}
-                  <div style={{ background:'#F8F8F8', padding:'14px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' }}>
+                  <div style={{ background:'rgba(0,0,0,0.025)', padding:'16px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' as const, borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
                     {detail.image ? (
                       <img
                         src={cleanLegacyUrl(detail.image) || getCardImageUrl({ lang: lang, setId: detail.set?.id, localId: detail.localId })}
@@ -1546,7 +1547,7 @@ export function Encyclopedie() {
                       <div style={{ marginBottom:'14px' }}>
                         <div style={{ fontSize:'9px', fontWeight:700, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'.1em', fontFamily:'var(--font-display)', marginBottom:'7px' }}>Attaques</div>
                         {detail.attacks.slice(0,3).map((a,i)=>(
-                          <div key={i} className="attack-row" style={{ background:'#F8F8F8', borderRadius:'8px', padding:'8px 10px', marginBottom:'5px' }}>
+                          <div key={i} className="attack-row" style={{ background:'rgba(0,0,0,0.025)', borderRadius:8, padding:'9px 11px', marginBottom:5 }}>
                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'3px' }}>
                               <span style={{ fontSize:'11px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)' }}>{a.name}</span>
                               {a.damage!=null && <span style={{ fontSize:'12px', fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)' }}>{a.damage}</span>}
@@ -1593,7 +1594,7 @@ export function Encyclopedie() {
                           { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
                         ].filter(s => s.price) : []
                         return (cardPrice || sources.length > 0) ? (
-                          <div style={{ background:SNOW.surface, borderRadius:'10px', padding:'12px', marginBottom:'10px', border:`1px solid ${SNOW.borderSoft}` }}>
+                          <div style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', borderRadius:12, padding:14, marginBottom:12, border:'1px solid rgba(0,0,0,0.05)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
                             <div style={{ fontSize:'9px', color:SNOW.muted, fontFamily:'var(--font-display)', marginBottom:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontWeight:500 }}>Prix marché</div>
                             <div style={{ fontSize:'22px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{formatEUR(cardPrice, 'small')}</div>
                             {sources.length > 0 && (
@@ -1668,7 +1669,7 @@ export function Encyclopedie() {
                         </div>
                       ) : null}
                       {setTotal>0 ? (
-                        <div style={{ background:'#F5F5F7', borderRadius:'10px', padding:'10px 12px', marginBottom:'12px' }}>
+                        <div style={{ background:'rgba(255,255,255,0.45)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)', border:'1px solid rgba(0,0,0,0.04)', borderRadius:11, padding:'11px 13px', marginBottom:12, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>
                           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
                             <span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>Complétion du set</span>
                             <span style={{ fontSize:'10px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{setOwned}/{setTotal}</span>

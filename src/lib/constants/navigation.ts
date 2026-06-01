@@ -19,21 +19,6 @@ export const NAV: NavItem[] = [
     href:  '/home',
     children: [
       { label:'Daily Hub',      href:'/home'           },
-      {
-        label: 'Dexy Insights',
-        href:  '/home/insights',
-        soon: {
-          feature: 'Dexy Insights',
-          version: 'v2.0',
-          description: 'Analyses quotidiennes generees par Dexy AI: ce qui bouge sur le marche, qui accumule quoi, opportunites detectees.',
-          bullets: [
-            'Resume marche personnalise chaque matin',
-            'Detection automatique des mouvements anormaux',
-            'Insights cibles selon ton portefeuille',
-            'Alertes sur les cartes que tu watches',
-          ],
-        },
-      },
       { label:'Missions',       href:'/home/missions'  },
       { label:'Prochains Sets', href:'/releases'       },
     ],
@@ -187,12 +172,13 @@ export const NAV: NavItem[] = [
         soon: {
           feature: 'Dexy AI',
           version: 'v2.0',
-          description: 'Analyste TCG 24/7 propulse par Claude. Pose nimporte quelle question sur le marche.',
+          description: 'Ton analyste TCG personnel propulse par Claude. Insights quotidiens proactifs + chat illimite sur n\'importe quelle question marche.',
           bullets: [
-            'Expert TCG avec contexte marche temps reel',
+            'Resume marche personnalise chaque matin (proactif)',
+            'Detection automatique des mouvements anormaux',
+            'Chat 24/7 avec expert TCG (Claude API)',
             'Conseils grading, investissement, timing',
-            'Requetes illimitees en plan Pro',
-            'Memoire conversation contextuelle',
+            'Memoire conversation contextuelle + alertes ciblees',
           ],
         },
       },

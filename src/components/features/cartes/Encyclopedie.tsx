@@ -532,6 +532,7 @@ export function Encyclopedie() {
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
   const [activeTab,  setActiveTab]   = useState<'apercu'|'prix'|'historique'>('apercu')
+  const [histoSubTab, setHistoSubTab] = useState<'raw'|'graded'>('raw')
   const [detLoading, setDetLoading]  = useState(false)
   const [enDetail,   setEnDetail]    = useState<TCGCardFull|null>(null)
 
@@ -2107,16 +2108,6 @@ export function Encyclopedie() {
                           </div>
                         ) : null
                       })()}
-                      {selCard?.setId && selCard?.localId ? (
-                        <div style={{ marginBottom:'12px' }}>
-                          <PriceHistoryChart
-                            setId={selCard.setId}
-                            localId={selCard.localId}
-                            isPro={isPro}
-                            
-                          />
-                        </div>
-                      ) : null}
                       {(() => {
                         const sid = selCard?.setId || ''
                         const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
@@ -2154,28 +2145,99 @@ export function Encyclopedie() {
                     </div>
                     {/* ====== /TAB: PRIX ====== */}
 
-                    {/* ====== TAB: HISTORIQUE (placeholder + CTA vers Prix) ====== */}
+                    {/* ====== TAB: HISTORIQUE (PriceHistoryChart + sub-tabs Raw/Grades) ====== */}
                     <div className={`tab-section ${activeTab==='historique' ? 'tab-active' : ''}`}>
-                      <div style={{ padding:'40px 20px', textAlign:'center' as const, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)' }}>
-                        <div style={{ fontSize:32, marginBottom:12, opacity:0.4 }}>📊</div>
-                        <div style={{ fontSize:14, fontWeight:600, color:'#1D1D1F', marginBottom:6 }}>Historique des prix</div>
-                        <div style={{ fontSize:12, color:'#86868B', lineHeight:1.5, maxWidth:280, margin:'0 auto 16px' }}>Les graphiques d'historique et la complétion du set se trouvent actuellement dans l'onglet <strong>Prix</strong>.</div>
-                        <button
-                          onClick={() => setActiveTab('prix')}
-                          style={{
-                            padding: '9px 18px',
-                            background: '#1D1D1F',
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: 9,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                            boxShadow: '0 4px 14px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.14)',
-                          }}
-                        >Voir l'historique →</button>
+                      {/* Sub-tabs Raw / Grades */}
+                      <div style={{
+                        display:'flex',
+                        gap:6,
+                        marginBottom:14,
+                        padding:4,
+                        background:'rgba(0,0,0,0.04)',
+                        borderRadius:10,
+                      }}>
+                        {(['raw','graded'] as const).map(t => (
+                          <button
+                            key={t}
+                            onClick={() => setHistoSubTab(t)}
+                            style={{
+                              flex:1,
+                              padding:'8px 14px',
+                              background: histoSubTab===t ? '#FFFFFF' : 'transparent',
+                              color: histoSubTab===t ? '#1D1D1F' : '#86868B',
+                              border:'none',
+                              borderRadius:7,
+                              fontSize:12,
+                              fontWeight: histoSubTab===t ? 700 : 600,
+                              cursor:'pointer',
+                              fontFamily:'var(--font-sora, Sora, sans-serif)',
+                              boxShadow: histoSubTab===t ? '0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)' : 'none',
+                              transition:'all .15s cubic-bezier(.2,.85,.3,1)',
+                              letterSpacing:'-0.01em',
+                            }}
+                          >{t==='raw' ? 'Raw' : 'Gradés'}</button>
+                        ))}
                       </div>
+
+                      {/* Contenu - Raw */}
+                      {histoSubTab==='raw' && selCard?.setId && selCard?.localId && (
+                        <div style={{ marginBottom:12 }}>
+                          <PriceHistoryChart
+                            setId={selCard.setId}
+                            localId={selCard.localId}
+                            isPro={isPro}
+                          />
+                        </div>
+                      )}
+
+                      {/* Contenu - Grades (a venir) */}
+                      {histoSubTab==='graded' && (
+                        <div style={{
+                          padding:'40px 20px',
+                          textAlign:'center' as const,
+                          background:'rgba(255,255,255,0.55)',
+                          backdropFilter:'blur(12px) saturate(180%)',
+                          WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                          border:'1px solid rgba(0,0,0,0.05)',
+                          borderRadius:12,
+                          boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)',
+                        }}>
+                          <div style={{ fontSize:32, marginBottom:12, opacity:0.4 }}>📈</div>
+                          <div style={{
+                            fontSize:14,
+                            fontWeight:700,
+                            color:'#1D1D1F',
+                            marginBottom:6,
+                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                          }}>Historique gradés</div>
+                          <div style={{
+                            fontSize:12,
+                            color:'#86868B',
+                            lineHeight:1.5,
+                            maxWidth:280,
+                            margin:'0 auto 16px',
+                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                          }}>Le suivi historique des cartes gradées (PSA, CGC, BGS) arrive prochainement.</div>
+                          <div style={{
+                            display:'inline-flex',
+                            alignItems:'center',
+                            gap:6,
+                            padding:'5px 12px',
+                            background:'rgba(184,118,59,0.1)',
+                            border:'1px solid rgba(184,118,59,0.25)',
+                            borderRadius:99,
+                            fontSize:10,
+                            fontWeight:700,
+                            color:'#B8763B',
+                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                            textTransform:'uppercase' as const,
+                            letterSpacing:'0.06em',
+                          }}>
+                            <span style={{ width:5, height:5, borderRadius:'50%', background:'#B8763B' }}/>
+                            v2.0
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {/* ====== /TAB: HISTORIQUE ====== */}
 

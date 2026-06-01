@@ -2200,12 +2200,8 @@ export function Encyclopedie() {
                         </div>
                       )}
 
-                      {/* Contenu - Grades
-                          TODO: Backfill PPT historique grades en cours (cron sync-graded-ppt-en).
-                          Quand suffisamment de snapshots (5+), basculer ce placeholder vers:
-                          <PriceHistoryChart setId=... localId=... isPro=... mode='graded' />
-                          (necessitera ajout de la prop 'mode' dans le composant PriceHistoryChart)
-                       */}
+                      {/* Contenu - Grades (GradedHistoryChart depuis graded_prices_ppt.grades_history,
+                          selecteurs Societe + Note ; placeholder vert en fallback si <5 points) */}
                       {histoSubTab==='graded' && selCard?.setId && selCard?.localId && (
                         <div style={{ marginBottom:12 }}>
                           <GradedHistoryChart

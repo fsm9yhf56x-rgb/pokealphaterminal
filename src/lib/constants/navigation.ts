@@ -13,6 +13,7 @@ export const NAV: NavItem[] = [
       { label:'Daily Hub',      href:'/home'           },
       { label:'Dexy Insights',  href:'/home/insights'  },
       { label:'Missions',       href:'/home/missions'  },
+      { label:'Prochains Sets', href:'/releases'       },
     ],
   },
   {

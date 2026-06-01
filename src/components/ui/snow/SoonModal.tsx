@@ -1,5 +1,6 @@
 'use client'
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 import { SnowButton } from './SnowButton'
 
@@ -29,7 +30,11 @@ export function SoonModal({
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
 
-  if (!open) return null
+  // SSR-safe: pas de portal cote serveur
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!open || !mounted) return null
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -58,16 +63,16 @@ export function SoonModal({
     }
   }
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
         position: 'fixed' as const,
         top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 200,
-        background: 'rgba(20,20,30,0.30)',
-        backdropFilter: 'blur(14px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        zIndex: 9999,
+        background: 'rgba(20,20,30,0.42)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
@@ -332,6 +337,7 @@ export function SoonModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

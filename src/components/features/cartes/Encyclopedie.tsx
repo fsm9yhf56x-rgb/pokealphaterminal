@@ -861,28 +861,60 @@ export function Encyclopedie() {
         .zoom-btn:hover { transform: scale(1.08); opacity:1 !important; }
         .zoom-btn:active { transform: scale(.95); }
 
+        /* ============================================
+           ENC-CARD GLASS V7 - Card tile premium
+        ============================================ */
         .enc-card {
-          transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s ease, border-color .18s ease;
-          border-radius: 12px; overflow: hidden; cursor: pointer; position: relative;
+          transition: transform .3s cubic-bezier(.2,.85,.3,1), box-shadow .3s cubic-bezier(.2,.85,.3,1), border-color .2s ease;
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          position: relative;
+          backdrop-filter: blur(14px) saturate(180%);
+          -webkit-backdrop-filter: blur(14px) saturate(180%);
         }
-        .enc-card { transition:transform .2s ease, box-shadow .2s ease !important; }
-        .enc-card:hover { transform:translateY(-4px) !important; box-shadow:0 12px 32px rgba(0,0,0,.08) !important; border-color:#D2D2D7 !important; }
-        .enc-card:hover .card-img { transform:scale(1.03); }
-        .enc-card .card-img { transition:transform .25s ease; }
-        .enc-card::after {
-          content:''; position:absolute; inset:0; border-radius:12px; pointer-events:none;
-          background: linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 60%);
-          opacity: 0; transition: opacity .25s;
+        /* Hover effect unifie premium */
+        .enc-card:hover {
+          transform: translateY(-4px) scale(1.015);
+          box-shadow:
+            0 16px 40px rgba(0,0,0,0.10),
+            0 4px 12px rgba(0,0,0,0.05),
+            inset 0 1px 0 rgba(255,255,255,0.95) !important;
+          border-color: rgba(0,0,0,0.12) !important;
         }
-        .enc-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 32px rgba(0,0,0,.13) !important; }
+        .enc-card:hover .card-img { transform: scale(1.04); }
         .enc-card:hover .zoom-btn { opacity: 1 !important; }
         .enc-card:hover::after { opacity: 1; }
-        .enc-card:hover .card-img { transform: scale(1.06); }
-        .enc-card.sel { animation: selPulse 2s ease-in-out infinite; border-color: #111 !important; }
+        /* Shimmer overlay au hover */
+        .enc-card::after {
+          content: '';
+          position: absolute; inset: 0;
+          border-radius: 16px;
+          pointer-events: none;
+          background: linear-gradient(115deg, rgba(255,255,255,0) 38%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 62%);
+          opacity: 0;
+          transition: opacity .3s;
+          z-index: 2;
+        }
+        .card-img { transition: transform .4s cubic-bezier(.2,.85,.3,1); will-change: transform; }
+        /* SELECTED state - bordure ink + glow subtle (pas de pulse rouge agressif) */
+        .enc-card.sel {
+          border-color: #1D1D1F !important;
+          box-shadow:
+            0 0 0 1px #1D1D1F,
+            0 16px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.95) !important;
+        }
         .enc-card.sel::before {
-          content:''; position:absolute; inset:0; border-radius:12px; pointer-events:none; z-index:1;
-          background: linear-gradient(135deg,rgba(255,220,100,.13),rgba(160,100,255,.1),rgba(100,200,255,.12));
-          background-size:300% 300%; animation: holoMove 4s ease infinite;
+          content: '';
+          position: absolute; inset: 0;
+          border-radius: 16px;
+          pointer-events: none;
+          z-index: 1;
+          background: linear-gradient(135deg, rgba(255,220,100,0.10), rgba(160,100,255,0.08), rgba(100,200,255,0.10));
+          background-size: 300% 300%;
+          animation: holoMove 5s ease infinite;
         }
         .card-img { transition: transform .35s cubic-bezier(.34,1.2,.64,1); will-change:transform; }
         .card-img-loaded { animation: imgReveal .3s ease-out; }
@@ -1251,9 +1283,38 @@ export function Encyclopedie() {
                     <div key={card.id}
                       className={`enc-card${isSel?' sel':''}`}
                       onClick={()=>handleCardClick(card.id)} onDoubleClick={e=>{e.stopPropagation();if(!isOwned(card)){addToPortfolio(card)}}}
-                      style={{ background:'#fff', border:`1.5px solid ${isSel?'#111':'#EBEBEB'}`, boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)', animation:`cardIn .28s ${Math.min(idx,18)*.025}s ease-out both` }}>
-                      <div style={{ height:cfg.imgH, background:'#F5F5F5', position:'relative', overflow:'hidden' }}>
-                        {card.rarity && (()=>{ const rc=getRarityColor(card.rarity); return <div style={{ position:'absolute', bottom:'6px', left:'6px', zIndex:2, padding:'2px 6px', borderRadius:'4px', background:rc.bg, fontSize:'7px', fontWeight:600, color:rc.fg, fontFamily:'var(--font-display)', letterSpacing:'.02em', opacity:.9 }}>{card.rarity}</div> })()}
+                      style={{
+                        background: 'rgba(255,255,255,0.65)',
+                        border: `1px solid ${isSel ? '#1D1D1F' : 'rgba(0,0,0,0.05)'}`,
+                        boxShadow: isSel
+                          ? '0 0 0 1px #1D1D1F, 0 16px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)'
+                          : '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                        animation: `cardIn .35s ${Math.min(idx,18)*.025}s cubic-bezier(.2,.85,.3,1) both`,
+                      }}>
+                      <div style={{ height: cfg.imgH, background: 'rgba(0,0,0,0.025)', position: 'relative' as const, overflow: 'hidden' as const, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                        {card.rarity && (()=>{
+                          const rc = getRarityColor(card.rarity)
+                          return (
+                            <div style={{
+                              position: 'absolute' as const,
+                              bottom: 7, left: 7,
+                              zIndex: 2,
+                              padding: '3px 7px',
+                              borderRadius: 5,
+                              background: rc.bg,
+                              fontSize: 7.5,
+                              fontWeight: 700,
+                              color: rc.fg,
+                              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase' as const,
+                              opacity: 0.95,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                              backdropFilter: 'blur(8px)',
+                              WebkitBackdropFilter: 'blur(8px)',
+                            }}>{card.rarity}</div>
+                          )
+                        })()}
                         {img ? (
                           <img src={img} alt={card.name}
                             className="card-img"
@@ -1272,7 +1333,19 @@ export function Encyclopedie() {
                           <img src={customImgs[customImgKey(card)]} alt={card.name}
                             style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', borderRadius:'inherit' }}/>
                           ) : (
-                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#F5F5F5,#EEEEEE)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px', cursor:'pointer' }}
+                          <div style={{
+                            position: 'absolute' as const, inset: 0,
+                            background: 'linear-gradient(145deg, rgba(0,0,0,0.025) 0%, rgba(0,0,0,0.045) 100%)',
+                            display: 'flex',
+                            flexDirection: 'column' as const,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 5,
+                            cursor: 'pointer',
+                            transition: 'background .2s ease',
+                          }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'linear-gradient(145deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.06) 100%)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(145deg, rgba(0,0,0,0.025) 0%, rgba(0,0,0,0.045) 100%)')}
                             onClick={e => handleUploadClick(card, e)}>
                             <div style={{ fontSize:cardSize==='S'?'16px':'20px', opacity:.25 }}>📷</div>
                             {cardSize!=='S' && <div style={{ fontSize:'7px', color:'#BBB', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Ajouter<br/>illustration</div>}
@@ -1280,14 +1353,56 @@ export function Encyclopedie() {
                           </div>
                           )
                         )}
-                        <div style={{ position:'absolute', bottom:'5px', right:'6px', fontSize: cardSize==='S'?'10px':'11px', background:'rgba(255,255,255,.92)', borderRadius:'4px', padding:'1px 5px', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}>
+                        <div style={{
+                          position: 'absolute' as const,
+                          bottom: 6, right: 7,
+                          fontSize: cardSize === 'S' ? 10 : 11,
+                          background: 'rgba(255,255,255,0.92)',
+                          backdropFilter: 'blur(10px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                          borderRadius: 5,
+                          padding: '2px 6px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95)',
+                          border: '1px solid rgba(0,0,0,0.04)',
+                        }}>
                           {flag(lang)}
                         </div>
                         <button className="zoom-btn" onClick={e=>{ e.stopPropagation(); setLightbox(card) }}
-                          style={{ position:'absolute', top:'6px', right:'6px', width:'24px', height:'24px', borderRadius:'6px', background:'rgba(255,255,255,.85)', backdropFilter:'blur(4px)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, zIndex:3 }}>
+                          style={{
+                            position: 'absolute' as const, top: 7, right: 7,
+                            width: 26, height: 26,
+                            borderRadius: 7,
+                            background: 'rgba(255,255,255,0.9)',
+                            backdropFilter: 'blur(12px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                            border: '1px solid rgba(0,0,0,0.06)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0,
+                            zIndex: 3,
+                            transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)',
+                          }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                         </button>
-                        {isOwned(card)&&<div style={{ position:'absolute', top:'6px', right:'6px', width:'20px', height:'20px', borderRadius:'50%', background:'#27500A', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
+                        {isOwned(card) && (
+                          <div style={{
+                            position: 'absolute' as const, top: 7, right: 7,
+                            width: 22, height: 22,
+                            borderRadius: '50%',
+                            background: '#1D9E75',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 2,
+                            boxShadow: '0 2px 8px rgba(29,158,117,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+                            border: '1.5px solid rgba(255,255,255,0.95)',
+                          }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          </div>
+                        )}
                       </div>
                       <div style={{ padding:cfg.pad }}>
                         <div className="card-name" style={{ fontSize:cfg.nameSize, fontWeight:600, color:'#111', fontFamily:'var(--font-display)', marginBottom:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.3 }}>

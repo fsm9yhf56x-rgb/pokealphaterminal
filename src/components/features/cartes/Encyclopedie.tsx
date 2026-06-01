@@ -531,7 +531,7 @@ export function Encyclopedie() {
 
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
-  const [activeTab,  setActiveTab]   = useState<'apercu'|'stats'|'prix'|'historique'>('apercu')
+  const [activeTab,  setActiveTab]   = useState<'apercu'|'prix'|'historique'>('apercu')
   const [detLoading, setDetLoading]  = useState(false)
   const [enDetail,   setEnDetail]    = useState<TCGCardFull|null>(null)
 
@@ -1006,7 +1006,7 @@ export function Encyclopedie() {
         /* ===== DETAIL DRAWER TABS - iOS Segment Control glass v7 ===== */
         .tab-segment-bar {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 2px;
           padding: 4px;
           background: rgba(0,0,0,0.04);
@@ -1784,7 +1784,6 @@ export function Encyclopedie() {
                   <div className="drawer-tab-bar-sticky">
                     <div className="tab-segment-bar">
                       <button className={`tab-segment ${activeTab==='apercu'?'active':''}`} onClick={()=>setActiveTab('apercu')}>Aperçu</button>
-                      <button className={`tab-segment ${activeTab==='stats'?'active':''}`} onClick={()=>setActiveTab('stats')}>Stats</button>
                       <button className={`tab-segment ${activeTab==='prix'?'active':''}`} onClick={()=>setActiveTab('prix')}>Prix</button>
                       <button className={`tab-segment ${activeTab==='historique'?'active':''}`} onClick={()=>setActiveTab('historique')}>Historique</button>
                     </div>
@@ -1903,38 +1902,8 @@ export function Encyclopedie() {
                     </div>
 
                     </div>
-                    {/* ====== /TAB: APERÇU ====== */}
-
-                    {/* ====== TAB: STATS ====== */}
-                    <div className={`tab-section ${activeTab==='stats' ? 'tab-active' : ''}`}>
-                    {/* Types + HP */}
-                    {(detail.types?.length || detail.hp) && (
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:'5px', marginBottom:'14px' }}>
-                        {detail.types?.map(t=>(
-                          <span key={t} style={{ fontSize:'10px', fontWeight:600, background:`${TC[t]??'#888'}18`, color:TC[t]??'#888', border:`1px solid ${TC[t]??'#888'}30`, padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>{t}</span>
-                        ))}
-                        {detail.hp && (
-                          <span style={{ fontSize:'10px', fontWeight:600, background:'#F5F5F5', color:'#555', border:'1px solid #E8E8E8', padding:'3px 8px', borderRadius:'5px', fontFamily:'var(--font-display)' }}>{detail.hp} HP</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Infos */}
-                    <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'14px' }}>
-                      {([
-
-                        ['Catégorie',   detail.category],
-                        ['Stade',       detail.stage],
-                        ['Évolue de',   detail.evolveFrom],
-                        ['Illustrateur',detail.illustrator],
-                      ] as [string,string|undefined][]).filter(([,v])=>v).map(([l,v])=>(
-                        <div key={l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px' }}>
-                          <span style={{ fontSize:'10px', color:'#AAA', fontFamily:'var(--font-display)', flexShrink:0 }}>{l}</span>
-                          <span style={{ fontSize:'11px', color:'#111', fontFamily:'var(--font-display)', fontWeight:500, textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{v}</span>
-                        </div>
-                      ))}
-                    </div>
-
+                    {/* ====== /TAB: APERÇU ====== */}                    {/* ====== Stats absorbe dans Apercu - Attaques + Faiblesses ====== */}
+                    <div className={`tab-section ${activeTab==='apercu' ? 'tab-active' : ''}`}>
                     {/* Attaques */}
                     {detail.attacks && detail.attacks.length>0 && (
                       <div style={{ marginBottom:'14px' }}>
@@ -1973,7 +1942,7 @@ export function Encyclopedie() {
                     )}
 
                     </div>
-                    {/* ====== /TAB: STATS ====== */}
+                    {/* ====== /Stats absorbe dans Apercu ====== */}
 
                     {/* ====== TAB: PRIX ====== */}
                     <div className={`tab-section ${activeTab==='prix' ? 'tab-active' : ''}`}>

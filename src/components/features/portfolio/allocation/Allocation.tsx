@@ -179,9 +179,9 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
           background: 'rgba(255,255,255,0.7)',
           backdropFilter: 'blur(18px) saturate(180%)',
           WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-          border: '1px solid rgba(201,168,76,0.22)',
+          border: '1px solid rgba(0,0,0,0.06)',
           borderRadius: 20,
-          boxShadow: '0 12px 40px rgba(184,118,59,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
           textAlign: 'center' as const,
           position: 'relative' as const,
           overflow: 'hidden' as const,
@@ -192,7 +192,7 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
             top: -80, left: '50%', transform: 'translateX(-50%)',
             width: 260, height: 260,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(215,147,90,0.12) 0%, rgba(201,168,76,0.06) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.02) 40%, transparent 70%)',
             pointerEvents: 'none' as const,
             zIndex: 0,
           }} />
@@ -209,15 +209,15 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
               position: 'absolute' as const,
               inset: -32,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(184,118,59,0.35) 0%, rgba(215,147,90,0.18) 30%, transparent 65%)',
+              background: 'radial-gradient(circle, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.05) 30%, transparent 65%)',
               filter: 'blur(8px)',
               pointerEvents: 'none' as const,
             }} />
             {/* Diamond avec pulse */}
             <div className="noval-diamond" style={{
               fontSize: 56,
-              color: '#B8763B',
-              filter: 'drop-shadow(0 4px 14px rgba(184,118,59,0.4))',
+              color: '#1D1D1F',
+              filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.18))',
               lineHeight: 1,
               position: 'relative' as const,
             }}>◆</div>
@@ -240,15 +240,15 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
             fontSize: 13.5,
             color: '#86868B',
             lineHeight: 1.6,
-            maxWidth: 460,
+            maxWidth: 480,
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             margin: '0 auto 24px',
             position: 'relative' as const,
             zIndex: 1,
           }}>
-            Le service de prix est temporairement indisponible.
+            Les prix de tes cartes ne sont pas encore disponibles.
             <br />
-            L'analyse d'allocation reviendra dès la valorisation rétablie.
+            Ils sont mis à jour automatiquement toutes les <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>4 heures</strong>.
           </div>
 
           {/* Stats badge glass */}
@@ -270,8 +270,8 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
             <span style={{
               width: 6, height: 6,
               borderRadius: '50%',
-              background: '#B8763B',
-              boxShadow: '0 0 8px rgba(184,118,59,0.5)',
+              background: '#C42E1F',
+              boxShadow: '0 0 8px rgba(196,46,31,0.4)',
             }} />
             <span style={{
               fontSize: 12,

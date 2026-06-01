@@ -19,10 +19,13 @@ export function AllocTopHoldings({ agg }: { agg: AllocAggregates }) {
       </SectionTitle>
 
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 14,
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         {agg.topHoldings.map((h, i) => (
           <Row
@@ -37,11 +40,11 @@ export function AllocTopHoldings({ agg }: { agg: AllocAggregates }) {
 
       {/* Footer hint */}
       <div style={{
-        marginTop: '8px',
-        fontSize: '10px',
-        color: 'var(--ink-faint)',
-        fontFamily: 'var(--font-display)',
-        textAlign: 'right',
+        marginTop: 10,
+        fontSize: 10.5,
+        color: '#AEAEB2',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+        textAlign: 'right' as const,
       }}>
         {agg.topHoldings.length < agg.cardsCount
           ? `Affichage du top ${agg.topHoldings.length} sur ${agg.cardsCount} cartes`
@@ -69,23 +72,24 @@ function Row({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '24px 1fr auto auto',
+        gridTemplateColumns: '28px 1fr auto auto',
         alignItems: 'center',
-        gap: '14px',
-        padding: '14px 18px',
-        borderBottom: isLast ? 'none' : '1px solid var(--border)',
-        transition: 'background 0.1s',
+        gap: 16,
+        padding: '14px 20px',
+        borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
+        transition: 'background .15s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.4)')}
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
-      {/* Rank */}
+      {/* Rank - top 3 en gold cuivre */}
       <div style={{
-        fontSize: '11px',
-        fontWeight: 600,
-        color: rank <= 3 ? 'var(--accent)' : 'var(--ink-faint)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        textAlign: 'center',
+        fontSize: 11.5,
+        fontWeight: 700,
+        color: rank === 1 ? '#B8763B' : rank <= 3 ? '#C9A84C' : '#AEAEB2',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
+        textAlign: 'center' as const,
+        letterSpacing: '-0.02em',
       }}>
         {rank.toString().padStart(2, '0')}
       </div>
@@ -93,79 +97,90 @@ function Row({
       {/* Name + meta */}
       <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: '13px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
-          whiteSpace: 'nowrap',
+          fontSize: 13,
+          fontWeight: 600,
+          color: '#1D1D1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          whiteSpace: 'nowrap' as const,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          marginBottom: '4px',
+          marginBottom: 5,
         }}>{holding.name}</div>
 
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          marginBottom: '6px',
-          whiteSpace: 'nowrap',
+          fontSize: 10.5,
+          color: '#86868B',
+          marginBottom: 7,
+          whiteSpace: 'nowrap' as const,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>
           {[holding.set_name, holding.lang, holding.rarity, `×${holding.qty}`]
             .filter(Boolean)
             .join(' · ')}
         </div>
 
-        {/* Weight bar */}
+        {/* Weight bar - gradient gold pour #1, ink degrade pour les autres */}
         <div style={{
           width: '100%',
-          height: '4px',
-          borderRadius: '2px',
-          background: 'var(--border)',
+          height: 5,
+          borderRadius: 3,
+          background: 'rgba(0,0,0,0.05)',
           overflow: 'hidden',
+          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
         }}>
           <div style={{
             width: `${barWidthPct}%`,
             height: '100%',
-            background: rank === 1 ? 'var(--accent)' : 'var(--ink)',
-            transition: 'width 0.5s ease',
+            background: rank === 1
+              ? 'linear-gradient(90deg, #B8763B, #D7935A)'
+              : rank <= 3
+                ? 'linear-gradient(90deg, #1D1D1F, #2C2C2E)'
+                : '#48484A',
+            transition: 'width .6s cubic-bezier(.2,.85,.3,1)',
+            boxShadow: rank === 1 ? '0 0 4px rgba(184,118,59,0.3)' : 'none',
           }} />
         </div>
       </div>
 
       {/* Value + weight % */}
-      <div style={{ textAlign: 'right' }}>
+      <div style={{ textAlign: 'right' as const }}>
         <div style={{
-          fontSize: '13px',
-          fontWeight: 600,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-data, var(--font-display))',
+          fontSize: 13.5,
+          fontWeight: 700,
+          color: '#1D1D1F',
+          fontFamily: 'var(--font-data, "Space Mono", monospace)',
           lineHeight: 1.1,
+          letterSpacing: '-0.01em',
         }}>{formatEUR(holding.value)}</div>
         <div style={{
-          fontSize: '11px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-data, var(--font-display))',
-          marginTop: '2px',
+          fontSize: 11,
+          color: '#86868B',
+          fontFamily: 'var(--font-data, "Space Mono", monospace)',
+          marginTop: 3,
+          fontWeight: 600,
         }}>{Number(holding.weightPct ?? 0).toFixed(1)}%</div>
       </div>
 
       {/* ROI */}
-      <div style={{ textAlign: 'right', minWidth: '60px' }}>
+      <div style={{ textAlign: 'right' as const, minWidth: 64 }}>
         <div style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: hasNoBuy ? 'var(--ink-faint)' : trendColor,
-          fontFamily: 'var(--font-data, var(--font-display))',
+          fontSize: 12.5,
+          fontWeight: 700,
+          color: hasNoBuy ? '#C7C7CC' : trendColor,
+          fontFamily: 'var(--font-data, "Space Mono", monospace)',
           lineHeight: 1.1,
+          letterSpacing: '-0.01em',
         }}>
           {hasNoBuy ? '—' : `${sign}${Number(holding.roiPct ?? 0).toFixed(1)}%`}
         </div>
         <div style={{
-          fontSize: '10px',
-          color: hasNoBuy ? 'var(--ink-faint)' : trendColor,
-          fontFamily: 'var(--font-data, var(--font-display))',
-          marginTop: '2px',
+          fontSize: 10.5,
+          color: hasNoBuy ? '#C7C7CC' : trendColor,
+          fontFamily: 'var(--font-data, "Space Mono", monospace)',
+          marginTop: 3,
+          opacity: 0.85,
         }}>
           {hasNoBuy ? '—' : `${sign}${formatEURcompact(holding.gain)}`}
         </div>
@@ -177,25 +192,25 @@ function Row({
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
+        textTransform: 'uppercase' as const,
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

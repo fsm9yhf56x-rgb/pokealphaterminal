@@ -85,7 +85,10 @@ export function Allocation() {
 
   if (loading) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-faint)' }}>
+      <div style={{
+        padding: '40px 20px', textAlign: 'center', color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)', fontSize: 13,
+      }}>
         Chargement…
       </div>
     )
@@ -118,46 +121,51 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
   return (
     <div style={{
       width: '100%',
-      maxWidth: '720px',
+      maxWidth: 720,
       margin: '0 auto',
       padding: '48px 32px',
       textAlign: 'center',
-      fontFamily: 'var(--font-display)',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
     }}>
       <p style={{
-        fontSize: '10px',
-        color: 'var(--ink-muted)',
+        fontSize: 10,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
         margin: '0 0 4px',
       }}>Portfolio</p>
       <h1 style={{
-        fontSize: '26px',
+        fontSize: 28,
         fontWeight: 600,
-        color: 'var(--ink)',
+        color: '#1D1D1F',
         letterSpacing: '-0.5px',
         margin: '0 0 8px',
       }}>Allocation</h1>
 
       <div style={{
-        marginTop: '32px',
-        padding: '32px 24px',
-        background: 'rgba(212, 175, 55, 0.06)',
-        border: '1px solid rgba(212, 175, 55, 0.25)',
-        borderRadius: '14px',
+        marginTop: 32,
+        padding: '36px 28px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(201,168,76,0.25)',
+        borderRadius: 16,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
-        <div style={{ fontSize: '32px', marginBottom: '14px', opacity: 0.6 }}>{'◆'}</div>
+        <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.7, color: '#B8763B' }}>◆</div>
         <div style={{
-          fontSize: '16px',
-          fontWeight: 600,
-          color: 'var(--ink)',
-          marginBottom: '8px',
+          fontSize: 17,
+          fontWeight: 700,
+          color: '#1D1D1F',
+          marginBottom: 8,
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>Valorisation en attente</div>
         <div style={{
-          fontSize: '13px',
-          color: 'var(--ink-muted)',
+          fontSize: 13,
+          color: '#86868B',
           lineHeight: 1.6,
-          maxWidth: '480px',
+          maxWidth: 480,
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
           margin: '0 auto 18px',
         }}>
           {cardsCount.toLocaleString('fr-FR')} carte{cardsCount > 1 ? 's' : ''} dans ton portfolio,
@@ -436,13 +444,13 @@ function Header() {
   return (
     <div>
       <p style={{
-        fontSize: '10px', color: 'var(--ink-muted)', textTransform: 'uppercase',
+        fontSize: 10, color: '#86868B', textTransform: 'uppercase',
         letterSpacing: '0.1em', margin: '0 0 4px',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>Portfolio</p>
       <h1 style={{
-        fontSize: '26px', fontWeight: 600, color: 'var(--ink)',
-        fontFamily: 'var(--font-display)', letterSpacing: '-0.5px', margin: 0,
+        fontSize: 28, fontWeight: 600, color: '#1D1D1F',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '-0.5px', margin: 0,
       }}>Allocation</h1>
     </div>
   )
@@ -452,13 +460,24 @@ function EmptyState() {
   return (
     <div style={{
       padding: '60px 20px', textAlign: 'center',
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: '12px',
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
     }}>
-      <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600, marginBottom: '6px' }}>
+      <div style={{ fontSize: 48, opacity: 0.2, marginBottom: 16 }}>📊</div>
+      <div style={{
+        fontSize: 15, color: '#1D1D1F', fontWeight: 600, marginBottom: 6,
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      }}>
         Aucune carte dans votre portfolio
       </div>
-      <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+      <div style={{
+        fontSize: 12, color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      }}>
         Ajoutez des cartes depuis Holdings pour voir vos allocations ici.
       </div>
     </div>

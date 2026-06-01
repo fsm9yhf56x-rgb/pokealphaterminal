@@ -9,6 +9,12 @@ import type { AllocAggregates, AllocBucket } from './Allocation'
 export function AllocBreakdowns({ agg }: { agg: AllocAggregates }) {
   return (
     <div>
+      <style>{`
+        .alloc-breakdown-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+      `}</style>
       <SectionTitle>Répartition par dimension</SectionTitle>
 
       <div style={{
@@ -41,18 +47,21 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
   if (buckets.length === 0) {
     return (
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '16px 18px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 14,
+        padding: '18px 20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         <CardTitle title={title} />
         <div style={{
-          padding: '20px 0',
+          padding: '24px 0',
           textAlign: 'center',
-          fontSize: '11px',
-          color: 'var(--ink-faint)',
-          fontFamily: 'var(--font-display)',
+          fontSize: 11.5,
+          color: '#AEAEB2',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>Pas de données</div>
       </div>
     )
@@ -68,23 +77,28 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
   const isHighConcentration = topPct > 60
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      padding: '16px 18px',
+    <div className="alloc-breakdown-card" style={{
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 14,
+      padding: '18px 20px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+      transition: 'all .3s cubic-bezier(.2,.85,.3,1)',
     }}>
       <CardTitle title={title} />
 
       {/* Stacked bar */}
       <div style={{
         display: 'flex',
-        height: '10px',
-        borderRadius: '6px',
+        height: 10,
+        borderRadius: 6,
         overflow: 'hidden',
-        marginBottom: '14px',
-        gap: '2px',
-        background: 'var(--border)',
+        marginBottom: 16,
+        gap: 2,
+        background: 'rgba(0,0,0,0.04)',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
       }}>
         {colored.map((b) => (
           <div
@@ -121,27 +135,29 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
               flexShrink: 0,
             }} />
             <span style={{
-              fontSize: '12px',
-              color: 'var(--ink)',
-              fontFamily: 'var(--font-display)',
+              fontSize: 12,
+              color: '#1D1D1F',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              fontWeight: 500,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}>{b.label}</span>
             <span style={{
-              fontSize: '11px',
-              color: 'var(--ink-muted)',
-              fontFamily: 'var(--font-data, var(--font-display))',
-              minWidth: '32px',
-              textAlign: 'right',
+              fontSize: 11.5,
+              color: '#86868B',
+              fontWeight: 600,
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
+              minWidth: 36,
+              textAlign: 'right' as const,
             }}>{Number(b.pct ?? 0).toFixed(1)}%</span>
             <span style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              color: 'var(--ink)',
-              fontFamily: 'var(--font-data, var(--font-display))',
-              minWidth: '60px',
-              textAlign: 'right',
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: '#1D1D1F',
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
+              minWidth: 60,
+              textAlign: 'right' as const,
             }}>{formatEURcompact(b.value)}</span>
           </div>
         ))}
@@ -150,12 +166,13 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
       {/* Concentration footnote */}
       {isHighConcentration && (
         <div style={{
-          marginTop: '10px',
-          paddingTop: '10px',
-          borderTop: '1px solid var(--border)',
-          fontSize: '10px',
-          color: 'var(--accent)',
-          fontFamily: 'var(--font-display)',
+          marginTop: 12,
+          paddingTop: 12,
+          borderTop: '1px solid rgba(0,0,0,0.05)',
+          fontSize: 10.5,
+          color: '#C42E1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          fontWeight: 600,
         }}>
           ▲ Forte concentration sur "{colored[0].label}"
         </div>
@@ -167,13 +184,13 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
 function CardTitle({ title }: { title: string }) {
   return (
     <div style={{
-      fontSize: '10px',
-      fontWeight: 600,
-      color: 'var(--ink-muted)',
+      fontSize: 10.5,
+      fontWeight: 700,
+      color: '#86868B',
       textTransform: 'uppercase',
       letterSpacing: '0.08em',
-      fontFamily: 'var(--font-display)',
-      marginBottom: '14px',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      marginBottom: 14,
     }}>{title}</div>
   )
 }
@@ -181,25 +198,25 @@ function CardTitle({ title }: { title: string }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

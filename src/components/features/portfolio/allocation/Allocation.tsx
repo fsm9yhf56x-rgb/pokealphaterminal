@@ -119,68 +119,199 @@ export function Allocation() {
 
 function NoValuationState({ cardsCount }: { cardsCount: number }) {
   return (
-    <div style={{
-      width: '100%',
-      maxWidth: 720,
-      margin: '0 auto',
-      padding: '48px 32px',
-      textAlign: 'center',
-      fontFamily: 'var(--font-sora, Sora, sans-serif)',
-    }}>
-      <p style={{
-        fontSize: 10,
-        color: '#86868B',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        margin: '0 0 4px',
-      }}>Portfolio</p>
-      <h1 style={{
-        fontSize: 28,
-        fontWeight: 600,
-        color: '#1D1D1F',
-        letterSpacing: '-0.5px',
-        margin: '0 0 8px',
-      }}>Allocation</h1>
-
+    <>
+      <style>{`
+        @keyframes diamondPulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+        @keyframes diamondGlow {
+          0%, 100% { opacity: 0.35; transform: scale(1); }
+          50% { opacity: 0.55; transform: scale(1.15); }
+        }
+        @keyframes novalFadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .noval-card {
+          animation: novalFadeUp .5s cubic-bezier(.2,.85,.3,1);
+        }
+        .noval-diamond {
+          animation: diamondPulse 3s ease-in-out infinite;
+        }
+        .noval-glow {
+          animation: diamondGlow 3s ease-in-out infinite;
+        }
+        .noval-cta:hover {
+          transform: translateY(-1.5px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+        }
+      `}</style>
       <div style={{
-        marginTop: 32,
-        padding: '36px 28px',
-        background: 'rgba(255,255,255,0.65)',
-        backdropFilter: 'blur(14px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
-        border: '1px solid rgba(201,168,76,0.25)',
-        borderRadius: 16,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+        width: '100%',
+        maxWidth: 720,
+        margin: '0 auto',
+        padding: '32px 24px',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>
-        <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.7, color: '#B8763B' }}>◆</div>
-        <div style={{
-          fontSize: 17,
-          fontWeight: 700,
-          color: '#1D1D1F',
-          marginBottom: 8,
-          fontFamily: 'var(--font-sora, Sora, sans-serif)',
-        }}>Valorisation en attente</div>
-        <div style={{
-          fontSize: 13,
-          color: '#86868B',
-          lineHeight: 1.6,
-          maxWidth: 480,
-          fontFamily: 'var(--font-sora, Sora, sans-serif)',
-          margin: '0 auto 18px',
-        }}>
-          {cardsCount.toLocaleString('fr-FR')} carte{cardsCount > 1 ? 's' : ''} dans ton portfolio,
-          mais le service de prix est temporairement indisponible.
-          L’analyse d’allocation reviendra une fois la valorisation rétablie.
+        {/* Header standard */}
+        <div style={{ marginBottom: 32 }}>
+          <p style={{
+            fontSize: 10,
+            color: '#86868B',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.1em',
+            margin: '0 0 4px',
+            fontWeight: 600,
+          }}>Portfolio</p>
+          <h1 style={{
+            fontSize: 28,
+            fontWeight: 600,
+            color: '#1D1D1F',
+            letterSpacing: '-0.5px',
+            margin: 0,
+          }}>Allocation</h1>
         </div>
-        <div style={{
-          fontSize: '11px',
-          color: 'var(--ink-faint)',
-          fontStyle: 'italic',
+
+        {/* Card premium */}
+        <div className="noval-card" style={{
+          padding: '48px 36px 40px',
+          background: 'rgba(255,255,255,0.7)',
+          backdropFilter: 'blur(18px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+          border: '1px solid rgba(201,168,76,0.22)',
+          borderRadius: 20,
+          boxShadow: '0 12px 40px rgba(184,118,59,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+          textAlign: 'center' as const,
+          position: 'relative' as const,
+          overflow: 'hidden' as const,
         }}>
-          En attendant, tu peux consulter tes Holdings dans la section Portfolio.
+          {/* Bokeh subtle background dans la card */}
+          <div style={{
+            position: 'absolute' as const,
+            top: -80, left: '50%', transform: 'translateX(-50%)',
+            width: 260, height: 260,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(215,147,90,0.12) 0%, rgba(201,168,76,0.06) 40%, transparent 70%)',
+            pointerEvents: 'none' as const,
+            zIndex: 0,
+          }} />
+
+          {/* Diamond avec halo glow */}
+          <div style={{
+            position: 'relative' as const,
+            display: 'inline-block',
+            marginBottom: 22,
+            zIndex: 1,
+          }}>
+            {/* Halo radial glow derriere */}
+            <div className="noval-glow" style={{
+              position: 'absolute' as const,
+              inset: -32,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(184,118,59,0.35) 0%, rgba(215,147,90,0.18) 30%, transparent 65%)',
+              filter: 'blur(8px)',
+              pointerEvents: 'none' as const,
+            }} />
+            {/* Diamond avec pulse */}
+            <div className="noval-diamond" style={{
+              fontSize: 56,
+              color: '#B8763B',
+              filter: 'drop-shadow(0 4px 14px rgba(184,118,59,0.4))',
+              lineHeight: 1,
+              position: 'relative' as const,
+            }}>◆</div>
+          </div>
+
+          {/* Title */}
+          <div style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: '#1D1D1F',
+            marginBottom: 12,
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            letterSpacing: '-0.3px',
+            position: 'relative' as const,
+            zIndex: 1,
+          }}>Valorisation en attente</div>
+
+          {/* Description */}
+          <div style={{
+            fontSize: 13.5,
+            color: '#86868B',
+            lineHeight: 1.6,
+            maxWidth: 460,
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            margin: '0 auto 24px',
+            position: 'relative' as const,
+            zIndex: 1,
+          }}>
+            Le service de prix est temporairement indisponible.
+            <br />
+            L'analyse d'allocation reviendra dès la valorisation rétablie.
+          </div>
+
+          {/* Stats badge glass */}
+          <div style={{
+            display: 'inline-flex' as const,
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 14px',
+            background: 'rgba(255,255,255,0.55)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 99,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+            marginBottom: 28,
+            position: 'relative' as const,
+            zIndex: 1,
+          }}>
+            <span style={{
+              width: 6, height: 6,
+              borderRadius: '50%',
+              background: '#B8763B',
+              boxShadow: '0 0 8px rgba(184,118,59,0.5)',
+            }} />
+            <span style={{
+              fontSize: 12,
+              color: '#1D1D1F',
+              fontWeight: 600,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            }}>
+              <strong style={{ color: '#1D1D1F' }}>{cardsCount.toLocaleString('fr-FR')}</strong>
+              <span style={{ color: '#86868B', fontWeight: 500 }}> carte{cardsCount > 1 ? 's' : ''} dans ton portfolio</span>
+            </span>
+          </div>
+
+          {/* CTA bouton noir premium */}
+          <div style={{ position: 'relative' as const, zIndex: 1 }}>
+            <a href="/portfolio" style={{ textDecoration: 'none' }}>
+              <button className="noval-cta" style={{
+                padding: '12px 28px',
+                background: '#1D1D1F',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 13.5,
+                fontWeight: 600,
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                letterSpacing: '0.005em',
+                cursor: 'pointer',
+                transition: 'all .25s cubic-bezier(.2,.85,.3,1)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',
+                display: 'inline-flex' as const,
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                Voir mes Holdings
+                <span style={{ fontSize: 14, marginTop: -1 }}>→</span>
+              </button>
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

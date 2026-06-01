@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { SNOW, FONT } from '@/lib/design/snow'
+import { SnowButton } from '@/components/ui/snow'
 
 type Lang = 'EN'|'FR'|'JP'
 type ProductType = 'booster'|'display'|'etb'|'bundle'
@@ -200,26 +202,102 @@ export function Scelles() {
         @keyframes cardIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
         @keyframes panelIn{from{opacity:0;transform:translateX(14px) scale(.98)}to{opacity:1;transform:translateX(0) scale(1)}}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .sc{transition:all .2s cubic-bezier(.34,1.2,.64,1) !important;cursor:pointer}
-        .sc:hover{transform:translateY(-4px) !important;box-shadow:0 12px 32px rgba(0,0,0,.1) !important;border-color:#D2D2D7 !important}
-        .pill{padding:5px 12px;border-radius:99px;border:1px solid #E5E5EA;background:#fff;color:#48484A;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s;white-space:nowrap}
-        .pill:hover{border-color:#1D1D1F;background:#F5F5F7}
-        .pill.on{background:#1D1D1F !important;color:#fff !important;border-color:#1D1D1F !important}
-        .srt{padding:5px 11px;border-radius:6px;border:none;background:transparent;color:#86868B;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .12s}
-        .srt:hover{background:#EBEBEB}
-        .srt.on{background:#1D1D1F !important;color:#fff !important}
-        .fsel{height:34px;padding:0 10px;border:1px solid #EBEBEB;border-radius:7px;font-size:12px;outline:none;background:#fff;cursor:pointer;font-family:var(--font-display);color:#555;transition:border-color .15s}
-        .fsel:focus,.fsel:hover{border-color:#BBB}
-        .detail-panel{animation:panelIn .28s cubic-bezier(.34,1.2,.64,1)}
-        .enc-card{transition:transform .22s cubic-bezier(.34,1.4,.64,1),box-shadow .22s ease,border-color .18s ease;border-radius:12px;overflow:hidden;cursor:pointer;position:relative}
-        .enc-card:hover{transform:translateY(-5px) scale(1.02) !important;box-shadow:0 12px 32px rgba(0,0,0,.1) !important;border-color:#D2D2D7 !important}
-        .enc-card:hover .card-img{transform:scale(1.04)}
-        .enc-card:hover .card-name{color:#000 !important}
-        .enc-card::after{content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,0) 40%,rgba(255,255,255,.18) 50%,rgba(255,255,255,0) 60%);opacity:0;transition:opacity .25s}
-        .enc-card:hover::after{opacity:1}
-        .card-img{transition:transform .35s cubic-bezier(.34,1.2,.64,1);will-change:transform}
-        .sc:hover .sealed-spec{opacity:1 !important}
-        .sc:hover{transform:translateY(-5px) scale(1.015) !important}
+        .sc-card{
+          transition:transform .3s cubic-bezier(.2,.85,.3,1),box-shadow .3s ease,border-color .2s ease;
+          border-radius:14px;overflow:hidden;cursor:pointer;position:relative;
+          background:rgba(255,255,255,0.65);
+          backdrop-filter:blur(14px) saturate(180%);
+          -webkit-backdrop-filter:blur(14px) saturate(180%);
+          box-shadow:0 1px 3px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .sc-card:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 10px 28px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.9);}
+        .sc-card:hover .sc-img{transform:scale(1.05)}
+        .sc-card:hover .sc-name{color:#000 !important}
+        .sc-card.sel{border-color:#1D1D1F !important;box-shadow:0 8px 28px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.9)}
+        .sc-img{transition:transform .4s cubic-bezier(.2,.85,.3,1);will-change:transform}
+        .sc-pill{
+          padding:6px 13px;border-radius:99px;
+          background:rgba(255,255,255,0.5);
+          backdrop-filter:blur(12px) saturate(180%);
+          -webkit-backdrop-filter:blur(12px) saturate(180%);
+          border:1px solid rgba(0,0,0,0.05);
+          color:#48484A;font-size:11.5px;font-weight:500;cursor:pointer;
+          font-family:var(--font-sora);
+          transition:all .2s cubic-bezier(.2,.85,.3,1);
+          white-space:nowrap;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+        .sc-pill:hover{background:rgba(255,255,255,0.75);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.85)}
+        .sc-pill.on{background:#1D1D1F !important;color:#fff !important;border-color:#1D1D1F !important;box-shadow:0 2px 8px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.14) !important}
+        .sc-srt{
+          padding:6px 12px;border-radius:7px;border:none;background:transparent;
+          color:#86868B;font-size:11.5px;font-weight:500;cursor:pointer;
+          font-family:var(--font-sora);transition:all .2s;
+        }
+        .sc-srt:hover{background:rgba(255,255,255,0.6);color:#1D1D1F}
+        .sc-srt.on{background:#1D1D1F !important;color:#fff !important;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+        .sc-fsel{
+          height:36px;padding:0 12px;
+          background:rgba(255,255,255,0.55);
+          backdrop-filter:blur(12px) saturate(180%);
+          -webkit-backdrop-filter:blur(12px) saturate(180%);
+          border:1px solid rgba(0,0,0,0.06);
+          border-radius:8px;font-size:12.5px;outline:none;cursor:pointer;
+          font-family:var(--font-sora);color:#1D1D1F;
+          transition:all .2s;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
+        }
+        .sc-fsel:focus,.sc-fsel:hover{background:rgba(255,255,255,0.75);border-color:rgba(0,0,0,0.08)}
+        .sc-search{
+          width:100%;height:40px;padding:0 14px 0 36px;
+          background:rgba(255,255,255,0.55);
+          backdrop-filter:blur(12px) saturate(180%);
+          -webkit-backdrop-filter:blur(12px) saturate(180%);
+          border:1px solid rgba(0,0,0,0.06);
+          border-radius:9px;font-size:13px;color:#1D1D1F;outline:none;
+          font-family:var(--font-dm);box-sizing:border-box;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
+          transition:all .2s;
+        }
+        .sc-search:focus{background:rgba(255,255,255,0.75);border-color:rgba(0,0,0,0.1)}
+        .sc-lang{
+          background:rgba(255,255,255,0.45);
+          backdrop-filter:blur(12px) saturate(180%);
+          -webkit-backdrop-filter:blur(12px) saturate(180%);
+          border-radius:12px;padding:4px;display:flex;gap:3px;
+          border:1px solid rgba(0,0,0,0.04);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
+        }
+        .sc-lang-btn{
+          padding:8px 14px;border-radius:9px;border:none;
+          font-family:var(--font-sora);font-size:13px;cursor:pointer;
+          display:flex;align-items:center;gap:6px;
+          transition:all .25s cubic-bezier(.2,.85,.3,1);
+          background:transparent;color:#86868B;font-weight:500;
+        }
+        .sc-lang-btn.on{
+          background:rgba(255,255,255,0.95) !important;color:#1D1D1F !important;font-weight:700 !important;
+          box-shadow:0 2px 8px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,1) !important;
+        }
+        .sc-sticky-bar{
+          position:sticky;top:0;z-index:30;
+          background:rgba(255,255,255,0.7);
+          backdrop-filter:blur(20px) saturate(180%);
+          -webkit-backdrop-filter:blur(20px) saturate(180%);
+          padding:14px 12px;margin:0 -12px 18px;
+          border-radius:12px;
+          border:1px solid rgba(0,0,0,0.04);
+          box-shadow:0 1px 3px rgba(0,0,0,0.03),inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+        .sc-panel{
+          background:rgba(255,255,255,0.7);
+          backdrop-filter:blur(28px) saturate(180%);
+          -webkit-backdrop-filter:blur(28px) saturate(180%);
+          border:1px solid rgba(255,255,255,0.55);
+          border-radius:18px;overflow:hidden;
+          box-shadow:0 12px 40px rgba(0,0,0,0.1),0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.9);
+          animation:panelIn .3s cubic-bezier(.2,.85,.3,1);
+        }
       `}</style>
 
       <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>
@@ -232,10 +310,10 @@ export function Scelles() {
               <div style={{fontSize:12,color:'#86868B'}}><strong style={{color:'#1D1D1F'}}>{stats.total}</strong> produits · <strong style={{color:'#1D1D1F'}}>{stats.sets}</strong> séries · <strong style={{color:'#1D1D1F'}}>{stats.eras}</strong> blocs</div>
             </div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <button onClick={()=>setGroupBySet(!groupBySet)} className={'pill'+(groupBySet?' on':'')}>{groupBySet?'Vue grille':'Par série'}</button>
-              <div style={{background:'#F5F5F5',borderRadius:12,padding:4,display:'flex',gap:3}}>
+              <SnowButton size="sm" variant={groupBySet?'primary':'secondary'} onClick={()=>setGroupBySet(!groupBySet)}>{groupBySet?'Vue grille':'Par série'}</SnowButton>
+              <div className="sc-lang">
                 {(['EN','FR','JP'] as Lang[]).map(l=>(
-                  <button key={l} onClick={()=>setLang(l)} style={{padding:'8px 14px',borderRadius:9,border:'none',background:lang===l?'#fff':'transparent',color:lang===l?'#111':'#888',fontFamily:'var(--font-display)',fontWeight:lang===l?700:500,fontSize:13,cursor:'pointer',boxShadow:lang===l?'0 2px 8px rgba(0,0,0,.1)':'none',display:'flex',alignItems:'center',gap:6}}>
+                  <button key={l} onClick={()=>setLang(l)} className={'sc-lang-btn'+(lang===l?' on':'')}>
                     <span>{flag(l)}</span><span>{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
                   </button>
                 ))}
@@ -247,32 +325,31 @@ export function Scelles() {
           <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap' as const,alignItems:'center'}}>
             <div style={{position:'relative' as const,flex:1,minWidth:200}}>
               <span style={{position:'absolute' as const,left:11,top:'50%',transform:'translateY(-50%)',color:'#CCC',fontSize:15,pointerEvents:'none' as const}}>{String.fromCharCode(8981)}</span>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un produit scellé..."
-                style={{width:'100%',height:38,padding:'0 12px 0 32px',border:'1px solid #EBEBEB',borderRadius:9,fontSize:13,color:'#111',outline:'none',background:'#fff',fontFamily:'var(--font-sans)',boxSizing:'border-box' as const}}/>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un produit scellé..." className="sc-search"/>
             </div>
-            <div style={{display:'flex',gap:3,background:'#F5F5F5',borderRadius:9,padding:3}}>
+            <div style={{display:'flex',gap:3,background:'rgba(255,255,255,0.45)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',border:'1px solid rgba(0,0,0,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.75)',borderRadius:9,padding:3}}>
               {([['recent','Récent'],['name','Nom'],['cards','Cartes']] as ['recent'|'name'|'cards',string][]).map(([k,l])=>(
-                <button key={k} onClick={()=>setSort(k)} className={'srt'+(sort===k?' on':'')}>{l}</button>
+                <button key={k} onClick={()=>setSort(k)} className={'sc-srt'+(sort===k?' on':'')}>{l}</button>
               ))}
             </div>
           </div>
 
           {/* Filters */}
-          <div style={{display:'flex',gap:8,marginBottom:18,flexWrap:'wrap' as const,alignItems:'center',position:'sticky' as const,top:0,zIndex:30,background:'rgba(255,255,255,.92)',backdropFilter:'blur(8px)',padding:'10px 0'}}>
-            <select className="fsel" value={filEra} onChange={e=>{setFilEra(e.target.value);setFilSet('all')}} style={{color:filEra!=='all'?'#111':'#AAA'}}>
+          <div className="sc-sticky-bar" style={{display:'flex',gap:8,flexWrap:'wrap' as const,alignItems:'center'}}>
+            <select className="sc-fsel" value={filEra} onChange={e=>{setFilEra(e.target.value);setFilSet('all')}} style={{color:filEra!=='all'?'#111':'#AAA'}}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
             </select>
-            <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} style={{maxWidth:220,color:filSet!=='all'?'#111':'#AAA'}}>
+            <select className="sc-fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} style={{maxWidth:220,color:filSet!=='all'?'#111':'#AAA'}}>
               <option value="all">Toutes les séries ({setsInEra.length})</option>
               {setsInEra.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <div style={{width:1,height:24,background:'#EBEBEB'}}/>
             {(['all','booster','display','etb','bundle'] as ('all'|ProductType)[]).map(t=>(
-              <button key={t} onClick={()=>setFilType(t)} className={'pill'+(filType===t?' on':'')}>{t==='all'?'Tous':TYPE_META[t].label}</button>
+              <button key={t} onClick={()=>setFilType(t)} className={'sc-pill'+(filType===t?' on':'')}>{t==='all'?'Tous':TYPE_META[t].label}</button>
             ))}
             {(filEra!=='all'||filSet!=='all'||filType!=='all'||search)&&(
-              <button onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}} style={{height:30,padding:'0 12px',borderRadius:7,border:'1px solid #EBEBEB',background:'#fff',color:'#888',fontSize:11,cursor:'pointer',fontFamily:'var(--font-display)'}}>✕ Effacer</button>
+              <SnowButton size="sm" variant="ghost" onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}}>✕ Effacer</SnowButton>
             )}
             <span style={{fontSize:11,color:'#AEAEB2',marginLeft:'auto',fontFamily:'var(--font-display)'}}>{filtered.length} produits</span>
           </div>
@@ -307,11 +384,11 @@ export function Scelles() {
                 const isSel=selId===item.id
                 const realImg=findRealImg(item.name,item.setName,item.type)
                 return (
-                  <div key={item.id} className="enc-card" onClick={()=>setSelId(isSel?null:item.id)}
+                  <div key={item.id} className="sc-card" onClick={()=>setSelId(isSel?null:item.id)}
                     style={{background:'#fff',border:'1.5px solid '+(isSel?'#111':'#EBEBEB'),boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .28s '+Math.min(idx,18)*.025+'s ease-out both'}}>
                     <div style={{height:180,background:'#F5F5F5',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
                       {realImg ? (
-                        <img src={realImg} alt={item.name} className="card-img"
+                        <img src={realImg} alt={item.name} className="sc-img"
                           style={{maxWidth:'88%',maxHeight:'88%',objectFit:'contain' as const,filter:'drop-shadow(0 4px 12px rgba(0,0,0,.1))'}}
                           onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                       ) : (
@@ -324,7 +401,7 @@ export function Scelles() {
                       {owned>0&&<div style={{position:'absolute',top:6,right:6,width:20,height:20,borderRadius:'50%',background:'#27500A',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
                     </div>
                     <div style={{padding:'10px 12px 12px'}}>
-                      <div className="card-name" style={{fontSize:13,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,lineHeight:1.3}}>{item.name}</div>
+                      <div className="sc-name" style={{fontSize:13,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,lineHeight:1.3}}>{item.name}</div>
                       <div style={{fontSize:10,color:'#AEAEB2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'flex',alignItems:'center',gap:4}}>
                         {item.logo&&<img src={item.logo} alt="" style={{height:11,maxWidth:40,objectFit:'contain' as const,opacity:.6}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                         <span>{item.setName}</span>
@@ -373,15 +450,15 @@ export function Scelles() {
             <div style={{textAlign:'center' as const,padding:'60px 20px'}}>
               <div style={{fontSize:48,opacity:.15,marginBottom:16}}>📦</div>
               <div style={{fontSize:16,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:6}}>Aucun produit trouvé</div>
-              <button onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}} style={{padding:'8px 16px',borderRadius:8,background:'#1D1D1F',color:'#fff',border:'none',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>Effacer les filtres</button>
+              <SnowButton variant="primary" onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}}>Effacer les filtres</SnowButton>
             </div>
           )}
         </div>
 
         {/* Detail panel */}
         {selProduct && (
-          <div className="detail-panel" style={{width:285,flexShrink:0,position:'sticky' as any,top:80,maxHeight:'calc(100vh - 100px)',overflowY:'auto' as any}}>
-            <div style={{background:'#fff',border:'1px solid #EBEBEB',borderRadius:16,overflow:'hidden',boxShadow:'0 8px 32px rgba(0,0,0,.07)'}}>
+          <div  style={{width:285,flexShrink:0,position:'sticky' as any,top:80,maxHeight:'calc(100vh - 100px)',overflowY:'auto' as any}}>
+            <div className="sc-panel">
               <div style={{background:'linear-gradient(135deg,#F8F8FA,#EDEDF0)',display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 0',position:'relative',minHeight:160}}>
                 <SealedImg type={selProduct.type} logo={selProduct.logo} setName={selProduct.setName} selected={false} realImg={findRealImg(selProduct.name,selProduct.setName,selProduct.type)||undefined}/>
                 <button onClick={()=>setSelId(null)} style={{position:'absolute',top:8,left:8,width:26,height:26,borderRadius:'50%',background:'rgba(255,255,255,.9)',border:'1px solid rgba(0,0,0,.08)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
@@ -422,7 +499,7 @@ export function Scelles() {
                     </div>
                   )
                 })()}
-                <button onClick={()=>{
+                <SnowButton fullWidth variant="primary" onClick={()=>{
                     const card: PortfolioCard = {
                       id:'sealed_'+Date.now(), name:selProduct.name, set:selProduct.setName,
                       setId:selProduct.setId, number:'SEALED', rarity:'Sealed',
@@ -434,10 +511,9 @@ export function Scelles() {
                     prev.push(card)
                     localStorage.setItem('portfolio', JSON.stringify(prev))
                     setPortfolio(prev)
-                  }}
-                  style={{width:'100%',padding:11,borderRadius:9,background:'#111',color:'#fff',border:'none',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)'}}>
+                  }}>
                   + Ajouter au portfolio
-                </button>
+                </SnowButton>
               </div>
             </div>
           </div>

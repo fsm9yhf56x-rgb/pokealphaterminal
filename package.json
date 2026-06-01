@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"✅ src/lib/db/schema.ts regenerated\"",
+    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"\u2705 src/lib/db/schema.ts regenerated\"",
     "psa:scrape": "node scripts/scrape-psa-set.mjs",
     "psa:scrape:hot": "node scripts/scrape-psa-tier.mjs --tier=hot",
     "psa:scrape:warm": "node scripts/scrape-psa-tier.mjs --tier=warm",
@@ -61,5 +61,8 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^4.1.5"
+  },
+  "overrides": {
+    "kysely": "0.28.17"
   }
 }

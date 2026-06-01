@@ -2190,7 +2190,12 @@ export function Encyclopedie() {
                         </div>
                       )}
 
-                      {/* Contenu - Grades (a venir) */}
+                      {/* Contenu - Grades
+                          TODO: Backfill PPT historique grades en cours (cron sync-graded-ppt-en).
+                          Quand suffisamment de snapshots (5+), basculer ce placeholder vers:
+                          <PriceHistoryChart setId=... localId=... isPro=... mode='graded' />
+                          (necessitera ajout de la prop 'mode' dans le composant PriceHistoryChart)
+                       */}
                       {histoSubTab==='graded' && (
                         <div style={{
                           padding:'40px 20px',
@@ -2214,28 +2219,40 @@ export function Encyclopedie() {
                             fontSize:12,
                             color:'#86868B',
                             lineHeight:1.5,
-                            maxWidth:280,
+                            maxWidth:300,
                             margin:'0 auto 16px',
                             fontFamily:'var(--font-sora, Sora, sans-serif)',
-                          }}>Le suivi historique des cartes gradées (PSA, CGC, BGS) arrive prochainement.</div>
+                          }}>Les prix gradés actuels sont disponibles dans l'onglet <strong style={{ color:'#1D1D1F' }}>Prix</strong>. Le suivi historique se construit en ce moment — repassez bientôt.</div>
                           <div style={{
                             display:'inline-flex',
                             alignItems:'center',
                             gap:6,
                             padding:'5px 12px',
-                            background:'rgba(184,118,59,0.1)',
-                            border:'1px solid rgba(184,118,59,0.25)',
+                            background:'rgba(29,158,117,0.1)',
+                            border:'1px solid rgba(29,158,117,0.2)',
                             borderRadius:99,
                             fontSize:10,
                             fontWeight:700,
-                            color:'#B8763B',
+                            color:'#1D9E75',
                             fontFamily:'var(--font-sora, Sora, sans-serif)',
                             textTransform:'uppercase' as const,
                             letterSpacing:'0.06em',
                           }}>
-                            <span style={{ width:5, height:5, borderRadius:'50%', background:'#B8763B' }}/>
-                            v2.0
+                            <span style={{
+                              width:5, height:5,
+                              borderRadius:'50%',
+                              background:'#1D9E75',
+                              boxShadow:'0 0 6px rgba(29,158,117,0.6)',
+                              animation:'pulse 1.6s ease-in-out infinite',
+                            }}/>
+                            Données en cours de collecte
                           </div>
+                          <style>{`
+                            @keyframes pulse {
+                              0%, 100% { opacity: 1; }
+                              50% { opacity: 0.4; }
+                            }
+                          `}</style>
                         </div>
                       )}
                     </div>

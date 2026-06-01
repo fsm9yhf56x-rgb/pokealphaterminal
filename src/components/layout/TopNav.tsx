@@ -1,19 +1,20 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { NAV } from '@/lib/constants/navigation'
+import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
+import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 /**
  * TopNav v7 - glassmorphism premium aligne SpotDrawer.
- *
- * - Background transparent (le wrapper AppShell gere le glass)
- * - Items glass v7: hover = pill subtle, active = pill rouge tinted
- * - Logo avec petit dot pulse rouge (signature Kodo Cards)
- * - Badge PRO refractif
+ * Items SOON: badge inline + click ouvre SoonModal (preventDefault navigation).
  */
 export function TopNav() {
   const pathname = usePathname()
+  const [soonModal, setSoonModal] = useState<SoonInfo | null>(null)
+
   return (
     <>
       <style>{`
@@ -29,7 +30,7 @@ export function TopNav() {
           transition: all .2s cubic-bezier(.2,.8,.2,1);
           display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 6px;
           position: relative;
         }
         .knav-link:hover {
@@ -74,7 +75,12 @@ export function TopNav() {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.7); }
         }
+        @keyframes blink {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
       `}</style>
+
       <nav style={{
         height: 56,
         display: 'flex',
@@ -124,6 +130,22 @@ export function TopNav() {
         {NAV.map(item => {
           const isActive = pathname.startsWith(item.href) ||
             item.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/'))
+
+          // SOON item: click ouvre modal (preventDefault)
+          if (item.soon) {
+            return (
+              <a
+                key={item.href}
+                href="#"
+                onClick={(e) => { e.preventDefault(); setSoonModal(item.soon!) }}
+                className="knav-link"
+              >
+                {item.label}
+                <SoonBadge version={item.soon.version} variant="inline" />
+              </a>
+            )
+          }
+
           return (
             <Link
               key={item.href}
@@ -139,6 +161,19 @@ export function TopNav() {
         <div style={{ flex: 1 }} />
         <UserMenu />
       </nav>
+
+      {/* SoonModal */}
+      {soonModal && (
+        <SoonModal
+          open={!!soonModal}
+          onClose={() => setSoonModal(null)}
+          feature={soonModal.feature}
+          version={soonModal.version}
+          description={soonModal.description}
+          bullets={soonModal.bullets}
+          brevoListId={Number(process.env.NEXT_PUBLIC_BREVO_WAITLIST_V2_LIST_ID) || 3}
+        />
+      )}
     </>
   )
 }

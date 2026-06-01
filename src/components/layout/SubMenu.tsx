@@ -1,20 +1,15 @@
 'use client'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { NAV } from '@/lib/constants/navigation'
 import { useState } from 'react'
+import { NAV } from '@/lib/constants/navigation'
+import type { SoonInfo } from '@/lib/constants/navigation'
+import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
-/**
- * SubMenu v7 - sidebar gauche en glass premium aligne SpotDrawer.
- *
- * - Background glass v7 ultra discret (lit le bokeh AppShell)
- * - Items hover glass subtle + active pill rouge tinted
- * - Section label en uppercase letterspacing collector
- * - Fallback children match pour routes hors-arbo (ex /releases sous Home)
- */
 export function SubMenu() {
   const pathname = usePathname()
-  const [open, setOpen] = useState(true)
+  const [open] = useState(true)
+  const [soonModal, setSoonModal] = useState<SoonInfo | null>(null)
 
   const section = NAV.find(n => pathname.startsWith(n.href) && n.href !== '/')
     ?? NAV.find(n => n.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/')))
@@ -27,7 +22,7 @@ export function SubMenu() {
         .ksub-link {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
           padding: 9px 14px;
           border-radius: 10px;
           font-size: 13px;
@@ -113,6 +108,21 @@ export function SubMenu() {
               {section.children.map(child => {
                 const isActive = pathname === child.href ||
                   (child.href !== section.href && pathname.startsWith(child.href + '/'))
+
+                if (child.soon) {
+                  return (
+                    <a
+                      key={child.href}
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); setSoonModal(child.soon!) }}
+                      className="ksub-link"
+                    >
+                      {child.label}
+                      <SoonBadge version={child.soon.version} variant="inline" style={{ marginLeft: 'auto' }} />
+                    </a>
+                  )
+                }
+
                 return (
                   <Link
                     key={child.href}
@@ -128,6 +138,18 @@ export function SubMenu() {
           </>
         )}
       </aside>
+
+      {soonModal && (
+        <SoonModal
+          open={!!soonModal}
+          onClose={() => setSoonModal(null)}
+          feature={soonModal.feature}
+          version={soonModal.version}
+          description={soonModal.description}
+          bullets={soonModal.bullets}
+          brevoListId={Number(process.env.NEXT_PUBLIC_BREVO_WAITLIST_V2_LIST_ID) || 3}
+        />
+      )}
     </>
   )
 }

@@ -1745,12 +1745,37 @@ export function Encyclopedie() {
                       </div>
                       )
                     )}
-                    <button onClick={()=>{ setSelId(null); setDetail(null); setEnDetail(null) }}
-                      style={{ position:'absolute', top:'8px', left:'8px', width:'26px', height:'26px', borderRadius:'50%', background:'rgba(255,255,255,.9)', border:'1px solid rgba(0,0,0,.08)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'#666' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                     {selCard && (
                       <button className="zoom-btn" onClick={()=>setLightbox(selCard)}
-                        style={{ position:'absolute', top:'8px', right:'8px', width:'30px', height:'30px', borderRadius:'50%', background:'rgba(0,0,0,.55)', border:'none', color:'#fff', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                        style={{
+                          position: 'absolute' as const,
+                          top: 12, left: 12,
+                          width: 30, height: 30,
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.85)',
+                          backdropFilter: 'blur(12px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                          border: '1px solid rgba(0,0,0,0.06)',
+                          color: '#1D1D1F',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+                          transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = '#1D1D1F'
+                          e.currentTarget.style.color = '#FFFFFF'
+                          ;(e.currentTarget.querySelector('svg') as SVGElement).style.stroke = '#FFFFFF'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+                          e.currentTarget.style.color = '#1D1D1F'
+                          ;(e.currentTarget.querySelector('svg') as SVGElement).style.stroke = '#1D1D1F'
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                       </button>
                     )}
                   </div>
@@ -1799,21 +1824,82 @@ export function Encyclopedie() {
                       </div>
                     )}
 
-                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'14px', padding:'8px 10px', background:'#F8F8FA', borderRadius:'8px', border:'1px solid #F0F0F2' }}>
-                      {selCard&&setLogos[selCard.setId]&&<img src={setLogos[selCard.setId]} alt="" style={{ height:'22px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                      <div style={{ minWidth:0 }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{detail.set?.name}{detail.localId ? ` · #${detail.localId}` : ''}</div>
-                        <div style={{ fontSize:'9px', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, padding:'10px 12px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'1px solid rgba(0,0,0,0.05)', borderRadius:10, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+                      {selCard&&setLogos[selCard.setId]&&<img src={setLogos[selCard.setId]} alt="" style={{ height:'24px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                      <div style={{ minWidth:0, flex:1 }}>
+                        <div style={{ fontSize:12, fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, letterSpacing:'-0.01em' }}>{detail.set?.name}{detail.localId ? ` · #${detail.localId}` : ''}</div>
+                        <div style={{ fontSize:10, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)', marginTop:2 }}>
                           {selCard&&setBlocks[selCard.setId]?setBlocks[selCard.setId]+' · ':''}
                           {detail.set?.releaseDate ? detail.set.releaseDate.slice(0,4) : ''}
                         </div>
                         {selCard&&(selCard.setId?.includes('-shadowless')||selCard.setId?.includes('-1st'))&&(
-                          <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'4px', flexWrap:'wrap' as const }}>
-                            {selCard.setId?.includes('-shadowless-ns')||selCard.setId?.includes('-1st')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
-                            {selCard.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
+                          <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:5, flexWrap:'wrap' as const }}>
+                            {selCard.setId?.includes('-shadowless-ns')||selCard.setId?.includes('-1st')?<span style={{ fontSize:7.5, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'linear-gradient(135deg,#1a1a2e,#2d2b55)', color:'#d4c5ff', fontFamily:'var(--font-data, "Space Mono", monospace)', letterSpacing:'.03em' }}>1ST EDITION</span>:null}
+                            {selCard.setId?.includes('-shadowless')?<span style={{ fontSize:7.5, fontWeight:700, padding:'2px 6px', borderRadius:4, background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data, "Space Mono", monospace)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Types + HP (deplace dans Apercu pour identite visuelle immediate) */}
+                    {(detail.types?.length || detail.hp) && (
+                      <div style={{ display:'flex', flexWrap:'wrap' as const, gap:6, marginBottom:14 }}>
+                        {detail.types?.map(t=>(
+                          <span key={t} style={{
+                            fontSize:11,
+                            fontWeight:700,
+                            background:`${TC[t]??'#888'}18`,
+                            color:TC[t]??'#888',
+                            border:`1px solid ${TC[t]??'#888'}30`,
+                            padding:'4px 10px',
+                            borderRadius:6,
+                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                            letterSpacing:'0.01em',
+                          }}>{t}</span>
+                        ))}
+                        {detail.hp && (
+                          <span style={{
+                            fontSize:11,
+                            fontWeight:700,
+                            background:'rgba(255,255,255,0.6)',
+                            backdropFilter:'blur(10px)',
+                            WebkitBackdropFilter:'blur(10px)',
+                            color:'#1D1D1F',
+                            border:'1px solid rgba(0,0,0,0.08)',
+                            padding:'4px 10px',
+                            borderRadius:6,
+                            fontFamily:'var(--font-data, "Space Mono", monospace)',
+                            letterSpacing:'-0.01em',
+                          }}>{detail.hp} HP</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Infos express - Categorie / Stade / Evolue de / Illustrateur */}
+                    <div style={{
+                      background:'rgba(255,255,255,0.55)',
+                      backdropFilter:'blur(12px) saturate(180%)',
+                      WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                      border:'1px solid rgba(0,0,0,0.05)',
+                      borderRadius:10,
+                      padding:'12px 14px',
+                      marginBottom:14,
+                      boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)',
+                      display:'flex',
+                      flexDirection:'column' as const,
+                      gap:8,
+                    }}>
+                      {([
+                        ['Catégorie',   detail.category],
+                        ['Stade',       detail.stage],
+                        ['Évolue de',   detail.evolveFrom],
+                        ['Illustrateur', detail.illustrator],
+                      ] as [string,string|undefined][]).filter(([,v])=>v).map(([l,v])=>(
+                        <div key={l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                          <span style={{ fontSize:10.5, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)', flexShrink:0, fontWeight:500 }}>{l}</span>
+                          <span style={{ fontSize:12, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', fontWeight:600, textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, letterSpacing:'-0.01em' }}>{v}</span>
+                        </div>
+                      ))}
                     </div>
 
                     </div>

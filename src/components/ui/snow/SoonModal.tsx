@@ -71,7 +71,7 @@ export function SoonModal({
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: '6vh 24px 24px',
+        padding: '110px 24px 24px',
         overflowY: 'auto' as const,
         animation: 'modalFade .25s cubic-bezier(.2,.8,.2,1)',
       }}

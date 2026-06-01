@@ -20,7 +20,7 @@ export function SoonBadge({ version, variant = 'inline', style, onClick }: SoonB
   const isFloat = variant === 'floating'
   const isPill = variant === 'pill'
 
-  // Inline (nav): minimaliste, juste un dot + version
+  // Inline (nav): glass micro-pill, ne deforme pas le label, lisible
   if (variant === 'inline') {
     return (
       <span
@@ -29,23 +29,27 @@ export function SoonBadge({ version, variant = 'inline', style, onClick }: SoonB
           display: 'inline-flex',
           alignItems: 'center',
           gap: 4,
-          fontSize: 9.5,
-          fontWeight: 600,
+          padding: '2px 7px',
+          fontSize: 9,
+          fontWeight: 700,
           fontFamily: FONT.display,
-          letterSpacing: '-0.005em',
-          color: '#AEAEB2',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase' as const,
+          color: '#86868B',
+          background: 'rgba(255,255,255,0.35)',
+          backdropFilter: 'blur(10px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.04)',
+          borderRadius: 5,
           cursor: onClick ? 'pointer' : 'inherit',
           whiteSpace: 'nowrap' as const,
-          opacity: 0.85,
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
+          flexShrink: 0,
           ...style,
         }}
       >
-        <span style={{
-          width: 4, height: 4, borderRadius: '50%',
-          background: '#C7C7CC',
-          flexShrink: 0,
-        }} />
-        {version}
+        Soon
+        <span style={{ color: '#1D1D1F', fontWeight: 800, letterSpacing: '-0.01em', textTransform: 'none' as const }}>{version}</span>
       </span>
     )
   }

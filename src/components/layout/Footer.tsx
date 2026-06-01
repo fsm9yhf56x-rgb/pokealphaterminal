@@ -66,10 +66,10 @@ export function Footer() {
           }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
-              background: 'linear-gradient(135deg,#E03020,#FF6644)',
+              background: '#1D1D1F',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontWeight: 800, fontSize: 13,
-              boxShadow: '0 2px 6px rgba(224,48,32,0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.14)',
               letterSpacing: '-0.02em',
             }}>K</div>
             <span style={{
@@ -77,7 +77,7 @@ export function Footer() {
               color: '#1D1D1F',
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
               letterSpacing: '-0.025em',
-            }}>Kodo<span style={{ color: '#E03020' }}> Cards</span></span>
+            }}>Kodo<span style={{ color: '#C42E1F' }}> Cards</span></span>
           </Link>
           <p style={{
             fontSize: 12,

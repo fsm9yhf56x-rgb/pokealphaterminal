@@ -43,12 +43,12 @@ export function SubMenu() {
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
         }
         .ksub-link.act {
-          background: rgba(224,48,32,0.08);
-          color: #E03020;
+          background: rgba(255,255,255,0.7);
+          color: #1D1D1F;
           font-weight: 600;
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.03);
         }
         .ksub-link.act::before {
           content: \'\';
@@ -59,20 +59,19 @@ export function SubMenu() {
           width: 3px;
           height: 16px;
           border-radius: 2px;
-          background: #E03020;
-          box-shadow: 0 0 8px rgba(224,48,32,0.5);
+          background: #1D1D1F;
         }
         .ksub-pro {
           font-size: 8.5px;
           font-weight: 800;
-          background: linear-gradient(135deg, #E03020, #FF6644);
-          color: #fff;
-          padding: 1px 5px;
+          background: linear-gradient(135deg, #C9A84C, #FFE08A);
+          color: #5C4200;
+          padding: 1px 6px;
           border-radius: 4px;
           font-family: var(--font-sora, \'Sora\', sans-serif);
           margin-left: auto;
           letter-spacing: 0.05em;
-          box-shadow: 0 1px 2px rgba(224,48,32,0.3);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
         }
       `}</style>
 

@@ -98,10 +98,10 @@ export function SnowButton({
         }
       case 'danger':
         return {
-          background: SNOW.red,
+          background: '#C42E1F',
           color: '#FFFFFF',
           border: 'none',
-          boxShadow: '0 4px 14px rgba(224,48,32,0.28), 0 1px 3px rgba(224,48,32,0.12), inset 0 1px 0 rgba(255,255,255,0.18)',
+          boxShadow: '0 4px 14px rgba(196,46,31,0.22), 0 1px 3px rgba(196,46,31,0.10), inset 0 1px 0 rgba(255,255,255,0.14)',
         }
     }
   }

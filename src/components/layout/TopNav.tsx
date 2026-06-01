@@ -41,12 +41,12 @@ export function TopNav() {
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
         }
         .knav-link.act {
-          background: rgba(224,48,32,0.08);
-          color: #E03020;
+          background: rgba(255,255,255,0.7);
+          color: #1D1D1F;
           font-weight: 600;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.03);
         }
         .knav-link.act::after {
           content: \'\';
@@ -57,19 +57,18 @@ export function TopNav() {
           width: 3px;
           height: 3px;
           border-radius: 50%;
-          background: #E03020;
-          box-shadow: 0 0 6px rgba(224,48,32,0.6);
+          background: #1D1D1F;
         }
         .knav-pro {
           font-size: 8.5px;
           font-weight: 800;
-          background: linear-gradient(135deg, #E03020, #FF6644);
-          color: #fff;
-          padding: 2px 5px;
+          background: linear-gradient(135deg, #C9A84C, #FFE08A);
+          color: #5C4200;
+          padding: 2px 6px;
           border-radius: 4px;
           letter-spacing: 0.05em;
           font-family: var(--font-sora, \'Sora\', sans-serif);
-          box-shadow: 0 1px 2px rgba(224,48,32,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(184,142,59,0.18);
         }
         @keyframes knavPulse {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -103,10 +102,10 @@ export function TopNav() {
         >
           <div style={{
             width: 30, height: 30, borderRadius: 9,
-            background: 'linear-gradient(135deg,#E03020,#FF6644)',
+            background: '#1D1D1F',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 800, fontSize: 13.5,
-            boxShadow: '0 2px 6px rgba(224,48,32,0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.14)',
             position: 'relative' as const,
             letterSpacing: '-0.02em',
           }}>K
@@ -123,7 +122,7 @@ export function TopNav() {
             color: '#1D1D1F',
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             letterSpacing: '-0.025em',
-          }}>Kodo<span style={{ color: '#E03020' }}> Cards</span></span>
+          }}>Kodo<span style={{ color: '#C42E1F' }}> Cards</span></span>
         </Link>
 
         {/* Nav items */}

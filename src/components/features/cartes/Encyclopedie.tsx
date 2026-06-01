@@ -2,6 +2,7 @@
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
+import { GradedHistoryChart } from '@/components/features/prices/GradedHistoryChart'
 import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
 import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
@@ -2179,13 +2180,22 @@ export function Encyclopedie() {
                         ))}
                       </div>
 
-                      {/* Contenu - Raw */}
+                      {/* Contenu - Raw (selecteur Etat via raw_history PPT,
+                          fallback PriceHistoryChart si pas d'historique raw) */}
                       {histoSubTab==='raw' && selCard?.setId && selCard?.localId && (
                         <div style={{ marginBottom:12 }}>
-                          <PriceHistoryChart
+                          <GradedHistoryChart
                             setId={selCard.setId}
                             localId={selCard.localId}
+                            mode="raw"
                             isPro={isPro}
+                            fallback={
+                              <PriceHistoryChart
+                                setId={selCard.setId}
+                                localId={selCard.localId}
+                                isPro={isPro}
+                              />
+                            }
                           />
                         </div>
                       )}
@@ -2196,7 +2206,14 @@ export function Encyclopedie() {
                           <PriceHistoryChart setId=... localId=... isPro=... mode='graded' />
                           (necessitera ajout de la prop 'mode' dans le composant PriceHistoryChart)
                        */}
-                      {histoSubTab==='graded' && (
+                      {histoSubTab==='graded' && selCard?.setId && selCard?.localId && (
+                        <div style={{ marginBottom:12 }}>
+                          <GradedHistoryChart
+                            setId={selCard.setId}
+                            localId={selCard.localId}
+                            mode="graded"
+                            isPro={isPro}
+                            fallback={
                         <div style={{
                           padding:'40px 20px',
                           textAlign:'center' as const,
@@ -2253,6 +2270,9 @@ export function Encyclopedie() {
                               50% { opacity: 0.4; }
                             }
                           `}</style>
+                        </div>
+                            }
+                          />
                         </div>
                       )}
                     </div>

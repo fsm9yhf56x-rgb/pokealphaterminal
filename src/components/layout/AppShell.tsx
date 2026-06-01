@@ -2,6 +2,7 @@
 import { TickerBar } from './TickerBar'
 import { TopNav }    from './TopNav'
 import { SubMenu }   from './SubMenu'
+import { Footer }    from './Footer'
 
 const HEADER_H = '83px'
 
@@ -87,17 +88,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         zIndex: 1,
       }}>
         <SubMenu />
-        <main style={{
+        <div style={{
           flex: 1,
           minWidth: 0,
-          padding: '32px 36px',
+          display: 'flex',
+          flexDirection: 'column',
           width: '100%',
           overflowX: 'clip' as any,
           position: 'relative',
           zIndex: 1,
         }}>
-          {children}
-        </main>
+          <main style={{
+            flex: 1,
+            minWidth: 0,
+            padding: '32px 36px',
+            width: '100%',
+            position: 'relative',
+            zIndex: 1,
+          }}>
+            {children}
+          </main>
+          <Footer />
+        </div>
       </div>
     </div>
   )

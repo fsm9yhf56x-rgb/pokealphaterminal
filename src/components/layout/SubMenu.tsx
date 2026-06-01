@@ -1,59 +1,133 @@
 'use client'
-
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { NAV } from '@/lib/constants/navigation'
 import { useState } from 'react'
 
+/**
+ * SubMenu v7 - sidebar gauche en glass premium aligne SpotDrawer.
+ *
+ * - Background glass v7 ultra discret (lit le bokeh AppShell)
+ * - Items hover glass subtle + active pill rouge tinted
+ * - Section label en uppercase letterspacing collector
+ * - Fallback children match pour routes hors-arbo (ex /releases sous Home)
+ */
 export function SubMenu() {
-  const pathname  = usePathname()
+  const pathname = usePathname()
   const [open, setOpen] = useState(true)
 
   const section = NAV.find(n => pathname.startsWith(n.href) && n.href !== '/')
+    ?? NAV.find(n => n.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/')))
+
   if (!section?.children?.length) return null
 
   return (
     <>
       <style>{`
-        .submenu-link       { display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:8px; font-size:13px; font-weight:400; color:#555; font-family:var(--font-display); text-decoration:none; transition:all 0.12s; cursor:pointer; }
-        .submenu-link:hover { background:#F0F0F0; color:#111; }
-        .submenu-link.act   { background:#FFF0EE; color:#E03020; font-weight:600; }
+        .ksub-link {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #6E6E73;
+          font-family: var(--font-sora, \'Sora\', sans-serif);
+          letter-spacing: -0.01em;
+          text-decoration: none;
+          transition: all .2s cubic-bezier(.2,.8,.2,1);
+          cursor: pointer;
+          position: relative;
+        }
+        .ksub-link:hover {
+          background: rgba(255,255,255,0.55);
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          color: #1D1D1F;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+        .ksub-link.act {
+          background: rgba(224,48,32,0.08);
+          color: #E03020;
+          font-weight: 600;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+        }
+        .ksub-link.act::before {
+          content: \'\';
+          position: absolute;
+          left: 4px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 3px;
+          height: 16px;
+          border-radius: 2px;
+          background: #E03020;
+          box-shadow: 0 0 8px rgba(224,48,32,0.5);
+        }
+        .ksub-pro {
+          font-size: 8.5px;
+          font-weight: 800;
+          background: linear-gradient(135deg, #E03020, #FF6644);
+          color: #fff;
+          padding: 1px 5px;
+          border-radius: 4px;
+          font-family: var(--font-sora, \'Sora\', sans-serif);
+          margin-left: auto;
+          letter-spacing: 0.05em;
+          box-shadow: 0 1px 2px rgba(224,48,32,0.3);
+        }
       `}</style>
-      <div style={{
-        width: open ? '200px' : '0px',
-        minWidth: open ? '200px' : '0px',
-        borderRight:'1px solid #F0F0F0',
-        padding: open ? '20px 10px' : '0',
-        overflow:'hidden',
-        transition:'all 0.2s ease',
-        flexShrink:0,
-        position:'relative',
+
+      <aside style={{
+        width: open ? 220 : 0,
+        minWidth: open ? 220 : 0,
+        padding: open ? '24px 12px' : 0,
+        overflow: 'hidden',
+        transition: 'all .3s cubic-bezier(.2,.8,.2,1)',
+        flexShrink: 0,
+        position: 'relative' as const,
+        zIndex: 1,
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.4) 100%)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        borderRight: '0.5px solid rgba(255,255,255,0.55)',
+        boxShadow: 'inset -1px 0 0 rgba(0,0,0,0.02), inset 1px 0 0 rgba(255,255,255,0.7)',
       }}>
         {open && (
           <>
-            <div style={{ fontSize:'10px', fontWeight:700, color:'#BBB', textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:'var(--font-display)', padding:'0 12px', marginBottom:'8px' }}>
-              {section.label}
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:'2px' }}>
+            <div style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: '#AEAEB2',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.16em',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              padding: '0 14px 4px',
+              marginBottom: 10,
+            }}>{section.label}</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 3 }}>
               {section.children.map(child => {
-                const isActive = pathname === child.href || (child.href !== section.href && pathname.startsWith(child.href))
+                const isActive = pathname === child.href ||
+                  (child.href !== section.href && pathname.startsWith(child.href + '/'))
                 return (
-                  <Link key={child.href} href={child.href} className={`submenu-link${isActive?' act':''}`}>
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className={`ksub-link${isActive ? ' act' : ''}`}
+                  >
                     {child.label}
-                    {child.pro && (
-                      <span style={{ fontSize:'8px', fontWeight:700, background:'#E03020', color:'#fff', padding:'1px 5px', borderRadius:'3px', fontFamily:'var(--font-display)', marginLeft:'auto' }}>PRO</span>
-                    )}
+                    {child.pro && <span className="ksub-pro">PRO</span>}
                   </Link>
                 )
               })}
             </div>
           </>
         )}
-        {/* Toggle */}
-        <button onClick={()=>setOpen(o=>!o)} style={{ position:'absolute', top:'50%', right:'-12px', transform:'translateY(-50%)', width:'22px', height:'22px', borderRadius:'50%', background:'#fff', border:'1px solid #E8E8E8', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:'10px', color:'#888', boxShadow:'0 1px 4px rgba(0,0,0,0.08)', zIndex:10 }}>
-          {open ? '‹' : '›'}
-        </button>
-      </div>
+      </aside>
     </>
   )
 }

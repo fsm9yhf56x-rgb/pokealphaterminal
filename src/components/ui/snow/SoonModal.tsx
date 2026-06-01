@@ -1,29 +1,24 @@
 'use client'
 import { useState, type FormEvent } from 'react'
-import { SNOW, FONT, GLASS, RADIUS, TRANSITION, SHADOW } from '@/lib/design/snow'
+import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 import { SnowButton } from './SnowButton'
 
 interface SoonModalProps {
   open: boolean
   onClose: () => void
-  /** Nom de la feature (ex: "Alpha Signals") */
   feature: string
-  /** Version cible (ex: "v2.0") */
   version: 'v2.0' | 'v3.0' | 'v4.0'
-  /** Description courte de la feature */
   description: string
-  /** Sub-features list (3-5 bullets max) */
   bullets?: string[]
-  /** ID liste Brevo pour la waitlist (si null, pas de CTA notify) */
   brevoListId?: number | null
-  /** Label CTA secondaire (par defaut "Plus tard") */
   cancelLabel?: string
 }
 
 /**
- * Modal SOON qui presente une feature future + capture waitlist Brevo.
+ * SoonModal v7 - Glass premium ref SpotDrawer.
  *
- * Reutilise la mecanique de waitlist_jp (route /api/waitlist).
+ * Fix: maxHeight 90vh + overflow-y auto pour contenus longs.
+ * Centrage flex propre + animation slide-up smooth.
  */
 export function SoonModal({
   open, onClose, feature, version, description, bullets,
@@ -67,23 +62,46 @@ export function SoonModal({
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,0.4)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 20,
-        animation: 'fadeIn .2s ease',
+        position: 'fixed' as const,
+        top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: 200,
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(10px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        animation: 'modalFade .25s cubic-bezier(.2,.8,.2,1)',
       }}
     >
+      <style>{`
+        @keyframes modalFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px) scale(.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          ...GLASS.cardElevated,
-          width: '100%', maxWidth: 460,
-          padding: '32px 28px',
-          animation: 'slideUp .35s cubic-bezier(.16,1,.3,1)',
-          position: 'relative',
+          width: '100%',
+          maxWidth: 480,
+          maxHeight: '85vh',
+          overflowY: 'auto' as const,
+          background: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderRadius: 20,
+          border: '1px solid rgba(255,255,255,0.5)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.18), 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+          padding: '34px 30px 28px',
+          animation: 'modalSlideUp .4s cubic-bezier(.16,1,.3,1)',
+          position: 'relative' as const,
         }}
       >
         {/* Close X */}
@@ -91,101 +109,126 @@ export function SoonModal({
           onClick={onClose}
           aria-label="Fermer"
           style={{
-            position: 'absolute', top: 16, right: 16,
-            width: 28, height: 28, borderRadius: '50%',
-            border: 'none', background: 'transparent',
-            cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            color: SNOW.muted, transition: TRANSITION.fast,
+            position: 'absolute' as const,
+            top: 14, right: 14,
+            width: 30, height: 30, borderRadius: '50%',
+            border: 'none',
+            background: 'rgba(0,0,0,0.04)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: SNOW.muted,
+            transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
           }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)'; e.currentTarget.style.color = SNOW.ink }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = SNOW.muted }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
             <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </button>
 
-        {/* Badge SOON */}
-        <div style={{ marginBottom: 12 }}>
+        {/* Badge SOON v7 inline */}
+        <div style={{ marginBottom: 14 }}>
           <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '4px 10px', fontSize: 10, fontWeight: 700,
-            fontFamily: FONT.data, letterSpacing: '0.06em',
-            textTransform: 'uppercase', color: SNOW.amberDark,
-            background: SNOW.amber, borderRadius: RADIUS.sm,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 12px',
+            fontSize: 10.5,
+            fontWeight: 600,
+            fontFamily: FONT.display,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase' as const,
+            color: '#86868B',
+            background: 'rgba(255,255,255,0.65)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            borderRadius: RADIUS.sm,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
           }}>
-            <span style={{
-              width: 5, height: 5, borderRadius: '50%',
-              background: SNOW.amberDark, opacity: 0.7,
-              animation: 'blink 2s ease-in-out infinite',
-            }} />
-            SOON · {version}
+            <span style={{ color: '#AEAEB2', fontSize: 8 }}>○</span>
+            <span>Bientôt</span>
+            <span style={{ color: '#1D1D1F', fontWeight: 700, letterSpacing: '-0.01em', textTransform: 'none' as const }}>· {version}</span>
           </span>
         </div>
 
         {done ? (
-          // ─── Etat succes ───────────────────────────────────────────────
-          <div style={{ textAlign: 'center', padding: '12px 0' }}>
+          <div style={{ textAlign: 'center' as const, padding: '14px 0 6px' }}>
             <div style={{
-              width: 56, height: 56, margin: '0 auto 16px',
-              borderRadius: '50%', background: SNOW.greenLight,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 58, height: 58, margin: '0 auto 18px',
+              borderRadius: '50%',
+              background: 'rgba(46,158,106,0.12)',
+              border: '1px solid rgba(46,158,106,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
             }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={SNOW.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
             <h3 style={{
-              fontSize: 18, fontWeight: 700, color: SNOW.ink,
-              margin: '0 0 6px', fontFamily: FONT.display,
+              fontSize: 19, fontWeight: 700, color: SNOW.ink,
+              margin: '0 0 8px', fontFamily: FONT.display,
+              letterSpacing: '-0.02em',
             }}>
-              C'est noté !
+              C\u2019est noté !
             </h3>
             <p style={{
-              fontSize: 13, color: SNOW.muted, margin: 0,
-              fontFamily: FONT.body, lineHeight: 1.5,
+              fontSize: 13.5, color: SNOW.muted, margin: 0,
+              fontFamily: FONT.display, lineHeight: 1.55,
             }}>
-              On te préviendra dès que <strong style={{ color: SNOW.ink }}>{feature}</strong> sera prêt.
+              On te préviendra dès que <strong style={{ color: SNOW.ink, fontWeight: 700 }}>{feature}</strong> sera prêt.
             </p>
           </div>
         ) : (
-          // ─── Etat formulaire ───────────────────────────────────────────
           <>
             <h3 style={{
-              fontSize: 22, fontWeight: 700, color: SNOW.ink,
-              margin: '0 0 8px', fontFamily: FONT.display,
-              letterSpacing: '-0.4px',
+              fontSize: 24, fontWeight: 800, color: SNOW.ink,
+              margin: '0 0 10px', fontFamily: FONT.display,
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
             }}>
               {feature}
             </h3>
             <p style={{
-              fontSize: 14, color: SNOW.muted, margin: '0 0 18px',
-              fontFamily: FONT.body, lineHeight: 1.55,
+              fontSize: 14, color: SNOW.muted, margin: '0 0 22px',
+              fontFamily: FONT.display, lineHeight: 1.6,
             }}>
               {description}
             </p>
 
             {bullets && bullets.length > 0 && (
               <ul style={{
-                listStyle: 'none', padding: 0, margin: '0 0 22px',
-                display: 'flex', flexDirection: 'column', gap: 8,
+                listStyle: 'none', padding: 0, margin: '0 0 24px',
+                display: 'flex', flexDirection: 'column' as const, gap: 10,
               }}>
                 {bullets.map((b, i) => (
                   <li key={i} style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    fontSize: 13, color: SNOW.inkSoft, fontFamily: FONT.body,
+                    display: 'flex', alignItems: 'flex-start', gap: 11,
+                    fontSize: 13, color: SNOW.inkSoft, fontFamily: FONT.display,
                     lineHeight: 1.5,
                   }}>
                     <span style={{
                       width: 18, height: 18, borderRadius: '50%',
-                      background: SNOW.greenLight, color: SNOW.green,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, marginTop: 1,
+                      background: 'rgba(46,158,106,0.12)',
+                      border: '1px solid rgba(46,158,106,0.2)',
+                      color: '#2E9E6A',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      marginTop: 1,
                     }}>
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="2 5 4 7 8 3"/>
                       </svg>
                     </span>
-                    {b}
+                    <span>{b}</span>
                   </li>
                 ))}
               </ul>
@@ -201,42 +244,81 @@ export function SoonModal({
                   autoComplete="email"
                   disabled={submitting}
                   style={{
-                    width: '100%', padding: '12px 14px',
-                    borderRadius: RADIUS.md,
-                    border: `1.5px solid ${error ? SNOW.red : 'rgba(229,229,234,0.8)'}`,
-                    fontSize: 14, color: SNOW.ink, fontFamily: FONT.body,
-                    boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.65)',
-                    backdropFilter: 'blur(8px)',
-                    transition: 'all .15s cubic-bezier(.2,.8,.2,1)',
+                    width: '100%',
+                    height: 46,
+                    padding: '0 16px',
+                    borderRadius: 12,
+                    border: `1px solid ${error ? SNOW.red : 'rgba(0,0,0,0.08)'}`,
+                    fontSize: 14,
+                    color: SNOW.ink,
+                    fontFamily: FONT.display,
+                    boxSizing: 'border-box' as const,
+                    background: 'rgba(255,255,255,0.92)',
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)',
+                    transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
                     outline: 'none',
-                    marginBottom: error ? 6 : 12,
+                    marginBottom: error ? 6 : 14,
                   }}
                 />
                 {error && (
                   <p style={{
-                    fontSize: 12, color: SNOW.red, margin: '0 2px 12px',
-                    fontFamily: FONT.body,
+                    fontSize: 12, color: SNOW.red, margin: '0 2px 14px',
+                    fontFamily: FONT.display,
                   }}>
                     {error}
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <SnowButton
+                  <button
                     type="submit"
-                    variant="primary"
                     disabled={submitting}
-                    fullWidth
+                    style={{
+                      flex: 1,
+                      height: 46,
+                      padding: '0 22px',
+                      borderRadius: 12,
+                      background: submitting ? 'rgba(0,0,0,0.05)' : SNOW.ink,
+                      color: submitting ? SNOW.muted : '#fff',
+                      border: 'none',
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      cursor: submitting ? 'default' : 'pointer',
+                      fontFamily: FONT.display,
+                      transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+                      letterSpacing: '0.01em',
+                      boxShadow: submitting ? 'none' : '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    }}
+                    onMouseEnter={e => { if (!submitting) { e.currentTarget.style.background = '#000'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+                    onMouseLeave={e => { if (!submitting) { e.currentTarget.style.background = SNOW.ink; e.currentTarget.style.transform = '' } }}
                   >
                     {submitting ? 'Inscription…' : 'Me prévenir au lancement'}
-                  </SnowButton>
-                  <SnowButton
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
                     onClick={onClose}
+                    style={{
+                      height: 46,
+                      padding: '0 18px',
+                      borderRadius: 12,
+                      background: 'rgba(255,255,255,0.5)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      color: SNOW.muted,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: FONT.display,
+                      transition: 'all .2s',
+                      whiteSpace: 'nowrap' as const,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = SNOW.ink; e.currentTarget.style.background = 'rgba(255,255,255,0.8)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = SNOW.muted; e.currentTarget.style.background = 'rgba(255,255,255,0.5)' }}
                   >
                     {cancelLabel}
-                  </SnowButton>
+                  </button>
                 </div>
               </form>
             ) : (

@@ -10,34 +10,49 @@ interface SoonBadgeProps {
 }
 
 /**
- * Badge "SOON · v2.0" pour features non encore livrees.
+ * Badge SOON v7 - premium glass desirable, pas warning amber.
+ *
+ * Design Snow+ v7 ref SpotDrawer:
+ * - Glass micro-pill rgba blanc 0.7 + blur 12px
+ * - Bordure invisible rgba(0,0,0,0.05)
+ * - Inset shadow subtle pour profondeur
+ * - Texte ink soft (gris fonce 6E6E73) + version en ink fonce
+ * - Pas de dot pulsant (trop agressif)
+ *
  * variant:
- *   - inline : a c\u00f4t\u00e9 d'un titre, petit
- *   - floating : coin haut-droit absolu (utile sur les cards)
- *   - pill : standalone, taille standard pill
+ *   - inline : a cote du label nav, ultra discret
+ *   - floating : coin haut-droit absolu sur cards
+ *   - pill : standalone, taille standard
  */
 export function SoonBadge({ version, variant = 'inline', style, onClick }: SoonBadgeProps) {
   const isFloat = variant === 'floating'
+  const isPill = variant === 'pill'
+
   return (
     <span
       onClick={onClick}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 4,
-        padding: variant === 'pill' ? '4px 10px' : '2px 7px',
-        fontSize: variant === 'pill' ? 11 : 9,
-        fontWeight: 700,
-        fontFamily: FONT.data,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        color: SNOW.amberDark,
-        background: SNOW.amber,
+        gap: 5,
+        padding: isPill ? '5px 11px' : '2px 8px',
+        fontSize: isPill ? 11 : 9,
+        fontWeight: 600,
+        fontFamily: FONT.display,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase' as const,
+        color: '#86868B',
+        background: 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(12px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
         borderRadius: RADIUS.sm,
         cursor: onClick ? 'pointer' : 'default',
-        whiteSpace: 'nowrap',
+        whiteSpace: 'nowrap' as const,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
+        transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
         ...(isFloat ? {
-          position: 'absolute',
+          position: 'absolute' as const,
           top: 12, right: 12,
           zIndex: 2,
         } : {}),
@@ -45,11 +60,17 @@ export function SoonBadge({ version, variant = 'inline', style, onClick }: SoonB
       }}
     >
       <span style={{
-        width: 5, height: 5, borderRadius: '50%',
-        background: SNOW.amberDark, opacity: 0.7,
-        animation: 'blink 2s ease-in-out infinite',
-      }} />
-      SOON · {version}
+        fontSize: isPill ? 9 : 7,
+        color: '#AEAEB2',
+        fontWeight: 500,
+      }}>○</span>
+      <span>Bientôt</span>
+      <span style={{
+        color: '#1D1D1F',
+        fontWeight: 700,
+        letterSpacing: '-0.01em',
+        textTransform: 'none' as const,
+      }}>· {version}</span>
     </span>
   )
 }

@@ -1961,35 +1961,148 @@ export function Encyclopedie() {
                           { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
                         ].filter(s => s.price) : []
                         return (cardPrice || sources.length > 0) ? (
-                          <div style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', borderRadius:12, padding:14, marginBottom:12, border:'1px solid rgba(0,0,0,0.05)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
-                            <div style={{ fontSize:'9px', color:SNOW.muted, fontFamily:'var(--font-display)', marginBottom:'4px', textTransform:'uppercase' as const, letterSpacing:'.08em', fontWeight:500 }}>Prix marché</div>
-                            <div style={{ fontSize:'22px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', letterSpacing:'-0.5px', marginBottom: sources.length ? '10px' : '0' }}>{formatEUR(cardPrice, 'small')}</div>
-                            {sources.length > 0 && (
-                              <div style={{ borderTop:`1px solid ${SNOW.borderSoft}`, paddingTop:'8px' }}>
-                                <div style={{ fontSize:'9px', color:SNOW.muted, textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', fontWeight:500, marginBottom:'6px' }}>Prix par source</div>
-                                {sources.map(s=>(
-                                  <div key={s.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'3px 0' }}>
-                                    <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-                                      <span style={{ fontSize:'9px' }}>{s.icon}</span>
-                                      <span style={{ fontSize:'11px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>{s.label}</span>
-                                    </div>
-                                    <span style={{ fontSize:'12px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{formatEUR(s.price, 'small')}</span>
-                                  </div>
-                                ))}
-                                {!det?.cardmarket && (()=>{
-                                  const sidE = selCard?.setId || ''
-                                  const isVar = sidE.includes('-shadowless') || sidE.includes('-1st')
-                                  return (
-                                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'3px 0', opacity:0.4 }}>
-                                    <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-                                      <span style={{ fontSize:'9px' }}>🟠</span>
-                                      <span style={{ fontSize:'11px', fontWeight:500, color:'#48484A', fontFamily:'var(--font-display)' }}>Cardmarket</span>
-                                    </div>
-                                    <span style={{ fontSize:'10px', fontStyle:'italic', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{isVar ? 'Non disponible' : 'Bientôt'}</span>
-                                  </div>
-                                  )
-                                })()}
+                          <div style={{
+                            background:'rgba(255,255,255,0.75)',
+                            backdropFilter:'blur(16px) saturate(180%)',
+                            WebkitBackdropFilter:'blur(16px) saturate(180%)',
+                            borderRadius:14,
+                            padding:'18px 20px',
+                            marginBottom:14,
+                            border:'1px solid rgba(0,0,0,0.05)',
+                            boxShadow:'0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+                          }}>
+                            {/* Label - Prix marche */}
+                            <div style={{
+                              display:'flex',
+                              justifyContent:'space-between',
+                              alignItems:'center',
+                              marginBottom:6,
+                            }}>
+                              <div style={{
+                                fontSize:10,
+                                color:'#86868B',
+                                fontFamily:'var(--font-sora, Sora, sans-serif)',
+                                textTransform:'uppercase' as const,
+                                letterSpacing:'0.08em',
+                                fontWeight:700,
+                              }}>Prix marché</div>
+                              <div style={{
+                                fontSize:9.5,
+                                color:'#1D9E75',
+                                fontFamily:'var(--font-sora, Sora, sans-serif)',
+                                textTransform:'uppercase' as const,
+                                letterSpacing:'0.05em',
+                                fontWeight:600,
+                                display:'flex',
+                                alignItems:'center',
+                                gap:4,
+                                padding:'2px 8px',
+                                background:'rgba(29,158,117,0.1)',
+                                border:'1px solid rgba(29,158,117,0.2)',
+                                borderRadius:99,
+                              }}>
+                                <span style={{ width:6, height:6, borderRadius:'50%', background:'#1D9E75', boxShadow:'0 0 6px rgba(29,158,117,0.6)' }}/>
+                                Consolidé
                               </div>
+                            </div>
+                            {/* Prix gros */}
+                            <div style={{
+                              fontSize:32,
+                              fontWeight:700,
+                              color:'#1D1D1F',
+                              fontFamily:'var(--font-data, "Space Mono", monospace)',
+                              letterSpacing:'-0.8px',
+                              marginBottom: sources.length ? 16 : 0,
+                              lineHeight:1,
+                            }}>{formatEUR(cardPrice, 'small')}</div>
+                            {/* Sources en grid 3 colonnes glass v7 */}
+                            {sources.length > 0 && (
+                              <>
+                                <div style={{
+                                  fontSize:9.5,
+                                  color:'#86868B',
+                                  textTransform:'uppercase' as const,
+                                  letterSpacing:'0.08em',
+                                  fontFamily:'var(--font-sora, Sora, sans-serif)',
+                                  fontWeight:700,
+                                  marginBottom:10,
+                                }}>Sources marchand</div>
+                                <div style={{
+                                  display:'grid',
+                                  gridTemplateColumns:'repeat(3, 1fr)',
+                                  gap:8,
+                                }}>
+                                  {([
+                                    { label:'eBay',       price:det?.ebay,       color:'#E03020' },
+                                    { label:'TCGPlayer',  price:det?.tcg,        color:'#0072CE' },
+                                    { label:'Cardmarket', price:det?.cardmarket, color:'#E08A1F' },
+                                  ] as Array<{label:string;price:number|null|undefined;color:string}>).map(s => {
+                                    const sidE = selCard?.setId || ''
+                                    const isVar = sidE.includes('-shadowless') || sidE.includes('-1st')
+                                    const isCM = s.label === 'Cardmarket'
+                                    const hasPrice = s.price != null && s.price > 0
+                                    return (
+                                      <div key={s.label} style={{
+                                        background: hasPrice ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
+                                        backdropFilter:'blur(10px)',
+                                        WebkitBackdropFilter:'blur(10px)',
+                                        border:'1px solid rgba(0,0,0,0.05)',
+                                        borderRadius:10,
+                                        padding:'10px 8px',
+                                        textAlign:'center' as const,
+                                        opacity: hasPrice ? 1 : 0.55,
+                                        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)',
+                                      }}>
+                                        <div style={{
+                                          display:'flex',
+                                          alignItems:'center',
+                                          justifyContent:'center',
+                                          gap:4,
+                                          marginBottom:5,
+                                        }}>
+                                          <span style={{
+                                            width:6, height:6,
+                                            borderRadius:'50%',
+                                            background:s.color,
+                                            boxShadow:`0 0 4px ${s.color}80`,
+                                            flexShrink:0,
+                                          }}/>
+                                          <span style={{
+                                            fontSize:9.5,
+                                            fontWeight:700,
+                                            color:'#86868B',
+                                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                                            textTransform:'uppercase' as const,
+                                            letterSpacing:'0.04em',
+                                          }}>{s.label}</span>
+                                        </div>
+                                        {hasPrice ? (
+                                          <div style={{
+                                            fontSize:13,
+                                            fontWeight:700,
+                                            color:'#1D1D1F',
+                                            fontFamily:'var(--font-data, "Space Mono", monospace)',
+                                            letterSpacing:'-0.2px',
+                                          }}>{formatEUR(s.price, 'small')}</div>
+                                        ) : isCM ? (
+                                          <div style={{
+                                            fontSize:10,
+                                            fontStyle:'italic' as const,
+                                            color:'#AEAEB2',
+                                            fontFamily:'var(--font-sora, Sora, sans-serif)',
+                                          }}>{isVar ? 'N/A' : 'Bientôt'}</div>
+                                        ) : (
+                                          <div style={{
+                                            fontSize:11,
+                                            color:'#C7C7CC',
+                                            fontFamily:'var(--font-data, "Space Mono", monospace)',
+                                          }}>—</div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </>
                             )}
                           </div>
                         ) : null
@@ -2033,17 +2146,6 @@ export function Encyclopedie() {
                             cardId={`${selCard.setId}-${selCard.localId}`}
                             hideWhenEmpty
                           />
-                        </div>
-                      ) : null}
-                      {setTotal>0 ? (
-                        <div style={{ background:'rgba(255,255,255,0.45)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)', border:'1px solid rgba(0,0,0,0.04)', borderRadius:11, padding:'11px 13px', marginBottom:12, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
-                            <span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>Complétion du set</span>
-                            <span style={{ fontSize:'10px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{setOwned}/{setTotal}</span>
-                          </div>
-                          <div style={{ height:'4px', borderRadius:'2px', background:'#E8E8ED', overflow:'hidden' }}>
-                            <div style={{ width:pct+'%', height:'100%', borderRadius:'2px', background:pct===100?'linear-gradient(90deg,#C9A84C,#D4AF37)':'#E03020', transition:'width .3s' }}/>
-                          </div>
                         </div>
                       ) : null}
                     </>)

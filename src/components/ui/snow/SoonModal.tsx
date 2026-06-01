@@ -69,10 +69,9 @@ export function SoonModal({
         backdropFilter: 'blur(10px) saturate(180%)',
         WebkitBackdropFilter: 'blur(10px) saturate(180%)',
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'center',
-        padding: '110px 24px 24px',
-        overflowY: 'auto' as const,
+        padding: '90px 24px 24px',
         animation: 'modalFade .25s cubic-bezier(.2,.8,.2,1)',
       }}
     >
@@ -92,7 +91,8 @@ export function SoonModal({
         style={{
           width: '100%',
           maxWidth: 480,
-          flexShrink: 0,
+          maxHeight: 'calc(100vh - 130px)',
+          overflowY: 'auto' as const,
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(40px) saturate(180%)',
           WebkitBackdropFilter: 'blur(40px) saturate(180%)',

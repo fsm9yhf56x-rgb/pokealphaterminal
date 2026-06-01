@@ -10,6 +10,7 @@ const NAV = [
   { href: '/dexy',     label: 'Dexy AI',         icon: '✦', desc: 'Analyste TCG'         },
   { href: '/whales',   label: 'Whale Tracker',   icon: '◉', desc: 'Gros collectionneurs'  },
   { href: '/deals',    label: 'Deal Hunter',     icon: '◎', desc: 'Meilleures affaires'   },
+  { href: '/releases', label: 'Prochains Sets',  icon: '▲', desc: 'Nouvelles sorties TCG'  },
 ] as const
 
 export function Sidebar() {

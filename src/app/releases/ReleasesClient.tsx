@@ -3,14 +3,8 @@
 /**
  * /releases · Prochains Sets
  *
- * Reproduit le langage visuel du SpotDrawer (reference absolue glassmorphism v7):
- * - Cards glass v7 ultra translucides sur bokeh AppShell
- * - Bordures quasi invisibles rgba(0,0,0,0.04)
- * - Hierarchy: grand chiffre noir + label muted
- * - Sub-blocks tres clairs pour les KPIs
- *
- * Vocabulaire collector: on AGREGE les releases officielles Pokemon TCG,
- * on NE droppe RIEN. Tone: insight Bloomberg pour le TCG.
+ * Reference glassmorphism v7: SpotDrawer.
+ * Vocabulaire collector 2026: agregation des releases officielles.
  */
 
 import { useState } from 'react'
@@ -28,17 +22,20 @@ type UpcomingSet = {
   isReleased: boolean
 }
 
-export default function ReleasesClient({ sets }: { sets: UpcomingSet[] }) {
+type Props = {
+  sets: UpcomingSet[]
+  lastSyncedAt?: string | null
+}
+
+export default function ReleasesClient({ sets, lastSyncedAt }: Props) {
   return (
     <main style={{
       minHeight: '80vh',
       padding: '40px 20px 80px',
-      maxWidth: 1100,
-      margin: '0 auto',
-      position: 'relative' as const,
-      zIndex: 1,
+      maxWidth: 1100, margin: '0 auto',
+      position: 'relative' as const, zIndex: 1,
     }}>
-      <Hero count={sets.length} />
+      <Hero count={sets.length} lastSyncedAt={lastSyncedAt} />
       {sets.length === 0 ? (
         <EmptyState />
       ) : (
@@ -51,7 +48,26 @@ export default function ReleasesClient({ sets }: { sets: UpcomingSet[] }) {
   )
 }
 
-function Hero({ count }: { count: number }) {
+// ────────────────────────────────────────────────────────────
+// Hero
+// ────────────────────────────────────────────────────────────
+function formatLastSynced(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const synced = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - synced.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffH = Math.floor(diffMs / 3600000)
+  const diffD = Math.floor(diffMs / 86400000)
+  if (diffMin < 1) return 'à l\u2019instant'
+  if (diffMin < 60) return `il y a ${diffMin} min`
+  if (diffH < 24) return `il y a ${diffH} h`
+  if (diffD < 7) return `il y a ${diffD} j`
+  return synced.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | null }) {
+  const lastSyncedLabel = formatLastSynced(lastSyncedAt)
   return (
     <div style={{ marginBottom: 40, textAlign: 'center' as const, paddingTop: 20 }}>
       <div style={{
@@ -72,7 +88,7 @@ function Hero({ count }: { count: number }) {
           boxShadow: '0 0 8px rgba(46,158,106,0.6)',
           animation: 'pulseDot 2s ease-in-out infinite',
         }} />
-        {count} {count > 1 ? 'sets a venir' : 'set a venir'}
+        {count} {count > 1 ? 'sets à venir' : 'set à venir'}
       </div>
 
       <h1 style={{
@@ -86,11 +102,20 @@ function Hero({ count }: { count: number }) {
       <p style={{
         fontSize: 'clamp(15px, 1.5vw, 17px)',
         color: SNOW.muted, fontFamily: FONT.display,
-        lineHeight: 1.6, maxWidth: 540, margin: '0 auto',
+        lineHeight: 1.6, maxWidth: 560, margin: '0 auto 14px',
       }}>
-        Les nouvelles sorties Pokemon TCG, anticipees pour toi.<br/>
-        Sois prevenu des qu&apos;un set est disponible.
+        Les nouvelles sorties Pokémon TCG, anticipées pour toi.<br/>
+        Sois prévenu dès qu&apos;un set est disponible.
       </p>
+
+      {lastSyncedLabel && (
+        <div style={{
+          fontSize: 11, color: SNOW.muted,
+          fontFamily: FONT.display, letterSpacing: '0.02em',
+        }}>
+          Dernière mise à jour : <span style={{ color: SNOW.ink, fontWeight: 600 }}>{lastSyncedLabel}</span>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes pulseDot {
@@ -102,6 +127,9 @@ function Hero({ count }: { count: number }) {
   )
 }
 
+// ────────────────────────────────────────────────────────────
+// Set Card
+// ────────────────────────────────────────────────────────────
 function SetCard({ set }: { set: UpcomingSet }) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -123,7 +151,7 @@ function SetCard({ set }: { set: UpcomingSet }) {
       }
       setStatus('success')
     } catch (err: any) {
-      setStatus('error'); setErrorMsg(err.message || 'Erreur, reessaye')
+      setStatus('error'); setErrorMsg(err.message || 'Erreur, réessaye')
     }
   }
 
@@ -136,27 +164,33 @@ function SetCard({ set }: { set: UpcomingSet }) {
       padding: 0, overflow: 'hidden',
       position: 'relative' as const,
       display: 'grid',
-      gridTemplateColumns: 'minmax(0, 300px) 1fr',
-      minHeight: 300,
+      gridTemplateColumns: 'minmax(0, 360px) 1fr',
+      minHeight: 320,
     }}>
-      {/* Colonne visuel */}
+      {/* ─── Colonne visuel (image + bokeh enrichi) ─── */}
       <div style={{
         position: 'relative' as const,
-        background: 'linear-gradient(135deg, rgba(255,165,80,0.06), rgba(195,135,245,0.06) 50%, rgba(0,210,150,0.04))',
+        background: 'linear-gradient(135deg, rgba(255,140,80,0.10) 0%, rgba(195,135,245,0.10) 45%, rgba(80,210,170,0.08) 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 44,
+        padding: 28,
         borderRight: '1px solid rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}>
+        {/* Bokeh multi-points */}
         <div aria-hidden style={{
-          position: 'absolute', top: '10%', left: '10%', right: '10%', bottom: '10%',
-          background: 'radial-gradient(circle at 30% 30%, rgba(255,165,80,0.18), transparent 60%)',
+          position: 'absolute', top: '5%', left: '10%', width: 180, height: 180,
+          background: 'radial-gradient(circle, rgba(255,140,80,0.32), transparent 60%)',
+          filter: 'blur(45px)', pointerEvents: 'none' as const,
+        }} />
+        <div aria-hidden style={{
+          position: 'absolute', top: '30%', right: '5%', width: 150, height: 150,
+          background: 'radial-gradient(circle, rgba(195,135,245,0.30), transparent 60%)',
           filter: 'blur(40px)', pointerEvents: 'none' as const,
         }} />
         <div aria-hidden style={{
-          position: 'absolute', top: '20%', right: '10%', width: 120, height: 120,
-          background: 'radial-gradient(circle, rgba(195,135,245,0.22), transparent 60%)',
-          filter: 'blur(30px)', pointerEvents: 'none' as const,
+          position: 'absolute', bottom: '10%', left: '25%', width: 130, height: 130,
+          background: 'radial-gradient(circle, rgba(80,210,170,0.25), transparent 60%)',
+          filter: 'blur(40px)', pointerEvents: 'none' as const,
         }} />
         {set.imageUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -164,28 +198,30 @@ function SetCard({ set }: { set: UpcomingSet }) {
             src={set.imageUrl}
             alt={set.name}
             style={{
-              maxWidth: '100%', maxHeight: 200,
+              maxWidth: '100%', maxHeight: 260,
+              width: 'auto', height: 'auto',
               position: 'relative' as const,
-              filter: 'drop-shadow(0 16px 36px rgba(0,0,0,0.18))',
+              filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.22))',
             }}
           />
         ) : (
           <div style={{
-            width: 140, height: 140, borderRadius: 18,
+            width: 180, height: 180, borderRadius: 22,
             background: 'rgba(255,255,255,0.6)',
             border: '1px solid rgba(0,0,0,0.06)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: SNOW.muted, fontSize: 11, fontFamily: FONT.display,
-            textAlign: 'center' as const, padding: 12,
-          }}>Visuel a venir</div>
+            color: SNOW.muted, fontSize: 12, fontFamily: FONT.display,
+            textAlign: 'center' as const, padding: 16,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+          }}>Visuel à venir</div>
         )}
       </div>
 
-      {/* Colonne contenu */}
+      {/* ─── Colonne contenu ─── */}
       <div style={{
-        padding: '30px 34px',
+        padding: '32px 36px',
         display: 'flex', flexDirection: 'column' as const,
-        justifyContent: 'space-between', gap: 20,
+        justifyContent: 'space-between', gap: 22,
       }}>
         <div>
           <div style={{
@@ -211,13 +247,18 @@ function SetCard({ set }: { set: UpcomingSet }) {
             fontSize: 11.5, fontFamily: FONT.display,
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
           }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={SNOW.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span style={{ color: SNOW.muted }}>Sortie</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={SNOW.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span style={{ color: SNOW.muted }}>Sortie prévue le</span>
             <span style={{ fontWeight: 700, color: SNOW.ink }}>{set.releaseDateLocale}</span>
           </div>
         </div>
 
-        {/* Compteur J-X gros */}
+        {/* Compteur J-X gigantesque */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '8px 0' }}>
           <div style={{
             fontSize: 'clamp(56px, 8vw, 88px)',
@@ -247,7 +288,7 @@ function SetCard({ set }: { set: UpcomingSet }) {
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-            On te previent des que le set sort
+            On te prévient dès que le set sort
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
@@ -289,7 +330,7 @@ function SetCard({ set }: { set: UpcomingSet }) {
               onMouseEnter={e => { if (status !== 'loading' && email.trim()) { e.currentTarget.style.background = '#000'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
               onMouseLeave={e => { if (status !== 'loading' && email.trim()) { e.currentTarget.style.background = SNOW.ink; e.currentTarget.style.transform = '' } }}
             >
-              {status === 'loading' ? 'Envoi...' : 'Previens-moi'}
+              {status === 'loading' ? 'Envoi...' : 'Préviens-moi'}
             </button>
             {status === 'error' && (
               <div style={{ width: '100%', fontSize: 11, color: '#E03020', fontFamily: FONT.display, marginTop: 4 }}>
@@ -328,7 +369,7 @@ function EmptyState() {
         Aucun set en attente
       </h2>
       <p style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, maxWidth: 340, margin: 0 }}>
-        Tous les sets Pokemon TCG annonces sont actuellement disponibles. Reviens bientot pour voir les nouvelles annonces.
+        Tous les sets Pokémon TCG annoncés sont actuellement disponibles. Reviens bientôt pour voir les nouvelles annonces.
       </p>
     </div>
   )
@@ -342,7 +383,7 @@ function Footer() {
       fontFamily: FONT.display, lineHeight: 1.7,
     }}>
       <p style={{ margin: 0 }}>
-        Donnees agreges depuis les annonces officielles · Mise a jour quotidienne automatique
+        Données agrégées depuis les annonces officielles · Mise à jour quotidienne automatique
       </p>
     </div>
   )

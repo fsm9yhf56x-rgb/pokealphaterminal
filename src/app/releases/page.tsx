@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 
 export const metadata = {
   title: 'Prochains Sets · Kodo Cards',
-  description: 'Les nouvelles sorties Pokemon TCG, anticipees pour toi. Calendrier des drops, dates de release, notification email a la sortie.',
+  description: 'Les nouvelles sorties Pokémon TCG, anticipées pour toi. Calendrier des drops, dates de release, notification email à la sortie.',
 }
 
 type UpcomingSet = {
@@ -21,15 +21,16 @@ type UpcomingSet = {
   isReleased: boolean
 }
 
-async function fetchUpcomingSets(): Promise<UpcomingSet[]> {
+async function fetchUpcomingSets(): Promise<{ sets: UpcomingSet[], lastSyncedAt: string | null }> {
   try {
     const result = await sql.query(
-      "SELECT items_pending FROM sync_progress WHERE job_id = 'tcg_sets_upcoming_meta';"
+      "SELECT items_pending, last_run_at, created_at FROM sync_progress WHERE job_id = \'tcg_sets_upcoming_meta\';"
     )
-    if (result.length === 0) return []
+    if (result.length === 0) return { sets: [], lastSyncedAt: null }
     const rawSets = result[0].items_pending || []
+    const lastSyncedAt = result[0].last_run_at || result[0].created_at || null
     const now = new Date()
-    return (Array.isArray(rawSets) ? rawSets : [])
+    const sets = (Array.isArray(rawSets) ? rawSets : [])
       .filter((s: any) => s && s.releaseDate)
       .map((s: any) => {
         const releaseDate = new Date(s.releaseDate)
@@ -47,13 +48,14 @@ async function fetchUpcomingSets(): Promise<UpcomingSet[]> {
         }
       })
       .sort((a: UpcomingSet, b: UpcomingSet) => new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime())
+    return { sets, lastSyncedAt: lastSyncedAt instanceof Date ? lastSyncedAt.toISOString() : lastSyncedAt }
   } catch (e) {
     console.error('[/releases] fetch error:', e)
-    return []
+    return { sets: [], lastSyncedAt: null }
   }
 }
 
 export default async function ReleasesPage() {
-  const sets = await fetchUpcomingSets()
-  return <ReleasesClient sets={sets} />
+  const { sets, lastSyncedAt } = await fetchUpcomingSets()
+  return <ReleasesClient sets={sets} lastSyncedAt={lastSyncedAt} />
 }

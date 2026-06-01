@@ -1,6 +1,7 @@
 'use client'
 
 import type { ObjAggregates, EnrichedWish } from './Objectifs'
+import { SnowButton } from '@/components/ui/snow'
 
 /**
  * Wishlist : cartes à acheter avec priorité (★/★★/★★★) + prix cible.
@@ -21,39 +22,29 @@ export function ObjWishlist({
       <div>
         <SectionTitle>Wishlist</SectionTitle>
         <div style={{
-          background: 'var(--surface)',
-          border: '2px dashed var(--border-strong)',
-          borderRadius: '12px',
-          padding: '40px 20px',
-          textAlign: 'center',
+          background: 'rgba(255,255,255,0.5)',
+          backdropFilter: 'blur(12px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          border: '2px dashed rgba(0,0,0,0.12)',
+          borderRadius: 14,
+          padding: '40px 24px',
+          textAlign: 'center' as const,
         }}>
           <div style={{
-            fontSize: '13px',
-            color: 'var(--ink)',
+            fontSize: 14,
+            color: '#1D1D1F',
             fontWeight: 600,
-            fontFamily: 'var(--font-display)',
-            marginBottom: '6px',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            marginBottom: 7,
+            letterSpacing: '-0.01em',
           }}>Aucune carte dans votre wishlist</div>
           <div style={{
-            fontSize: '11px',
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '14px',
+            fontSize: 12,
+            color: '#86868B',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            marginBottom: 18,
           }}>Trackez les cartes que vous voulez acquérir avec un prix cible.</div>
-          <button
-            onClick={onAdd}
-            style={{
-              padding: '8px 14px',
-              background: 'var(--ink)',
-              color: 'var(--surface)',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-display)',
-            }}
-          >+ Ajouter une carte</button>
+          <SnowButton onClick={onAdd} variant="primary" size="md">+ Ajouter une carte</SnowButton>
         </div>
       </div>
     )
@@ -71,39 +62,43 @@ export function ObjWishlist({
         Wishlist · {wishlist.length} carte{wishlist.length > 1 ? 's' : ''}
         {agg.wishlistAlerts > 0 && (
           <span style={{
-            marginLeft: '8px',
-            padding: '2px 6px',
-            background: 'var(--perf-up-soft)',
-            color: 'var(--perf-up)',
-            fontSize: '9px',
-            fontWeight: 600,
-            borderRadius: '4px',
-            textTransform: 'none',
+            marginLeft: 8,
+            padding: '3px 9px',
+            background: 'rgba(29,158,117,0.12)',
+            color: '#1D9E75',
+            fontSize: 9.5,
+            fontWeight: 700,
+            borderRadius: 99,
+            textTransform: 'none' as const,
             letterSpacing: 0,
+            border: '1px solid rgba(29,158,117,0.2)',
           }}>▲ {agg.wishlistAlerts} alerte{agg.wishlistAlerts > 1 ? 's' : ''}</span>
         )}
       </SectionTitle>
 
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 14,
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         {/* Header row */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '40px 2.4fr 1fr 1fr 1fr auto',
-          gap: '12px',
-          padding: '10px 16px',
-          background: '#FAFAFA',
-          borderBottom: '1px solid var(--border)',
-          fontSize: '9px',
-          fontWeight: 600,
-          color: 'var(--ink-muted)',
-          textTransform: 'uppercase',
+          gap: 12,
+          padding: '10px 18px',
+          background: 'rgba(0,0,0,0.025)',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          fontSize: 9.5,
+          fontWeight: 700,
+          color: '#86868B',
+          textTransform: 'uppercase' as const,
           letterSpacing: '0.08em',
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>
           <div style={{ textAlign: 'center' }}>★</div>
           <div>Carte</div>
@@ -129,23 +124,24 @@ export function ObjWishlist({
           onClick={onAdd}
           style={{
             width: '100%',
-            padding: '12px',
+            padding: 14,
             background: 'transparent',
             border: 'none',
-            borderTop: '1px solid var(--border)',
-            color: 'var(--ink-muted)',
-            fontSize: '12px',
+            borderTop: '1px solid rgba(0,0,0,0.05)',
+            color: '#86868B',
+            fontSize: 12.5,
+            fontWeight: 500,
             cursor: 'pointer',
-            fontFamily: 'var(--font-display)',
-            transition: 'all 0.1s',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            transition: 'all .15s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = '#FAFAFA'
-            e.currentTarget.style.color = 'var(--ink)'
+            e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
+            e.currentTarget.style.color = '#1D1D1F'
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = 'var(--ink-muted)'
+            e.currentTarget.style.color = '#86868B'
           }}
         >
           + Ajouter une carte
@@ -164,33 +160,33 @@ function WishRow({
   onAcquire: (id: string) => void
 }) {
   const stars = '★'.repeat(wish.priority) + '☆'.repeat(3 - wish.priority)
-  const starColor = wish.priority === 3 ? 'var(--accent)'
-                   : wish.priority === 2 ? 'var(--premium)'
-                   : 'var(--ink-faint)'
+  const starColor = wish.priority === 3 ? '#C42E1F'
+                   : wish.priority === 2 ? '#C9A84C'
+                   : '#AEAEB2'
 
   return (
     <div style={{
       display: 'grid',
       gridTemplateColumns: '40px 2.4fr 1fr 1fr 1fr auto',
-      gap: '12px',
-      padding: '12px 16px',
-      borderBottom: isLast ? 'none' : '1px solid var(--border)',
+      gap: 12,
+      padding: '14px 18px',
+      borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
       alignItems: 'center',
-      transition: 'background 0.1s',
-      background: wish.alertActive ? 'var(--perf-up-soft)' : 'transparent',
+      transition: 'background .15s',
+      background: wish.alertActive ? 'rgba(29,158,117,0.08)' : 'transparent',
     }}
     onMouseEnter={e => {
-      if (!wish.alertActive) e.currentTarget.style.background = 'rgba(0,0,0,0.015)'
+      if (!wish.alertActive) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
     }}
     onMouseLeave={e => {
-      e.currentTarget.style.background = wish.alertActive ? 'var(--perf-up-soft)' : 'transparent'
+      e.currentTarget.style.background = wish.alertActive ? 'rgba(29,158,117,0.08)' : 'transparent'
     }}
     >
       {/* Stars */}
       <div style={{
-        textAlign: 'center',
-        fontSize: '13px',
-        fontFamily: 'var(--font-display)',
+        textAlign: 'center' as const,
+        fontSize: 13,
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
         color: starColor,
         letterSpacing: '-1px',
       }}>{stars}</div>
@@ -198,63 +194,66 @@ function WishRow({
       {/* Card name + meta */}
       <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: '13px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
-          whiteSpace: 'nowrap',
+          fontSize: 13,
+          fontWeight: 600,
+          color: '#1D1D1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          whiteSpace: 'nowrap' as const,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          marginBottom: '2px',
+          marginBottom: 3,
+          letterSpacing: '-0.01em',
         }}>{wish.card_name}</div>
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          whiteSpace: 'nowrap',
+          fontSize: 10.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          whiteSpace: 'nowrap' as const,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}>
           {[wish.set_name, wish.lang, wish.rarity].filter(Boolean).join(' · ') || '—'}
-          {wish.notes && <span style={{ fontStyle: 'italic' }}> · {wish.notes}</span>}
+          {wish.notes && <span style={{ fontStyle: 'italic' as const }}> · {wish.notes}</span>}
         </div>
       </div>
 
       {/* Target price */}
       <div style={{
-        textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 500,
-        color: 'var(--ink)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        textAlign: 'right' as const,
+        fontSize: 12.5,
+        fontWeight: 600,
+        color: '#1D1D1F',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{wish.target_price ? formatEUR(wish.target_price) : '—'}</div>
 
       {/* Current price (placeholder for now) */}
       <div style={{
-        textAlign: 'right',
-        fontSize: '12px',
-        color: 'var(--ink-faint)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        textAlign: 'right' as const,
+        fontSize: 12.5,
+        color: '#AEAEB2',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>—</div>
 
       {/* Alert state */}
-      <div style={{ textAlign: 'right' }}>
+      <div style={{ textAlign: 'right' as const }}>
         {wish.alertActive ? (
           <span style={{
-            padding: '2px 6px',
-            background: 'var(--perf-up)',
-            color: 'var(--surface)',
-            fontSize: '9px',
-            fontWeight: 600,
-            fontFamily: 'var(--font-display)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            borderRadius: '4px',
+            padding: '3px 9px',
+            background: '#1D9E75',
+            color: '#FFFFFF',
+            fontSize: 9.5,
+            fontWeight: 700,
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.06em',
+            borderRadius: 99,
+            boxShadow: '0 2px 6px rgba(29,158,117,0.3)',
           }}>▲ Achat</span>
         ) : (
           <span style={{
-            fontSize: '10px',
-            color: 'var(--ink-faint)',
-            fontFamily: 'var(--font-display)',
+            fontSize: 10.5,
+            color: '#AEAEB2',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
           }}>En attente</span>
         )}
       </div>
@@ -264,16 +263,16 @@ function WishRow({
         <button
           onClick={() => onAcquire(wish.id)}
           title="Marquer comme acquise"
-          style={iconBtnStyle('perf-up')}
+          style={iconBtnStyle()}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--perf-up-soft)'
-            e.currentTarget.style.color = 'var(--perf-up)'
-            e.currentTarget.style.borderColor = 'var(--green-border)'
+            e.currentTarget.style.background = 'rgba(29,158,117,0.12)'
+            e.currentTarget.style.color = '#1D9E75'
+            e.currentTarget.style.borderColor = 'rgba(29,158,117,0.3)'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = 'var(--ink-faint)'
-            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.background = 'rgba(255,255,255,0.5)'
+            e.currentTarget.style.color = '#AEAEB2'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
           }}
         >✓</button>
         <button
@@ -281,16 +280,16 @@ function WishRow({
             if (window.confirm('Retirer cette carte de la wishlist ?')) onDelete(wish.id)
           }}
           title="Supprimer"
-          style={iconBtnStyle('accent')}
+          style={iconBtnStyle()}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--red-light)'
-            e.currentTarget.style.color = 'var(--accent)'
-            e.currentTarget.style.borderColor = 'var(--red-border)'
+            e.currentTarget.style.background = 'rgba(196,46,31,0.1)'
+            e.currentTarget.style.color = '#C42E1F'
+            e.currentTarget.style.borderColor = 'rgba(196,46,31,0.3)'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = 'var(--ink-faint)'
-            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.background = 'rgba(255,255,255,0.5)'
+            e.currentTarget.style.color = '#AEAEB2'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
           }}
         >×</button>
       </div>
@@ -298,46 +297,46 @@ function WishRow({
   )
 }
 
-function iconBtnStyle(_hoverToken: string): React.CSSProperties {
+function iconBtnStyle(): React.CSSProperties {
   return {
-    width: '24px',
-    height: '24px',
+    width: 26,
+    height: 26,
     borderRadius: '50%',
-    background: 'transparent',
-    border: '1px solid var(--border)',
-    color: 'var(--ink-faint)',
-    fontSize: '11px',
+    background: 'rgba(255,255,255,0.5)',
+    border: '1px solid rgba(0,0,0,0.08)',
+    color: '#AEAEB2',
+    fontSize: 12,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'all 0.12s',
-    fontFamily: 'var(--font-display)',
+    transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+    fontFamily: 'var(--font-sora, Sora, sans-serif)',
   }
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
+        textTransform: 'uppercase' as const,
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

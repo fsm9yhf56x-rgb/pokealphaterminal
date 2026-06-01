@@ -86,35 +86,40 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed',
+        position: 'fixed' as const,
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 200,
+        background: 'rgba(20, 20, 30, 0.42)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        animation: 'fadeIn 0.15s ease-out',
+        animation: 'objModalFadeIn 0.2s cubic-bezier(.2,.85,.3,1)',
+        padding: 16,
       }}
     >
       <style>{`
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes objModalFadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes objModalSlideUp { from{opacity:0;transform:translateY(12px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
       `}</style>
 
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'var(--surface)',
-          borderRadius: '16px',
-          padding: '24px',
-          width: '420px',
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(32px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.7)',
+          borderRadius: 20,
+          padding: 28,
+          width: 440,
           maxWidth: 'calc(100vw - 32px)',
           maxHeight: 'calc(100vh - 64px)',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.18)',
-          fontFamily: 'var(--font-display)',
-          animation: 'slideUp 0.2s ease-out',
+          overflowY: 'auto' as const,
+          boxShadow: '0 32px 80px rgba(0,0,0,0.24), 0 6px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          animation: 'objModalSlideUp 0.28s cubic-bezier(.2,.85,.3,1)',
         }}
       >
         {/* Header */}
@@ -126,33 +131,50 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
         }}>
           <div>
             <div style={{
-              fontSize: '9px',
-              color: 'var(--ink-muted)',
-              textTransform: 'uppercase',
+              fontSize: 10,
+              color: '#86868B',
+              textTransform: 'uppercase' as const,
               letterSpacing: '0.08em',
-              marginBottom: '4px',
+              marginBottom: 5,
+              fontWeight: 700,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
             }}>{mode === 'target' ? 'Nouvel objectif' : 'Nouvelle wishlist'}</div>
             <div style={{
-              fontSize: '17px',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              letterSpacing: '-0.3px',
+              fontSize: 19,
+              fontWeight: 700,
+              color: '#1D1D1F',
+              letterSpacing: '-0.4px',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
             }}>{mode === 'target' ? 'Définir une cible' : 'Ajouter une carte'}</div>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: '28px',
-              height: '28px',
+              width: 30,
+              height: 30,
               borderRadius: '50%',
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              color: 'var(--ink-muted)',
-              fontSize: '15px',
+              background: 'rgba(255,255,255,0.6)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              color: '#86868B',
+              fontSize: 16,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(196,46,31,0.1)'
+              e.currentTarget.style.color = '#C42E1F'
+              e.currentTarget.style.borderColor = 'rgba(196,46,31,0.3)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.6)'
+              e.currentTarget.style.color = '#86868B'
+              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
             }}
           >×</button>
         </div>
@@ -178,20 +200,31 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
         )}
 
         {/* Buttons */}
-        <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '11px',
-              background: 'var(--surface)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '10px',
-              fontSize: '13px',
+              padding: 12,
+              background: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 10,
+              fontSize: 13,
               cursor: 'pointer',
-              color: 'var(--ink)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 500,
+              color: '#1D1D1F',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              fontWeight: 600,
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.55)'
+              e.currentTarget.style.transform = 'translateY(0)'
             }}
           >Annuler</button>
           <button
@@ -199,16 +232,31 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
             disabled={!canSubmit}
             style={{
               flex: 1,
-              padding: '11px',
-              background: canSubmit ? 'var(--ink)' : 'var(--border)',
+              padding: 12,
+              background: canSubmit ? '#1D1D1F' : 'rgba(0,0,0,0.1)',
               border: 'none',
-              borderRadius: '10px',
-              color: canSubmit ? 'var(--surface)' : 'var(--ink-muted)',
-              fontSize: '13px',
-              fontWeight: 500,
+              borderRadius: 10,
+              color: canSubmit ? '#FFFFFF' : '#AEAEB2',
+              fontSize: 13,
+              fontWeight: 600,
               cursor: canSubmit ? 'pointer' : 'not-allowed',
-              fontFamily: 'var(--font-display)',
-              transition: 'all 0.15s',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+              boxShadow: canSubmit
+                ? '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)'
+                : 'none',
+            }}
+            onMouseEnter={e => {
+              if (canSubmit) {
+                e.currentTarget.style.transform = 'translateY(-1.5px)'
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.18)'
+              }
+            }}
+            onMouseLeave={e => {
+              if (canSubmit) {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)'
+              }
             }}
           >{submitting ? 'En cours…' : (mode === 'target' ? 'Créer l\'objectif' : 'Ajouter à la wishlist')}</button>
         </div>
@@ -240,17 +288,17 @@ function TargetForm({
               key={opt.value}
               onClick={() => setMetric(opt.value)}
               style={{
-                padding: '8px 10px',
-                background: metric === opt.value ? 'var(--ink)' : 'var(--surface)',
-                color: metric === opt.value ? 'var(--surface)' : 'var(--ink-muted)',
-                border: `1px solid ${metric === opt.value ? 'var(--ink)' : 'var(--border)'}`,
-                borderRadius: '8px',
-                fontSize: '11px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-display)',
+                padding: '10px 12px',
+                background: metric === opt.value ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
+                color: metric === opt.value ? '#FFFFFF' : '#86868B',
+                border: `1px solid ${metric === opt.value ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                borderRadius: 9,
+                fontSize: 11.5,
+                fontWeight: 600,
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
                 cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.12s',
+                textAlign: 'left' as const,
+                transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
               }}
             >{opt.label}</button>
           ))}
@@ -321,15 +369,17 @@ function WishForm({
                 onClick={() => setWishLang(l)}
                 style={{
                   flex: 1,
-                  padding: '9px 0',
-                  background: wishLang === l ? 'var(--ink)' : 'var(--surface)',
-                  color: wishLang === l ? 'var(--surface)' : 'var(--ink-muted)',
-                  border: `1px solid ${wishLang === l ? 'var(--ink)' : 'var(--border)'}`,
-                  borderRadius: '8px',
-                  fontSize: '11px',
-                  fontWeight: 500,
+                  padding: '10px 0',
+                  background: wishLang === l ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
+                  color: wishLang === l ? '#FFFFFF' : '#86868B',
+                  border: `1px solid ${wishLang === l ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 9,
+                  fontSize: 11.5,
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                  letterSpacing: '0.02em',
+                  transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
                 }}
               >{l}</button>
             ))}
@@ -352,15 +402,16 @@ function WishForm({
                 onClick={() => setWishPriority(p)}
                 style={{
                   flex: 1,
-                  padding: '9px',
-                  background: active ? 'var(--ink)' : 'var(--surface)',
-                  color: active ? 'var(--surface)' : 'var(--ink-muted)',
-                  border: `1px solid ${active ? 'var(--ink)' : 'var(--border)'}`,
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontFamily: 'var(--font-display)',
+                  padding: 11,
+                  background: active ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
+                  color: active ? '#FFFFFF' : '#86868B',
+                  border: `1px solid ${active ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 9,
+                  fontSize: 14,
+                  fontFamily: 'var(--font-sora, Sora, sans-serif)',
                   letterSpacing: '-1px',
                   cursor: 'pointer',
+                  transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
                 }}
               >{stars}</button>
             )
@@ -391,13 +442,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label style={{
         display: 'block',
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        marginBottom: '6px',
-        fontFamily: 'var(--font-display)',
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: '#86868B',
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.07em',
+        marginBottom: 8,
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{label}</label>
       {children}
     </div>
@@ -426,19 +477,30 @@ function Input({
       autoFocus={autoFocus}
       style={{
         width: '100%',
-        padding: '10px 12px',
-        border: '1px solid var(--border)',
-        borderRadius: '8px',
-        fontSize: '13px',
-        background: 'var(--surface)',
-        color: 'var(--ink)',
+        padding: '11px 14px',
+        border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 9,
+        fontSize: 13,
+        background: 'rgba(255,255,255,0.6)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        color: '#1D1D1F',
         outline: 'none',
-        fontFamily: type === 'number' ? 'var(--font-data, var(--font-display))' : 'var(--font-display)',
-        boxSizing: 'border-box',
-        transition: 'border-color 0.12s',
+        fontFamily: type === 'number' ? 'var(--font-data, "Space Mono", monospace)' : 'var(--font-sora, Sora, sans-serif)',
+        boxSizing: 'border-box' as const,
+        transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
       }}
-      onFocus={e => (e.currentTarget.style.borderColor = 'var(--ink)')}
-      onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+      onFocus={e => {
+        e.currentTarget.style.borderColor = '#1D1D1F'
+        e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+        e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(0,0,0,0.05)'
+      }}
+      onBlur={e => {
+        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
+        e.currentTarget.style.background = 'rgba(255,255,255,0.6)'
+        e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04)'
+      }}
     />
   )
 }

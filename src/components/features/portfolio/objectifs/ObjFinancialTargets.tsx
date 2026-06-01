@@ -16,6 +16,12 @@ export function ObjFinancialTargets({
 }) {
   return (
     <div>
+      <style>{`
+        .obj-target-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+      `}</style>
       <SectionTitle>Objectifs personnels</SectionTitle>
 
       <div style={{
@@ -41,38 +47,46 @@ function TargetCard({
   onDelete: (id: string) => void
 }) {
   const ringColor = target.achieved
-    ? 'var(--perf-up)'
-    : target.pct >= 75 ? 'var(--premium)'
-    : target.pct >= 30 ? 'var(--accent)'
-    : 'var(--ink-faint)'
+    ? '#1D9E75'
+    : target.pct >= 75 ? '#C9A84C'
+    : target.pct >= 30 ? '#1D1D1F'
+    : '#AEAEB2'
 
   const fmt = formatterForMetric(target.metric, target.unit)
   const meta = METRIC_META[target.metric]
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: target.achieved ? '1px solid var(--green-border)' : '1px solid var(--border)',
-      borderRadius: '14px',
-      padding: '16px 18px',
-      position: 'relative',
-      transition: 'border-color 0.15s',
+    <div className="obj-target-card" style={{
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: target.achieved ? '1px solid rgba(29,158,117,0.4)' : '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      padding: '18px 20px',
+      position: 'relative' as const,
+      transition: 'all .3s cubic-bezier(.2,.85,.3,1)',
+      boxShadow: target.achieved
+        ? '0 1px 3px rgba(29,158,117,0.08), inset 0 1px 0 rgba(255,255,255,0.85), 0 0 0 1px rgba(29,158,117,0.06)'
+        : '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
     }}>
-      {/* Achieved badge */}
+      {/* Achieved badge glass v7 */}
       {target.achieved && (
         <div style={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
-          padding: '3px 8px',
-          background: 'var(--perf-up-soft)',
-          color: 'var(--perf-up)',
-          fontSize: '9px',
-          fontWeight: 600,
-          fontFamily: 'var(--font-display)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          borderRadius: '6px',
+          position: 'absolute' as const,
+          top: 12,
+          right: 12,
+          padding: '4px 10px',
+          background: 'rgba(29,158,117,0.12)',
+          color: '#1D9E75',
+          fontSize: 9.5,
+          fontWeight: 700,
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          textTransform: 'uppercase' as const,
+          letterSpacing: '0.06em',
+          borderRadius: 99,
+          border: '1px solid rgba(29,158,117,0.2)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
         }}>✓ Atteint</div>
       )}
 
@@ -88,28 +102,30 @@ function TargetCard({
         {/* Info */}
         <div style={{ minWidth: 0 }}>
           <div style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
-            textTransform: 'uppercase',
+            fontSize: 10,
+            color: '#86868B',
+            textTransform: 'uppercase' as const,
             letterSpacing: '0.06em',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '4px',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            fontWeight: 700,
+            marginBottom: 5,
           }}>{meta.label}</div>
           <div style={{
-            fontSize: '14px',
+            fontSize: 14,
             fontWeight: 600,
-            color: 'var(--ink)',
-            fontFamily: 'var(--font-display)',
-            whiteSpace: 'nowrap',
+            color: '#1D1D1F',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            whiteSpace: 'nowrap' as const,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            marginBottom: '2px',
+            marginBottom: 3,
+            letterSpacing: '-0.01em',
           }}>{target.label || `Atteindre ${fmt(target.target_value)}`}</div>
           {target.deadline && (
             <div style={{
-              fontSize: '10px',
-              color: 'var(--ink-muted)',
-              fontFamily: 'var(--font-display)',
+              fontSize: 10.5,
+              color: '#86868B',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
             }}>
               Deadline · {formatDeadline(target.deadline)}
             </div>
@@ -119,39 +135,49 @@ function TargetCard({
 
       {/* Bottom progress numbers */}
       <div style={{
-        marginTop: '14px',
-        paddingTop: '12px',
-        borderTop: '1px solid var(--border)',
+        marginTop: 16,
+        paddingTop: 14,
+        borderTop: '1px solid rgba(0,0,0,0.05)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
       }}>
         <div>
           <div style={{
-            fontSize: '15px',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            fontFamily: 'var(--font-data, var(--font-display))',
+            fontSize: 16,
+            fontWeight: 700,
+            color: '#1D1D1F',
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
             letterSpacing: '-0.3px',
+            lineHeight: 1.1,
           }}>{fmt(target.current)}</div>
           <div style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-display)',
+            fontSize: 10,
+            color: '#86868B',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            marginTop: 3,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+            fontWeight: 600,
           }}>Actuel</div>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right' as const }}>
           <div style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-data, var(--font-display))',
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#86868B',
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
+            lineHeight: 1.1,
           }}>{fmt(target.target_value)}</div>
           <div style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-display)',
+            fontSize: 10,
+            color: '#AEAEB2',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            marginTop: 3,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+            fontWeight: 600,
           }}>Cible</div>
         </div>
       </div>
@@ -169,10 +195,10 @@ function TargetCard({
           width: '22px',
           height: '22px',
           borderRadius: '50%',
-          background: 'transparent',
-          border: '1px solid var(--border)',
-          color: 'var(--ink-faint)',
-          fontSize: '12px',
+          background: 'rgba(255,255,255,0.5)',
+          border: '1px solid rgba(0,0,0,0.08)',
+          color: '#AEAEB2',
+          fontSize: 12,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -182,13 +208,13 @@ function TargetCard({
         }}
         onMouseEnter={e => {
           e.currentTarget.style.opacity = '1'
-          e.currentTarget.style.color = 'var(--accent)'
-          e.currentTarget.style.borderColor = 'var(--accent)'
+          e.currentTarget.style.color = '#C42E1F'
+          e.currentTarget.style.borderColor = '#C42E1F'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.opacity = '0'
-          e.currentTarget.style.color = 'var(--ink-faint)'
-          e.currentTarget.style.borderColor = 'var(--border)'
+          e.currentTarget.style.color = '#AEAEB2'
+          e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
         }}
       >×</button>
     </div>
@@ -211,7 +237,7 @@ function ProgressRing({ pct, color }: { pct: number; color: string }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--border)"
+          stroke="rgba(0,0,0,0.08)"
           strokeWidth={stroke}
         />
         <circle
@@ -228,12 +254,13 @@ function ProgressRing({ pct, color }: { pct: number; color: string }) {
         />
       </svg>
       <div style={{
-        position: 'absolute', inset: 0,
+        position: 'absolute' as const, inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '13px',
-        fontWeight: 600,
+        fontSize: 13,
+        fontWeight: 700,
         color,
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
+        letterSpacing: '-0.02em',
       }}>{pct.toFixed(0)}%</div>
     </div>
   )
@@ -244,32 +271,38 @@ function AddCard({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       style={{
-        background: 'transparent',
-        border: '2px dashed var(--border-strong)',
-        borderRadius: '14px',
-        padding: '20px',
+        background: 'rgba(255,255,255,0.35)',
+        backdropFilter: 'blur(10px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+        border: '2px dashed rgba(0,0,0,0.12)',
+        borderRadius: 16,
+        padding: 22,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column' as const,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '8px',
+        gap: 10,
         cursor: 'pointer',
-        minHeight: '140px',
-        color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-display)',
-        transition: 'all 0.15s',
+        minHeight: 150,
+        color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+        transition: 'all .25s cubic-bezier(.2,.85,.3,1)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'var(--ink)'
-        e.currentTarget.style.color = 'var(--ink)'
+        e.currentTarget.style.borderColor = '#1D1D1F'
+        e.currentTarget.style.color = '#1D1D1F'
+        e.currentTarget.style.background = 'rgba(255,255,255,0.55)'
+        e.currentTarget.style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--border-strong)'
-        e.currentTarget.style.color = 'var(--ink-muted)'
+        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'
+        e.currentTarget.style.color = '#86868B'
+        e.currentTarget.style.background = 'rgba(255,255,255,0.35)'
+        e.currentTarget.style.transform = 'translateY(0)'
       }}
     >
-      <div style={{ fontSize: '24px', fontWeight: 300 }}>+</div>
-      <div style={{ fontSize: '12px' }}>Ajouter un objectif</div>
+      <div style={{ fontSize: 28, fontWeight: 300, lineHeight: 1 }}>+</div>
+      <div style={{ fontSize: 12.5, fontWeight: 500 }}>Ajouter un objectif</div>
     </button>
   )
 }
@@ -308,25 +341,25 @@ function formatDeadline(d: string): string {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
+        textTransform: 'uppercase' as const,
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

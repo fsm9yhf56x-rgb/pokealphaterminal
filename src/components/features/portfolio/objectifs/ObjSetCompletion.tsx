@@ -35,14 +35,17 @@ export function ObjSetCompletion({ agg }: { agg: ObjAggregates }) {
       <div>
         <SectionTitle>Complétion de sets</SectionTitle>
         <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '12px',
-          padding: '40px 20px',
-          textAlign: 'center',
-          color: 'var(--ink-muted)',
-          fontSize: '12px',
-          fontFamily: 'var(--font-display)',
+          background: 'rgba(255,255,255,0.65)',
+          backdropFilter: 'blur(14px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.05)',
+          borderRadius: 14,
+          padding: '40px 24px',
+          textAlign: 'center' as const,
+          color: '#86868B',
+          fontSize: 13,
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
         }}>
           Aucun set en cours. Ajoutez des cartes à votre portfolio pour suivre la progression.
         </div>
@@ -77,41 +80,44 @@ export function ObjSetCompletion({ agg }: { agg: ObjAggregates }) {
       {/* Mini summary */}
       <div style={{
         display: 'flex',
-        gap: '14px',
-        marginBottom: '14px',
-        fontSize: '11px',
-        color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-display)',
+        gap: 14,
+        marginBottom: 16,
+        fontSize: 11.5,
+        color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>
         {completed > 0 && (
           <div>
-            <span style={{ color: 'var(--perf-up)', fontWeight: 600 }}>{completed}</span> complet{completed > 1 ? 's' : ''}
+            <span style={{ color: '#1D9E75', fontWeight: 700 }}>{completed}</span> complet{completed > 1 ? 's' : ''}
           </div>
         )}
         {inProgress > 0 && (
           <div>
-            <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{inProgress}</span> en cours
+            <span style={{ color: '#1D1D1F', fontWeight: 700 }}>{inProgress}</span> en cours
           </div>
         )}
         {unknownTotal > 0 && (
           <div>
-            <span style={{ color: 'var(--ink-faint)' }}>{unknownTotal}</span> total inconnu
+            <span style={{ color: '#AEAEB2', fontWeight: 600 }}>{unknownTotal}</span> total inconnu
           </div>
         )}
       </div>
 
       {loading ? (
         <div style={{
-          padding: '20px', textAlign: 'center',
-          fontSize: '11px', color: 'var(--ink-faint)',
-          fontFamily: 'var(--font-display)',
+          padding: 24, textAlign: 'center' as const,
+          fontSize: 12, color: '#AEAEB2',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>Chargement des données de sets…</div>
       ) : (
         <div style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '12px',
+          background: 'rgba(255,255,255,0.65)',
+          backdropFilter: 'blur(14px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.05)',
+          borderRadius: 14,
           overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
         }}>
           {enriched.map((s, i) => (
             <SetRow
@@ -130,22 +136,22 @@ function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
   const isComplete = set.pct >= 100 && set.total > 0
   const hasUnknownTotal = set.total === 0
 
-  let pctColor = 'var(--ink-faint)'
-  if (isComplete) pctColor = 'var(--perf-up)'
-  else if (set.pct >= 75) pctColor = 'var(--premium)'
-  else if (set.pct >= 30) pctColor = 'var(--accent)'
+  let pctColor = '#AEAEB2'
+  if (isComplete) pctColor = '#1D9E75'
+  else if (set.pct >= 75) pctColor = '#C9A84C'
+  else if (set.pct >= 30) pctColor = '#1D1D1F'
 
   return (
     <div style={{
       display: 'grid',
       gridTemplateColumns: '1fr auto',
       alignItems: 'center',
-      gap: '16px',
-      padding: '14px 18px',
-      borderBottom: isLast ? 'none' : '1px solid var(--border)',
-      transition: 'background 0.1s',
+      gap: 16,
+      padding: '14px 20px',
+      borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
+      transition: 'background .15s',
     }}
-    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
+    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.4)')}
     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
       {/* Left : name + progress bar + meta */}
@@ -157,26 +163,28 @@ function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
           marginBottom: '8px',
         }}>
           <div style={{
-            fontSize: '13px',
+            fontSize: 13,
             fontWeight: 600,
-            color: 'var(--ink)',
-            fontFamily: 'var(--font-display)',
-            whiteSpace: 'nowrap',
+            color: '#1D1D1F',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            whiteSpace: 'nowrap' as const,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
+            letterSpacing: '-0.01em',
           }}>{set.setName}</div>
 
           {isComplete && (
             <span style={{
-              padding: '2px 6px',
-              background: 'var(--perf-up-soft)',
-              color: 'var(--perf-up)',
-              fontSize: '8px',
-              fontWeight: 600,
-              fontFamily: 'var(--font-display)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              borderRadius: '4px',
+              padding: '3px 8px',
+              background: 'rgba(29,158,117,0.12)',
+              color: '#1D9E75',
+              fontSize: 9,
+              fontWeight: 700,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.06em',
+              borderRadius: 99,
+              border: '1px solid rgba(29,158,117,0.2)',
               flexShrink: 0,
             }}>✓ Complet</span>
           )}
@@ -186,56 +194,59 @@ function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
         {!hasUnknownTotal && (
           <div style={{
             width: '100%',
-            height: '6px',
-            background: 'var(--border)',
-            borderRadius: '3px',
+            height: 6,
+            background: 'rgba(0,0,0,0.05)',
+            borderRadius: 3,
             overflow: 'hidden',
-            marginBottom: '6px',
+            marginBottom: 7,
+            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
           }}>
             <div style={{
               width: `${set.pct}%`,
               height: '100%',
               background: pctColor,
-              borderRadius: '3px',
-              transition: 'width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              borderRadius: 3,
+              transition: 'width .6s cubic-bezier(.34, 1.56, .64, 1)',
+              boxShadow: isComplete ? '0 0 4px rgba(29,158,117,0.3)' : 'none',
             }} />
           </div>
         )}
 
         {/* Meta line */}
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
+          fontSize: 10.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>
           {hasUnknownTotal ? (
             <>{set.owned} carte{set.owned > 1 ? 's' : ''} possédée{set.owned > 1 ? 's' : ''} · Total du set inconnu</>
           ) : (
             <>
               {set.owned} / {set.total} cartes ·
-              {set.topCard ? <> Top: <span style={{ color: 'var(--ink)' }}>{set.topCard}</span></> : null}
+              {set.topCard ? <> Top: <span style={{ color: '#1D1D1F', fontWeight: 500 }}>{set.topCard}</span></> : null}
             </>
           )}
         </div>
       </div>
 
       {/* Right : pct + value */}
-      <div style={{ textAlign: 'right' }}>
+      <div style={{ textAlign: 'right' as const }}>
         {!hasUnknownTotal && (
           <div style={{
-            fontSize: '17px',
-            fontWeight: 600,
+            fontSize: 18,
+            fontWeight: 700,
             color: pctColor,
-            fontFamily: 'var(--font-data, var(--font-display))',
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
             letterSpacing: '-0.3px',
             lineHeight: 1,
-            marginBottom: '4px',
+            marginBottom: 5,
           }}>{set.pct.toFixed(0)}%</div>
         )}
         <div style={{
-          fontSize: '11px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-data, var(--font-display))',
+          fontSize: 11.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-data, "Space Mono", monospace)',
+          fontWeight: 600,
         }}>{formatEUR(set.totalValue)}</div>
       </div>
     </div>
@@ -245,25 +256,25 @@ function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
+        textTransform: 'uppercase' as const,
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

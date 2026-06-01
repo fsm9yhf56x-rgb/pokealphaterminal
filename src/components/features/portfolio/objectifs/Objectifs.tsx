@@ -7,6 +7,7 @@ import { ObjFinancialTargets } from './ObjFinancialTargets'
 import { ObjSetCompletion } from './ObjSetCompletion'
 import { ObjWishlist } from './ObjWishlist'
 import { ObjAddModal } from './ObjAddModal'
+import { SnowButton } from '@/components/ui/snow'
 
 /**
  * Aggregates Objectifs : combine portfolio actuel + targets + wishlist.
@@ -69,7 +70,10 @@ export function Objectifs() {
 
   if (pfLoading || goals.loading) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-faint)' }}>
+      <div style={{
+        padding: '40px 20px', textAlign: 'center', color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)', fontSize: 13,
+      }}>
         Chargement…
       </div>
     )
@@ -223,71 +227,45 @@ function Header({
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
-      gap: '12px',
-      flexWrap: 'wrap',
+      gap: 12,
+      flexWrap: 'wrap' as const,
     }}>
       <div>
         <p style={{
-          fontSize: '10px', color: 'var(--ink-muted)', textTransform: 'uppercase',
+          fontSize: 10, color: '#86868B', textTransform: 'uppercase' as const,
           letterSpacing: '0.1em', margin: '0 0 4px',
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          fontWeight: 600,
         }}>Portfolio</p>
         <h1 style={{
-          fontSize: '26px', fontWeight: 600, color: 'var(--ink)',
-          fontFamily: 'var(--font-display)', letterSpacing: '-0.5px', margin: 0,
+          fontSize: 28, fontWeight: 600, color: '#1D1D1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '-0.5px', margin: 0,
         }}>Objectifs</h1>
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
-          marginTop: '4px',
+          fontSize: 10.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          marginTop: 5,
+          display: 'inline-flex' as const,
+          alignItems: 'center',
+          gap: 5,
+          padding: '3px 9px',
+          background: 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(10px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.04)',
+          borderRadius: 99,
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
         }}>
-          {isCloud ? '☁ Synchronisé sur le cloud' : '⊙ Stocké localement'}
+          {isCloud ? '☁ Synchronisé cloud' : '⊙ Stocké localement'}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <ActionButton onClick={onAddWish} variant="secondary">+ Wishlist</ActionButton>
-        <ActionButton onClick={onAddTarget} variant="primary">+ Objectif</ActionButton>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <SnowButton onClick={onAddWish} variant="glass" size="md">+ Wishlist</SnowButton>
+        <SnowButton onClick={onAddTarget} variant="primary" size="md">+ Objectif</SnowButton>
       </div>
     </div>
-  )
-}
-
-function ActionButton({
-  onClick, variant, children,
-}: {
-  onClick: () => void
-  variant: 'primary' | 'secondary'
-  children: React.ReactNode
-}) {
-  const isPrimary = variant === 'primary'
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: '9px 16px',
-        background: isPrimary ? 'var(--ink)' : 'var(--surface)',
-        color: isPrimary ? 'var(--surface)' : 'var(--ink)',
-        border: isPrimary ? 'none' : '1px solid var(--border-strong)',
-        borderRadius: '10px',
-        fontSize: '13px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        fontFamily: 'var(--font-display)',
-        transition: 'all 0.15s',
-      }}
-      onMouseEnter={e => {
-        if (isPrimary) e.currentTarget.style.background = '#333'
-        else           e.currentTarget.style.background = '#FAFAFA'
-      }}
-      onMouseLeave={e => {
-        if (isPrimary) e.currentTarget.style.background = 'var(--ink)'
-        else           e.currentTarget.style.background = 'var(--surface)'
-      }}
-    >
-      {children}
-    </button>
   )
 }
 
@@ -320,45 +298,59 @@ function SummaryKPIs({ agg }: { agg: ObjAggregates }) {
   ]
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      gap: '12px',
-    }}>
-      {kpis.map((k, i) => (
-        <div
-          key={i}
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '14px 16px',
-          }}
-        >
-          <div style={{
-            fontSize: '9px',
-            color: 'var(--ink-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.07em',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '6px',
-          }}>{k.label}</div>
-          <div style={{
-            fontSize: '22px',
-            fontWeight: 600,
-            color: k.color,
-            fontFamily: 'var(--font-data, var(--font-display))',
-            letterSpacing: '-0.4px',
-            lineHeight: 1.1,
-            marginBottom: '4px',
-          }}>{k.value}</div>
-          <div style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-display)',
-          }}>{k.sub}</div>
-        </div>
-      ))}
-    </div>
+    <>
+      <style>{`
+        .obj-kpi:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+      `}</style>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+        gap: 14,
+      }}>
+        {kpis.map((k, i) => (
+          <div
+            key={i}
+            className="obj-kpi"
+            style={{
+              background: 'rgba(255,255,255,0.65)',
+              backdropFilter: 'blur(14px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              borderRadius: 14,
+              padding: '18px 20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+              transition: 'all .3s cubic-bezier(.2,.85,.3,1)',
+            }}
+          >
+            <div style={{
+              fontSize: 9.5,
+              color: '#86868B',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.07em',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              fontWeight: 700,
+              marginBottom: 8,
+            }}>{k.label}</div>
+            <div style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: k.color === 'var(--ink)' ? '#1D1D1F' : k.color === 'var(--perf-up)' ? '#1D9E75' : k.color,
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
+              letterSpacing: '-0.4px',
+              lineHeight: 1.1,
+              marginBottom: 5,
+            }}>{k.value}</div>
+            <div style={{
+              fontSize: 10.5,
+              color: '#86868B',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            }}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+    </>
   )
 }

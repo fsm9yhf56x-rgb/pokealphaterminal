@@ -971,6 +971,38 @@ export function Encyclopedie() {
             z-index: 50 !important;
           }
         }
+        /* ===== DRAWER TAB SECTIONS - show/hide par tab ===== */
+        .tab-section { display: none; }
+        .tab-section.tab-active { display: block; animation: tabFadeIn .25s cubic-bezier(.2,.85,.3,1); }
+        @keyframes tabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        /* Sticky tab bar dans le drawer */
+        .drawer-tab-bar-sticky {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          padding: 12px 14px 10px;
+          background: rgba(255,255,255,0.85);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .drawer-scroll-content {
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: 80px;
+        }
+        .drawer-cta-sticky {
+          position: sticky;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 14px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.92) 40%, rgba(255,255,255,0.96) 100%);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border-top: 1px solid rgba(0,0,0,0.04);
+          z-index: 10;
+        }
         /* ===== DETAIL DRAWER TABS - iOS Segment Control glass v7 ===== */
         .tab-segment-bar {
           display: grid;
@@ -1723,7 +1755,19 @@ export function Encyclopedie() {
                     )}
                   </div>
 
-                  <div style={{ padding:'14px' }}>
+                  {/* ===== STICKY TAB BAR ===== */}
+                  <div className="drawer-tab-bar-sticky">
+                    <div className="tab-segment-bar">
+                      <button className={`tab-segment ${activeTab==='apercu'?'active':''}`} onClick={()=>setActiveTab('apercu')}>Aperçu</button>
+                      <button className={`tab-segment ${activeTab==='stats'?'active':''}`} onClick={()=>setActiveTab('stats')}>Stats</button>
+                      <button className={`tab-segment ${activeTab==='prix'?'active':''}`} onClick={()=>setActiveTab('prix')}>Prix</button>
+                      <button className={`tab-segment ${activeTab==='historique'?'active':''}`} onClick={()=>setActiveTab('historique')}>Historique</button>
+                    </div>
+                  </div>
+
+                  {/* ===== SCROLL WRAPPER CONTENT ===== */}
+                  <div className="drawer-scroll-content">
+                    <div style={{ padding:'14px' }}>
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{detail.name}</div>
                       {lang==='JP' && jpToNames(detail.name,jpEnDict) && (()=>{
@@ -1937,6 +1981,12 @@ export function Encyclopedie() {
                     </>)
                     })()}
 
+                  </div>
+                  {/* /drawer-scroll-content */}
+                  </div>
+
+                  {/* ===== STICKY BOTTOM CTA ===== */}
+                  <div className="drawer-cta-sticky">
                     {selCard && isOwned(selCard) ? (
                       <div className="drawer-cta-btn owned">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>

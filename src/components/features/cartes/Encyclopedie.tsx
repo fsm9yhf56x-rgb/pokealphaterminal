@@ -531,6 +531,7 @@ export function Encyclopedie() {
 
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
+  const [activeTab,  setActiveTab]   = useState<'apercu'|'stats'|'prix'|'historique'>('apercu')
   const [detLoading, setDetLoading]  = useState(false)
   const [enDetail,   setEnDetail]    = useState<TCGCardFull|null>(null)
 
@@ -951,6 +952,77 @@ export function Encyclopedie() {
         .add-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1) !important; }
         .add-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow:0 4px 14px rgba(0,0,0,.18) !important; }
         .add-btn:active { transform: scale(.97) !important; }
+        /* ===== DETAIL DRAWER TABS - iOS Segment Control glass v7 ===== */
+        .tab-segment-bar {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 2px;
+          padding: 4px;
+          background: rgba(0,0,0,0.04);
+          border-radius: 12px;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .tab-segment {
+          padding: 8px 4px;
+          background: transparent;
+          border: none;
+          border-radius: 9px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #86868B;
+          cursor: pointer;
+          font-family: var(--font-sora, Sora, sans-serif);
+          transition: all .2s cubic-bezier(.2,.85,.3,1);
+          white-space: nowrap;
+          letter-spacing: -0.01em;
+        }
+        .tab-segment:hover:not(.active) {
+          color: #1D1D1F;
+          background: rgba(255,255,255,0.4);
+        }
+        .tab-segment.active {
+          background: #FFFFFF;
+          color: #1D1D1F;
+          box-shadow:
+            0 1px 3px rgba(0,0,0,0.08),
+            0 1px 2px rgba(0,0,0,0.04),
+            inset 0 1px 0 rgba(255,255,255,0.95);
+          font-weight: 700;
+        }
+        /* ===== DRAWER BOTTOM CTA STICKY ===== */
+        .drawer-cta-btn {
+          width: 100%;
+          padding: 13px 18px;
+          background: #1D1D1F;
+          color: #FFFFFF;
+          border: none;
+          border-radius: 11px;
+          font-size: 13.5px;
+          font-weight: 600;
+          font-family: var(--font-sora, Sora, sans-serif);
+          letter-spacing: -0.01em;
+          cursor: pointer;
+          transition: all .25s cubic-bezier(.2,.85,.3,1);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+        .drawer-cta-btn:hover {
+          transform: translateY(-1.5px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.18);
+        }
+        .drawer-cta-btn.owned {
+          background: rgba(29,158,117,0.12);
+          color: #1D9E75;
+          border: 1px solid rgba(29,158,117,0.25);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+        .drawer-cta-btn.owned:hover {
+          background: rgba(29,158,117,0.18);
+          transform: none;
+        }
         .set-carousel::-webkit-scrollbar { height: 4px; }
         .set-carousel::-webkit-scrollbar-track { background: transparent; }
         .set-carousel::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 4px; }
@@ -1538,8 +1610,57 @@ export function Encyclopedie() {
 
         {/* ── DETAIL PANEL ── */}
         {selId && (
-          <div className="detail-panel" style={{ width:'285px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)', overflowY:'auto' as any }}>
-            <div style={{ background:'rgba(255,255,255,0.78)', backdropFilter:'blur(18px) saturate(180%)', WebkitBackdropFilter:'blur(18px) saturate(180%)', border:'1px solid rgba(255,255,255,0.6)', borderRadius:18, overflow:'hidden', overflowY:'auto' as const, boxShadow:'0 12px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+          <div className="detail-panel" style={{ width:'400px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)' }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.78)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '1px solid rgba(255,255,255,0.6)',
+              borderRadius: 18,
+              overflow: 'hidden' as const,
+              boxShadow: '0 16px 48px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9)',
+              maxHeight: 'calc(100vh - 100px)',
+              display: 'flex',
+              flexDirection: 'column' as const,
+              position: 'relative' as const,
+            }}>
+              {/* Close button drawer top-right */}
+              <button
+                onClick={() => { setSelId(null); setDetail(null); setEnDetail(null) }}
+                title="Fermer"
+                style={{
+                  position: 'absolute' as const,
+                  top: 12, right: 12,
+                  width: 30, height: 30,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.85)',
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  color: '#86868B',
+                  fontSize: 18,
+                  fontWeight: 400,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = '#1D1D1F'
+                  e.currentTarget.style.color = '#FFFFFF'
+                  e.currentTarget.style.borderColor = '#1D1D1F'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+                  e.currentTarget.style.color = '#86868B'
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'
+                }}
+              >×</button>
 
               {detLoading ? (
                 <div style={{ padding:'50px 20px', textAlign:'center' }}>
@@ -1798,14 +1919,17 @@ export function Encyclopedie() {
                     })()}
 
                     {selCard && isOwned(selCard) ? (
-                      <div style={{ width:'100%', padding:'11px', borderRadius:'9px', background:'#EAF3DE', color:'#27500A', border:'none', fontSize:'12px', fontWeight:600, fontFamily:'var(--font-display)', textAlign:'center' as const, display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27500A" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      <div className="drawer-cta-btn owned">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                         Dans ma collection
                       </div>
                     ) : (
-                      <button onClick={()=>{ if(selCard) addToPortfolio(selCard) }} className="add-btn"
-                        style={{ width:'100%', padding:'11px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', letterSpacing:'.02em' }}>
-                        + Ajouter au portfolio
+                      <button
+                        onClick={() => { if(selCard) addToPortfolio(selCard) }}
+                        className="drawer-cta-btn"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Ajouter au portfolio
                       </button>
                     )}
                   </div>

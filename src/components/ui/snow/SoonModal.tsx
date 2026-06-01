@@ -69,9 +69,12 @@ export function SoonModal({
         backdropFilter: 'blur(10px) saturate(180%)',
         WebkitBackdropFilter: 'blur(10px) saturate(180%)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: '90px 24px 24px',
+        paddingTop: 100,
+        paddingLeft: 24,
+        paddingRight: 24,
+        paddingBottom: 24,
         animation: 'modalFade .25s cubic-bezier(.2,.8,.2,1)',
       }}
     >

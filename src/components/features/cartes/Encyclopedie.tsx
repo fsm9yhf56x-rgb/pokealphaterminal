@@ -1997,12 +1997,27 @@ export function Encyclopedie() {
                     </div>
                     {/* ====== /TAB: PRIX ====== */}
 
-                    {/* ====== TAB: HISTORIQUE (placeholder) ====== */}
+                    {/* ====== TAB: HISTORIQUE (placeholder + CTA vers Prix) ====== */}
                     <div className={`tab-section ${activeTab==='historique' ? 'tab-active' : ''}`}>
                       <div style={{ padding:'40px 20px', textAlign:'center' as const, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)' }}>
                         <div style={{ fontSize:32, marginBottom:12, opacity:0.4 }}>📊</div>
                         <div style={{ fontSize:14, fontWeight:600, color:'#1D1D1F', marginBottom:6 }}>Historique des prix</div>
-                        <div style={{ fontSize:12, color:'#86868B', lineHeight:1.5, maxWidth:280, margin:'0 auto' }}>Les graphiques d'historique se trouvent actuellement dans l'onglet Prix.</div>
+                        <div style={{ fontSize:12, color:'#86868B', lineHeight:1.5, maxWidth:280, margin:'0 auto 16px' }}>Les graphiques d'historique et la complétion du set se trouvent actuellement dans l'onglet <strong>Prix</strong>.</div>
+                        <button
+                          onClick={() => setActiveTab('prix')}
+                          style={{
+                            padding: '9px 18px',
+                            background: '#1D1D1F',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: 9,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                            boxShadow: '0 4px 14px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.14)',
+                          }}
+                        >Voir l'historique →</button>
                       </div>
                     </div>
                     {/* ====== /TAB: HISTORIQUE ====== */}

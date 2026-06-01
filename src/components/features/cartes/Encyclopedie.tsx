@@ -1768,6 +1768,9 @@ export function Encyclopedie() {
                   {/* ===== SCROLL WRAPPER CONTENT ===== */}
                   <div className="drawer-scroll-content">
                     <div style={{ padding:'14px' }}>
+
+                    {/* ====== TAB: APERÇU ====== */}
+                    <div className={`tab-section ${activeTab==='apercu' ? 'tab-active' : ''}`}>
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px', marginBottom:'2px' }}>
                       <div style={{ fontSize:'16px', fontWeight:700, color:'#111', fontFamily:'var(--font-display)', lineHeight:1.2 }}>{detail.name}</div>
                       {lang==='JP' && jpToNames(detail.name,jpEnDict) && (()=>{
@@ -1813,6 +1816,11 @@ export function Encyclopedie() {
                       </div>
                     </div>
 
+                    </div>
+                    {/* ====== /TAB: APERÇU ====== */}
+
+                    {/* ====== TAB: STATS ====== */}
+                    <div className={`tab-section ${activeTab==='stats' ? 'tab-active' : ''}`}>
                     {/* Types + HP */}
                     {(detail.types?.length || detail.hp) && (
                       <div style={{ display:'flex', flexWrap:'wrap', gap:'5px', marginBottom:'14px' }}>
@@ -1878,6 +1886,11 @@ export function Encyclopedie() {
                       </div>
                     )}
 
+                    </div>
+                    {/* ====== /TAB: STATS ====== */}
+
+                    {/* ====== TAB: PRIX ====== */}
+                    <div className={`tab-section ${activeTab==='prix' ? 'tab-active' : ''}`}>
                     {/* Owned + set completion */}
                     {selCard && (()=>{
                       const cardPrice = selCard ? getPrice(selCard) : null
@@ -1980,6 +1993,19 @@ export function Encyclopedie() {
                       ) : null}
                     </>)
                     })()}
+
+                    </div>
+                    {/* ====== /TAB: PRIX ====== */}
+
+                    {/* ====== TAB: HISTORIQUE (placeholder) ====== */}
+                    <div className={`tab-section ${activeTab==='historique' ? 'tab-active' : ''}`}>
+                      <div style={{ padding:'40px 20px', textAlign:'center' as const, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)' }}>
+                        <div style={{ fontSize:32, marginBottom:12, opacity:0.4 }}>📊</div>
+                        <div style={{ fontSize:14, fontWeight:600, color:'#1D1D1F', marginBottom:6 }}>Historique des prix</div>
+                        <div style={{ fontSize:12, color:'#86868B', lineHeight:1.5, maxWidth:280, margin:'0 auto' }}>Les graphiques d'historique se trouvent actuellement dans l'onglet Prix.</div>
+                      </div>
+                    </div>
+                    {/* ====== /TAB: HISTORIQUE ====== */}
 
                   </div>
                   {/* /drawer-scroll-content */}

@@ -31,10 +31,13 @@ export function PerfChart({ agg }: { agg: PerfAggregates }) {
       <SectionTitle>Évolution de la valeur</SectionTitle>
 
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '20px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 16,
+        padding: 22,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         {/* Top bar : legend + period selector */}
         <div style={{
@@ -102,15 +105,19 @@ export function PerfChart({ agg }: { agg: PerfAggregates }) {
 
         {/* V1 note */}
         <div style={{
-          marginTop: '12px',
-          padding: '8px 12px',
-          background: 'var(--accent-soft)',
-          borderRadius: '6px',
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
+          marginTop: 14,
+          padding: '10px 14px',
+          background: 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(10px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.04)',
+          borderRadius: 9,
+          fontSize: 10.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
         }}>
-          <strong style={{ color: 'var(--ink)' }}>Bientôt :</strong> historique complet
+          <strong style={{ color: '#1D1D1F' }}>Bientôt :</strong> historique complet
           des valeurs (snapshots quotidiens). Pour l'instant, projection simple basée
           sur le coût d'acquisition et la valeur actuelle.
         </div>
@@ -162,10 +169,14 @@ function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Peri
   return (
     <div style={{
       display: 'flex',
-      gap: '2px',
-      background: '#F5F5F7',
-      borderRadius: '8px',
-      padding: '3px',
+      gap: 2,
+      background: 'rgba(255,255,255,0.45)',
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.04)',
+      borderRadius: 9,
+      padding: 3,
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
     }}>
       {PERIODS.map(p => {
         const active = value === p
@@ -174,22 +185,29 @@ function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Peri
             key={p}
             onClick={() => onChange(p)}
             style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
+              padding: '6px 12px',
+              borderRadius: 7,
               border: 'none',
-              background: active ? 'var(--ink)' : 'transparent',
-              color: active ? 'var(--surface)' : 'var(--ink-muted)',
-              fontSize: '11px',
-              fontWeight: 500,
+              background: active ? '#1D1D1F' : 'transparent',
+              color: active ? '#fff' : '#86868B',
+              fontSize: 11.5,
+              fontWeight: active ? 600 : 500,
               cursor: 'pointer',
-              fontFamily: 'var(--font-display)',
-              transition: 'all 0.12s',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+              boxShadow: active ? '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.14)' : 'none',
             }}
             onMouseEnter={e => {
-              if (!active) e.currentTarget.style.background = '#EBEBEB'
+              if (!active) {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.7)'
+                e.currentTarget.style.color = '#1D1D1F'
+              }
             }}
             onMouseLeave={e => {
-              if (!active) e.currentTarget.style.background = 'transparent'
+              if (!active) {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#86868B'
+              }
             }}
           >
             {p}
@@ -211,9 +229,10 @@ function LegendItem({ color, label, dashed }: { color: string; label: string; da
         borderRadius: '2px',
       }} />
       <span style={{
-        fontSize: '11px',
-        color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-display)',
+        fontSize: 11.5,
+        color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+        fontWeight: 500,
       }}>{label}</span>
     </div>
   )
@@ -224,26 +243,28 @@ function ChartTooltip({ active, payload, label }: any) {
   const p = payload[0]
   return (
     <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border-strong)',
-      borderRadius: '8px',
-      padding: '8px 12px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-      fontFamily: 'var(--font-display)',
+      background: 'rgba(255,255,255,0.85)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,0.6)',
+      borderRadius: 10,
+      padding: '10px 14px',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
     }}>
       <div style={{
-        fontSize: '10px',
+        fontSize: 10,
         fontWeight: 600,
-        color: 'var(--ink-muted)',
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
-        marginBottom: '2px',
+        marginBottom: 3,
       }}>{label}</div>
       <div style={{
-        fontSize: '13px',
-        fontWeight: 600,
-        color: 'var(--ink)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 14,
+        fontWeight: 700,
+        color: '#1D1D1F',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{formatEUR(p.value)}</div>
     </div>
   )
@@ -252,25 +273,25 @@ function ChartTooltip({ active, payload, label }: any) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

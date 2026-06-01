@@ -49,15 +49,19 @@ function MoversList({
   if (holdings.length === 0) {
     return (
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '14px 18px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 14,
+        padding: '16px 20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         <ListHeader title={title} />
         <div style={{
           padding: '24px 0', textAlign: 'center',
-          fontSize: '12px', color: 'var(--ink-faint)',
+          fontSize: 12.5, color: '#AEAEB2',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>
           {emptyMessage || 'Pas de données'}
         </div>
@@ -67,12 +71,15 @@ function MoversList({
 
   return (
     <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      padding: '14px 0',
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 14,
+      padding: '16px 0',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
     }}>
-      <div style={{ padding: '0 18px' }}>
+      <div style={{ padding: '0 20px' }}>
         <ListHeader title={title} />
       </div>
 
@@ -83,26 +90,30 @@ function MoversList({
             display: 'grid',
             gridTemplateColumns: '1fr auto',
             alignItems: 'center',
-            gap: '12px',
-            padding: '10px 18px',
-            borderTop: i === 0 ? '1px solid var(--border)' : 'none',
-            borderBottom: i < holdings.length - 1 ? '1px solid var(--border)' : 'none',
+            gap: 12,
+            padding: '12px 20px',
+            borderTop: i === 0 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            borderBottom: i < holdings.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+            transition: 'background .15s',
           }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.4)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
         >
           <div style={{ minWidth: 0 }}>
             <div style={{
-              fontSize: '13px',
-              fontWeight: 500,
-              color: 'var(--ink)',
-              fontFamily: 'var(--font-display)',
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: '#1D1D1F',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              marginBottom: '2px',
+              marginBottom: 3,
             }}>{h.name}</div>
             <div style={{
-              fontSize: '10px',
-              color: 'var(--ink-muted)',
+              fontSize: 10.5,
+              color: '#86868B',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -113,18 +124,21 @@ function MoversList({
 
           <div style={{ textAlign: 'right' }}>
             <div style={{
-              fontSize: '14px',
-              fontWeight: 600,
+              fontSize: 14.5,
+              fontWeight: 700,
               color,
-              fontFamily: 'var(--font-data, var(--font-display))',
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
               lineHeight: 1.1,
+              letterSpacing: '-0.01em',
             }}>
               {sign}{h.roiPct.toFixed(1)}%
             </div>
             <div style={{
-              fontSize: '10px',
+              fontSize: 10.5,
               color,
-              fontFamily: 'var(--font-data, var(--font-display))',
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
+              opacity: 0.85,
+              marginTop: 2,
             }}>
               {sign}{formatEUR(h.gain)}
             </div>
@@ -138,13 +152,13 @@ function MoversList({
 function ListHeader({ title }: { title: string }) {
   return (
     <div style={{
-      fontSize: '10px',
-      fontWeight: 600,
-      color: 'var(--ink-muted)',
+      fontSize: 10.5,
+      fontWeight: 700,
+      color: '#86868B',
       textTransform: 'uppercase',
       letterSpacing: '0.08em',
-      fontFamily: 'var(--font-display)',
-      marginBottom: '4px',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      marginBottom: 6,
     }}>{title}</div>
   )
 }
@@ -152,25 +166,25 @@ function ListHeader({ title }: { title: string }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

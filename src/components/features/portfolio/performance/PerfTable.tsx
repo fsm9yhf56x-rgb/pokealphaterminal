@@ -72,33 +72,44 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
           value={filter}
           onChange={e => setFilter(e.target.value)}
           style={{
-            padding: '6px 10px',
-            fontSize: '12px',
-            fontFamily: 'var(--font-display)',
-            border: '1px solid var(--border)',
-            borderRadius: '6px',
-            background: 'var(--surface)',
-            color: 'var(--ink)',
-            width: '200px',
+            padding: '8px 14px',
+            fontSize: 12.5,
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.55)',
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            color: '#1D1D1F',
+            width: 220,
             outline: 'none',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
+            transition: 'all .2s',
           }}
+          onFocus={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.75)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
+          onBlur={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.55)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
         />
       </div>
 
       <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.65)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 14,
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         {/* Header */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: gridCols,
-          gap: '0',
-          padding: '12px 16px',
-          background: '#FAFAFA',
-          borderBottom: '1px solid var(--border)',
+          gap: 0,
+          padding: '14px 18px',
+          background: 'rgba(255,255,255,0.5)',
+          backdropFilter: 'blur(10px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
         }}>
           {COLS.map(c => (
             <button
@@ -110,16 +121,17 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
                 padding: 0,
                 textAlign: c.align,
                 cursor: 'pointer',
-                fontSize: '10px',
-                fontWeight: 600,
-                color: sortKey === c.key ? 'var(--ink)' : 'var(--ink-muted)',
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: sortKey === c.key ? '#1D1D1F' : '#86868B',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: c.align === 'right' ? 'flex-end' : 'flex-start',
-                gap: '4px',
+                gap: 4,
+                transition: 'color .15s',
               }}
             >
               {c.label}
@@ -135,10 +147,11 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
         {/* Rows */}
         {sorted.length === 0 ? (
           <div style={{
-            padding: '32px 20px',
+            padding: '40px 20px',
             textAlign: 'center',
-            fontSize: '12px',
-            color: 'var(--ink-faint)',
+            fontSize: 12.5,
+            color: '#AEAEB2',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
           }}>Aucune carte trouvée</div>
         ) : (
           <div style={{ maxHeight: '480px', overflowY: 'auto' }}>
@@ -167,35 +180,37 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
     <div style={{
       display: 'grid',
       gridTemplateColumns: gridCols,
-      gap: '0',
-      padding: '11px 16px',
-      borderBottom: isLast ? 'none' : '1px solid var(--border)',
+      gap: 0,
+      padding: '12px 18px',
+      borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
       alignItems: 'center',
-      transition: 'background 0.1s',
+      transition: 'background .15s',
     }}
-    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
+    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.4)')}
     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
       <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: '13px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
+          fontSize: 13,
+          fontWeight: 600,
+          color: '#1D1D1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          marginBottom: 2,
         }}>{h.name}</div>
         <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
+          fontSize: 10.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>{h.lang} · {h.rarity || '—'}</div>
       </div>
 
       <div style={{
-        fontSize: '11px',
-        color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-display)',
+        fontSize: 11.5,
+        color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -203,40 +218,40 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
 
       <div style={{
         textAlign: 'right',
-        fontSize: '12px',
-        color: 'var(--ink-muted)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 12.5,
+        color: '#86868B',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{h.qty}</div>
 
       <div style={{
         textAlign: 'right',
-        fontSize: '12px',
-        color: hasNoBuy ? 'var(--ink-faint)' : 'var(--ink-muted)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 12.5,
+        color: hasNoBuy ? '#C7C7CC' : '#86868B',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{hasNoBuy ? '—' : formatEUR(h.cost)}</div>
 
       <div style={{
         textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 500,
-        color: 'var(--ink)',
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 12.5,
+        fontWeight: 600,
+        color: '#1D1D1F',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{formatEUR(h.value)}</div>
 
       <div style={{
         textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 600,
-        color: hasNoBuy ? 'var(--ink-faint)' : trendColor,
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 12.5,
+        fontWeight: 700,
+        color: hasNoBuy ? '#C7C7CC' : trendColor,
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{hasNoBuy ? '—' : `${sign}${formatEUR(h.gain)}`}</div>
 
       <div style={{
         textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 600,
-        color: hasNoBuy ? 'var(--ink-faint)' : trendColor,
-        fontFamily: 'var(--font-data, var(--font-display))',
+        fontSize: 12.5,
+        fontWeight: 700,
+        color: hasNoBuy ? '#C7C7CC' : trendColor,
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{hasNoBuy ? '—' : `${sign}${h.roiPct.toFixed(1)}%`}</div>
     </div>
   )
@@ -257,24 +272,24 @@ function getSortValue(h: EnrichedHolding, key: SortKey): string | number {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px', flex: 1,
+      display: 'flex', alignItems: 'center', gap: 8, flex: 1,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

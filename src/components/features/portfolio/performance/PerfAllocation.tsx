@@ -9,6 +9,12 @@ import type { PerfAggregates, AllocationBucket } from './Performance'
 export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
   return (
     <div>
+      <style>{`
+        .perf-alloc-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+      `}</style>
       <SectionTitle>Allocation</SectionTitle>
 
       <div style={{
@@ -48,20 +54,24 @@ function DonutCard({ title, buckets }: { title: string; buckets: AllocationBucke
   const totalValue = buckets.reduce((s, b) => s + b.value, 0)
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      padding: '16px 18px',
+    <div className="perf-alloc-card" style={{
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 14,
+      padding: '18px 20px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+      transition: 'all .3s cubic-bezier(.2,.85,.3,1)',
     }}>
       <div style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
-        fontFamily: 'var(--font-display)',
-        marginBottom: '12px',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+        marginBottom: 14,
       }}>{title}</div>
 
       <div style={{
@@ -100,17 +110,19 @@ function DonutCard({ title, buckets }: { title: string; buckets: AllocationBucke
             pointerEvents: 'none',
           }}>
             <div style={{
-              fontSize: '10px',
-              color: 'var(--ink-muted)',
-              fontFamily: 'var(--font-display)',
+              fontSize: 9.5,
+              color: '#86868B',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
+              fontWeight: 600,
+              marginBottom: 2,
             }}>Total</div>
             <div style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              fontFamily: 'var(--font-data, var(--font-display))',
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#1D1D1F',
+              fontFamily: 'var(--font-data, "Space Mono", monospace)',
               letterSpacing: '-0.3px',
             }}>{formatEURcompact(totalValue)}</div>
           </div>
@@ -136,27 +148,29 @@ function DonutCard({ title, buckets }: { title: string; buckets: AllocationBucke
                 flexShrink: 0,
               }} />
               <div style={{
-                fontSize: '11px',
-                color: 'var(--ink)',
-                fontFamily: 'var(--font-display)',
+                fontSize: 11.5,
+                color: '#1D1D1F',
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                fontWeight: 500,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }}>{d.name}</div>
               <div style={{
-                fontSize: '11px',
-                fontWeight: 500,
-                color: 'var(--ink-muted)',
-                fontFamily: 'var(--font-data, var(--font-display))',
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: '#86868B',
+                fontFamily: 'var(--font-data, "Space Mono", monospace)',
               }}>{d.pct.toFixed(0)}%</div>
             </div>
           ))}
           {data.length > 5 && (
             <div style={{
-              fontSize: '10px',
-              color: 'var(--ink-faint)',
+              fontSize: 10.5,
+              color: '#AEAEB2',
               fontStyle: 'italic',
-              marginTop: '2px',
+              marginTop: 3,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
             }}>+ {data.length - 5} autres</div>
           )}
         </div>
@@ -171,22 +185,25 @@ function DonutTooltip({ active, payload }: any) {
   const d = payload[0].payload
   return (
     <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border-strong)',
-      borderRadius: '8px',
-      padding: '8px 12px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-      fontFamily: 'var(--font-display)',
+      background: 'rgba(255,255,255,0.85)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,0.6)',
+      borderRadius: 10,
+      padding: '10px 14px',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
     }}>
       <div style={{
-        fontSize: '11px',
-        fontWeight: 600,
-        color: 'var(--ink)',
-        marginBottom: '2px',
+        fontSize: 11.5,
+        fontWeight: 700,
+        color: '#1D1D1F',
+        marginBottom: 3,
       }}>{d.name}</div>
       <div style={{
-        fontSize: '10px',
-        color: 'var(--ink-muted)',
+        fontSize: 10.5,
+        color: '#86868B',
+        fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>
         {formatEUR(d.value)} · {d.pct.toFixed(1)}% · {d.count} carte{d.count > 1 ? 's' : ''}
       </div>
@@ -197,25 +214,25 @@ function DonutTooltip({ active, payload }: any) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 14,
     }}>
       <div style={{
-        width: '5px', height: '5px',
+        width: 5, height: 5,
         borderRadius: '50%',
-        background: 'var(--accent)',
+        background: '#C42E1F',
         flexShrink: 0,
       }} />
       <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
+        fontSize: 10.5, fontWeight: 600,
+        color: '#86868B',
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>{children}</span>
       <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
+        flex: 1, height: 1,
+        background: 'linear-gradient(90deg, rgba(0,0,0,0.06), transparent)',
       }} />
     </div>
   )

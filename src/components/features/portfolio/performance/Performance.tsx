@@ -113,7 +113,10 @@ export function Performance() {
 
   if (loading) {
     return (
-      <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-faint)' }}>
+      <div style={{
+        padding: '40px 20px', textAlign: 'center', color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)', fontSize: 13,
+      }}>
         Chargement…
       </div>
     )
@@ -182,13 +185,13 @@ function Header() {
   return (
     <div>
       <p style={{
-        fontSize: '10px', color: 'var(--ink-muted)', textTransform: 'uppercase',
+        fontSize: 10, color: '#86868B', textTransform: 'uppercase',
         letterSpacing: '0.1em', margin: '0 0 4px',
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
       }}>Portfolio</p>
       <h1 style={{
-        fontSize: '26px', fontWeight: 600, color: 'var(--ink)',
-        fontFamily: 'var(--font-display)', letterSpacing: '-0.5px', margin: 0,
+        fontSize: 28, fontWeight: 600, color: '#1D1D1F',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '-0.5px', margin: 0,
       }}>Performance</h1>
     </div>
   )
@@ -198,13 +201,24 @@ function EmptyState() {
   return (
     <div style={{
       padding: '60px 20px', textAlign: 'center',
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: '12px',
+      background: 'rgba(255,255,255,0.65)',
+      backdropFilter: 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
     }}>
-      <div style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600, marginBottom: '6px' }}>
+      <div style={{ fontSize: 48, opacity: 0.2, marginBottom: 16 }}>📊</div>
+      <div style={{
+        fontSize: 15, color: '#1D1D1F', fontWeight: 600, marginBottom: 6,
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      }}>
         Aucune carte dans votre portfolio
       </div>
-      <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+      <div style={{
+        fontSize: 12, color: '#86868B',
+        fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      }}>
         Ajoutez des cartes depuis Holdings pour voir vos performances ici.
       </div>
     </div>

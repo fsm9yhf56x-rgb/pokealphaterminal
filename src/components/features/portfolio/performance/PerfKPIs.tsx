@@ -43,46 +43,60 @@ export function PerfKPIs({ agg }: { agg: PerfAggregates }) {
   ]
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      gap: '12px',
-    }}>
+    <>
+      <style>{`
+        .perf-kpi:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+      `}</style>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+        gap: 14,
+      }}>
       {kpis.map((k, i) => (
         <div
           key={i}
+          className="perf-kpi"
           style={{
-            background: k.bg,
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '16px 18px',
+            background: 'rgba(255,255,255,0.65)',
+            backdropFilter: 'blur(14px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 14,
+            padding: '18px 20px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+            transition: 'all .3s cubic-bezier(.2,.85,.3,1)',
           }}
         >
           <div style={{
-            fontSize: '9px',
-            color: 'var(--ink-muted)',
+            fontSize: 9.5,
+            color: '#86868B',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
-            fontFamily: 'var(--font-display)',
-            marginBottom: '8px',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            fontWeight: 600,
+            marginBottom: 10,
           }}>{k.label}</div>
           <div style={{
-            fontSize: '22px',
-            fontWeight: 600,
+            fontSize: 24,
+            fontWeight: 700,
             color: k.color,
-            fontFamily: 'var(--font-data, var(--font-display))',
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
             letterSpacing: '-0.5px',
             lineHeight: 1.1,
-            marginBottom: '4px',
+            marginBottom: 5,
           }}>{k.value}</div>
           <div style={{
-            fontSize: '11px',
-            color: 'var(--ink-muted)',
-            fontFamily: 'var(--font-display)',
+            fontSize: 11,
+            color: '#86868B',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
           }}>{k.sub}</div>
         </div>
       ))}
-    </div>
+      </div>
+    </>
   )
 }
 

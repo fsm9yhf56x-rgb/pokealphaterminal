@@ -952,6 +952,25 @@ export function Encyclopedie() {
         .add-btn { transition: all .18s cubic-bezier(.34,1.4,.64,1) !important; }
         .add-btn:hover { transform: translateY(-1px) scale(1.02) !important; box-shadow:0 4px 14px rgba(0,0,0,.18) !important; }
         .add-btn:active { transform: scale(.97) !important; }
+        /* ===== DRAWER RESPONSIVE ===== */
+        @media (max-width: 1280px) {
+          .detail-panel { width: 480px !important; }
+        }
+        @media (max-width: 1024px) {
+          .detail-panel { width: 420px !important; }
+        }
+        @media (max-width: 900px) {
+          .detail-panel {
+            width: 100% !important;
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            max-height: 85vh !important;
+            z-index: 50 !important;
+          }
+        }
         /* ===== DETAIL DRAWER TABS - iOS Segment Control glass v7 ===== */
         .tab-segment-bar {
           display: grid;
@@ -1610,7 +1629,7 @@ export function Encyclopedie() {
 
         {/* ── DETAIL PANEL ── */}
         {selId && (
-          <div className="detail-panel" style={{ width:'400px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)' }}>
+          <div className="detail-panel" style={{ width:'600px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)' }}>
             <div style={{
               background: 'rgba(255,255,255,0.78)',
               backdropFilter: 'blur(20px) saturate(180%)',

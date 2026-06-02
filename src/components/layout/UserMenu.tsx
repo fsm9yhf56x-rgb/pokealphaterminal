@@ -79,12 +79,12 @@ export default function UserMenu() {
             <p style={{ fontSize: 11, color: '#AEAEB2', margin: '2px 0 0', fontFamily: 'var(--font-dm,"DM Sans",system-ui)' }}>{user.email}</p>
           </div>
           {[
-            { label: 'Mon profil', action: () => setMenuOpen(false) },
-            { label: 'Parametres', action: () => setMenuOpen(false) },
-            ...(!isPro ? [{ label: 'Passer Pro \u2726', action: () => setMenuOpen(false) }] : []),
-            ...(isAdmin ? [{ label: 'Admin \u2699', action: () => { setMenuOpen(false); router.push('/admin') } }] : []),
+            { label: 'Mon profil', href: '/parametres' },
+            { label: 'Param\u00e8tres', href: '/parametres' },
+            { label: 'Abonnement', href: '/abonnement' },
+            ...(isAdmin ? [{ label: 'Admin \u2699', href: '/admin' }] : []),
           ].map((item, i) => (
-            <button key={i} onClick={item.action} style={{
+            <button key={i} onClick={() => { setMenuOpen(false); router.push(item.href) }} style={{
               width: '100%', padding: '10px 16px', border: 'none', background: 'transparent',
               textAlign: 'left' as const, fontSize: 13, color: '#1D1D1F', cursor: 'pointer',
               fontFamily: 'var(--font-dm,"DM Sans",system-ui)',
@@ -100,7 +100,7 @@ export default function UserMenu() {
               fontFamily: 'var(--font-dm,"DM Sans",system-ui)',
               transition: 'all .15s',
             }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1D1D1F' }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#86868B' }}>
-              Se deconnecter
+              Se déconnecter
             </button>
           </div>
         </div>

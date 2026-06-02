@@ -1,14 +1,14 @@
 'use client'
 
 /**
- * GradedHistoryChart — historique gradés OU raw multi-condition.
+ * GradedHistoryChart — historique gradés OU raw multi-condition (glass v7).
  * Source: /api/prices/graded-history (graded_prices_ppt.grades_history / raw_history).
  *
  * mode='graded' : selecteurs Societe + Note  (PSA 10, BGS 9.5, ...)
  * mode='raw'    : selecteur Etat              (Near Mint, Lightly Played, ...)
  *
- * Tout est data-driven : seules les dimensions reellement presentes s'affichent.
- * Devise = USD (PPT). Rendu SVG pur, zero dependance.
+ * Data-driven : seules les dimensions reellement presentes s'affichent.
+ * Devise = USD (PPT). Rendu SVG pur, zero dependance. Styling Snow+ glass v7.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -27,12 +27,7 @@ interface RawSeries { key: string; variant: string; condition: string; points: P
 
 interface ApiResp {
   currency: string
-  dimensions: {
-    companies?: string[]
-    grades?: Record<string, string[]>
-    conditions?: string[]
-    variants?: string[]
-  }
+  dimensions: { companies?: string[]; grades?: Record<string, string[]>; conditions?: string[]; variants?: string[] }
   series: any[]
   _info?: string
 }
@@ -43,7 +38,6 @@ export interface GradedHistoryChartProps {
   tcgCardId?: string | null
   mode?: 'graded' | 'raw'
   isPro?: boolean
-  /** Rendu (placeholder vert) quand pas de data. Si fourni, prioritaire. */
   fallback?: React.ReactNode
 }
 
@@ -72,26 +66,42 @@ function niceTicks(min: number, max: number, count = 3): number[] {
   return Array.from({ length: count + 1 }, (_, i) => min + step * i)
 }
 
-// ── Pill selector (segment control glass v7) ──
+// ── Pill selector — glass v7 (calque .tab-segment-bar du drawer) ──
 function PillSelect({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 2, background: SNOW.surface, borderRadius: 7, padding: 3, flexWrap: 'wrap' }}>
+    <div style={{
+      display: 'flex', gap: 2, flexWrap: 'wrap', padding: 4,
+      background: 'rgba(0,0,0,0.04)', borderRadius: 12,
+      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
+    }}>
       {options.map(o => {
         const active = o === value
         return (
           <button key={o} onClick={() => onChange(o)}
             style={{
-              padding: '4px 11px', border: 0, borderRadius: 5,
-              background: active ? SNOW.bg : 'transparent',
-              color: active ? SNOW.ink : SNOW.muted,
-              fontWeight: active ? 700 : 600, fontSize: 11, cursor: 'pointer',
-              fontFamily: 'var(--font-sora, Sora, sans-serif)',
-              boxShadow: active ? `0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)` : 'none',
-              transition: 'all .15s cubic-bezier(.2,.85,.3,1)', letterSpacing: '-0.01em',
-            }}>{o}</button>
+              padding: '7px 13px', border: 'none', borderRadius: 9,
+              background: active ? '#FFFFFF' : 'transparent',
+              color: active ? SNOW.ink : SNOW.dim,
+              fontWeight: active ? 700 : 600, fontSize: 11.5, cursor: 'pointer',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '-0.01em',
+              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+            }}
+            onMouseEnter={e => { if (!active) { e.currentTarget.style.color = SNOW.ink; e.currentTarget.style.background = 'rgba(255,255,255,0.4)' } }}
+            onMouseLeave={e => { if (!active) { e.currentTarget.style.color = SNOW.dim; e.currentTarget.style.background = 'transparent' } }}
+          >{o}</button>
         )
       })}
     </div>
+  )
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontSize: 9.5, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase',
+      fontWeight: 700, marginBottom: 6, fontFamily: 'var(--font-sora, Sora, sans-serif)',
+    }}>{children}</div>
   )
 }
 
@@ -181,10 +191,7 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     const p = new URLSearchParams()
     p.set('mode', mode)
     if (tcgCardId) p.set('tcg_card_id', tcgCardId)
-    else if (setId && localId) {
-      // calque /api/prices/graded : tcg_card_id = "{setId}-{localId}", resolu serveur-side
-      p.set('tcg_card_id', `${setId}-${localId}`)
-    }
+    else if (setId && localId) p.set('tcg_card_id', `${setId}-${localId}`)
     return p.toString()
   }, [setId, localId, tcgCardId, mode])
 
@@ -198,7 +205,6 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     return () => { alive = false }
   }, [qs])
 
-  // Init selecteurs sur premiere valeur dispo
   useEffect(() => {
     if (!resp) return
     if (mode === 'graded') {
@@ -206,7 +212,6 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       const c = comps.includes(company) ? company : comps[0] || ''
       if (c !== company) setCompany(c)
       const grds = (resp.dimensions?.grades || {})[c] || []
-      // PSA 10 par defaut si dispo
       const preferred = grds.includes('10') ? '10' : grds[0] || ''
       if (!grds.includes(grade)) setGrade(preferred)
     } else {
@@ -215,7 +220,6 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     }
   }, [resp, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Quand on change de societe, re-defaut la note
   useEffect(() => {
     if (mode !== 'graded' || !resp) return
     const grds = (resp.dimensions?.grades || {})[company] || []
@@ -228,7 +232,6 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       const s = (resp.series as GradedSeries[]).find(x => x.company === company && x.grade === grade)
       return s?.points || []
     }
-    // raw : agrege toutes variants pour la condition (max prix par date)
     const byDate = new Map<string, number>()
     for (const s of resp.series as RawSeries[]) {
       if (s.condition !== condition) continue
@@ -241,16 +244,20 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     ? (resp?.dimensions?.companies?.length ?? 0) > 0
     : (resp?.dimensions?.conditions?.length ?? 0) > 0
 
-  // Loading
+  // Loading — skeleton glass v7
   if (loading) {
     return (
-      <div style={{ height: 200, borderRadius: 10, background: `linear-gradient(90deg, ${SNOW.surface} 25%, ${SNOW.bg} 50%, ${SNOW.surface} 75%)`, backgroundSize: '200% 100%', animation: 'pka-shimmer 1.5s ease-in-out infinite' }}>
+      <div style={{
+        height: 280, borderRadius: 14,
+        background: `linear-gradient(90deg, rgba(245,245,247,0.6) 25%, rgba(255,255,255,0.4) 50%, rgba(245,245,247,0.6) 75%)`,
+        backgroundSize: '200% 100%', animation: 'pka-shimmer 1.5s ease-in-out infinite',
+        border: '1px solid rgba(0,0,0,0.05)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+      }}>
         <style>{`@keyframes pka-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
       </div>
     )
   }
 
-  // Pas de data exploitable -> fallback (placeholder vert)
   if (!resp || !hasDimensions || activePoints.length < MIN_POINTS) {
     return <>{fallback ?? <div style={{ padding: 20, textAlign: 'center', color: SNOW.muted, fontSize: 12, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>Pas encore assez de données historiques.</div>}</>
   }
@@ -274,50 +281,55 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
 
   return (
     <div style={{
-      background: SNOW.bg, border: `0.5px solid ${SNOW.borderSoft}`, borderRadius: 10, padding: 16,
-      fontFamily: 'var(--font-sans, system-ui)', color: SNOW.ink, animation: 'pka-fade-in 300ms ease-out',
+      background: 'rgba(255,255,255,0.75)',
+      backdropFilter: 'blur(16px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 14, padding: 18,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)', color: SNOW.ink,
+      animation: 'pka-fade-in 300ms ease-out',
     }}>
       <style>{`@keyframes pka-fade-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }`}</style>
 
-      {/* Selecteurs */}
+      {/* Selecteurs glass v7 */}
       {mode === 'graded' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 8.5, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 5, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>Société</div>
-            <PillSelect options={companies} value={company} onChange={setCompany} />
-          </div>
-          <div>
-            <div style={{ fontSize: 8.5, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 5, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>Note</div>
-            <PillSelect options={grades} value={grade} onChange={setGrade} />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+          <div><FieldLabel>Société</FieldLabel><PillSelect options={companies} value={company} onChange={setCompany} /></div>
+          <div><FieldLabel>Note</FieldLabel><PillSelect options={grades} value={grade} onChange={setGrade} /></div>
         </div>
       ) : (
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 8.5, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 5, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>État</div>
+        <div style={{ marginBottom: 14 }}>
+          <FieldLabel>État</FieldLabel>
           <PillSelect options={conditions} value={condition} onChange={setCondition} />
         </div>
       )}
 
       {/* Hero */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
-        <span style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.015em' }}>{fmtFull(current)}</span>
+        <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtFull(current)}</span>
         <span style={{ fontSize: 12, color: c30.color, fontFamily: 'var(--font-data, monospace)', fontWeight: 500 }}>{c30.text}</span>
         <span style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>30d</span>
       </div>
-      <div style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)', marginBottom: 12 }}>
+      <div style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)', marginBottom: 14 }}>
         {mode === 'graded' ? `${company} ${grade}` : condition} · {activePoints.length} points
       </div>
 
-      {/* Stats strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderTop: `0.5px solid ${SNOW.borderSoft}`, borderBottom: `0.5px solid ${SNOW.borderSoft}`, marginBottom: 12 }}>
+      {/* Stats strip glass v7 */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4,1fr)',
+        background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 10, overflow: 'hidden', marginBottom: 14,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+      }}>
         {[
           { label: 'Var 7j', value: c7.text, color: c7.color },
           { label: 'Var 30j', value: c30.text, color: c30.color },
           { label: 'ATH', value: fmt(ath), color: SNOW.ink },
           { label: 'ATL', value: fmt(atl), color: SNOW.ink },
         ].map((c, i) => (
-          <div key={c.label} style={{ padding: '8px 6px', borderRight: i < 3 ? `0.5px solid ${SNOW.borderSoft}` : 'none', fontFamily: 'var(--font-data, monospace)' }}>
-            <div style={{ fontSize: 8, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{c.label}</div>
+          <div key={c.label} style={{ padding: '9px 8px', borderRight: i < 3 ? '1px solid rgba(0,0,0,0.05)' : 'none', fontFamily: 'var(--font-data, monospace)' }}>
+            <div style={{ fontSize: 8, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3, fontFamily: 'var(--font-sora, Sora, sans-serif)', fontWeight: 600 }}>{c.label}</div>
             <div style={{ fontSize: 12, fontWeight: 500, color: c.color }}>{c.value}</div>
           </div>
         ))}
@@ -326,9 +338,9 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       <ChartSVG points={activePoints} />
 
       {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: `0.5px dashed ${SNOW.borderSoft}`, marginTop: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px dashed rgba(0,0,0,0.08)', marginTop: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 5, height: 5, background: SNOW.accent, borderRadius: '50%' }} />
+          <span style={{ width: 5, height: 5, background: SNOW.accent, borderRadius: '50%', boxShadow: `0 0 4px ${SNOW.accent}80` }} />
           <span style={{ fontSize: 9, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>{mode === 'graded' ? 'graded sold avg' : 'tcgplayer market'}</span>
         </div>
         <span style={{ fontSize: 9, color: SNOW.dim, fontFamily: 'var(--font-data, monospace)' }}>USD · PokeTrace</span>

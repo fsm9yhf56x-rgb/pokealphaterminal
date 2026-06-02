@@ -4,22 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/useAuth'
 import { authClient } from '@/lib/auth/client'
-
-const C = {
-  bg: '#FFFFFF',
-  surface: '#F5F5F7',
-  border: '#E5E5EA',
-  borderStrong: '#C7C7CC',
-  ink: '#1D1D1F',
-  muted: '#6E6E73',
-  faint: '#86868B',
-  accent: '#E03020',
-  green: '#2E9E6A',
-}
-const fSora = 'var(--font-sora, Sora, system-ui, sans-serif)'
-const fDM = 'var(--font-dm, "DM Sans", system-ui, sans-serif)'
+import { SNOW, FONT, GLASS, RADIUS, SHADOW, EASE } from '@/lib/design/snow'
+import { PlanBadge } from '@/components/ui/PlanBadge'
 
 type Tab = 'profil' | 'securite' | 'abonnement' | 'compte'
+type Msg = { type: 'ok' | 'err'; text: string } | null
 
 export default function ParametresPage() {
   const router = useRouter()
@@ -31,52 +20,58 @@ export default function ParametresPage() {
   }, [loading, user, router])
 
   if (loading || !user) {
-    return (
-      <div style={{ padding: 40, fontFamily: fDM, color: C.muted }}>
-        Chargement…
-      </div>
-    )
+    return <div style={{ padding: 48, fontFamily: FONT.body, color: SNOW.muted }}>Chargement…</div>
   }
 
-  const plan: string = profile?.plan || (isPro ? 'pro' : 'free')
+  const plan: 'free' | 'pro' | 'premium' = profile?.plan || (isPro ? 'pro' : 'free')
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 20px 80px' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', padding: '40px 20px 90px' }}>
       <h1 style={{
-        fontFamily: fSora, fontSize: 28, fontWeight: 700, color: C.ink,
-        letterSpacing: '-0.5px', margin: '0 0 4px',
+        fontFamily: FONT.display, fontSize: 30, fontWeight: 700, color: SNOW.ink,
+        letterSpacing: '-0.6px', margin: '0 0 4px',
       }}>
         Paramètres
       </h1>
-      <p style={{ fontFamily: fDM, fontSize: 14, color: C.muted, margin: '0 0 24px' }}>
+      <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 26px' }}>
         {user.email}
       </p>
 
-      {/* Tabs */}
+      {/* Tabs — glass pill container */}
       <div style={{
-        display: 'flex', gap: 4, borderBottom: `1px solid ${C.border}`,
-        marginBottom: 28, overflowX: 'auto',
+        display: 'inline-flex', gap: 2, marginBottom: 26, padding: 4,
+        background: 'rgba(255,255,255,0.5)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderRadius: RADIUS.pill,
+        boxShadow: SHADOW.insetSubtle,
+        maxWidth: '100%', overflowX: 'auto',
       }}>
         {([
           ['profil', 'Profil'],
           ['securite', 'Sécurité'],
           ['abonnement', 'Abonnement'],
           ['compte', 'Compte'],
-        ] as [Tab, string][]).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            style={{
-              fontFamily: fSora, fontSize: 14, fontWeight: 600,
-              padding: '10px 14px', border: 'none', background: 'transparent',
-              color: tab === id ? C.ink : C.faint, cursor: 'pointer',
-              borderBottom: tab === id ? `2px solid ${C.accent}` : '2px solid transparent',
-              marginBottom: -1, whiteSpace: 'nowrap',
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        ] as [Tab, string][]).map(([id, label]) => {
+          const active = tab === id
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              style={{
+                fontFamily: FONT.display, fontSize: 13, fontWeight: 600,
+                padding: '8px 16px', border: 'none', cursor: 'pointer',
+                borderRadius: RADIUS.pill, whiteSpace: 'nowrap',
+                color: active ? '#fff' : SNOW.muted,
+                background: active ? SNOW.ink : 'transparent',
+                boxShadow: active ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+                transition: `all ${'.18s'} ${EASE.apple}`,
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       {tab === 'profil' && <ProfilTab profile={profile} />}
@@ -89,11 +84,16 @@ export default function ParametresPage() {
 
 /* ---------- Shared UI ---------- */
 
-function Card({ children }: { children: React.ReactNode }) {
+function GlassCard({ children, danger }: { children: React.ReactNode; danger?: boolean }) {
   return (
     <div style={{
-      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 14,
-      padding: 24, marginBottom: 16,
+      ...GLASS.card,
+      padding: 26,
+      marginBottom: 16,
+      ...(danger ? {
+        background: 'rgba(252,235,235,0.66)',
+        boxShadow: `${SHADOW.card}, inset 0 0 0 1px rgba(224,48,32,0.18)`,
+      } : {}),
     }}>
       {children}
     </div>
@@ -103,24 +103,29 @@ function Card({ children }: { children: React.ReactNode }) {
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <label style={{
-      display: 'block', fontFamily: fSora, fontSize: 12, fontWeight: 600,
-      color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em',
-      marginBottom: 6,
+      display: 'block', fontFamily: FONT.display, fontSize: 11, fontWeight: 600,
+      color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.07em',
+      marginBottom: 7,
     }}>
       {children}
     </label>
   )
 }
 
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const [focus, setFocus] = useState(false)
   return (
     <input
       {...props}
+      onFocus={e => { setFocus(true); props.onFocus?.(e) }}
+      onBlur={e => { setFocus(false); props.onBlur?.(e) }}
       style={{
-        width: '100%', boxSizing: 'border-box', fontFamily: fDM, fontSize: 15,
-        color: C.ink, background: props.disabled ? C.surface : C.bg,
-        border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 13px',
-        outline: 'none', ...(props.style || {}),
+        width: '100%', boxSizing: 'border-box', fontFamily: FONT.body, fontSize: 15,
+        color: SNOW.ink, background: 'rgba(255,255,255,0.7)',
+        border: `1px solid ${focus ? SNOW.ink : SNOW.border}`,
+        borderRadius: RADIUS.md, padding: '12px 14px', outline: 'none',
+        transition: `border-color .15s ${EASE.apple}`,
+        ...(props.style || {}),
       }}
     />
   )
@@ -132,32 +137,35 @@ function Btn({ children, onClick, variant = 'primary', disabled }: {
   variant?: 'primary' | 'ghost' | 'danger'
   disabled?: boolean
 }) {
-  const styles: Record<string, React.CSSProperties> = {
-    primary: { background: C.ink, color: '#fff', border: 'none' },
-    ghost: { background: C.bg, color: C.ink, border: `1px solid ${C.borderStrong}` },
-    danger: { background: C.accent, color: '#fff', border: 'none' },
+  const v: Record<string, React.CSSProperties> = {
+    primary: { background: SNOW.ink, color: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.16)' },
+    ghost: { background: 'rgba(255,255,255,0.6)', color: SNOW.ink, border: `1px solid ${SNOW.borderHover}` },
+    danger: { background: SNOW.red, color: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(224,48,32,0.22)' },
   }
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        fontFamily: fSora, fontSize: 14, fontWeight: 600, padding: '11px 18px',
-        borderRadius: 10, cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1, ...styles[variant],
+        fontFamily: FONT.display, fontSize: 14, fontWeight: 600, padding: '12px 20px',
+        borderRadius: RADIUS.md, cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1, transition: `transform .15s ${EASE.apple}`,
+        ...v[variant],
       }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = 'translateY(-1px)' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
     >
       {children}
     </button>
   )
 }
 
-function Feedback({ msg }: { msg: { type: 'ok' | 'err'; text: string } | null }) {
+function Feedback({ msg }: { msg: Msg }) {
   if (!msg) return null
   return (
     <p style={{
-      fontFamily: fDM, fontSize: 13, marginTop: 12,
-      color: msg.type === 'ok' ? C.green : C.accent,
+      fontFamily: FONT.body, fontSize: 13, marginTop: 12,
+      color: msg.type === 'ok' ? SNOW.greenAccent : SNOW.red,
     }}>
       {msg.text}
     </p>
@@ -171,15 +179,15 @@ function ProfilTab({ profile }: { profile: any }) {
   const [username, setUsername] = useState(profile?.username || '')
   const [lang, setLang] = useState(profile?.lang || 'fr')
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [msg, setMsg] = useState<Msg>(null)
 
   async function save() {
-    setSaving(true); setMsg(null)
+    setMsg(null)
     if (username && !/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      setSaving(false)
       setMsg({ type: 'err', text: 'Pseudo : 3-20 caractères, lettres/chiffres/_ uniquement.' })
       return
     }
+    setSaving(true)
     try {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
@@ -196,37 +204,33 @@ function ProfilTab({ profile }: { profile: any }) {
   }
 
   return (
-    <Card>
+    <GlassCard>
       <div style={{ marginBottom: 18 }}>
         <Label>Nom affiché</Label>
-        <Input value={displayName} onChange={e => setDisplayName(e.target.value)}
-          placeholder="Ton nom" maxLength={40} />
+        <Field value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Ton nom" maxLength={40} />
       </div>
       <div style={{ marginBottom: 18 }}>
         <Label>Pseudo</Label>
-        <Input value={username} onChange={e => setUsername(e.target.value)}
-          placeholder="pseudo" maxLength={20} />
+        <Field value={username} onChange={e => setUsername(e.target.value)} placeholder="pseudo" maxLength={20} />
       </div>
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 24 }}>
         <Label>Langue</Label>
         <select
           value={lang}
           onChange={e => setLang(e.target.value)}
           style={{
-            width: '100%', fontFamily: fDM, fontSize: 15, color: C.ink,
-            background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
-            padding: '11px 13px', outline: 'none', cursor: 'pointer',
+            width: '100%', fontFamily: FONT.body, fontSize: 15, color: SNOW.ink,
+            background: 'rgba(255,255,255,0.7)', border: `1px solid ${SNOW.border}`,
+            borderRadius: RADIUS.md, padding: '12px 14px', outline: 'none', cursor: 'pointer',
           }}
         >
           <option value="fr">Français</option>
           <option value="en">English</option>
         </select>
       </div>
-      <Btn onClick={save} disabled={saving}>
-        {saving ? 'Enregistrement…' : 'Enregistrer'}
-      </Btn>
+      <Btn onClick={save} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Btn>
       <Feedback msg={msg} />
-    </Card>
+    </GlassCard>
   )
 }
 
@@ -237,7 +241,7 @@ function SecuriteTab() {
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [msg, setMsg] = useState<Msg>(null)
 
   async function change() {
     setMsg(null)
@@ -246,9 +250,7 @@ function SecuriteTab() {
     setSaving(true)
     try {
       const { error } = await authClient.changePassword({
-        currentPassword: current,
-        newPassword: next,
-        revokeOtherSessions: true,
+        currentPassword: current, newPassword: next, revokeOtherSessions: true,
       })
       if (error) {
         setMsg({ type: 'err', text: error.message || 'Mot de passe actuel incorrect.' })
@@ -264,81 +266,65 @@ function SecuriteTab() {
   }
 
   return (
-    <Card>
+    <GlassCard>
       <div style={{ marginBottom: 18 }}>
         <Label>Mot de passe actuel</Label>
-        <Input type="password" value={current} onChange={e => setCurrent(e.target.value)} />
+        <Field type="password" value={current} onChange={e => setCurrent(e.target.value)} />
       </div>
       <div style={{ marginBottom: 18 }}>
         <Label>Nouveau mot de passe</Label>
-        <Input type="password" value={next} onChange={e => setNext(e.target.value)} />
+        <Field type="password" value={next} onChange={e => setNext(e.target.value)} />
       </div>
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 24 }}>
         <Label>Confirmer</Label>
-        <Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} />
+        <Field type="password" value={confirm} onChange={e => setConfirm(e.target.value)} />
       </div>
-      <Btn onClick={change} disabled={saving}>
-        {saving ? 'Mise à jour…' : 'Changer le mot de passe'}
-      </Btn>
+      <Btn onClick={change} disabled={saving}>{saving ? 'Mise à jour…' : 'Changer le mot de passe'}</Btn>
       <Feedback msg={msg} />
-    </Card>
+    </GlassCard>
   )
 }
 
-/* ---------- Abonnement (lecture seule) ---------- */
+/* ---------- Abonnement ---------- */
 
-function AbonnementTab({ plan, proUntil }: { plan: string; proUntil?: string }) {
-  const labels: Record<string, string> = {
-    free: 'Gratuit', pro: 'Pro', premium: 'Premium',
-  }
+function AbonnementTab({ plan, proUntil }: { plan: 'free' | 'pro' | 'premium'; proUntil?: string }) {
   const isPaid = plan === 'pro' || plan === 'premium'
   return (
-    <Card>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontFamily: fSora, fontSize: 18, fontWeight: 700, color: C.ink }}>
-          Plan {labels[plan] || 'Gratuit'}
+    <GlassCard>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <span style={{ fontFamily: FONT.display, fontSize: 17, fontWeight: 700, color: SNOW.ink }}>
+          Ton forfait
         </span>
-        {isPaid && (
-          <span style={{
-            fontFamily: fSora, fontSize: 11, fontWeight: 700, padding: '3px 8px',
-            borderRadius: 6, background: C.accent, color: '#fff', letterSpacing: '0.05em',
-          }}>
-            ACTIF
-          </span>
-        )}
+        <PlanBadge plan={plan} />
       </div>
       {isPaid && proUntil && (
-        <p style={{ fontFamily: fDM, fontSize: 13, color: C.muted, margin: '0 0 16px' }}>
+        <p style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, margin: '0 0 18px' }}>
           Valide jusqu’au {new Date(proUntil).toLocaleDateString('fr-FR')}
         </p>
       )}
       {!isPaid && (
-        <p style={{ fontFamily: fDM, fontSize: 14, color: C.muted, margin: '0 0 16px', lineHeight: 1.5 }}>
-          Passe à Pro pour les signaux illimités, le Deal Hunter, le Whale Tracker
-          et Dexy AI sans limite.
+        <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 18px', lineHeight: 1.5 }}>
+          Débloque plus de puissance : signaux, Deal Hunter, Whale Tracker et Dexy AI.
         </p>
       )}
       <a href="/abonnement" style={{ textDecoration: 'none' }}>
         <Btn variant={isPaid ? 'ghost' : 'primary'}>
-          {isPaid ? 'Gérer mon abonnement' : 'Découvrir Pro'}
+          {isPaid ? 'Gérer mon abonnement' : 'Voir les forfaits'}
         </Btn>
       </a>
-    </Card>
+    </GlassCard>
   )
 }
 
-/* ---------- Compte (zone danger) ---------- */
+/* ---------- Compte ---------- */
 
 function CompteTab({ signOut, router }: { signOut: () => void; router: any }) {
   const [confirm, setConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [msg, setMsg] = useState<Msg>(null)
 
   async function destroy() {
-    if (confirm !== 'SUPPRIMER') {
-      setMsg({ type: 'err', text: 'Tape SUPPRIMER pour confirmer.' })
-      return
-    }
+    if (confirm !== 'SUPPRIMER') { setMsg({ type: 'err', text: 'Tape SUPPRIMER pour confirmer.' }); return }
     setDeleting(true); setMsg(null)
     try {
       const res = await fetch('/api/account/delete', {
@@ -357,36 +343,32 @@ function CompteTab({ signOut, router }: { signOut: () => void; router: any }) {
 
   return (
     <>
-      <Card>
-        <h3 style={{ fontFamily: fSora, fontSize: 16, fontWeight: 700, color: C.ink, margin: '0 0 6px' }}>
+      <GlassCard>
+        <h3 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '0 0 6px' }}>
           Session
         </h3>
-        <p style={{ fontFamily: fDM, fontSize: 14, color: C.muted, margin: '0 0 16px' }}>
+        <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 16px' }}>
           Déconnecte-toi de cet appareil.
         </p>
-        <Btn variant="ghost" onClick={() => { signOut(); router.replace('/') }}>
-          Se déconnecter
-        </Btn>
-      </Card>
+        <Btn variant="ghost" onClick={() => { signOut(); router.replace('/') }}>Se déconnecter</Btn>
+      </GlassCard>
 
-      <div style={{
-        background: '#FFF5F4', border: `1px solid ${C.accent}33`, borderRadius: 14, padding: 24,
-      }}>
-        <h3 style={{ fontFamily: fSora, fontSize: 16, fontWeight: 700, color: C.accent, margin: '0 0 6px' }}>
+      <GlassCard danger>
+        <h3 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.red, margin: '0 0 6px' }}>
           Supprimer le compte
         </h3>
-        <p style={{ fontFamily: fDM, fontSize: 14, color: C.muted, margin: '0 0 16px', lineHeight: 1.5 }}>
+        <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 16px', lineHeight: 1.5 }}>
           Action <strong>irréversible</strong>. Ton profil et ton identité sont effacés.
-          Tape <strong>SUPPRIMER</strong> ci-dessous pour confirmer.
+          Tape <strong>SUPPRIMER</strong> pour confirmer.
         </p>
         <div style={{ marginBottom: 16 }}>
-          <Input value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="SUPPRIMER" />
+          <Field value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="SUPPRIMER" />
         </div>
         <Btn variant="danger" onClick={destroy} disabled={deleting || confirm !== 'SUPPRIMER'}>
           {deleting ? 'Suppression…' : 'Supprimer définitivement'}
         </Btn>
         <Feedback msg={msg} />
-      </div>
+      </GlassCard>
     </>
   )
 }

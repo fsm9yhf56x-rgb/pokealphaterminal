@@ -105,12 +105,6 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
             </>
           )}
 
-          {!data.isPro && (
-            <div style={S.proHint}>
-              <span style={S.proBadgeSmall}>PRO</span>
-              <span>Variantes rares (Black Dot Error, Inverted Back, etc.) en plan Pro</span>
-            </div>
-          )}
         </>
       )}
     </div>
@@ -147,26 +141,31 @@ function labelForTier(t: PsaPopVariant['gem_mint_tier']): string {
 
 const S: Record<string, React.CSSProperties> = {
   container: {
-    background: '#FFFFFF',
-    border: `1px solid ${SNOW.border}`,
-    borderRadius: 6,
+    background: 'rgba(255,255,255,0.75)',
+    backdropFilter: 'blur(16px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+    border: '1px solid rgba(0,0,0,0.05)',
+    borderRadius: 14,
     overflow: 'hidden',
-    fontFamily: 'var(--font-dm, system-ui)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+    fontFamily: 'var(--font-sora, Sora, sans-serif)',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10px 14px',
-    background: SNOW.surface,
-    borderBottom: `1px solid ${SNOW.border}`,
+    padding: '12px 16px',
+    background: 'rgba(255,255,255,0.45)',
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
   },
   headerLabel: {
-    fontFamily: 'var(--font-sora, system-ui)',
-    fontSize: 11,
-    fontWeight: 600,
+    fontFamily: 'var(--font-sora, Sora, sans-serif)',
+    fontSize: 10,
+    fontWeight: 700,
     letterSpacing: '0.08em',
-    color: SNOW.ink,
+    textTransform: 'uppercase',
+    color: SNOW.mutedSoft,
   },
   totalBadge: {
     fontFamily: 'var(--font-mono, monospace)',
@@ -185,7 +184,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 10,
     letterSpacing: '0.06em',
     color: SNOW.muted,
-    borderBottom: `1px solid ${SNOW.border}`,
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
   },
   thRight: {
     textAlign: 'right',
@@ -194,23 +193,23 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 10,
     letterSpacing: '0.06em',
     color: SNOW.muted,
-    borderBottom: `1px solid ${SNOW.border}`,
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
   },
   tdLeft: {
     padding: '10px 12px',
     color: SNOW.ink,
-    borderBottom: `1px solid ${SNOW.border}`,
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
   },
   tdRight: {
     textAlign: 'right',
-    borderBottom: `1px solid ${SNOW.border}`,
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
   },
   tdNum: {
     textAlign: 'right',
     padding: '10px 12px',
     fontFamily: 'var(--font-mono, monospace)',
     color: SNOW.ink,
-    borderBottom: `1px solid ${SNOW.border}`,
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
     fontVariantNumeric: 'tabular-nums',
   },
   tierBadge: {
@@ -244,7 +243,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: '10px 14px',
     background: 'transparent',
     border: 'none',
-    borderTop: `1px solid ${SNOW.border}`,
+    borderTop: '1px solid rgba(0,0,0,0.05)',
     cursor: 'pointer',
     fontSize: 12,
     color: SNOW.ink,
@@ -266,7 +265,7 @@ const S: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: '10px 14px',
     background: SNOW.surface,
-    borderTop: `1px solid ${SNOW.border}`,
+    borderTop: '1px solid rgba(0,0,0,0.05)',
     fontSize: 11,
     color: SNOW.muted,
   },

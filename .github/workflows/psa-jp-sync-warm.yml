@@ -2,7 +2,7 @@ name: PSA JP Sync WARM (weekly)
 
 on:
   schedule:
-    - cron: '0 5 * * 1'  # Monday 5h UTC weekly
+    - cron: '0 3 11 * *'  # 11 du mois 3h UTC (JP tier warm)
   workflow_dispatch:
 
 permissions:
@@ -31,14 +31,12 @@ jobs:
 
       - name: Run PSA JP scraper (warm tier)
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run psa:scrape:jp:warm
 
       - name: Rebuild static JSON
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/rebuild-static-data.mjs
 
       - name: Auto-commit JSON updates

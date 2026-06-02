@@ -2,7 +2,7 @@ name: PSA Sync HOT (daily)
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 1 * *'  # 1er du mois 3h UTC (EN tier hot)
   workflow_dispatch:
 
 permissions:
@@ -26,14 +26,12 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Run PSA scraper (hot tier)
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run psa:scrape:hot
 
       - name: Rebuild static JSON
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/rebuild-static-data.mjs
 
       - name: Auto-commit JSON updates

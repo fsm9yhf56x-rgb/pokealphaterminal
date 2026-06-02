@@ -119,30 +119,20 @@ export function DailyHub() {
             />
           </div>
 
-          {/* 6-7. Market & signaux — Premium uniquement */}
-          {isPremium ? (
-            <>
-              <SoonSectionLabel />
-              <HubMarketPulse indices={market.indices} loading={market.loading} />
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-                gap: 14,
-              }}>
-                <HubSpreadsTeaser
-                  signals={spreads.allSignals}
-                  loading={spreads.loading}
-                />
-                <HubMarketMovers />
-              </div>
-            </>
-          ) : (
-            <UpgradeHook
-              requires="premium"
-              title="Market & signaux Alpha"
-              desc="Indices de marché en temps réel, cartes en mouvement et opportunités sous-évaluées détectées avant les autres."
+          {/* 6-7. Vitrine v2.0 — teasers "Bientôt disponible", visibles par tous */}
+          <SoonSectionLabel />
+          <HubMarketPulse indices={market.indices} loading={market.loading} />
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+            gap: 14,
+          }}>
+            <HubSpreadsTeaser
+              signals={spreads.allSignals}
+              loading={spreads.loading}
             />
-          )}
+            <HubMarketMovers />
+          </div>
 
           {/* 8. Quote du jour */}
           <HubFooterQuote />

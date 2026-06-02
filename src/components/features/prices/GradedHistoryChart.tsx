@@ -343,7 +343,7 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
           <span style={{ width: 5, height: 5, background: SNOW.accent, borderRadius: '50%', boxShadow: `0 0 4px ${SNOW.accent}80` }} />
           <span style={{ fontSize: 9, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>{mode === 'graded' ? 'graded sold avg' : 'tcgplayer market'}</span>
         </div>
-        <span style={{ fontSize: 9, color: SNOW.dim, fontFamily: 'var(--font-data, monospace)' }}>USD · PokeTrace</span>
+        <span style={{ fontSize: 9, color: SNOW.dim, fontFamily: 'var(--font-data, monospace)' }}>USD · PokemonPriceTracker</span>
       </div>
     </div>
   )

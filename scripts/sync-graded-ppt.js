@@ -177,19 +177,46 @@ function extractGrades(ebay) {
 // ----------------------------------------------------------------------------
 // Upsert dans graded_prices_ppt
 // ----------------------------------------------------------------------------
+function extractConditions(prices) {
+  if (!prices) return null
+  const MAP = {
+    'Near Mint': 'NM', 'Lightly Played': 'LP', 'Moderately Played': 'MP',
+    'Heavily Played': 'HP', 'Damaged': 'DMG',
+  }
+  const out = {}
+  const printing = prices.primaryPrinting
+  const variantConds = printing && prices.variants ? prices.variants[printing] : null
+  if (variantConds) {
+    for (const [cond, short] of Object.entries(MAP)) {
+      const p = variantConds[cond] && variantConds[cond].price
+      if (p != null && isFinite(Number(p))) out[short] = Number(p)
+    }
+  }
+  if (prices.conditions) {
+    for (const [cond, short] of Object.entries(MAP)) {
+      if (out[short] == null) {
+        const p = prices.conditions[cond] && prices.conditions[cond].price
+        if (p != null && isFinite(Number(p))) out[short] = Number(p)
+      }
+    }
+  }
+  return Object.keys(out).length ? out : null
+}
+
 async function upsertCard(pool, pptCard, lang) {
   const tcgId = buildTcgCardId(pptCard, lang)
   const { grades, totals } = extractGrades(pptCard.ebay)
+  const conditions = extractConditions(pptCard.prices)
 
   const sql = `
     INSERT INTO graded_prices_ppt (
       tcg_card_id, ppt_card_id, ppt_tcgplayer_id,
       card_name, card_number, total_set_number, set_name, rarity, language,
-      raw_market_usd, grades,
+      raw_market_usd, grades, prices_by_condition,
       total_sales, total_value, date_range_start, date_range_end,
       fetched_at, raw_response
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15, NOW(), $16::jsonb
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, NOW(), $17::jsonb
     )
     ON CONFLICT (tcg_card_id) DO UPDATE SET
       ppt_card_id = EXCLUDED.ppt_card_id,
@@ -201,6 +228,7 @@ async function upsertCard(pool, pptCard, lang) {
       rarity = EXCLUDED.rarity,
       raw_market_usd = EXCLUDED.raw_market_usd,
       grades = EXCLUDED.grades,
+      prices_by_condition = EXCLUDED.prices_by_condition,
       total_sales = EXCLUDED.total_sales,
       total_value = EXCLUDED.total_value,
       date_range_start = EXCLUDED.date_range_start,
@@ -220,6 +248,7 @@ async function upsertCard(pool, pptCard, lang) {
     lang,
     pptCard.prices?.market ?? null,
     JSON.stringify(grades),
+    conditions ? JSON.stringify(conditions) : null,
     totals.total_sales,
     totals.total_value,
     totals.date_range_start,

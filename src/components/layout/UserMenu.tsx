@@ -6,9 +6,11 @@ import { useAuth } from '@/lib/useAuth'
 import { useRouter } from 'next/navigation'
 import { useIsAdmin } from '@/lib/useIsAdmin'
 import { SnowButton } from '@/components/ui/snow'
+import { PlanBadge } from '@/components/ui/PlanBadge'
 
 export default function UserMenu() {
   const { user, profile, loading, signOut, isPro } = useAuth()
+  const plan: 'free' | 'pro' | 'premium' = (profile?.plan as any) || (isPro ? 'pro' : 'free')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -42,23 +44,15 @@ export default function UserMenu() {
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {isPro && (
-          <span style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
-            padding: '3px 9px', borderRadius: 6,
-            background: 'linear-gradient(135deg,#C9A84C,#FFE08A)',
-            color: '#5C4200',
-            fontFamily: 'var(--font-sora,Sora,system-ui)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
-          }}>PRO</span>
-        )}
+        <PlanBadge plan={plan} hideFree />
         <button onClick={() => setMenuOpen(!menuOpen)} style={{
-          width: 34, height: 34, borderRadius: '50%', border: 'none',
-          background: 'linear-gradient(135deg, #B8763B 0%, #D7935A 100%)',
+          width: 34, height: 34, borderRadius: '50%',
+          border: '1px solid rgba(255,255,255,0.16)',
+          background: '#1D1D1F',
           color: '#fff', fontSize: 14, fontWeight: 700,
           cursor: 'pointer', fontFamily: 'var(--font-sora,Sora,system-ui)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(184,118,59,0.25), inset 0 1px 0 rgba(255,255,255,0.25)',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.22)',
           transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',
         }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}

@@ -14,6 +14,8 @@ import { HubMarketMovers } from './HubMarketMovers'
 import { HubSparkles } from './HubSparkles'
 import { HubFooterQuote } from './HubFooterQuote'
 import { UpgradeHook } from './UpgradeHook'
+import { HubQuickActions } from './HubQuickActions'
+import { HubMarketPulse } from './HubMarketPulse'
 import { usePlan } from '@/lib/usePlan'
 import { SNOW, FONT } from '@/lib/design/snow'
 
@@ -75,6 +77,9 @@ export function DailyHub() {
           {/* 1. Header */}
           <HubHeader />
 
+          {/* 1b. Quick actions */}
+          <HubQuickActions />
+
           {/* 2. Insight intelligent v1 */}
           <HubInsight
             cards={portfolio.cards || []}
@@ -118,6 +123,7 @@ export function DailyHub() {
           {isPremium ? (
             <>
               <SoonSectionLabel />
+              <HubMarketPulse indices={market.indices} loading={market.loading} />
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',

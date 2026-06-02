@@ -155,13 +155,13 @@ export default function AbonnementPage() {
           features={FEATURES.free} cta="Commencer gratuitement"
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
-        <PlanCard id="pro" name="Pro" cell={PRICES.pro[period]}
-          features={FEATURES.pro} cta="Essayer Pro"
-          currentPlan={currentPlan} busy={busy} onCta={handleCta} />
-
         <PlanCard id="premium" name="Premium" cell={PRICES.premium[period]}
           features={FEATURES.premium} cta="Passer Premium" recommended
           footnote="Market / Alpha / Whale en déploiement (v2.0 / v3.0)."
+          currentPlan={currentPlan} busy={busy} onCta={handleCta} />
+
+        <PlanCard id="pro" name="Pro" cell={PRICES.pro[period]}
+          features={FEATURES.pro} cta="Essayer Pro"
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
       </div>
 

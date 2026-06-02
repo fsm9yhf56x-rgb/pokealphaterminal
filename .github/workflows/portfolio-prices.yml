@@ -1,0 +1,27 @@
+name: portfolio-prices
+on:
+  schedule:
+    # 1x/jour a 04:00 UTC, apres dedupe-snapshots (03:00) qui suit les crons prix (15 */4).
+    # Rafraichit portfolio_cards.current_price depuis la vue card_price_resolved (PPT EN, FR/JP a venir).
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh portfolio current_price
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          URL="https://kodocards.com/api/cron/portfolio-prices?triggeredBy=cron"
+          echo "Calling: $URL"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$URL" \
+            -H "Authorization: Bearer $CRON_SECRET")
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          CODE=$(echo "$RESPONSE" | tail -n1)
+          echo "Response: $BODY"
+          echo "HTTP: $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "FAILED with HTTP $CODE"
+            exit 1
+          fi

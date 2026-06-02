@@ -131,7 +131,10 @@ export function useAuth() {
   }
 
   const loading = isPending || profileLoading
-  const isPro = profile?.is_pro ?? false
+  const plan: 'free' | 'pro' | 'premium' =
+    (profile?.plan as 'free' | 'pro' | 'premium') ?? (profile?.is_pro ? 'pro' : 'free')
+  const isPro = plan === 'pro' || plan === 'premium'
+  const isPremium = plan === 'premium'
 
   return {
     user,
@@ -144,6 +147,8 @@ export function useAuth() {
     signOut,
     updateProfile,
     isPro,
+    isPremium,
+    plan,
     logout: signOut,
   }
 }

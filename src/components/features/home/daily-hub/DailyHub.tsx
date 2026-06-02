@@ -13,6 +13,8 @@ import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
 import { HubSparkles } from './HubSparkles'
 import { HubFooterQuote } from './HubFooterQuote'
+import { UpgradeHook } from './UpgradeHook'
+import { usePlan } from '@/lib/usePlan'
 import { SNOW, FONT } from '@/lib/design/snow'
 
 /**
@@ -32,6 +34,7 @@ export function DailyHub() {
   const portfolio = usePortfolio()
   const market = useMarketData()
   const spreads = useSpreads()
+  const { isPremium } = usePlan()
 
   return (
     <>
@@ -111,21 +114,29 @@ export function DailyHub() {
             />
           </div>
 
-          {/* 6. Separateur SOON v2 (label discret) */}
-          <SoonSectionLabel />
-
-          {/* 7. Grille SOON v2 */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: 14,
-          }}>
-            <HubSpreadsTeaser
-              signals={spreads.allSignals}
-              loading={spreads.loading}
+          {/* 6-7. Market & signaux — Premium uniquement */}
+          {isPremium ? (
+            <>
+              <SoonSectionLabel />
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+                gap: 14,
+              }}>
+                <HubSpreadsTeaser
+                  signals={spreads.allSignals}
+                  loading={spreads.loading}
+                />
+                <HubMarketMovers />
+              </div>
+            </>
+          ) : (
+            <UpgradeHook
+              requires="premium"
+              title="Market & signaux Alpha"
+              desc="Indices de marché en temps réel, cartes en mouvement et opportunités sous-évaluées détectées avant les autres."
             />
-            <HubMarketMovers />
-          </div>
+          )}
 
           {/* 8. Quote du jour */}
           <HubFooterQuote />

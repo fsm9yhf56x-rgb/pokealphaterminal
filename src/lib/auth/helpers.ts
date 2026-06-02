@@ -25,6 +25,8 @@ export type BetterAuthUser = {
 
 export type UserWithProfile = BetterAuthUser & {
   isPro: boolean
+  isPremium: boolean
+  plan: 'free' | 'pro' | 'premium'
   isAdmin: boolean
 }
 
@@ -49,17 +51,20 @@ export async function getCurrentUserWithProfile(): Promise<UserWithProfile | nul
 
   try {
     const rows = (await sql`
-      SELECT is_pro, is_admin FROM "profiles" WHERE id = ${user.id} LIMIT 1
-    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null }>
+      SELECT is_pro, is_admin, plan FROM "profiles" WHERE id = ${user.id} LIMIT 1
+    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null }>
 
     const profile = rows[0]
+    const plan = (profile?.plan as 'free'|'pro'|'premium') || (profile?.is_pro ? 'pro' : 'free')
     return {
       ...user,
-      isPro: profile?.is_pro === true,
+      plan,
+      isPro: plan === 'pro' || plan === 'premium',
+      isPremium: plan === 'premium',
       isAdmin: profile?.is_admin === true,
     }
   } catch {
-    return { ...user, isPro: false, isAdmin: false }
+    return { ...user, plan: 'free' as const, isPro: false, isPremium: false, isAdmin: false }
   }
 }
 

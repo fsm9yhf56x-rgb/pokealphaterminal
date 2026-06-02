@@ -4,6 +4,7 @@ export interface Profile {
   display_name: string | null
   avatar_url: string | null
   is_pro: boolean
+  plan: 'free' | 'pro' | 'premium'
   pro_until: string | null
   theme: string
   lang: string

@@ -14,7 +14,7 @@
  *   5. Logs to sync_logs
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { neon } from '@neondatabase/serverless'
 import { readFileSync } from 'fs'
 import { mapToCardRef, stripSubjectSuffix } from './lib/psa-mapper.mjs'
 import { getPsaConfig } from './lib/psa-headings.mjs'
@@ -36,21 +36,22 @@ if (!setId) {
   process.exit(1)
 }
 
-// ─── Init Supabase (works locally via .env.local OR via process.env in CI) ──
-let supabaseUrl, supabaseKey
-try {
-  const env = readFileSync('.env.local', 'utf-8')
-  supabaseUrl = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)[1].trim()
-  supabaseKey = env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)[1].trim()
-} catch {
-  supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+// ─── Init Neon (DATABASE_URL via .env.production.local en local OU process.env en CI) ──
+let databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  for (const file of ['.env.production.local', '.env.local']) {
+    try {
+      const env = readFileSync(file, 'utf-8')
+      const m = env.match(/^DATABASE_URL=(.+)$/m)
+      if (m) { databaseUrl = m[1].trim().replace(/^["']|["']$/g, ''); break }
+    } catch {}
+  }
 }
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+if (!databaseUrl) {
+  console.error('❌ Missing DATABASE_URL')
   process.exit(1)
 }
-const sb = createClient(supabaseUrl, supabaseKey)
+const sql = neon(databaseUrl)
 
 // ─── Fetch PSA data (via Puppeteer + stealth) ──────────
 async function fetchPsaSet({ categoryId, headingId, label }) {
@@ -69,12 +70,11 @@ async function preloadCardRefs(setId) {
   // tcg_cards uses language-prefixed set_ids: en-base1, fr-base1, jp-base1.
   // We need any of them to confirm the card exists.
   // The result Set contains canonical refs (no lang prefix): "base1-4".
-  const { data, error } = await sb
-    .from('tcg_cards')
-    .select('local_id')
-    .or(`set_id.eq.en-${setId},set_id.eq.fr-${setId},set_id.eq.jp-${setId}`)
-
-  if (error) throw error
+  const data = await sql`
+    SELECT local_id
+    FROM tcg_cards
+    WHERE set_id IN (${'en-' + setId}, ${'fr-' + setId}, ${'jp-' + setId})
+  `
 
   const refs = new Set()
   for (const row of data || []) {
@@ -193,30 +193,55 @@ async function main() {
     return
   }
 
-  // 4. Insert (upsert based on uniqueness constraint)
-  console.log(`\n💾 Inserting ${rows.length} rows...`)
-  const { error } = await sb.from('psa_pop_reports').insert(rows)
-  if (error) {
-    console.error('❌ Insert failed:', error)
-    throw error
+  // 4. Insert dans Neon par batch (chaque run = nouveau snapshot date via scraped_at DEFAULT now())
+  console.log(`\n💾 Inserting ${rows.length} rows into Neon...`)
+  const COLS = [
+    'card_ref','psa_spec_id','variety','subject_name','card_number',
+    'pop_1','pop_1_5','pop_2','pop_2_5','pop_3','pop_3_5','pop_4','pop_4_5',
+    'pop_5','pop_5_5','pop_6','pop_6_5','pop_7','pop_7_5','pop_8','pop_8_5',
+    'pop_9','pop_9_5','pop_10','pop_authentic','pop_qualifier','pop_total','source_url'
+  ]
+  const BATCH = 200
+  let inserted = 0
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const chunk = rows.slice(i, i + BATCH)
+    // Construit VALUES ($1,$2,...),($n,...) parametrise
+    const params = []
+    const tuples = chunk.map((row) => {
+      const ph = COLS.map((c) => {
+        params.push(c === 'pop_qualifier' ? JSON.stringify(row[c]) : row[c])
+        return `$${params.length}${c === 'pop_qualifier' ? '::jsonb' : ''}`
+      })
+      return `(${ph.join(',')})`
+    })
+    const text = `INSERT INTO psa_pop_reports (${COLS.join(',')}) VALUES ${tuples.join(',')}`
+    try {
+      await sql.query(text, params)
+      inserted += chunk.length
+    } catch (e) {
+      console.error(`❌ Batch insert failed at row ${i}:`, e.message)
+      throw e
+    }
   }
+  console.log(`   ✓ ${inserted} rows inserted`)
 
-  // 5. Log to sync_logs
-  await sb.from('sync_logs').insert({
-    job_name: `psa_pop_${setId}`,
-    status: 'success',
-    finished_at: new Date().toISOString(),
-    stats: {
+  // 5. Log to sync_logs (Neon, non-fatal)
+  try {
+    const logStats = {
       setId,
       heading_id: config.headingId,
       label: config.label,
       items_processed: rows.length,
       duration_ms: Date.now() - startTime,
       mapping_stats: stats,
-    },
-  }).then(({ error: e }) => {
-    if (e) console.warn('⚠️  sync_logs insert failed (non-fatal):', e.message)
-  })
+    }
+    await sql`
+      INSERT INTO sync_logs (job_name, status, finished_at, stats, triggered_by)
+      VALUES (${`psa_pop_${setId}`}, 'success', NOW(), ${JSON.stringify(logStats)}::jsonb, 'cron')
+    `
+  } catch (e) {
+    console.warn('⚠️  sync_logs insert failed (non-fatal):', e.message)
+  }
 
   console.log(`\n✅ Done in ${((Date.now() - startTime) / 1000).toFixed(1)}s`)
 }

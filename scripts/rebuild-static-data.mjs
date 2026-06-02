@@ -7,34 +7,42 @@
  *   2. TCGdex pattern (modern sets, discovered by API)
  *   3. R2 fallback (legacy sync)
  */
-import { createClient } from '@supabase/supabase-js'
+import { neon } from '@neondatabase/serverless'
 import { readFileSync, writeFileSync } from 'fs'
 
 // Priority 1: process.env (GitHub Actions / production)
 // Priority 2: .env.local (local dev)
-let url = process.env.NEXT_PUBLIC_SUPABASE_URL
-let key = process.env.SUPABASE_SERVICE_ROLE_KEY
-if (!url || !key) {
-  try {
-    const env = readFileSync('.env.local', 'utf-8')
-    url = url || env.match(/NEXT_PUBLIC_SUPABASE_URL=(.+)/)?.[1]?.trim()
-    key = key || env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)?.[1]?.trim()
-  } catch {}
+let databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  for (const file of ['.env.production.local', '.env.local']) {
+    try {
+      const env = readFileSync(file, 'utf-8')
+      const mm = env.match(/^DATABASE_URL=(.+)$/m)
+      if (mm) { databaseUrl = mm[1].trim().replace(/^["']|["']$/g, ''); break }
+    } catch {}
+  }
 }
-if (!url || !key) {
-  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+if (!databaseUrl) {
+  console.error('❌ Missing DATABASE_URL')
   process.exit(1)
 }
-const sb = createClient(url, key)
+const sql = neon(databaseUrl)
 
 async function fetchAll(table, filter) {
+  // Whitelist des tables autorisees (anti-injection sur nom de table)
+  const ALLOWED = ['tcg_cards', 'tcg_sets']
+  if (!ALLOWED.includes(table)) throw new Error(`Table non autorisee: ${table}`)
   const all = []
   let offset = 0
+  // Construit la clause WHERE parametree depuis le filtre
+  const keys = Object.keys(filter)
+  const whereClause = keys.length
+    ? 'WHERE ' + keys.map((k, i) => `${k} = $${i + 1}`).join(' AND ')
+    : ''
+  const baseParams = keys.map((k) => filter[k])
   while (true) {
-    let q = sb.from(table).select('*')
-    for (const [k, v] of Object.entries(filter)) q = q.eq(k, v)
-    q = q.range(offset, offset + 999)
-    const { data } = await q
+    const text = `SELECT * FROM ${table} ${whereClause} ORDER BY 1 LIMIT 1000 OFFSET ${offset}`
+    const data = await sql.query(text, baseParams)
     if (!data || data.length === 0) break
     all.push(...data)
     offset += data.length

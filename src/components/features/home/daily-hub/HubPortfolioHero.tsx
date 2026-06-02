@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useRef } from 'react'
 import type { MarketIndex } from '@/lib/useMarketData'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION, SHADOW } from '@/lib/design/snow'
+import { useCountUp } from '@/lib/useCountUp'
 
 interface PortfolioCard {
   qty?: number
@@ -91,6 +92,7 @@ export function HubPortfolioHero({
   const benchmarkIndex = indices.find(i => i.id === 'vintage_us') || indices[0] || null
   const isUp = stats.gain >= 0
   const hasData = !loading && cards.length > 0
+  const animatedValue = useCountUp(stats.totalValue)
 
   return (
     <div
@@ -201,7 +203,7 @@ export function HubPortfolioHero({
               {loading ? '—'
                 : hasData && stats.totalValue === 0
                   ? `${stats.cardsCount.toLocaleString('fr-FR')} cartes`
-                  : formatEUR(stats.totalValue)}
+                  : formatEUR(animatedValue)}
             </div>
 
             {hasData && stats.totalCost > 0 && (

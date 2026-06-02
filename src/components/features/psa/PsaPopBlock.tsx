@@ -138,6 +138,26 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
                 )
               })
             })()}
+            {/* Ligne agregée "Autres notes" (1 a 7.5, non detaillees par PSA) */}
+            {(() => {
+              const total = edition.pop_total || 0
+              const detailed = GRADES.reduce((a, g) => a + Number(edition[g.key] ?? 0), 0)
+              const others = total - detailed
+              if (others <= 0) return null
+              const maxPop = Math.max(...GRADES.map((g) => Number(edition[g.key] ?? 0)), others, 1)
+              const barW = (others / maxPop) * 100
+              const pctOfTotal = (others / (total || 1)) * 100
+              return (
+                <div style={S.gradeRow}>
+                  <span style={{ ...S.gradeLabel, color: SNOW.mutedSoft }}>Autres</span>
+                  <div style={S.barTrack}>
+                    <div style={{ ...S.barFill, width: `${barW}%`, background: SNOW.border }} />
+                  </div>
+                  <span style={{ ...S.gradeCount, color: SNOW.muted }}>{others.toLocaleString('fr-FR')}</span>
+                  <span style={S.gradePct}>{pctOfTotal.toFixed(1)}%</span>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Stats footer */}
@@ -150,6 +170,24 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
               <span style={S.statLabel}>High grade</span>
               <span style={S.statValue}>{Number(edition.pct_high_grade ?? 0).toFixed(1)}%</span>
             </div>
+          </div>
+
+          {/* Meta: total + date scrape + lien PSA */}
+          <div style={S.metaRow}>
+            <span style={S.metaText}>
+              {edition.pop_total.toLocaleString('fr-FR')} cartes gradées
+              {edition.scraped_at ? ` · MAJ ${new Date(edition.scraped_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
+            </span>
+            {edition.psa_spec_id ? (
+              <a
+                href={`https://www.psacard.com/pop/${edition.psa_spec_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={S.psaLink}
+              >
+                Voir sur PSA ↗
+              </a>
+            ) : null}
           </div>
 
           {/* Erreurs / autres varieties en petit */}
@@ -221,6 +259,17 @@ const S: Record<string, React.CSSProperties> = {
   },
   errorsLabel: { fontSize: 9, color: SNOW.mutedSoft, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
   errorsList: { fontSize: 10.5, color: SNOW.muted, lineHeight: 1.6, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
+  metaRow: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(0,0,0,0.08)', gap: 8, flexWrap: 'wrap',
+  },
+  metaText: { fontSize: 10, color: SNOW.mutedSoft, fontFamily: 'var(--font-data, "Space Mono", monospace)' },
+  psaLink: {
+    fontSize: 10, fontWeight: 700, color: ACCENT, textDecoration: 'none',
+    fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '0.02em',
+    padding: '3px 9px', borderRadius: 99, background: 'rgba(224,48,32,0.08)',
+    border: '1px solid rgba(224,48,32,0.18)', transition: 'all .15s',
+  },
   empty: { minHeight: 80, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 14, gap: 8 },
   skeletonRow: {
     height: 14, background: 'linear-gradient(90deg, rgba(245,245,247,0.6) 0%, rgba(0,0,0,0.05) 50%, rgba(245,245,247,0.6) 100%)',

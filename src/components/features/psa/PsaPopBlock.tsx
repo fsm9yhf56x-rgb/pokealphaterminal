@@ -12,18 +12,12 @@ const ACCENT = '#E03020'
 const GREEN = '#1D9E75'
 
 interface Props {
-  /** card.id from tcg_cards (e.g. "en-base1-4", "fr-base1-shadowless-4") */
   cardId: string
   hideWhenEmpty?: boolean
 }
 
-// ── Edition resolution: setId suffix -> PSA variety ──
-// base1            -> null      (Unlimited)
-// base1-shadowless -> Shadowless
-// base1-1st        -> 1st Edition
 function resolveEdition(cardId: string): { variety: string | null; label: string; cleanRef: string } {
-  const ref = toCanonicalRef(cardId) // strip lang prefix -> "base1-shadowless-4"
-  // localId = dernier segment numerique ; le reste = setId
+  const ref = toCanonicalRef(cardId)
   const parts = ref.split('-')
   const localId = parts[parts.length - 1]
   const setId = parts.slice(0, -1).join('-')
@@ -31,15 +25,13 @@ function resolveEdition(cardId: string): { variety: string | null; label: string
   let variety: string | null = null
   let label = 'Unlimited'
   if (/-shadowless(-ns)?$/.test(setId)) { variety = 'Shadowless'; label = 'Shadowless' }
-  else if (/-1st$/.test(setId)) { variety = '1st Edition'; label = '1ʳᵉ Édition' }
+  else if (/-1st$/.test(setId)) { variety = '1st Edition'; label = '1re Edition' }
 
-  // card_ref PSA = setId de base (sans suffixe edition) + localId
   const baseSetId = setId.replace(/-shadowless(-ns)?$|-1st$/g, '')
   const cleanRef = `${baseSetId}-${localId}`
   return { variety, label, cleanRef }
 }
 
-// Notes affichees (PSA vintage: 9.5 et 10+ souvent absents -> masques si null)
 const GRADES: { key: keyof PsaPopVariant; label: string }[] = [
   { key: 'pop_10', label: 'PSA 10' },
   { key: 'pop_9_5', label: 'PSA 9.5' },
@@ -54,19 +46,16 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
 
   if (hideWhenEmpty && (isLoading || !data?.hasData)) return null
 
-  // Toutes les varieties (mainstream + premium) pour matcher l'edition + lister les erreurs
   const allVariants: PsaPopVariant[] = data
     ? [...(data.variants || []), ...(data.premiumVariants || [])]
     : []
 
-  // Match exact de l'edition (variety null/Shadowless/1st Edition)
   const matchVariety = (v: PsaPopVariant) => {
     if (variety === null) return v.variety === null || v.variety === '' || v.variety === 'Base Set 1999-2000'
     return v.variety === variety
   }
   const edition = allVariants.find(matchVariety) || null
 
-  // Erreurs / autres varieties = tout ce qui n'est ni l'edition courante ni vide
   const errorVariants = allVariants.filter(
     (v) => v !== edition && v.variety && v.pop_total > 0 &&
            !['Base Set 1999-2000', '1st Edition', 'Shadowless'].includes(v.variety)
@@ -104,13 +93,11 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
 
       {!isLoading && !error && edition && (
         <div style={{ padding: '14px 16px' }}>
-          {/* Edition + gem rate */}
           <div style={S.editionRow}>
             <span style={S.editionLabel}>Édition</span>
             <span style={S.editionValue}>{label}</span>
           </div>
 
-          {/* Breakdown par note (barres glass v7) */}
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {(() => {
               const total = edition.pop_total || 1
@@ -138,7 +125,6 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
                 )
               })
             })()}
-            {/* Ligne agregée "Autres notes" (1 a 7.5, non detaillees par PSA) */}
             {(() => {
               const total = edition.pop_total || 0
               const detailed = GRADES.reduce((a, g) => a + Number(edition[g.key] ?? 0), 0)
@@ -160,7 +146,6 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
             })()}
           </div>
 
-          {/* Stats footer */}
           <div style={S.statsRow}>
             <div style={S.statCell}>
               <span style={S.statLabel}>Gem rate</span>
@@ -172,25 +157,25 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
             </div>
           </div>
 
-          {/* Meta: total + date scrape + lien PSA */}
           <div style={S.metaRow}>
             <span style={S.metaText}>
               {edition.pop_total.toLocaleString('fr-FR')} cartes gradées
               {edition.scraped_at ? ` · MAJ ${new Date(edition.scraped_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
             </span>
-            {edition.psa_spec_id ? (
-              <a
-                href={`https://www.psacard.com/pop/${edition.psa_spec_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={S.psaLink}
-              >
-                Voir sur PSA ↗
-              </a>
-            ) : null}
+            {(() => {
+              const subj = (edition.subject_name || '').replace(/-/g, ' ').trim()
+              const num = (edition.card_number || '').split('/')[0].replace(/\D/g, '')
+              const term = [subj, num].filter(Boolean).join(' ')
+              if (!term) return null
+              const url = 'https://www.psacard.com/pop/search?q=' + encodeURIComponent(term)
+              return (
+                <a href={url} target="_blank" rel="noopener noreferrer" style={S.psaLink}>
+                  Voir sur PSA
+                </a>
+              )
+            })()}
           </div>
 
-          {/* Erreurs / autres varieties en petit */}
           {errorVariants.length > 0 && (
             <div style={S.errorsRow}>
               <span style={S.errorsLabel}>Autres</span>
@@ -253,12 +238,6 @@ const S: Record<string, React.CSSProperties> = {
   },
   statLabel: { fontSize: 9, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
   statValue: { fontSize: 14, fontWeight: 700, color: SNOW.ink, fontFamily: 'var(--font-data, "Space Mono", monospace)', letterSpacing: '-0.3px' },
-  errorsRow: {
-    marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(0,0,0,0.08)',
-    display: 'flex', gap: 8, alignItems: 'baseline',
-  },
-  errorsLabel: { fontSize: 9, color: SNOW.mutedSoft, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
-  errorsList: { fontSize: 10.5, color: SNOW.muted, lineHeight: 1.6, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
   metaRow: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(0,0,0,0.08)', gap: 8, flexWrap: 'wrap',
@@ -270,6 +249,12 @@ const S: Record<string, React.CSSProperties> = {
     padding: '3px 9px', borderRadius: 99, background: 'rgba(224,48,32,0.08)',
     border: '1px solid rgba(224,48,32,0.18)', transition: 'all .15s',
   },
+  errorsRow: {
+    marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(0,0,0,0.08)',
+    display: 'flex', gap: 8, alignItems: 'baseline',
+  },
+  errorsLabel: { fontSize: 9, color: SNOW.mutedSoft, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, flexShrink: 0, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
+  errorsList: { fontSize: 10.5, color: SNOW.muted, lineHeight: 1.6, fontFamily: 'var(--font-sora, Sora, sans-serif)' },
   empty: { minHeight: 80, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 14, gap: 8 },
   skeletonRow: {
     height: 14, background: 'linear-gradient(90deg, rgba(245,245,247,0.6) 0%, rgba(0,0,0,0.05) 50%, rgba(245,245,247,0.6) 100%)',

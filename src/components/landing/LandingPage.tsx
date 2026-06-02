@@ -318,11 +318,11 @@ function Nav() {
           <a href="#pricing">Tarifs</a>
           <a href="/blog">Blog</a>
           <a href="/a-propos">À propos</a>
+          <a href="/telecharger">Télécharger</a>
           <a href="#faq">FAQ</a>
         </nav>
 
         <div className="kc-nav-cta">
-          <span className="kc-soon"><i />App mobile · bientôt</span>
           <a href="/login" className="kc-link-ghost">
             Se connecter
           </a>
@@ -348,7 +348,7 @@ function Nav() {
           <a href="#faq" onClick={() => setOpen(false)}>FAQ</a>
           <a href="/blog" onClick={() => setOpen(false)}>Blog</a>
           <a href="/a-propos" onClick={() => setOpen(false)}>À propos</a>
-          <span className="kc-soon"><i />App mobile · bientôt</span>
+          <a href="/telecharger" onClick={() => setOpen(false)}>Télécharger</a>
           <a href="/login" onClick={() => setOpen(false)}>Se connecter</a>
           <a
             href="/signup"
@@ -857,9 +857,6 @@ const CSS = `
 .kc-mobile-menu{position:absolute;top:64px;left:12px;right:12px;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:4px;}
 .kc-mobile-menu a{padding:12px 14px;border-radius:12px;font-weight:600;font-size:15px;}
 .kc-mobile-menu a:hover{background:rgba(0,0,0,.04);}
-.kc-soon{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);box-shadow:inset 0 0 0 1px var(--border);padding:6px 11px;border-radius:999px;white-space:nowrap;}
-.kc-soon i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(224,48,32,.4);}
-.kc-mobile-menu .kc-soon{margin:8px 14px 2px;}
 
 /* Buttons */
 .kc-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--display);font-weight:600;font-size:15px;border-radius:13px;padding:13px 22px;cursor:pointer;border:none;transition:transform .15s var(--ease),box-shadow .25s,background .2s,color .2s;white-space:nowrap;}

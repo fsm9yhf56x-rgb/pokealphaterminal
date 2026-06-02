@@ -39,6 +39,13 @@ export const dynamic = 'force-dynamic'
 const sql = neon(process.env.DATABASE_URL!)
 const USD_TO_EUR = 0.92
 
+// Genere les variantes de numero pour matcher le padding PPT incoherent ("4","04","004")
+function numberVariants(localId: string): string[] {
+  const raw = String(localId).replace(/\D/g, '').replace(/^0+/, '') || '0'
+  return [raw, raw.padStart(2, '0'), raw.padStart(3, '0')]
+    .filter((v, i, a) => a.indexOf(v) === i)
+}
+
 // Mapping PPT variant key → notre variant string (préserve le format existant)
 // PPT: "psa10", "cgc9_5", "bgs10" → notre: "psa_10", "cgc_9.5", "bgs_10"
 function normalizeVariant(pptKey: string): string {
@@ -90,21 +97,29 @@ export async function GET(req: NextRequest) {
       // On extrait local_id (dernier segment) et on cherche le set via tcg_cards
       const parts = tcgCardId.split('-')
       const localId = parts[parts.length - 1]
-      resolvedLocalIdPadded = String(localId).padStart(3, '0')
+      resolvedLocalIdPadded = String(localId).replace(/\D/g, '').replace(/^0+/, '') || '0'
 
-      // Récupère le set_name via tcg_cards
-      const setRow = await sql`
-        SELECT s.name AS set_name
-        FROM tcg_cards c
-        LEFT JOIN tcg_sets s ON s.id = c.set_id
-        WHERE c.id = ${tcgCardId}
-        LIMIT 1
-      ` as Array<{ set_name: string | null }>
+      // Récupère le set_name via tcg_cards. Robuste au prefixe langue:
+      // essaie l'id tel quel, sinon avec prefixes en-/fr-/jp-/ja-.
+      const idCandidates = [tcgCardId]
+      if (!/^(en|fr|jp|ja)-/.test(tcgCardId)) {
+        idCandidates.push('en-' + tcgCardId, 'fr-' + tcgCardId, 'jp-' + tcgCardId)
+      }
+      let setRow: Array<{ set_name: string | null }> = []
+      for (const cid of idCandidates) {
+        setRow = await sql`
+          SELECT s.name AS set_name
+          FROM tcg_cards c
+          LEFT JOIN tcg_sets s ON s.id = c.set_id
+          WHERE c.id = ${cid}
+          LIMIT 1
+        ` as Array<{ set_name: string | null }>
+        if (setRow.length && setRow[0].set_name) break
+      }
       resolvedSetName = setRow[0]?.set_name ?? null
     } else if (setSlug && cardNumber) {
       // set_slug "base-set" → set_name "Base Set" via tcg_sets
-      const num = String(cardNumber).split('/')[0].replace(/^0+/, '') || '0'
-      resolvedLocalIdPadded = String(num).padStart(3, '0')
+      resolvedLocalIdPadded = String(cardNumber).split('/')[0].replace(/\D/g, '').replace(/^0+/, '') || '0'
 
       const setRow = await sql`
         SELECT name FROM tcg_sets WHERE id LIKE ${'%' + setSlug.replace(/-/g, '%') + '%'} LIMIT 1
@@ -112,20 +127,22 @@ export async function GET(req: NextRequest) {
       resolvedSetName = setRow[0]?.name ?? null
     }
 
-    if (!resolvedSetName) {
+    if (!resolvedSetName || !resolvedLocalIdPadded) {
       return NextResponse.json({ data: {}, tcg_card_id: tcgCardId, _info: 'set_not_resolved' })
     }
 
     // Step 2: Query graded_prices_ppt
-    // card_number commence par "004/" pour local_id 4
-    const numberPrefix = resolvedLocalIdPadded + '/'
+    // Patterns tolerants au padding PPT (2 ou 3 chiffres selon taille du set).
+    // LIKE OR explicite (LIKE ANY = KO silencieux avec driver Neon).
+    const patterns = numberVariants(resolvedLocalIdPadded).map((v) => v + '/%')
+    const [pp1, pp2, pp3] = [patterns[0] || '___', patterns[1] || '___', patterns[2] || '___']
 
     const rows = await sql`
       SELECT card_name, card_number, raw_market_usd, total_sales,
              grades, fetched_at, language
       FROM graded_prices_ppt
       WHERE set_name = ${resolvedSetName}
-        AND card_number LIKE ${numberPrefix + '%'}
+        AND (card_number LIKE ${pp1} OR card_number LIKE ${pp2} OR card_number LIKE ${pp3})
       ORDER BY fetched_at DESC
       LIMIT 1
     ` as Array<{

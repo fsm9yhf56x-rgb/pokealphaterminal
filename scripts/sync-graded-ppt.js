@@ -207,16 +207,23 @@ async function upsertCard(pool, pptCard, lang) {
   const tcgId = buildTcgCardId(pptCard, lang)
   const { grades, totals } = extractGrades(pptCard.ebay)
   const conditions = extractConditions(pptCard.prices)
+  // Date de derniere actualisation des prix gradés (lastMarketUpdate d'une note, fallback)
+  const _sbg = pptCard.ebay && pptCard.ebay.salesByGrade
+  const gradedUpdatedAt = (_sbg && (
+    (_sbg.psa10 && _sbg.psa10.lastMarketUpdate) ||
+    (_sbg.psa9 && _sbg.psa9.lastMarketUpdate) ||
+    (_sbg.psa8 && _sbg.psa8.lastMarketUpdate)
+  )) || (pptCard.ebay && (pptCard.ebay.lastScrapedDate || pptCard.ebay.updatedAt)) || null
 
   const sql = `
     INSERT INTO graded_prices_ppt (
       tcg_card_id, ppt_card_id, ppt_tcgplayer_id,
       card_name, card_number, total_set_number, set_name, rarity, language,
-      raw_market_usd, grades, prices_by_condition,
+      raw_market_usd, grades, prices_by_condition, graded_updated_at,
       total_sales, total_value, date_range_start, date_range_end,
       fetched_at, raw_response
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, NOW(), $17::jsonb
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, $17, NOW(), $18::jsonb
     )
     ON CONFLICT (tcg_card_id) DO UPDATE SET
       ppt_card_id = EXCLUDED.ppt_card_id,
@@ -229,6 +236,7 @@ async function upsertCard(pool, pptCard, lang) {
       raw_market_usd = EXCLUDED.raw_market_usd,
       grades = EXCLUDED.grades,
       prices_by_condition = EXCLUDED.prices_by_condition,
+      graded_updated_at = EXCLUDED.graded_updated_at,
       total_sales = EXCLUDED.total_sales,
       total_value = EXCLUDED.total_value,
       date_range_start = EXCLUDED.date_range_start,
@@ -249,6 +257,7 @@ async function upsertCard(pool, pptCard, lang) {
     pptCard.prices?.market ?? null,
     JSON.stringify(grades),
     conditions ? JSON.stringify(conditions) : null,
+    gradedUpdatedAt,
     totals.total_sales,
     totals.total_value,
     totals.date_range_start,

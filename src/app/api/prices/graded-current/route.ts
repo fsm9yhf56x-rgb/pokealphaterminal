@@ -124,7 +124,7 @@ export async function GET(req: Request) {
     let matchedSetName = resolvedSetName
     for (const sn of candidateSetNames) {
       const rows = await sql`
-        SELECT set_name, card_name, card_number, prices_by_condition, grades
+        SELECT set_name, card_name, card_number, prices_by_condition, grades, graded_updated_at
         FROM graded_prices_ppt
         WHERE set_name = ${sn}
           AND (card_number LIKE ${p1} OR card_number LIKE ${p2} OR card_number LIKE ${p3})
@@ -163,7 +163,7 @@ export async function GET(req: Request) {
 
     const gr = (typeof row.grades === 'string' ? JSON.parse(row.grades) : row.grades) || {}
     const graded: {
-      company: string; grade: string; smartPrice: number | null
+      company: string; grade: string; smartPrice: number | null; median: number | null
       count: number | null; confidence: string | null; trend: string | null
     }[] = []
     for (const [code, val] of Object.entries(gr as Record<string, Record<string, unknown>>)) {
@@ -175,6 +175,7 @@ export async function GET(req: Request) {
         company: parsed.company,
         grade: parsed.grade,
         smartPrice: toEur(sp),
+        median: toEur(num(val.median)),
         count: num(val.count),
         confidence: typeof val.confidence === 'string' ? val.confidence : null,
         trend: typeof val.marketTrend === 'string' ? val.marketTrend : null,
@@ -192,6 +193,7 @@ export async function GET(req: Request) {
       market,
       conditions,
       graded,
+      gradedUpdatedAt: row.graded_updated_at ?? null,
       _matched: {
         set_name: matchedSetName,
         card_number: row.card_number,

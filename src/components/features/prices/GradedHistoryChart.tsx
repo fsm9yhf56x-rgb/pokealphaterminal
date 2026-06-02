@@ -8,7 +8,7 @@
  * mode='raw'    : selecteur Etat              (Near Mint, Lightly Played, ...)
  *
  * Data-driven : seules les dimensions reellement presentes s'affichent.
- * Devise = USD (PPT). Rendu SVG pur, zero dependance. Styling Snow+ glass v7.
+ * Devise = EUR (USD PPT converti ×0.92). Rendu SVG pur, zero dependance. Styling Snow+ glass v7.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -22,7 +22,7 @@ const SNOW = {
 const MIN_POINTS = 5
 
 interface Pt { date: string; price: number }
-interface GradedSeries { key: string; company: string; grade: string; points: Pt[] }
+interface GradedSeries { key: string; company: string; grade: string; count?: number | null; confidence?: string | null; points: Pt[] }
 interface RawSeries { key: string; variant: string; condition: string; points: Pt[] }
 
 interface ApiResp {
@@ -43,12 +43,12 @@ export interface GradedHistoryChartProps {
 
 function fmt(n: number | null | undefined): string {
   if (n == null) return '—'
-  if (Math.abs(n) >= 1000) return `$${Math.round(n / 100) / 10}k`
-  return `$${n.toFixed(2)}`
+  if (Math.abs(n) >= 1000) return `${Math.round(n / 100) / 10}k €`
+  return `${n.toFixed(0)} €`
 }
 function fmtFull(n: number | null | undefined): string {
   if (n == null) return '—'
-  return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 }
 function fmtDate(iso: string): string {
   const d = new Date(iso)
@@ -240,6 +240,14 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     return Array.from(byDate.entries()).map(([date, price]) => ({ date, price })).sort((a, b) => (a.date < b.date ? -1 : 1))
   }, [resp, mode, company, grade, condition])
 
+  // Fiabilite de la note gradee selectionnee (count + confidence depuis la serie)
+  const activeMeta = useMemo(() => {
+    if (mode !== 'graded' || !resp) return { count: null as number | null, low: false }
+    const s = (resp.series as GradedSeries[]).find(x => x.company === company && x.grade === grade)
+    const cnt = s?.count ?? null
+    return { count: cnt, low: s?.confidence === 'low' && cnt != null && cnt < 5 }
+  }, [resp, mode, company, grade])
+
   const hasDimensions = mode === 'graded'
     ? (resp?.dimensions?.companies?.length ?? 0) > 0
     : (resp?.dimensions?.conditions?.length ?? 0) > 0
@@ -312,8 +320,22 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
         <span style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>30d</span>
       </div>
       <div style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)', marginBottom: 14 }}>
-        {mode === 'graded' ? `${company} ${grade}` : condition} · {activePoints.length} points
+        {mode === 'graded' ? `${company} ${grade}` : condition}
+        {mode === 'graded' && activeMeta.count != null
+          ? ` · ${activeMeta.count} vente${activeMeta.count > 1 ? 's' : ''} eBay`
+          : ` · ${activePoints.length} points`}
       </div>
+      {mode === 'graded' && activeMeta.low && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '8px 12px', marginBottom: 14, borderRadius: 9,
+          background: 'rgba(224,138,31,0.1)', border: '1px solid rgba(224,138,31,0.22)',
+          fontSize: 11, color: '#E08A1F', fontFamily: 'var(--font-sora, Sora, sans-serif)', fontWeight: 600,
+        }}>
+          <span style={{ fontSize: 13 }}>⚠</span>
+          Peu de ventes sur cette note — tendance indicative
+        </div>
+      )}
 
       {/* Stats strip glass v7 */}
       <div style={{
@@ -343,7 +365,7 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
           <span style={{ width: 5, height: 5, background: SNOW.accent, borderRadius: '50%', boxShadow: `0 0 4px ${SNOW.accent}80` }} />
           <span style={{ fontSize: 9, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>{mode === 'graded' ? 'graded sold avg' : 'tcgplayer market'}</span>
         </div>
-        <span style={{ fontSize: 9, color: SNOW.dim, fontFamily: 'var(--font-data, monospace)' }}>USD · PokemonPriceTracker</span>
+        <span style={{ fontSize: 9, color: SNOW.dim, fontFamily: 'var(--font-data, monospace)' }}>EUR · données de marché</span>
       </div>
     </div>
   )

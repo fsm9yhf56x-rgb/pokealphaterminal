@@ -11,7 +11,7 @@
  *
  * Reponse:
  *   {
- *     currency: 'USD',
+ *     currency: 'EUR',
  *     dimensions: {
  *       companies: ['PSA','BGS',...],            // mode graded
  *       grades: { PSA: ['10','9',...], ... },    // mode graded
@@ -26,6 +26,8 @@ import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 
 export const revalidate = 300
+const USD_TO_EUR = 0.92
+const toEur = (usd: number) => Math.round(usd * USD_TO_EUR * 100) / 100
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -77,6 +79,7 @@ export async function GET(request: Request) {
     // ── Resolution set_name + card_number padded (calque /api/prices/graded) ──
     let resolvedSetName: string | null = null
     let resolvedLocalIdPadded: string | null = null
+    let edition: 'unlimited' | 'shadowless' | '1st' = 'unlimited'
 
     if (tcgCardId) {
       // tcgCardId vient du drawer = "{setId}-{localId}" (ex: "base2-12", "base2-1st-12").
@@ -86,8 +89,15 @@ export async function GET(request: Request) {
       const parts = stripped.split('-')
       const localId = parts[parts.length - 1]
       resolvedLocalIdPadded = String(localId).padStart(3, '0')
-      const setSlugFromId = parts.slice(0, -1).join('-') // ex: "base2" ou "base2-1st"
-      // 1) match exact set_id (prefixe lang + slug), sinon 2) match par slug avec LIKE
+      let setSlugFromId = parts.slice(0, -1).join('-')
+      // Detecte l'edition au suffixe (alignement avec graded-current)
+      if (/-?shadowless(-ns)?$/.test(setSlugFromId)) {
+        edition = 'shadowless'
+        setSlugFromId = setSlugFromId.replace(/-?shadowless(-ns)?$/, '')
+      } else if (/-?1st$/.test(setSlugFromId)) {
+        edition = '1st'
+        setSlugFromId = setSlugFromId.replace(/-?1st$/, '')
+      }
       let setRows = await sqlClient`
         SELECT name FROM tcg_sets
         WHERE id = ${'en-' + setSlugFromId} OR id = ${setSlugFromId}
@@ -102,32 +112,46 @@ export async function GET(request: Request) {
       }
       resolvedSetName = setRows?.[0]?.name ?? null
     } else {
+      let ss = String(setSlug)
+      if (/-?shadowless(-ns)?$/.test(ss)) { edition = 'shadowless'; ss = ss.replace(/-?shadowless(-ns)?$/, '') }
+      else if (/-?1st$/.test(ss)) { edition = '1st'; ss = ss.replace(/-?1st$/, '') }
       const num = String(cardNumber).split('/')[0].replace(/\D/g, '')
       resolvedLocalIdPadded = String(num).padStart(3, '0')
       const setRows = await sqlClient`
         SELECT name FROM tcg_sets
-        WHERE id LIKE ${'%' + (setSlug as string).replace(/-/g, '%') + '%'}
+        WHERE id LIKE ${'%' + ss.replace(/-/g, '%') + '%'}
         LIMIT 1
       `
       resolvedSetName = setRows?.[0]?.name ?? null
     }
 
     if (!resolvedSetName || !resolvedLocalIdPadded) {
-      return NextResponse.json({ currency: 'USD', dimensions: {}, series: [], _info: 'set_not_resolved' })
+      return NextResponse.json({ currency: 'EUR', dimensions: {}, series: [], _info: 'set_not_resolved' })
     }
 
-    // Patterns LIKE tolerants au padding PPT (2 ou 3 chiffres selon taille du set)
+    // Candidats set_name selon edition (Shadowless cible "... (Shadowless)")
+    const candidateSetNames: string[] = []
+    if (edition === 'shadowless') candidateSetNames.push(`${resolvedSetName} (Shadowless)`)
+    candidateSetNames.push(resolvedSetName)
+
+    // Patterns LIKE (2 ou 3 chiffres). LIKE OR explicite (LIKE ANY = KO avec driver Neon)
     const patterns = numberVariants(resolvedLocalIdPadded).map((v) => v + '/%')
-    const rows = await sqlClient`
-      SELECT card_name, card_number, grades_history, raw_history
-      FROM graded_prices_ppt
-      WHERE set_name = ${resolvedSetName}
-        AND card_number LIKE ANY(${patterns})
-      LIMIT 1
-    `
-    const row = rows?.[0]
+    const [pp1, pp2, pp3] = [patterns[0] || '___', patterns[1] || '___', patterns[2] || '___']
+
+    let row: any = null
+    for (const sn of candidateSetNames) {
+      const rows = await sqlClient`
+        SELECT card_name, card_number, grades_history, raw_history, grades
+        FROM graded_prices_ppt
+        WHERE set_name = ${sn}
+          AND (card_number LIKE ${pp1} OR card_number LIKE ${pp2} OR card_number LIKE ${pp3})
+        ORDER BY language = 'english' DESC
+        LIMIT 1
+      `
+      if (rows?.length) { row = rows[0]; resolvedSetName = sn; break }
+    }
     if (!row) {
-      return NextResponse.json({ currency: 'USD', dimensions: {}, series: [], _info: 'no_ppt_row' })
+      return NextResponse.json({ currency: 'EUR', dimensions: {}, series: [], _info: 'no_ppt_row' })
     }
 
     const asObj = (v: any) => {
@@ -138,9 +162,10 @@ export async function GET(request: Request) {
 
     if (mode === 'graded') {
       const gh = asObj(row.grades_history) || {}
+      const gradesStats = asObj(row.grades) || {}
       const companiesSet = new Set<string>()
       const gradesByCompany: Record<string, Set<string>> = {}
-      const series: { key: string; company: string; grade: string; points: { date: string; price: number }[] }[] = []
+      const series: { key: string; company: string; grade: string; count: number | null; confidence: string | null; points: { date: string; price: number }[] }[] = []
 
       for (const [code, byDate] of Object.entries(gh)) {
         const parsed = parseGradeCode(code)
@@ -148,13 +173,17 @@ export async function GET(request: Request) {
         const points: { date: string; price: number }[] = []
         for (const [date, rec] of Object.entries(byDate as Record<string, any>)) {
           const price = rec?.sevenDayAverage ?? rec?.average ?? null
-          if (price != null && isFinite(Number(price))) points.push({ date, price: Number(price) })
+          if (price != null && isFinite(Number(price))) points.push({ date, price: toEur(Number(price)) })
         }
         if (points.length === 0) continue
         points.sort((a, b) => (a.date < b.date ? -1 : 1))
         companiesSet.add(parsed.company)
         ;(gradesByCompany[parsed.company] ||= new Set()).add(parsed.grade)
-        series.push({ key: code, company: parsed.company, grade: parsed.grade, points })
+        // Croise avec grades (stats actuelles) pour count + confidence
+        const st = (gradesStats as Record<string, any>)[code] || {}
+        const count = st.count != null && isFinite(Number(st.count)) ? Number(st.count) : null
+        const confidence = typeof st.confidence === 'string' ? st.confidence : null
+        series.push({ key: code, company: parsed.company, grade: parsed.grade, count, confidence, points })
       }
 
       const companies = Array.from(companiesSet).sort((a, b) => {
@@ -167,7 +196,7 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.json({
-        currency: 'USD',
+        currency: 'EUR',
         dimensions: { companies, grades },
         series,
         _matched: { set_name: resolvedSetName, card_number: row.card_number, card_name: row.card_name },
@@ -191,7 +220,7 @@ export async function GET(request: Request) {
         for (const h of hist) {
           const price = h?.market ?? null
           const date = h?.date ? String(h.date).slice(0, 10) : null
-          if (price != null && date && isFinite(Number(price))) points.push({ date, price: Number(price) })
+          if (price != null && date && isFinite(Number(price))) points.push({ date, price: toEur(Number(price)) })
         }
         if (points.length === 0) continue
         points.sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -207,7 +236,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json({
-      currency: 'USD',
+      currency: 'EUR',
       dimensions: { variants: Array.from(variantsSet), conditions },
       series,
       _matched: { set_name: resolvedSetName, card_number: row.card_number, card_name: row.card_name },

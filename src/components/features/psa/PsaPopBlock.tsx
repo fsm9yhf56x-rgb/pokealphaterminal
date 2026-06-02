@@ -163,8 +163,8 @@ export function PsaPopBlock({ cardId, hideWhenEmpty = false }: Props) {
               {edition.scraped_at ? ` · MAJ ${new Date(edition.scraped_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
             </span>
             {(() => {
-              const subj = (edition.subject_name || '').replace(/-/g, ' ').trim()
-              const num = (edition.card_number || '').split('/')[0].replace(/\D/g, '')
+              const subj = String(edition.subject_name ?? '').replace(/-/g, ' ').trim()
+              const num = String(edition.card_number ?? '').split('/')[0].replace(/\D/g, '')
               const term = [subj, num].filter(Boolean).join(' ')
               if (!term) return null
               const url = 'https://www.psacard.com/pop/search?q=' + encodeURIComponent(term)

@@ -3,10 +3,9 @@
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { GradedHistoryChart } from '@/components/features/prices/GradedHistoryChart'
-import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
-import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
+import { PricePanelPpt } from '@/components/features/prices/PricePanelPpt'
 import { SNOW } from '@/lib/design/colors'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
@@ -1955,183 +1954,20 @@ export function Encyclopedie() {
                       const setOwned = allCards.filter(c=>c.setId===selCard.setId && isOwned(c)).length
                       const pct = setTotal>0 ? Math.round(setOwned/setTotal*100) : 0
                       return (<>
-                      {(()=>{
-                        const det = selCard ? getPriceDetail(selCard) : null
-                        const sources = det ? [
-                          { label: 'eBay', price: det.ebay, icon: '🔴' },
-                          { label: 'TCGPlayer', price: det.tcg, icon: '🔵' },
-                          { label: 'Cardmarket', price: det.cardmarket, icon: '🟠' },
-                        ].filter(s => s.price) : []
-                        return (cardPrice || sources.length > 0) ? (
-                          <div style={{
-                            background:'rgba(255,255,255,0.75)',
-                            backdropFilter:'blur(16px) saturate(180%)',
-                            WebkitBackdropFilter:'blur(16px) saturate(180%)',
-                            borderRadius:14,
-                            padding:'18px 20px',
-                            marginBottom:14,
-                            border:'1px solid rgba(0,0,0,0.05)',
-                            boxShadow:'0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
-                          }}>
-                            {/* Label - Prix marche */}
-                            <div style={{
-                              display:'flex',
-                              justifyContent:'space-between',
-                              alignItems:'center',
-                              marginBottom:6,
-                            }}>
-                              <div style={{
-                                fontSize:10,
-                                color:'#86868B',
-                                fontFamily:'var(--font-sora, Sora, sans-serif)',
-                                textTransform:'uppercase' as const,
-                                letterSpacing:'0.08em',
-                                fontWeight:700,
-                              }}>Prix marché</div>
-                              <div style={{
-                                fontSize:9.5,
-                                color:'#1D9E75',
-                                fontFamily:'var(--font-sora, Sora, sans-serif)',
-                                textTransform:'uppercase' as const,
-                                letterSpacing:'0.05em',
-                                fontWeight:600,
-                                display:'flex',
-                                alignItems:'center',
-                                gap:4,
-                                padding:'2px 8px',
-                                background:'rgba(29,158,117,0.1)',
-                                border:'1px solid rgba(29,158,117,0.2)',
-                                borderRadius:99,
-                              }}>
-                                <span style={{ width:6, height:6, borderRadius:'50%', background:'#1D9E75', boxShadow:'0 0 6px rgba(29,158,117,0.6)' }}/>
-                                Consolidé
-                              </div>
-                            </div>
-                            {/* Prix gros */}
-                            <div style={{
-                              fontSize:32,
-                              fontWeight:700,
-                              color:'#1D1D1F',
-                              fontFamily:'var(--font-data, "Space Mono", monospace)',
-                              letterSpacing:'-0.8px',
-                              marginBottom: sources.length ? 16 : 0,
-                              lineHeight:1,
-                            }}>{formatEUR(cardPrice, 'small')}</div>
-                            {/* Sources en grid 3 colonnes glass v7 */}
-                            {sources.length > 0 && (
-                              <>
-                                <div style={{
-                                  fontSize:9.5,
-                                  color:'#86868B',
-                                  textTransform:'uppercase' as const,
-                                  letterSpacing:'0.08em',
-                                  fontFamily:'var(--font-sora, Sora, sans-serif)',
-                                  fontWeight:700,
-                                  marginBottom:10,
-                                }}>Sources marchand</div>
-                                <div style={{
-                                  display:'grid',
-                                  gridTemplateColumns:'repeat(3, 1fr)',
-                                  gap:8,
-                                }}>
-                                  {([
-                                    { label:'eBay',       price:det?.ebay,       color:'#E03020' },
-                                    { label:'TCGPlayer',  price:det?.tcg,        color:'#0072CE' },
-                                    { label:'Cardmarket', price:det?.cardmarket, color:'#E08A1F' },
-                                  ] as Array<{label:string;price:number|null|undefined;color:string}>).map(s => {
-                                    const sidE = selCard?.setId || ''
-                                    const isVar = sidE.includes('-shadowless') || sidE.includes('-1st')
-                                    const isCM = s.label === 'Cardmarket'
-                                    const hasPrice = s.price != null && s.price > 0
-                                    return (
-                                      <div key={s.label} style={{
-                                        background: hasPrice ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
-                                        backdropFilter:'blur(10px)',
-                                        WebkitBackdropFilter:'blur(10px)',
-                                        border:'1px solid rgba(0,0,0,0.05)',
-                                        borderRadius:10,
-                                        padding:'10px 8px',
-                                        textAlign:'center' as const,
-                                        opacity: hasPrice ? 1 : 0.55,
-                                        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)',
-                                      }}>
-                                        <div style={{
-                                          display:'flex',
-                                          alignItems:'center',
-                                          justifyContent:'center',
-                                          gap:4,
-                                          marginBottom:5,
-                                        }}>
-                                          <span style={{
-                                            width:6, height:6,
-                                            borderRadius:'50%',
-                                            background:s.color,
-                                            boxShadow:`0 0 4px ${s.color}80`,
-                                            flexShrink:0,
-                                          }}/>
-                                          <span style={{
-                                            fontSize:9.5,
-                                            fontWeight:700,
-                                            color:'#86868B',
-                                            fontFamily:'var(--font-sora, Sora, sans-serif)',
-                                            textTransform:'uppercase' as const,
-                                            letterSpacing:'0.04em',
-                                          }}>{s.label}</span>
-                                        </div>
-                                        {hasPrice ? (
-                                          <div style={{
-                                            fontSize:13,
-                                            fontWeight:700,
-                                            color:'#1D1D1F',
-                                            fontFamily:'var(--font-data, "Space Mono", monospace)',
-                                            letterSpacing:'-0.2px',
-                                          }}>{formatEUR(s.price, 'small')}</div>
-                                        ) : isCM ? (
-                                          <div style={{
-                                            fontSize:10,
-                                            fontStyle:'italic' as const,
-                                            color:'#AEAEB2',
-                                            fontFamily:'var(--font-sora, Sora, sans-serif)',
-                                          }}>{isVar ? 'N/A' : 'Bientôt'}</div>
-                                        ) : (
-                                          <div style={{
-                                            fontSize:11,
-                                            color:'#C7C7CC',
-                                            fontFamily:'var(--font-data, "Space Mono", monospace)',
-                                          }}>—</div>
-                                        )}
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ) : null
-                      })()}
-                      {(() => {
-                        const sid = selCard?.setId || ''
-                        const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
-                        const slug = setMapping[sid] || setMapping[cleanSid] || ''
-                        return slug && selCard?.localId ? (
-                          <div style={{ marginBottom:'12px' }}>
-                            <ConditionPriceTable
-                              setSlug={slug}
-                              cardNumber={selCard.localId}
-                              hideWhenEmpty
-                            />
-                          </div>
-                        ) : null
-                      })()}
-                      {selCard?.setId && selCard?.localId ? (
-                        <div style={{ marginBottom:'12px' }}>
-                          <GradedPriceTable
-                            tcgCardId={`${selCard.setId}-${selCard.localId}`}
-                            lang={(selCard as any).lang}
-                            hideWhenEmpty
+                      {selCard?.setId && selCard?.localId ? (() => {
+                        const det = getPriceDetail(selCard)
+                        return (
+                          <PricePanelPpt
+                            cardId={`${selCard.setId}-${selCard.localId}`}
+                            fallbackMarket={getPrice(selCard)}
+                            fallbackSources={det ? [
+                              { label: 'eBay', price: det.ebay, color: '#E03020' },
+                              { label: 'TCGPlayer', price: det.tcg, color: '#0072CE' },
+                              { label: 'Cardmarket', price: det.cardmarket, color: '#E08A1F' },
+                            ] : []}
                           />
-                        </div>
-                      ) : null}
+                        )
+                      })() : null}
                       {selCard?.setId && selCard?.localId ? (
                         <div style={{ marginBottom:'12px' }}>
                           <PsaPopBlock

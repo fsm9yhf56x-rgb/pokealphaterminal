@@ -398,6 +398,7 @@ export function Holdings() {
   const [scannerLoad,  setScannerLoad]  = useState(false)
   const [scannerImg,   setScannerImg]   = useState<string|null>(null)
   const [showWelcome,  setShowWelcome]  = useState(false)
+  const [welcomeCards, setWelcomeCards] = useState<{name:string;lang:string;setId:string;localId:string}[]>([])
   const [celebSet,     setCelebSet]     = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
   const scrollRefs = useRef<Record<string, HTMLDivElement|null>>({})
@@ -500,6 +501,17 @@ export function Holdings() {
       localStorage.setItem('pka_binder_seen','1')
     }
   },[])
+
+  // ── Cartes vitrine bienvenue : simple fetch (images R2 garanties) ──
+  useEffect(()=>{
+    if(!showWelcome) return
+    let cancelled = false
+    fetch('/api/portfolio/welcome-cards',{ cache:'no-store' })
+      .then(r=>r.ok?r.json():{cards:[]})
+      .then(j=>{ if(!cancelled) setWelcomeCards((j.cards??[]).slice(0,3)) })
+      .catch(()=>{})
+    return ()=>{ cancelled = true }
+  },[showWelcome])
 
   // ── Totaux TCGDex — cache localStorage instantané ──
   useEffect(()=>{
@@ -1476,6 +1488,8 @@ export function Holdings() {
         @keyframes burst      { 0%{transform:scale(0) rotate(0deg);opacity:1} 60%{transform:scale(1.3) rotate(20deg);opacity:1} 100%{transform:scale(1.1) rotate(15deg);opacity:1} }
         @keyframes confettiF  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(120px) rotate(720deg);opacity:0} }
         @keyframes shimmerG   { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        @keyframes holoSweep  { 0%,100%{background-position:0% 0%} 50%{background-position:100% 100%} }
+        @keyframes wcFade     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
         @keyframes scanPulse  { 0%,100%{border-color:rgba(16,185,129,.4)} 50%{border-color:rgba(16,185,129,.9)} }
         @keyframes scanLine   { 0%{top:10%} 100%{top:90%} }
@@ -3265,24 +3279,104 @@ export function Holdings() {
         </div>
       )}
 
-      {/* ── WELCOME ── */}
+      {/* ── WELCOME ── glass v7 (v2 enrichie) */}
       {showWelcome&&(
-        <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.96)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(12px)' }}>
-          <div style={{ maxWidth:'420px',width:'100%',textAlign:'center',animation:'welcomeIn .5s cubic-bezier(.34,1.2,.64,1)' }}>
-            <div style={{ fontSize:'64px',marginBottom:'20px',animation:'burst .6s .2s cubic-bezier(.34,1.4,.64,1) both' }}>📖</div>
-            <div style={{ fontSize:'11px',fontWeight:700,color:'rgba(255,107,53,.8)',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur Kodo Cards</div>
-            <h2 style={{ fontSize:'28px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.15,marginBottom:'14px' }}>
+        <div style={{ position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',
+          background:'rgba(245,245,247,0.74)',backdropFilter:'blur(28px) saturate(160%)',WebkitBackdropFilter:'blur(28px) saturate(160%)' }}
+          onClick={()=>setShowWelcome(false)}>
+          {/* bokeh doux */}
+          <div style={{ position:'absolute',inset:0,pointerEvents:'none',
+            backgroundImage:'radial-gradient(ellipse at 22% 26%, rgba(224,48,32,0.06) 0%, transparent 45%), radial-gradient(ellipse at 80% 74%, rgba(201,162,39,0.07) 0%, transparent 45%)' }} />
+          <div onClick={e=>e.stopPropagation()} style={{
+            position:'relative',maxWidth:'460px',width:'100%',textAlign:'center',
+            background:'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)',
+            backdropFilter:'blur(48px) saturate(200%)',WebkitBackdropFilter:'blur(48px) saturate(200%)',
+            borderRadius:24,border:'0.5px solid rgba(255,255,255,0.6)',
+            boxShadow:'0 24px 80px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
+            padding:'44px 40px 36px',
+            animation:'welcomeIn .55s cubic-bezier(.16,1,.3,1) both' }}>
+
+            {/* 3 vraies cartes BDD en éventail */}
+            <div style={{ position:'relative',height:'150px',marginBottom:'18px',display:'flex',alignItems:'center',justifyContent:'center' }}>
+              {welcomeCards.length>0 ? (
+                welcomeCards.slice(0,3).map((c,i)=>{
+                  const order = [ -1, 1, 0 ]   // rend gauche, droite, puis centre (z-index)
+                  const o = order[i] ?? 0
+                  const url = getCardImageUrl({ lang:c.lang, setId:c.setId, localId:c.localId })
+                  return (
+                    <div key={`${c.setId}-${c.localId}-${i}`}
+                      style={{
+                        position:'absolute',
+                        transform:`translateX(${o*52}px) rotate(${o*8}deg) translateY(${Math.abs(o)*10}px)`,
+                        zIndex:o===0?3:1,
+                        transition:'transform .45s cubic-bezier(.16,1,.3,1)',
+                      }}>
+                      {/* enfant : opacity SEULEMENT (n'écrase pas le transform de l'éventail) */}
+                      <div style={{
+                        width:'88px',height:'122px',borderRadius:'9px',overflow:'hidden',
+                        background:'#EDEDF0',position:'relative',
+                        boxShadow:'0 14px 32px rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)',
+                        opacity:0, animation:`wcFade .5s ease-out ${i*120}ms forwards`,
+                      }}>
+                        <img src={url} alt={c.name} draggable={false}
+                          style={{ width:'100%',height:'100%',objectFit:'cover',display:'block' }}
+                          onError={e=>{ const el=e.currentTarget.parentElement as HTMLElement|null; if(el) el.style.display='none' }} />
+                        <div style={{ position:'absolute',inset:0,pointerEvents:'none',mixBlendMode:'overlay',
+                          background:'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 48%, transparent 62%)',
+                          backgroundSize:'250% 250%',animation:'holoSweep 4.5s ease-in-out infinite' }} />
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                // skeleton neutre le temps du fetch (jamais le livre en premier)
+                [-1,1,0].map(o=>(
+                  <div key={o} style={{ position:'absolute',width:'88px',height:'122px',borderRadius:'9px',
+                    transform:`translateX(${o*52}px) rotate(${o*8}deg) translateY(${Math.abs(o)*10}px)`,
+                    zIndex:o===0?3:1,
+                    background:'linear-gradient(135deg, rgba(255,255,255,0.7), rgba(245,245,247,0.5))',
+                    border:'0.5px solid rgba(255,255,255,0.6)',
+                    boxShadow:'0 10px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85)' }} />
+                ))
+              )}
+            </div>
+            <div style={{ fontSize:'11px',fontWeight:700,color:'#E03020',letterSpacing:'.2em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'12px' }}>Bienvenue sur Kodo Cards</div>
+            <h2 style={{ fontSize:'27px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',lineHeight:1.18,marginBottom:'14px' }}>
               Votre collection mérite<br/>
-              <span style={{ background:'linear-gradient(135deg,#FF6B35,#FFD700,#FF6B35)',backgroundSize:'200% 200%',animation:'shimmerG 3s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>d'être célébrée.</span>
+              <span style={{ background:'linear-gradient(135deg,#E03020,#FF6B35,#C9A227)',backgroundSize:'200% 200%',animation:'shimmerG 3s ease infinite',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent' }}>d&apos;être célébrée.</span>
             </h2>
-            <p style={{ fontSize:'14px',color:'#48484A',fontFamily:'var(--font-display)',lineHeight:1.7,marginBottom:'28px' }}>
-              Ajoutez vos premières cartes et regardez votre binder prendre vie.
-              Chaque carte est un souvenir, une victoire, une passion.
+            <p style={{ fontSize:'14px',color:'#48484A',fontFamily:'var(--font-body)',lineHeight:1.65,marginBottom:'24px',maxWidth:'340px',marginLeft:'auto',marginRight:'auto' }}>
+              Ajoutez votre première carte et regardez votre binder prendre vie. Chaque carte est un souvenir, une victoire, une passion.
             </p>
-            <button onClick={()=>setShowWelcome(false)}
-              style={{ padding:'14px 36px',borderRadius:'12px',background:'linear-gradient(135deg,#E03020,#FF6B35)',color:'#1D1D1F',border:'none',fontSize:'14px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 8px 32px rgba(224,48,32,.45)',letterSpacing:'.03em' }}>
-              Ouvrir mon binder →
-            </button>
+
+            {/* Ce qui t'attend */}
+            <div style={{ display:'flex',gap:'8px',justifyContent:'center',marginBottom:'26px',flexWrap:'wrap' }}>
+              {[['📈','Suivi de valeur'],['🏆','Master sets'],['🔔','Alertes prix']].map(([ic,lbl])=>(
+                <div key={lbl} style={{ display:'inline-flex',alignItems:'center',gap:'6px',padding:'7px 13px',borderRadius:'99px',
+                  background:'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 100%)',
+                  border:'0.5px solid rgba(255,255,255,0.6)',
+                  boxShadow:'0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+                  fontSize:'12px',fontWeight:600,color:'#3A3A3C',fontFamily:'var(--font-display)' }}>
+                  <span style={{ fontSize:'13px' }}>{ic}</span>{lbl}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display:'flex',flexDirection:'column',gap:'10px',alignItems:'center' }}>
+              <button onClick={()=>{ setShowWelcome(false); setAddOpen(true) }}
+                style={{ width:'100%',maxWidth:'300px',padding:'14px 32px',borderRadius:'12px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'14px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',letterSpacing:'.02em',transition:'all .2s cubic-bezier(.2,.8,.2,1)',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:'7px',
+                  boxShadow:'0 8px 28px rgba(0,0,0,0.18)' }}
+                onMouseEnter={e=>{e.currentTarget.style.background='#000';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 12px 36px rgba(0,0,0,0.22)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 8px 28px rgba(0,0,0,0.18)'}}>
+                + Ajouter ma première carte
+              </button>
+              <button onClick={()=>setShowWelcome(false)}
+                style={{ padding:'8px 16px',borderRadius:'10px',background:'transparent',color:'#6E6E73',border:'none',fontSize:'13px',fontWeight:500,cursor:'pointer',fontFamily:'var(--font-display)',transition:'color .15s' }}
+                onMouseEnter={e=>{e.currentTarget.style.color='#1D1D1F'}}
+                onMouseLeave={e=>{e.currentTarget.style.color='#6E6E73'}}>
+                Explorer d&apos;abord
+              </button>
+            </div>
           </div>
         </div>
       )}

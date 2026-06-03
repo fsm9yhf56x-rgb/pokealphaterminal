@@ -689,7 +689,7 @@ export function Holdings() {
     sets.forEach(async setName => {
       if (setLogos[setName]) return
       const sc = portfolio.filter(c => c.set === setName)
-      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
+      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === String(setName ?? '').toLowerCase())?.id || ''
       if (!sid) return
       // For edition sets, use parent set logo
       const parentSid = sid.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
@@ -725,7 +725,7 @@ export function Holdings() {
     sets.forEach(setName => {
       if (shelfSetCards[setName]) return
       const sc = portfolio.filter(c => c.set === setName)
-      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === setName.toLowerCase())?.id || ''
+      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === String(setName ?? '').toLowerCase())?.id || ''
       if (!sid) return
       const lang = sc[0]?.lang || 'FR'
       getCardsForSet(lang as 'EN'|'FR'|'JP', sid)
@@ -741,7 +741,7 @@ export function Holdings() {
   useEffect(() => {
     if (!binderSet || binderSet === '__all__') { setFullSetCards([]); return }
     const sc = portfolio.filter(c => c.set === binderSet)
-    const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === binderSet)?.id || liveSets.find(ls => ls.name.toLowerCase() === binderSet.toLowerCase())?.id || ''
+    const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === binderSet)?.id || liveSets.find(ls => ls.name.toLowerCase() === String(binderSet ?? '').toLowerCase())?.id || ''
     if (!sid) { setFullSetCards([]); return }
     const lang = sc[0]?.lang || 'FR'
     setFullSetLoading(true)
@@ -2270,7 +2270,7 @@ export function Holdings() {
                       const setCards=portfolio.filter(c=>c.set===setName)
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
-                      const resolvedTotal=total||(setIdKey?setTotalsMap[setIdKey]:0)||setTotalsMap[setName]||setTotalsMap[setName.toLowerCase()]||0
+                      const resolvedTotal=total||(setIdKey?setTotalsMap[setIdKey]:0)||setTotalsMap[setName]||setTotalsMap[String(setName ?? '').toLowerCase()]||0
                       const uniqueNums=new Set(setCards.map(c=>c.number)).size
                       const pct=resolvedTotal>0?Math.round((uniqueNums/resolvedTotal)*100):null
                       const totalForDisplay=resolvedTotal
@@ -2529,7 +2529,7 @@ export function Holdings() {
                             {/* Carte + ajout */}
                             <div onClick={()=>{
                                 const lang=setCards[0]?.lang||'FR'
-                                const sid=setCards.find(c=>c.setId)?.setId || liveSets.find(ls=>ls.name===setName)?.id || liveSets.find(ls=>ls.name.toLowerCase()===setName.toLowerCase())?.id || ''
+                                const sid=setCards.find(c=>c.setId)?.setId || liveSets.find(ls=>ls.name===setName)?.id || liveSets.find(ls=>ls.name.toLowerCase()===String(setName ?? '').toLowerCase())?.id || ''
                                 setAddForm(p=>({...p, set:setName, setId:sid, lang}))
                                 if(sid){ setCardsLoading(true); setLiveCards([]); getCardsForSet(addForm.lang as 'EN'|'FR'|'JP',sid).then(cards=>{setLiveCards(staticToTCGCards(cards,sid,addForm.lang,(l,si,lid)=>getCardImageUrl({lang:l,setId:si,localId:lid})) as any);setCardsLoading(false)}).catch(()=>setCardsLoading(false)) }
                                 setAddOpen(true)

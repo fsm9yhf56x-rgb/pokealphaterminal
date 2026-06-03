@@ -1,11 +1,14 @@
 'use client'
 
 import type { MoverCard } from '@/lib/useMarketData'
+import { SNOW, FONT, GLASS } from '@/lib/design/snow'
 
-/**
- * Top movers : 2 colonnes côte à côte (hausses ▲ / baisses ▼).
- * Vue liste compact, cohérent avec le pattern PerfMovers du portfolio.
- */
+const POS = SNOW.greenAccent
+const NEG = SNOW.red
+const POS_BG = 'rgba(38,166,91,.10)'
+const NEG_BG = SNOW.redLight
+const EDGE = '0 0 0 0.5px rgba(255,255,255,0.7)'
+
 export function TermMovers({
   gainers, losers,
 }: {
@@ -17,24 +20,15 @@ export function TermMovers({
   return (
     <div>
       <SectionTitle>Top movers · 24h</SectionTitle>
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '14px',
-      }}>
-        <MoversList
-          title="Plus fortes hausses"
-          icon="▲"
-          cards={gainers}
-          variant="up"
-        />
-        <MoversList
-          title="Plus fortes baisses"
-          icon="▼"
-          cards={losers}
-          variant="down"
-        />
+      <style>{`
+        @keyframes mvIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .mv-row{transition:background .12s}
+        .mv-row:hover{background:rgba(0,0,0,0.025)}
+        @media (prefers-reduced-motion: reduce){ .mv-row{animation:none !important} }
+      `}</style>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:'14px' }}>
+        <MoversList title="Plus fortes hausses" icon="▲" cards={gainers} variant="up" />
+        <MoversList title="Plus fortes baisses" icon="▼" cards={losers} variant="down" />
       </div>
     </div>
   )
@@ -43,56 +37,28 @@ export function TermMovers({
 function MoversList({
   title, icon, cards, variant,
 }: {
-  title: string
-  icon: string
-  cards: MoverCard[]
-  variant: 'up' | 'down'
+  title: string; icon: string; cards: MoverCard[]; variant: 'up'|'down'
 }) {
-  const accentColor = variant === 'up' ? 'var(--perf-up)' : 'var(--perf-down)'
-  const accentSoft  = variant === 'up' ? 'var(--perf-up-soft)' : 'var(--perf-down-soft)'
+  const accent = variant === 'up' ? POS : NEG
+  const soft   = variant === 'up' ? POS_BG : NEG_BG
 
   if (cards.length === 0) {
     return (
-      <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '14px 18px',
-      }}>
-        <ListHeader title={title} icon={icon} accentColor={accentColor} />
-        <div style={{
-          padding: '24px 0',
-          textAlign: 'center',
-          fontSize: '11px',
-          color: 'var(--ink-faint)',
-          fontFamily: 'var(--font-display)',
-        }}>Pas de données</div>
+      <div style={{ ...GLASS.card, padding:'14px 18px', boxShadow:`${GLASS.card.boxShadow as string}, ${EDGE}` }}>
+        <ListHeader title={title} icon={icon} accentColor={accent} />
+        <div style={{ padding:'24px 0', textAlign:'center', fontSize:'11px', color:SNOW.mutedExtraLight, fontFamily:FONT.display }}>Pas de données</div>
       </div>
     )
   }
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      overflow: 'hidden',
-    }}>
-      <div style={{ padding: '14px 18px 8px' }}>
-        <ListHeader title={title} icon={icon} accentColor={accentColor} />
+    <div style={{ ...GLASS.card, overflow:'hidden', boxShadow:`${GLASS.card.boxShadow as string}, ${EDGE}` }}>
+      <div style={{ padding:'14px 18px 8px' }}>
+        <ListHeader title={title} icon={icon} accentColor={accent} />
       </div>
-
       <div>
         {cards.map((card, i) => (
-          <CardRow
-            key={card.card_ref}
-            card={card}
-            rank={i + 1}
-            variant={variant}
-            accentColor={accentColor}
-            accentSoft={accentSoft}
-            isLast={i === cards.length - 1}
-          />
+          <CardRow key={card.card_ref} card={card} rank={i+1} variant={variant} accentColor={accent} accentSoft={soft} idx={i} />
         ))}
       </div>
     </div>
@@ -100,96 +66,30 @@ function MoversList({
 }
 
 function CardRow({
-  card, rank, variant, accentColor, accentSoft, isLast,
+  card, rank, variant, accentColor, accentSoft, idx,
 }: {
-  card: MoverCard
-  rank: number
-  variant: 'up' | 'down'
-  accentColor: string
-  accentSoft: string
-  isLast: boolean
+  card: MoverCard; rank: number; variant: 'up'|'down'; accentColor: string; accentSoft: string; idx: number
 }) {
   const sign = variant === 'up' ? '+' : ''
-
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '24px 1fr auto auto',
-      alignItems: 'center',
-      gap: '10px',
-      padding: '10px 18px',
-      borderTop: '1px solid var(--border)',
-      borderBottom: isLast ? 'none' : 'none',
-      transition: 'background 0.1s',
-    }}
-    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
-    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-    >
-      {/* Rank */}
-      <div style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: rank <= 3 ? accentColor : 'var(--ink-faint)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        textAlign: 'center',
-      }}>
+    <div className="mv-row" style={{
+      display:'grid', gridTemplateColumns:'24px 1fr auto auto', alignItems:'center', gap:'10px',
+      padding:'10px 18px', borderTop:`1px solid ${SNOW.borderSoft}`,
+      animation:`mvIn .35s cubic-bezier(.16,1,.3,1) ${idx*40}ms both`,
+    }}>
+      <div style={{ fontSize:'10px', fontWeight:700, color:rank<=3?accentColor:SNOW.mutedExtraLight, fontFamily:FONT.data, textAlign:'center' }}>
         {rank.toString().padStart(2, '0')}
       </div>
-
-      {/* Name + meta */}
-      <div style={{ minWidth: 0 }}>
-        <div style={{
-          fontSize: '12px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-display)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          marginBottom: '2px',
-        }}>{card.card_name}</div>
-        <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
+      <div style={{ minWidth:0 }}>
+        <div style={{ fontSize:'12px', fontWeight:600, color:SNOW.ink, fontFamily:FONT.display, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginBottom:'2px' }}>{card.card_name}</div>
+        <div style={{ fontSize:'10px', color:SNOW.mutedLight, fontFamily:FONT.body, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {[card.set_name, card.lang, card.source].filter(Boolean).join(' · ')}
         </div>
       </div>
-
-      {/* Price */}
-      <div style={{
-        textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 500,
-        color: 'var(--ink)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        fontVariantNumeric: 'tabular-nums',
-        minWidth: '56px',
-      }}>{formatEUR(card.current_price)}</div>
-
-      {/* Change pill */}
-      <div style={{
-        textAlign: 'right',
-        minWidth: '64px',
-      }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '3px',
-          padding: '3px 7px',
-          background: accentSoft,
-          borderRadius: '4px',
-        }}>
-          <span style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            color: accentColor,
-            fontFamily: 'var(--font-data, var(--font-display))',
-            fontVariantNumeric: 'tabular-nums',
-          }}>
+      <div style={{ textAlign:'right', fontSize:'12px', fontWeight:600, color:SNOW.ink, fontFamily:FONT.data, fontVariantNumeric:'tabular-nums', minWidth:'56px' }}>{formatEUR(card.current_price)}</div>
+      <div style={{ textAlign:'right', minWidth:'64px' }}>
+        <div style={{ display:'inline-flex', alignItems:'center', gap:'3px', padding:'3px 7px', background:accentSoft, borderRadius:'5px' }}>
+          <span style={{ fontSize:'11px', fontWeight:700, color:accentColor, fontFamily:FONT.data, fontVariantNumeric:'tabular-nums' }}>
             {sign}{Number(card.change_pct ?? 0).toFixed(1)}%
           </span>
         </div>
@@ -198,59 +98,21 @@ function CardRow({
   )
 }
 
-function ListHeader({
-  title, icon, accentColor,
-}: {
-  title: string
-  icon: string
-  accentColor: string
-}) {
+function ListHeader({ title, icon, accentColor }: { title: string; icon: string; accentColor: string }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-    }}>
-      <span style={{
-        fontSize: '11px',
-        color: accentColor,
-        fontWeight: 700,
-      }}>{icon}</span>
-      <span style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        fontFamily: 'var(--font-display)',
-      }}>{title}</span>
+    <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+      <span style={{ fontSize:'11px', color:accentColor, fontWeight:700 }}>{icon}</span>
+      <span style={{ fontSize:'10px', fontWeight:600, color:SNOW.muted, textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:FONT.display }}>{title}</span>
     </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
-    }}>
-      <div style={{
-        width: '5px', height: '5px',
-        borderRadius: '50%',
-        background: 'var(--accent)',
-        flexShrink: 0,
-      }} />
-      <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
-      }}>{children}</span>
-      <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
-      }} />
+    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
+      <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:SNOW.red, flexShrink:0 }} />
+      <span style={{ fontSize:'10px', fontWeight:600, color:SNOW.muted, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:FONT.display }}>{children}</span>
+      <div style={{ flex:1, height:'1px', background:`linear-gradient(90deg, ${SNOW.border}, transparent)` }} />
     </div>
   )
 }

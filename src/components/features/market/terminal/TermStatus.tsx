@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { SNOW, FONT, GLASS } from '@/lib/design/snow'
 
-/**
- * Header Terminal : titre + badge OPEN/CLOSED + horloge live + last update.
- * L'horloge tourne en temps réel pour le feel "Bloomberg en direct".
- */
 export function TermStatus({
   status, lastUpdate,
 }: {
@@ -19,79 +16,33 @@ export function TermStatus({
     return () => clearInterval(id)
   }, [])
 
-  const isOpen = status === 'open'
-
   return (
     <div style={{
+      ...GLASS.card,
+      padding: '16px 20px',
+      boxShadow: `${GLASS.card.boxShadow as string}, 0 0 0 0.5px rgba(255,255,255,0.7)`,
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: '16px',
       flexWrap: 'wrap',
     }}>
-      {/* Left : title + market status */}
       <div>
-        <p style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          margin: '0 0 4px',
-          fontFamily: 'var(--font-display)',
-        }}>Market</p>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap',
-        }}>
-          <h1 style={{
-            fontSize: '26px',
-            fontWeight: 600,
-            color: 'var(--ink)',
-            fontFamily: 'var(--font-display)',
-            letterSpacing: '-0.5px',
-            margin: 0,
-          }}>Terminal</h1>
-
+        <p style={{ fontSize:'10px', color:SNOW.mutedLight, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 4px', fontFamily:FONT.display }}>Market</p>
+        <div style={{ display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
+          <h1 style={{ fontSize:'26px', fontWeight:600, color:SNOW.ink, fontFamily:FONT.display, letterSpacing:'-0.5px', margin:0 }}>Terminal</h1>
           <StatusBadge status={status} />
         </div>
       </div>
 
-      {/* Right : live clock + last update */}
-      <div style={{
-        textAlign: 'right',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-      }}>
-        <div style={{
-          fontSize: '20px',
-          fontWeight: 500,
-          color: 'var(--ink)',
-          fontFamily: 'var(--font-data, var(--font-display))',
-          letterSpacing: '-0.3px',
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.1,
-        }}>
+      <div style={{ textAlign:'right', display:'flex', flexDirection:'column', gap:'4px' }}>
+        <div style={{ fontSize:'20px', fontWeight:500, color:SNOW.ink, fontFamily:FONT.data, letterSpacing:'-0.3px', fontVariantNumeric:'tabular-nums', lineHeight:1.1 }}>
           {formatClock(now)}
-          <span style={{
-            fontSize: '11px',
-            color: 'var(--ink-muted)',
-            marginLeft: '6px',
-            fontWeight: 400,
-            letterSpacing: '0.05em',
-          }}>{getTimezoneAbbr(now)}</span>
+          <span style={{ fontSize:'11px', color:SNOW.mutedLight, marginLeft:'6px', fontWeight:400, letterSpacing:'0.05em' }}>{getTimezoneAbbr(now)}</span>
         </div>
-
-        <div style={{
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
-        }}>
+        <div style={{ fontSize:'10px', color:SNOW.mutedLight, fontFamily:FONT.display }}>
           {lastUpdate
-            ? <>Dernière mise à jour · <span style={{ color: 'var(--ink)' }}>{formatRelative(lastUpdate, now)}</span></>
+            ? <>Dernière mise à jour · <span style={{ color:SNOW.ink }}>{formatRelative(lastUpdate, now)}</span></>
             : '—'}
         </div>
       </div>
@@ -101,43 +52,20 @@ export function TermStatus({
 
 function StatusBadge({ status }: { status: 'open' | 'closed' }) {
   const isOpen = status === 'open'
-  const dotColor = isOpen ? 'var(--perf-up)' : 'var(--ink-muted)'
-  const bg       = isOpen ? 'var(--perf-up-soft)' : 'var(--surface)'
-  const border   = isOpen ? 'var(--green-border)' : 'var(--border)'
-  const text     = isOpen ? 'var(--perf-up)' : 'var(--ink-muted)'
+  const dot    = isOpen ? SNOW.greenAccent : SNOW.mutedLight
+  const bg     = isOpen ? 'rgba(38,166,91,.10)' : SNOW.surface
+  const border = isOpen ? 'rgba(38,166,91,.28)' : SNOW.border
+  const text   = isOpen ? SNOW.greenAccent : SNOW.mutedLight
 
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '4px 10px',
-      background: bg,
-      border: `1px solid ${border}`,
-      borderRadius: '6px',
-    }}>
-      <div style={{
-        width: '7px',
-        height: '7px',
-        borderRadius: '50%',
-        background: dotColor,
-        animation: isOpen ? 'pulse-status 2s ease-in-out infinite' : 'none',
-      }} />
-      <span style={{
-        fontSize: '10px',
-        fontWeight: 600,
-        color: text,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        fontFamily: 'var(--font-display)',
-      }}>
+    <div style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'4px 10px', background:bg, border:`1px solid ${border}`, borderRadius:'6px' }}>
+      <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:dot, animation:isOpen?'pulse-status 2s ease-in-out infinite':'none' }} />
+      <span style={{ fontSize:'10px', fontWeight:700, color:text, textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:FONT.display }}>
         {isOpen ? 'Open' : 'Closed'}
       </span>
       <style>{`
-        @keyframes pulse-status {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%      { opacity: 0.5; transform: scale(1.3); }
-        }
+        @keyframes pulse-status { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+        @media (prefers-reduced-motion: reduce){ @keyframes pulse-status { 0%,100%{opacity:1;transform:none} } }
       `}</style>
     </div>
   )
@@ -151,11 +79,8 @@ function formatClock(d: Date): string {
 }
 
 function getTimezoneAbbr(d: Date): string {
-  // Intl gives a short timezone label, fallback to UTC offset
   try {
-    const formatted = new Intl.DateTimeFormat('en-US', {
-      timeZoneName: 'short',
-    }).formatToParts(d)
+    const formatted = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(d)
     const tz = formatted.find(p => p.type === 'timeZoneName')?.value
     if (tz) return tz
   } catch {}

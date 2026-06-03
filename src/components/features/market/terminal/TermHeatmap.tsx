@@ -2,18 +2,14 @@
 
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts'
 import type { HeatmapNode } from '@/lib/useMarketData'
+import { SNOW, FONT, GLASS } from '@/lib/design/snow'
 
-/**
- * Heatmap des sets actifs : taille = volume (€), couleur = variation 24h.
- * Façon Bloomberg "market overview" qui montre la santé globale en un coup d'œil.
- */
 export function TermHeatmap({ nodes }: { nodes: HeatmapNode[] }) {
   if (nodes.length === 0) return null
 
-  // Map nodes to Recharts treemap format
   const data = nodes.map(n => ({
     name: n.set_name,
-    size: Math.max(n.volume, 1),  // avoid 0-size rectangles
+    size: Math.max(n.volume, 1),
     volume: n.volume,
     variation: n.variation_24h,
     cards: n.cards_count,
@@ -24,38 +20,19 @@ export function TermHeatmap({ nodes }: { nodes: HeatmapNode[] }) {
     <div>
       <SectionTitle>Heatmap des sets · activité 24h</SectionTitle>
 
-      <div style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '16px',
-      }}>
-        {/* Variation legend */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-          marginBottom: '12px',
-          fontSize: '10px',
-          color: 'var(--ink-muted)',
-          fontFamily: 'var(--font-display)',
-        }}>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-            Couleur =
-          </span>
+      <div style={{ ...GLASS.card, padding:'16px', boxShadow:`${GLASS.card.boxShadow as string}, 0 0 0 0.5px rgba(255,255,255,0.7)` }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'14px', marginBottom:'12px', fontSize:'10px', color:SNOW.muted, fontFamily:FONT.display, flexWrap:'wrap' }}>
+          <span style={{ textTransform:'uppercase', letterSpacing:'0.05em', fontWeight:600 }}>Couleur =</span>
           <VariationScale />
-          <span style={{ marginLeft: 'auto', fontStyle: 'italic' }}>
-            Taille = volume du set
-          </span>
+          <span style={{ marginLeft:'auto', fontStyle:'italic', color:SNOW.mutedLight }}>Taille = volume du set</span>
         </div>
 
-        {/* Treemap */}
-        <div style={{ width: '100%', height: '320px' }}>
+        <div style={{ width:'100%', height:'320px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
               data={data as any}
               dataKey="size"
-              stroke="var(--surface)"
+              stroke="#FFFFFF"
               content={<HeatmapNode_ />}
               isAnimationActive={true}
               animationDuration={400}
@@ -65,14 +42,7 @@ export function TermHeatmap({ nodes }: { nodes: HeatmapNode[] }) {
           </ResponsiveContainer>
         </div>
 
-        {/* Footer hint */}
-        <div style={{
-          marginTop: '10px',
-          fontSize: '10px',
-          color: 'var(--ink-faint)',
-          fontFamily: 'var(--font-display)',
-          textAlign: 'right',
-        }}>
+        <div style={{ marginTop:'10px', fontSize:'10px', color:SNOW.mutedExtraLight, fontFamily:FONT.display, textAlign:'right' }}>
           {data.length} sets · top par activité
         </div>
       </div>
@@ -80,54 +50,31 @@ export function TermHeatmap({ nodes }: { nodes: HeatmapNode[] }) {
   )
 }
 
-/* Custom rectangle renderer */
 function HeatmapNode_(props: any) {
   const { x, y, width, height, name, fill, variation } = props
   if (width <= 0 || height <= 0) return null
 
-  const showName = width > 60 && height > 28
-  const showVar  = width > 80 && height > 44
-
-  // Adaptive text color based on background
+  const showName = width > 54 && height > 26
+  const showVar  = width > 76 && height > 42
   const textColor = isLightColor(fill) ? '#1D1D1F' : '#FFFFFF'
+  const shadow = isLightColor(fill) ? 'none' : '0 1px 2px rgba(0,0,0,.35)'
   const isUp = variation >= 0
 
   return (
     <g>
       <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        style={{
-          fill: fill || '#E5E5EA',
-          stroke: 'var(--surface)',
-          strokeWidth: 1.5,
-        }}
+        x={x} y={y} width={width} height={height} rx={3}
+        style={{ fill: fill || '#E5E5EA', stroke:'#FFFFFF', strokeWidth:2 }}
       />
       {showName && (
-        <text
-          x={x + 8}
-          y={y + 18}
-          fill={textColor}
-          fontSize="11"
-          fontWeight="600"
-          fontFamily="var(--font-display)"
-          style={{ pointerEvents: 'none' }}
-        >
+        <text x={x + 9} y={y + 19} fill={textColor} fontSize="11.5" fontWeight="700" fontFamily={FONT.display}
+          style={{ pointerEvents:'none', textShadow:shadow, letterSpacing:'-0.2px' }}>
           {truncate(name, Math.max(6, Math.floor(width / 7)))}
         </text>
       )}
       {showVar && variation !== 0 && (
-        <text
-          x={x + 8}
-          y={y + 34}
-          fill={textColor}
-          fontSize="10"
-          fontFamily="var(--font-data, var(--font-display))"
-          opacity={0.85}
-          style={{ pointerEvents: 'none' }}
-        >
+        <text x={x + 9} y={y + 35} fill={textColor} fontSize="10" fontWeight="600" fontFamily={FONT.data}
+          opacity={0.92} style={{ pointerEvents:'none', textShadow:shadow }}>
           {isUp ? '▲' : '▼'} {variation >= 0 ? '+' : ''}{Number(variation ?? 0).toFixed(1)}%
         </text>
       )}
@@ -139,35 +86,16 @@ function HeatmapTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload
   if (!d || !d.name) return null
-
   const isUp = d.variation >= 0
-  const trendColor = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
+  const trendColor = isUp ? SNOW.greenAccent : SNOW.red
 
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border-strong)',
-      borderRadius: '8px',
-      padding: '10px 14px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-      fontFamily: 'var(--font-display)',
-      minWidth: '180px',
-    }}>
-      <div style={{
-        fontSize: '12px',
-        fontWeight: 600,
-        color: 'var(--ink)',
-        marginBottom: '6px',
-      }}>{d.name}</div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-        <Row label="Volume"   value={formatEUR(d.volume)} />
-        <Row label="Cartes"   value={`${d.cards}`} />
-        <Row
-          label="Variation 24h"
-          value={`${d.variation >= 0 ? '+' : ''}${Number(d.variation ?? 0).toFixed(2)}%`}
-          valueColor={trendColor}
-        />
+    <div style={{ ...GLASS.cardElevated, padding:'10px 14px', fontFamily:FONT.display, minWidth:'180px' }}>
+      <div style={{ fontSize:'12px', fontWeight:700, color:SNOW.ink, marginBottom:'6px' }}>{d.name}</div>
+      <div style={{ display:'flex', flexDirection:'column', gap:'3px' }}>
+        <Row label="Volume" value={formatEUR(d.volume)} />
+        <Row label="Cartes" value={`${d.cards}`} />
+        <Row label="Variation 24h" value={`${d.variation >= 0 ? '+' : ''}${Number(d.variation ?? 0).toFixed(2)}%`} valueColor={trendColor} />
       </div>
     </div>
   )
@@ -175,42 +103,27 @@ function HeatmapTooltip({ active, payload }: any) {
 
 function Row({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-      gap: '12px',
-      fontSize: '11px',
-    }}>
-      <span style={{ color: 'var(--ink-muted)' }}>{label}</span>
-      <span style={{
-        fontWeight: 500,
-        color: valueColor || 'var(--ink)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-      }}>{value}</span>
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:'12px', fontSize:'11px' }}>
+      <span style={{ color:SNOW.muted }}>{label}</span>
+      <span style={{ fontWeight:600, color:valueColor || SNOW.ink, fontFamily:FONT.data }}>{value}</span>
     </div>
   )
 }
 
 function VariationScale() {
   const stops = [
-    { v: '-10%+', color: '#E03020' },
-    { v: '-3%',   color: '#E87F73' },
-    { v: '0%',    color: '#E5E5EA' },
-    { v: '+3%',   color: '#A8DCC4' },
-    { v: '+10%+', color: '#1D9E75' },
+    { v:'-10%+', color:'#E03020' },
+    { v:'-3%',   color:'#E87F73' },
+    { v:'0%',    color:'#E5E5EA' },
+    { v:'+3%',   color:'#A8DCC4' },
+    { v:'+10%+', color:'#1D9E75' },
   ]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
       {stops.map((s, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-          <div style={{
-            width: '10px',
-            height: '10px',
-            borderRadius: '2px',
-            background: s.color,
-          }} />
-          <span style={{ fontSize: '10px' }}>{s.v}</span>
+        <div key={i} style={{ display:'flex', alignItems:'center', gap:'3px' }}>
+          <div style={{ width:'10px', height:'10px', borderRadius:'2px', background:s.color }} />
+          <span style={{ fontSize:'10px' }}>{s.v}</span>
         </div>
       ))}
     </div>
@@ -218,40 +131,22 @@ function VariationScale() {
 }
 
 function variationToColor(v: number): string {
-  // Variation 24h → couleur (clamp -15% / +15%)
   const clamped = Math.max(-15, Math.min(15, v))
-  if (clamped >= 8)   return '#1D9E75'  // perf-up vif
+  if (clamped >= 8)   return '#1D9E75'
   if (clamped >= 3)   return '#5BC495'
   if (clamped >= 1)   return '#A8DCC4'
-  if (clamped >= -1)  return '#E5E5EA'  // neutre
+  if (clamped >= -1)  return '#D9D9DE'
   if (clamped >= -3)  return '#F5C2BB'
   if (clamped >= -8)  return '#E87F73'
-  return '#E03020'  // perf-down vif
+  return '#E03020'
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      marginBottom: '12px',
-    }}>
-      <div style={{
-        width: '5px', height: '5px',
-        borderRadius: '50%',
-        background: 'var(--accent)',
-        flexShrink: 0,
-      }} />
-      <span style={{
-        fontSize: '10px', fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        fontFamily: 'var(--font-display)',
-      }}>{children}</span>
-      <div style={{
-        flex: 1, height: '1px',
-        background: 'linear-gradient(90deg, var(--border), transparent)',
-      }} />
+    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'12px' }}>
+      <div style={{ width:'5px', height:'5px', borderRadius:'50%', background:SNOW.red, flexShrink:0 }} />
+      <span style={{ fontSize:'10px', fontWeight:600, color:SNOW.muted, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:FONT.display }}>{children}</span>
+      <div style={{ flex:1, height:'1px', background:`linear-gradient(90deg, ${SNOW.border}, transparent)` }} />
     </div>
   )
 }
@@ -270,8 +165,5 @@ function truncate(s: string, n: number): string {
 }
 
 function formatEUR(v: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency', currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(v)
+  return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(v)
 }

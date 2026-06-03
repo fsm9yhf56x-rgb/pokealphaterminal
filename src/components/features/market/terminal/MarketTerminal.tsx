@@ -28,8 +28,18 @@ export function MarketTerminal({ isPro = false }: { isPro?: boolean }) {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
 
-      {/* TICKER : pleine largeur, scroll horizontal */}
-      <TermTicker items={data.ticker} />
+      {/* TICKER : sticky sous le header global (HEADER_H = 83px) */}
+      <div style={{
+        position: 'sticky',
+        top: '83px',
+        zIndex: 40,
+        margin: '-32px -36px 0',
+        padding: '12px 36px',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }}>
+        <TermTicker items={data.ticker} />
+      </div>
 
       {/* CONTENT WRAPPER */}
       <div style={{

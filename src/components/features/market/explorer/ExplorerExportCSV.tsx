@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ExplorerResult } from '@/lib/useExplorerSearch'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 /**
  * Export CSV des résultats actuels (page courante).
@@ -39,53 +40,22 @@ export function ExplorerExportCSV({
   }
 
   return (
-    <button
+    <GlassButton
+      size="sm"
       onClick={handleExport}
       disabled={disabled}
       title={disabled ? 'Aucun résultat à exporter' : `Exporter ${results.length} résultats en CSV`}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px',
-        padding: '7px 12px',
-        background: 'var(--surface)',
-        border: '1px solid var(--border-strong)',
-        borderRadius: '8px',
-        color: disabled ? 'var(--ink-faint)' : 'var(--ink-muted)',
-        fontSize: '11px',
-        fontWeight: 500,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontFamily: 'var(--font-display)',
-        transition: 'all 0.12s',
-        opacity: disabled ? 0.5 : 1,
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = 'var(--ink)'
-          e.currentTarget.style.color = 'var(--ink)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = 'var(--border-strong)'
-          e.currentTarget.style.color = 'var(--ink-muted)'
-        }
-      }}
-    >
-      <DownloadIcon />
-      {exporting ? 'Export…' : 'Exporter CSV'}
-      {results.length > 0 && (
+      icon={<DownloadIcon />}
+      iconRight={results.length > 0 ? (
         <span style={{
-          padding: '1px 5px',
-          background: 'var(--border)',
-          color: 'var(--ink-muted)',
-          fontSize: '9px',
-          fontWeight: 600,
-          borderRadius: '3px',
+          padding: '1px 5px', background: 'var(--border)', color: 'var(--ink-muted)',
+          fontSize: '9px', fontWeight: 600, borderRadius: '3px',
           fontFamily: 'var(--font-data, var(--font-display))',
         }}>{results.length}</span>
-      )}
-    </button>
+      ) : undefined}
+    >
+      {exporting ? 'Export…' : 'Exporter CSV'}
+    </GlassButton>
   )
 }
 

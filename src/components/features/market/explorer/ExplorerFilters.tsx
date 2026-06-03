@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ExplorerFilters as TFilters, Lang } from '@/lib/useExplorerSearch'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 /**
  * Panel filtres avancés (collapsible, ouvert/fermé par parent).
@@ -184,29 +185,7 @@ export function ExplorerFilters({
           }}>
             Filtres actifs · les résultats sont restreints
           </span>
-          <button
-            onClick={resetFilters}
-            style={{
-              padding: '6px 12px',
-              background: 'transparent',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '8px',
-              color: 'var(--ink-muted)',
-              fontSize: '11px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-display)',
-              transition: 'all 0.12s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent)'
-              e.currentTarget.style.color = 'var(--accent)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-strong)'
-              e.currentTarget.style.color = 'var(--ink-muted)'
-            }}
-          >Réinitialiser</button>
+          <GlassButton size="sm" onClick={resetFilters}>Réinitialiser</GlassButton>
         </div>
       )}
     </div>
@@ -247,30 +226,40 @@ function SegmentedControl({
   return (
     <div style={{
       display: 'flex',
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '8px',
-      overflow: 'hidden',
+      gap: '4px',
+      padding: '3px',
+      background: 'rgba(255,255,255,0.5)',
+      backdropFilter: 'blur(18px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+      border: '0.5px solid rgba(255,255,255,0.6)',
+      borderRadius: '999px',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
     }}>
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          style={{
-            flex: 1,
-            padding: '7px',
-            background: value === opt.value ? 'var(--ink)' : 'transparent',
-            color: value === opt.value ? 'var(--surface)' : 'var(--ink-muted)',
-            border: 'none',
-            borderLeft: i > 0 ? '1px solid var(--border)' : 'none',
-            fontSize: '11px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            fontFamily: 'var(--font-display)',
-            transition: 'all 0.12s',
-          }}
-        >{opt.label}</button>
-      ))}
+      {options.map((opt) => {
+        const on = value === opt.value
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            style={{
+              flex: 1,
+              padding: '6px 8px',
+              borderRadius: '999px',
+              border: 'none',
+              background: on
+                ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)'
+                : 'transparent',
+              color: on ? 'var(--ink)' : 'var(--ink-muted)',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-display)',
+              transition: 'all 0.18s cubic-bezier(.2,.8,.2,1)',
+              boxShadow: on ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
+            }}
+          >{opt.label}</button>
+        )
+      })}
     </div>
   )
 }

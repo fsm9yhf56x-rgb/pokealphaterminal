@@ -8,12 +8,12 @@ import { Ticker }  from '@/components/ui/Ticker'
 import type { TickerItem } from '@/components/ui/Ticker'
 
 const TICKER: TickerItem[] = [
-  { name: 'Charizard Alt Art', price: '€ 920',   change: 53,  type: 'fire'     },
-  { name: 'Gengar VMAX',       price: '€ 340',   change: 18,  type: 'psychic'  },
-  { name: 'Mewtwo V',          price: '€ 280',   change: 12,  type: 'psychic'  },
-  { name: 'Umbreon VMAX',      price: '€ 880',   change: 24,  type: 'dark'     },
-  { name: 'Blastoise Base',    price: '€ 620',   change: -4,  type: 'water'    },
-  { name: 'Pikachu Illustr.',  price: '€ 4,200', change: 8,   type: 'electric' },
+  { name: 'Charizard Alt Art', price: 920,  changePct: 5.3,  type: 'fire'     },
+  { name: 'Gengar VMAX',       price: 340,  changePct: 1.8,  type: 'psychic'  },
+  { name: 'Mewtwo V',          price: 280,  changePct: 1.2,  type: 'psychic'  },
+  { name: 'Umbreon VMAX',      price: 880,  changePct: 2.4,  type: 'dark'     },
+  { name: 'Blastoise Base',    price: 620,  changePct: -0.4, type: 'water'    },
+  { name: 'Pikachu Illustr.',  price: 4200, changePct: 0.8,  type: 'electric' },
 ]
 
 const PALETTE = [

@@ -320,7 +320,7 @@ export function Holdings() {
         : (sid.includes('-shadowless') && !sid.includes('-shadowless-ns')) ? 'Unlimited_Holofoil' : null
       const varKey = varHint ? slug + '|' + varHint + '|' + c.number : ''
       const slugKey = slug + '|' + c.number
-      const nameKey = c.name.toLowerCase()
+      const nameKey = String(c.name ?? '').toLowerCase()
       let priceUSD = (varKey && priceMap[varKey]?.top) || priceMap[slugKey]?.top || priceMap[nameKey]?.top
       // 1st Edition: floor against Shadowless and check 1st-Ed eBay variant key
       if ((sid.includes('-1st') || sid.includes('-shadowless-ns')) && slug) {
@@ -379,7 +379,7 @@ export function Holdings() {
     }
     // Fallback by name
     if (!priceUSD) {
-      const nameKey = card.name.toLowerCase()
+      const nameKey = String(card.name ?? '').toLowerCase()
       if (priceMap[nameKey]?.top) priceUSD = priceMap[nameKey].top!
     }
     // 1st Edition floor
@@ -928,7 +928,7 @@ export function Holdings() {
   const binderFilteredFinal = binderSorted.filter(c=>{
     if(binderFilter==='graded' && !c.graded) return false
     if(binderFilter==='raw' && c.graded) return false
-    if(setSearch && !c.name.toLowerCase().includes(setSearch.toLowerCase()) && !c.set.toLowerCase().includes(setSearch.toLowerCase())) return false
+    if(setSearch && !String(c.name ?? '').toLowerCase().includes(setSearch.toLowerCase()) && !String(c.set ?? '').toLowerCase().includes(setSearch.toLowerCase())) return false
     return true
   })
   const buildGridItems = (): GridItem[] => {
@@ -1589,7 +1589,7 @@ export function Holdings() {
               {(()=>{
                 const available = portfolio.filter(c=>!showcase.find(sc=>sc.id===c.id))
                 const filtered = available.filter(c=>{
-                  const matchSearch = !vitrineSearch || c.name.toLowerCase().includes(vitrineSearch.toLowerCase()) || c.set.toLowerCase().includes(vitrineSearch.toLowerCase())
+                  const matchSearch = !vitrineSearch || String(c.name ?? '').toLowerCase().includes(vitrineSearch.toLowerCase()) || String(c.set ?? '').toLowerCase().includes(vitrineSearch.toLowerCase())
                   const RARE_SET = ['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare']
                   const matchFilter = vitrineFilter==='all'
                     || vitrineFilter==='top'
@@ -2266,7 +2266,7 @@ export function Holdings() {
                       const raw=[...new Set(portfolio.map(c=>c.set))]
                       const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw
                       return ordered
-                    })().filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
+                    })().filter(n=>String(n ?? '').toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
                       const setCards=portfolio.filter(c=>c.set===setName)
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
@@ -2573,7 +2573,7 @@ export function Holdings() {
                           })()}
                           </div>}
                           {/* Séparateur */}
-                          {si<(()=>{const raw=[...new Set(portfolio.map(c=>c.set))];const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw;return ordered})().filter(n=>n.toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
+                          {si<(()=>{const raw=[...new Set(portfolio.map(c=>c.set))];const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw;return ordered})().filter(n=>String(n ?? '').toLowerCase().includes(setSearch.toLowerCase())).length-1&&<div style={{ height:'1px', background:'#F5F5F7', marginTop:collapsedSets.has(setName)?'8px':'20px' }}/>}
                         </div>
                       )
                     })}

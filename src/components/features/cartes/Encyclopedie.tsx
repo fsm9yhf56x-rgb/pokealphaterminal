@@ -252,8 +252,8 @@ export function Encyclopedie() {
     }
     const newCard: PortfolioCard = {
       id: 'enc_'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
-      name: card.name, set: card.setName, setId: card.setId,
-      number: card.localId, rarity: card.rarity||'',
+      name: card.name || 'Carte', set: card.setName || '', setId: card.setId || '',
+      number: card.localId || '', rarity: card.rarity||'',
       type: 'fire', lang: lang, condition: 'Raw', graded: false,
       buyPrice: 0, curPrice: 0, qty: 1, year: card.year,
       image: card.image || card.enImage || '',
@@ -271,7 +271,7 @@ export function Encyclopedie() {
       const { error } = await supabase.from('portfolio_cards').insert({
         user_id: user.id,
         name: newCard.name,
-        set_name: newCard.set,
+        set_name: newCard.set || '',
         set_id: newCard.setId,
         card_number: newCard.number,
         rarity: newCard.rarity,

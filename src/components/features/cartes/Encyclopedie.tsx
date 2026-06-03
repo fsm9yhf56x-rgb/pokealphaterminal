@@ -1142,9 +1142,9 @@ export function Encyclopedie() {
                   const ct = allCards.filter(c=>c.setId===sid).length
                   return (
                     <button key={sid} onClick={()=>{setFilSet(sid);setFilEra('all');setPage(0)}}
-                      style={{ flexShrink:0, padding:'5px 12px', borderRadius:'99px', border:'1px solid #E5E5EA', background:'#fff', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px' }}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.color='#fff'}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.color='#48484A'}}>
+                      style={{ flexShrink:0, padding:'6px 13px', borderRadius:'99px', border:'1px solid rgba(0,0,0,0.05)', background:'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.7)' }}
+                      onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.85)';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.5)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.7)'}}>
                       {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                       {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?<><span style={{ color:'#2E9E6A', fontWeight:700 }}>{ow}</span>/{ct}</>:ct })()}</span>
                     </button>

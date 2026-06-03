@@ -1019,9 +1019,12 @@ export function Encyclopedie() {
           grid-template-columns: repeat(3, 1fr);
           gap: 2px;
           padding: 4px;
-          background: rgba(0,0,0,0.04);
+          background: rgba(255,255,255,0.45);
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          border: 1px solid rgba(255,255,255,0.5);
           border-radius: 12px;
-          box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
         }
         .tab-segment {
           padding: 8px 4px;
@@ -1042,11 +1045,10 @@ export function Encyclopedie() {
           background: rgba(255,255,255,0.4);
         }
         .tab-segment.active {
-          background: #FFFFFF;
+          background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%);
           color: #1D1D1F;
           box-shadow:
-            0 1px 3px rgba(0,0,0,0.08),
-            0 1px 2px rgba(0,0,0,0.04),
+            0 2px 8px rgba(0,0,0,0.07),
             inset 0 1px 0 rgba(255,255,255,0.95);
           font-weight: 700;
         }

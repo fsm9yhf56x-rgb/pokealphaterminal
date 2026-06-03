@@ -1,10 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 /**
- * Overlay de gate Pro affiché sous le grid de signaux.
- * Encourage la conversion en montrant clairement la valeur cachée.
+ * Overlay de gate Pro affiché sous le grid de signaux — glass v7 clair.
+ * L'or reste en accent (badge + compteur) pour la notion premium, sans bloc dark.
  */
 export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
   const router = useRouter()
@@ -12,20 +13,22 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
   return (
     <div style={{
       position: 'relative',
-      background: 'linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%)',
-      borderRadius: '14px',
+      background: 'rgba(255,255,255,0.62)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+      borderRadius: '18px',
+      border: 'none',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
       padding: '32px 28px',
       overflow: 'hidden',
-      color: 'var(--surface)',
+      color: '#1D1D1F',
     }}>
-      {/* Decorative gold dots pattern */}
+      {/* Bokeh doux or/rouge (accent premium discret) */}
       <div style={{
         position: 'absolute',
-        top: 0, right: 0,
-        width: '40%',
-        height: '100%',
-        backgroundImage: 'radial-gradient(circle at 70% 30%, rgba(212,175,55,0.18) 0%, transparent 50%)',
+        inset: 0,
         pointerEvents: 'none',
+        backgroundImage: 'radial-gradient(ellipse at 82% 20%, rgba(201,162,39,0.10) 0%, transparent 50%), radial-gradient(ellipse at 15% 90%, rgba(224,48,32,0.05) 0%, transparent 45%)',
       }} />
 
       {/* Sparkle accent top-right */}
@@ -34,12 +37,13 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
         top: '20px',
         right: '24px',
         fontSize: '24px',
-        opacity: 0.4,
+        color: '#C9A227',
+        opacity: 0.5,
         animation: 'sparkle 3s ease-in-out infinite',
       }}>◆</div>
       <style>{`
         @keyframes sparkle {
-          0%, 100% { opacity: 0.3; transform: scale(1) rotate(0deg); }
+          0%, 100% { opacity: 0.35; transform: scale(1) rotate(0deg); }
           50%      { opacity: 0.8; transform: scale(1.1) rotate(15deg); }
         }
       `}</style>
@@ -60,19 +64,19 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
             alignItems: 'center',
             gap: '6px',
             padding: '4px 10px',
-            background: 'rgba(212, 175, 55, 0.16)',
-            border: '1px solid rgba(212, 175, 55, 0.4)',
-            borderRadius: '6px',
+            background: 'rgba(201, 162, 39, 0.12)',
+            border: '0.5px solid rgba(201, 162, 39, 0.35)',
+            borderRadius: '999px',
             fontSize: '10px',
             fontWeight: 700,
-            color: '#E8C56A',
+            color: '#8A6500',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             fontFamily: 'var(--font-display)',
             marginBottom: '12px',
           }}>
             <span>◆</span>
-            Pro · Spreads & Signals
+            Pro · Spreads &amp; Signals
           </div>
 
           <div style={{
@@ -81,18 +85,19 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
             letterSpacing: '-0.4px',
             marginBottom: '6px',
             fontFamily: 'var(--font-display)',
+            color: '#1D1D1F',
           }}>
-            <span style={{ color: '#E8C56A' }}>{hiddenCount.toLocaleString('fr-FR')} signaux</span> sont cachés
+            <span style={{ color: '#B8860B' }}>{hiddenCount.toLocaleString('fr-FR')} signaux</span> sont cachés
           </div>
 
           <div style={{
             fontSize: '13px',
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: '#48484A',
             lineHeight: 1.5,
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-body)',
             marginBottom: '4px',
           }}>
-            Débloquez tous les spreads en passant à Pro. Plus l'accès anticipé aux Alpha Signals (sous-cotation, momentum, set heat — bientôt disponibles).
+            Débloquez tous les spreads en passant à Pro. Plus l&apos;accès anticipé aux Alpha Signals (sous-cotation, momentum, set heat — bientôt disponibles).
           </div>
         </div>
 
@@ -104,38 +109,13 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
           gap: '8px',
           flexShrink: 0,
         }}>
-          <button
-            onClick={() => router.push('/pricing')}
-            style={{
-              padding: '12px 22px',
-              background: 'linear-gradient(135deg, #E8C56A 0%, #D4AF37 100%)',
-              color: '#1D1D1F',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-display)',
-              letterSpacing: '0.02em',
-              boxShadow: '0 4px 16px rgba(212, 175, 55, 0.3)',
-              transition: 'all 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 22px rgba(212, 175, 55, 0.45)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(212, 175, 55, 0.3)'
-            }}
-          >
+          <GlassButton size="lg" onClick={() => router.push('/pricing')}>
             Découvrir Pro
-          </button>
+          </GlassButton>
 
           <div style={{
             fontSize: '10px',
-            color: 'rgba(255, 255, 255, 0.5)',
+            color: '#86868B',
             fontFamily: 'var(--font-display)',
           }}>
             Dès 9,99€/mois · Sans engagement
@@ -143,7 +123,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
         </div>
       </div>
 
-      {/* Features chips */}
+      {/* Features chips — glass clair */}
       <div style={{
         position: 'relative',
         zIndex: 1,
@@ -152,7 +132,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
         gap: '8px',
         marginTop: '20px',
         paddingTop: '20px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        borderTop: '1px solid rgba(0, 0, 0, 0.06)',
       }}>
         <Chip>Tous les spreads S/A/B</Chip>
         <Chip>Alertes temps réel</Chip>
@@ -167,14 +147,15 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span style={{
-      padding: '5px 10px',
-      background: 'rgba(255, 255, 255, 0.08)',
-      border: '1px solid rgba(255, 255, 255, 0.12)',
-      borderRadius: '6px',
+      padding: '5px 12px',
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 100%)',
+      border: '0.5px solid rgba(255,255,255,0.6)',
+      borderRadius: '999px',
       fontSize: '10px',
-      fontWeight: 500,
-      color: 'rgba(255, 255, 255, 0.85)',
+      fontWeight: 600,
+      color: '#3A3A3C',
       fontFamily: 'var(--font-display)',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
     }}>{children}</span>
   )
 }

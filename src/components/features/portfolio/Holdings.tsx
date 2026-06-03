@@ -753,7 +753,7 @@ export function Holdings() {
         setFullSetLoading(false)
       })
       .catch(() => setFullSetLoading(false))
-  }, [binderSet, liveSets.length])
+  }, [binderSet])
 
   // -- Glitter: IntersectionObserver (perf) --
   const glitterObsRef = useRef<IntersectionObserver|null>(null)
@@ -934,6 +934,7 @@ export function Holdings() {
   })
   const buildGridItems = (): GridItem[] => {
     if(binderSort!=='number'||!binderSet||binderSet==='__all__'||fullSetCards.length===0||binderFilter!=='all'||setSearch){
+      if (typeof window !== 'undefined') console.log('[KC4] vue Par séries — owned cards:', binderFilteredFinal.map(c=>({name:c.name, image:c.image, setId:c.setId, num:c.number})))
       return binderFilteredFinal.map(c=>({type:'owned' as const,card:c}))
     }
     const ownedByNum = new Map<string,CardItem[]>()
@@ -960,6 +961,7 @@ export function Holdings() {
     return result
   }
   const gridItems = buildGridItems()
+  if (typeof window !== 'undefined' && binderSet && binderSet !== '__all__') { const o = gridItems.filter(g=>g.type==='owned').length; console.log('[KC2] binderSet=', binderSet, '| fullSetCards=', fullSetCards.length, '| owned in grid=', o, '| total grid=', gridItems.length, '| portfolio.set=', portfolio.filter(c=>c.set===binderSet).map(c=>({n:c.number,s:c.set}))) }
   const pageItems = gridItems.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
   const phantomCount = 0
   const binderPages = Math.max(1,Math.ceil(gridItems.length/slotsPer))
@@ -2286,11 +2288,12 @@ export function Holdings() {
                       const shelfGhosts = shelfSetCards[setName] || []
                       const cardImgs: GridItem[] = (binderSort==='number' && shelfGhosts.length>0 && binderFilter==='all' && !setSearch)
                         ? (()=>{
+                            const normN = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
                             const ownedMap = new Map<string,CardItem>()
-                            setCards.forEach(c => ownedMap.set(c.number, c))
+                            setCards.forEach(c => ownedMap.set(normN(c.number), c))
                             return shelfGhosts.map(fc => {
-                              const owned = ownedMap.get(fc.localId||'')
-                              if(owned) return { type:'owned' as const, card:owned }
+                              const owned = ownedMap.get(normN(fc.localId||''))
+                              if(owned) return { type:'owned' as const, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '' } }
                               return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:cleanImageUrl(fc.image)||'', rarity:fc.rarity||'' }
                             })
                           })()
@@ -2646,6 +2649,7 @@ export function Holdings() {
                         )
                       }
                       const card=item.card
+                      if (typeof window !== 'undefined') console.log('[KC3] OWNED render:', card.name, '| image=', card.image)
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0

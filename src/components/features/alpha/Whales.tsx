@@ -144,6 +144,17 @@ export function Whales({ isPro = false }: { isPro?: boolean }) {
   const filteredFeed = selected ? WHALE_FEED.filter(f=>f.handle === sel?.handle) : WHALE_FEED
   const feedKey = selected ?? 'all'
 
+  const topCards = useMemo(() => {
+    if (!sel) return [] as { card:string; total:number; count:number }[]
+    const agg: Record<string,{card:string;total:number;count:number}> = {}
+    WHALE_FEED.filter(m=>m.handle===sel.handle && m.action==='Acheté').forEach(m=>{
+      const key = m.card.replace(/\s×\d+$/,'')
+      if (!agg[key]) agg[key] = { card:key, total:0, count:0 }
+      agg[key].total += m.amount; agg[key].count += 1
+    })
+    return Object.values(agg).sort((a,b)=>b.total-a.total).slice(0,3)
+  }, [selected])
+
   const globalStats = useMemo(() => {
     const buys = WHALE_FEED.filter(m=>m.action==='Acheté')
     const sells = WHALE_FEED.filter(m=>m.action==='Vendu')
@@ -279,6 +290,24 @@ export function Whales({ isPro = false }: { isPro?: boolean }) {
                 return <MoveRow key={`${move.id}-${feedKey}`} move={move} idx={i} last={i===filteredFeed.length-1} avatar={whale?.avatar ?? move.handle.slice(0,2).toUpperCase()} />
               })}
             </div>
+
+            {sel && topCards.length > 0 && (
+              <div style={{ marginTop:'14px' }}>
+                <div style={{ fontSize:'10px', fontWeight:700, color:SNOW.mutedLight, textTransform:'uppercase', letterSpacing:'.08em', fontFamily:FONT.display, marginBottom:'9px' }}>Cartes les plus accumulées</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+                  {topCards.map((c,i)=>(
+                    <div key={c.card} style={{ ...GLASS.cardSoft, padding:'11px 14px', display:'flex', alignItems:'center', gap:'12px', animation:`rowIn .4s cubic-bezier(.16,1,.3,1) ${i*60}ms both` }}>
+                      <span style={{ fontSize:'13px', fontWeight:800, color:sel.color, fontFamily:FONT.data, width:'22px', flexShrink:0 }}>#{i+1}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:'12px', fontWeight:600, color:SNOW.ink, fontFamily:FONT.display, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.card}</div>
+                        <div style={{ fontSize:'10px', color:SNOW.mutedLight, fontFamily:FONT.body, marginTop:'1px' }}>{c.count} achat{c.count>1?'s':''} · {sel.handle}</div>
+                      </div>
+                      <span style={{ fontSize:'14px', fontWeight:800, color:SNOW.ink, fontFamily:FONT.data, letterSpacing:'-.3px', flexShrink:0 }}>€ {c.total.toLocaleString('fr-FR')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

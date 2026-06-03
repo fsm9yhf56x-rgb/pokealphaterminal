@@ -928,7 +928,7 @@ export function Encyclopedie() {
 
         .srt { padding:6px 11px; border-radius:7px; border:none; background:transparent; color:#86868B; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s cubic-bezier(.2,.85,.3,1); font-family:var(--font-sora, Sora, sans-serif); }
         .srt:hover { background:rgba(255,255,255,0.55); backdrop-filter:blur(10px); color:#1D1D1F; }
-        .srt.on { background:#1D1D1F !important; color:#FFFFFF !important; box-shadow:0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.14); }
+        .srt.on { background:linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%) !important; color:#1D1D1F !important; box-shadow:0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95); }
         .rh { transition: background .15s; cursor:pointer; }
         .rh:hover { background:rgba(255,255,255,0.5) !important; }
         .rh:hover .rh-name { font-weight:600 !important; }
@@ -1197,7 +1197,7 @@ export function Encyclopedie() {
             </div>
             <div style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
               {(['grid','list'] as ViewMode[]).map(v=>(
-                <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'#111':'transparent', color:view===v?'#fff':'#888', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .12s' }}>
+                <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'transparent', color:view===v?'#1D1D1F':'#888', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .18s cubic-bezier(.2,.8,.2,1)', boxShadow:view===v?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
                   {v==='grid'?'⊞':'☰'}
                 </button>
               ))}
@@ -1206,7 +1206,7 @@ export function Encyclopedie() {
               <div style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
                 {(['S','M','L'] as const).map(sz=>(
                   <button key={sz} onClick={()=>setCardSize(sz)}
-                    style={{ width:'30px', height:'32px', borderRadius:'7px', border:'none', background:cardSize===sz?'#111':'transparent', color:cardSize===sz?'#fff':'#888', fontSize:'10px', fontWeight:700, cursor:'pointer', transition:'all .12s', fontFamily:'var(--font-display)', letterSpacing:'.05em' }}>
+                    style={{ width:'30px', height:'32px', borderRadius:'7px', border:'none', background:cardSize===sz?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'transparent', color:cardSize===sz?'#1D1D1F':'#888', fontSize:'10px', fontWeight:700, cursor:'pointer', transition:'all .18s cubic-bezier(.2,.8,.2,1)', fontFamily:'var(--font-display)', letterSpacing:'.05em', boxShadow:cardSize===sz?'0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
                     {sz}
                   </button>
                 ))}
@@ -1281,8 +1281,8 @@ export function Encyclopedie() {
           {/* Browse toggle */}
           {!loading && !loadErr && (
             <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
-              <button onClick={()=>{setBrowseMode('all');setSelBloc(null);setFilSet('all');setFilEra('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'1px solid '+(browseMode==='all'?'#1D1D1F':'#E5E5EA'), background:browseMode==='all'?'#1D1D1F':'#fff', color:browseMode==='all'?'#fff':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Toutes les cartes</button>
-              <button onClick={()=>{setBrowseMode('bloc');setSelBloc(null);setFilSet('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'1px solid '+(browseMode==='bloc'?'#1D1D1F':'#E5E5EA'), background:browseMode==='bloc'?'#1D1D1F':'#fff', color:browseMode==='bloc'?'#fff':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Par blocs</button>
+              <button onClick={()=>{setBrowseMode('all');setSelBloc(null);setFilSet('all');setFilEra('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'0.5px solid rgba(255,255,255,0.6)', background:browseMode==='all'?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'rgba(255,255,255,0.45)', color:browseMode==='all'?'#1D1D1F':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:browseMode==='all'?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}>Toutes les cartes</button>
+              <button onClick={()=>{setBrowseMode('bloc');setSelBloc(null);setFilSet('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'0.5px solid rgba(255,255,255,0.6)', background:browseMode==='bloc'?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'rgba(255,255,255,0.45)', color:browseMode==='bloc'?'#1D1D1F':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:browseMode==='bloc'?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}>Par blocs</button>
             </div>
           )}
           {browseMode==='bloc'&&!selBloc&&!loading&&(

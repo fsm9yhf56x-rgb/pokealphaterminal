@@ -230,8 +230,8 @@ export function Scelles() {
         .sc-pill:hover{background:rgba(255,255,255,0.75);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.85)}
         .sc-pill.on{background:linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%) !important;color:#1D1D1F !important;border-color:rgba(255,255,255,0.6) !important;box-shadow:0 2px 8px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,0.95) !important}
         .sc-srt{
-          padding:6px 12px;border-radius:7px;border:none;background:transparent;
-          color:#86868B;font-size:11.5px;font-weight:500;cursor:pointer;
+          padding:6px 13px;border-radius:99px;border:none;background:transparent;
+          color:#86868B;font-size:11.5px;font-weight:600;cursor:pointer;
           font-family:var(--font-sora);transition:all .2s;
         }
         .sc-srt:hover{background:rgba(255,255,255,0.6);color:#1D1D1F}

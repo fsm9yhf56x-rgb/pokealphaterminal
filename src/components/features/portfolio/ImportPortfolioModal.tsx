@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useRef, useCallback, useEffect } from 'react'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 interface ImportedCard {
   id:string; name:string; set:string; qty:number; price:number;
@@ -217,10 +218,10 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
                     style={{width:'100%',minHeight:'140px',background:'#F5F5F7',border:'1px solid #E5E5EA',borderRadius:'12px',color:'#1D1D1F',fontFamily:'var(--font-data)',fontSize:'12px',padding:'14px',resize:'vertical',boxSizing:'border-box',marginBottom:'12px',outline:'none'}}
                     onFocus={e=>{e.currentTarget.style.borderColor='#1D1D1F'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA'}}
                     spellCheck={false}/>
-                  <button onClick={()=>{if(paste.trim())handleContent(paste,'coller',src.id)}} disabled={!paste.trim()}
-                    style={{width:'100%',background:paste.trim()?'#1D1D1F':'#F0F0F5',border:'none',borderRadius:'12px',color:paste.trim()?'#fff':'#AEAEB2',padding:'12px',fontSize:'13px',fontWeight:700,cursor:paste.trim()?'pointer':'default',fontFamily:'var(--font-display)',transition:'all .15s'}}>
+                  <GlassButton fullWidth size="lg" disabled={!paste.trim()}
+                    onClick={()=>{if(paste.trim())handleContent(paste,'coller',src.id)}}>
                     Analyser le tableau
-                  </button>
+                  </GlassButton>
                 </div>
               ):(
                 <div>
@@ -295,11 +296,9 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
                 <Ic d={PATHS.alert} c="#E03020" s={14}/>
                 <span style={{fontSize:'11px',color:'#E03020',fontFamily:'var(--font-display)'}}>La colonne "Nom de la carte" doit etre associee</span>
               </div>}
-              <button onClick={applyMapping} disabled={!mapping.name}
-                style={{width:'100%',background:mapping.name?'#1D1D1F':'#F0F0F5',border:'none',borderRadius:'12px',color:mapping.name?'#fff':'#AEAEB2',padding:'12px',fontSize:'13px',fontWeight:700,cursor:mapping.name?'pointer':'default',fontFamily:'var(--font-display)',transition:'all .15s'}}
-                onMouseEnter={e=>{if(mapping.name)e.currentTarget.style.background='#333'}} onMouseLeave={e=>{e.currentTarget.style.background=mapping.name?'#1D1D1F':'#F0F0F5'}}>
-                Previsualiser l'import ({rows.length} cartes)
-              </button>
+              <GlassButton fullWidth size="lg" disabled={!mapping.name} onClick={applyMapping}>
+                Previsualiser l&apos;import ({rows.length} cartes)
+              </GlassButton>
             </div>
           )}
 
@@ -345,13 +344,11 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
                   </tbody>
                 </table>
               </div>
-              <button onClick={handleImport} disabled={importing}
-                style={{width:'100%',background:'#1D1D1F',border:'none',borderRadius:'12px',color:'#fff',padding:'13px',fontSize:'13px',fontWeight:700,cursor:importing?'wait':'pointer',fontFamily:'var(--font-display)',transition:'all .15s'}}
-                onMouseEnter={e=>{if(!importing)e.currentTarget.style.background='#333'}} onMouseLeave={e=>{e.currentTarget.style.background='#1D1D1F'}}>
+              <GlassButton fullWidth size="lg" disabled={importing} onClick={handleImport}>
                 {importing
-                  ? <span style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}><div style={{width:'14px',height:'14px',border:'2px solid rgba(255,255,255,.3)',borderTop:'2px solid #fff',borderRadius:'50%',animation:'spin .7s linear infinite'}}/> Import... {prog}%</span>
+                  ? <span style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}><div style={{width:'14px',height:'14px',border:'2px solid rgba(29,29,31,.25)',borderTop:'2px solid #1D1D1F',borderRadius:'50%',animation:'spin .7s linear infinite'}}/> Import... {prog}%</span>
                   : `Importer ${valid.length} cartes`}
-              </button>
+              </GlassButton>
             </div>
           )}
 
@@ -370,16 +367,8 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
                 ))}
               </div>
               <div style={{display:'flex',gap:'8px',justifyContent:'center'}}>
-                <button onClick={onClose}
-                  style={{background:'#1D1D1F',border:'none',borderRadius:'12px',color:'#fff',padding:'12px 24px',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#333'}} onMouseLeave={e=>{e.currentTarget.style.background='#1D1D1F'}}>
-                  Voir mon portefeuille
-                </button>
-                <button onClick={()=>{setStep('source');setSelSrc(null);setHeaders([]);setRows([]);setCards([]);setPaste('');setFName('')}}
-                  style={{background:'#F5F5F7',border:'1px solid #E5E5EA',borderRadius:'12px',color:'#48484A',padding:'12px 20px',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.background='#EDEDF0'}} onMouseLeave={e=>{e.currentTarget.style.background='#F5F5F7'}}>
-                  Nouvel import
-                </button>
+                <GlassButton size="lg" onClick={onClose}>Voir mon portefeuille</GlassButton>
+                <GlassButton size="lg" onClick={()=>{setStep('source');setSelSrc(null);setHeaders([]);setRows([]);setCards([]);setPaste('');setFName('')}}>Nouvel import</GlassButton>
               </div>
             </div>
           )}

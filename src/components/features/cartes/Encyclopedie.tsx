@@ -1,6 +1,8 @@
 'use client'
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
+import AuthModal from '@/components/layout/AuthModal'
+import { CollectionGate } from './CollectionGate'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { GradedHistoryChart } from '@/components/features/prices/GradedHistoryChart'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
@@ -244,6 +246,10 @@ export function Encyclopedie() {
   const isOwned = (card: EnrichedCard) => ownedKeys.has(card.setId+'-'+card.localId) || ownedKeys.has(card.name+'|'+card.setName)
 
   const addToPortfolio = async (card: EnrichedCard) => {
+    if (!user) {
+      setGateCard({ name: card.name, lang: lang as string, setId: card.setId, localId: card.localId, image: card.image || card.enImage || '' })
+      return
+    }
     const newCard: PortfolioCard = {
       id: 'enc_'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
       name: card.name, set: card.setName, setId: card.setId,
@@ -282,6 +288,8 @@ export function Encyclopedie() {
   }
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
+  const [gateCard, setGateCard] = useState<{name:string;lang:string;setId:string;localId:string;image?:string}|null>(null)
+  const [authModal, setAuthModal] = useState<null|'login'|'signup'>(null)
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
   // ── Prix via hook centralisé useCardPrices ──
   // Encyclopedie affiche toutes les cartes → setIds=null charge tous les prix
@@ -2270,7 +2278,7 @@ export function Encyclopedie() {
               </div>
               <div style={{ display:'flex', gap:'8px', marginTop:'4px' }}>
                 {!isOwned(lightbox) && (
-                  <button onClick={()=>{addToPortfolio(lightbox);setToast(lightbox.name+' ajouté')}}
+                  <button onClick={()=>{addToPortfolio(lightbox)}}
                     style={{ padding:'8px 16px', borderRadius:'8px', background:'#fff', color:'#1D1D1F', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     + Ajouter au portfolio
                   </button>
@@ -2299,6 +2307,17 @@ export function Encyclopedie() {
         onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'}}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 15l-6-6-6 6"/></svg>
       </button>
+      <CollectionGate
+        card={gateCard}
+        onClose={()=>setGateCard(null)}
+        onSignup={()=>{ setGateCard(null); setAuthModal('signup') }}
+        onLogin={()=>{ setGateCard(null); setAuthModal('login') }}
+      />
+      <AuthModal
+        open={authModal!==null}
+        defaultMode={authModal||'login'}
+        onClose={()=>setAuthModal(null)}
+      />
     </>
   )
 }

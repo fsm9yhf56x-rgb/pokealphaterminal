@@ -2554,7 +2554,8 @@ export function Holdings() {
                             const viewFrac = Math.min(1, Math.max(0.08, 7 / Math.max(total, 1)))
                             if (total <= 7) return null
                             const bars = Math.min(total, 150)
-                            const ownedNumbers = new Set(setCards.map(c => c.number))
+                            const normMM = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
+                            const ownedNumbers = new Set(setCards.map(c => normMM(c.number)))
                             // Build ghost card number list for positional matching
                             const ghostNums = (shelfSetCards[setName] || []).map((c: any) => c.localId || '')
                             return (
@@ -2565,7 +2566,7 @@ export function Holdings() {
                                   {Array.from({ length: bars }).map((_, i) => {
                                     const idx = total <= 150 ? i : Math.round((i / bars) * total)
                                     const ghostNum = ghostNums[idx] || String(idx + 1)
-                                    const isOwned = ownedNumbers.has(ghostNum) || ownedNumbers.has(String(idx + 1))
+                                    const isOwned = ownedNumbers.has(normMM(ghostNum)) || ownedNumbers.has(normMM(idx + 1))
                                     return (
                                       <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? 0.9 : 0.5 }} />
                                     )

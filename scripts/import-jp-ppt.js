@@ -57,6 +57,9 @@ const ONE_SET = arg('set');
 const ALL = has('all');
 const DRY = has('dry-run');
 const NO_IMAGES = has('no-images');
+const MAX_CREDITS = parseInt(arg('max-credits') || '16000', 10); // plafond/jour, marge sous 20k
+const RESUME = has('resume'); // skip les sets deja importes (source='ppt' en base)
+let creditsUsed = 0; // estimation 2 cr/carte fetchee
 
 if (!ONE_SET && !ALL) {
   console.error('Usage: --set "SV2a: Pokemon Card 151"  OU  --all  [--dry-run] [--no-images]');
@@ -95,6 +98,7 @@ async function fetchSetCards(setName) {
     if (offset > 5000) break;
     await new Promise(res => setTimeout(res, 300));
   }
+  creditsUsed += all.length * 2; // estimation cout PPT
   return all;
 }
 async function uploadImage(imageCdnUrl, slug, localId) {
@@ -172,16 +176,38 @@ async function importSet(setName, setMeta) {
     }
     console.log(`${setsToImport.length} sets JP a importer`);
   }
+  // Mode resume: charge les set_id deja importes (source='ppt') pour les skip
+  let alreadyDone = new Set();
+  if (RESUME) {
+    const rows = await sql`SELECT DISTINCT set_id FROM tcg_cards WHERE source = 'ppt' AND lang = 'JP'`;
+    alreadyDone = new Set(rows.map(r => r.set_id));
+    console.log(`RESUME: ${alreadyDone.size} sets JP deja en base, seront skip`);
+  }
+
   const results = [];
   for (const s of setsToImport) {
+    // Plafond credits: arret propre avant de depasser le quota
+    if (creditsUsed >= MAX_CREDITS) {
+      console.log(`\n⏸  PLAFOND CREDITS atteint (~${creditsUsed}/${MAX_CREDITS}). Arret propre.`);
+      console.log(`   Relance demain avec --resume pour continuer.`);
+      break;
+    }
+    // Resume: skip si deja fait
+    const slug = slugifySet(s.name);
+    if (RESUME && alreadyDone.has(`jp-${slug}`)) {
+      console.log(`   skip (deja fait): ${s.name}`);
+      continue;
+    }
     try { results.push(await importSet(s.name, s)); }
     catch (e) { console.error(`ECHEC "${s.name}": ${e.message}`); results.push({ set: s.name, cards: 0, images: 0, error: e.message }); }
+    // Pause anti-429 entre sets
+    await new Promise(res => setTimeout(res, 1500));
   }
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   const tc = results.reduce((a, r) => a + (r.cards || 0), 0);
   const ti = results.reduce((a, r) => a + (r.images || 0), 0);
   const errs = results.filter(r => r.error);
-  console.log(`Sets: ${results.length} | Cartes: ${tc} | Images R2: ${ti} | Erreurs: ${errs.length}`);
+  console.log(`Sets: ${results.length} | Cartes: ${tc} | Images R2: ${ti} | Erreurs: ${errs.length} | Credits~${creditsUsed}`);
   if (errs.length) for (const e of errs.slice(0, 5)) console.log(`  ERR ${e.set}: ${e.error}`);
   process.exit(0);
 })().catch(e => { console.error('FATAL:', e.message); process.exit(1); });

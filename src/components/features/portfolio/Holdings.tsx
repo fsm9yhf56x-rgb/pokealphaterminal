@@ -3447,21 +3447,22 @@ export function Holdings() {
           reader.readAsDataURL(file)
         }
         return (
+          <>
+          <SoonModal
+            open={scannerSoonOpen}
+            onClose={()=>setScannerSoonOpen(false)}
+            feature="Scanner IA"
+            version="v2.0"
+            description="Photographiez une carte et l'IA Kodo l'identifie automatiquement (set, numéro, langue, état) puis pré-remplit l'ajout au portefeuille."
+            bullets={[
+              'Reconnaissance instantanée par photo',
+              'Pré-remplissage set / numéro / langue',
+              'Détection auto raw vs gradée',
+              'Ajout en un geste depuis mobile',
+            ]}
+            brevoListId={null}
+          />
           <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}
-      <SoonModal
-        open={scannerSoonOpen}
-        onClose={()=>setScannerSoonOpen(false)}
-        feature="Scanner IA"
-        version="v2.0"
-        description="Photographiez une carte et l'IA Kodo l'identifie automatiquement (set, numéro, langue, état) puis pré-remplit l'ajout au portefeuille."
-        bullets={[
-          'Reconnaissance instantanée par photo',
-          'Pré-remplissage set / numéro / langue',
-          'Détection auto raw vs gradée',
-          'Ajout en un geste depuis mobile',
-        ]}
-        brevoListId={null}
-      />
             onClick={()=>{ if(!scannerLoad){ setScannerOpen(false); setScannerImg(null) } }}>
             <div style={{
               maxWidth:'420px', width:'100%',
@@ -3616,6 +3617,7 @@ export function Holdings() {
               </div>
             </div>
           </div>
+          </>
         )
       })()}
 

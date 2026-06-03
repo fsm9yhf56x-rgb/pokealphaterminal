@@ -1735,19 +1735,19 @@ export function Holdings() {
                       style={{
                         flex:1, padding:'11px 8px',
                         borderRadius:10,
-                        border: addForm.lang===l.k ? '1px solid #1D1D1F' : '1px solid rgba(229,229,234,0.7)',
-                        background: addForm.lang===l.k ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
-                        backdropFilter: addForm.lang===l.k ? 'none' : 'blur(12px) saturate(180%)',
-                        WebkitBackdropFilter: addForm.lang===l.k ? 'none' : 'blur(12px) saturate(180%)',
-                        color: addForm.lang===l.k ? '#fff' : '#48484A',
+                        border: '1px solid rgba(255,255,255,0.6)',
+                        background: addForm.lang===l.k ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)' : 'rgba(255,255,255,0.45)',
+                        backdropFilter: 'blur(12px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                        color: addForm.lang===l.k ? '#1D1D1F' : '#48484A',
                         fontSize:12, fontWeight:700,
                         cursor:'pointer',
                         fontFamily:'var(--font-display)',
                         display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                         transition:'all .2s cubic-bezier(.2,.85,.3,1)',
-                        boxShadow: addForm.lang===l.k ? '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                        boxShadow: addForm.lang===l.k ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
                       }}
-                      onMouseEnter={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
+                      onMouseEnter={e=>{if(addForm.lang!==l.k){e.currentTarget.style.background='rgba(255,255,255,0.65)'}}}
                       onMouseLeave={e=>{if(addForm.lang!==l.k){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
                       <span style={{ fontSize:'16px' }}>{l.flag}</span>
                       {l.label}
@@ -3126,17 +3126,17 @@ export function Holdings() {
                   <button key={l.k} onClick={()=>{setAddSetLang(l.k);setAddSetCards([]);setAddSetId('');setAddSetName('')}} style={{
                     flex:1, padding:'11px 8px',
                     borderRadius:10,
-                    border: addSetLang===l.k ? '1px solid #1D1D1F' : '1px solid rgba(229,229,234,0.7)',
-                    background: addSetLang===l.k ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
-                    backdropFilter: addSetLang===l.k ? 'none' : 'blur(12px) saturate(180%)',
-                    WebkitBackdropFilter: addSetLang===l.k ? 'none' : 'blur(12px) saturate(180%)',
-                    color: addSetLang===l.k ? '#fff' : '#48484A',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    background: addSetLang===l.k ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)' : 'rgba(255,255,255,0.45)',
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                    color: addSetLang===l.k ? '#1D1D1F' : '#48484A',
                     fontSize:12, fontWeight:700,
                     cursor:'pointer',
                     fontFamily:'var(--font-display)',
                     display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                     transition:'all .2s cubic-bezier(.2,.85,.3,1)',
-                    boxShadow: addSetLang===l.k ? '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    boxShadow: addSetLang===l.k ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
                   }}>
                     <span style={{ fontSize:16 }}>{l.flag}</span>{l.label}
                   </button>

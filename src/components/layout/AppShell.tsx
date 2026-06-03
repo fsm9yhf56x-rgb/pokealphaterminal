@@ -1,5 +1,6 @@
 'use client'
-import { TickerBar } from './TickerBar'
+// TickerBar masquée — réactiver en décommentant
+// import { TickerBar } from './TickerBar'
 import { TopNav }    from './TopNav'
 import { SubMenu }   from './SubMenu'
 import { Footer }    from './Footer'
@@ -74,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         borderBottom: '0.5px solid rgba(255,255,255,0.5)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 0 rgba(0,0,0,0.03)',
       }}>
-        <TickerBar />
+        {/* <TickerBar /> */}
         <TopNav />
       </div>
 

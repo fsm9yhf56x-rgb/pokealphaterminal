@@ -1,6 +1,6 @@
 'use client'
 
-import { TickerBar } from '@/components/layout/TickerBar'
+// import { TickerBar } from '@/components/layout/TickerBar'
 
 export function Header() {
   return (
@@ -20,7 +20,7 @@ export function Header() {
 
       {/* Ticker live — prend tout l'espace */}
       <div style={{ flex: 1, marginRight: '16px', overflow: 'hidden' }}>
-        <TickerBar />
+        {/* <TickerBar /> */}
       </div>
 
       {/* Actions droite */}

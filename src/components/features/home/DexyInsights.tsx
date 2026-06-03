@@ -26,9 +26,9 @@ export function DexyInsights() {
         @keyframes expand  { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
         @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
         .ins-row:hover     { background:#FAFAFA !important; }
-        .pill { padding:5px 12px; border-radius:8px; border:1px solid #E8E8E8; background:#fff; color:#666; font-size:12px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; white-space:nowrap; }
-        .pill:hover { border-color:#999; }
-        .pill.on { background:#111 !important; color:#fff !important; border-color:#111 !important; }
+        .pill { padding:6px 14px; border-radius:999px; border:0.5px solid rgba(255,255,255,0.6); background:rgba(255,255,255,0.45); color:#6E6E73; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-display); transition:all 0.18s cubic-bezier(.2,.8,.2,1); white-space:nowrap; box-shadow:inset 0 1px 0 rgba(255,255,255,0.7); }
+        .pill:hover:not(.on) { background:linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.45) 100%); color:#1D1D1F; }
+        .pill.on { background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%) !important; color:#1D1D1F !important; box-shadow:0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
       `}</style>
 
       <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%' }}>
@@ -42,7 +42,7 @@ export function DexyInsights() {
               {insights.length} insights · mis à jour en continu par Kodo AI
             </div>
           </div>
-          <button onClick={()=>setInsights(prev=>prev.map(i=>({...i,read:true})))} style={{ padding:'7px 16px', borderRadius:'9px', background:'#F5F5F5', border:'1px solid #EBEBEB', fontSize:'12px', color:'#666', cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:500 }}>
+          <button onClick={()=>setInsights(prev=>prev.map(i=>({...i,read:true})))} style={{ padding:'7px 16px', borderRadius:'999px', background:'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 100%)', backdropFilter:'blur(18px) saturate(180%)', WebkitBackdropFilter:'blur(18px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.6)', fontSize:'12px', color:'#48484A', cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:600, boxShadow:'0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
             Tout marquer lu
           </button>
         </div>
@@ -106,7 +106,7 @@ export function DexyInsights() {
                         ))}
                         <button
                           onClick={() => ins.type==='signal'||ins.type==='whale' ? router.push('/alpha') : ins.type==='market'||ins.type==='report' ? router.push('/market') : router.push('/alpha/deals')}
-                          style={{ padding:'9px', borderRadius:'9px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px' }}>
+                          style={{ padding:'9px', borderRadius:'999px', background:'linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%)', backdropFilter:'blur(18px) saturate(190%)', WebkitBackdropFilter:'blur(18px) saturate(190%)', color:'#1D1D1F', border:'0.5px solid rgba(255,255,255,0.6)', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', marginTop:'4px', boxShadow:'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                           Voir le détail →
                         </button>
                       </div>

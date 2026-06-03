@@ -97,9 +97,9 @@ export function Missions() {
       <style>{`
         @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
         @keyframes xpFill { from{width:0} to{width:var(--w)} }
-        .tab-btn { padding:7px 16px; border-radius:8px; border:none; background:transparent; color:#666; font-size:12px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; }
-        .tab-btn:hover { background:#F0F0F0; }
-        .tab-btn.on { background:#111 !important; color:#fff !important; }
+        .tab-btn { padding:7px 16px; border-radius:999px; border:none; background:transparent; color:#6E6E73; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-display); transition:all 0.18s cubic-bezier(.2,.8,.2,1); }
+        .tab-btn:hover:not(.on) { background:linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%); color:#1D1D1F; box-shadow:inset 0 1px 0 rgba(255,255,255,0.85); }
+        .tab-btn.on { background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%) !important; color:#1D1D1F !important; box-shadow:0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
       `}</style>
 
       <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%' }}>

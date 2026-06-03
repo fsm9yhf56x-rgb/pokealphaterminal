@@ -62,9 +62,9 @@ export default function ParametresPage() {
                 fontFamily: FONT.display, fontSize: 13, fontWeight: 600,
                 padding: '8px 16px', border: 'none', cursor: 'pointer',
                 borderRadius: RADIUS.pill, whiteSpace: 'nowrap',
-                color: active ? '#fff' : SNOW.muted,
-                background: active ? SNOW.ink : 'transparent',
-                boxShadow: active ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+                color: active ? '#1D1D1F' : SNOW.muted,
+                background: active ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)' : 'transparent',
+                boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
                 transition: `all ${'.18s'} ${EASE.apple}`,
               }}
             >

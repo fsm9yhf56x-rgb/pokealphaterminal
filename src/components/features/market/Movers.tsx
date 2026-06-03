@@ -65,7 +65,7 @@ export function Movers() {
           </div>
           <div style={{ display:'flex', gap:'3px', background:'#F5F5F5', borderRadius:'9px', padding:'3px' }}>
             {(['gainers','losers','volume'] as Tab[]).map(t => (
-              <button key={t} onClick={()=>setTab(t)} className={`tab${tab===t?' on':''}`} style={{ padding:'6px 14px', borderRadius:'7px', border:'none', background:tab===t?'#111':'transparent', color:tab===t?'#fff':'#666', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all 0.12s' }}>
+              <button key={t} onClick={()=>setTab(t)} className={`tab${tab===t?' on':''}`} style={{ padding:'7px 14px', borderRadius:'999px', border:'none', background:tab===t?'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)':'transparent', color:tab===t?'#1D1D1F':'#6E6E73', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all 0.18s cubic-bezier(.2,.8,.2,1)', boxShadow:tab===t?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
                 {t==='gainers'?'🟢 Gainers':t==='losers'?'🔴 Losers':'📊 Volume'}
               </button>
             ))}
@@ -94,7 +94,7 @@ export function Movers() {
           <div style={{ display:'grid', gridTemplateColumns:'2.4fr 1fr 1fr 1fr 0.7fr', padding:'10px 16px', borderBottom:'1px solid #F0F0F0', background:'#FAFAFA', alignItems:'center' }}>
             <div style={{ fontSize:'10px', fontWeight:600, color:'#AAA', textTransform:'uppercase' as const, letterSpacing:'0.07em', fontFamily:'var(--font-display)' }}>Carte</div>
             {(['h24','h7d','price','vol'] as SortH[]).map((k,i) => (
-              <button key={k} onClick={()=>setSort(k)} className={`srt${sort===k?' on':''}`} style={{ padding:'3px 8px', borderRadius:'5px', border:'none', background:sort===k?'#111':'transparent', color:sort===k?'#fff':'#AAA', fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all 0.12s', textTransform:'uppercase' as const, letterSpacing:'0.07em', textAlign:'right' as const }}>
+              <button key={k} onClick={()=>setSort(k)} className={`srt${sort===k?' on':''}`} style={{ padding:'4px 9px', borderRadius:'999px', border:'none', background:sort===k?'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)':'transparent', color:sort===k?'#1D1D1F':'#86868B', fontSize:'10px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all 0.18s cubic-bezier(.2,.8,.2,1)', textTransform:'uppercase' as const, letterSpacing:'0.07em', textAlign:'right' as const, boxShadow:sort===k?'0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
                 {k==='h24'?'24H':k==='h7d'?'7J':k==='price'?'PRIX':'VOL'}
               </button>
             ))}

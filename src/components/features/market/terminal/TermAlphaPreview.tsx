@@ -109,7 +109,7 @@ function SignalRow({ signal, gated }: { signal: AlphaSignalPreview; gated: boole
 function ProUpgradeOverlay({ onClick }: { onClick: () => void }) {
   return (
     <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'60%', background:'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.92) 60%, rgba(255,255,255,1) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', paddingBottom:'14px', pointerEvents:'none' }}>
-      <button className="ap-cta" onClick={onClick} style={{ padding:'8px 16px', background:SNOW.ink, color:'#fff', border:'none', borderRadius:'8px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:FONT.display, letterSpacing:'0.02em', pointerEvents:'auto', boxShadow:'0 2px 8px rgba(0,0,0,0.12)' }}>
+      <button className="ap-cta" onClick={onClick} style={{ padding:'8px 18px', background:'linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%)', backdropFilter:'blur(20px) saturate(190%)', WebkitBackdropFilter:'blur(20px) saturate(190%)', color:SNOW.ink, border:'0.5px solid rgba(255,255,255,0.6)', borderRadius:'999px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:FONT.display, letterSpacing:'0.02em', pointerEvents:'auto', boxShadow:'0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
         🔒 Débloquer avec Pro
       </button>
       <div style={{ marginTop:'6px', fontSize:'10px', color:SNOW.muted, fontFamily:FONT.display, textAlign:'center' }}>Accès illimité aux signaux Alpha</div>

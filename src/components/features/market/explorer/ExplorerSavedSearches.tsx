@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { ExplorerFilters } from '@/lib/useExplorerSearch'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 const LS_KEY = 'pka_saved_searches'
 
@@ -87,38 +88,23 @@ export function ExplorerSavedSearches({
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
-      <button
+      <GlassButton
+        size="sm"
+        active={open}
         onClick={() => setOpen(o => !o)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '7px 12px',
-          background: open ? 'var(--ink)' : 'var(--surface)',
-          color: open ? 'var(--surface)' : 'var(--ink-muted)',
-          border: `1px solid ${open ? 'var(--ink)' : 'var(--border-strong)'}`,
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontWeight: 500,
-          cursor: 'pointer',
-          fontFamily: 'var(--font-display)',
-          transition: 'all 0.12s',
-        }}
-      >
-        <BookmarkIcon />
-        Recherches sauvées
-        {saved.length > 0 && (
+        icon={<BookmarkIcon />}
+        iconRight={saved.length > 0 ? (
           <span style={{
             padding: '1px 5px',
-            background: open ? 'var(--surface)' : 'var(--ink)',
-            color: open ? 'var(--ink)' : 'var(--surface)',
-            fontSize: '9px',
-            fontWeight: 700,
-            borderRadius: '3px',
+            background: 'var(--border)',
+            color: 'var(--ink-muted)',
+            fontSize: '9px', fontWeight: 700, borderRadius: '3px',
             fontFamily: 'var(--font-data, var(--font-display))',
           }}>{saved.length}</span>
-        )}
-      </button>
+        ) : undefined}
+      >
+        Recherches sauvées
+      </GlassButton>
 
       {open && (
         <div style={{

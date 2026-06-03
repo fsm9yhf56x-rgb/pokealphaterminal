@@ -170,13 +170,16 @@ function ViewToggle({
   return (
     <div style={{
       display: 'flex',
-      background: 'var(--surface)',
-      border: '1px solid var(--border-strong)',
-      borderRadius: '8px',
-      overflow: 'hidden',
+      gap: '3px',
+      padding: '3px',
+      background: 'rgba(255,255,255,0.5)',
+      backdropFilter: 'blur(18px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+      border: '0.5px solid rgba(255,255,255,0.6)',
+      borderRadius: '999px',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
     }}>
       <ViewBtn icon={<GridIcon />} active={view === 'grid'} onClick={() => onChange('grid')} title="Grille" />
-      <div style={{ width: '1px', background: 'var(--border-strong)' }} />
       <ViewBtn icon={<TableIcon />} active={view === 'table'} onClick={() => onChange('table')} title="Table" />
     </div>
   )
@@ -195,16 +198,20 @@ function ViewBtn({
       onClick={onClick}
       title={title}
       style={{
-        width: '32px',
-        height: '32px',
-        background: active ? 'var(--ink)' : 'transparent',
-        color: active ? 'var(--surface)' : 'var(--ink-muted)',
+        width: '30px',
+        height: '28px',
+        borderRadius: '999px',
+        background: active
+          ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)'
+          : 'transparent',
+        color: active ? 'var(--ink)' : 'var(--ink-muted)',
         border: 'none',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'all 0.12s',
+        boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
+        transition: 'all 0.18s cubic-bezier(.2,.8,.2,1)',
       }}
     >{icon}</button>
   )
@@ -293,9 +300,11 @@ function PageBtn({
       style={{
         width: '28px',
         height: '28px',
-        borderRadius: '6px',
-        background: 'var(--surface)',
-        border: '1px solid var(--border-strong)',
+        borderRadius: '999px',
+        background: 'rgba(255,255,255,0.6)',
+        backdropFilter: 'blur(16px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+        border: '0.5px solid rgba(255,255,255,0.6)',
         color: disabled ? 'var(--ink-faint)' : 'var(--ink)',
         fontSize: '14px',
         cursor: disabled ? 'not-allowed' : 'pointer',

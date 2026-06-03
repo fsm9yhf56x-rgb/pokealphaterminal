@@ -118,9 +118,9 @@ export function Tendances() {
       <style>{`
         @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
         .rh:hover { background:#F8F8F8 !important; cursor:pointer; }
-        .per-btn  { padding:5px 12px; border-radius:7px; border:none; background:transparent; color:#666; font-size:11px; font-weight:500; cursor:pointer; font-family:var(--font-display); transition:all 0.12s; }
-        .per-btn:hover { background:#EBEBEB; }
-        .per-btn.on { background:#111 !important; color:#fff !important; }
+        .per-btn  { padding:6px 14px; border-radius:999px; border:none; background:transparent; color:#6E6E73; font-size:11px; font-weight:600; cursor:pointer; font-family:var(--font-display); transition:all 0.18s cubic-bezier(.2,.8,.2,1); }
+        .per-btn:hover:not(.on) { background:linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%); color:#1D1D1F; box-shadow:inset 0 1px 0 rgba(255,255,255,0.85); }
+        .per-btn.on { background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%) !important; color:#1D1D1F !important; box-shadow:0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
       `}</style>
 
       <div style={{ animation:'fadeIn 0.25s ease-out', width:'100%' }}>

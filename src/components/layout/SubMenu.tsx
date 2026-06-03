@@ -23,8 +23,9 @@ export function SubMenu() {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 9px 14px;
-          border-radius: 10px;
+          padding: 9px 16px;
+          border-radius: 999px;
+          border: 0.5px solid transparent;
           font-size: 13px;
           font-weight: 500;
           color: #6E6E73;
@@ -36,31 +37,24 @@ export function SubMenu() {
           position: relative;
         }
         .ksub-link:hover {
-          background: rgba(255,255,255,0.55);
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%);
+          backdrop-filter: blur(20px) saturate(190%);
+          -webkit-backdrop-filter: blur(20px) saturate(190%);
+          border-color: rgba(255,255,255,0.6);
           color: #1D1D1F;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
         }
         .ksub-link.act {
-          background: rgba(255,255,255,0.7);
+          background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%);
           color: #1D1D1F;
           font-weight: 600;
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.03);
+          border-color: rgba(255,255,255,0.6);
+          backdrop-filter: blur(20px) saturate(190%);
+          -webkit-backdrop-filter: blur(20px) saturate(190%);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
         }
-        .ksub-link.act::before {
-          content: \'\';
-          position: absolute;
-          left: 4px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 3px;
-          height: 16px;
-          border-radius: 2px;
-          background: #1D1D1F;
-        }
+        
         .ksub-pro {
           font-size: 8.5px;
           font-weight: 800;

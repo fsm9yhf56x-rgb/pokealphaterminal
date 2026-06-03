@@ -23,8 +23,9 @@ export function TopNav() {
           font-weight: 500;
           color: #6E6E73;
           text-decoration: none;
-          padding: 7px 14px;
-          border-radius: 10px;
+          padding: 8px 16px;
+          border-radius: 999px;
+          border: 0.5px solid transparent;
           font-family: var(--font-sora, \'Sora\', sans-serif);
           letter-spacing: -0.01em;
           transition: all .2s cubic-bezier(.2,.8,.2,1);
@@ -34,31 +35,24 @@ export function TopNav() {
           position: relative;
         }
         .knav-link:hover {
-          background: rgba(255,255,255,0.55);
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%);
+          backdrop-filter: blur(20px) saturate(190%);
+          -webkit-backdrop-filter: blur(20px) saturate(190%);
+          border-color: rgba(255,255,255,0.6);
           color: #1D1D1F;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
         }
         .knav-link.act {
-          background: rgba(255,255,255,0.7);
+          background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%);
           color: #1D1D1F;
           font-weight: 600;
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.03);
+          border-color: rgba(255,255,255,0.6);
+          backdrop-filter: blur(20px) saturate(190%);
+          -webkit-backdrop-filter: blur(20px) saturate(190%);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
         }
-        .knav-link.act::after {
-          content: \'\';
-          position: absolute;
-          bottom: -4px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 3px;
-          height: 3px;
-          border-radius: 50%;
-          background: #1D1D1F;
-        }
+        
         .knav-pro {
           font-size: 8.5px;
           font-weight: 800;

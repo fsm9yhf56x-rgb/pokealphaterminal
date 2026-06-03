@@ -23,6 +23,7 @@ import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
 import { SpotDrawer } from './SpotDrawer'
 import { WrappedView } from './WrappedView'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 type CardItem = {
   id: string; name: string; set: string; year: number; number: string
@@ -1437,7 +1438,7 @@ export function Holdings() {
         .add-modal input:-webkit-autofill { -webkit-box-shadow:0 0 0 1000px rgba(255,255,255,0.7) inset !important; -webkit-text-fill-color:#1D1D1F !important; }
 
         button:hover:not(:disabled) { filter:brightness(1.05); }
-        .vtab:hover:not(.on) { background:#F0F0F5 !important;color:#48484A !important;border-color:#C7C7CC !important; }
+        .vtab:hover:not(.on) { color:#1D1D1F !important; }
         .vtab:active { transform:scale(.96) !important;transition-duration:.06s !important; }
         .colbtn:hover { background:#F0F0F5 !important;color:#48484A !important; }
         .colbtn:active { transform:scale(.9) !important; }
@@ -1463,10 +1464,10 @@ export function Holdings() {
         @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 8px rgba(224,48,32,.1)} }
         .empty-pocket { animation:slotPulse 3s ease-in-out infinite;border:2px dashed #D2D2D7 !important;background:#FAFAFA !important; }
         .empty-pocket:hover { animation:none !important; }
-        .vtab { padding:7px 18px;border-radius:99px;border:1px solid #C7C7CC;background:#FAFAFA;color:#6E6E73;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .25s cubic-bezier(.25,.46,.45,.94); }
-        .vtab:hover:not(.on) { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
-        .vtab:active { transform:scale(.96);transition-duration:.08s; }
-        .vtab.on { background:#1D1D1F !important;border-color:#1D1D1F !important;color:#fff !important; }
+        .vtab { padding:8px 18px;border-radius:99px;border:0.5px solid rgba(255,255,255,0.6);background:linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);color:#6E6E73;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-display);transition:all .25s cubic-bezier(.2,.8,.2,1);box-shadow:0 1px 4px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.8); }
+        .vtab:hover:not(.on) { transform:translateY(-1px);color:#1D1D1F;box-shadow:0 6px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9); }
+        .vtab:active { transform:scale(.97);transition-duration:.08s; }
+        .vtab.on { background:linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%) !important;color:#1D1D1F !important;box-shadow:0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .2s cubic-bezier(.25,.46,.45,.94);color:#86868B;border:1px solid #D2D2D7;background:#fff; }
         .colbtn:hover { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
         .colbtn:active { transform:scale(.92);transition-duration:.06s; }
@@ -2053,11 +2054,10 @@ export function Holdings() {
                   <div style={{ fontSize:10, color:'#6E6E73' }}>{bestCard.name}</div>
                 </div>
               )}
-              <button onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }} style={{ padding:'11px 20px', borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6 }} onMouseEnter={e=>{e.currentTarget.style.background='#000';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.18)'}}
-                onMouseLeave={e=>{e.currentTarget.style.background='#1D1D1F';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <GlassButton onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }}
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}>
                 Partager
-              </button>
+              </GlassButton>
             </div>
           </div>
           </div>
@@ -2195,30 +2195,22 @@ export function Holdings() {
                 </div>
                   </div>
                   <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-                    <button onClick={()=>setAddOpen(true)} style={{ padding:'7px 16px', borderRadius:'10px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    <GlassButton onClick={()=>setAddOpen(true)}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>}>
                       Ajouter une carte
-                    </button>
-                    {(!binderSet||binderSet==='__all__')&&<button onClick={()=>{/* TODO: modal ajouter serie */setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}} style={{ padding:'7px 16px', borderRadius:'10px', background:'#1D1D1F', border:'none', color:'#fff', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px', transition:'all .15s' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.12)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                    </GlassButton>
+                    {(!binderSet||binderSet==='__all__')&&<GlassButton onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>}>
                       Ajouter une série
-                    </button>}
-                    <button onClick={()=>setImportOpen(true)} style={{ padding:'7px 16px', borderRadius:10, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', color:'#1D1D1F', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:6, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,0.95)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    </GlassButton>}
+                    <GlassButton onClick={()=>setImportOpen(true)}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>}>
                       Importer
-                    </button>
-                    <button onClick={()=>setScannerOpen(true)} style={{ padding:'7px 16px', borderRadius:10, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', color:'#1D1D1F', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:6, transition:'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}
-                      onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </GlassButton>
+                    <GlassButton onClick={()=>setScannerOpen(true)}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>}>
                       Scanner
-                    </button>
+                    </GlassButton>
                     {(binderSet!==null)&&[6,7,8,9].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
                     ))}
@@ -2230,9 +2222,9 @@ export function Holdings() {
                   <div style={{ textAlign:'center', padding:'64px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px' }}>
                     <div style={{ fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)' }}>Collection vide</div>
                     <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre premiere carte pour commencer</div>
-                    <button onClick={()=>setAddOpen(true)} style={{ padding:'11px 24px', borderRadius:'11px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'13px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
+                    <GlassButton size="lg" onClick={()=>setAddOpen(true)}>
                       + Ajouter ma première carte
-                    </button>
+                    </GlassButton>
                   </div>
                 ) : (!binderSet || binderSet==='__all__') && binderSet!=='__all__' ? (
                   /* VUE SETS — SHELF */

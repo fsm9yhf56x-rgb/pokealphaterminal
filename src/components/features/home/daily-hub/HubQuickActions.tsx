@@ -1,63 +1,27 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { SNOW, FONT, GLASS, RADIUS } from '@/lib/design/snow'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 /**
  * HubQuickActions — rangée de pills glass v7 d'accès rapide.
- * Pur routing, aucune dépendance data → visible pour tous les plans.
+ * Référence visuelle du site : tous les boutons s'alignent sur GlassButton.
  */
 const ACTIONS = [
-  { label: 'Ajouter une carte', href: '/portfolio?add=1', icon: 'plus' as const },
-  { label: 'Pokédesk',          href: '/cartes',          icon: 'book' as const },
-  { label: 'Marché',            href: '/market',          icon: 'chart' as const },
-  { label: 'Mes objectifs',     href: '/portfolio/objectifs', icon: 'target' as const },
+  { label: 'Ajouter une carte', href: '/portfolio?add=1',      icon: 'plus' as const },
+  { label: 'Pokédesk',          href: '/cartes',               icon: 'book' as const },
+  { label: 'Marché',            href: '/market',               icon: 'chart' as const },
+  { label: 'Mes objectifs',     href: '/portfolio/objectifs',  icon: 'target' as const },
 ]
 
 export function HubQuickActions() {
   const router = useRouter()
   return (
-    <div style={{
-      display: 'flex',
-      gap: 10,
-      flexWrap: 'wrap',
-    }}>
-      <style>{`
-        @media (prefers-reduced-motion: reduce) {
-          .kc-qa { transition: none !important; }
-        }
-      `}</style>
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
       {ACTIONS.map((a) => (
-        <button
-          key={a.href}
-          className="kc-qa"
-          onClick={() => router.push(a.href)}
-          style={{
-            ...GLASS.button,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 16px',
-            borderRadius: RADIUS.pill,
-            cursor: 'pointer',
-            fontFamily: FONT.display,
-            fontWeight: 600,
-            fontSize: 13,
-            color: SNOW.ink,
-            transition: 'transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .25s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 8px 22px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none'
-            e.currentTarget.style.boxShadow = GLASS.button.boxShadow as string
-          }}
-        >
-          <span style={{ color: SNOW.red, display: 'inline-flex' }}><Icon name={a.icon} /></span>
+        <GlassButton key={a.href} onClick={() => router.push(a.href)} icon={<Icon name={a.icon} />}>
           {a.label}
-        </button>
+        </GlassButton>
       ))}
     </div>
   )

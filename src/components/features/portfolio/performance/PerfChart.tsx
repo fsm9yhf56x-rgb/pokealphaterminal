@@ -185,17 +185,17 @@ function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Peri
             key={p}
             onClick={() => onChange(p)}
             style={{
-              padding: '6px 12px',
-              borderRadius: 7,
+              padding: '6px 14px',
+              borderRadius: 999,
               border: 'none',
-              background: active ? '#1D1D1F' : 'transparent',
-              color: active ? '#fff' : '#86868B',
+              background: active ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'transparent',
+              color: active ? '#1D1D1F' : '#86868B',
               fontSize: 11.5,
               fontWeight: active ? 600 : 500,
               cursor: 'pointer',
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
               transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
-              boxShadow: active ? '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.14)' : 'none',
+              boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
             }}
             onMouseEnter={e => {
               if (!active) {

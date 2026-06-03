@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { GlassButton } from '@/components/ui/GlassButton'
 import { usePortfolio } from '@/lib/usePortfolio'
 import { AllocConcentration } from './AllocConcentration'
 import { AllocTreemap } from './AllocTreemap'
@@ -287,26 +288,7 @@ function NoValuationState({ cardsCount }: { cardsCount: number }) {
           {/* CTA bouton noir premium */}
           <div style={{ position: 'relative' as const, zIndex: 1 }}>
             <a href="/portfolio" style={{ textDecoration: 'none' }}>
-              <button className="noval-cta" style={{
-                padding: '12px 28px',
-                background: '#1D1D1F',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: 10,
-                fontSize: 13.5,
-                fontWeight: 600,
-                fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                letterSpacing: '0.005em',
-                cursor: 'pointer',
-                transition: 'all .25s cubic-bezier(.2,.85,.3,1)',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)',
-                display: 'inline-flex' as const,
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                Voir mes Holdings
-                <span style={{ fontSize: 14, marginTop: -1 }}>→</span>
-              </button>
+              <GlassButton size="lg">Démarrer ma collection</GlassButton>
             </a>
           </div>
         </div>

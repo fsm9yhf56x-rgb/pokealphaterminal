@@ -268,6 +268,7 @@ export function Encyclopedie() {
     }
     // Si connecté, sauvegarder dans Supabase
     if (user) {
+      console.log('[KC ADD] user.id =', user.id, '| card =', newCard.name)
       const { error } = await supabase.from('portfolio_cards').insert({
         user_id: user.id,
         name: newCard.name,
@@ -281,7 +282,7 @@ export function Encyclopedie() {
         buy_price: newCard.buyPrice || 0,
         image_url: getCardImageUrl({ lang: newCard.lang as string, setId: newCard.setId, localId: newCard.number }) || newCard.image || '',
       })
-      if (error) console.error('Supabase insert error:', error.message)
+      if (error) { console.error('[KC ADD] INSERT ECHOUE:', JSON.stringify(error)) } else { console.log('[KC ADD] INSERT OK pour', newCard.name) }
     }
     setToast(card.name + ' ajouté')
     setTimeout(() => setToast(''), 2000)

@@ -169,7 +169,8 @@ export function Holdings() {
               setId: c.set_id || undefined, favorite: c.is_favorite || false,
               notes: c.notes || undefined,
             }))
-            setPortfolio(mapped.filter(c => !deletedIds.current.has(c.id)))
+            const visible = mapped.filter(c => !deletedIds.current.has(c.id))
+            setPortfolio(visible)
           } else {
             setPortfolio([])
           }
@@ -936,17 +937,18 @@ export function Holdings() {
       return binderFilteredFinal.map(c=>({type:'owned' as const,card:c}))
     }
     const ownedByNum = new Map<string,CardItem[]>()
-    binderFiltered.forEach(c=>{ const k=c.number; if(!ownedByNum.has(k)) ownedByNum.set(k,[]); ownedByNum.get(k)!.push(c) })
+    const normNum = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
+    binderFiltered.forEach(c=>{ const k=normNum(c.number); if(!ownedByNum.has(k)) ownedByNum.set(k,[]); ownedByNum.get(k)!.push(c) })
     const usedIds = new Set<string>()
     const result: typeof gridItems = []
     fullSetCards.forEach(fc=>{
       const num = fc.localId||''
-      const arr = ownedByNum.get(num)
+      const arr = ownedByNum.get(normNum(num))
       if(arr){
         arr.forEach(owned=>{
           if(!usedIds.has(owned.id)){
             usedIds.add(owned.id)
-            result.push({ type:'owned' as const, card:{ ...owned, image: cleanImageUrl(owned.image) || cleanImageUrl(fc.image) || '' } })
+            result.push({ type:'owned' as const, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '' } })
           }
         })
       } else {

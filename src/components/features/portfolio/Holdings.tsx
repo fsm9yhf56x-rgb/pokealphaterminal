@@ -934,7 +934,6 @@ export function Holdings() {
   })
   const buildGridItems = (): GridItem[] => {
     if(binderSort!=='number'||!binderSet||binderSet==='__all__'||fullSetCards.length===0||binderFilter!=='all'||setSearch){
-      if (typeof window !== 'undefined') console.log('[KC4] vue Par séries — owned cards:', binderFilteredFinal.map(c=>({name:c.name, image:c.image, setId:c.setId, num:c.number})))
       return binderFilteredFinal.map(c=>({type:'owned' as const,card:c}))
     }
     const ownedByNum = new Map<string,CardItem[]>()
@@ -961,7 +960,6 @@ export function Holdings() {
     return result
   }
   const gridItems = buildGridItems()
-  if (typeof window !== 'undefined' && binderSet && binderSet !== '__all__') { const o = gridItems.filter(g=>g.type==='owned').length; console.log('[KC2] binderSet=', binderSet, '| fullSetCards=', fullSetCards.length, '| owned in grid=', o, '| total grid=', gridItems.length, '| portfolio.set=', portfolio.filter(c=>c.set===binderSet).map(c=>({n:c.number,s:c.set}))) }
   const pageItems = gridItems.slice(binderPage*slotsPer,(binderPage+1)*slotsPer)
   const phantomCount = 0
   const binderPages = Math.max(1,Math.ceil(gridItems.length/slotsPer))
@@ -2650,7 +2648,6 @@ export function Holdings() {
                         )
                       }
                       const card=item.card
-                      if (typeof window !== 'undefined') console.log('[KC3] OWNED render:', card.name, '| image=', card.image)
                       const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                       const isHolo=HOLO_RARITIES.includes(card.rarity)
                       const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0

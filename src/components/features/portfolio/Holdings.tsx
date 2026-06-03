@@ -24,6 +24,7 @@ import { ShareSheet } from './ShareSheet'
 import { SpotDrawer } from './SpotDrawer'
 import { WrappedView } from './WrappedView'
 import { GlassButton } from '@/components/ui/GlassButton'
+import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 type CardItem = {
   id: string; name: string; set: string; year: number; number: string
@@ -252,6 +253,7 @@ export function Holdings() {
     done:boolean; success:boolean
   }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
+  const [scannerSoonOpen, setScannerSoonOpen] = useState(false)
   // ── Prix via hook centralisé useCardPrices ──
   const portfolioSetIds = useMemo(
     () => Array.from(new Set(portfolio.map(c => c.setId).filter(Boolean) as string[])),
@@ -2207,8 +2209,9 @@ export function Holdings() {
                       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>}>
                       Importer
                     </GlassButton>
-                    <GlassButton onClick={()=>setScannerOpen(true)}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>}>
+                    <GlassButton onClick={()=>setScannerSoonOpen(true)}
+                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+                      iconRight={<SoonBadge version="v2.0" />}>
                       Scanner
                     </GlassButton>
                     {(binderSet!==null)&&[6,7,8,9].map(n=>(
@@ -3445,6 +3448,20 @@ export function Holdings() {
         }
         return (
           <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}
+      <SoonModal
+        open={scannerSoonOpen}
+        onClose={()=>setScannerSoonOpen(false)}
+        feature="Scanner IA"
+        version="v2.0"
+        description="Photographiez une carte et l'IA Kodo l'identifie automatiquement (set, numéro, langue, état) puis pré-remplit l'ajout au portefeuille."
+        bullets={[
+          'Reconnaissance instantanée par photo',
+          'Pré-remplissage set / numéro / langue',
+          'Détection auto raw vs gradée',
+          'Ajout en un geste depuis mobile',
+        ]}
+        brevoListId={null}
+      />
             onClick={()=>{ if(!scannerLoad){ setScannerOpen(false); setScannerImg(null) } }}>
             <div style={{
               maxWidth:'420px', width:'100%',

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { GoalTarget, WishlistItem, GoalMetric } from '@/lib/useGoals'
+import { GlassButton } from '@/components/ui/GlassButton'
 
 interface Props {
   mode: 'target' | 'wish'
@@ -201,64 +202,10 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              padding: 12,
-              background: 'rgba(255,255,255,0.55)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderRadius: 10,
-              fontSize: 13,
-              cursor: 'pointer',
-              color: '#1D1D1F',
-              fontFamily: 'var(--font-sora, Sora, sans-serif)',
-              fontWeight: 600,
-              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.55)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
-          >Annuler</button>
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            style={{
-              flex: 1,
-              padding: 12,
-              background: canSubmit ? '#1D1D1F' : 'rgba(0,0,0,0.1)',
-              border: 'none',
-              borderRadius: 10,
-              color: canSubmit ? '#FFFFFF' : '#AEAEB2',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-              fontFamily: 'var(--font-sora, Sora, sans-serif)',
-              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
-              boxShadow: canSubmit
-                ? '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)'
-                : 'none',
-            }}
-            onMouseEnter={e => {
-              if (canSubmit) {
-                e.currentTarget.style.transform = 'translateY(-1.5px)'
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.18)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (canSubmit) {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.14)'
-              }
-            }}
-          >{submitting ? 'En cours…' : (mode === 'target' ? 'Créer l\'objectif' : 'Ajouter à la wishlist')}</button>
+          <GlassButton fullWidth onClick={onClose} style={{ flex: 1 }}>Annuler</GlassButton>
+          <GlassButton fullWidth active disabled={!canSubmit} onClick={handleSubmit} style={{ flex: 1 }}>
+            {submitting ? 'En cours…' : (mode === 'target' ? 'Créer l\'objectif' : 'Ajouter à la wishlist')}
+          </GlassButton>
         </div>
       </div>
     </div>
@@ -289,9 +236,10 @@ function TargetForm({
               onClick={() => setMetric(opt.value)}
               style={{
                 padding: '10px 12px',
-                background: metric === opt.value ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
-                color: metric === opt.value ? '#FFFFFF' : '#86868B',
-                border: `1px solid ${metric === opt.value ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                background: metric === opt.value ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
+                color: metric === opt.value ? '#1D1D1F' : '#86868B',
+                border: `0.5px solid rgba(255,255,255,0.6)`,
+                boxShadow: metric === opt.value ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
                 borderRadius: 9,
                 fontSize: 11.5,
                 fontWeight: 600,
@@ -370,9 +318,10 @@ function WishForm({
                 style={{
                   flex: 1,
                   padding: '10px 0',
-                  background: wishLang === l ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
-                  color: wishLang === l ? '#FFFFFF' : '#86868B',
-                  border: `1px solid ${wishLang === l ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                  background: wishLang === l ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
+                  color: wishLang === l ? '#1D1D1F' : '#86868B',
+                  border: `0.5px solid rgba(255,255,255,0.6)`,
+                  boxShadow: wishLang === l ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
                   borderRadius: 9,
                   fontSize: 11.5,
                   fontWeight: 700,
@@ -403,9 +352,10 @@ function WishForm({
                 style={{
                   flex: 1,
                   padding: 11,
-                  background: active ? '#1D1D1F' : 'rgba(255,255,255,0.55)',
-                  color: active ? '#FFFFFF' : '#86868B',
-                  border: `1px solid ${active ? '#1D1D1F' : 'rgba(0,0,0,0.08)'}`,
+                  background: active ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
+                  color: active ? '#1D1D1F' : '#86868B',
+                  border: `0.5px solid rgba(255,255,255,0.6)`,
+                  boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
                   borderRadius: 9,
                   fontSize: 14,
                   fontFamily: 'var(--font-sora, Sora, sans-serif)',

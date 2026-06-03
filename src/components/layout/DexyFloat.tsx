@@ -139,9 +139,9 @@ export function DexyFloat() {
 
             {/* Header */}
             <div style={{ background:'#111', padding:'10px 13px', display:'flex', alignItems:'center', gap:'9px' }}>
-              <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'12px', fontWeight:700, flexShrink:0 }}>D</div>
+              <div style={{ width:'28px', height:'28px', borderRadius:'8px', background:'linear-gradient(135deg,#FF7A5A,#E03020)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'12px', fontWeight:700, flexShrink:0 }}>K</div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:'12px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Dexy AI</div>
+                <div style={{ fontSize:'12px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)' }}>Kodo AI</div>
                 <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.4)', marginTop:'1px' }}>Analyste TCG</div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'4px' }}>
@@ -241,7 +241,7 @@ export function DexyFloat() {
                 fontFamily:'var(--font-display)',
               }}
             >
-              {expanded ? '×' : 'D'}
+              {expanded ? '×' : 'K'}
             </button>
             {!expanded && (
               <button

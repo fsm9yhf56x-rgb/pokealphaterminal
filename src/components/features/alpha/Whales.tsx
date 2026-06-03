@@ -119,7 +119,7 @@ function MoveRow({ move, idx, last, avatar }:{ move:Move; idx:number; last:boole
         <div style={{ display:'flex', alignItems:'center', gap:'7px', marginBottom:'3px', flexWrap:'wrap' }}>
           <span style={{ fontSize:'12px', fontWeight:700, color:SNOW.ink, fontFamily:FONT.display }}>{move.handle}</span>
           <span style={{ fontSize:'10px', fontWeight:700, color:col, background:buy?'rgba(38,166,91,.10)':SNOW.redLight, padding:'1px 7px', borderRadius:'5px', fontFamily:FONT.display }}>{move.action}</span>
-          {move.signal && <span style={{ display:'inline-flex', alignItems:'center', gap:'3px', fontSize:'8px', fontWeight:700, background:SNOW.redLight, color:SNOW.red, border:'1px solid #FFD8D0', padding:'2px 6px', borderRadius:'5px', fontFamily:FONT.display, letterSpacing:'.03em' }}>⚡ SIGNAL DEXY</span>}
+          {move.signal && <span style={{ display:'inline-flex', alignItems:'center', gap:'3px', fontSize:'8px', fontWeight:700, background:SNOW.redLight, color:SNOW.red, border:'1px solid #FFD8D0', padding:'2px 6px', borderRadius:'5px', fontFamily:FONT.display, letterSpacing:'.03em' }}>⚡ SIGNAL KODO AI</span>}
         </div>
         <div style={{ fontSize:'12px', color:SNOW.inkSoft, fontFamily:FONT.display, fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{move.card}</div>
         <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'2px' }}>
@@ -201,7 +201,7 @@ export function Whales({ isPro = false }: { isPro?: boolean }) {
         <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', marginBottom:'22px' }}>
           <StatCard label="Volume tracké 30j" value={globalStats.vol} sub="€ sur tous les whales" color={SNOW.ink} delay={0} />
           <StatCard label="Moves détectés" value={globalStats.moves} sub="achats + ventes" color={SNOW.ink} delay={60} />
-          <StatCard label="Signaux Dexy" value={globalStats.signals} sub="moves convertis en alpha" color={SNOW.red} delay={120} />
+          <StatCard label="Signaux Kodo AI" value={globalStats.signals} sub="moves convertis en alpha" color={SNOW.red} delay={120} />
           <StatCard label="Sentiment net" value={globalStats.net} sub={`${globalStats.net}% acheteur · haussier`} color={POS} delay={180} />
         </div>
 

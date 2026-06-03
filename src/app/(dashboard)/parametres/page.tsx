@@ -304,7 +304,7 @@ function AbonnementTab({ plan, proUntil }: { plan: 'free' | 'pro' | 'premium'; p
       )}
       {!isPaid && (
         <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 18px', lineHeight: 1.5 }}>
-          Débloque plus de puissance : signaux, Deal Hunter, Whale Tracker et Dexy AI.
+          Débloque plus de puissance : signaux, Deal Hunter, Whale Tracker et Kodo AI.
         </p>
       )}
       <a href="/abonnement" style={{ textDecoration: 'none' }}>

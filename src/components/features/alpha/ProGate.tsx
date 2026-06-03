@@ -30,17 +30,17 @@ const CFG: Record<string, { title:string; desc:string; preview:string; features:
   },
   whales: {
     title:   'Whale Tracker',
-    desc:    "Suis les plus grands collectionneurs Pokémon dans le monde. Vois ce que les acheteurs LEGEND accumulent en temps réel et reçois un signal Dexy à chaque gros move.",
+    desc:    "Suis les plus grands collectionneurs Pokémon dans le monde. Vois ce que les acheteurs LEGEND accumulent en temps réel et reçois un signal Kodo AI à chaque gros move.",
     preview: "4 whales trackés · 10 moves aujourd'hui",
     features: [
       { icon:'🐋', label:'4 profils LEGEND trackés' },
       { icon:'📡', label:'Feed de moves en temps réel' },
-      { icon:'🤖', label:'Signal Dexy sur chaque gros move' },
+      { icon:'🤖', label:'Signal Kodo AI sur chaque gros move' },
       { icon:'📈', label:'Volumes · portefeuilles · stratégies' },
     ],
   },
   dexy: {
-    title:   'Dexy AI',
+    title:   'Kodo AI',
     desc:    "Un analyste TCG IA disponible 24h/24, propulsé par Claude. Analyse de cartes, comparaisons d'investissement, stratégies portfolio — avec contexte de marché réel intégré.",
     preview: 'Requêtes illimitées avec Pro',
     features: [

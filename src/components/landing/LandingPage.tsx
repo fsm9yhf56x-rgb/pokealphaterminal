@@ -226,7 +226,7 @@ const FEATURES = [
   },
   {
     icon: 'spark' as const,
-    title: 'Dexy AI',
+    title: 'Kodo AI',
     desc: 'Un analyste TCG 24/7. Gradation, timing, thèse d’achat — des réponses, pas des graphiques à déchiffrer.',
     badge: 'Bientôt · v2.0',
     live: false,
@@ -706,7 +706,7 @@ export default function LandingPage() {
               <li><Glyph d="check" size={16} /> Alpha Signals (S / A / B)</li>
               <li><Glyph d="check" size={16} /> Whale Tracker</li>
               <li><Glyph d="check" size={16} /> Deal Hunter — eBay & Cardmarket</li>
-              <li><Glyph d="check" size={16} /> Dexy AI illimité + support prioritaire</li>
+              <li><Glyph d="check" size={16} /> Kodo AI illimité + support prioritaire</li>
             </ul>
             <a href="/signup" className="kc-btn kc-btn-primary kc-btn-block">Passer Premium</a>
             <p className="kc-plan-note">Market / Alpha / Whale en déploiement (v2.0 / v3.0).</p>
@@ -722,7 +722,7 @@ export default function LandingPage() {
             Le Terminal arrive. Soyez dans la première vague.
           </h2>
           <p className="kc-cta-sub">
-            Signaux Alpha, Whale Tracker, Dexy AI. Laissez votre email : accès prioritaire,
+            Signaux Alpha, Whale Tracker, Kodo AI. Laissez votre email : accès prioritaire,
             sans engagement — on vous prévient le jour J.
           </p>
 

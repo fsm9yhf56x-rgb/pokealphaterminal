@@ -45,7 +45,7 @@ const FEATURES: Record<PlanId, string[]> = {
     'Alpha Signals (S / A / B)',
     'Whale Tracker',
     'Deal Hunter — eBay & Cardmarket',
-    'Dexy AI illimité + support prioritaire',
+    'Kodo AI illimité + support prioritaire',
   ],
 }
 

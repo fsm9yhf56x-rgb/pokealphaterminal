@@ -111,12 +111,12 @@ export const NAV: NavItem[] = [
     soon: {
       feature: 'Alpha Signals',
       version: 'v2.0',
-      description: 'Detection IA des opportunites avant le marche. 4 modules: Signals, Deal Hunter, Whale Tracker, Dexy AI.',
+      description: 'Detection IA des opportunites avant le marche. 4 modules: Signals, Deal Hunter, Whale Tracker, Kodo AI.',
       bullets: [
         'Signals: cartes sous-evaluees detectees par IA (S/A/B tier)',
         'Deal Hunter: scan eBay/Cardmarket automatique',
         'Whale Tracker: mouvements des gros collectionneurs',
-        'Dexy AI: analyste TCG 24/7 (Claude API)',
+        'Kodo AI: analyste TCG 24/7 (Claude API)',
       ],
     },
     children: [
@@ -160,17 +160,17 @@ export const NAV: NavItem[] = [
           bullets: [
             '4 profils whales LEGEND-tier suivis',
             'Notifications quand un whale move',
-            'Dexy genere un signal sur chaque move',
+            'Kodo AI genere un signal sur chaque move',
             'Historique des transactions sur 90j',
           ],
         },
       },
       {
-        label: 'Dexy AI',
+        label: 'Kodo AI',
         href:  '/alpha/dexy',
         pro:   true,
         soon: {
-          feature: 'Dexy AI',
+          feature: 'Kodo AI',
           version: 'v2.0',
           description: 'Ton analyste TCG personnel propulse par Claude. Insights quotidiens proactifs + chat illimite sur n\'importe quelle question marche.',
           bullets: [

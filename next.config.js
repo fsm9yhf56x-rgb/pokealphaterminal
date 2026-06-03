@@ -48,9 +48,9 @@ const cspReportOnly = [
   // Fonts: self + Google Fonts (Sora, DM Sans, Space Mono via next/font)
   "font-src 'self' https://fonts.gstatic.com data:",
   // Images: self + R2 (catalogue cartes) + Resend tracking + Vercel
-  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://*.vercel.app https://*.kodocards.com",
+  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://assets.tcgdex.net https://*.vercel.app https://*.kodocards.com",
   // Connect: self + Better Auth + Neon + Resend + R2
-  "connect-src 'self' https://*.neon.tech https://api.resend.com https://*.r2.dev https://va.vercel-scripts.com",
+  "connect-src 'self' https://*.neon.tech https://api.resend.com https://api.tcgdex.net https://*.r2.dev https://va.vercel-scripts.com",
   // Frames: deny (anti-clickjacking)
   "frame-ancestors 'none'",
   // Forms: self only (anti-CSRF)

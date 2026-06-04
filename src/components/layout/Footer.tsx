@@ -93,12 +93,36 @@ export function Footer() {
           font-family: var(--font-sora, 'Sora', sans-serif);
           letter-spacing: -0.005em;
         }
+        .kfoot-grid, .kfoot-bottom { width: 100%; box-sizing: border-box; }
+        .kfoot-col { min-width: 0; }
         @media (max-width: 860px) {
           .kfoot-grid { grid-template-columns: 1fr 1fr; gap: 32px 24px; }
         }
+        @media (max-width: 767px) {
+          /* C : masquer Produit (deja dans le burger), pas de redondance mobile */
+          .kfoot-produit { display: none !important; }
+          /* A : 2 colonnes compactes pour le reste */
+          .kfoot-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 26px 20px !important;
+            margin-bottom: 24px;
+          }
+          /* Brand s'etale sur les 2 colonnes en tete */
+          .kfoot-grid > div:first-child { grid-column: 1 / -1; }
+        }
+        @media (max-width: 767px) {
+          /* Barre du bas : 2 lignes centrees nettes */
+          .kfoot-bottom {
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+          }
+          .kfoot-bottom > div { justify-content: center; }
+          .kfoot-sep { display: none; }
+        }
         @media (max-width: 520px) {
-          .kfoot-grid { grid-template-columns: 1fr; gap: 28px; }
-          .kfoot-bottom { justify-content: center; text-align: center; }
+          .kfoot-grid { grid-template-columns: 1fr 1fr !important; gap: 24px 16px !important; }
         }
       `}</style>
 
@@ -163,7 +187,7 @@ export function Footer() {
         </div>
 
         {/* Produit */}
-        <div>
+        <div className="kfoot-produit">
           <div className="kfoot-section-label">Produit</div>
           <div className="kfoot-col">
             <Link href="/home" className="kfoot-link">Daily Hub</Link>
@@ -205,7 +229,7 @@ export function Footer() {
       <div className="kfoot-bottom">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
           <span>© {year} Kodo Cards · Tous droits réservés</span>
-          <span style={{ color: '#C7C7CC' }}>·</span>
+          <span className="kfoot-sep" style={{ color: '#C7C7CC' }}>·</span>
           <span>Conçu en France</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Sora, DM_Sans, Space_Mono } from 'next/font/google'
 import './globals.css'
 const sora = Sora({
@@ -31,6 +31,13 @@ export const metadata: Metadata = {
     siteName: 'Kodo Cards',
     locale: 'fr_FR',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
 }
 interface RootLayoutProps {
   children: React.ReactNode

@@ -177,69 +177,107 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
           </button>
         </div>
 
-        {/* Preview Snow+ premium */}
-        <div style={{ padding:'4px 24px 18px' }}>
-          <div ref={previewRef} style={{
-            borderRadius:16,
-            overflow:'hidden',
-            background:'linear-gradient(180deg, #FAFAFB 0%, #F4F4F7 100%)',
-            padding:'18px 18px',
-            display:'flex', alignItems:'center', gap:18,
-            position:'relative',
-            boxShadow:'inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 0.5px rgba(0,0,0,0.05)',
-          }}>
-
-
-            {isShowcase && showcaseCards.length > 0 ? (
-              <div style={{ display:'flex', gap:6, flexShrink:0 }}>
-                {showcaseCards.slice(0,3).map((sc,i) => (
-                  <img key={sc.id} src={sc.image ? `${sc.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp` : ''} alt={sc.name} crossOrigin="anonymous"
-                    style={{ width:62, borderRadius:8, boxShadow:'0 8px 20px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08)', transform:`rotate(${(i-1)*4}deg)` }}
-                    onError={e => { (e.target as HTMLImageElement).style.display='none' }} />
-                ))}
+        {/* Aperçu compact (visible) + Story 9:16 hors-écran (capture html2canvas) */}
+        {(() => {
+          const apFan = isShowcase ? showcaseCards.filter(c=>c.image).slice(0,3)
+            : isCard ? (card!.image ? [card!] : [])
+            : portfolio.filter(c=>c.image).slice(0,3)
+          const apHi = (img:string) => /\/low\.(webp|jpg|png)$/.test(img) ? img.replace(/\/low\.(webp|jpg|png)$/, '') + '/high.webp' : img
+          const apVal = isCard ? (card!.curPrice + ' \u20AC') : formatEUR(totalCur, 'big')
+          const apCount = isCard ? 1 : (isShowcase?showcaseCards:portfolio).length
+          return (
+            <div style={{ padding:'4px 24px 16px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, background:'#0A0A14', borderRadius:14, padding:'14px 16px', position:'relative', overflow:'hidden' }}>
+                <div aria-hidden style={{ position:'absolute', top:0, left:0, right:0, height:'70%', background:'radial-gradient(ellipse at 30% 0%, rgba(60,40,100,0.4) 0%, transparent 70%)', pointerEvents:'none' }}/>
+                <div style={{ display:'flex', alignItems:'center', flexShrink:0, position:'relative', zIndex:1 }}>
+                  {apFan.length>0 ? apFan.map((c,i)=>(
+                    <img key={c.id} src={apHi(c.image!)} alt={c.name} crossOrigin="anonymous"
+                      style={{ width:i===Math.floor(apFan.length/2)&&apFan.length===3?44:38, borderRadius:5, marginLeft:i===0?0:-14, transform:`rotate(${apFan.length===3?(i===0?-10:i===2?10:0):apFan.length===2?(i===0?-6:6):0}deg)`, zIndex:i===1?3:1, position:'relative', border:'1px solid rgba(255,255,255,0.2)', boxShadow:'0 4px 12px rgba(0,0,0,0.5)' }}
+                      onError={e=>{const t=e.target as HTMLImageElement; if(t.src.endsWith('/high.webp')){t.src=t.src.replace('/high.webp','/high.jpg')}else{t.style.display='none'}}} />
+                  )) : (
+                    <div style={{ width:40, height:56, borderRadius:6, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)' }}/>
+                  )}
+                </div>
+                <div style={{ flex:1, minWidth:0, position:'relative', zIndex:1 }}>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#E03020', fontFamily:'var(--font-display)' }}>Kodo Cards</div>
+                  <div style={{ fontSize:19, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', marginTop:1, lineHeight:1.1 }}>{apVal}</div>
+                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', marginTop:2, fontFamily:'var(--font-display)' }}>Story prête · {apCount} carte{apCount>1?'s':''}</div>
+                </div>
               </div>
-            ) : isCard && card!.image ? (
-              <img src={`${card!.image.replace(/\/low\.(webp|jpg|png)$/, '')}/high.webp`} alt={card!.name} crossOrigin="anonymous"
-                style={{ width:104, borderRadius:10, boxShadow:'0 12px 28px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1)' }}
-                onError={e => { const t = e.target as HTMLImageElement; if (t.src.includes('.webp')) t.src = t.src.replace('.webp', '.jpg') }} />
-            ) : (
-              <div style={{ display:'flex', flexShrink:0, position:'relative' }}>
-                {portfolio.filter(c=>c.image).slice(0,3).length >= 2 ? (
-                  <div style={{ display:'flex' }}>
-                    {portfolio.filter(c=>c.image).slice(0,3).map((c,i) => {
-                      const angles = ['-8deg','0deg','8deg']
-                      return <img key={c.id} src={c.image!.replace(/\/low\.(webp|jpg|png)$/, '') + '/high.webp'} alt={c.name} crossOrigin="anonymous"
-                        style={{ width:56, borderRadius:8, boxShadow:'0 8px 20px rgba(0,0,0,0.18)', transform:'rotate('+angles[i]+') translateY('+(i===1?'0':'4')+'px)', marginLeft:i>0?-10:0, position:'relative', zIndex:i===1?3:1 }}
-                        onError={e=>{(e.target as HTMLImageElement).style.display='none'}} />
+            </div>
+          )
+        })()}
+
+        {/* Story 9:16 hors-écran — capturée par html2canvas */}
+        <div aria-hidden style={{ position:'fixed', left:-99999, top:0, width:360, pointerEvents:'none', opacity:0 }}>
+          {(() => {
+            const fanCards = isShowcase ? showcaseCards.filter(c=>c.image).slice(0,3)
+              : isCard ? (card!.image ? [card!] : [])
+              : portfolio.filter(c=>c.image).slice(0,3)
+            const hi = (img:string) => /\/low\.(webp|jpg|png)$/.test(img) ? img.replace(/\/low\.(webp|jpg|png)$/, '') + '/high.webp' : img
+            const setCount = isCard ? 1 : new Set((isShowcase?showcaseCards:portfolio).map(c=>c.set)).size
+            const cardCount = isCard ? 1 : (isShowcase?showcaseCards:portfolio).length
+            const ctxLabel = isShowcase ? 'MA VITRINE' : isCard ? 'MA CARTE' : 'MON PORTFOLIO'
+            const bigVal = isCard ? (card!.curPrice + ' \u20AC') : formatEUR(totalCur, 'big')
+            const roiVal = isCard ? roi : totalROI
+            const hasRoi = isCard ? card!.buyPrice > 0 : totalBuy > 0
+            const roiPos = roiVal >= 0
+            return (
+            <div ref={previewRef} style={{
+              borderRadius:18,
+              overflow:'hidden',
+              background:'#0A0A14',
+              aspectRatio:'9 / 16',
+              position:'relative',
+              display:'flex', flexDirection:'column',
+              boxShadow:'0 0 0 0.5px rgba(0,0,0,0.4)',
+            }}>
+              <div aria-hidden style={{ position:'absolute', top:0, left:0, right:0, height:'45%', background:'radial-gradient(ellipse at 50% 0%, rgba(60,40,100,0.35) 0%, transparent 70%)', pointerEvents:'none' }}/>
+
+              <div style={{ padding:'22px 20px 0', display:'flex', justifyContent:'space-between', alignItems:'center', position:'relative', zIndex:2 }}>
+                <span style={{ fontSize:14, fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)', letterSpacing:'-0.2px' }}>Kodo Cards</span>
+                <span style={{ fontSize:9, fontWeight:600, color:'rgba(255,255,255,0.45)', letterSpacing:'0.16em', fontFamily:'var(--font-display)' }}>{ctxLabel}</span>
+              </div>
+
+              <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:1, minHeight:0, padding:'8px 0' }}>
+                {fanCards.length > 0 ? (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {fanCards.map((c,i) => {
+                      const isCenter = fanCards.length===3 ? i===1 : (fanCards.length===1)
+                      const rot = fanCards.length===3 ? (i===0?-12:i===2?12:0) : fanCards.length===2 ? (i===0?-7:7) : 0
+                      const w = isCenter ? 118 : 94
+                      const ml = i===0 ? 0 : (fanCards.length===3 ? -22 : -16)
+                      return (
+                        <img key={c.id} src={hi(c.image!)} alt={c.name} crossOrigin="anonymous"
+                          style={{ width:w, borderRadius:8, marginLeft:ml, transform:`rotate(${rot}deg)`, zIndex:isCenter?3:1, position:'relative', border:'1.5px solid rgba(255,255,255,0.2)', boxShadow:isCenter?'0 16px 40px rgba(0,0,0,0.6)':'0 10px 28px rgba(0,0,0,0.55)' }}
+                          onError={e => { const t = e.target as HTMLImageElement; if (t.src.endsWith('/high.webp')) { t.src = t.src.replace('/high.webp','/high.jpg') } else { t.style.display='none' } }} />
+                      )
                     })}
                   </div>
                 ) : (
-                  <div style={{ width:80, height:80, borderRadius:16, background:'#F0F0F2', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #E5E5EA' }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.8"><path d="M4 4h16v16H4zM9 4v16M15 4v16"/></svg>
+                  <div style={{ width:92, height:128, borderRadius:10, background:'rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(255,255,255,0.1)' }}>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.6"><path d="M4 4h16v16H4zM9 4v16M15 4v16"/></svg>
                   </div>
                 )}
               </div>
-            )}
 
-            <div style={{ flex:1, minWidth:0, position:'relative', zIndex:1 }}>
-              <div style={{ fontSize:11, fontWeight:600, color:'#E03020', fontFamily:'var(--font-display)', letterSpacing:'0.04em', marginBottom:6 }}>Kodo Cards</div>
-              <div style={{ fontSize:14, fontWeight:700, color:'#0A0A0F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', letterSpacing:'-0.2px' }}>{title}</div>
-              {isCard ? (
-                <>
-                  <div style={{ fontSize:10, color:'#86868B', marginTop:3, fontFamily:'var(--font-display)' }}>{card!.set}</div>
-                  {card!.curPrice > 0 && <div style={{ fontSize:22, fontWeight:800, color:'#0A0A0F', fontFamily:'var(--font-display)', marginTop:8, letterSpacing:'-0.5px' }}>{card!.curPrice} €</div>}
-                  {card!.buyPrice > 0 && <div style={{ fontSize:11, color:'#2E9E6A', fontWeight:700, marginTop:2 }}>+{roi}% ROI</div>}
-                </>
-              ) : (
-                <>
-                  <div style={{ fontSize:26, fontWeight:800, color:'#0A0A0F', fontFamily:'var(--font-display)', marginTop:6, letterSpacing:'-0.8px', lineHeight:1 }}>{formatEUR(totalCur, 'big')}</div>
-                  {totalBuy > 0 && <div style={{ fontSize:12, color:'#2E9E6A', fontWeight:700, marginTop:4 }}>+{totalROI}%</div>}
-                  <div style={{ fontSize:10, color:'#86868B', marginTop:3, fontFamily:'var(--font-display)' }}>{portfolio.length} carte{portfolio.length>1?'s':''}</div>
-                </>
-              )}
-              <div style={{ fontSize:9, fontWeight:600, color:'#AEAEB2', marginTop:10, letterSpacing:'0.1em', fontFamily:'var(--font-display)' }}>kodocards.com</div>
+              <div style={{ textAlign:'center', padding:'0 20px', position:'relative', zIndex:2 }}>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.5)', letterSpacing:'0.14em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:4 }}>{isCard ? card!.set : 'Valeur de la collection'}</div>
+                <div style={{ fontSize:34, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1px', lineHeight:1 }}>{bigVal}</div>
+                {hasRoi && (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:4, marginTop:10, background:roiPos?'rgba(46,158,106,0.16)':'rgba(224,48,32,0.16)', border:`1px solid ${roiPos?'rgba(46,158,106,0.4)':'rgba(224,48,32,0.4)'}`, borderRadius:999, padding:'4px 14px' }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:roiPos?'#3DD68C':'#FF6B5B', fontFamily:'var(--font-display)' }}>{roiPos?'\u2191':'\u2193'} {roiPos?'+':''}{roiVal}%</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ padding:'18px 20px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:'0.5px solid rgba(255,255,255,0.1)', marginTop:18, position:'relative', zIndex:2 }}>
+                <span style={{ fontSize:10, color:'rgba(255,255,255,0.55)', fontFamily:'var(--font-display)' }}>{isCard ? card!.name : `${cardCount} carte${cardCount>1?'s':''} \u00B7 ${setCount} set${setCount>1?'s':''}`}</span>
+                <span style={{ fontSize:10, fontWeight:600, color:'rgba(255,255,255,0.75)', letterSpacing:'0.04em', fontFamily:'var(--font-display)' }}>kodocards.com</span>
+              </div>
             </div>
-          </div>
+            )
+          })()}
         </div>
 
         {/* Share buttons */}

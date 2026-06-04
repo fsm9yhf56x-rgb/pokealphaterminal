@@ -1478,6 +1478,20 @@ export function Holdings() {
           .kbinder-grid{ grid-template-columns:repeat(3,minmax(0,1fr))!important; }
           .kbinder-colpicker{ display:none!important; }
         }
+        @media (max-width:767px){
+          /* Étagère de cartes : 130px -> on voit 2,5 cartes, la demi-carte signale le swipe */
+          .shelf-card{ width:130px!important; }
+          /* Fade à droite : indice visuel "ça continue, swipe" */
+          .shelf-row{ -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); }
+          /* Ligne de série : masquer la pill redondante (la ligne entière est cliquable) */
+          .voir-pill{ display:none!important; }
+          /* Autoriser le wrap pour que compteur+poubelle ne soient jamais coupés */
+          .ksetrow-head{ flex-wrap:wrap!important; gap:8px; }
+          .ksetrow-left{ flex-wrap:wrap!important; min-width:0; flex:1; }
+          /* Boutons Ajouter : empilés pleine largeur */
+          .kadd-btns{ flex-direction:column!important; width:100%; align-items:stretch!important; gap:8px!important; }
+          .kadd-btns > *{ width:100%!important; }
+        }
         @media (max-width:600px){
           .kbinder-grid{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
           .kpicker-grid{ grid-template-columns:repeat(2,1fr)!important; }
@@ -2207,7 +2221,7 @@ export function Holdings() {
                   )}
                 </div>
                   </div>
-                  <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                  <div className="kadd-btns" style={{ display:'flex', gap:'6px', alignItems:'center' }}>
                     <GlassButton onClick={()=>setAddOpen(true)}
                       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>}>
                       Ajouter une carte
@@ -2364,8 +2378,8 @@ export function Holdings() {
                                   setDragOverSet(null)
                                 }}
                                 onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
-                                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
-                                  <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                                <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
+                                  <div className="ksetrow-left" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
                                     <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0, textShadow:isComplete?'0 1px 2px rgba(100,80,20,.4)':'none', boxShadow:'none', animation:isComplete?'starBreath 4s ease-in-out infinite':'none' }}>{lvl}</div>
                                                                         {setLogos[setName]&&(
@@ -2451,7 +2465,7 @@ export function Holdings() {
                               if(item.type==='ghost'){
                                 const gi=item
                                 return(
-                                  <div key={'sg-'+gi.number}
+                                  <div key={'sg-'+gi.number} className="shelf-card"
                                     style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', opacity:.4, transition:'opacity .2s', cursor:'pointer' }}
                                     onMouseEnter={e=>{e.currentTarget.style.opacity='0.6'}}
                                     onMouseLeave={e=>{e.currentTarget.style.opacity='0.4'}}
@@ -2492,7 +2506,7 @@ export function Holdings() {
                               const gradeBg=gn>=10?'linear-gradient(135deg,#B8942F,#D4AF37,#F5ECA0,#D4AF37)':gn>=8?'linear-gradient(135deg,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8)':gn>=5?'linear-gradient(135deg,#A0724A,#C4956A,#E0BFA0,#C4956A)':'#555'
                               const gradeFg=gn>=10?'#1a1200':gn>=8?'#333':gn>=5?'#2a1800':'#fff'
                               return(
-                              <div key={card.id}
+                              <div key={card.id} className="shelf-card"
                                 style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'visible', position:'relative', transition:'transform .2s cubic-bezier(.34,1.2,.64,1)' }}
                                 onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-6px)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,.1)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                                 onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}>

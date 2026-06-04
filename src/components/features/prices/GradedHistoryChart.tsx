@@ -338,7 +338,7 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       )}
 
       {/* Stats strip glass v7 */}
-      <div style={{
+      <div className="kgrid-stat" style={{
         display: 'grid', gridTemplateColumns: 'repeat(4,1fr)',
         background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.05)',
         borderRadius: 10, overflow: 'hidden', marginBottom: 14,

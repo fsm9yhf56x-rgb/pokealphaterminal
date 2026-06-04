@@ -338,7 +338,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
           <SectionLabel index="05" label="Badges Dresseur" noMargin />
           <div style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-data)', fontWeight:600 }}>{earned.length}<span style={{ color:'#C7C7CC' }}> / {BADGES.length}</span></div>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:10 }}>
+        <div className="kgrid-stat" style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:10 }}>
           {BADGES.map(b=>{
             const ok = b.check(portfolio, totalCur)
             return (

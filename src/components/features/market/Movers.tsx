@@ -73,7 +73,7 @@ export function Movers() {
         </div>
 
         {/* Stats rapides */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'20px' }}>
+        <div className="kgrid-stat" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'20px' }}>
           {[
             { label:'Gainers 24h',  value:String(GAINERS.length), sub:'Cartes en hausse',   color:'#2E9E6A' },
             { label:'Losers 24h',   value:String(LOSERS.length),  sub:'Cartes en baisse',   color:'#E03020' },

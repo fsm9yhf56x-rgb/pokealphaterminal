@@ -1473,6 +1473,15 @@ export function Holdings() {
         .vtab:active { transform:scale(.97);transition-duration:.08s; }
         .vtab.on { background:linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%) !important;color:#1D1D1F !important;box-shadow:0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .2s cubic-bezier(.25,.46,.45,.94);color:#86868B;border:1px solid #D2D2D7;background:#fff; }
+        /* Responsive — clamp colonnes binder (override inline grid via !important) */
+        @media (max-width:1023px){
+          .kbinder-grid{ grid-template-columns:repeat(3,minmax(0,1fr))!important; }
+          .kbinder-colpicker{ display:none!important; }
+        }
+        @media (max-width:600px){
+          .kbinder-grid{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
+          .kpicker-grid{ grid-template-columns:repeat(2,1fr)!important; }
+        }
         .colbtn:hover { background:#F0F0F5;color:#48484A;border-color:#C7C7CC; }
         .colbtn:active { transform:scale(.92);transition-duration:.06s; }
         .remove-btn { pointer-events:all !important; }
@@ -1662,7 +1671,7 @@ export function Holdings() {
                     <span style={{ fontWeight:700, color:'#1D1D1F' }}>{filtered.length}</span> carte{filtered.length!==1?'s':''} disponible{filtered.length!==1?'s':''}
                   </div>
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, padding:'8px 20px 20px', overflowY:'auto' as const }}>
+                <div className="kpicker-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, padding:'8px 20px 20px', overflowY:'auto' as const }}>
                   {filtered.slice(0,18).map(card=>{
                     const ec2=EC[card.type]??'#888'
                     return (
@@ -2609,7 +2618,7 @@ export function Holdings() {
                       ))}
                     </div>
                   </div>
-                  <div style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'1fr', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
+                  <div className="kbinder-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'1fr', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
                     {pageItems.map((item,idx)=>{
                       if(item.type==='ghost'){
                         const gi=item

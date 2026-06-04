@@ -154,7 +154,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
           </div>
         ) : null}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: SNOW.border, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
+        <div className="kgrid-stat" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: SNOW.border, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
           <KpiCell label="Total noté" value={total.toLocaleString('fr-FR')} sub="PSA seulement" />
           <KpiCell label="Gem rate" value={`${gemRate.toFixed(2).replace('.', ',')} %`} valueColor="#00A368" sub={`${pop10.toLocaleString('fr-FR')} PSA 10`} />
           <KpiCell label="Cartes 9+" value={pop9plus.toLocaleString('fr-FR')} sub={`${nine_plus_pct.toFixed(1).replace('.', ',')} % du total`} />

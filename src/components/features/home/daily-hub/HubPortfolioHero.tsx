@@ -281,7 +281,7 @@ export function HubPortfolioHero({
 
           {/* Bottom row : 4 mini-stats */}
           {hasData && (
-            <div style={{
+            <div className="kgrid-stat" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
               gap: 14,

@@ -139,6 +139,7 @@ function StatsStrip({
 
   return (
     <div
+      className="kgrid-stat"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',

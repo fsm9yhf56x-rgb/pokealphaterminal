@@ -147,7 +147,7 @@ export function Signals({ isPro = false }: { isPro?: boolean }) {
           </div>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'22px' }}>
+        <div className="kgrid-stat" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'12px', marginBottom:'22px' }}>
           {[
             { label:'Tier S actifs',   value:String(SIGNALS_DATA.filter(s=>s.tier==='S').length), color:'#FF8C00', sub:'Priorité maximale'   },
             { label:'Tier A actifs',   value:String(SIGNALS_DATA.filter(s=>s.tier==='A').length), color:'#C855D4', sub:'Haute priorité'      },

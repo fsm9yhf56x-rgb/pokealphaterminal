@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { NAV } from '@/lib/constants/navigation'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
+import { MobileNav } from './MobileNav'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 /**
@@ -72,9 +73,41 @@ export function TopNav() {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
         }
+
+        /* Responsive — nav items scrollables horizontalement < 1024 */
+        .knav-items {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex: 1;
+          min-width: 0;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        .knav-items::-webkit-scrollbar { display: none; }
+        .knav-link { white-space: nowrap; flex-shrink: 0; }
+        @media (max-width: 1023px) {
+          .knav-bar { padding-inline: 14px !important; }
+          .knav-items { display: none !important; }
+          /* Logo centre en absolu : burger a gauche, avatar a droite, marque pile au milieu */
+          .knav-logo {
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            margin: 0 !important;
+          }
+          .knav-usermenu { margin-left: auto !important; }
+          .knav-tile { display: none !important; }
+        }
+        /* < 768 : wordmark compacte */
+        @media (max-width: 767px) {
+          .knav-wordmark-cards { display: none !important; }
+        }
       `}</style>
 
-      <nav style={{
+      <nav className="knav-bar" style={{
         height: 56,
         display: 'flex',
         alignItems: 'center',
@@ -83,8 +116,9 @@ export function TopNav() {
         position: 'relative' as const,
         flexShrink: 0,
       }}>
+        <MobileNav />
         {/* Logo */}
-        <Link href="/home" style={{
+        <Link href="/home" className="knav-logo" style={{
           display: 'flex', alignItems: 'center', gap: 9,
           textDecoration: 'none', marginRight: 18, flexShrink: 0,
           padding: '5px 10px 5px 5px',
@@ -94,7 +128,7 @@ export function TopNav() {
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.4)' }}
           onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
-          <div style={{
+          <div className="knav-tile" style={{
             width: 30, height: 30, borderRadius: 9,
             background: '#1D1D1F',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -116,10 +150,11 @@ export function TopNav() {
             color: '#1D1D1F',
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             letterSpacing: '-0.025em',
-          }}>Kodo<span style={{ color: '#C42E1F' }}> Cards</span></span>
+          }}>Kodo<span className="knav-wordmark-cards" style={{ color: '#C42E1F' }}> Cards</span></span>
         </Link>
 
         {/* Nav items */}
+        <div className="knav-items">
         {NAV.map(item => {
           const isActive = pathname.startsWith(item.href) ||
             item.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/'))
@@ -150,9 +185,9 @@ export function TopNav() {
             </Link>
           )
         })}
+        </div>
 
-        <div style={{ flex: 1 }} />
-        <UserMenu />
+        <span className="knav-usermenu"><UserMenu /></span>
       </nav>
 
       {/* SoonModal */}

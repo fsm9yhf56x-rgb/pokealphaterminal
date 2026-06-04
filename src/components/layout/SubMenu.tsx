@@ -67,9 +67,33 @@ export function SubMenu() {
           letter-spacing: 0.05em;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
         }
+
+        /* Responsive — sidebar 220px -> bandeau horizontal scrollable < 1024 */
+        @media (max-width: 1023px) {
+          .ksub-aside {
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 10px 12px !important;
+            border-right: none !important;
+            border-bottom: 0.5px solid rgba(255,255,255,0.55) !important;
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+          }
+          .ksub-section { display: none !important; }
+          .ksub-list {
+            flex-direction: row !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            gap: 6px !important;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+          }
+          .ksub-list::-webkit-scrollbar { display: none; }
+          .ksub-link { white-space: nowrap; flex-shrink: 0; }
+        }
       `}</style>
 
-      <aside style={{
+      <aside className="ksub-aside" style={{
         width: open ? 220 : 0,
         minWidth: open ? 220 : 0,
         padding: open ? '24px 12px' : 0,
@@ -86,7 +110,7 @@ export function SubMenu() {
       }}>
         {open && (
           <>
-            <div style={{
+            <div className="ksub-section" style={{
               fontSize: 10,
               fontWeight: 700,
               color: '#AEAEB2',
@@ -97,7 +121,7 @@ export function SubMenu() {
               marginBottom: 10,
             }}>{section.label}</div>
 
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 3 }}>
+            <div className="ksub-list" style={{ display: 'flex', flexDirection: 'column' as const, gap: 3 }}>
               {section.children.map(child => {
                 const isActive = pathname === child.href ||
                   (child.href !== section.href && pathname.startsWith(child.href + '/'))

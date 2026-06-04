@@ -123,6 +123,7 @@ export function ConditionPriceTable({ cardRef, setSlug, cardNumber, hideWhenEmpt
       </div>
 
       {/* Table */}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
@@ -173,6 +174,7 @@ export function ConditionPriceTable({ cardRef, setSlug, cardNumber, hideWhenEmpt
           })}
         </tbody>
       </table>
+      </div>
 
       {/* Footer caption */}
       <div style={{

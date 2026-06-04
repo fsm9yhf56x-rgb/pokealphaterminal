@@ -29,6 +29,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }}>
       
 
+      <style>{`
+        /* Responsive shell — bascule sidebar/colonne au seuil 1024 (= seuil zoom) */
+        @media (max-width: 1023px) {
+          .kshell-content {
+            flex-direction: column !important;
+            margin-top: 56px !important;
+            min-height: calc(100vh - 56px) !important;
+          }
+          .kshell-main { padding: 16px !important; }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .kshell-main { padding: 20px 24px !important; }
+        }
+      `}</style>
+
       {/* Nappes bokeh alignees sur Spotlight (5 couleurs floutees fixes) */}
       <div aria-hidden style={{
         position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
@@ -79,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <TopNav />
       </div>
 
-      <div style={{
+      <div className="kshell-content" style={{
         display: 'flex',
         flex: 1,
         marginTop: HEADER_H,
@@ -99,7 +114,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           position: 'relative',
           zIndex: 1,
         }}>
-          <main style={{
+          <main className="kshell-main" style={{
             flex: 1,
             minWidth: 0,
             padding: '32px 36px',

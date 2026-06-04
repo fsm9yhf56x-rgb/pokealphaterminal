@@ -94,8 +94,23 @@ body {
 
 /* ── RESPONSIVE GLOBAL ───────────────────────────── */
 
-html { zoom: 1.1; }
+/* Zoom legacy conserve desktop uniquement (dette rem -> v1.0).
+   Desactive < lg pour un calcul responsive juste sur mobile/tablette. */
+@media (min-width: 1024px) {
+  html { zoom: 1.1; }
+}
 html, body { width: 100%; }
+
+/* Grilles KPI/stats : repeat(4|5) desktop -> 2 col mobile (override inline) */
+@media (max-width: 767px) {
+  .kgrid-stat { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+}
+
+/* Badge plan : dans la barre desktop, dans le dropdown mobile */
+@media (max-width: 767px) {
+  .kum-badge-bar { display: none !important; }
+  .kum-badge-menu { display: inline-flex !important; }
+}
 
 
 /* ── APPLE GLASS TOKENS ── */

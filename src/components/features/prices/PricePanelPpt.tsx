@@ -106,7 +106,7 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
         <div style={S.header}><span style={S.headerLabel}>Prix marché</span><span style={S.srcBadge}>Sources marché</span></div>
         <div style={S.bigPrice}>{formatEUR(fallbackMarket ?? null, 'small')}</div>
         {fbSources.length > 0 && (
-          <div style={{ ...S.condGrid, marginTop: 14 }}>
+          <div className="kgrid-stat" style={{ ...S.condGrid, marginTop: 14 }}>
             {fbSources.map((s) => (
               <div key={s.label} style={S.condCell}>
                 <span style={S.condLabel}>{s.label}</span>

@@ -60,6 +60,8 @@ const NO_IMAGES = has('no-images');
 const MAX_CREDITS = parseInt(arg('max-credits') || '16000', 10); // plafond/jour, marge sous 20k
 const RESUME = has('resume'); // skip les sets deja importes (source='ppt' en base)
 let creditsUsed = 0; // estimation 2 cr/carte fetchee
+const MAX_SETS = parseInt(arg('max-sets') || '0', 10); // 0 = illimite ; limite sets/run (timeout CI)
+let setsImported = 0; // compteur pour --max-sets
 
 if (!ONE_SET && !ALL) {
   console.error('Usage: --set "SV2a: Pokemon Card 151"  OU  --all  [--dry-run] [--no-images]');
@@ -198,7 +200,11 @@ async function importSet(setName, setMeta) {
       console.log(`   skip (deja fait): ${s.name}`);
       continue;
     }
-    try { results.push(await importSet(s.name, s)); }
+    if (MAX_SETS > 0 && setsImported >= MAX_SETS) {
+      console.log(`\n⏸  PLAFOND SETS atteint (${setsImported}/${MAX_SETS}). Arret propre. Relance --resume.`);
+      break;
+    }
+    try { results.push(await importSet(s.name, s)); setsImported++; }
     catch (e) { console.error(`ECHEC "${s.name}": ${e.message}`); results.push({ set: s.name, cards: 0, images: 0, error: e.message }); }
     // Pause anti-429 entre sets
     await new Promise(res => setTimeout(res, 1500));

@@ -1807,19 +1807,19 @@ export function Encyclopedie() {
 
               ) : detail ? (
                 <>
-                  {/* Image haute résolution */}
-                  <div style={{ background:'rgba(0,0,0,0.025)', padding:'16px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'180px', position:'relative' as const, borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
+                  {/* Image haute résolution — carte agrandie, héros de l'en-tête */}
+                  <div style={{ background:'linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.015) 100%)', padding:'24px 16px 26px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'320px', position:'relative' as const, borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
                     {detail.image ? (
                       <img
                         src={cleanLegacyUrl(detail.image) || getCardImageUrl({ lang: lang, setId: detail.set?.id, localId: detail.localId })}
                         alt={detail.name}
-                        style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}
+                        style={{ maxHeight:'340px', width:'auto', maxWidth:'82%', objectFit:'contain', borderRadius:'10px', boxShadow:'0 12px 36px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.08)' }}
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
                       />
                     ) : (
                       selCard && customImgs[customImgKey(selCard)] ? (
                       <img src={customImgs[customImgKey(selCard)]} alt={selCard.name}
-                        style={{ maxHeight:'220px', maxWidth:'100%', objectFit:'contain', borderRadius:'6px', boxShadow:'0 4px 20px rgba(0,0,0,.1)' }}/>
+                        style={{ maxHeight:'340px', width:'auto', maxWidth:'82%', objectFit:'contain', borderRadius:'10px', boxShadow:'0 12px 36px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.08)' }}/>
                       ) : (
                       <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px', cursor:'pointer', border:'2px dashed #DDD', transition:'all .2s' }}
                         onClick={e => { if(selCard) handleUploadClick(selCard, e) }}

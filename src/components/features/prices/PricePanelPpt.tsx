@@ -104,7 +104,7 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
     return (
       <div style={S.container}>
         <div style={S.header}><span style={S.headerLabel}>Prix marché</span><span style={S.srcBadge}>Sources marché</span></div>
-        <div style={S.bigPrice}>{formatEUR(fallbackMarket ?? null, 'small')}</div>
+        <div className="ppt-bigprice" style={S.bigPrice}>{formatEUR(fallbackMarket ?? null, 'small')}</div>
         {fbSources.length > 0 && (
           <div className="kgrid-stat" style={{ ...S.condGrid, marginTop: 14 }}>
             {fbSources.map((s) => (
@@ -145,9 +145,22 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
 
   return (
     <>
+      <style>{`
+        @media (max-width: 900px) {
+          .ppt-card { padding: 9px 11px !important; margin-bottom: 10px !important; }
+          .ppt-bigprice { font-size: 20px !important; letter-spacing: -0.5px !important; line-height: 1 !important; }
+          .ppt-divider { margin-top: 6px !important; padding-top: 6px !important; }
+          .ppt-sellabel { margin-top: 5px !important; margin-bottom: 2px !important; font-size: 8px !important; }
+          .ppt-pillrow { margin-top: 4px !important; gap: 4px !important; }
+          .ppt-card button { padding: 4px 8px !important; font-size: 10px !important; }
+          .ppt-card .kgrid-stat > div { padding: 4px 4px !important; }
+          /* Header de bloc (label + badge) tasse */
+          .ppt-card .ppt-section > div:first-child { margin-bottom: 4px !important; }
+        }
+      `}</style>
       {/* ═══ CARTE VALEUR DE MARCHÉ (raw + gradé fusionnés) ═══ */}
       {(data.conditions.length > 0 || companies.length > 0) && (
-      <div style={S.container}>
+      <div className="ppt-card" style={S.container}>
 
       {/* ─── Section RAW ─── */}
       {data.conditions.length > 0 && (
@@ -161,7 +174,7 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
           </div>
 
           {rawReliable ? (
-            <div style={S.bigPrice}>{formatEUR(selCondObj?.price ?? null, 'small')}</div>
+            <div className="ppt-bigprice" style={S.bigPrice}>{formatEUR(selCondObj?.price ?? null, 'small')}</div>
           ) : (
             <div>
               <div style={S.insufficientTitle}>Donnée non fiable</div>
@@ -171,7 +184,7 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
             </div>
           )}
 
-          <div style={S.pillRow}>
+          <div className="ppt-pillrow" style={S.pillRow}>
             {data.conditions.map((c) => {
               const active = c.code === selCond
               return (
@@ -196,18 +209,18 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
 
       {/* ─── Section GRADÉ (séparée par un filet, même carte) ─── */}
       {companies.length > 0 && (
-        <div style={data.conditions.length > 0 ? S.innerDivider : undefined}>
+        <div className="ppt-divider" style={data.conditions.length > 0 ? S.innerDivider : undefined}>
           <div style={S.header}>
             <span style={S.headerLabel}>Prix gradé</span>
             <span style={S.srcBadge}>{selCompany} {selGrade}</span>
           </div>
 
           {selGradeObj == null ? (
-            <div style={S.bigPrice}>—</div>
+            <div className="ppt-bigprice" style={S.bigPrice}>—</div>
           ) : gradeLow ? (
             // Confiance faible: prix visible mais en gris attenue + badge prudence
             <>
-              <div style={{ ...S.bigPrice, color: SNOW.muted }}>
+              <div className="ppt-bigprice" style={{ ...S.bigPrice, color: SNOW.muted }}>
                 <TrendArrow trend={selGradeObj.trend} />{' '}
                 {formatEUR(selGradeObj.smartPrice ?? selGradeObj.median, 'small')}
               </div>
@@ -225,7 +238,7 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
             </>
           ) : (
             <>
-              <div style={S.bigPrice}>
+              <div className="ppt-bigprice" style={S.bigPrice}>
                 <TrendArrow trend={selGradeObj.trend} />{' '}
                 {formatEUR(selGradeObj.smartPrice, 'small')}
               </div>
@@ -245,8 +258,8 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
             </>
           )}
 
-          <div style={S.selLabel}>Société</div>
-          <div style={S.pillRow}>
+          <div className="ppt-sellabel" style={S.selLabel}>Société</div>
+          <div className="ppt-pillrow" style={S.pillRow}>
             {companies.map((co) => (
               <button key={co} onClick={() => setSelCompany(co)} style={{ ...S.pill, ...(co === selCompany ? S.pillActive : {}) }}>
                 {co}
@@ -254,8 +267,8 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
             ))}
           </div>
 
-          <div style={S.selLabel}>Note</div>
-          <div style={S.pillRow}>
+          <div className="ppt-sellabel" style={S.selLabel}>Note</div>
+          <div className="ppt-pillrow" style={S.pillRow}>
             {gradeGrades.map((gr) => {
               const gObj = (gradedByCompany[selCompany] || []).find((g) => g.grade === gr)
               const isLow = gObj?.confidence === 'low' && gObj?.count != null && gObj.count < 5

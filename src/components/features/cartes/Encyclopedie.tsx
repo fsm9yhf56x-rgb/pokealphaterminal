@@ -1006,19 +1006,21 @@ export function Encyclopedie() {
           .detail-panel { width: 420px !important; }
         }
         @media (max-width: 900px) {
-          /* Bottom-sheet flex column, hauteur quasi-pleine (marge fine en haut).
-             4 zones figees sauf le contenu qui scrolle. La cle = min-height:0
-             sur chaque enfant flex, sinon le contenu deborde au lieu de scroller. */
+          /* VUE PLEIN ECRAN mobile : inset:0, pas de sheet, pas de dvh capricieux.
+             L'ecran entier est dedie a la carte. Header retour en haut, contenu
+             qui scrolle, CTA en bas. La cle = min-height:0 sur les enfants flex. */
+          .detail-backdrop { display: none !important; }
           .detail-panel {
-            width: 100% !important;
             position: fixed !important;
-            top: auto !important;
+            inset: 0 !important;
+            top: 0 !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: 88dvh !important;
-            max-height: 88dvh !important;
-            border-radius: 20px 20px 0 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            border-radius: 0 !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
@@ -1055,6 +1057,49 @@ export function Encyclopedie() {
             position: static !important;
             padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
           }
+          /* Wrapper glass interne : plein ecran, pas de radius ni d'ombre flottante */
+          .detail-panel > div {
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            max-height: 100% !important;
+            background: rgba(255,255,255,0.96) !important;
+            padding-top: env(safe-area-inset-top) !important;
+          }
+          /* Header retour visible en mobile, close X masque (le retour le remplace) */
+          .drawer-mobile-header { display: flex !important; }
+          .detail-panel .drawer-mobile-header + button[title="Fermer"] { display: none !important; }
+        }
+        /* Header retour : masque par defaut (desktop garde le panneau lateral + close X) */
+        .drawer-mobile-header { display: none; }
+        .drawer-mobile-header {
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 12px 10px;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+          flex: none;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          position: sticky;
+          top: 0;
+          z-index: 6;
+        }
+        .drawer-back-btn {
+          width: 38px; height: 38px; border-radius: 10px;
+          border: none; background: rgba(0,0,0,0.04);
+          color: #1D1D1F; cursor: pointer; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          transition: background .15s;
+        }
+        .drawer-back-btn:active { background: rgba(0,0,0,0.1); }
+        .drawer-back-title {
+          flex: 1; text-align: center;
+          font-size: 15px; font-weight: 700; color: #1D1D1F;
+          font-family: var(--font-sora, Sora, sans-serif);
+          letter-spacing: -0.01em;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         /* ===== DRAWER TAB SECTIONS - show/hide par tab ===== */
         .tab-section { display: none; }
@@ -1829,6 +1874,18 @@ export function Encyclopedie() {
               flexDirection: 'column' as const,
               position: 'relative' as const,
             }}>
+              {/* Header retour — MOBILE uniquement (vue plein ecran) */}
+              <div className="drawer-mobile-header">
+                <button
+                  className="drawer-back-btn"
+                  onClick={() => { setSelId(null); setDetail(null); setEnDetail(null) }}
+                  aria-label="Retour"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span className="drawer-back-title">{detail?.name || selCard?.name || ''}</span>
+                <span style={{ width: 38, flexShrink: 0 }} />
+              </div>
               {/* Close button drawer top-right */}
               <button
                 onClick={() => { setSelId(null); setDetail(null); setEnDetail(null) }}

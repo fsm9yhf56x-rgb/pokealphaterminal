@@ -106,7 +106,7 @@ function PillSelect({ options, value, onChange, labelMap }: { options: string[];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
+    <div className="hist-fieldlabel" style={{
       fontSize: 9.5, color: SNOW.muted, letterSpacing: '0.08em', textTransform: 'uppercase',
       fontWeight: 700, marginBottom: 6, fontFamily: 'var(--font-sora, Sora, sans-serif)',
     }}>{children}</div>
@@ -146,7 +146,7 @@ function ChartSVG({ points }: { points: Pt[] }) {
   }
 
   return (
-    <div style={{ height: 150, position: 'relative', marginBottom: 6 }}>
+    <div className="hist-chart" style={{ height: 150, position: 'relative', marginBottom: 6 }}>
       <svg viewBox="0 0 300 130" width="100%" height="130" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
         {yLabels.map((yl, i) => (<text key={'yt' + i} x="2" y={yl.y + 3} fontFamily="var(--font-data, monospace)" fontSize="8" fill={SNOW.dim}>{yl.text}</text>))}
         {yLabels.map((yl, i) => (
@@ -305,8 +305,21 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       boxShadow: '0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
       fontFamily: 'var(--font-sora, Sora, sans-serif)', color: SNOW.ink,
       animation: 'pka-fade-in 300ms ease-out',
-    }}>
-      <style>{`@keyframes pka-fade-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }`}</style>
+    }} className="hist-card">
+      <style>{`
+        @keyframes pka-fade-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+        @media (max-width: 900px) {
+          .hist-card { padding: 9px 11px !important; }
+          .hist-card > div { margin-bottom: 6px !important; }
+          .hist-card button { padding: 4px 8px !important; font-size: 10px !important; }
+          .hist-card > div > div > div:first-child,
+          .hist-card .hist-fieldlabel { font-size: 8px !important; margin-bottom: 2px !important; }
+          .hist-card .kgrid-stat > div { padding: 4px 4px !important; }
+          .hist-card .kgrid-stat > div > div:first-child { font-size: 7px !important; margin-bottom: 1px !important; }
+          .hist-card .kgrid-stat > div > div:last-child { font-size: 10.5px !important; }
+          .hist-card .hist-chart { height: 110px !important; }
+        }
+      `}</style>
 
       {/* Selecteurs glass v7 */}
       {mode === 'graded' ? (

@@ -298,6 +298,11 @@ export function Scelles() {
           box-shadow:0 12px 40px rgba(0,0,0,0.1),0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.9);
           animation:panelIn .3s cubic-bezier(.2,.85,.3,1);
         }
+        @media (max-width: 767px) {
+          .sc-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 10px !important; }
+          .sc-lang-label { display: none !important; }
+          .sc-fsel { width: 100% !important; max-width: none !important; }
+        }
       `}</style>
 
       <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>
@@ -314,7 +319,7 @@ export function Scelles() {
               <div className="sc-lang">
                 {(['EN','FR','JP'] as Lang[]).map(l=>(
                   <button key={l} onClick={()=>setLang(l)} className={'sc-lang-btn'+(lang===l?' on':'')}>
-                    <span>{flag(l)}</span><span>{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
+                    <span>{flag(l)}</span><span className="sc-lang-label">{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
                   </button>
                 ))}
               </div>
@@ -377,7 +382,7 @@ export function Scelles() {
 
           {/* Grid */}
           {!groupBySet && (
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
+            <div className="sc-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
               {pageItems.map((item,idx)=>{
                 const tm=TYPE_META[item.type]
                 const owned=ownedInSet(item.setId)

@@ -3,6 +3,7 @@
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import AuthModal from '@/components/layout/AuthModal'
 import { CollectionGate } from './CollectionGate'
+import { SetPicker } from './SetPicker'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { GradedHistoryChart } from '@/components/features/prices/GradedHistoryChart'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
@@ -289,6 +290,17 @@ export function Encyclopedie() {
   }
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
+  // Mobile : forcer la vue grille (tableau illisible <768px)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const enforce = () => { if (mq.matches) setView('grid') }
+    enforce()
+    mq.addEventListener('change', enforce)
+    return () => mq.removeEventListener('change', enforce)
+  }, [])
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [setPickerOpen, setSetPickerOpen] = useState(false)
+  const activeFilterCount = [filEra!=='all', filSet!=='all', filRarity!=='all'].filter(Boolean).length
   const [gateCard, setGateCard] = useState<{name:string;lang:string;setId:string;localId:string;image?:string}|null>(null)
   const [authModal, setAuthModal] = useState<null|'login'|'signup'>(null)
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
@@ -1013,6 +1025,40 @@ export function Encyclopedie() {
           border-top: 1px solid rgba(0,0,0,0.04);
           z-index: 10;
         }
+        /* ===== RESPONSIVE POKEDESK MOBILE ===== */
+        @media (max-width: 767px) {
+          /* Vraie grille mobile : 3 col (M) par defaut, S=4, L=2 */
+          .kcard-grid[data-size="M"] { grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 8px !important; }
+          .kcard-grid[data-size="S"] { grid-template-columns: repeat(4, minmax(0,1fr)) !important; gap: 6px !important; }
+          .kcard-grid[data-size="L"] { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 12px !important; }
+          /* Vue tableau désactivée en mobile : le toggle grille/liste n'a plus de raison d'être */
+          .kview-toggle { display: none !important; }
+          /* Filtres repliables : bouton visible, selects caches par defaut */
+          .kfilters-toggle { display: flex !important; }
+          .kfilters-row {
+            max-height: 0; overflow: hidden; padding-top: 0 !important; padding-bottom: 0 !important;
+            margin-bottom: 0 !important; border: none !important; box-shadow: none !important;
+            opacity: 0; transition: max-height .3s ease, opacity .25s ease, padding .3s ease;
+            position: static !important;
+          }
+          .kfilters-row.open {
+            max-height: 320px; opacity: 1;
+            padding: 14px 12px !important; margin-bottom: 18px !important;
+            border: 1px solid rgba(0,0,0,0.04) !important;
+          }
+          /* Selects pleine largeur dans le panneau ouvert */
+          .kfilters-row .fsel { width: 100% !important; max-width: none !important; flex: none !important; }
+          /* Langue compacte : drapeaux seuls (3 langues = pas besoin de texte) */
+          .klang-label { display: none !important; }
+          .lang-btn { padding: 8px 12px !important; }
+          /* Set : remplacer le carousel scrollable par le bouton SetPicker */
+          .kset-pick-btn { display: flex !important; }
+          .kset-carousel-wrap { display: none !important; }
+          /* Vue Par blocs : grille pleine largeur + retirer les puces de séries tronquées */
+          .kbloc-grid { grid-template-columns: 1fr !important; }
+          .kbloc-chips { display: none !important; }
+        }
+
         /* ===== DETAIL DRAWER TABS - iOS Segment Control glass v7 ===== */
         .tab-segment-bar {
           display: grid;
@@ -1128,7 +1174,7 @@ export function Encyclopedie() {
                 <button key={l} onClick={()=>setLang(l)} className="lang-btn"
                   style={{ padding:'8px 14px', borderRadius:'9px', border:'none', background:lang===l?'#fff':'transparent', color:lang===l?'#111':'#888', fontFamily:'var(--font-display)', fontWeight:lang===l?700:500, fontSize:'13px', cursor:'pointer', boxShadow:lang===l?'0 2px 8px rgba(0,0,0,.1)':'none', display:'flex', alignItems:'center', gap:'6px', flexShrink:0 }}>
                   <span>{flag(l)}</span>
-                  <span>{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
+                  <span className="klang-label">{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
                 </button>
               ))}
             </div>
@@ -1136,8 +1182,16 @@ export function Encyclopedie() {
 
           {/* Search + sort + view */}
           {/* Series populaires */}
-          {!loading && browseMode==='all' && (
-            <div style={{ marginBottom:'12px', position:'relative' }}>
+          {!loading && browseMode==='all' && (() => {
+            const curSetName = filSet==='all' ? 'Toutes les séries' : (allCards.find(c=>c.setId===filSet)?.setName || filSet)
+            return (<>
+            {/* Bouton mobile : ouvre le SetPicker plein écran */}
+            <button className="kset-pick-btn" onClick={()=>setSetPickerOpen(true)}
+              style={{ display:'none', width:'100%', alignItems:'center', justifyContent:'space-between', height:'44px', padding:'0 14px', marginBottom:'12px', borderRadius:'10px', border:'1px solid rgba(0,0,0,0.06)', background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', color:'#1D1D1F', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+              <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, color:filSet==='all'?'#888':'#1D1D1F' }}>{curSetName}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink:0, opacity:0.5 }}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            <div className="kset-carousel-wrap" style={{ marginBottom:'12px', position:'relative' }}>
               <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:-200,behavior:'smooth'})}}
                 style={{ position:'absolute', left:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'rgba(255,255,255,0.75)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.6)', boxShadow:'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#48484A' }}>‹</button>
               <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:200,behavior:'smooth'})}}
@@ -1163,7 +1217,17 @@ export function Encyclopedie() {
                 })}
               </div>
             </div>
-          )}
+            <SetPicker
+              open={setPickerOpen}
+              sets={sets.map(x=>({ id:x.id, name:x.name, count:(x as any).count }))}
+              current={filSet}
+              lang={lang}
+              totalCount={allCards.length}
+              onSelect={(id)=>{ setFilSet(id); setFilEra('all'); setPage(0) }}
+              onClose={()=>setSetPickerOpen(false)}
+            />
+            </>)
+          })()}
 
           <div style={{ display:'flex', gap:'8px', marginBottom:'12px', flexWrap:'wrap' }}>
             <div style={{ position:'relative', flex:1, minWidth:'200px', zIndex:20 }}>
@@ -1206,9 +1270,9 @@ export function Encyclopedie() {
                 </div>
               )}
             </div>
-            <div style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
+            <div className="kview-toggle" style={{ display:'flex', gap:'2px', background:'#F5F5F5', borderRadius:'9px', padding:'3px', flexShrink:0 }}>
               {(['grid','list'] as ViewMode[]).map(v=>(
-                <button key={v} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'transparent', color:view===v?'#1D1D1F':'#888', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .18s cubic-bezier(.2,.8,.2,1)', boxShadow:view===v?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
+                <button key={v} className={`kview-btn-${v}`} onClick={()=>setView(v)} style={{ width:'34px', height:'32px', borderRadius:'7px', border:'none', background:view===v?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'transparent', color:view===v?'#1D1D1F':'#888', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .18s cubic-bezier(.2,.8,.2,1)', boxShadow:view===v?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'none' }}>
                   {v==='grid'?'⊞':'☰'}
                 </button>
               ))}
@@ -1225,8 +1289,18 @@ export function Encyclopedie() {
             )}
           </div>
 
+          {/* Bouton Filtres — mobile uniquement */}
+          <button className="kfilters-toggle" onClick={()=>setFiltersOpen(o=>!o)}
+            style={{ display:'none', width:'100%', alignItems:'center', justifyContent:'space-between', height:'42px', padding:'0 14px', marginBottom:'12px', borderRadius:'10px', border:'1px solid rgba(0,0,0,0.06)', background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', color:'#1D1D1F', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+            <span style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+              <span>Filtres</span>
+              {activeFilterCount>0 && <span style={{ fontSize:'11px', fontWeight:700, color:'#fff', background:'#E03020', borderRadius:'999px', minWidth:'18px', height:'18px', display:'inline-flex', alignItems:'center', justifyContent:'center', padding:'0 5px' }}>{activeFilterCount}</span>}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform:filtersOpen?'rotate(180deg)':'none', transition:'transform .2s', opacity:0.5 }}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+
           {/* Filters */}
-          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+          <div className={`kfilters-row${filtersOpen?' open':''}`} style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
             <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>setFilEra(e.target.value)}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
@@ -1297,7 +1371,7 @@ export function Encyclopedie() {
             </div>
           )}
           {browseMode==='bloc'&&!selBloc&&!loading&&(
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'12px', marginBottom:'20px' }}>
+            <div className="kbloc-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'12px', marginBottom:'20px' }}>
               {blocs.map(b=>(
                 <div key={b.name} className="enc-bloc-card" onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'1px solid rgba(0,0,0,0.05)', borderRadius:14, padding:18, cursor:'pointer', transition:'all .25s cubic-bezier(.2,.85,.3,1)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.boxShadow=''}}>
@@ -1313,7 +1387,7 @@ export function Encyclopedie() {
                       })
                     })()}
                   </div>
-                  <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
+                  <div className="kbloc-chips" style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
                     {b.sets.slice(0,4).map(st=>{
                       const enSet = allCards.find(c=>c.setId===st.id)?.enSetName
                       return (<span key={st.id} style={{ fontSize:'9px', color:'#86868B', background:'rgba(0,0,0,0.04)', padding:'3px 7px', borderRadius:6, fontWeight:500 }}>{lang==='JP'&&enSet?enSet:st.name}</span>)
@@ -1409,7 +1483,7 @@ export function Encyclopedie() {
               L:{ col:'repeat(auto-fill,minmax(240px,1fr))', imgH:'220px', nameSize:'14px', subSize:'11px', pad:'12px 14px 14px'},
             }[cardSize]
             return (
-              <div style={{ display:'grid', gridTemplateColumns:cfg.col, gap: cardSize==='L'?'16px':'12px' }}>
+              <div className="kcard-grid" data-size={cardSize} style={{ display:'grid', gridTemplateColumns:cfg.col, gap: cardSize==='L'?'16px':'12px' }}>
                 {pageCards.map((card,idx) => {
                   const isSel = selId===card.id
                   const base  = cardImageUrl(card, lang)

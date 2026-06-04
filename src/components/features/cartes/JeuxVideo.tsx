@@ -66,6 +66,7 @@ export function JeuxVideo() {
   const [filGen, setFilGen] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'year'|'name'|'gen'>('year')
+  const [jvFiltersOpen, setJvFiltersOpen] = useState(false)
   const [lang, setLang] = useState<'FR'|'EN'|'JP'>('FR')
   const [visible, setVisible] = useState(CHUNK)
   const [selId, setSelId] = useState<string|null>(null)
@@ -205,6 +206,12 @@ export function JeuxVideo() {
           .jv-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 10px !important; }
           .jv-lang-label { display: none !important; }
           .jv-fsel { width: 100% !important; max-width: none !important; }
+          .jv-filters-toggle { display: flex !important; }
+          .jv-sticky-bar {
+            max-height: 0; overflow: hidden; opacity: 0; margin-bottom: 0 !important;
+            transition: max-height .3s ease, opacity .25s ease;
+          }
+          .jv-sticky-bar.open { max-height: 460px; opacity: 1; margin-bottom: 18px !important; }
         }
       `}</style>
       <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>
@@ -237,8 +244,20 @@ export function JeuxVideo() {
               ))}
             </div>
           </div>
+          {/* Bouton Filtres — mobile */}
+          {(()=>{ const n=[filGen!=='all',filPlatform!=='all',filType!=='all'].filter(Boolean).length; return (
+          <button className="jv-filters-toggle" onClick={()=>setJvFiltersOpen(o=>!o)}
+            style={{display:'none',width:'100%',alignItems:'center',justifyContent:'space-between',height:42,padding:'0 14px',marginBottom:12,borderRadius:10,border:'1px solid rgba(0,0,0,0.06)',background:'rgba(255,255,255,0.7)',backdropFilter:'blur(20px) saturate(180%)',WebkitBackdropFilter:'blur(20px) saturate(180%)',color:SNOW.ink,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:FONT.display,boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)'}}>
+            <span style={{display:'flex',alignItems:'center',gap:8}}>
+              <span>Filtres</span>
+              {n>0&&<span style={{fontSize:11,fontWeight:700,color:'#fff',background:'#E03020',borderRadius:999,minWidth:18,height:18,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>{n}</span>}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{transform:jvFiltersOpen?'rotate(180deg)':'none',transition:'transform .2s',opacity:0.5}}><path d="M3 4.5L6 7.5L9 4.5" stroke={SNOW.ink} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          )})()}
+
           {/* Sticky filter bar */}
-          <div className="jv-sticky-bar" style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+          <div className={'jv-sticky-bar'+(jvFiltersOpen?' open':'')} style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
             <select className="jv-fsel" value={filGen} onChange={e=>setFilGen(e.target.value)} style={{color:filGen!=='all'?SNOW.ink:SNOW.muted}}>
               <option value="all">Toutes les générations</option>
               {gens.map(g=><option key={g} value={g}>Génération {g}</option>)}

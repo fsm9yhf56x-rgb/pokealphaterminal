@@ -85,6 +85,7 @@ export function Scelles() {
   const [filSet, setFilSet] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'recent'|'name'|'cards'>('recent')
+  const [scFiltersOpen, setScFiltersOpen] = useState(false)
   const [visible, setVisible] = useState(CHUNK)
   const [selId, setSelId] = useState<string|null>(null)
   const [portfolio, setPortfolio] = useState<PortfolioCard[]>([])
@@ -302,6 +303,12 @@ export function Scelles() {
           .sc-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 10px !important; }
           .sc-lang-label { display: none !important; }
           .sc-fsel { width: 100% !important; max-width: none !important; }
+          .sc-filters-toggle { display: flex !important; }
+          .sc-sticky-bar {
+            max-height: 0; overflow: hidden; opacity: 0; margin-bottom: 0 !important;
+            transition: max-height .3s ease, opacity .25s ease;
+          }
+          .sc-sticky-bar.open { max-height: 400px; opacity: 1; margin-bottom: 18px !important; }
         }
       `}</style>
 
@@ -310,20 +317,23 @@ export function Scelles() {
           {/* Header */}
           <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap' as const,gap:12}}>
             <div>
-              <p style={{fontSize:10,color:'#AAA',textTransform:'uppercase' as const,letterSpacing:'.1em',margin:'0 0 4px',fontFamily:'var(--font-display)'}}>Cartes</p>
+              <p style={{fontSize:10,color:'#AAA',textTransform:'uppercase' as const,letterSpacing:'.1em',margin:'0 0 4px',fontFamily:'var(--font-display)'}}>Pokédesk</p>
               <h1 style={{fontSize:26,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:'0 0 6px'}}>Scellés</h1>
               <div style={{fontSize:12,color:'#86868B'}}><strong style={{color:'#1D1D1F'}}>{stats.total}</strong> produits · <strong style={{color:'#1D1D1F'}}>{stats.sets}</strong> séries · <strong style={{color:'#1D1D1F'}}>{stats.eras}</strong> blocs</div>
             </div>
-            <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <SnowButton size="sm" variant={groupBySet?'primary':'secondary'} onClick={()=>setGroupBySet(!groupBySet)}>{groupBySet?'Vue grille':'Par série'}</SnowButton>
-              <div className="sc-lang">
+            <div className="sc-lang">
                 {(['EN','FR','JP'] as Lang[]).map(l=>(
                   <button key={l} onClick={()=>setLang(l)} className={'sc-lang-btn'+(lang===l?' on':'')}>
                     <span>{flag(l)}</span><span className="sc-lang-label">{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
                   </button>
                 ))}
-              </div>
             </div>
+          </div>
+
+          {/* Vue : grille / par série — en pill sous l'en-tête (comme Cartes) */}
+          <div style={{display:'flex',gap:8,marginBottom:14}}>
+            <button onClick={()=>setGroupBySet(false)} className={'sc-pill'+(!groupBySet?' on':'')}>Vue grille</button>
+            <button onClick={()=>setGroupBySet(true)} className={'sc-pill'+(groupBySet?' on':'')}>Par série</button>
           </div>
 
           {/* Search + Sort */}
@@ -339,8 +349,20 @@ export function Scelles() {
             </div>
           </div>
 
+          {/* Bouton Filtres — mobile */}
+          {(()=>{ const n=[filEra!=='all',filSet!=='all',filType!=='all'].filter(Boolean).length; return (
+          <button className="sc-filters-toggle" onClick={()=>setScFiltersOpen(o=>!o)}
+            style={{display:'none',width:'100%',alignItems:'center',justifyContent:'space-between',height:42,padding:'0 14px',marginBottom:12,borderRadius:10,border:'1px solid rgba(0,0,0,0.06)',background:'rgba(255,255,255,0.7)',backdropFilter:'blur(20px) saturate(180%)',WebkitBackdropFilter:'blur(20px) saturate(180%)',color:'#1D1D1F',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)'}}>
+            <span style={{display:'flex',alignItems:'center',gap:8}}>
+              <span>Filtres</span>
+              {n>0&&<span style={{fontSize:11,fontWeight:700,color:'#fff',background:'#E03020',borderRadius:999,minWidth:18,height:18,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>{n}</span>}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{transform:scFiltersOpen?'rotate(180deg)':'none',transition:'transform .2s',opacity:0.5}}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          )})()}
+
           {/* Filters */}
-          <div className="sc-sticky-bar" style={{display:'flex',gap:8,flexWrap:'wrap' as const,alignItems:'center'}}>
+          <div className={'sc-sticky-bar'+(scFiltersOpen?' open':'')} style={{display:'flex',gap:8,flexWrap:'wrap' as const,alignItems:'center'}}>
             <select className="sc-fsel" value={filEra} onChange={e=>{setFilEra(e.target.value);setFilSet('all')}} style={{color:filEra!=='all'?'#111':'#AAA'}}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}

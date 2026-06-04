@@ -145,9 +145,13 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
 
   return (
     <>
-      {/* ═══ BLOC RAW ═══ */}
+      {/* ═══ CARTE VALEUR DE MARCHÉ (raw + gradé fusionnés) ═══ */}
+      {(data.conditions.length > 0 || companies.length > 0) && (
+      <div style={S.container}>
+
+      {/* ─── Section RAW ─── */}
       {data.conditions.length > 0 && (
-        <div style={S.container}>
+        <div>
           <div style={S.header}>
             <span style={S.headerLabel}>Prix raw</span>
             <span style={S.srcBadge}>
@@ -190,9 +194,9 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
         </div>
       )}
 
-      {/* ═══ BLOC GRADÉ ═══ */}
+      {/* ─── Section GRADÉ (séparée par un filet, même carte) ─── */}
       {companies.length > 0 && (
-        <div style={S.container}>
+        <div style={data.conditions.length > 0 ? S.innerDivider : undefined}>
           <div style={S.header}>
             <span style={S.headerLabel}>Prix gradé</span>
             <span style={S.srcBadge}>{selCompany} {selGrade}</span>
@@ -270,6 +274,9 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
         </div>
       )}
 
+      </div>
+      )}
+
       {(data.conditions.length > 0 || companies.length > 0) && (
         <div style={{ ...S.footer, marginTop: -6, marginBottom: 14 }}>
           <span style={S.footerText}>USD→EUR · fiabilité selon le volume de ventes</span>
@@ -281,13 +288,17 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
 
 const S: Record<string, React.CSSProperties> = {
   container: {
-    background: 'rgba(255,255,255,0.75)',
+    background: 'rgba(255,255,255,0.72)',
     backdropFilter: 'blur(16px) saturate(180%)',
     WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-    borderRadius: 14, padding: '18px 20px', marginBottom: 14,
+    borderRadius: 16, padding: '18px 20px', marginBottom: 14,
     border: '1px solid rgba(0,0,0,0.05)',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
     fontFamily: 'var(--font-sora, Sora, sans-serif)',
+  },
+  innerDivider: {
+    marginTop: 18, paddingTop: 18,
+    borderTop: '1px solid rgba(0,0,0,0.07)',
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   headerLabel: { fontSize: 10, color: SNOW.mutedSoft, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 },

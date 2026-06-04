@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { PerfAggregates, AllocationBucket } from './Performance'
 
@@ -7,6 +8,13 @@ import type { PerfAggregates, AllocationBucket } from './Performance'
  * 3 mini-donuts Recharts : répartition par langue, set, rareté
  */
 export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
+  const [tab, setTab] = useState<'lang'|'set'|'rarity'>('lang')
+  const TABS = [
+    { key: 'lang'   as const, label: 'Langue',  buckets: agg.byLang,   title: 'Par langue' },
+    { key: 'set'    as const, label: 'Set',     buckets: agg.bySet,    title: 'Par set'    },
+    { key: 'rarity' as const, label: 'Rareté',  buckets: agg.byRarity, title: 'Par rareté' },
+  ]
+  const active = TABS.find(t => t.key === tab)!
   return (
     <div>
       <style>{`
@@ -18,14 +26,37 @@ export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
       <SectionTitle>Allocation</SectionTitle>
 
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '14px',
+        display: 'flex',
+        gap: 6,
+        marginBottom: 14,
+        padding: 4,
+        background: 'rgba(255,255,255,0.4)',
+        backdropFilter: 'blur(14px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(180%)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        borderRadius: 13,
       }}>
-        <DonutCard title="Par langue"  buckets={agg.byLang}   />
-        <DonutCard title="Par set"     buckets={agg.bySet}    />
-        <DonutCard title="Par rareté"  buckets={agg.byRarity} />
+        {TABS.map(t => {
+          const isActive = t.key === tab
+          return (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              flex: 1,
+              padding: '9px 12px',
+              borderRadius: 9,
+              border: 'none',
+              background: isActive ? '#FFFFFF' : 'transparent',
+              color: isActive ? '#1D1D1F' : '#86868B',
+              fontSize: 12,
+              fontWeight: isActive ? 700 : 600,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+            }}>{t.label}</button>
+          )
+        })}
       </div>
+      <DonutCard title={active.title} buckets={active.buckets} />
     </div>
   )
 }

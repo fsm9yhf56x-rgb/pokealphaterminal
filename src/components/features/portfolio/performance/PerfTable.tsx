@@ -56,6 +56,36 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
 
   return (
     <div>
+      <style>{`
+        @media (max-width: 767px) {
+          .perf-table-header { display: none !important; }
+          .perf-rows-scroll { max-height: none !important; overflow: visible !important; }
+          .perf-row {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 12px 8px !important;
+            padding: 14px 16px !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+            align-items: start !important;
+          }
+          .perf-cell-name { grid-column: 1 / -1; margin-bottom: 4px; }
+          .perf-cell-name > div:first-child { font-size: 15px !important; white-space: normal !important; }
+          .perf-cell {
+            text-align: left !important;
+            display: flex; flex-direction: column; gap: 3px;
+            font-size: 13px !important;
+          }
+          .perf-cell::before {
+            content: attr(data-label);
+            font-size: 8.5px;
+            font-weight: 600;
+            color: #AEAEB2;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-family: var(--font-sora, Sora, sans-serif);
+          }
+        }
+      `}</style>
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -101,7 +131,7 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
         boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
         {/* Header */}
-        <div style={{
+        <div className="perf-table-header" style={{
           display: 'grid',
           gridTemplateColumns: gridCols,
           gap: 0,
@@ -154,7 +184,7 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
           }}>Aucune carte trouvée</div>
         ) : (
-          <div style={{ maxHeight: '480px', overflowY: 'auto' }}>
+          <div className="perf-rows-scroll" style={{ maxHeight: '480px', overflowY: 'auto' }}>
             {sorted.map((h, i) => (
               <Row
                 key={h.id}
@@ -177,7 +207,7 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
   const hasNoBuy = h.buy_price == null || h.buy_price === 0
 
   return (
-    <div style={{
+    <div className="perf-row" style={{
       display: 'grid',
       gridTemplateColumns: gridCols,
       gap: 0,
@@ -189,7 +219,7 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.4)')}
     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
-      <div style={{ minWidth: 0 }}>
+      <div className="perf-cell-name" style={{ minWidth: 0 }}>
         <div style={{
           fontSize: 13,
           fontWeight: 600,
@@ -207,7 +237,7 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
         }}>{h.lang} · {h.rarity || '—'}</div>
       </div>
 
-      <div style={{
+      <div className="perf-cell" data-label="Set" style={{
         fontSize: 11.5,
         color: '#86868B',
         fontFamily: 'var(--font-sora, Sora, sans-serif)',
@@ -216,21 +246,21 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
         textOverflow: 'ellipsis',
       }}>{h.set_name || '—'}</div>
 
-      <div style={{
+      <div className="perf-cell" data-label="Qté" style={{
         textAlign: 'right',
         fontSize: 12.5,
         color: '#86868B',
         fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{h.qty}</div>
 
-      <div style={{
+      <div className="perf-cell" data-label="Coût" style={{
         textAlign: 'right',
         fontSize: 12.5,
         color: hasNoBuy ? '#C7C7CC' : '#86868B',
         fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{hasNoBuy ? '—' : formatEUR(h.cost)}</div>
 
-      <div style={{
+      <div className="perf-cell" data-label="Valeur" style={{
         textAlign: 'right',
         fontSize: 12.5,
         fontWeight: 600,
@@ -238,7 +268,7 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
         fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{formatEUR(h.value)}</div>
 
-      <div style={{
+      <div className="perf-cell" data-label="Gain" style={{
         textAlign: 'right',
         fontSize: 12.5,
         fontWeight: 700,
@@ -246,7 +276,7 @@ function Row({ h, gridCols, isLast }: { h: EnrichedHolding; gridCols: string; is
         fontFamily: 'var(--font-data, "Space Mono", monospace)',
       }}>{hasNoBuy ? '—' : `${sign}${formatEUR(h.gain)}`}</div>
 
-      <div style={{
+      <div className="perf-cell" data-label="ROI" style={{
         textAlign: 'right',
         fontSize: 12.5,
         fontWeight: 700,

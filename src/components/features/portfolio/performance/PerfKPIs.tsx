@@ -49,8 +49,13 @@ export function PerfKPIs({ agg }: { agg: PerfAggregates }) {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
         }
+        @media (max-width: 767px) {
+          .perf-kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+          .perf-kpi { padding: 14px 14px !important; }
+          .perf-kpi .perf-kpi-val { font-size: 20px !important; }
+        }
       `}</style>
-      <div style={{
+      <div className="perf-kpi-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
         gap: 14,
@@ -79,7 +84,7 @@ export function PerfKPIs({ agg }: { agg: PerfAggregates }) {
             fontWeight: 600,
             marginBottom: 10,
           }}>{k.label}</div>
-          <div style={{
+          <div className="perf-kpi-val" style={{
             fontSize: 24,
             fontWeight: 700,
             color: k.color,

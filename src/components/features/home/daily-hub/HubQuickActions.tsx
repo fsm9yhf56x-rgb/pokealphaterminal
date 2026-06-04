@@ -17,13 +17,37 @@ const ACTIONS = [
 export function HubQuickActions() {
   const router = useRouter()
   return (
-    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-      {ACTIONS.map((a) => (
-        <GlassButton key={a.href} onClick={() => router.push(a.href)} icon={<Icon name={a.icon} />}>
-          {a.label}
-        </GlassButton>
-      ))}
-    </div>
+    <>
+      <style>{`
+        .hub-quick-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        /* Mobile : grille 2x2 a colonnes egales, bords alignes */
+        @media (max-width: 640px) {
+          .hub-quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+          /* Le bouton remplit toute sa cellule via fullWidth */
+          .hub-quick-actions > button { justify-content: flex-start; }
+        }
+      `}</style>
+      <div className="hub-quick-actions">
+        {ACTIONS.map((a) => (
+          <GlassButton
+            key={a.href}
+            onClick={() => router.push(a.href)}
+            icon={<Icon name={a.icon} />}
+            fullWidth
+          >
+            {a.label}
+          </GlassButton>
+        ))}
+      </div>
+    </>
   )
 }
 

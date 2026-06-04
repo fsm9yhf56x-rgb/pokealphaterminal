@@ -30,14 +30,44 @@ export default function UserMenu() {
 
   // ── Not logged in: SnowButton glass + primary v7 ─────────────────
   if (!user) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Link href="/login" style={{ textDecoration: 'none' }}>
+    <>
+      <style>{`
+        /* Desktop : 2 boutons separes. Mobile : une seule pill glass
+           "Connexion" (le logo reste centre, cote droit minimal).
+           L'inscription reste accessible depuis la page /login. */
+        .kum-auth-desktop { display: flex; align-items: center; gap: 8px; }
+        .kum-auth-mobile { display: none; }
+        @media (max-width: 1023px) {
+          .kum-auth-desktop { display: none !important; }
+          .kum-auth-mobile { display: inline-flex !important; }
+        }
+        /* Pill Connexion mobile = glass v7 canonique (GLASS.card de snow.ts) */
+        .kum-auth-mobile button {
+          background: rgba(255,255,255,0.62) !important;
+          backdrop-filter: blur(24px) saturate(180%) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+          border: none !important;
+          color: #1D1D1F !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4) !important;
+        }
+      `}</style>
+
+      {/* Desktop : 2 boutons SnowButton separes (inchange) */}
+      <div className="kum-auth-desktop">
+        <Link href="/login" style={{ textDecoration: 'none' }}>
+          <SnowButton variant="glass" size="sm">Connexion</SnowButton>
+        </Link>
+        <Link href="/signup" style={{ textDecoration: 'none' }}>
+          <SnowButton variant="primary" size="sm">Inscription</SnowButton>
+        </Link>
+      </div>
+
+      {/* Mobile : une seule pill glass "Connexion" */}
+      <Link href="/login" className="kum-auth-mobile" style={{ textDecoration: 'none' }}>
         <SnowButton variant="glass" size="sm">Connexion</SnowButton>
       </Link>
-      <Link href="/signup" style={{ textDecoration: 'none' }}>
-        <SnowButton variant="primary" size="sm">Inscription</SnowButton>
-      </Link>
-    </div>
+    </>
   )
 
   // ── Logged in ─────────────────────────────────────────────────

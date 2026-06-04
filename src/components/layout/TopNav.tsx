@@ -91,14 +91,14 @@ export function TopNav() {
         @media (max-width: 1023px) {
           .knav-bar { padding-inline: 14px !important; }
           .knav-items { display: none !important; }
-          /* Logo centre en absolu : burger a gauche, avatar a droite, marque pile au milieu */
+          /* Logo centre en absolu : burger a gauche, CTA a droite, marque au milieu */
           .knav-logo {
             position: absolute !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             margin: 0 !important;
           }
-          .knav-usermenu { margin-left: auto !important; }
+          .knav-usermenu { margin-left: auto !important; flex-shrink: 0; }
           .knav-tile { display: none !important; }
         }
         /* < 768 : wordmark compacte */

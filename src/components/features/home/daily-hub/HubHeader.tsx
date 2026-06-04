@@ -25,7 +25,7 @@ export function HubHeader() {
   const marketStatus = getMarketStatus(now)
 
   return (
-    <div style={{
+    <div className="hub-header-root" style={{
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
@@ -33,7 +33,7 @@ export function HubHeader() {
       flexWrap: 'wrap',
     }}>
       {/* Left : greeting + date + streak */}
-      <div>
+      <div className="hub-header-left">
         <p style={{
           fontSize: 10,
           color: SNOW.mutedLight,
@@ -55,7 +55,7 @@ export function HubHeader() {
           Daily Hub
         </p>
 
-        <h1 style={{
+        <h1 className="hub-greeting" style={{
           fontSize: 32,
           fontWeight: 700,
           color: SNOW.ink,
@@ -78,13 +78,11 @@ export function HubHeader() {
           {dateStr}
         </p>
 
-        <div style={{ marginTop: 12 }}>
-          <HubStreak />
-        </div>
+
       </div>
 
       {/* Right : market status pill glass + clock */}
-      <div style={{ textAlign: 'right' }}>
+      <div className="hub-header-right" style={{ textAlign: 'right' }}>
         {/* Market status pill - glass v5 */}
         <div style={{
           ...GLASS.cardSoft,
@@ -117,7 +115,8 @@ export function HubHeader() {
         </div>
 
         {/* Clock */}
-        <div style={{
+        <div className="hub-clock">
+        <div className="hub-clock-time" style={{
           fontSize: 28,
           fontWeight: 600,
           color: SNOW.ink,
@@ -139,12 +138,36 @@ export function HubHeader() {
         }}>
           Heure locale
         </div>
+        {/* Streak sous l'heure, aligne a droite */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <HubStreak />
+        </div>
+        </div>
       </div>
 
       <style>{`
         @keyframes pulse-dot {
           0%, 100% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
           50%      { box-shadow: 0 0 0 6px transparent; opacity: 0.7; }
+        }
+        /* Mobile : on garde le layout desktop (greeting gauche / statut+heure
+           droite). On empeche juste le wrap et on compacte legerement pour que
+           le bloc droite tienne sur petit ecran. */
+        @media (max-width: 1023px) {
+          .hub-header-root { flex-wrap: nowrap !important; gap: 12px !important; }
+          .hub-header-left { min-width: 0; flex: 1; }
+          .hub-header-right { flex-shrink: 0; }
+          .hub-clock-time { font-size: 24px !important; }
+        }
+        @media (max-width: 400px) {
+          .hub-clock-time { font-size: 21px !important; }
+        }
+        /* Mobile : titre compacte pour eviter le wrap sur 2 lignes */
+        @media (max-width: 1023px) {
+          .hub-greeting { font-size: 26px !important; }
+        }
+        @media (max-width: 400px) {
+          .hub-greeting { font-size: 23px !important; }
         }
       `}</style>
     </div>

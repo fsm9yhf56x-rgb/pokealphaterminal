@@ -90,6 +90,11 @@ export function SubMenu() {
           }
           .ksub-list::-webkit-scrollbar { display: none; }
           .ksub-link { white-space: nowrap; flex-shrink: 0; }
+          /* Fade à droite : indice visuel que les onglets scrollent (swipe) */
+          .ksub-list {
+            -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+            mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+          }
         }
       `}</style>
 

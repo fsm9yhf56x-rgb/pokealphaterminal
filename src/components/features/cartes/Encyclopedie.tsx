@@ -1016,8 +1016,8 @@ export function Encyclopedie() {
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            height: 94vh !important;
-            max-height: 94vh !important;
+            height: 88dvh !important;
+            max-height: 88dvh !important;
             border-radius: 20px 20px 0 0 !important;
             display: flex !important;
             flex-direction: column !important;
@@ -1049,8 +1049,12 @@ export function Encyclopedie() {
             -webkit-overflow-scrolling: touch;
             padding-bottom: 16px !important;
           }
-          /* CTA : fige en bas */
-          .drawer-cta-sticky { flex: none !important; position: static !important; }
+          /* CTA : fige en bas + safe-area iPhone (home indicator) */
+          .drawer-cta-sticky {
+            flex: none !important;
+            position: static !important;
+            padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+          }
         }
         /* ===== DRAWER TAB SECTIONS - show/hide par tab ===== */
         .tab-section { display: none; }

@@ -321,17 +321,18 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
         </div>
       )}
 
-      {/* Hero */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
-        <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtFull(current)}</span>
-        <span style={{ fontSize: 12, color: c30.color, fontFamily: 'var(--font-data, monospace)', fontWeight: 500 }}>{c30.text}</span>
-        <span style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>30d</span>
-      </div>
-      <div style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)', marginBottom: 14 }}>
-        {mode === 'graded' ? `${company} ${grade}` : condition}
-        {mode === 'graded' && activeMeta.count != null
-          ? ` · ${activeMeta.count} vente${activeMeta.count > 1 ? 's' : ''} eBay`
-          : ` · ${activePoints.length} points`}
+      {/* Rappel prix discret (l'onglet Prix porte le gros chiffre ; ici le focus = l'évolution) */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', marginBottom: 12 }}>
+        <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', color: SNOW.ink, fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtFull(current)}</span>
+        <span style={{ fontSize: 11.5, color: c30.color, fontFamily: 'var(--font-data, monospace)', fontWeight: 600 }}>{c30.text}</span>
+        <span style={{ fontSize: 10, color: SNOW.muted, fontFamily: 'var(--font-data, monospace)' }}>sur 30j</span>
+        <span style={{ fontSize: 10, color: SNOW.dim, margin: '0 2px' }}>·</span>
+        <span style={{ fontSize: 10.5, color: SNOW.muted, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>
+          {mode === 'graded' ? `${company} ${grade}` : condition}
+          {mode === 'graded' && activeMeta.count != null
+            ? ` · ${activeMeta.count} vente${activeMeta.count > 1 ? 's' : ''}`
+            : ` · ${activePoints.length} pts`}
+        </span>
       </div>
       {mode === 'graded' && activeMeta.low && (
         <div style={{

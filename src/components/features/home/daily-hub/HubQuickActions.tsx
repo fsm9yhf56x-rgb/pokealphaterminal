@@ -24,14 +24,18 @@ export function HubQuickActions() {
           gap: 10px;
           flex-wrap: wrap;
         }
-        /* Mobile : grille 2x2 a colonnes egales, bords alignes */
+        /* Desktop : rangee compacte. On neutralise le fullWidth (width:100% inline)
+           pour que les pills gardent la largeur de leur contenu, alignees a gauche. */
+        @media (min-width: 641px) {
+          .hub-quick-actions > button { width: auto !important; }
+        }
+        /* Mobile : grille 2x2 a colonnes egales, bords alignes (fullWidth actif) */
         @media (max-width: 640px) {
           .hub-quick-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
           }
-          /* Le bouton remplit toute sa cellule via fullWidth */
           .hub-quick-actions > button { justify-content: flex-start; }
         }
       `}</style>

@@ -1488,9 +1488,25 @@ export function Holdings() {
           /* Autoriser le wrap pour que compteur+poubelle ne soient jamais coupés */
           .ksetrow-head{ flex-wrap:wrap!important; gap:8px; }
           .ksetrow-left{ flex-wrap:wrap!important; min-width:0; flex:1; }
-          /* Boutons Ajouter : empilés pleine largeur */
+          /* Carte collection : titre en haut pleine largeur, actions empilées en dessous */
+          .kcollection-head{ flex-direction:column!important; align-items:stretch!important; gap:12px; }
+          .kcollection-title{ width:100%; }
+          /* Carte d'actions : "Ajouter une carte" principal + 3 mini-boutons */
           .kadd-btns{ flex-direction:column!important; width:100%; align-items:stretch!important; gap:8px!important; }
-          .kadd-btns > *{ width:100%!important; }
+          .kadd-btns > .gb, .kadd-btns > button:not(.kadd-mini){ width:100%!important; }
+          /* La rangée des 3 mini-boutons : display:contents ne marche pas pour flexer, on remet un flex */
+          .kadd-secondary{ display:flex!important; gap:8px!important; width:100%; }
+          .kadd-mini{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:52px; border-radius:10px; border:1px solid rgba(0,0,0,0.07); background:rgba(255,255,255,0.6); color:#48484A; font-size:11px; font-weight:600; font-family:var(--font-display); cursor:pointer; }
+          .kadd-mini:active{ background:rgba(0,0,0,0.04); }
+          /* Boutons colonnes binder : inutiles en mobile (densité forcée) */
+          .kadd-cols{ display:none!important; }
+          /* Rangée recherche+filtres : recherche en haut pleine largeur, filtres en dessous */
+          .kfilt-row{ flex-direction:column!important; align-items:stretch!important; gap:10px; }
+          .kfilt-search{ flex:none!important; width:100%; }
+          /* Filtres+tri : scroll horizontal avec fade (indice swipe) */
+          .kfilt-chips{ overflow-x:auto; flex-shrink:1!important; padding-bottom:2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%); mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%); }
+          .kfilt-chips::-webkit-scrollbar{ display:none; }
+          .kfilt-chips > *{ flex-shrink:0; }
         }
         @media (max-width:600px){
           .kbinder-grid{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
@@ -2185,8 +2201,8 @@ export function Holdings() {
                 border: 'none',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
               }}>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
-                  <div>
+                <div className="kcollection-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
+                  <div className="kcollection-title">
                     <div style={{ fontSize:10, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
                       <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
                       Ma Collection
@@ -2222,26 +2238,31 @@ export function Holdings() {
                 </div>
                   </div>
                   <div className="kadd-btns" style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+                    <style>{`
+                      .kadd-mini{ display:inline-flex; flex-direction:row; align-items:center; gap:6px; height:38px; padding:0 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); color:#48484A; font-size:13px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:all .15s; flex-shrink:0; }
+                      .kadd-mini:hover{ background:rgba(255,255,255,0.85); border-color:rgba(0,0,0,0.12); color:#1D1D1F; }
+                    `}</style>
                     <GlassButton onClick={()=>setAddOpen(true)}
                       icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>}>
                       Ajouter une carte
                     </GlassButton>
-                    {(!binderSet||binderSet==='__all__')&&<GlassButton onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>}>
-                      Ajouter une série
-                    </GlassButton>}
-                    <GlassButton onClick={()=>setImportOpen(true)}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>}>
-                      Importer
-                    </GlassButton>
-                    <GlassButton onClick={()=>setScannerSoonOpen(true)}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>}
-                      iconRight={<SoonBadge version="v2.0" />}>
-                      Scanner
-                    </GlassButton>
-                    {(binderSet!==null)&&[6,7,8,9].map(n=>(
+                    <div className="kadd-secondary" style={{ display:'contents' }}>
+                    {(!binderSet||binderSet==='__all__')&&<button className="kadd-mini" onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                      <span>Série</span>
+                    </button>}
+                    <button className="kadd-mini" onClick={()=>setImportOpen(true)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                      <span>Import</span>
+                    </button>
+                    <button className="kadd-mini" onClick={()=>setScannerSoonOpen(true)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <span>Scan</span>
+                    </button>
+                    </div>
+                    {(binderSet!==null)&&<div className="kadd-cols" style={{ display:'flex', gap:6 }}>{[6,7,8,9].map(n=>(
                       <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
-                    ))}
+                    ))}</div>}
 
                   </div>
                 </div>
@@ -2258,8 +2279,8 @@ export function Holdings() {
                   /* VUE SETS — SHELF */
                   <div style={{ display:'flex', flexDirection:'column', gap:'0' }}>
                     {true&&(
-                      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
-                        <div style={{ position:'relative', flex:1, minWidth:'120px' }}>
+                      <div className="kfilt-row" style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
+                        <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
                           <input
                             type="text"
                             placeholder="Rechercher une série..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
@@ -2270,7 +2291,7 @@ export function Holdings() {
                           <div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'#AEAEB2', pointerEvents:'none' }}>🔍</div>
                           {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
                         </div>
-                        <div style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
+                        <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
                           {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
                             <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
                               style={{ padding:'5px 12px',borderRadius:'99px',border:`1px solid ${binderFilter===fi.k?'#1D1D1F':'#E5E5EA'}`,background:binderFilter===fi.k?'#1D1D1F':'transparent',color:binderFilter===fi.k?'#fff':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>

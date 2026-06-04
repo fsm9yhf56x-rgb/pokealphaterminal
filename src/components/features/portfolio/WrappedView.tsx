@@ -18,10 +18,10 @@ const TYPE_FR: Record<string,string> = {
 }
 const RARE_SET = new Set(['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare'])
 
-const Ic = ({ d, c, s=16 }: { d:string; c:string; s?:number }) => (
+export const Ic = ({ d, c, s=16 }: { d:string; c:string; s?:number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>
 )
-const D = {
+export const D = {
   cards:'M4 4h16v16H4zM9 4v16M15 4v16', folder:'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
   diamond:'M12 2L2 12l10 10 10-10L12 2z', globe:'M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20',
   star:'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
@@ -36,22 +36,22 @@ const D = {
 interface Badge { id:string; name:string; icon:string; color:string; desc:string; check:(p:CardItem[],v:number)=>boolean }
 
 /* ── PROFILS COLLECTIONNEUR ── */
-interface Profile { id:string; name:string; sub:string; quote:string; icon:string; color:string }
-function getProfile(p: CardItem[], totalCur: number): Profile {
+export interface Profile { id:string; name:string; sub:string; quote:string; icon:string; color:string }
+export function getProfile(p: CardItem[], totalCur: number): Profile {
   const rarePct = p.filter(c=>c.rarity&&RARE_SET.has(c.rarity)).length / Math.max(p.length,1)
   const frPct = p.filter(c=>c.lang==='FR').length / Math.max(p.length,1)
   const vintPct = p.filter(c=>c.year<2015).length / Math.max(p.length,1)
   const langCount = new Set(p.map(c=>c.lang)).size
   const bestROI = p.filter(c=>c.buyPrice>0).reduce((best,c)=>{const r=((c.curPrice-c.buyPrice)/c.buyPrice);return r>best?r:best},0)
 
-  if (totalCur >= 5000) return { id:'whale', name:'La Baleine', sub:'Collectionneur d\'exception', quote:'Les marketplaces tremblent a ton passage.', icon:D.zap, color:'#7C4DFF' }
-  if (bestROI >= 0.3 && p.filter(c=>c.buyPrice>0).length >= 3) return { id:'hunter', name:'Le Chasseur', sub:'Investisseur avise', quote:'Tu ne collectionnes pas. Tu investis.', icon:D.target, color:'#2E9E6A' }
-  if (rarePct >= 0.3) return { id:'aesthete', name:'L\'Esthete', sub:'Amoureux de la beaute', quote:'Seule la beaute compte.', icon:D.diamond, color:'#C855D4' }
-  if (frPct >= 0.7) return { id:'purist', name:'Le Puriste', sub:'Fidele aux origines', quote:'Full FR ou rien.', icon:D.shield, color:'#42A5F5' }
-  if (vintPct >= 0.5) return { id:'archaeo', name:'L\'Archeologue', sub:'Gardien du passe', quote:'Le passe est ton terrain de jeu.', icon:D.crown, color:'#D97706' }
-  if (langCount >= 3) return { id:'globe', name:'Le Globetrotter', sub:'Collectionneur sans frontieres', quote:'Ta collection n\'a pas de frontieres.', icon:D.globe, color:'#FF6B35' }
-  if (p.length >= 10) return { id:'guardian', name:'Le Gardien', sub:'Collectionneur passionne', quote:'Ta collection est un musee.', icon:D.cards, color:'#E03020' }
-  return { id:'newbie', name:'Le Decouvreur', sub:'Debut d\'une grande aventure', quote:'Chaque grande collection commence par une carte.', icon:D.star, color:'#D97706' }
+  if (totalCur >= 5000) return { id:'whale', name:'La Baleine', sub:'Collectionneur d\'exception', quote:'Les marketplaces tremblent à ton passage.', icon:D.zap, color:'#7C4DFF' }
+  if (bestROI >= 0.3 && p.filter(c=>c.buyPrice>0).length >= 3) return { id:'hunter', name:'Le Chasseur', sub:'Investisseur avisé', quote:'Tu ne collectionnes pas. Tu investis.', icon:D.target, color:'#2E9E6A' }
+  if (rarePct >= 0.3) return { id:'aesthete', name:'L\'Esthète', sub:'Amoureux de la beauté', quote:'Seule la beauté compte.', icon:D.diamond, color:'#C855D4' }
+  if (frPct >= 0.7) return { id:'purist', name:'Le Puriste', sub:'Fidèle aux origines', quote:'Full FR ou rien.', icon:D.shield, color:'#42A5F5' }
+  if (vintPct >= 0.5) return { id:'archaeo', name:'L\'Archéologue', sub:'Gardien du passé', quote:'Le passé est ton terrain de jeu.', icon:D.crown, color:'#D97706' }
+  if (langCount >= 3) return { id:'globe', name:'Le Globetrotter', sub:'Collectionneur sans frontières', quote:'Ta collection n\'a pas de frontières.', icon:D.globe, color:'#FF6B35' }
+  if (p.length >= 10) return { id:'guardian', name:'Le Gardien', sub:'Collectionneur passionné', quote:'Ta collection est un musée.', icon:D.cards, color:'#E03020' }
+  return { id:'newbie', name:'Le Découvreur', sub:'Début d\'une grande aventure', quote:'Chaque grande collection commence par une carte.', icon:D.star, color:'#D97706' }
 }
 
 const BADGES: Badge[] = [
@@ -71,6 +71,7 @@ interface Props {
 }
 
 export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain, onShare }: Props) {
+  const wrappedYear = new Date().getFullYear()
   const setsOwned = [...new Set(portfolio.map(c=>c.set))]
   const rareCt = portfolio.filter(c=>c.rarity&&RARE_SET.has(c.rarity)).length
   const totalQty = portfolio.reduce((s,c)=>s+c.qty, 0)
@@ -96,8 +97,8 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
       borderRadius:20, margin:'0 24px',
       boxShadow:'0 4px 24px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.95)',
     }}>
-      <div style={{ display:'inline-flex', width:64, height:64, alignItems:'center', justifyContent:'center', borderRadius:18, background:'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(224,48,32,0.08))' }}>
-        <Ic d={D.star} c="#C9A227" s={32}/>
+      <div style={{ display:'inline-flex', width:64, height:64, alignItems:'center', justifyContent:'center', borderRadius:18, background:'rgba(224,48,32,0.1)', border:'1px solid rgba(224,48,32,0.18)' }}>
+        <Ic d={D.star} c="#E03020" s={32}/>
       </div>
       <div style={{ marginTop:18, fontSize:18, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>Ton Wrapped t&apos;attend</div>
       <div style={{ marginTop:6, fontSize:13, color:'#6E6E73', maxWidth:280, margin:'6px auto 0', lineHeight:1.6, fontFamily:'var(--font-body)' }}>Ajoute des cartes pour debloquer ton bilan annuel.</div>
@@ -106,7 +107,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
 
   /* ─── Wrapped Snow+ premium luxe ─────────────────────────────── */
   return (
-    <div style={{
+    <div className="wrap-root" style={{
       position:'relative',
       margin:'0 16px',
       padding:'72px 56px 56px',
@@ -114,21 +115,28 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
       backdropFilter:'blur(28px) saturate(180%)',
       WebkitBackdropFilter:'blur(28px) saturate(180%)',
       borderRadius:28,
-      boxShadow:'0 12px 48px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4), 0 0 0 1px rgba(184,146,72,0.08)',
+      boxShadow:'0 12px 48px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4), 0 0 0 0.5px rgba(0,0,0,0.05)',
       animation:'wrappedIn .6s cubic-bezier(.2,.85,.3,1)',
       overflow:'hidden',
       isolation:'isolate' as const,
     }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .wrap-root { padding: 40px 18px 36px !important; margin: 0 12px !important; }
+          .wrap-prof-card { flex-direction: column !important; text-align: center !important; gap: 14px !important; }
+          .wrap-prof-text { width: 100%; }
+        }
+      `}</style>
       {/* Bordure or pale sérigraphie (style invitation gravée) */}
-      <div aria-hidden style={{ position:'absolute', top:14, left:14, right:14, bottom:14, borderRadius:20, border:'1px solid rgba(184,146,72,0.12)', pointerEvents:'none' }}/>
-      <div aria-hidden style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'30%', height:1, background:'linear-gradient(90deg, transparent, rgba(184,146,72,0.5), transparent)', pointerEvents:'none' }}/>
-      <div aria-hidden style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', width:'30%', height:1, background:'linear-gradient(90deg, transparent, rgba(184,146,72,0.3), transparent)', pointerEvents:'none' }}/>
+      <div aria-hidden style={{ position:'absolute', top:14, left:14, right:14, bottom:14, borderRadius:20, border:'1px solid rgba(0,0,0,0.05)', pointerEvents:'none' }}/>
+      <div aria-hidden style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'30%', height:1, background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent)', pointerEvents:'none' }}/>
+      <div aria-hidden style={{ position:'absolute', bottom:0, left:'50%', transform:'translateX(-50%)', width:'30%', height:1, background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent)', pointerEvents:'none' }}/>
 
       {/* ═══════ 01 HERO ═══════ */}
       <div style={{ textAlign:'center', marginBottom:72 }}>
         {/* Bandeau premium : monogramme a gauche + bouton partage mini a droite */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28 }}>
-          <div style={{ fontSize:13, fontWeight:400, color:'#B89248', fontFamily:'Georgia, serif', fontStyle:'italic', letterSpacing:'0.08em', opacity:.85 }}>Kodo Cards</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'#E03020', fontFamily:'var(--font-display)', letterSpacing:'0.04em' }}>Kodo Cards</div>
           <button onClick={onShare} style={{
             display:'inline-flex', alignItems:'center', gap:7,
             padding:'7px 13px',
@@ -137,7 +145,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
             backdropFilter:'blur(16px) saturate(180%)',
             WebkitBackdropFilter:'blur(16px) saturate(180%)',
             color:'#1D1D1F',
-            border:'1px solid rgba(184,146,72,0.25)',
+            border:'1px solid rgba(0,0,0,0.1)',
             fontSize:10.5, fontWeight:700,
             cursor:'pointer',
             fontFamily:'var(--font-display)',
@@ -146,14 +154,14 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
             transition:'all .25s cubic-bezier(.2,.85,.3,1)',
             boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
           }}
-            onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='rgba(184,146,72,0.5)'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)' }}
-            onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.62)'; e.currentTarget.style.color='#1D1D1F'; e.currentTarget.style.borderColor='rgba(184,146,72,0.25)'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+            onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='rgba(0,0,0,0.2)'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)' }}
+            onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.62)'; e.currentTarget.style.color='#1D1D1F'; e.currentTarget.style.borderColor='rgba(0,0,0,0.1)'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             Partager
           </button>
         </div>
 
-        <SectionLabel index="01" label="Bilan annuel 2026" />
+        <SectionLabel index="01" label={`Bilan annuel ${wrappedYear}`} />
 
         {/* Value MASSIVE noir avec ligne dorée signature en dessous */}
         <div style={{
@@ -166,7 +174,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
         }}>{formatEUR(totalCur, 'big')}</div>
 
         {/* Ligne dorée signature ultra-fine */}
-        <div style={{ width:80, height:1, background:'linear-gradient(90deg, transparent, #B89248, transparent)', margin:'24px auto 16px' }}/>
+        <div style={{ width:80, height:1, background:'linear-gradient(90deg, transparent, #D1D1D6, transparent)', margin:'24px auto 16px' }}/>
 
         <div style={{ fontSize:10, fontWeight:600, color:'#86868B', letterSpacing:'0.32em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>Valeur totale de ta collection</div>
 
@@ -209,7 +217,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
         return (
           <div style={{ marginBottom:32 }}>
             <SectionLabel index="02" label="Ton profil collectionneur" />
-            <div style={{
+            <div className="wrap-prof-card" style={{
               background:'rgba(255,255,255,0.85)',
               border:`1px solid ${prof.color}1A`,
               borderRadius:20, padding:'24px 22px',
@@ -219,8 +227,8 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
               <div style={{ width:72, height:72, borderRadius:'50%', background:`linear-gradient(135deg, ${prof.color}, ${prof.color}CC)`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:`0 8px 24px ${prof.color}30, inset 0 1px 0 rgba(255,255,255,0.4)` }}>
                 <Ic d={prof.icon} c="#fff" s={32}/>
               </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:24, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1.1 }}>{prof.name}</div>
+              <div className="wrap-prof-text" style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:22, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1.15 }}>{prof.name}</div>
                 <div style={{ fontSize:12, color:prof.color, fontWeight:700, fontFamily:'var(--font-display)', marginTop:4, textTransform:'uppercase' as const, letterSpacing:'0.08em' }}>{prof.sub}</div>
                 <div style={{ fontSize:13, color:'#6E6E73', fontStyle:'italic', marginTop:10, lineHeight:1.5, fontFamily:'var(--font-body)' }}>&ldquo;{prof.quote}&rdquo;</div>
               </div>
@@ -369,13 +377,13 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
       </div>
 
       {/* ═══════ CTA Partager - moment fort de conversion sociale ═══════ */}
-      <div style={{ marginTop:40, paddingTop:32, borderTop:'1px solid rgba(184,146,72,0.2)', position:'relative' }}>
+      <div style={{ marginTop:40, paddingTop:32, borderTop:'1px solid rgba(0,0,0,0.08)', position:'relative' }}>
         {/* Filet doree centre au-dessus du CTA */}
-        <div style={{ position:'absolute', top:-1, left:'50%', transform:'translateX(-50%)', width:140, height:1, background:'linear-gradient(90deg, transparent, #B89248, transparent)' }}/>
+        <div style={{ position:'absolute', top:-1, left:'50%', transform:'translateX(-50%)', width:140, height:1, background:'linear-gradient(90deg, transparent, #D1D1D6, transparent)' }}/>
 
         {/* Accroche emotionnelle */}
         <div style={{ textAlign:'center', marginBottom:24 }}>
-          <div style={{ fontSize:11, fontWeight:600, color:'#B89248', letterSpacing:'0.32em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:14 }}>L&apos;heure de briller</div>
+          <div style={{ fontSize:11, fontWeight:600, color:'#E03020', letterSpacing:'0.32em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:14 }}>L&apos;heure de briller</div>
           <div style={{ fontSize:22, fontWeight:800, color:'#0A0A0F', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', lineHeight:1.25, maxWidth:480, margin:'0 auto' }}>
             Montre ta collection au monde.
           </div>
@@ -395,19 +403,19 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
           cursor:'pointer',
           fontFamily:'var(--font-display)',
           display:'flex', alignItems:'center', justifyContent:'center', gap:14,
-          boxShadow:'0 12px 36px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(184,146,72,0.25)',
+          boxShadow:'0 12px 36px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 0.5px rgba(0,0,0,0.3)',
           transition:'all .35s cubic-bezier(.2,.85,.3,1)',
           letterSpacing:'0.02em',
           position:'relative',
           overflow:'hidden',
         }}
-          onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 18px 48px rgba(0,0,0,0.28), 0 8px 18px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(184,146,72,0.6), 0 0 32px rgba(184,146,72,0.15)' }}
-          onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 12px 36px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 1px rgba(184,146,72,0.25)' }}>
+          onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 18px 48px rgba(0,0,0,0.28), 0 8px 18px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 0.5px rgba(0,0,0,0.4)' }}
+          onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 12px 36px rgba(0,0,0,0.22), 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 0 0.5px rgba(0,0,0,0.3)' }}>
           {/* Shimmer animation overlay */}
-          <div style={{ position:'absolute', inset:0, background:'linear-gradient(120deg, transparent 30%, rgba(184,146,72,0.15) 50%, transparent 70%)', animation:'goldShine 4s ease-in-out infinite', pointerEvents:'none' }}/>
-          <Ic d={D.share} c="#B89248" s={16}/>
-          <span style={{ position:'relative', zIndex:1 }}>Partager mon bilan 2026</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B89248" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position:'relative', zIndex:1 }}><polyline points="9 18 15 12 9 6"/></svg>
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%)', animation:'goldShine 4s ease-in-out infinite', pointerEvents:'none' }}/>
+          <Ic d={D.share} c="#fff" s={16}/>
+          <span style={{ position:'relative', zIndex:1 }}>Partager mon bilan {wrappedYear}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position:'relative', zIndex:1 }}><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
         {/* Reseaux sociaux direct */}
@@ -424,14 +432,14 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
               background:'rgba(255,255,255,0.6)',
               backdropFilter:'blur(12px)',
               WebkitBackdropFilter:'blur(12px)',
-              border:'1px solid rgba(184,146,72,0.2)',
+              border:'1px solid rgba(0,0,0,0.1)',
               cursor:'pointer',
               display:'flex', alignItems:'center', justifyContent:'center',
               transition:'all .2s cubic-bezier(.2,.85,.3,1)',
               padding:0,
               boxShadow:'0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
             }}
-              onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)'; const svg=e.currentTarget.querySelector('svg'); if(svg) svg.setAttribute('fill','#B89248') }}
+              onMouseEnter={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)'; const svg=e.currentTarget.querySelector('svg'); if(svg) svg.setAttribute('fill','#fff') }}
               onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.6)'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)'; const svg=e.currentTarget.querySelector('svg'); if(svg) svg.setAttribute('fill','#1D1D1F') }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#1D1D1F"><path d={net.d}/></svg>
             </button>
@@ -440,7 +448,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
 
         {/* Social proof - hook subtil */}
         <div style={{ textAlign:'center', marginTop:20, fontSize:11, color:'#86868B', fontFamily:'var(--font-display)', letterSpacing:'0.05em' }}>
-          <span style={{ color:'#B89248', fontWeight:700 }}>234 collectionneurs</span> ont partage leur bilan cette semaine
+          <span style={{ color:'#E03020', fontWeight:700 }}>234 collectionneurs</span> ont partage leur bilan cette semaine
         </div>
       </div>
     </div>
@@ -451,14 +459,14 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
 function SectionLabel({ index, label, noMargin }: { index:string; label:string; noMargin?:boolean }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom: noMargin ? 0 : 24, justifyContent:'center' }}>
-      <span style={{ width:32, height:1, background:'linear-gradient(90deg, transparent, rgba(184,146,72,0.4))' }} />
+      <span style={{ width:32, height:1, background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.12))' }} />
       <span style={{
         fontSize:10, fontWeight:700,
-        color:'#B89248',
+        color:'#E03020',
         fontFamily:'var(--font-data)', letterSpacing:'0.28em',
       }}>{index}</span>
       <span style={{ fontSize:10, fontWeight:700, color:'#48484A', letterSpacing:'0.28em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>{label}</span>
-      <span style={{ width:32, height:1, background:'linear-gradient(90deg, rgba(184,146,72,0.4), transparent)' }} />
+      <span style={{ width:32, height:1, background:'linear-gradient(90deg, rgba(0,0,0,0.12), transparent)' }} />
     </div>
   )
 }

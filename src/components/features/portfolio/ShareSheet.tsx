@@ -2,6 +2,7 @@
 import { formatEUR } from '@/lib/formatPrice'
 
 import { useState, useRef, useCallback } from 'react'
+import { getProfile, Ic, D } from './WrappedView'
 
 interface CardItem {
   id:string; name:string; set:string; year:number; type:string;
@@ -34,7 +35,12 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
   const isCard = context === 'card' && card
   const isShowcase = context === 'showcase'
-  const title = isCard ? card!.name : isShowcase ? 'Ma Vitrine' : context === 'wrapped' ? 'Wrapped 2026' : 'Mon Portfolio'
+  const isWrapped = context === 'wrapped'
+  const wrappedYear = new Date().getFullYear()
+  const wProf = isWrapped ? getProfile(portfolio, totalCur) : null
+  const wBest = isWrapped ? [...portfolio].filter(c=>c.curPrice>0).sort((a,b)=>b.curPrice-a.curPrice)[0] : null
+  const wSets = isWrapped ? new Set(portfolio.map(c=>c.set)).size : 0
+  const title = isCard ? card!.name : isShowcase ? 'Ma Vitrine' : context === 'wrapped' ? `Wrapped ${wrappedYear}` : 'Mon Portfolio'
   const showcaseCards = showcase ?? []
   const subtitle = isShowcase
     ? showcaseCards.length + ' piece' + (showcaseCards.length !== 1 ? 's' : '') + ' d\'exception'
@@ -51,28 +57,31 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     : isCard
     ? `${card!.name} dans ma collection Kodo Cards ${card!.buyPrice > 0 ? '— ROI +' + roi + '%' : ''}`
     : context === 'wrapped'
-    ? `Mon Wrapped 2026 sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
+    ? `Mon Wrapped ${wrappedYear} sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
     : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur Kodo Cards`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
 
-  const generateImage = useCallback(async () => {
-    if (!previewRef.current) return
+  const generateImage = useCallback(async (): Promise<string|null> => {
+    if (!previewRef.current) return null
     setGenerating(true)
     try {
       const html2canvas = (await import('html2canvas')).default
       const canvas = await html2canvas(previewRef.current, {
         scale: 2, backgroundColor: null, useCORS: true, logging: false,
       })
-      setImageUrl(canvas.toDataURL('image/png'))
-    } catch { showToast('Erreur de capture') }
-    setGenerating(false)
+      const url = canvas.toDataURL('image/png')
+      setImageUrl(url)
+      setGenerating(false)
+      return url
+    } catch { showToast('Erreur de capture'); setGenerating(false); return null }
   }, [showToast])
 
-  const download = useCallback(() => {
-    if (!imageUrl) return
+  const download = useCallback((url?: string) => {
+    const src = url || imageUrl
+    if (!src) return
     const a = document.createElement('a')
-    a.href = imageUrl
+    a.href = src
     a.download = `kodocards-${isCard ? card!.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio'}.png`
     a.click()
     showToast('Image sauvegardee')
@@ -190,7 +199,11 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
               <div style={{ display:'flex', alignItems:'center', gap:14, background:'#0A0A14', borderRadius:14, padding:'14px 16px', position:'relative', overflow:'hidden' }}>
                 <div aria-hidden style={{ position:'absolute', top:0, left:0, right:0, height:'70%', background:'radial-gradient(ellipse at 30% 0%, rgba(60,40,100,0.4) 0%, transparent 70%)', pointerEvents:'none' }}/>
                 <div style={{ display:'flex', alignItems:'center', flexShrink:0, position:'relative', zIndex:1 }}>
-                  {apFan.length>0 ? apFan.map((c,i)=>(
+                  {isWrapped ? (
+                    <div style={{ width:52, height:52, borderRadius:'50%', background:'rgba(224,48,32,0.14)', border:'1.5px solid rgba(224,48,32,0.4)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {wProf && <Ic d={wProf.icon} c="#E03020" s={26}/>}
+                    </div>
+                  ) : apFan.length>0 ? apFan.map((c,i)=>(
                     <img key={c.id} src={apHi(c.image!)} alt={c.name} crossOrigin="anonymous"
                       style={{ width:i===Math.floor(apFan.length/2)&&apFan.length===3?44:38, borderRadius:5, marginLeft:i===0?0:-14, transform:`rotate(${apFan.length===3?(i===0?-10:i===2?10:0):apFan.length===2?(i===0?-6:6):0}deg)`, zIndex:i===1?3:1, position:'relative', border:'1px solid rgba(255,255,255,0.2)', boxShadow:'0 4px 12px rgba(0,0,0,0.5)' }}
                       onError={e=>{const t=e.target as HTMLImageElement; if(t.src.endsWith('/high.webp')){t.src=t.src.replace('/high.webp','/high.jpg')}else{t.style.display='none'}}} />
@@ -199,9 +212,18 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
                   )}
                 </div>
                 <div style={{ flex:1, minWidth:0, position:'relative', zIndex:1 }}>
-                  <div style={{ fontSize:11, fontWeight:600, color:'#E03020', fontFamily:'var(--font-display)' }}>Kodo Cards</div>
-                  <div style={{ fontSize:19, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', marginTop:1, lineHeight:1.1 }}>{apVal}</div>
-                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', marginTop:2, fontFamily:'var(--font-display)' }}>Story prête · {apCount} carte{apCount>1?'s':''}</div>
+                  <div style={{ fontSize:11, fontWeight:600, color:'#E03020', fontFamily:'var(--font-display)' }}>{isWrapped ? `Wrapped ${wrappedYear}` : 'Kodo Cards'}</div>
+                  {isWrapped ? (
+                    <>
+                      <div style={{ fontSize:16, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.3px', marginTop:2, lineHeight:1.1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{wProf?.name}</div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', marginTop:2, fontFamily:'var(--font-display)' }}>{apVal} · {apCount} carte{apCount>1?'s':''}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize:19, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', marginTop:1, lineHeight:1.1 }}>{apVal}</div>
+                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.45)', marginTop:2, fontFamily:'var(--font-display)' }}>Story prête · {apCount} carte{apCount>1?'s':''}</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -222,6 +244,60 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
             const roiVal = isCard ? roi : totalROI
             const hasRoi = isCard ? card!.buyPrice > 0 : totalBuy > 0
             const roiPos = roiVal >= 0
+
+            if (isWrapped) {
+              const wRoiPos = totalROI >= 0
+              return (
+              <div ref={previewRef} style={{
+                borderRadius:18, overflow:'hidden', background:'#0A0A14', aspectRatio:'9 / 16',
+                position:'relative', display:'flex', flexDirection:'column', boxShadow:'0 0 0 0.5px rgba(0,0,0,0.4)',
+              }}>
+                <div aria-hidden style={{ position:'absolute', top:0, left:0, right:0, height:'45%', background:'radial-gradient(ellipse at 50% 0%, rgba(80,50,130,0.45) 0%, transparent 70%)', pointerEvents:'none' }}/>
+                <div style={{ padding:'22px 20px 0', display:'flex', justifyContent:'space-between', alignItems:'center', position:'relative', zIndex:2 }}>
+                  <span style={{ fontSize:14, fontWeight:700, color:'#E03020', fontFamily:'var(--font-display)', letterSpacing:'-0.2px' }}>Kodo Cards</span>
+                  <span style={{ fontSize:9, fontWeight:600, color:'rgba(255,255,255,0.45)', letterSpacing:'0.16em', fontFamily:'var(--font-display)' }}>WRAPPED {wrappedYear}</span>
+                </div>
+                <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'space-evenly', padding:'20px 18px', position:'relative', zIndex:2 }}>
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontSize:9, color:'rgba(255,255,255,0.5)', letterSpacing:'0.18em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Mon bilan annuel</div>
+                    <div style={{ fontSize:56, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-2px', lineHeight:1, marginTop:6 }}>{wrappedYear}</div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+                    <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(224,48,32,0.14)', border:'1.5px solid rgba(224,48,32,0.4)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {wProf && <Ic d={wProf.icon} c="#E03020" s={30}/>}
+                    </div>
+                    <div style={{ textAlign:'center' }}>
+                      <div style={{ fontSize:17, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-0.3px' }}>{wProf?.name}</div>
+                      <div style={{ fontSize:9, color:'rgba(255,255,255,0.5)', letterSpacing:'0.1em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginTop:2 }}>{wProf?.sub}</div>
+                    </div>
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4, padding:'0 4px' }}>
+                    <div style={{ textAlign:'center' }}>
+                      <div style={{ fontSize:26, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1 }}>{portfolio.length}</div>
+                      <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', letterSpacing:'0.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginTop:4 }}>carte{portfolio.length>1?'s':''}</div>
+                    </div>
+                    <div style={{ textAlign:'center' }}>
+                      <div style={{ fontSize:26, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', lineHeight:1 }}>{wSets}</div>
+                      <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', letterSpacing:'0.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginTop:4 }}>set{wSets>1?'s':''}</div>
+                    </div>
+                    <div style={{ textAlign:'center' }}>
+                      <div style={{ fontSize:26, fontWeight:800, color:totalBuy>0?(wRoiPos?'#3DD68C':'#FF6B5B'):'rgba(255,255,255,0.7)', fontFamily:'var(--font-display)', lineHeight:1 }}>{totalBuy>0?(wRoiPos?'+':'')+totalROI+'%':'—'}</div>
+                      <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', letterSpacing:'0.08em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginTop:4 }}>ROI</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontSize:9, color:'rgba(255,255,255,0.5)', letterSpacing:'0.14em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)' }}>Valeur de la collection</div>
+                    <div style={{ fontSize:36, fontWeight:800, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', marginTop:4 }}>{formatEUR(totalCur, 'big')}</div>
+                  </div>
+                </div>
+                <div style={{ padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:'0.5px solid rgba(255,255,255,0.1)', position:'relative', zIndex:2 }}>
+                  <span style={{ fontSize:9, color:'rgba(255,255,255,0.55)', fontFamily:'var(--font-display)' }}>{wBest ? `Pièce maîtresse · ${wBest.name}` : `${portfolio.length} carte${portfolio.length>1?'s':''}`}</span>
+                  <span style={{ fontSize:9, fontWeight:600, color:'rgba(255,255,255,0.75)', fontFamily:'var(--font-display)' }}>kodocards.com</span>
+                </div>
+              </div>
+              )
+            }
+
             return (
             <div ref={previewRef} style={{
               borderRadius:18,
@@ -315,7 +391,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
         {/* Generate + Download */}
         <div style={{ padding:'0 24px 14px' }}>
-          <button onClick={async () => { await generateImage(); download() }} disabled={generating} style={{
+          <button onClick={async () => { const u = await generateImage(); download(u || undefined) }} disabled={generating} style={{
             width:'100%', padding:'13px 16px',
             borderRadius:12,
             background: generating ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.7)',

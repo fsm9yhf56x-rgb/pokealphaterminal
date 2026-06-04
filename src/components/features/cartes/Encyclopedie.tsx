@@ -1599,7 +1599,7 @@ export function Encyclopedie() {
                   return (
                     <div key={card.id}
                       className={`enc-card${isSel?' sel':''}`}
-                      onClick={()=>handleCardClick(card.id)} onDoubleClick={e=>{e.stopPropagation();if(!isOwned(card)){addToPortfolio(card)}}}
+                      onClick={()=>handleCardClick(card.id)}
                       style={{
                         background: 'rgba(255,255,255,0.65)',
                         border: `1px solid ${isSel ? '#1D1D1F' : 'rgba(0,0,0,0.05)'}`,

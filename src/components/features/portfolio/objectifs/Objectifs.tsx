@@ -300,16 +300,16 @@ function SummaryKPIs({ agg }: { agg: ObjAggregates }) {
   return (
     <>
       <style>{`
+        .obj-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
         .obj-kpi:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
         }
+        @media (max-width: 640px) {
+          .obj-kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+        }
       `}</style>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-        gap: 14,
-      }}>
+      <div className="obj-kpi-grid" style={{ display: 'grid' }}>
         {kpis.map((k, i) => (
           <div
             key={i}

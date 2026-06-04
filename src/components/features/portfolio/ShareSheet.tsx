@@ -245,13 +245,12 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
         {/* Share buttons */}
         <div style={{ padding:'0 24px 14px' }}>
           <div style={{ fontSize:11, fontWeight:600, color:'#AEAEB2', fontFamily:'var(--font-display)', marginBottom:10, paddingLeft:2 }}>Partager vers</div>
-          <div className="kgrid-stat" style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8 }}>
             {[
               { id:'twitter', label:'X', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>, dark:true },
               { id:'story', label:'Instagram', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>, dark:true },
               { id:'tiktok', label:'TikTok', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005.8 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.84-.1z"/></svg>, dark:true },
               { id:'link', label:copied ? 'Copie' : 'Lien', svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>, dark:false },
-              { id:'plus', label:'Plus', svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>, dark:false },
             ].map(b => (
               <button key={b.id} onClick={() => handleShare(b.id)} style={{
                 padding:'14px 4px 12px',
@@ -304,41 +303,42 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
         {/* Referral */}
         <div style={{ padding:'0 24px 20px' }}>
           <div style={{
-            background:'rgba(255,255,255,0.65)',
-            backdropFilter:'blur(12px) saturate(180%)',
-            WebkitBackdropFilter:'blur(12px) saturate(180%)',
+            background:'rgba(224,48,32,0.06)',
             border:'1px solid rgba(224,48,32,0.18)',
             borderRadius:14,
             padding:'14px 16px',
-            display:'flex', alignItems:'center', gap:12,
-            boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+            boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.6)',
           }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(224,48,32,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid rgba(224,48,32,0.18)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
+              <div style={{ width:38, height:38, borderRadius:10, background:'rgba(224,48,32,0.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.1px', lineHeight:1.2 }}>Parrainez un ami</div>
+                <div style={{ fontSize:12, color:'#6E6E73', marginTop:2, fontFamily:'var(--font-display)' }}>1 mois offert pour vous deux</div>
+              </div>
             </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:12.5, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.1px' }}>Invite un ami, gagne 1 mois Pro</div>
-              <div style={{ fontSize:10.5, color:'#6E6E73', marginTop:3, fontFamily:'var(--font-display)' }}>Ton code : <span style={{ fontWeight:700, color:'#E03020', fontFamily:'var(--font-data)', letterSpacing:'0.04em' }}>{REFERRAL}</span></div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(255,255,255,0.7)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:9, padding:'8px 8px 8px 12px' }}>
+              <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:'#E03020', fontFamily:'var(--font-data)', letterSpacing:'0.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{REFERRAL}</span>
+              <button onClick={() => { navigator.clipboard.writeText(REFERRAL); setRefCopied(true); showToast('Code copie'); setTimeout(() => setRefCopied(false), 2000) }} style={{
+                padding:'7px 16px',
+                borderRadius:7,
+                background: refCopied ? '#2E9E6A' : '#1D1D1F',
+                color:'#fff',
+                border:'none',
+                fontSize:11, fontWeight:700,
+                cursor:'pointer',
+                fontFamily:'var(--font-display)',
+                whiteSpace:'nowrap' as const,
+                flexShrink:0,
+                transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                letterSpacing:'0.05em',
+              }}
+                onMouseEnter={e=>{ if(!refCopied){ e.currentTarget.style.background='#000' } }}
+                onMouseLeave={e=>{ if(!refCopied){ e.currentTarget.style.background='#1D1D1F' } }}>
+                {refCopied ? '✓ Copié' : 'Copier'}
+              </button>
             </div>
-            <button onClick={() => { navigator.clipboard.writeText(REFERRAL); setRefCopied(true); showToast('Code copie'); setTimeout(() => setRefCopied(false), 2000) }} style={{
-              padding:'7px 14px',
-              borderRadius:10,
-              background: refCopied ? '#2E9E6A' : '#1D1D1F',
-              color:'#fff',
-              border:'none',
-              fontSize:10.5, fontWeight:700,
-              cursor:'pointer',
-              fontFamily:'var(--font-display)',
-              whiteSpace:'nowrap' as const,
-              transition:'all .2s cubic-bezier(.2,.85,.3,1)',
-              letterSpacing:'0.08em',
-              textTransform:'uppercase' as const,
-              boxShadow:'0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.12)',
-            }}
-              onMouseEnter={e=>{ if(!refCopied){ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)' } }}
-              onMouseLeave={e=>{ if(!refCopied){ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform='' } }}>
-              {refCopied ? '✓ Copie' : 'Copier'}
-            </button>
           </div>
         </div>
 

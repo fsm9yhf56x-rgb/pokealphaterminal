@@ -7,7 +7,11 @@ import type { AllocAggregates, AllocAlert } from './Allocation'
  * Affiché en haut de page, avant le treemap.
  */
 export function AllocAlerts({ agg }: { agg: AllocAggregates }) {
-  if (agg.alerts.length === 0) return null
+  // Les alertes "Surexposition X" font doublon avec les footers de AllocBreakdowns
+  // (chaque breakdown affiche deja "Forte concentration sur X"). On ne garde ici
+  // que les alertes de synthese globale (concentration), le vrai takeaway.
+  const alerts = agg.alerts.filter(a => !a.title.startsWith('Surexposition'))
+  if (alerts.length === 0) return null
 
   return (
     <div style={{
@@ -15,7 +19,7 @@ export function AllocAlerts({ agg }: { agg: AllocAggregates }) {
       flexDirection: 'column',
       gap: '8px',
     }}>
-      {agg.alerts.map((alert, i) => (
+      {alerts.map((alert, i) => (
         <AlertBanner key={i} alert={alert} />
       ))}
     </div>

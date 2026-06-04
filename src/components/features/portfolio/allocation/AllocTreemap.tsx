@@ -28,6 +28,13 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
         .alloc-treemap-wrapper {
           animation: treemapFadeIn .5s cubic-bezier(.2,.85,.3,1);
         }
+        .alloc-treemap-mobile { display: none; }
+        @media (max-width: 1024px) {
+          .alloc-treemap-desktop { display: none; }
+          .alloc-treemap-mobile { display: block; }
+          .alloc-treemap-hover-hint { display: none; }
+          .alloc-treemap-legend-mobile { display: inline !important; }
+        }
         /* Recharts cell hover effect via CSS */
         .alloc-treemap-wrapper svg .recharts-rectangle:hover {
           filter: brightness(1.08) saturate(1.1);
@@ -75,8 +82,8 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
           </span>
         </div>
 
-        {/* Treemap */}
-        <div className="alloc-treemap-wrapper" style={{ width: '100%', height: 420 }}>
+        {/* Treemap (desktop) */}
+        <div className="alloc-treemap-wrapper alloc-treemap-desktop" style={{ width: '100%', height: 420 }}>
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
               data={agg.treemapData as any}
@@ -90,6 +97,11 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
               <Tooltip content={<TreemapTooltip />} />
             </Treemap>
           </ResponsiveContainer>
+        </div>
+
+        {/* Liste rankee (mobile) — treemap illisible + tooltip hover mort au doigt */}
+        <div className="alloc-treemap-mobile">
+          <TreemapMobileList nodes={agg.treemapData as TreemapNode[]} />
         </div>
 
         {/* Footer hint poetique */}
@@ -106,15 +118,85 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
           gap: 12,
           flexWrap: 'wrap' as const,
         }}>
-          <span>
+          <span className="alloc-treemap-hover-hint">
             <strong style={{ color: '#86868B' }}>Taille</strong> = valeur du set ·{' '}
             <strong style={{ color: '#86868B' }}>Couleur</strong> = performance moyenne
           </span>
-          <span style={{ fontStyle: 'italic' as const, opacity: 0.7 }}>
+          <span className="alloc-treemap-legend-mobile" style={{ display: 'none' }}>
+            <strong style={{ color: '#86868B' }}>Barre</strong> = poids ·{' '}
+            <strong style={{ color: '#86868B' }}>%</strong> ROI moyen du set
+          </span>
+          <span className="alloc-treemap-hover-hint" style={{ fontStyle: 'italic' as const, opacity: 0.7 }}>
             Survolez pour les détails
           </span>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* Vue mobile : liste rankee des sets. Tout est visible (valeur, poids,
+   cartes, ROI) — ce que le tooltip cachait au survol, impossible au doigt. */
+function TreemapMobileList({ nodes }: { nodes: TreemapNode[] }) {
+  const sorted = [...nodes].sort((a, b) => (b.size ?? 0) - (a.size ?? 0))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {sorted.map((n, i) => {
+        const roi = Number(n.avgROI ?? 0)
+        const roiColor = roi > 0.5 ? '#1D9E75' : roi < -0.5 ? '#C42E1F' : '#86868B'
+        const count = Number(n.count ?? 0)
+        return (
+          <div key={i} style={{
+            background: 'rgba(255,255,255,0.5)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            borderRadius: 12,
+            padding: '12px 14px',
+          }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'baseline', gap: 10, marginBottom: 9,
+            }}>
+              <span style={{
+                fontSize: 13.5, fontWeight: 700, color: '#1D1D1F',
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                letterSpacing: '-0.01em',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{n.name}</span>
+              <span style={{
+                fontSize: 13, fontWeight: 700, color: '#1D1D1F',
+                fontFamily: 'var(--font-data, "Space Mono", monospace)',
+                flexShrink: 0,
+              }}>{formatEUR(n.size)}</span>
+            </div>
+            <div style={{
+              height: 7, borderRadius: 4,
+              background: 'rgba(0,0,0,0.08)',
+              overflow: 'hidden', marginBottom: 8,
+            }}>
+              <div style={{
+                width: `${Math.max(4, Number(n.pct ?? 0))}%`,
+                height: '100%', borderRadius: 4,
+                background: barColor(Number(n.avgROI ?? 0), n.fill),
+              }} />
+            </div>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              fontSize: 11, color: '#86868B',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            }}>
+              <span>
+                <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>
+                  {Number(n.pct ?? 0).toFixed(1)}%
+                </strong> du portfolio · {count} carte{count > 1 ? 's' : ''}
+              </span>
+              <span style={{
+                fontFamily: 'var(--font-data, "Space Mono", monospace)',
+                fontWeight: 700, color: roiColor, flexShrink: 0,
+              }}>{roi >= 0 ? '+' : ''}{roi.toFixed(1)}%</span>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -434,4 +516,12 @@ function formatEURcompact(v: number): string {
   if (v >= 1_000_000) return `€${Number(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000)     return `€${Number(v / 1_000).toFixed(1)}K`
   return `€${Number(v ?? 0).toFixed(0)}`
+}
+
+/* Couleur de barre mobile : ROI neutre -> bleu neutre lisible (pas le gris
+   central du treemap qui se fond), sinon vert/rouge selon performance. */
+function barColor(roi: number, fill?: string): string {
+  if (roi > 0.5)  return '#1D9E75'
+  if (roi < -0.5) return '#C42E1F'
+  return '#9CA3AF'
 }

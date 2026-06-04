@@ -38,16 +38,17 @@ export function AllocConcentration({ agg }: { agg: AllocAggregates }) {
   return (
     <>
       <style>{`
+        .alloc-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
         .alloc-conc-kpi:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
         }
+        @media (max-width: 640px) {
+          .alloc-kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .alloc-kpi-val-text { font-size: 13.5px !important; }
+        }
       `}</style>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-        gap: 14,
-      }}>
+      <div className="alloc-kpi-grid" style={{ display: 'grid' }}>
         {kpis.map((k, i) => (
           <div
             key={i}
@@ -72,7 +73,9 @@ export function AllocConcentration({ agg }: { agg: AllocAggregates }) {
               fontWeight: 600,
               marginBottom: 10,
             }}>{k.label}</div>
-            <div style={{
+            <div
+              className={k.isText ? 'alloc-kpi-val-text' : undefined}
+              style={{
               fontSize: k.isText ? 16 : 24,
               fontWeight: 700,
               color: k.color,
@@ -80,9 +83,9 @@ export function AllocConcentration({ agg }: { agg: AllocAggregates }) {
               letterSpacing: '-0.3px',
               lineHeight: 1.15,
               marginBottom: 5,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              whiteSpace: k.isText ? 'normal' : 'nowrap',
+              overflow: k.isText ? 'visible' : 'hidden',
+              textOverflow: k.isText ? 'clip' : 'ellipsis',
             }}>{k.value}</div>
             <div style={{
               fontSize: 11,

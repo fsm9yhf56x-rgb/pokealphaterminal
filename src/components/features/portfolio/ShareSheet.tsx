@@ -135,11 +135,10 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     <div className="kshare-overlay" style={{ position:'fixed', inset:0, background:'rgba(20,20,28,0.30)', backdropFilter:'blur(12px) saturate(120%)', WebkitBackdropFilter:'blur(12px) saturate(120%)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }} onClick={onClose}>
       <style>{`
         @media (max-width: 767px) {
-          .kshare-overlay { align-items: flex-end !important; padding: 0 !important; }
+          .kshare-overlay { align-items: center !important; padding: 16px !important; }
           .kshare-modal {
             max-width: 100% !important;
-            border-radius: 22px 22px 0 0 !important;
-            max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
           }
         }
       `}</style>
@@ -159,11 +158,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
         {/* Header */}
         <div style={{ padding:'22px 24px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-          <div>
-            <div style={{ fontSize:11, fontWeight:700, color:'#AEAEB2', letterSpacing:'0.24em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:6 }}>Partager</div>
-            <div style={{ fontSize:18, fontWeight:800, color:'#0A0A0F', fontFamily:'var(--font-display)', letterSpacing:'-0.3px', lineHeight:1.2 }}>{title}</div>
-            <div style={{ fontSize:11, color:'#86868B', marginTop:4, fontFamily:'var(--font-display)' }}>{subtitle}</div>
-          </div>
+          <div style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px' }}>Partager</div>
           <button onClick={onClose} style={{
             width:30, height:30, borderRadius:'50%',
             background:'rgba(255,255,255,0.6)',
@@ -188,7 +183,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
             borderRadius:16,
             overflow:'hidden',
             background:'linear-gradient(180deg, #FAFAFB 0%, #F4F4F7 100%)',
-            padding:'24px 22px',
+            padding:'18px 18px',
             display:'flex', alignItems:'center', gap:18,
             position:'relative',
             boxShadow:'inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 0.5px rgba(0,0,0,0.05)',
@@ -248,8 +243,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
         </div>
 
         {/* Share buttons */}
-        <div style={{ padding:'0 24px 18px' }}>
-          <div style={{ fontSize:10, fontWeight:700, color:'#86868B', letterSpacing:'0.18em', textTransform:'uppercase' as const, fontFamily:'var(--font-display)', marginBottom:10, paddingLeft:2 }}>Direct vers</div>
+        <div style={{ padding:'0 24px 14px' }}>
+          <div style={{ fontSize:11, fontWeight:600, color:'#AEAEB2', fontFamily:'var(--font-display)', marginBottom:10, paddingLeft:2 }}>Partager vers</div>
           <div className="kgrid-stat" style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8 }}>
             {[
               { id:'twitter', label:'X', svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>, dark:true },

@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
@@ -205,6 +206,8 @@ export function Encyclopedie() {
   const router = useRouter()
 
   const [lang,       setLang]        = useState<Lang>('FR')
+  const [drawerMounted, setDrawerMounted] = useState(false)
+  useEffect(() => { setDrawerMounted(true) }, [])
   const [allCards,   setAllCards]    = useState<EnrichedCard[]>([])
   const [loading,    setLoading]     = useState(false)
   const [loadErr,    setLoadErr]     = useState(false)
@@ -968,6 +971,27 @@ export function Encyclopedie() {
         .lang-btn:active { animation: langBounce .35s ease-out; }
 
         .detail-panel { animation: panelIn .28s cubic-bezier(.34,1.2,.64,1); }
+        /* Panel en portal : fixe a droite (desktop), echappe au layout grille */
+        .detail-panel {
+          position: fixed;
+          top: 80px;
+          right: 20px;
+          width: 600px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          max-height: calc(100vh - 100px);
+        }
+        .detail-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(20,20,28,0.28);
+          backdrop-filter: blur(3px);
+          -webkit-backdrop-filter: blur(3px);
+          z-index: 999;
+          animation: drawerBackdropIn .25s ease;
+        }
+        @keyframes drawerBackdropIn { from { opacity: 0; } to { opacity: 1; } }
         .attack-row { transition: background .15s; border-radius:8px; }
         .attack-row:hover { background:rgba(0,0,0,0.04) !important; }
 
@@ -982,6 +1006,9 @@ export function Encyclopedie() {
           .detail-panel { width: 420px !important; }
         }
         @media (max-width: 900px) {
+          /* Bottom-sheet flex column, hauteur quasi-pleine (marge fine en haut).
+             4 zones figees sauf le contenu qui scrolle. La cle = min-height:0
+             sur chaque enfant flex, sinon le contenu deborde au lieu de scroller. */
           .detail-panel {
             width: 100% !important;
             position: fixed !important;
@@ -989,9 +1016,41 @@ export function Encyclopedie() {
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            max-height: 85vh !important;
-            z-index: 50 !important;
+            height: 94vh !important;
+            max-height: 94vh !important;
+            border-radius: 20px 20px 0 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            z-index: 1000 !important;
           }
+          /* Wrapper glass interne : flex column pleine hauteur */
+          .detail-panel > div {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            flex: 1 1 auto !important;
+          }
+          /* Image hero : hauteur maitrisee, entiere, jamais coupee */
+          .drawer-hero {
+            flex: none !important;
+            min-height: 0 !important;
+            padding: 14px 16px 16px !important;
+          }
+          .drawer-hero img { max-height: 200px !important; }
+          /* Tabs : figes en haut du sheet */
+          .drawer-tab-bar-sticky { flex: none !important; position: static !important; }
+          /* Contenu : la SEULE zone qui scrolle */
+          .drawer-scroll-content {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 16px !important;
+          }
+          /* CTA : fige en bas */
+          .drawer-cta-sticky { flex: none !important; position: static !important; }
         }
         /* ===== DRAWER TAB SECTIONS - show/hide par tab ===== */
         .tab-section { display: none; }
@@ -1745,9 +1804,14 @@ export function Encyclopedie() {
 
         </div>
 
-        {/* ── DETAIL PANEL ── */}
-        {selId && (
-          <div className="detail-panel" style={{ width:'600px', flexShrink:0, position:'sticky' as any, top:'80px', maxHeight:'calc(100vh - 100px)' }}>
+        {/* ── DETAIL PANEL (portal sur body) ── */}
+        {drawerMounted && selId && createPortal(
+          <>
+          <div
+            className="detail-backdrop"
+            onClick={() => { setSelId(null); setDetail(null); setEnDetail(null) }}
+          />
+          <div className="detail-panel" style={{ maxHeight:'calc(100vh - 100px)' }}>
             <div style={{
               background: 'rgba(255,255,255,0.78)',
               backdropFilter: 'blur(20px) saturate(180%)',
@@ -1808,7 +1872,7 @@ export function Encyclopedie() {
               ) : detail ? (
                 <>
                   {/* Image haute résolution — carte agrandie, héros de l'en-tête */}
-                  <div style={{ background:'linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.015) 100%)', padding:'24px 16px 26px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'320px', position:'relative' as const, borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
+                  <div className="drawer-hero" style={{ background:'linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.015) 100%)', padding:'24px 16px 26px', display:'flex', justifyContent:'center', alignItems:'center', minHeight:'320px', position:'relative' as const, borderBottom:'1px solid rgba(0,0,0,0.04)' }}>
                     {detail.image ? (
                       <img
                         src={cleanLegacyUrl(detail.image) || getCardImageUrl({ lang: lang, setId: detail.set?.id, localId: detail.localId })}
@@ -2230,6 +2294,8 @@ export function Encyclopedie() {
 
             </div>
           </div>
+          </>,
+          document.body
         )}
 
       </div>
@@ -2317,13 +2383,13 @@ export function Encyclopedie() {
         const prevCard = curIdx > 0 ? setCards[curIdx-1] : null
         const nextCard = curIdx < setCards.length-1 ? setCards[curIdx+1] : null
         const rc = getRarityColor(lightbox.rarity||'')
-        return (
-          <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.92)', zIndex:60, display:'flex', alignItems:'center', justifyContent:'center' }}
+        return createPortal(
+          <div className="kc-lightbox" style={{ position:'fixed', inset:0, background:'rgba(8,8,12,0.94)', backdropFilter:'blur(10px) saturate(120%)', WebkitBackdropFilter:'blur(10px) saturate(120%)', zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', animation:'kcLightboxIn .22s cubic-bezier(.2,.85,.3,1)' }}
             onClick={()=>setLightbox(null)}>
             {/* Prev */}
             {prevCard && (
               <button onClick={e=>{e.stopPropagation();setLightbox(prevCard)}}
-                style={{ position:'absolute', left:'20px', top:'50%', transform:'translateY(-50%)', width:'44px', height:'44px', borderRadius:'50%', background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.7)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', transition:'all .15s', zIndex:2 }}
+                style={{ position:'absolute', left:'16px', top:'50%', transform:'translateY(-50%)', width:'48px', height:'48px', borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', border:'1px solid rgba(255,255,255,0.2)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', transition:'all .15s', zIndex:2, boxShadow:'0 4px 16px rgba(0,0,0,0.3)' }}
                 onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.2)'}}
                 onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.1)'}}>
                 {String.fromCharCode(8249)}
@@ -2332,7 +2398,7 @@ export function Encyclopedie() {
             {/* Next */}
             {nextCard && (
               <button onClick={e=>{e.stopPropagation();setLightbox(nextCard)}}
-                style={{ position:'absolute', right:'20px', top:'50%', transform:'translateY(-50%)', width:'44px', height:'44px', borderRadius:'50%', background:'rgba(255,255,255,.1)', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.7)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', transition:'all .15s', zIndex:2 }}
+                style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', width:'48px', height:'48px', borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', border:'1px solid rgba(255,255,255,0.2)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', transition:'all .15s', zIndex:2, boxShadow:'0 4px 16px rgba(0,0,0,0.3)' }}
                 onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.2)'}}
                 onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.1)'}}>
                 {String.fromCharCode(8250)}
@@ -2343,8 +2409,8 @@ export function Encyclopedie() {
               {imgHd && <img src={imgHd} alt={lightbox.name}
                 style={{ maxHeight:'75vh', maxWidth:'100%', objectFit:'contain', borderRadius:'16px', boxShadow:'0 24px 60px rgba(0,0,0,.4)' }}
                 onError={e=>{const t=e.target as HTMLImageElement; if(t.src.includes('high.webp')) t.src=t.src.replace('high.webp','high.png')}}/>}
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontSize:'16px', fontWeight:600, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{lightbox.name}</div>
+              <div style={{ textAlign:'center', background:'rgba(255,255,255,0.08)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'14px', padding:'12px 20px' }}>
+                <div style={{ fontSize:'16px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{lightbox.name}</div>
                 <div style={{ fontSize:'12px', color:'rgba(255,255,255,.5)', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                   <span>{lightbox.setName}</span>
                   <span>{String.fromCharCode(183)}</span>
@@ -2370,12 +2436,14 @@ export function Encyclopedie() {
             </div>
             {/* Close */}
             <button onClick={()=>setLightbox(null)}
-              style={{ position:'absolute', top:'20px', right:'20px', width:'38px', height:'38px', borderRadius:'50%', background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', transition:'all .15s' }}
+              style={{ position:'absolute', top:'20px', right:'20px', width:'42px', height:'42px', borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', border:'1px solid rgba(255,255,255,0.2)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', transition:'all .15s', zIndex:3, boxShadow:'0 4px 16px rgba(0,0,0,0.3)' }}
               onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.15)'}}
               onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.08)'}}>
               {String.fromCharCode(215)}
             </button>
-          </div>
+            <style>{`@keyframes kcLightboxIn{from{opacity:0}to{opacity:1}}`}</style>
+          </div>,
+          document.body
         )
       })()}
       {/* Back to top */}

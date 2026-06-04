@@ -67,7 +67,15 @@ function niceTicks(min: number, max: number, count = 3): number[] {
 }
 
 // ── Pill selector — glass v7 (calque .tab-segment-bar du drawer) ──
-function PillSelect({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+const COND_ABBR: Record<string, string> = {
+  'Near Mint': 'NM',
+  'Lightly Played': 'LP',
+  'Moderately Played': 'MP',
+  'Heavily Played': 'HP',
+  'Damaged': 'DMG',
+}
+
+function PillSelect({ options, value, onChange, labelMap }: { options: string[]; value: string; onChange: (v: string) => void; labelMap?: Record<string, string> }) {
   return (
     <div style={{
       display: 'flex', gap: 2, flexWrap: 'wrap', padding: 4,
@@ -89,7 +97,7 @@ function PillSelect({ options, value, onChange }: { options: string[]; value: st
             }}
             onMouseEnter={e => { if (!active) { e.currentTarget.style.color = SNOW.ink; e.currentTarget.style.background = 'rgba(255,255,255,0.4)' } }}
             onMouseLeave={e => { if (!active) { e.currentTarget.style.color = SNOW.dim; e.currentTarget.style.background = 'transparent' } }}
-          >{o}</button>
+          >{labelMap?.[o] ?? o}</button>
         )
       })}
     </div>
@@ -309,7 +317,7 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
       ) : (
         <div style={{ marginBottom: 14 }}>
           <FieldLabel>État</FieldLabel>
-          <PillSelect options={conditions} value={condition} onChange={setCondition} />
+          <PillSelect options={conditions} value={condition} onChange={setCondition} labelMap={COND_ABBR} />
         </div>
       )}
 

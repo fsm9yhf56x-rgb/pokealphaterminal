@@ -1500,6 +1500,22 @@ export function Holdings() {
           .kadd-mini:active{ background:rgba(0,0,0,0.04); }
           /* Boutons colonnes binder : inutiles en mobile (densité forcée) */
           .kadd-cols{ display:none!important; }
+          /* En-tête Vitrine : titre en haut, actions en rangée dessous */
+          .kvitrine-head{ flex-direction:column!important; align-items:stretch!important; gap:12px; }
+          .kvitrine-title{ width:100%; }
+          .kvitrine-actions{ width:100%; }
+          .kvitrine-share{ flex:1; justify-content:center; }
+          /* "Ajouter une carte" → icône seule (action principale = Partager) */
+          .kvitrine-add-label{ display:none; }
+          .kvitrine-add{ padding:10px!important; width:42px; justify-content:center; flex-shrink:0; }
+          /* Présentoir Vitrine : piédestal — vedette en grand, reste en grille 2-col */
+          .kvitrine-stage{ padding:32px 16px 28px!important; }
+          .kvitrine-cards{ display:grid!important; grid-template-columns:repeat(2,1fr)!important; gap:16px 14px!important; align-items:start!important; }
+          .kvc-slot{ width:100%!important; min-width:0; }
+          .kvc-slot .kvitrine-card{ width:100%!important; }
+          /* Vedette : occupe les 2 colonnes, centrée, plus grande */
+          .kvc-star{ grid-column:1 / -1!important; }
+          .kvc-star .kvitrine-card{ max-width:190px; margin:0 auto; }
           /* Rangée recherche+filtres : recherche en haut pleine largeur, filtres en dessous */
           .kfilt-row{ flex-direction:column!important; align-items:stretch!important; gap:10px; }
           .kfilt-search{ flex:none!important; width:100%; }
@@ -2810,17 +2826,17 @@ export function Holdings() {
         {/* VITRINE */}
         {view==='showcase'&&(
           <div style={{ position:'relative', zIndex:1, padding:'0 24px 20px', animation:'fadeUp .3s ease-out' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'18px' }}>
-              <div>
+            <div className="kvitrine-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'18px' }}>
+              <div className="kvitrine-title">
                 <div style={{ fontSize:'10px', color:'#48484A', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'4px' }}>Vitrine</div>
                 <div style={{ fontSize:'13px', color:'#48484A', fontFamily:'var(--font-display)' }}>{showcase.length===0?'Exposez vos plus belles pieces':showcase.length+' piece'+(showcase.length!==1?'s':'')+' exposee'+(showcase.length!==1?'s':'')}</div>
               </div>
-              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+              <div className="kvitrine-actions" style={{ display:'flex', gap:'8px', alignItems:'center' }}>
                 <button onClick={()=>setShowInfo(v=>!v)}
                   style={{ padding:'0', width:'36px', height:'36px', borderRadius:'99px', background:showInfo?'#F5F5F7':'#F5F5F7', border:'1px solid #E5E5EA', color:showInfo?'#1D1D1F':'#AEAEB2', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{showInfo?<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z"/>:<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/>}</svg>
                 </button>
-                <button onClick={()=>{ setShareCtx('showcase'); setShareCard(null); setShareOpen(true) }}
+                <button className="kvitrine-share" onClick={()=>{ setShareCtx('showcase'); setShareCard(null); setShareOpen(true) }}
                   disabled={showcase.length===0}
                   style={{ padding:'10px 20px', borderRadius:12, background:showcase.length>0?'#1D1D1F':'rgba(0,0,0,0.05)', border:'none', color:showcase.length>0?'#fff':'#AEAEB2', fontSize:12, fontWeight:600, cursor:showcase.length>0?'pointer':'default', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6, opacity:showcase.length>0?1:.6 }}
                   onMouseEnter={e=>{ if(showcase.length>0){ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)' } }}
@@ -2828,12 +2844,12 @@ export function Holdings() {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   Partager ma Vitrine
                 </button>
-                <button onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else if(showcase.length>=5){ showToast('La vitrine est limitee a 5 pieces') }else{ setShowPickerForShowcase(true) } }}
+                <button className="kvitrine-add" onClick={()=>{ if(portfolio.length===0){ showToast('Ajoutez des cartes a votre collection') }else if(showcase.length>=5){ showToast('La vitrine est limitee a 5 pieces') }else{ setShowPickerForShowcase(true) } }}
                   style={{ padding:'10px 20px', borderRadius:12, background:'#1D1D1F', border:'none', color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' as const, transition:'all .2s cubic-bezier(.2,.8,.2,1)', display:'inline-flex', alignItems:'center', gap:6 }}
                   onMouseEnter={e=>{ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)' }}
                   onMouseLeave={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                  Ajouter une carte
+                  <span className="kvitrine-add-label">Ajouter une carte</span>
                 </button>
               </div>
             </div>
@@ -2875,7 +2891,7 @@ export function Holdings() {
               </div>
             ):(
               /* ── VITRINE LUXE ── */
-              <div style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 48px 52px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(255,255,255,.03),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.1)' }}>
+              <div className="kvitrine-stage" style={{ background:(()=>{ const m:Record<string,string>={obsidienne:'#080604',nuit:'radial-gradient(ellipse at 50% 30%,#120820 0%,#080510 50%,#030208 100%)',jade:'linear-gradient(160deg,#020b06 0%,#030e08 50%,#020a07 100%)',pokedex:'#04080c',holodex:'#030b0f',centre:'#030206',labo:'#04080a'}; return m[showcaseBg]??'#080604' })(), borderRadius:'24px', padding:'60px 48px 52px', position:'relative', overflow:'hidden', boxShadow:'inset 0 1px 0 rgba(255,255,255,.03),inset 0 -1px 0 rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.1)' }}>
                 {showcaseBg==='obsidienne'&&<>
                   <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(201,168,76,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.05) 1px,transparent 1px)', backgroundSize:'32px 32px', pointerEvents:'none' }}/>
                   <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.06) 0%,transparent 60%)', pointerEvents:'none' }}/>
@@ -2909,7 +2925,7 @@ export function Holdings() {
                   <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'200px', height:'60px', background:'radial-gradient(ellipse at 50% 0%,rgba(255,240,180,.07) 0%,transparent 70%)', pointerEvents:'none' }}/>
                   <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(200,160,80,.4),transparent)', pointerEvents:'none' }}/>
                 </>}
-                <div style={{ display:'flex', gap:'28px', flexWrap:'wrap' as const, justifyContent:'center', alignItems:'flex-end', position:'relative' }}>
+                <div className="kvitrine-cards" style={{ display:'flex', gap:'28px', flexWrap:'wrap' as const, justifyContent:'center', alignItems:'flex-end', position:'relative' }}>
                   {showcase.slice(0,5).map((card,idx)=>{
                     const ec=EC[card.type]??'#888', eg=EG[card.type]??'rgba(128,128,128,.4)'
                     const roi=card.buyPrice>0?Math.round(((card.curPrice-card.buyPrice)/card.buyPrice)*100):0
@@ -2922,7 +2938,7 @@ export function Holdings() {
                     const shimDelay=idx*0.9
                     const isFeat = showcase.length>1 && idx===Math.floor((showcase.length-1)/2)
                     return (
-                      <div key={card.id} style={{ display:'flex', flexDirection:'column', alignItems:'center', animation:`showcaseReveal .6s ${idx*.12}s cubic-bezier(.16,1,.3,1) both`, position:'relative', zIndex:1 }}>
+                      <div key={card.id} className={idx===0?'kvc-slot kvc-star':'kvc-slot kvc-mini'} style={{ display:'flex', flexDirection:'column', alignItems:'center', animation:`showcaseReveal .6s ${idx*.12}s cubic-bezier(.16,1,.3,1) both`, position:'relative', zIndex:1 }}>
                         {/* Spotlight cone */}
                         <div style={{ position:'absolute', top:'-80px', left:'50%', transform:'translateX(-50%)', width:'200px', height:'160px', background:`radial-gradient(ellipse at 50% 0%,${isGold?'rgba(255,240,150,.18)':isFeat?`${ec}28`:'rgba(29,29,31,.05)'} 0%,transparent 60%)`, pointerEvents:'none' }}/>
 
@@ -2934,6 +2950,7 @@ export function Holdings() {
                           onDrop={()=>{ if(dragIdx===null||dragIdx===idx) return; setShowcase(prev=>{ const a=[...prev]; const [item]=a.splice(dragIdx,1); a.splice(idx,0,item); return a }); setDragIdx(null) }}
                           onDragEnd={()=>setDragIdx(null)}
                           onClick={()=>{ setSpotCard(card); setEditQty(null) }}
+                          className="kvitrine-card"
                           style={{ width:'220px', aspectRatio:'63/88', borderRadius:'14px', position:'relative', overflow:'hidden', cursor:'grab', border:`1.5px solid ${dragIdx===idx?'rgba(255,107,53,.8)':borderCol}`, boxShadow:dragIdx===idx?`0 0 0 2px rgba(255,107,53,.4)`:`0 12px 40px ${glowCol}`, opacity:dragIdx===idx?.4:1, transition:'box-shadow .45s ease', background:'#040302', animation:`floatCard ${6+idx*.6}s ${idx*1.2}s ease-in-out infinite` }}
                           onMouseMove={e=>{
                             const el=e.currentTarget as HTMLElement

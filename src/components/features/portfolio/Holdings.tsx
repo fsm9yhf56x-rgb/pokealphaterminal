@@ -602,9 +602,10 @@ export function Holdings() {
 
   // -- Backfill missing rarity from static data + API fallback --
   const rarityBackfilled = useRef(false)
+  const rarityTriedIds = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (rarityBackfilled.current) return
-    const needsFix = portfolio.filter(c => !c.rarity && c.setId && c.number && c.number !== '???')
+    const needsFix = portfolio.filter(c => !c.rarity && c.setId && c.number && c.number !== '???' && !rarityTriedIds.current.has(c.id))
     if (needsFix.length === 0) return
     rarityBackfilled.current = true
     const doBackfill = async () => {
@@ -618,6 +619,7 @@ export function Holdings() {
       }
       const updates: Record<string, string> = {}
       for (const card of needsFix) {
+        rarityTriedIds.current.add(card.id)
         const lang = card.lang === 'JP' ? 'JP' : card.lang === 'EN' ? 'EN' : 'FR'
         const setCards = card.setId ? staticCards[lang]?.[card.setId as string] : undefined
         if (setCards) {
@@ -633,7 +635,8 @@ export function Holdings() {
       if (Object.keys(updates).length > 0) {
         setPortfolio(prev => prev.map(c => updates[c.id] ? { ...c, rarity: updates[c.id] } : c))
       }
-      rarityBackfilled.current = false
+      // NE PAS rearmer rarityBackfilled : un seul passage par session.
+      // Les cartes tentees sont dans rarityTriedIds (pas de re-fetch des echecs).
     }
     doBackfill()
   }, [portfolio.length])

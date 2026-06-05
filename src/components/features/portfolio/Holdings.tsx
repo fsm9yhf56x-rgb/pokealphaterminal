@@ -626,9 +626,11 @@ export function Holdings() {
           const match = setCards.find((c: any) => c.lid === card.number || c.id === card.setId + '-' + card.number)
           if (match?.r) { updates[card.id] = match.r; continue }
         }
-        // Fallback API pour les cartes pas dans le dump
+        // Fallback API pour les cartes pas dans le dump.
+        // Nettoyer le numero : "1st-1" / "1st1" -> "1" (TCGdex n'accepte pas le suffixe edition)
         try {
-          const detail = await fetchCardDetail(lang, card.setId + '-' + card.number)
+          const cleanNum = String(card.number).replace(/^1st-?/i, '').replace(/[^0-9a-zA-Z]/g, '')
+          const detail = await fetchCardDetail(lang, card.setId + '-' + cleanNum)
           if (detail?.rarity) updates[card.id] = detail.rarity
         } catch {}
       }

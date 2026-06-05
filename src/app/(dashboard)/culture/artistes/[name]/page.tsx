@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { fetchCardsByIllustrator, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
+import { usePortfolio } from '@/lib/usePortfolio'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
 
 function imgSrc(image?: string, q: 'high' | 'low' = 'low'): string | null {
@@ -78,6 +79,26 @@ export default function IllustrateurPage() {
   }
   function closeCard() { setSelId(null); setDetail(null) }
 
+  const { cards: owned } = usePortfolio()
+
+  // normalise un numéro de carte : strip zéros initiaux, lowercase
+  const normNum = (n?: unknown) => String(n ?? '').replace(/^0+/, '').toLowerCase().trim()
+  const normSet = (v?: unknown) => String(v ?? '').replace(/^jp-/, '').replace(/^en-/, '').toLowerCase().trim()
+
+  // set des clés possédées "set|num"
+  const ownedKeys = new Set(
+    (owned ?? []).map((c: any) => `${normSet(c.set_id)}|${normNum(c.card_number)}`)
+  )
+  // une carte TCGdex (id "base1-4") est-elle possédée ?
+  const isOwned = (id: string) => {
+    const dash = id.lastIndexOf('-')
+    if (dash < 0) return false
+    const setPart = normSet(id.slice(0, dash))
+    const numPart = normNum(id.slice(dash + 1))
+    return ownedKeys.has(`${setPart}|${numPart}`)
+  }
+  const ownedCount = cards.filter(c => isOwned(c.id)).length
+
   const withImg = cards.filter(c => c.image)
 
   // En-tête intelligent : ères couvertes (dérivées des ids) + bio si maître connu
@@ -101,6 +122,7 @@ export default function IllustrateurPage() {
         {/* Stats dérivées */}
         <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 14px' }}>
           {loading ? 'Chargement…' : `${cards.length} carte${cards.length !== 1 ? 's' : ''} illustrée${cards.length !== 1 ? 's' : ''}`}
+          {!loading && ownedCount > 0 ? ` · ${ownedCount} dans ta collection` : ''}
           {!loading && master ? ` · ${master.period}` : ''}
         </p>
 
@@ -136,9 +158,15 @@ export default function IllustrateurPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 14 }}>
           {withImg.map((c) => {
             const src = imgSrc(c.image, 'low')
+            const own = isOwned(c.id)
             return (
-              <button key={c.id} onClick={() => openCard(c.id)} title={c.name} style={{ display: 'block', padding: 0, border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left' }}>
-                <div style={{ aspectRatio: '63/88', borderRadius: RADIUS.md, overflow: 'hidden', background: SNOW.surface, marginBottom: 7, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6)', transition: 'transform .2s cubic-bezier(.2,.85,.3,1), box-shadow .2s' }}
+              <button key={c.id} onClick={() => openCard(c.id)} title={own ? `${c.name} · dans ta collection` : c.name} style={{ display: 'block', padding: 0, border: 'none', cursor: 'pointer', background: 'transparent', textAlign: 'left', position: 'relative' }}>
+                {own && (
+                  <div style={{ position: 'absolute', top: 6, right: 6, zIndex: 2, width: 22, height: 22, borderRadius: '50%', background: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(212,175,55,0.5)', border: '1.5px solid #fff' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </div>
+                )}
+                <div style={{ aspectRatio: '63/88', borderRadius: RADIUS.md, overflow: 'hidden', background: SNOW.surface, marginBottom: 7, border: own ? '2px solid #D4AF37' : '1px solid rgba(0,0,0,0.05)', boxShadow: own ? '0 4px 14px rgba(212,175,55,0.35), inset 0 1px 0 rgba(255,255,255,0.6)' : '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6)', transition: 'transform .2s cubic-bezier(.2,.85,.3,1), box-shadow .2s' }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 26px rgba(0,0,0,0.12)' }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
                   <img src={src ?? ''} alt={c.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}

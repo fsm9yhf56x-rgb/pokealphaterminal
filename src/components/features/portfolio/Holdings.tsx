@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { AnimatedTotal } from './AnimatedTotal'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 import { formatEUR } from '@/lib/formatPrice'
@@ -902,28 +903,8 @@ export function Holdings() {
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
 
-  // ── Animated counter ──
-  const [displayValue, setDisplayValue] = useState(0)
-  const [valuePulse, setValuePulse] = useState<false|'up'|'down'>(false)
-  const prevTotal = useRef(0)
-  useEffect(() => {
-    const target = totalCur
-    const from = prevTotal.current
-    if (from === target) { setDisplayValue(target); return }
-    setValuePulse(target > from ? 'up' : 'down')
-    setTimeout(() => setValuePulse(false), 600)
-    const duration = 800
-    const start = performance.now()
-    const tick = (now: number) => {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
-      setDisplayValue(Math.round((from + (target - from) * eased) * 100) / 100)
-      if (progress < 1) requestAnimationFrame(tick)
-      else prevTotal.current = target
-    }
-    requestAnimationFrame(tick)
-  }, [totalCur])
+  // Compteur isolé dans <AnimatedTotal/> (animation confinée, ne re-rend pas tout Holdings)
+  const valuePulse: false | 'up' | 'down' = false
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
@@ -2103,7 +2084,7 @@ export function Holdings() {
                 {portfolio.length>0 ? (
                   <>
                     <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
-                    <span style={{ transition:'color .3s', color:valuePulse==='up'?'#2E9E6A':valuePulse==='down'?'#E03020':'#1D1D1F' }}>{displayValue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <AnimatedTotal target={totalCur} ready={!pricesLoading} />
                   </>
                 ) : <span style={{ color:'#C7C7CC' }}>---</span>}
               </div>

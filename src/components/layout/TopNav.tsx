@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { NAV } from '@/lib/constants/navigation'
+import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
 import { MobileNav } from './MobileNav'
@@ -13,6 +13,7 @@ import { SoonModal, SoonBadge } from '@/components/ui/snow'
  * Items SOON: badge inline + click ouvre SoonModal (preventDefault navigation).
  */
 export function TopNav() {
+  const NAV = useNav()
   const pathname = usePathname()
   const [soonModal, setSoonModal] = useState<SoonInfo | null>(null)
 

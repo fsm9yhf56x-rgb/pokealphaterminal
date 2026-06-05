@@ -10,7 +10,8 @@ export type NavItem = {
   href:     string
   pro?:     boolean
   soon?:    SoonInfo
-  children?: { label: string; href: string; pro?: boolean; soon?: SoonInfo }[]
+  collectorHide?: boolean
+  children?: { label: string; href: string; pro?: boolean; soon?: SoonInfo; collectorHide?: boolean }[]
 }
 
 export const NAV: NavItem[] = [
@@ -28,7 +29,7 @@ export const NAV: NavItem[] = [
     href:  '/portfolio',
     children: [
       { label:'Holdings',     href:'/portfolio'             },
-      { label:'Performance',  href:'/portfolio/performance' },
+      { label:'Performance',  href:'/portfolio/performance', collectorHide: true },
       { label:'Allocations',  href:'/portfolio/allocation'  },
       { label:'Objectifs',    href:'/portfolio/objectifs'   },
     ],
@@ -45,6 +46,7 @@ export const NAV: NavItem[] = [
   {
     label: 'Market',
     href:  '/market',
+    collectorHide: true,
     soon: {
       feature: 'Market Terminal',
       version: 'v2.0',
@@ -108,6 +110,7 @@ export const NAV: NavItem[] = [
     label: 'Alpha',
     href:  '/alpha',
     pro:   true,
+    collectorHide: true,
     soon: {
       feature: 'Alpha Signals',
       version: 'v2.0',
@@ -183,5 +186,20 @@ export const NAV: NavItem[] = [
         },
       },
     ],
+  },
+  {
+    label: 'Kodo AI',
+    href:  '/alpha/dexy',
+    soon: {
+      feature: 'Kodo AI',
+      version: 'v2.0',
+      description: 'Ton assistant collection propulse par Claude. Questions sur les cartes, illustrateurs, completion, raretes — chat illimite.',
+      bullets: [
+        'Reconnaissance carte, illustrateur, set et rarete',
+        'Aide a la completion de tes mastersets',
+        'Anecdotes et lore des cartes iconiques',
+        'Chat 24/7 avec expert TCG (Claude API)',
+      ],
+    },
   },
 ]

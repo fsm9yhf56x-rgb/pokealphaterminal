@@ -68,7 +68,7 @@ const CHOICES: Choice[] = [
   },
 ]
 
-export function PersonaOnboarding() {
+export function PersonaOnboarding({ forceOpen = false, onClose }: { forceOpen?: boolean; onClose?: () => void } = {}) {
   const { user, updateProfile } = useAuth()
   const { onboarded, loading } = usePersona()
   const [saving, setSaving] = useState<Persona | 'skip' | null>(null)
@@ -77,17 +77,20 @@ export function PersonaOnboarding() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  if (!mounted || loading || !user || onboarded) return null
+  if (!mounted || loading || !user) return null
+  if (!forceOpen && onboarded) return null
 
   async function pick(persona: Persona) {
     setSaving(persona)
     await updateProfile({ persona, persona_onboarded: true } as never)
     setSaving(null)
+    onClose?.()
   }
   async function skip() {
     setSaving('skip')
     await updateProfile({ persona_onboarded: true } as never)
     setSaving(null)
+    onClose?.()
   }
 
   const busy = saving !== null
@@ -98,6 +101,7 @@ export function PersonaOnboarding() {
   return createPortal(
     <div
       data-konb-overlay
+      onClick={forceOpen ? onClose : undefined}
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
         background: 'rgba(20,20,30,0.42)',
@@ -141,7 +145,7 @@ export function PersonaOnboarding() {
       `}</style>
 
       {/* Wrapper : aligne la couche bokeh et le panel */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
 
         {/* Couche bokeh — derrière le panel, floutée par son verre = réfraction */}
         <div style={{ position: 'absolute', inset: -70, borderRadius: 40, overflow: 'hidden', zIndex: 0 }}>
@@ -192,7 +196,7 @@ export function PersonaOnboarding() {
               boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
             }}>
               <span style={{ color: SNOW.red, fontSize: 8 }}>●</span>
-              <span>Bienvenue sur Kodo</span>
+              <span>{forceOpen ? 'Mode d\u2019exp\u00e9rience' : 'Bienvenue sur Kodo'}</span>
             </span>
           </div>
 
@@ -200,7 +204,7 @@ export function PersonaOnboarding() {
             animationDelay: '.14s', fontSize: 25, fontWeight: 800, margin: '0 0 10px',
             fontFamily: FONT.display, letterSpacing: '-0.03em', lineHeight: 1.15,
           }}>
-            <span className="konb-title-grad">Comment veux-tu vivre Kodo&nbsp;?</span>
+            <span className="konb-title-grad">{forceOpen ? 'Change ta fa\u00e7on de vivre Kodo' : 'Comment veux-tu vivre Kodo'}&nbsp;?</span>
           </h3>
           <p className="konb-rise" style={{
             animationDelay: '.2s', fontSize: 14, color: SNOW.muted, margin: '0 0 24px',

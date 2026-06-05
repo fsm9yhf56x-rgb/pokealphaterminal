@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation'
 import { useIsAdmin } from '@/lib/useIsAdmin'
 import { SnowButton } from '@/components/ui/snow'
 import { PlanBadge } from '@/components/ui/PlanBadge'
+import { usePersona } from '@/lib/usePersona'
+import { PersonaOnboarding } from '@/components/onboarding/PersonaOnboarding'
 
 export default function UserMenu() {
   const { user, profile, loading, signOut, isPro } = useAuth()
@@ -17,6 +19,9 @@ export default function UserMenu() {
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const isAdmin = useIsAdmin()
+  const { persona } = usePersona()
+  const [modeOpen, setModeOpen] = useState(false)
+  const modeAccent = persona === 'investor' ? '#185FA5' : '#E03020'
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -118,6 +123,37 @@ export default function UserMenu() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={() => setModeOpen(true)}
+          aria-label="Changer de mode"
+          title={persona === 'investor' ? 'Mode Investisseur' : 'Mode Collectionneur'}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            height: 36, padding: '0 12px 0 10px', borderRadius: 999,
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.62)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.6)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+            transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: modeAccent, flexShrink: 0, boxShadow: `0 0 6px ${modeAccent}66` }} />
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.05 }}>
+            <span style={{ fontSize: 8, fontWeight: 600, color: '#AEAEB2', fontFamily: 'var(--font-display)', letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              Kodo Expérience
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>
+              {persona === 'investor' ? 'Investisseur' : 'Collectionneur'}
+            </span>
+          </span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: '#AEAEB2', marginLeft: 1 }} aria-hidden>
+            <path d="M7 10l-3 3 3 3M4 13h12M17 14l3-3-3-3M20 11H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         <span className="kum-badge-bar"><PlanBadge plan={plan} hideFree /></span>
         <button onClick={() => setMenuOpen(!menuOpen)} style={{
           width: 34, height: 34, borderRadius: '50%',
@@ -184,6 +220,7 @@ export default function UserMenu() {
         </>,
         document.body
       )}
+      {modeOpen && <PersonaOnboarding forceOpen onClose={() => setModeOpen(false)} />}
     </div>
   )
 }

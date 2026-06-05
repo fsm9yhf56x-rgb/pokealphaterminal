@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NAV } from '@/lib/constants/navigation'
+import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
@@ -19,6 +19,7 @@ import { SoonModal, SoonBadge } from '@/components/ui/snow'
  * piegerait un position:fixed (containing block).
  */
 export function MobileNav() {
+  const NAV = useNav()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)

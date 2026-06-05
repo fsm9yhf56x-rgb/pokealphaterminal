@@ -2,11 +2,12 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
-import { NAV } from '@/lib/constants/navigation'
+import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 export function SubMenu() {
+  const NAV = useNav()
   const pathname = usePathname()
   const [open] = useState(true)
   const [soonModal, setSoonModal] = useState<SoonInfo | null>(null)

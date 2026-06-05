@@ -469,7 +469,7 @@ function deriveCondition(card: any): string {
   return card.condition || 'Raw'
 }
 
-function deriveEra(setName: string | null): string {
+export function deriveEra(setName: string | null): string {
   if (!setName) return 'N/A'
   const lower = setName.toLowerCase()
   // Heuristique simple — à raffiner avec un mapping set→ère plus tard

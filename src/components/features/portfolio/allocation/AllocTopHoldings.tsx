@@ -1,6 +1,7 @@
 'use client'
 
 import type { AllocAggregates, AllocHolding } from './Allocation'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * Top 10 holdings classés par valeur absolue.
@@ -63,6 +64,7 @@ function Row({
   isLast: boolean
 }) {
   const isUp = holding.gain >= 0
+  const { show } = usePersona()
   const trendColor = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
   const sign = isUp ? '+' : ''
   const hasNoBuy = holding.buy_price == null || holding.buy_price === 0
@@ -163,8 +165,8 @@ function Row({
         }}>{Number(holding.weightPct ?? 0).toFixed(1)}%</div>
       </div>
 
-      {/* ROI */}
-      <div style={{ textAlign: 'right' as const, minWidth: 64 }}>
+      {/* ROI — masqué en mode collector */}
+      {show.pnl && <div style={{ textAlign: 'right' as const, minWidth: 64 }}>
         <div style={{
           fontSize: 12.5,
           fontWeight: 700,
@@ -184,7 +186,7 @@ function Row({
         }}>
           {hasNoBuy ? '—' : `${sign}${formatEURcompact(holding.gain)}`}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

@@ -2740,7 +2740,7 @@ export function Holdings() {
                             <span style={{ position:'absolute', bottom:'6px', right:'4px', fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
-                              {card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
+                              {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
@@ -3033,7 +3033,7 @@ export function Holdings() {
                             const gh=gn>=9||card.condition.includes('9.5')||card.condition.includes('9')
                             return <span style={{ fontSize:'9px', fontWeight:800, fontFamily:'var(--font-data)', color:gp?'#FFD700':gh?'#D2D2D7':'rgba(255,255,255,.5)', letterSpacing:'.03em' }}>{card.condition}</span>
                           })()}
-                            {roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>{roi>=0?'+':''}{roi}%</span>}
+                            {show.pnl&&roi!==0&&card.buyPrice>0&&<span style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)' }}>{roi>=0?'+':''}{roi}%</span>}
                           </div>
                         </div>
                       </div>

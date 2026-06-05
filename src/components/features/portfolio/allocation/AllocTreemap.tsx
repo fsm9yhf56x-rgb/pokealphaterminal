@@ -2,6 +2,9 @@
 
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts'
 import type { AllocAggregates, TreemapNode } from './Allocation'
+import { deriveEra } from './Allocation'
+import { usePersona } from '@/lib/usePersona'
+import { SNOW } from '@/lib/design/snow'
 
 /**
  * Treemap Recharts v7 - piece maitresse visuelle d\'Allocation.
@@ -9,7 +12,14 @@ import type { AllocAggregates, TreemapNode } from './Allocation'
  * Vue "carte de poids" du portfolio facon Bloomberg premium.
  */
 export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
+  const { show } = usePersona()
   if (agg.treemapData.length === 0) return null
+
+  // Couleur des cellules : ROI (investor) conservé tel quel,
+  // ou recoloré par ère (collector) — recharts lit le champ `fill`.
+  const treemapColored = show.pnl
+    ? agg.treemapData
+    : (agg.treemapData as TreemapNode[]).map(n => ({ ...n, fill: eraColor(n.name) }))
 
   return (
     <div>
@@ -52,7 +62,36 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
         padding: 22,
         boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
       }}>
-        {/* Legend ROI - gradient continu premium */}
+        {/* Legend — ères (collector) vs ROI gradient (investor) */}
+        {!show.pnl ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' as const }}>
+            {agg.treemapData.length > 0 && (() => {
+              const eras = Array.from(new Set((agg.treemapData as TreemapNode[]).map(n => deriveEra(n.name))))
+              return eras.map(era => (
+                <span key={era} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '4px 11px 4px 9px', borderRadius: 999,
+                  background: `linear-gradient(180deg, ${ERA_COLORS[era] ?? '#86868B'}1F, ${ERA_COLORS[era] ?? '#86868B'}0F)`,
+                  border: `1px solid ${ERA_COLORS[era] ?? '#86868B'}33`,
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7), 0 1px 2px rgba(0,0,0,0.03)',
+                  backdropFilter: 'blur(10px) saturate(160%)',
+                  WebkitBackdropFilter: 'blur(10px) saturate(160%)',
+                }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: ERA_COLORS[era] ?? '#86868B', flexShrink: 0,
+                    boxShadow: `0 0 5px ${ERA_COLORS[era] ?? '#86868B'}66`,
+                  }} />
+                  <span style={{
+                    fontSize: 11, color: '#1D1D1F',
+                    fontFamily: 'var(--font-sora, Sora, sans-serif)', fontWeight: 600,
+                    letterSpacing: '-0.005em', whiteSpace: 'nowrap',
+                  }}>{era}</span>
+                </span>
+              ))
+            })()}
+          </div>
+        ) : (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -82,11 +121,13 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
           </span>
         </div>
 
+        )}
+
         {/* Treemap (desktop) */}
         <div className="alloc-treemap-wrapper alloc-treemap-desktop" style={{ width: '100%', height: 420 }}>
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
-              data={agg.treemapData as any}
+              data={treemapColored as any}
               dataKey="size"
               stroke="rgba(255,255,255,0.45)"
               content={<CustomNode />}
@@ -120,7 +161,7 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
         }}>
           <span className="alloc-treemap-hover-hint">
             <strong style={{ color: '#86868B' }}>Taille</strong> = valeur du set ·{' '}
-            <strong style={{ color: '#86868B' }}>Couleur</strong> = performance moyenne
+            <strong style={{ color: '#86868B' }}>Couleur</strong> = {show.pnl ? 'performance moyenne' : 'ère du set'}
           </span>
           <span className="alloc-treemap-legend-mobile" style={{ display: 'none' }}>
             <strong style={{ color: '#86868B' }}>Barre</strong> = poids ·{' '}
@@ -138,6 +179,7 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
 /* Vue mobile : liste rankee des sets. Tout est visible (valeur, poids,
    cartes, ROI) — ce que le tooltip cachait au survol, impossible au doigt. */
 function TreemapMobileList({ nodes }: { nodes: TreemapNode[] }) {
+  const { show } = usePersona()
   const sorted = [...nodes].sort((a, b) => (b.size ?? 0) - (a.size ?? 0))
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -176,7 +218,7 @@ function TreemapMobileList({ nodes }: { nodes: TreemapNode[] }) {
               <div style={{
                 width: `${Math.max(4, Number(n.pct ?? 0))}%`,
                 height: '100%', borderRadius: 4,
-                background: barColor(Number(n.avgROI ?? 0), n.fill),
+                background: show.pnl ? barColor(Number(n.avgROI ?? 0), n.fill) : eraColor(n.name),
               }} />
             </div>
             <div style={{
@@ -189,10 +231,10 @@ function TreemapMobileList({ nodes }: { nodes: TreemapNode[] }) {
                   {Number(n.pct ?? 0).toFixed(1)}%
                 </strong> du portfolio · {count} carte{count > 1 ? 's' : ''}
               </span>
-              <span style={{
+              {show.pnl && <span style={{
                 fontFamily: 'var(--font-data, "Space Mono", monospace)',
                 fontWeight: 700, color: roiColor, flexShrink: 0,
-              }}>{roi >= 0 ? '+' : ''}{roi.toFixed(1)}%</span>
+              }}>{roi >= 0 ? '+' : ''}{roi.toFixed(1)}%</span>}
             </div>
           </div>
         )
@@ -212,17 +254,17 @@ function CustomNode(props: any) {
   const showValue = width > 80 && height > 56
   const showPct   = width > 56 && height > 26
 
-  // Text color depending on background luminance
-  const isLight = isLightColor(fill || '#E5E5EA')
-  const textColor = isLight ? '#1D1D1F' : '#FFFFFF'
-  const shadowColor = isLight ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'
+  // Fond verre clair => texte toujours sombre, sans ombre baveuse.
+  const accent = fill || '#8E949C'
+  const textColor = '#1D1D1F'
+  const shadowColor = 'rgba(255,255,255,0.6)'
 
   // Rayon arrondi adapte a la taille de la cellule
   const radius = Math.min(8, Math.min(width, height) / 4)
 
   return (
     <g>
-      {/* Cellule principale avec coins arrondis */}
+      {/* Cellule = verre clair teinté très léger par l'ère */}
       <rect
         x={x + 1}
         y={y + 1}
@@ -231,11 +273,32 @@ function CustomNode(props: any) {
         rx={radius}
         ry={radius}
         style={{
-          fill: fill || '#E5E5EA',
-          stroke: 'rgba(255,255,255,0.45)',
+          fill: '#FFFFFF',
+          opacity: 0.45,
+          stroke: `${accent}66`,
           strokeWidth: 1.5,
           transition: 'filter .2s ease, opacity .2s ease',
         }}
+      />
+      {/* Wash d'accent très subtil par-dessus le verre */}
+      <rect
+        x={x + 1}
+        y={y + 1}
+        width={Math.max(0, width - 2)}
+        height={Math.max(0, height - 2)}
+        rx={radius}
+        ry={radius}
+        style={{ fill: accent, opacity: 0.16, pointerEvents: 'none' }}
+      />
+      {/* Barre d'accent latérale = identité d'ère */}
+      <rect
+        x={x + 1}
+        y={y + 1}
+        width={5}
+        height={Math.max(0, height - 2)}
+        rx={2.5}
+        ry={2.5}
+        style={{ fill: accent, opacity: 1, pointerEvents: 'none' }}
       />
       {/* Overlay shimmer subtle pour profondeur (gradient top white inset) */}
       <rect
@@ -262,7 +325,7 @@ function CustomNode(props: any) {
       {/* Set name */}
       {showName && (
         <text
-          x={x + 12}
+          x={x + 16}
           y={y + 22}
           fill={textColor}
           fontSize="12"
@@ -520,6 +583,24 @@ function formatEURcompact(v: number): string {
 
 /* Couleur de barre mobile : ROI neutre -> bleu neutre lisible (pas le gris
    central du treemap qui se fond), sinon vert/rouge selon performance. */
+const ERA_COLORS: Record<string, string> = {
+  'Vintage WOTC':     '#D4AF37', // or premium
+  'EX':               '#2A82DD', // bleu
+  'DPP / HGSS':       '#0E9E8E', // teal
+  'Black & White':    '#5C6270', // ardoise
+  'XY':               '#C44E8E', // magenta
+  'Sun & Moon':       '#E07B39', // orange
+  'Sword & Shield':   '#4F5FC4', // indigo
+  'Scarlet & Violet': '#D93A3A', // rouge
+  'Autre':            '#8E949C', // gris
+  'N/A':              '#B4B9C0', // gris clair
+}
+
+function eraColor(setName: string): string {
+  const era = deriveEra(setName)
+  return ERA_COLORS[era] ?? '#86868B'
+}
+
 function barColor(roi: number, fill?: string): string {
   if (roi > 0.5)  return '#1D9E75'
   if (roi < -0.5) return '#C42E1F'

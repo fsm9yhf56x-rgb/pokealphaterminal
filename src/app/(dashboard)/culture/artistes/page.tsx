@@ -42,7 +42,7 @@ export default function ArtistesPage() {
     return all.filter(n => n.toLowerCase().includes(s)).slice(0, 8)
   }, [q, all])
 
-  function go(name: string) { router.push('/cartes/illustrateur/' + encodeURIComponent(name)) }
+  function go(name: string) { router.push('/culture/artistes/' + encodeURIComponent(name)) }
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '8px 20px 90px' }}>

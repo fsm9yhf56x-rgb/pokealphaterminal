@@ -2109,7 +2109,7 @@ export function Encyclopedie() {
                           <span style={{ fontSize:10.5, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)', flexShrink:0, fontWeight:500 }}>{l}</span>
                           {l === 'Illustrateur' ? (
                             <button
-                              onClick={() => router.push('/cartes/illustrateur/' + encodeURIComponent(v as string))}
+                              onClick={() => router.push('/culture/artistes/' + encodeURIComponent(v as string))}
                               title={`Voir toutes les cartes de ${v}`}
                               style={{
                                 display:'inline-flex', alignItems:'center', gap:5,

@@ -62,11 +62,10 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
             .spot-cols { flex-direction: column !important; overflow-y: auto !important; }
             .spot-imgcol {
               width: 100% !important; flex-shrink: 0 !important;
-              padding: 16px 16px 8px !important;
+              padding: 6px 16px 0 !important;
               border-radius: 0 !important;
             }
-            .spot-imgcol .gem { max-width: 150px !important; }
-            .spot-imgcol { padding: 12px 16px 4px !important; }
+            .spot-imgcol .gem { max-width: 130px !important; }
             /* Close ramene DANS le modal, en haut a droite */
             .spot-close {
               top: 12px !important; right: 12px !important;

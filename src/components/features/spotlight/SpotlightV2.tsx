@@ -84,17 +84,15 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           .spot-tabbar button.on { background: #fff; color: #1D1D1F; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95); }
           .spot-sec { display: none !important; }
           .spot-sec.on { display: block !important; }
-          .spot-sec-vue.on { display: flex !important; flex-direction: column; gap: 7px !important; }
-          /* DENSIFICATION mobile : compacter sections + marges */
-          .spot-tabbar { margin-bottom: 7px !important; }
-          /* Conteneur racine SpotlightV2 : padding reduit */
-          .spotv2-root { padding: 10px 12px 10px !important; gap: 7px !important; }
-          /* Chaque carte glass de section : padding reduit */
+          .spot-sec-vue.on { display: flex !important; flex-direction: column; gap: 5px !important; }
+          /* DENSIFICATION MAX mobile */
+          .spot-tabbar { margin-bottom: 5px !important; padding: 3px !important; }
+          .spot-tabbar button { padding: 6px 6px !important; font-size: 11px !important; }
+          .spotv2-root { padding: 2px 11px 6px !important; gap: 5px !important; }
           .spotv2-root .spot-sec > div,
-          .spotv2-root > div > div[style*="border-radius"] { padding: 10px 12px !important; }
-          /* Gros chiffres un cran plus petits */
+          .spotv2-root > div > div[style*="border-radius"] { padding: 8px 10px !important; }
           .spotv2-root [style*="font-size: 32"],
-          .spotv2-root [style*="fontSize: 32"] { font-size: 24px !important; }
+          .spotv2-root [style*="fontSize: 32"] { font-size: 22px !important; }
         }
       `}</style>
 

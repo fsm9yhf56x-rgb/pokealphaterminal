@@ -79,9 +79,11 @@ export default function AbonnementPage() {
   async function handleCta(plan: PlanId) {
     // Gratuit : rien à payer
     if (plan === 'free') { window.location.href = '/'; return }
-    // Déjà sur ce plan : ouvrir le portail de gestion
-    if (plan === currentPlan) { openPortal(); return }
-    // Sinon : lancer le checkout Stripe
+    // Déjà abonné (à ce plan OU à un autre) : le portail Stripe gère tout
+    // (changement de forfait avec proration, changement de cycle, annulation).
+    // Stripe interdit un 2e abonnement via checkout -> on passe par le portail.
+    if (currentPlan !== 'free') { openPortal(); return }
+    // User gratuit qui souscrit un plan payant : checkout Stripe
     if (!user?.id) { setMsg({ type: 'err', text: 'Connecte-toi pour t’abonner.' }); return }
     setBusy(plan); setMsg(null)
     try {
@@ -219,8 +221,10 @@ function PlanCard({
   const sub = priceSub ?? cell?.period ?? ''
 
   function label() {
+    if (busy === id) return 'Redirection…'
     if (isCurrent) return 'Ton plan actuel'
-    if (busy === id) return 'Inscription…'
+    // Déjà abonné à un autre forfait : le bouton mène au portail Stripe
+    if (currentPlan !== 'free' && id !== 'free') return 'Gérer l’abonnement'
     return cta
   }
 

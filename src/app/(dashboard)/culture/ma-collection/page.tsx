@@ -201,7 +201,8 @@ export default function MaCollectionCulturePage() {
               <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: SNOW.mutedLight }}>volume par époque</span>
             </div>
             <p style={{ fontFamily: FONT.body, fontSize: 13.5, color: SNOW.muted, margin: '0 0 22px' }}>Chaque colonne est une ère. Pleine si tu la possèdes, fantôme sinon. Clique pour explorer.</p>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(6px,1.5vw,14px)', height: 200, marginBottom: 12 }}>
+            <div style={{ position: 'relative', padding: '18px 16px 14px', borderRadius: RADIUS.lg, background: 'linear-gradient(180deg, rgba(245,245,247,0.5), rgba(245,245,247,0.15))', border: `1px solid ${SNOW.borderSoft}`, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(6px,1.5vw,14px)', height: 200 }}>
               {stats.eraData.map((e, i) => {
                 const owned = e.count > 0
                 const h = owned ? Math.max(40, (e.count / stats.maxCount) * 140) : 28
@@ -217,7 +218,8 @@ export default function MaCollectionCulturePage() {
                 )
               })}
             </div>
-            <div style={{ height: 2, background: `linear-gradient(90deg, ${ERA_ORDER.map(e => e.color).join(',')})`, borderRadius: 2, opacity: 0.25 }} />
+            <div style={{ height: 2, background: `linear-gradient(90deg, ${ERA_ORDER.map(e => e.color).join(',')})`, borderRadius: 2, opacity: 0.3, margin: '0 16px' }} />
+            </div>
           </Reveal>
         </>
       )}

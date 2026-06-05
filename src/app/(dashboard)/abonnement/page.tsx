@@ -57,23 +57,44 @@ export default function AbonnementPage() {
   const [busy, setBusy] = useState<PlanId | null>(null)
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
-  // ── STRIPE (étape B) : remplacer par checkout, en mappant period → price ID. ──
+  // Mapping période UI → cycle Stripe
+  const periodToCycle: Record<Period, 'weekly' | 'monthly' | 'yearly'> = {
+    hebdo: 'weekly', mensuel: 'monthly', annuel: 'yearly',
+  }
+
+  // Ouvre le Customer Portal Stripe (gérer/annuler l'abo)
+  async function openPortal() {
+    setBusy(currentPlan); setMsg(null)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) { window.location.href = data.url; return }
+      throw new Error(data.error)
+    } catch {
+      setMsg({ type: 'err', text: 'Impossible d’ouvrir la gestion de l’abonnement.' })
+      setBusy(null)
+    }
+  }
+
   async function handleCta(plan: PlanId) {
-    if (plan === 'free' || plan === currentPlan) return
-    const email = user?.email
-    if (!email) { setMsg({ type: 'err', text: 'Connecte-toi pour rejoindre la liste.' }); return }
+    // Gratuit : rien à payer
+    if (plan === 'free') { window.location.href = '/'; return }
+    // Déjà sur ce plan : ouvrir le portail de gestion
+    if (plan === currentPlan) { openPortal(); return }
+    // Sinon : lancer le checkout Stripe
+    if (!user?.id) { setMsg({ type: 'err', text: 'Connecte-toi pour t’abonner.' }); return }
     setBusy(plan); setMsg(null)
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: `abonnement_${plan}_${period}` }),
+        body: JSON.stringify({ plan, cycle: periodToCycle[period] }),
       })
-      if (!res.ok) throw new Error()
-      setMsg({ type: 'ok', text: 'Inscrit ✓ On te prévient dès l’ouverture des paiements.' })
-    } catch {
-      setMsg({ type: 'err', text: 'Échec. Réessaie dans un instant.' })
-    } finally {
+      const data = await res.json()
+      if (data.url) { window.location.href = data.url; return }
+      throw new Error(data.error || 'Erreur checkout')
+    } catch (e: any) {
+      setMsg({ type: 'err', text: e?.message || 'Échec. Réessaie dans un instant.' })
       setBusy(null)
     }
   }

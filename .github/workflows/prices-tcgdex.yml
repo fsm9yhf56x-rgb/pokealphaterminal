@@ -4,7 +4,8 @@ on:
   schedule:
     # Toutes les 4h (5 sets/run × 2 langs × 6 runs/jour = 60 sets/jour)
     # Optimisation beta v0.9 : JP coupe, freq 1h->4h, boucle 10->5 (-92% compute Neon)
-    - cron: '0 */4 * * *'
+    # [NEUTRALISÉ] ancien pipeline TCGdex/Cardmarket (504, source remplacée par PPT/PokeTrace)
+    # - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       lang:

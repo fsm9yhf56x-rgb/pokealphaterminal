@@ -4,7 +4,8 @@ on:
   schedule:
     # Toutes les 4h (5 sets/run × 6 cycles/jour = 30 sets/jour)
     # Optimisation beta v0.9 : JP coupe, freq 2h->4h, boucle 10->5
-    - cron: '0 */4 * * *'
+    # [NEUTRALISÉ] ancien pipeline TCGplayer (source remplacée par PPT)
+    # - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       market:

@@ -2,7 +2,8 @@ name: artofpkm Sync (monthly)
 
 on:
   schedule:
-    - cron: '0 6 1 * *'  # 1st of month, 6h UTC (after PSA HOT/WARM, before COLD)
+    # [NEUTRALISÉ] ancien sync artofpkm (source JP remplacée par PPT)
+    # - cron: '0 6 1 * *'  # 1st of month, 6h UTC (after PSA HOT/WARM, before COLD)
   workflow_dispatch:
 
 permissions:

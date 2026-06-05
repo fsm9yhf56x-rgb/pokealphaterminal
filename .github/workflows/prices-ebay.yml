@@ -3,7 +3,8 @@ on:
   schedule:
     # Every 4 hours (matrix runs EN+FR sequentially)
     # Optimisation beta v0.9 : JP coupe, freq 2h->4h
-    - cron: '15 */4 * * *'
+    # [NEUTRALISÉ] ancien pipeline eBay (désactivé, réactivable via workflow_dispatch)
+    # - cron: '15 */4 * * *'
   workflow_dispatch:
     inputs:
       lang:

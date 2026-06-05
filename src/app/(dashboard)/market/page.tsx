@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { MarketTerminal } from '@/components/features/market/terminal/MarketTerminal'
+import { PersonaGuard } from '@/components/onboarding/PersonaGuard'
 
 export default function MarketPage() {
   const { isPro } = useAuth()
@@ -9,5 +10,5 @@ export default function MarketPage() {
   useEffect(() => {
     setPreview(new URLSearchParams(window.location.search).get('preview') === '1')
   }, [])
-  return <MarketTerminal isPro={isPro || preview} />
+  return <PersonaGuard redirectTo="/home"><MarketTerminal isPro={isPro || preview} /></PersonaGuard>
 }

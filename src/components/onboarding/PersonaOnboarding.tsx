@@ -85,9 +85,9 @@ export function PersonaOnboarding({ forceOpen = false, onClose }: { forceOpen?: 
     await updateProfile({ persona, persona_onboarded: true } as never)
     setSaving(null)
     if (forceOpen) {
-      // Changement de mode à chaud : reload pour resynchroniser toute l'UI
-      // (nav, gardes, libellés) qui dépend du profil dans d'autres instances.
-      window.location.reload()
+      // Changement de mode à chaud : redirige vers le Daily Hub du nouveau mode
+      // (full reload pour resynchroniser nav, gardes, libellés dans toute l'UI).
+      window.location.href = '/home'
     } else {
       onClose?.()
     }

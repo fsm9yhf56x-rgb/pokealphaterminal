@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/useAuth'
+import { usePersona, type Persona } from '@/lib/usePersona'
 import { authClient } from '@/lib/auth/client'
 import { SNOW, FONT, GLASS, RADIUS, SHADOW, EASE } from '@/lib/design/snow'
 import { PlanBadge } from '@/components/ui/PlanBadge'
@@ -172,6 +173,109 @@ function Feedback({ msg }: { msg: Msg }) {
   )
 }
 
+/* ---------- Sélecteur de mode (persona) ---------- */
+
+const PERSONA_OPTS: { id: Persona; title: string; desc: string; accent: string; soft: string; border: string }[] = [
+  {
+    id: 'collector',
+    title: 'Collectionneur',
+    desc: 'Collection enrichie : mastersets, illustrateurs, lore. Sans jargon financier.',
+    accent: '#E03020', soft: 'rgba(224,48,32,0.10)', border: 'rgba(224,48,32,0.24)',
+  },
+  {
+    id: 'investor',
+    title: 'Investisseur',
+    desc: 'Le terminal complet : P&L, signaux, Whale Tracker, Deal Hunter arbitrage.',
+    accent: '#185FA5', soft: 'rgba(24,95,165,0.10)', border: 'rgba(24,95,165,0.24)',
+  },
+]
+
+function PersonaPicker() {
+  const { persona } = usePersona()
+  const [current, setCurrent] = useState<Persona>(persona)
+  const [saving, setSaving] = useState<Persona | null>(null)
+  const [msg, setMsg] = useState<Msg>(null)
+
+  // resynchronise si le profil charge après le 1er render
+  useEffect(() => { setCurrent(persona) }, [persona])
+
+  async function choose(next: Persona) {
+    if (next === current || saving) return
+    setSaving(next); setMsg(null)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona: next }),
+      })
+      if (!res.ok) throw new Error()
+      setCurrent(next)
+      setMsg({ type: 'ok', text: 'Mode mis à jour. Recharge pour voir tous les changements.' })
+    } catch {
+      setMsg({ type: 'err', text: 'Échec du changement de mode.' })
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  return (
+    <GlassCard>
+      <h3 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '0 0 4px' }}>
+        Mode d'expérience
+      </h3>
+      <p style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, margin: '0 0 16px', lineHeight: 1.5 }}>
+        On adapte l'interface à ta façon de collectionner.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {PERSONA_OPTS.map(o => {
+          const active = current === o.id
+          const busy = saving === o.id
+          return (
+            <button
+              key={o.id}
+              onClick={() => choose(o.id)}
+              disabled={saving !== null}
+              style={{
+                textAlign: 'left', cursor: saving !== null ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'flex-start', gap: 13, width: '100%',
+                padding: '15px 16px', borderRadius: RADIUS.lg,
+                background: active ? o.soft : 'rgba(255,255,255,0.55)',
+                border: `1px solid ${active ? o.border : SNOW.border}`,
+                boxShadow: active ? `inset 0 0 0 1px ${o.border}` : 'none',
+                transition: `all .18s ${EASE.apple}`,
+              }}
+            >
+              <span style={{
+                flex: '0 0 auto', width: 18, height: 18, borderRadius: '50%',
+                border: `2px solid ${active ? o.accent : SNOW.borderHover}`,
+                background: active ? o.accent : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1,
+                transition: `all .18s ${EASE.apple}`,
+              }}>
+                {active && (
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="2 5 4 7 8 3" />
+                  </svg>
+                )}
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: FONT.display, fontSize: 15, fontWeight: 700, color: SNOW.ink }}>{o.title}</span>
+                  {busy && <span style={{ fontFamily: FONT.body, fontSize: 12, color: SNOW.muted }}>…</span>}
+                </span>
+                <span style={{ display: 'block', fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, marginTop: 3, lineHeight: 1.45 }}>
+                  {o.desc}
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <Feedback msg={msg} />
+    </GlassCard>
+  )
+}
+
 /* ---------- Profil ---------- */
 
 function ProfilTab({ profile }: { profile: any }) {
@@ -204,7 +308,8 @@ function ProfilTab({ profile }: { profile: any }) {
   }
 
   return (
-    <GlassCard>
+    <>
+      <GlassCard>
       <div style={{ marginBottom: 18 }}>
         <Label>Nom affiché</Label>
         <Field value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Ton nom" maxLength={40} />
@@ -230,7 +335,9 @@ function ProfilTab({ profile }: { profile: any }) {
       </div>
       <Btn onClick={save} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Btn>
       <Feedback msg={msg} />
-    </GlassCard>
+      </GlassCard>
+      <PersonaPicker />
+    </>
   )
 }
 

@@ -51,7 +51,7 @@ export async function PATCH(req: Request) {
 
   const body = await req.json().catch(() => ({}))
   // Whitelist of editable fields
-  const allowed = ['display_name', 'username', 'avatar_url', 'theme', 'lang'] as const
+  const allowed = ['display_name', 'username', 'avatar_url', 'theme', 'lang', 'persona', 'persona_onboarded'] as const
   const updates: Record<string, any> = {}
   for (const k of allowed) {
     if (k in body) updates[k] = body[k]

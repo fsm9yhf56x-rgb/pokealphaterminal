@@ -7,6 +7,16 @@ const AppShell = dynamic(
   { ssr: false, loading: () => <div style={{ minHeight:'100vh', background:'#fff' }} /> }
 )
 
+const PersonaOnboarding = dynamic(
+  () => import('@/components/onboarding/PersonaOnboarding').then(m => ({ default: m.PersonaOnboarding })),
+  { ssr: false }
+)
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell>{children}</AppShell>
+  return (
+    <>
+      <AppShell>{children}</AppShell>
+      <PersonaOnboarding />
+    </>
+  )
 }

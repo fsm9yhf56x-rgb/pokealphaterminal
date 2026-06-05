@@ -5,6 +5,8 @@ export interface Profile {
   avatar_url: string | null
   is_pro: boolean
   plan: 'free' | 'pro' | 'premium'
+  persona: 'collector' | 'investor'
+  persona_onboarded: boolean
   pro_until: string | null
   theme: string
   lang: string

@@ -10,6 +10,7 @@ import ImportPortfolioModal from './ImportPortfolioModal'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
+import { usePersona } from '@/lib/usePersona'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
@@ -96,6 +97,7 @@ const GRADE_COMPANIES = [
 type GridItem = { type:'owned'; card:CardItem } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
 export function Holdings() {
+  const { labels, show } = usePersona()
   // -- IndexedDB persistence --
   const dbOpen = () => new Promise<IDBDatabase>((res, rej) => {
     const req = indexedDB.open('pka_db', 1)
@@ -2078,7 +2080,7 @@ export function Holdings() {
             <div>
               <div style={{ fontSize:'10px', fontWeight:600, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px', display:'flex', alignItems:'center', gap:6 }} className='section-reveal'>
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
-                Portfolio
+                {labels.portfolio}
               </div>
               <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                 {portfolio.length>0 ? (
@@ -2089,13 +2091,13 @@ export function Holdings() {
                 ) : <span style={{ color:'#C7C7CC' }}>---</span>}
               </div>
               <div className="value-hero-sub" style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'8px' }}>
-                {portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
+                {show.pnl&&portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
                 {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</span>}
                 {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commencez votre collection</span>}
               </div>
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
-              {bestCard&&bestCard.buyPrice>0&&(
+              {show.pnl&&bestCard&&bestCard.buyPrice>0&&(
                 <div style={{ background:'rgba(255,248,229,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(212,175,55,0.25)', borderRadius:10, padding:'8px 14px' }}>
                   <div style={{ fontSize:10, color:'#8A6500', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:4, fontWeight:600 }}>Meilleure perf.</div>
                   <div style={{ fontSize:18, fontWeight:700, color:'#8A6500', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>

@@ -258,7 +258,10 @@ export function Holdings() {
   // ── Prix via hook centralisé useCardPrices ──
   const portfolioSetIds = useMemo(
     () => Array.from(new Set(portfolio.map(c => c.setId).filter(Boolean) as string[])),
-    [portfolio]
+    // Cle stable : ne recalcule QUE si la liste des setIds change (pas a chaque
+    // setPortfolio qui modifie les prix) -> evite le re-fetch en boucle / compteur qui danse
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [Array.from(new Set(portfolio.map(c => c.setId).filter(Boolean) as string[])).sort().join(',')]
   )
   const {
     priceDetails,
@@ -627,10 +630,10 @@ export function Holdings() {
           if (match?.r) { updates[card.id] = match.r; continue }
         }
         // Fallback API pour les cartes pas dans le dump.
-        // Nettoyer le numero : "1st-1" / "1st1" -> "1" (TCGdex n'accepte pas le suffixe edition)
+        // Le setId local "base3-1st" (1st edition) n'existe pas chez TCGdex : strip le suffixe -1st.
         try {
-          const cleanNum = String(card.number).replace(/^1st-?/i, '').replace(/[^0-9a-zA-Z]/g, '')
-          const detail = await fetchCardDetail(lang, card.setId + '-' + cleanNum)
+          const cleanSetId = String(card.setId).replace(/-1st$/i, '')
+          const detail = await fetchCardDetail(lang, cleanSetId + '-' + card.number)
           if (detail?.rarity) updates[card.id] = detail.rarity
         } catch {}
       }

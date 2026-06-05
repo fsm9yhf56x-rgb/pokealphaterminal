@@ -16,7 +16,11 @@ export function useNav(): NavItem[] {
   const { isCollector } = usePersona()
 
   return useMemo(() => {
-    if (!isCollector) return NAV
+    if (!isCollector) {
+      // investor : on masque ce qui est réservé collector (Culture)
+      return NAV.filter((item) => !item.collectorOnly)
+    }
+    // collector : on masque le spéculatif (collectorHide), on garde le reste + Culture
     return NAV
       .filter((item) => !item.collectorHide)
       .map((item) =>

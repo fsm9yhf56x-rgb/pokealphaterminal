@@ -57,6 +57,15 @@ export async function searchCards(lang:Lang, query:string): Promise<TCGCard[]> {
   setCache(key,cards); return cards
 }
 
+export async function fetchIllustrators(lang:Lang): Promise<string[]> {
+  const l=LC[lang], key=`tcg_illustrators_${l}`
+  const hit=getCache<string[]>(key); if (hit) return hit
+  const res=await fetch(`${BASE}/${l}/illustrators`)
+  if (!res.ok) return []
+  const raw:string[]=await res.json()
+  const list=raw.filter(Boolean).sort((a,b)=>a.localeCompare(b,'fr'))
+  setCache(key,list); return list
+}
 export async function fetchCardsByIllustrator(lang:Lang, illustrator:string): Promise<TCGCard[]> {
   const l=LC[lang], key=`tcg_illu_${l}_${illustrator.toLowerCase()}`
   const hit=getCache<TCGCard[]>(key); if (hit) return hit

@@ -11,6 +11,7 @@ export type NavItem = {
   pro?:     boolean
   soon?:    SoonInfo
   collectorHide?: boolean
+  collectorOnly?: boolean
   children?: { label: string; href: string; pro?: boolean; soon?: SoonInfo; collectorHide?: boolean }[]
 }
 
@@ -185,6 +186,17 @@ export const NAV: NavItem[] = [
           ],
         },
       },
+    ],
+  },
+  {
+    label: 'Culture',
+    href:  '/culture',
+    collectorOnly: true,
+    children: [
+      { label:'Artistes',    href:'/culture/artistes'   },
+      { label:'Lore',        href:'/culture/lore'       },
+      { label:'Ères',        href:'/culture/eres'       },
+      { label:'Curiosités',  href:'/culture/curiosites' },
     ],
   },
   {

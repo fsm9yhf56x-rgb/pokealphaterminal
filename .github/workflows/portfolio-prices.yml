@@ -3,7 +3,7 @@ on:
   schedule:
     # 1x/jour a 04:00 UTC, apres dedupe-snapshots (03:00) qui suit les crons prix (15 */4).
     # Rafraichit portfolio_cards.current_price depuis la vue card_price_resolved (PPT EN, FR/JP a venir).
-    - cron: '0 4 * * *'
+    - cron: '30 4 * * *'  # 04:30 : apres poketrace (04:00) pour lire des prix frais
   workflow_dispatch:
 jobs:
   refresh:

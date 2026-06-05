@@ -82,7 +82,7 @@ export default function ArtistesPage() {
 
       {/* Vedettes */}
       <h2 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '0 0 16px', letterSpacing: '-0.01em' }}>Les maîtres</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
         {FEATURED.map(a => (
           <button key={a.name} onClick={() => go(a.name)} style={{ display: 'block', textAlign: 'left', padding: 14, borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', border: `1px solid ${SNOW.border}`, boxShadow: '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)', transition: 'transform .2s cubic-bezier(.2,.85,.3,1), box-shadow .2s' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 14px 36px rgba(0,0,0,0.1)' }}
@@ -93,6 +93,30 @@ export default function ArtistesPage() {
             </div>
             <div style={{ fontFamily: FONT.display, fontSize: 15, fontWeight: 700, color: SNOW.ink, marginBottom: 4, letterSpacing: '-0.01em' }}>{a.name}</div>
             <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: SNOW.muted, lineHeight: 1.45 }}>{a.bio}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Tous les illustrateurs */}
+      <h2 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '40px 0 16px', letterSpacing: '-0.01em' }}>
+        Tous les illustrateurs <span style={{ color: SNOW.mutedLight, fontWeight: 600 }}>· {all.length}</span>
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+        {all.map(n => (
+          <button key={n} onClick={() => go(n)} title={`Voir les cartes de ${n}`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 9, textAlign: 'left',
+              padding: '11px 14px', borderRadius: RADIUS.md, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(14px) saturate(170%)', WebkitBackdropFilter: 'blur(14px) saturate(170%)',
+              border: `1px solid ${SNOW.border}`,
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+              transition: 'transform .15s ease, box-shadow .15s ease, background .15s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.background = 'rgba(255,255,255,0.55)'; e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#E03020', flexShrink: 0, opacity: 0.55 }} />
+            <span style={{ fontFamily: FONT.body, fontSize: 13, fontWeight: 500, color: SNOW.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n}</span>
           </button>
         ))}
       </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useSpotlightData } from './useSpotlightData'
 import { SpotlightHero } from './sections/SpotlightHero'
 import { SpotlightChart } from './sections/SpotlightChart'
@@ -52,7 +53,10 @@ const SkeletonBox = ({ height, opacity = 0.5 }: { height: number; opacity?: numb
   </div>
 )
 
+type SpotTab = 'vue' | 'marche' | 'pop'
+
 export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
+  const [tab, setTab] = useState<SpotTab>('vue')
   const { data, loading, error } = useSpotlightData(cardId, lang, portfolio?.condition)
 
   if (error) return <div style={{ padding: 24, fontSize: 13, color: SNOW.red, fontFamily: FONT.body }}>Erreur : {error}</div>
@@ -63,7 +67,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
   const isJp = (lang || card?.lang || '').toString().toUpperCase().startsWith('J')
 
   return (
-    <div style={{
+    <div className="spotv2-root" style={{
       background: 'transparent',
       color: SNOW.ink, fontFamily: FONT.body,
       padding: '18px 22px 14px',
@@ -72,10 +76,39 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
       isolation: 'isolate' as const,
       overflow: 'hidden' as const,
     }}>
+      <style>{`
+        .spot-tabbar { display: none; }
+        @media (max-width: 900px) {
+          .spot-tabbar { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,0.04); border-radius: 12px; position: sticky; top: 0; z-index: 5; margin-bottom: 4px; }
+          .spot-tabbar button { flex: 1; padding: 9px 6px; border: none; border-radius: 9px; background: transparent; color: #86868B; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-dm, 'DM Sans', sans-serif); transition: all .2s; }
+          .spot-tabbar button.on { background: #fff; color: #1D1D1F; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95); }
+          .spot-sec { display: none !important; }
+          .spot-sec.on { display: block !important; }
+          .spot-sec-vue.on { display: flex !important; flex-direction: column; gap: 7px !important; }
+          /* DENSIFICATION mobile : compacter sections + marges */
+          .spot-tabbar { margin-bottom: 7px !important; }
+          /* Conteneur racine SpotlightV2 : padding reduit */
+          .spotv2-root { padding: 10px 12px 10px !important; gap: 7px !important; }
+          /* Chaque carte glass de section : padding reduit */
+          .spotv2-root .spot-sec > div,
+          .spotv2-root > div > div[style*="border-radius"] { padding: 10px 12px !important; }
+          /* Gros chiffres un cran plus petits */
+          .spotv2-root [style*="font-size: 32"],
+          .spotv2-root [style*="fontSize: 32"] { font-size: 24px !important; }
+        }
+      `}</style>
+
       <div style={{ position: 'relative' as const, zIndex: 1, display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+        {!isJp && (
+          <div className="spot-tabbar">
+            <button className={tab === 'vue' ? 'on' : ''} onClick={() => setTab('vue')}>Vue</button>
+            <button className={tab === 'marche' ? 'on' : ''} onClick={() => setTab('marche')}>Marché</button>
+            <button className={tab === 'pop' ? 'on' : ''} onClick={() => setTab('pop')}>Population</button>
+          </div>
+        )}
         {card && prices ? (
           <div style={GLASS_CARD}>
-            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hideTitle hidePrice={isJp} />
+            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={isJp} />
           </div>
         ) : (
           <SkeletonBox height={80} />
@@ -85,6 +118,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           <JpPriceSoon cardId={cardId} />
         ) : (
         <>
+        <div className={`spot-sec spot-sec-vue ${tab === 'vue' ? 'on' : ''}`}>
         {hasHistory ? (
           <div style={GLASS_CARD}>
             <SpotlightChart history={prices!.history} />
@@ -98,20 +132,25 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         ) : (
           <SkeletonBox height={60} />
         )}
+        </div>
 
+        <div className={`spot-sec ${tab === 'marche' ? 'on' : ''}`}>
         {prices ? (
           <SpotlightStates prices={prices} portfolio={portfolio} />
         ) : (
           <SkeletonBox height={140} />
         )}
+        </div>
         </>
         )}
 
+        <div className={`spot-sec ${tab === 'pop' ? 'on' : ''}`}>
         {card ? (
           <SpotlightPopExpandable cardId={card.id} lang={card.lang} />
         ) : (
           <SkeletonBox height={100} />
         )}
+        </div>
       </div>
     </div>
   )

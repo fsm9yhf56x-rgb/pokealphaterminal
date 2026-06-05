@@ -78,46 +78,49 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice }:
   const showPortfolio = portfolio != null
 
   return (
-    <div style={{ padding: '0' }}>
+    <div className="spot-hero-clean" style={{ padding: 0 }}>
       {!hideTitle ? (
         <>
-          <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 500, color: SNOW.mutedLight, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14 }}>{flag}</span>
+          <div style={{ fontFamily: FONT.display, fontSize: 10.5, fontWeight: 600, color: SNOW.mutedLight, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13 }}>{flag}</span>
             <span>{lang}</span>
             <span style={{ color: '#D8D8DD' }}>·</span>
             <span>{card.set_name}{year ? ` ${year}` : ''}</span>
             <span style={{ color: '#D8D8DD' }}>·</span>
             <span style={{ fontFamily: FONT.data }}>#{card.local_id}</span>
+            {card.rarity_normalized ? (<><span style={{ color: '#D8D8DD' }}>·</span><span>{card.rarity_normalized}</span></>) : null}
           </div>
-          <h1 style={{ fontFamily: FONT.display, fontSize: 22, fontWeight: 500, letterSpacing: '-0.022em', lineHeight: 1.1, margin: '0 0 2px' }}>{card.name}</h1>
-          <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: 0 }}>
-            {card.rarity_normalized || ''}{card.rarity_normalized ? ' · Wizards of the Coast' : 'Wizards of the Coast'}
-          </p>
+          <h1 style={{ fontFamily: FONT.display, fontSize: 25, fontWeight: 600, letterSpacing: '-0.022em', lineHeight: 1.15, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.name}</h1>
         </>
       ) : null}
-
       {!hidePrice ? (
-      <div style={{ marginTop: hideTitle ? 0 : 10 }}>
-        <div style={{ fontSize: 10, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display, marginBottom: 4 }}>
-          {showPortfolio ? 'Ton exemplaire' : 'Prix de marché'} · {userStateLabel}{' '}
-          <span style={{ fontFamily: 'Times New Roman, serif', fontStyle: 'italic', textTransform: 'none', letterSpacing: 0, color: SNOW.mutedLight, fontWeight: 400 }}>
-            {userStateSub}
-          </span>
-        </div>
-        <div>
-          <span style={{ fontFamily: FONT.display, fontSize: 36, fontWeight: 500, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
-          <span style={{ fontSize: 22, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
-        </div>
-        {showPortfolio && portfolio!.qty > 1 ? (
-          <div style={{ fontSize: 12, color: SNOW.mutedLight, marginTop: 6 }}>
-            × {portfolio!.qty} exemplaires = <strong style={{ color: SNOW.ink, fontWeight: 500 }}>{fmtPrice((heroPrice || 0) * portfolio!.qty, 'EUR')}</strong>
+      <div style={{
+        marginTop: hideTitle ? 0 : 14, paddingTop: hideTitle ? 0 : 14,
+        borderTop: hideTitle ? 'none' : '1px solid rgba(0,0,0,0.07)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+      }}>
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+          <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display }}>
+            {showPortfolio ? 'Ton exemplaire' : 'Prix de marché'}
           </div>
-        ) : null}
-        {roi != null ? (
-          <div style={{ fontSize: 12, marginTop: 6, color: roi >= 0 ? '#00A368' : SNOW.red }}>
-            <strong style={{ fontWeight: 500 }}>{roi >= 0 ? '+' : ''}{roi.toFixed(1).replace('.', ',')} %</strong> depuis ton achat ({fmtPrice(portfolio!.buyPrice!, 'EUR')})
+          <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display }}>{userStateLabel}</div>
+        </div>
+        <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+          <div>
+            <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
+            <span style={{ fontSize: 18, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
           </div>
-        ) : null}
+          {roi != null ? (
+            <div style={{ fontSize: 11.5, marginTop: 4, color: roi >= 0 ? '#00A368' : SNOW.red, fontWeight: 600 }}>
+              {roi >= 0 ? '+' : ''}{roi.toFixed(1).replace('.', ',')} % <span style={{ color: SNOW.mutedLight, fontWeight: 400 }}>depuis achat</span>
+            </div>
+          ) : null}
+          {showPortfolio && portfolio!.qty > 1 ? (
+            <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 3 }}>
+              ×{portfolio!.qty} = <strong style={{ color: SNOW.ink, fontWeight: 500 }}>{fmtPrice((heroPrice || 0) * portfolio!.qty, 'EUR')}</strong>
+            </div>
+          ) : null}
+        </div>
       </div>
       ) : null}
     </div>

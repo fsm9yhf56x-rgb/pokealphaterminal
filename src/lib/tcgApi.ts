@@ -57,6 +57,15 @@ export async function searchCards(lang:Lang, query:string): Promise<TCGCard[]> {
   setCache(key,cards); return cards
 }
 
+export async function fetchCardsByIllustrator(lang:Lang, illustrator:string): Promise<TCGCard[]> {
+  const l=LC[lang], key=`tcg_illu_${l}_${illustrator.toLowerCase()}`
+  const hit=getCache<TCGCard[]>(key); if (hit) return hit
+  const res=await fetch(`${BASE}/${l}/cards?illustrator=${encodeURIComponent(illustrator)}`)
+  if (!res.ok) return []
+  const raw:Array<{id?:string;name:string;localId:string;image?:string}>=await res.json()
+  const cards:TCGCard[]=raw.map(c=>({id:c.id??c.localId,name:c.name,localId:c.localId,image:c.image,rarity:(c as any).rarity}))
+  setCache(key,cards); return cards
+}
 export async function fetchAllCards(lang:Lang): Promise<TCGCard[]> {
   const l=LC[lang], key=`tcg_allcards_${l}`
   const hit=getCache<TCGCard[]>(key); if (hit) return hit

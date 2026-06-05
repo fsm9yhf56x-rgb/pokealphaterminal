@@ -2107,7 +2107,26 @@ export function Encyclopedie() {
                       ] as [string,string|undefined][]).filter(([,v])=>v).map(([l,v])=>(
                         <div key={l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
                           <span style={{ fontSize:10.5, color:'#86868B', fontFamily:'var(--font-sora, Sora, sans-serif)', flexShrink:0, fontWeight:500 }}>{l}</span>
-                          <span style={{ fontSize:12, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', fontWeight:600, textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, letterSpacing:'-0.01em' }}>{v}</span>
+                          {l === 'Illustrateur' ? (
+                            <button
+                              onClick={() => router.push('/cartes/illustrateur/' + encodeURIComponent(v as string))}
+                              title={`Voir toutes les cartes de ${v}`}
+                              style={{
+                                display:'inline-flex', alignItems:'center', gap:5,
+                                background:'transparent', border:'none', cursor:'pointer', padding:0,
+                                fontSize:12, color:'#E03020', fontFamily:'var(--font-sora, Sora, sans-serif)', fontWeight:600,
+                                textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const,
+                                letterSpacing:'-0.01em', maxWidth:'70%',
+                              }}
+                            >
+                              <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{v}</span>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0, opacity:0.7 }} aria-hidden>
+                                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span style={{ fontSize:12, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', fontWeight:600, textAlign:'right' as const, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, letterSpacing:'-0.01em' }}>{v}</span>
+                          )}
                         </div>
                       ))}
                     </div>

@@ -8,10 +8,8 @@ import { HubInsight } from './HubInsight'
 import { HubPortfolioHero } from './HubPortfolioHero'
 import { HubKpis } from './HubKpis'
 import { HubMovers } from './HubMovers'
-import { HubAlerts } from './HubAlerts'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
-import { HubSparkles } from './HubSparkles'
 import { HubFooterQuote } from './HubFooterQuote'
 import { UpgradeHook } from './UpgradeHook'
 import { HubQuickActions } from './HubQuickActions'
@@ -40,7 +38,6 @@ export function DailyHub() {
 
   return (
     <>
-      <HubSparkles cards={portfolio.cards || []} />
 
       <div style={{
         width: '100%',
@@ -110,10 +107,6 @@ export function DailyHub() {
             gap: 14,
           }}>
             <HubMovers
-              cards={portfolio.cards || []}
-              loading={portfolio.loading}
-            />
-            <HubAlerts
               cards={portfolio.cards || []}
               loading={portfolio.loading}
             />

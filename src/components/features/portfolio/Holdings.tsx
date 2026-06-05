@@ -407,7 +407,6 @@ export function Holdings() {
   const [scannerImg,   setScannerImg]   = useState<string|null>(null)
   const [showWelcome,  setShowWelcome]  = useState(false)
   const [welcomeCards, setWelcomeCards] = useState<{name:string;lang:string;setId:string;localId:string}[]>([])
-  const [celebSet,     setCelebSet]     = useState<string|null>(null)
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
   const scrollRefs = useRef<Record<string, HTMLDivElement|null>>({})
   const [scrollPcts, setScrollPcts] = useState<Record<string, number>>({})
@@ -1536,7 +1535,6 @@ export function Holdings() {
         @keyframes floatCard { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-5px)} }
         @keyframes welcomeIn  { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
         @keyframes burst      { 0%{transform:scale(0) rotate(0deg);opacity:1} 60%{transform:scale(1.3) rotate(20deg);opacity:1} 100%{transform:scale(1.1) rotate(15deg);opacity:1} }
-        @keyframes confettiF  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(120px) rotate(720deg);opacity:0} }
         @keyframes shimmerG   { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
         @keyframes holoSweep  { 0%,100%{background-position:0% 0%} 50%{background-position:100% 100%} }
         @keyframes wcFade     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
@@ -3431,38 +3429,6 @@ export function Holdings() {
           </div>
         </div>
       )}
-
-      {/* ── CELEBRATION ── */}
-      {celebSet&&(()=>{
-        const confetti = Array.from({length:48},(_,i)=>({
-          left:(i*37+13)%100, top:(i*19+5)%100, size:4+(i*3)%10,
-          round:i%3!==0, delay:(i*0.08)%2.5, dur:1.8+(i*0.09)%1.5,
-          color:['#D97706','#FF6B35','#C855D4','#42A5F5','#4ECCA3','#FF6B8A','#E03020'][i%7],
-        }))
-        return (
-          <div style={{ position:'fixed',inset:0,background:'rgba(7,5,3,.92)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',backdropFilter:'blur(8px)' }}
-            onClick={()=>setCelebSet(null)}>
-            {/* Confetti */}
-            {confetti.map((c,i)=>(
-              <div key={i} style={{ position:'absolute',left:`${c.left}%`,top:'-5%',width:`${c.size}px`,height:`${c.size}px`,borderRadius:c.round?'50%':'2px',background:c.color,animation:`confettiF ${c.dur}s ${c.delay}s ease-out forwards`,zIndex:1 }}/>
-            ))}
-            <div style={{ textAlign:'center',zIndex:2,animation:'welcomeIn .4s cubic-bezier(.34,1.2,.64,1)' }} onClick={e=>e.stopPropagation()}>
-              <div style={{ fontSize:'72px',marginBottom:'8px',filter:'drop-shadow(0 0 32px rgba(255,215,0,.6))' }}>🏆</div>
-              <div style={{ fontSize:'11px',fontWeight:700,color:'#D97706',letterSpacing:'.25em',textTransform:'uppercase',fontFamily:'var(--font-display)',marginBottom:'10px' }}>Set complété !</div>
-              <h2 style={{ fontSize:'32px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',letterSpacing:'-1px',marginBottom:'8px',lineHeight:1.2 }}>
-                {celebSet}
-              </h2>
-              <p style={{ fontSize:'14px',color:'#6E6E73',fontFamily:'var(--font-display)',marginBottom:'28px' }}>
-                Vous avez complété ce set à 100%. Impressionnant.
-              </p>
-              <button onClick={()=>setCelebSet(null)}
-                style={{ padding:'12px 32px',borderRadius:'10px',background:'#EDEDF0',border:'1px solid rgba(29,29,31,.16)',color:'#1D1D1F',fontSize:'13px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)' }}>
-                Continuer la collection
-              </button>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* ── SCANNER ── */}
       {scannerOpen&&(()=>{

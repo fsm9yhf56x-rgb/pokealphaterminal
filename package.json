@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"\u2705 src/lib/db/schema.ts regenerated\"",
+    "db:types": "supabase gen types typescript --linked > src/lib/db/schema.ts && echo \"✅ src/lib/db/schema.ts regenerated\"",
     "psa:scrape": "node scripts/scrape-psa-set.mjs",
     "psa:scrape:hot": "node scripts/scrape-psa-tier.mjs --tier=hot",
     "psa:scrape:warm": "node scripts/scrape-psa-tier.mjs --tier=warm",
@@ -26,6 +26,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
+    "@stripe/stripe-js": "^9.7.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "@upstash/ratelimit": "^2.0.8",
@@ -39,6 +40,7 @@
     "react-dom": "^18",
     "recharts": "^3.8.1",
     "resend": "^6.12.3",
+    "stripe": "^22.2.0",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

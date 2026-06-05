@@ -193,6 +193,7 @@ export const NAV: NavItem[] = [
     href:  '/culture',
     collectorOnly: true,
     children: [
+      { label:'Ma collection', href:'/culture/ma-collection' },
       { label:'Artistes',    href:'/culture/artistes'   },
       { label:'Lore',        href:'/culture/lore'       },
       { label:'Ères',        href:'/culture/eres'       },

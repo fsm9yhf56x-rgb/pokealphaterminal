@@ -57,8 +57,22 @@ export async function POST(req: Request) {
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
         const userId = sub.metadata?.userId
+        const customerId = sub.customer as string
         if (userId) {
-          await applyPlan(userId, 'free', sub.customer as string, null)
+          // Un autre abonnement actif existe-t-il pour ce customer ?
+          // (cas changement de cycle/plan : Stripe annule l'ancien, en crée un nouveau)
+          const others = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 3,
+          })
+          const stillActive = others.data.find((x) => x.id !== sub.id)
+          if (stillActive) {
+            const priceId = stillActive.items.data[0]?.price?.id
+            await applyPlan(userId, planFromPriceId(priceId), customerId, stillActive.id)
+          } else {
+            await applyPlan(userId, 'free', customerId, null)
+          }
         }
         break
       }

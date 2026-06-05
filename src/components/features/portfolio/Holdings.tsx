@@ -1830,7 +1830,8 @@ export function Holdings() {
                     }}>
                     <option value="">{setsLoading?'Chargement des séries…':'Sélectionner une série…'}</option>
                     {(() => {
-                      const filtered = filterCoreSets(liveSets)
+                      const filteredRaw = filterCoreSets(liveSets)
+                      const filtered = Array.from(new Map(filteredRaw.map(x => [x.id, x])).values())
                       const groups = groupSetsByEra(filtered)
                       return groups.map(g => (
                         <optgroup key={g.label} label={g.label}>

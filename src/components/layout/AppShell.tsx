@@ -5,7 +5,7 @@ import { TopNav }    from './TopNav'
 import { SubMenu }   from './SubMenu'
 import { Footer }    from './Footer'
 
-const HEADER_H = '83px'
+const HEADER_H = '56px'
 
 /**
  * AppShell Snow+ v3.

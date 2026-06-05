@@ -84,7 +84,13 @@ export function PersonaOnboarding({ forceOpen = false, onClose }: { forceOpen?: 
     setSaving(persona)
     await updateProfile({ persona, persona_onboarded: true } as never)
     setSaving(null)
-    onClose?.()
+    if (forceOpen) {
+      // Changement de mode à chaud : reload pour resynchroniser toute l'UI
+      // (nav, gardes, libellés) qui dépend du profil dans d'autres instances.
+      window.location.reload()
+    } else {
+      onClose?.()
+    }
   }
   async function skip() {
     setSaving('skip')

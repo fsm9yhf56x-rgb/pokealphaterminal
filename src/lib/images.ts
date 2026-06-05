@@ -137,6 +137,16 @@ export function parseLocalId(cardNumber: string | undefined | null): string {
 }
 
 /**
+ * Variante R2 : coupe le "/total" mais PRÉSERVE le zéro de tête.
+ *   "097/174" -> "097"   (R2 stocke avec le padding : 097.webp)
+ * À utiliser pour construire les URLs R2 depuis prices_v2 (Explorer).
+ */
+export function parseLocalIdR2(cardNumber: string | undefined | null): string {
+  if (!cardNumber) return '';
+  return cardNumber.split('/')[0].trim();
+}
+
+/**
  * Same as getCardImageUrl but returns a low-res variant for thumbnails.
  * (Currently both return the same — R2 doesn't have low-res variants yet —
  * but having the function separate lets us add variants later without a

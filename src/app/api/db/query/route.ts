@@ -158,11 +158,12 @@ function buildQuery(
   const buildWhere = (): string => {
     if (!allFilters.length) return ''
     const parts = allFilters.map((f: any) => {
-      const c = quoteIdent(f.col)
       // 'or' is a special op : col is empty, val is "col1.op1.val1,col2.op2.val2"
+      // IMPORTANT: traiter 'or' AVANT quoteIdent (sinon quoteIdent('') throw)
       if (f.op === 'or') {
         return parseOrExpression(f.val as string, placeholder)
       }
+      const c = quoteIdent(f.col)
       switch (f.op) {
         case 'eq': return `${c} = ${placeholder(f.val)}`
         case 'neq': return `${c} <> ${placeholder(f.val)}`

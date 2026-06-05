@@ -10,6 +10,39 @@ function imgSrc(image?: string, q: 'high' | 'low' = 'low'): string | null {
   return /\.(webp|png|jpg|jpeg)$/i.test(image) ? image : `${image}/${q}.webp`
 }
 
+// Dérive l'ère depuis le préfixe d'id TCGdex (ex: 'base1-4' -> Vintage WOTC)
+const ERA_BY_PREFIX: { test: RegExp; era: string; color: string }[] = [
+  { test: /^(base|jungle|fossil|neo|gym|wizards|bp|si|tk)/i, era: 'Vintage WOTC', color: '#D4AF37' },
+  { test: /^(ecard|ex|np|pop)/i,                              era: 'EX',           color: '#2A82DD' },
+  { test: /^(dp|pl|hgss|col|hs|ru)/i,                         era: 'DPP / HGSS',   color: '#0E9E8E' },
+  { test: /^(bw|dv|mc)/i,                                     era: 'Black & White',color: '#5C6270' },
+  { test: /^(xy|g1|dc)/i,                                     era: 'XY',           color: '#C44E8E' },
+  { test: /^(sm|smp)/i,                                       era: 'Sun & Moon',   color: '#E07B39' },
+  { test: /^(swsh|cel|me)/i,                                  era: 'Sword & Shield',color: '#4F5FC4' },
+  { test: /^(sv|sve|svp|A\d|me\d|tcgp)/i,                    era: 'Scarlet & Violet', color: '#D93A3A' },
+]
+function eraOf(id: string): { era: string; color: string } | null {
+  const prefix = id.split('-')[0]
+  for (const e of ERA_BY_PREFIX) if (e.test.test(prefix)) return { era: e.era, color: e.color }
+  return null
+}
+
+type MasterBio = { tagline: string; bio: string; style: string; period: string }
+const MASTERS: Record<string, MasterBio> = {
+  'Mitsuhiro Arita': { tagline: 'Le maître du Dracaufeu', period: '1996 — aujourd\u2019hui', style: 'Réalisme dramatique, lumière et matière',
+    bio: 'Illustrateur de la toute première carte Dracaufeu du Set de Base, Mitsuhiro Arita est sans doute l\u2019artiste le plus emblématique du TCG. Son style réaliste et puissant a défini l\u2019identité visuelle des cartes vintage. Il a illustré des centaines de cartes sur près de trente ans.' },
+  'Atsuko Nishida': { tagline: 'La créatrice de Pikachu', period: '1996 — 2010s', style: 'Douceur, rondeur, expressivité',
+    bio: 'Character designer historique, Atsuko Nishida est à l\u2019origine du design de Pikachu et d\u2019Évoli. Ses illustrations de cartes capturent la tendresse et la personnalité des Pokémon, un style chaleureux reconnaissable entre tous.' },
+  'Ken Sugimori': { tagline: 'Le directeur artistique', period: '1996 — aujourd\u2019hui', style: 'Ligne claire, canon officiel',
+    bio: 'Directeur artistique de la franchise Pokémon et illustrateur principal des jeux vidéo, Ken Sugimori a aussi signé de nombreuses cartes. Son trait définit le canon visuel officiel de chaque Pokémon.' },
+  'Kagemaru Himeno': { tagline: 'L\u2019artiste des ères Neo', period: '1999 — 2010s', style: 'Éthéré, onirique, mouvement',
+    bio: 'Figure majeure des ères Neo et e-Card, Kagemaru Himeno est célèbre pour ses illustrations éthérées et dynamiques, notamment ses Lugia et ses cartes holographiques au style très atmosphérique.' },
+  '5ban Graphics': { tagline: 'Le studio holographique', period: '2000s — 2010s', style: 'Compositions numériques, holos',
+    bio: '5ban Graphics est un studio responsable de nombreuses cartes holographiques modernes, souvent des full arts et des cartes ex/EX aux compositions numériques spectaculaires.' },
+  'Naoki Saito': { tagline: 'Le styliste moderne', period: '2000s — aujourd\u2019hui', style: 'Énergie, couleur, dynamisme',
+    bio: 'Illustrateur prolifique de l\u2019ère moderne, Naoki Saito est connu pour ses compositions énergiques et colorées, présentes sur de nombreuses cartes populaires des séries récentes.' },
+}
+
 export default function IllustrateurPage() {
   const params = useParams()
   const router = useRouter()
@@ -47,6 +80,12 @@ export default function IllustrateurPage() {
 
   const withImg = cards.filter(c => c.image)
 
+  // En-tête intelligent : ères couvertes (dérivées des ids) + bio si maître connu
+  const eraMap = new Map<string, string>()
+  cards.forEach(c => { const e = eraOf(c.id); if (e) eraMap.set(e.era, e.color) })
+  const eras = Array.from(eraMap.entries())  // [ [era, color], ... ]
+  const master = MASTERS[name] ?? null
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 90px' }}>
       <button onClick={() => router.back()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 18, background: 'transparent', border: 'none', cursor: 'pointer', color: SNOW.muted, fontSize: 13, fontFamily: FONT.body, padding: 0 }}>
@@ -55,11 +94,36 @@ export default function IllustrateurPage() {
       </button>
 
       <div style={{ marginBottom: 28 }}>
-        <span style={{ display: 'inline-block', marginBottom: 10, padding: '5px 13px', borderRadius: RADIUS.pill, background: 'rgba(224,48,32,0.08)', border: '1px solid rgba(224,48,32,0.2)', color: '#E03020', fontSize: 10.5, fontWeight: 700, fontFamily: FONT.display, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Illustrateur</span>
-        <h1 style={{ fontFamily: FONT.display, fontSize: 32, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.03em', margin: '0 0 6px', lineHeight: 1.1 }}>{name}</h1>
-        <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: 0 }}>
+        <span style={{ display: 'inline-block', marginBottom: 10, padding: '5px 13px', borderRadius: RADIUS.pill, background: 'rgba(224,48,32,0.08)', border: '1px solid rgba(224,48,32,0.2)', color: '#E03020', fontSize: 10.5, fontWeight: 700, fontFamily: FONT.display, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Illustrateur{master ? ' · Maître' : ''}</span>
+        <h1 style={{ fontFamily: FONT.display, fontSize: 32, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.03em', margin: '0 0 4px', lineHeight: 1.1 }}>{name}</h1>
+        {master && <p style={{ fontFamily: FONT.display, fontSize: 15, fontWeight: 600, color: '#E03020', margin: '0 0 10px' }}>{master.tagline}</p>}
+
+        {/* Stats dérivées */}
+        <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 14px' }}>
           {loading ? 'Chargement…' : `${cards.length} carte${cards.length !== 1 ? 's' : ''} illustrée${cards.length !== 1 ? 's' : ''}`}
+          {!loading && master ? ` · ${master.period}` : ''}
         </p>
+
+        {/* Bio maître */}
+        {master && (
+          <div style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', border: `1px solid ${SNOW.border}`, borderRadius: RADIUS.lg, padding: '16px 18px', marginBottom: 16, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)', maxWidth: 680 }}>
+            <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.inkSoft, margin: '0 0 10px', lineHeight: 1.6 }}>{master.bio}</p>
+            <div style={{ fontFamily: FONT.display, fontSize: 12, color: SNOW.muted }}><strong style={{ color: SNOW.ink }}>Style :</strong> {master.style}</div>
+          </div>
+        )}
+
+        {/* Ères couvertes (pills) */}
+        {eras.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.mutedLight, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 2 }}>Ères :</span>
+            {eras.map(([era, color]) => (
+              <span key={era} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 11px', borderRadius: RADIUS.pill, background: `${color}14`, border: `1px solid ${color}33`, fontSize: 11.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.body }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 4px ${color}66` }} />
+                {era}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (

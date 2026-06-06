@@ -9,10 +9,11 @@ import { useIsAdmin } from '@/lib/useIsAdmin'
 import { SnowButton } from '@/components/ui/snow'
 import { PlanBadge } from '@/components/ui/PlanBadge'
 import { usePersona } from '@/lib/usePersona'
+import { useIsMobile } from '@/lib/useIsMobile'
 import { PersonaOnboarding } from '@/components/onboarding/PersonaOnboarding'
 
 export default function UserMenu() {
-  const { user, profile, loading, signOut, isPro } = useAuth()
+  const { user, profile, loading, signOut, isPro, updateProfile } = useAuth()
   const plan: 'free' | 'pro' | 'premium' = (profile?.plan as any) || (isPro ? 'pro' : 'free')
   const [menuOpen, setMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -20,6 +21,18 @@ export default function UserMenu() {
   const router = useRouter()
   const isAdmin = useIsAdmin()
   const { persona } = usePersona()
+  const isMobile = useIsMobile()
+  const [switching, setSwitching] = useState<null | 'collector' | 'investor'>(null)
+  async function toggleMode() {
+    const next = persona === 'investor' ? 'collector' : 'investor'
+    setSwitching(next)               // fait glisser le curseur visuellement
+    try {
+      await updateProfile({ persona: next, persona_onboarded: true } as never)
+      window.location.href = '/home' // reload + Daily Hub du nouveau mode
+    } catch {
+      setSwitching(null)
+    }
+  }
   const [modeOpen, setModeOpen] = useState(false)
   const modeAccent = persona === 'investor' ? '#185FA5' : '#E03020'
 
@@ -123,37 +136,66 @@ export default function UserMenu() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button
-          onClick={() => setModeOpen(true)}
-          aria-label="Changer de mode"
-          title={persona === 'investor' ? 'Mode Investisseur' : 'Mode Collectionneur'}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7,
-            height: 36, padding: '0 12px 0 10px', borderRadius: 999,
-            cursor: 'pointer',
-            background: 'rgba(255,255,255,0.62)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(255,255,255,0.6)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
-            transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-        >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: modeAccent, flexShrink: 0, boxShadow: `0 0 6px ${modeAccent}66` }} />
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.05 }}>
-            <span style={{ fontSize: 8, fontWeight: 600, color: '#AEAEB2', fontFamily: 'var(--font-display)', letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-              Kodo Expérience
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>
-              {persona === 'investor' ? 'Investisseur' : 'Collectionneur'}
-            </span>
-          </span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: '#AEAEB2', marginLeft: 1 }} aria-hidden>
-            <path d="M7 10l-3 3 3 3M4 13h12M17 14l3-3-3-3M20 11H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        {(() => {
+          const effective = switching ?? persona
+          const isInv = effective === 'investor'
+          const RED = '#E03020', BLUE = '#185FA5'
+          return (
+            <>
+            <style>{`@keyframes kmodeglow { 0%,100% { opacity:.45; transform:scale(.82) } 50% { opacity:.95; transform:scale(1.08) } }`}</style>
+            <button
+              onClick={toggleMode}
+              aria-label="Changer de mode"
+              title={isInv ? 'Passer en mode Collectionneur' : 'Passer en mode Investisseur'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: isMobile ? 0 : 9,
+                height: 36, padding: isMobile ? '0 6px' : '0 13px 0 7px', borderRadius: 999,
+                cursor: 'pointer',
+                background: 'rgba(255,255,255,0.62)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+                transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.93)' }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+            >
+              {/* Capsule toggle bicolore : piste + curseur qui glisse */}
+              <span style={{ position: 'relative', width: 42, height: 22, borderRadius: 999, flexShrink: 0,
+                background: `linear-gradient(90deg, ${RED}26, ${BLUE}26)`,
+                border: '1px solid rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                {/* pastille rouge (gauche) */}
+                <span style={{ position: 'absolute', left: 5, top: '50%', transform: 'translateY(-50%)', width: 7, height: 7, borderRadius: '50%',
+                  background: RED, opacity: isInv ? 0.3 : 1, transition: 'opacity .35s ease' }} />
+                {/* pastille bleue (droite) */}
+                <span style={{ position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)', width: 7, height: 7, borderRadius: '50%',
+                  background: BLUE, opacity: isInv ? 1 : 0.3, transition: 'opacity .35s ease' }} />
+                {/* halo pulsant sous le curseur — hook visuel qui invite au clic */}
+                <span aria-hidden style={{ position: 'absolute', top: 0, left: isInv ? 20 : 0, width: 22, height: 20, borderRadius: 999,
+                  background: `radial-gradient(circle, ${isInv ? BLUE : RED}66, transparent 72%)`,
+                  animation: 'kmodeglow 2.6s ease-in-out infinite', pointerEvents: 'none',
+                  transition: 'left .42s cubic-bezier(.34,1.56,.4,1)' }} />
+                {/* curseur lumineux qui glisse (spring) + reflet interieur */}
+                <span style={{ position: 'absolute', top: 2, left: isInv ? 22 : 2, width: 18, height: 16, borderRadius: 999,
+                  background: `linear-gradient(160deg, ${isInv ? BLUE : RED}, ${isInv ? BLUE : RED}C0)`,
+                  boxShadow: `0 2px 6px ${isInv ? BLUE : RED}59, inset 0 1px 0 rgba(255,255,255,0.45)`,
+                  transition: 'left .42s cubic-bezier(.34,1.56,.4,1), background .35s ease' }} />
+              </span>
+              {!isMobile && <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.05 }}>
+                <span style={{ fontSize: 8, fontWeight: 600, color: '#AEAEB2', fontFamily: 'var(--font-display)', letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                  Kodo Expérience
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: isInv ? BLUE : RED, fontFamily: 'var(--font-display)', whiteSpace: 'nowrap', transition: 'color .35s ease' }}>
+                  {isInv ? 'Investisseur' : 'Collectionneur'}
+                </span>
+              </span>}
+            </button>
+            </>
+          )
+        })()}
         <span className="kum-badge-bar"><PlanBadge plan={plan} hideFree /></span>
         <button onClick={() => setMenuOpen(!menuOpen)} style={{
           width: 34, height: 34, borderRadius: '50%',

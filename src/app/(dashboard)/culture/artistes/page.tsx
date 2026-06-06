@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchIllustrators } from '@/lib/tcgApi'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 // Vedettes : noms vérifiés présents dans /illustrators + carte emblème TCGdex.
 const FEATURED = [
@@ -17,6 +18,7 @@ const FEATURED = [
 function imgSrc(u: string) { return /\.(webp|png|jpg)$/i.test(u) ? u : `${u}/low.webp` }
 
 export default function ArtistesPage() {
+  const isMobile = useIsMobile()
   const router = useRouter()
   const [all, setAll] = useState<string[]>([])
   const [q, setQ] = useState('')
@@ -82,7 +84,7 @@ export default function ArtistesPage() {
 
       {/* Vedettes */}
       <h2 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '0 0 16px', letterSpacing: '-0.01em' }}>Les maîtres</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 10 : 14 }}>
         {FEATURED.map(a => (
           <button key={a.name} onClick={() => go(a.name)} style={{ display: 'block', textAlign: 'left', padding: 14, borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', border: `1px solid ${SNOW.border}`, boxShadow: '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)', transition: 'transform .2s cubic-bezier(.2,.85,.3,1), box-shadow .2s' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 14px 36px rgba(0,0,0,0.1)' }}
@@ -101,7 +103,7 @@ export default function ArtistesPage() {
       <h2 style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, margin: '40px 0 16px', letterSpacing: '-0.01em' }}>
         Tous les illustrateurs <span style={{ color: SNOW.mutedLight, fontWeight: 600 }}>· {all.length}</span>
       </h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 140 : 180}px, 1fr))`, gap: 10 }}>
         {all.map(n => (
           <button key={n} onClick={() => go(n)} title={`Voir les cartes de ${n}`}
             style={{

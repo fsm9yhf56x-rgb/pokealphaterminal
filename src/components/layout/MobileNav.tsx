@@ -88,7 +88,7 @@ export function MobileNav() {
             return (
               <Link
                 key={item.href}
-                href={item.children?.[0]?.href ?? item.href}
+                href={item.href ?? item.children?.[0]?.href ?? '#'}
                 className={`kmnav-item${active ? ' act' : ''}`}
                 style={{ ['--i' as any]: i }}
               >

@@ -1,65 +1,62 @@
-const { createClient } = require('@supabase/supabase-js');
+// Logger de sync — migré Supabase → Neon (@neondatabase/serverless)
+const { neon } = require('@neondatabase/serverless');
 
-function getSupa() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+function getSql() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL manquante (sync-logger)');
+  return neon(url);
 }
 
 async function startSyncLog(jobName, triggeredBy = 'manual') {
-  const supa = getSupa();
-  const { data, error } = await supa
-    .from('sync_logs')
-    .insert({
-      job_name: jobName,
-      status: 'running',
-      triggered_by: triggeredBy,
-    })
-    .select('id, started_at')
-    .single();
-  if (error) {
-    console.error('⚠️ startSyncLog failed:', error.message);
+  try {
+    const sql = getSql();
+    const rows = await sql`
+      INSERT INTO sync_logs (job_name, status, triggered_by)
+      VALUES (${jobName}, 'running', ${triggeredBy})
+      RETURNING id, started_at
+    `;
+    const data = rows[0];
+    console.log(`📝 sync_log #${String(data.id).slice(0, 8)} started (${jobName})`);
+    return { id: data.id, startedAt: new Date(data.started_at) };
+  } catch (e) {
+    console.error('⚠️ startSyncLog failed:', e.message);
     return { id: null, startedAt: new Date() };
   }
-  console.log(`📝 sync_log #${data.id.slice(0, 8)} started (${jobName})`);
-  return { id: data.id, startedAt: new Date(data.started_at) };
 }
 
 async function finishSyncLog(logId, status, stats = {}, error = null) {
   if (!logId) return;
-  const supa = getSupa();
-  const { error: updErr } = await supa
-    .from('sync_logs')
-    .update({
-      status,
-      stats,
-      error,
-      finished_at: new Date().toISOString(),
-    })
-    .eq('id', logId);
-  if (updErr) {
-    console.error('⚠️ finishSyncLog failed:', updErr.message);
-    return;
+  try {
+    const sql = getSql();
+    await sql`
+      UPDATE sync_logs
+      SET status = ${status},
+          stats = ${JSON.stringify(stats)},
+          error = ${error},
+          finished_at = NOW()
+      WHERE id = ${logId}
+    `;
+    const duration = stats.duration_ms ? ` (${stats.duration_ms}ms)` : '';
+    const icon = status === 'success' ? '✅' : '❌';
+    console.log(`${icon} sync_log #${String(logId).slice(0, 8)} ${status}${duration}`);
+  } catch (e) {
+    console.error('⚠️ finishSyncLog failed:', e.message);
   }
-  const duration = stats.duration_ms ? ` (${stats.duration_ms}ms)` : '';
-  const icon = status === 'success' ? '✅' : '❌';
-  console.log(`${icon} sync_log #${logId.slice(0, 8)} ${status}${duration}`);
 }
 
 async function getRecentRuns(jobName, limit = 5) {
-  const supa = getSupa();
-  const { data } = await supa
-    .from('sync_logs')
-    .select('*')
-    .eq('job_name', jobName)
-    .order('started_at', { ascending: false })
-    .limit(limit);
-  return data || [];
+  try {
+    const sql = getSql();
+    const rows = await sql`
+      SELECT * FROM sync_logs
+      WHERE job_name = ${jobName}
+      ORDER BY started_at DESC
+      LIMIT ${limit}
+    `;
+    return rows || [];
+  } catch {
+    return [];
+  }
 }
 
-module.exports = {
-  startSyncLog,
-  finishSyncLog,
-  getRecentRuns,
-};
+module.exports = { startSyncLog, finishSyncLog, getRecentRuns };

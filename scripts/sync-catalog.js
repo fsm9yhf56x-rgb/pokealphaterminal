@@ -1,29 +1,29 @@
 /**
  * Pipeline de sync TCGdex → R2 + tcg_sets + tcg_cards
+ * Migré Supabase → Neon (@neondatabase/serverless)
  *
  * Usage:
  *   node scripts/sync-catalog.js                  → sync EN + FR
  *   node scripts/sync-catalog.js --dry            → dry run, zéro écriture
  *   node scripts/sync-catalog.js --lang=en        → une seule langue
- *   node scripts/sync-catalog.js --set=base1      → un seul set (précédé du préfixe lang)
+ *   node scripts/sync-catalog.js --set=en-base1   → un seul set (préfixe lang inclus)
  *   node scripts/sync-catalog.js --only-fill-images → ne fait que combler les images manquantes
- *   node scripts/sync-catalog.js --trigger=cron   → marque le log comme triggered_by='cron'
+ *   node scripts/sync-catalog.js --trigger=cron   → marque le log triggered_by='cron'
  */
 
 require('dotenv').config({ path: '.env.local' });
-const { createClient } = require('@supabase/supabase-js');
+const { neon } = require('@neondatabase/serverless');
 const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { startSyncLog, finishSyncLog } = require('./lib/sync-logger');
 
 // ── Env ──
-const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPA_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const DATABASE_URL = process.env.DATABASE_URL;
 const R2_ACCOUNT = process.env.R2_ACCOUNT_ID;
 const R2_KEY = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET = process.env.R2_BUCKET;
 
-for (const [k, v] of Object.entries({ SUPA_URL, SUPA_SERVICE, R2_ACCOUNT, R2_KEY, R2_SECRET, R2_BUCKET })) {
+for (const [k, v] of Object.entries({ DATABASE_URL, R2_ACCOUNT, R2_KEY, R2_SECRET, R2_BUCKET })) {
   if (!v) { console.error(`❌ Env manquante: ${k}`); process.exit(1); }
 }
 
@@ -37,7 +37,7 @@ const TRIGGER = args.find(a => a.startsWith('--trigger='))?.split('=')[1] || 'ma
 const LANGS = LANG_FILTER ? [LANG_FILTER] : ['en', 'fr'];
 
 // ── Clients ──
-const supa = createClient(SUPA_URL, SUPA_SERVICE);
+const sql = neon(DATABASE_URL);
 const r2 = new S3Client({
   region: 'auto',
   endpoint: `https://${R2_ACCOUNT}.r2.cloudflarestorage.com`,
@@ -81,61 +81,37 @@ async function fetchImage(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// ── DB helpers ──
+// ── DB helpers (Neon) ──
 async function getExistingCardIds(langPrefix) {
   const ids = new Set();
-  const PAGE = 1000;
-  let from = 0;
-  while (true) {
-    const { data, error } = await supa
-      .from('tcg_cards')
-      .select('id')
-      .ilike('id', `${langPrefix}-%`)
-      .order('id', { ascending: true })
-      .range(from, from + PAGE - 1);
-    if (error) throw error;
-    if (!data?.length) break;
-    data.forEach(r => ids.add(r.id));
-    if (data.length < PAGE) break;
-    from += PAGE;
-  }
+  const rows = await sql`SELECT id FROM tcg_cards WHERE id LIKE ${langPrefix + '-%'}`;
+  rows.forEach(r => ids.add(r.id));
   return ids;
 }
 
 async function getCardsWithoutImage(langPrefix, setFilter = null) {
-  const ids = [];
-  const PAGE = 1000;
-  let from = 0;
-  while (true) {
-    let q = supa
-      .from('tcg_cards')
-      .select('id, set_id, local_id, lang')
-      .ilike('id', `${langPrefix}-%`)
-      .eq('has_image', false)
-      .order('id', { ascending: true });
-    if (setFilter) q = q.eq('set_id', setFilter);
-    const { data, error } = await q.range(from, from + PAGE - 1);
-    if (error) throw error;
-    if (!data?.length) break;
-    ids.push(...data);
-    if (data.length < PAGE) break;
-    from += PAGE;
+  if (setFilter) {
+    return await sql`
+      SELECT id, set_id, local_id, lang FROM tcg_cards
+      WHERE id LIKE ${langPrefix + '-%'} AND has_image = false AND set_id = ${setFilter}
+      ORDER BY id ASC
+    `;
   }
-  return ids;
+  return await sql`
+    SELECT id, set_id, local_id, lang FROM tcg_cards
+    WHERE id LIKE ${langPrefix + '-%'} AND has_image = false
+    ORDER BY id ASC
+  `;
 }
 
 // ── Image sync pour une carte ──
 async function syncCardImage(lang, setId, localId, tcgdexImage) {
-  // setId est "en-base1" → sur R2 c'est "en/base1/..."
-  const r2SetId = setId.replace(new RegExp(`^${lang}-`), ''); // strip préfixe lang
+  const r2SetId = setId.replace(new RegExp(`^${lang}-`), '');
   const r2Key = lang === 'jp'
     ? `${lang}/${r2SetId}/${localId}.jpg`
     : `${lang}/${r2SetId}/${localId}.webp`;
 
-  // Déjà sur R2 ? (soit on l'ignore, soit on note true)
   if (await r2Exists(r2Key)) return { status: 'already_on_r2', key: r2Key };
-
-  // Sinon, download depuis TCGdex
   if (!tcgdexImage) return { status: 'no_source', key: r2Key };
 
   try {
@@ -153,20 +129,13 @@ async function syncLang(lang) {
   console.log(`\n🌐 === ${lang.toUpperCase()} ===`);
   const stats = { new_cards: 0, new_sets: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
 
-  // Mode 1: ONLY_IMAGES = on ne s'occupe que des cartes has_image=false
   if (ONLY_IMAGES) {
     console.log('📸 Mode: comblement images uniquement');
     const cards = await getCardsWithoutImage(lang, SET_FILTER);
     console.log(`🎯 ${cards.length} cartes sans image R2`);
-    for (const c of cards) {
-      // Récupère l'URL TCGdex via fetch set/cards
-      // (on skip pour l'instant, on y reviendra si besoin — pour l'instant mode full)
-      // → recommande mode full pour run initial
-    }
     return stats;
   }
 
-  // Mode 2: full sync
   const existingIds = await getExistingCardIds(lang);
   console.log(`📚 ${existingIds.size} cartes déjà en DB`);
 
@@ -175,11 +144,9 @@ async function syncLang(lang) {
   console.log(`📦 ${sets.length} sets sur TCGdex`);
 
   for (const setMeta of sets) {
-    // Filtre éventuel sur un seul set
     const dbSetId = `${lang}-${setMeta.id}`;
     if (SET_FILTER && dbSetId !== SET_FILTER) continue;
 
-    // Upsert du set dans tcg_sets (nouvelle ou mise à jour metadata)
     const setRow = {
       id: dbSetId,
       name: setMeta.name,
@@ -188,11 +155,22 @@ async function syncLang(lang) {
       release_date: setMeta.releaseDate || null,
       logo_url: setMeta.logo ? `${setMeta.logo}.webp` : null,
       series: setMeta.serie?.name || null,
-      is_active: true,
     };
     if (!DRY) {
-      const { error } = await supa.from('tcg_sets').upsert(setRow, { onConflict: 'id' });
-      if (error) stats.errors.push(`set ${dbSetId}: ${error.message}`);
+      try {
+        await sql`
+          INSERT INTO tcg_sets (id, name, lang, total_cards, release_date, logo_url, series, is_active, source, updated_at)
+          VALUES (${setRow.id}, ${setRow.name}, ${setRow.lang}, ${setRow.total_cards}, ${setRow.release_date}, ${setRow.logo_url}, ${setRow.series}, true, 'tcgdex', NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            total_cards = EXCLUDED.total_cards,
+            release_date = EXCLUDED.release_date,
+            logo_url = EXCLUDED.logo_url,
+            series = EXCLUDED.series,
+            is_active = true,
+            updated_at = NOW()
+        `;
+      } catch (e) { stats.errors.push(`set ${dbSetId}: ${e.message}`); }
     }
 
     const setData = await fetchJson(`${TCGDEX}/${lang}/sets/${setMeta.id}`);
@@ -203,52 +181,39 @@ async function syncLang(lang) {
       const dbId = `${lang}-${setMeta.id}-${card.localId}`;
       const cardInDb = existingIds.has(dbId);
 
-      // Insert la carte si absente
       if (!cardInDb) {
         if (!DRY) {
-          const { error } = await supa.from('tcg_cards').insert({
-            id: dbId,
-            set_id: dbSetId,
-            local_id: card.localId,
-            name: card.name || '',
-            lang: lang.toUpperCase(),
-            rarity: card.rarity || null,
-            has_image: false,
-            is_active: true,
-            synced_at: new Date().toISOString(),
-          });
-          if (error) { stats.errors.push(`card ${dbId}: ${error.message}`); continue; }
+          try {
+            await sql`
+              INSERT INTO tcg_cards (id, set_id, local_id, name, lang, rarity, has_image, is_active, source, synced_at)
+              VALUES (${dbId}, ${dbSetId}, ${card.localId}, ${card.name || ''}, ${lang.toUpperCase()}, ${card.rarity || null}, false, true, 'tcgdex', NOW())
+              ON CONFLICT (id) DO NOTHING
+            `;
+          } catch (e) { stats.errors.push(`card ${dbId}: ${e.message}`); continue; }
         }
         stats.new_cards++;
         setNewCards++;
       }
 
-      // Sync image
       const imgResult = await syncCardImage(lang, dbSetId, card.localId, card.image);
 
       if (imgResult.status === 'uploaded') {
         stats.images_uploaded++;
         setImagesUploaded++;
         if (!DRY) {
-          await supa.from('tcg_cards')
-            .update({ has_image: true, image_synced_at: new Date().toISOString() })
-            .eq('id', dbId);
+          await sql`UPDATE tcg_cards SET has_image = true, image_synced_at = NOW() WHERE id = ${dbId}`;
         }
       } else if (imgResult.status === 'already_on_r2') {
         stats.images_skipped++;
         if (!DRY && !cardInDb) {
-          // carte nouvellement créée, mais image déjà là (rare, mais possible)
-          await supa.from('tcg_cards')
-            .update({ has_image: true, image_synced_at: new Date().toISOString() })
-            .eq('id', dbId);
+          await sql`UPDATE tcg_cards SET has_image = true, image_synced_at = NOW() WHERE id = ${dbId}`;
         }
       } else if (imgResult.status === 'failed') {
         stats.images_failed++;
         stats.errors.push(`img ${dbId}: ${imgResult.error}`);
       }
-      // 'no_source' = pas d'image TCGdex, on ignore
 
-      await sleep(30); // throttle léger
+      await sleep(30);
     }
 
     if (setNewCards > 0 || setImagesUploaded > 0) {

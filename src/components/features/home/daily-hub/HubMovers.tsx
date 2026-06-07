@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
+import { usePersona } from '@/lib/usePersona'
 
 interface PortfolioCard {
   id?: string | number
@@ -34,6 +35,7 @@ export function HubMovers({
   loading: boolean
 }) {
   const router = useRouter()
+  const { isCollector } = usePersona()
 
   const { gainers, loser, mode } = useMemo(() => {
     const withROI: MoverItem[] = cards
@@ -97,7 +99,7 @@ export function HubMovers({
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <SectionLabel accent={SNOW.red}>{mode === 'roi' ? 'Top mouvements' : 'Top valeur'}</SectionLabel>
+        <SectionLabel accent={SNOW.red}>{mode === 'roi' ? 'Top mouvements' : (isCollector ? 'Tes pièces maîtresses' : 'Top valeur')}</SectionLabel>
         <button
           onClick={() => router.push('/portfolio/performance')}
           style={{

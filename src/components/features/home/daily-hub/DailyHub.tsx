@@ -15,6 +15,7 @@ import { UpgradeHook } from './UpgradeHook'
 import { HubQuickActions } from './HubQuickActions'
 import { HubMarketPulse } from './HubMarketPulse'
 import { usePlan } from '@/lib/usePlan'
+import { usePersona } from '@/lib/usePersona'
 import { SNOW, FONT } from '@/lib/design/snow'
 
 /**
@@ -35,6 +36,7 @@ export function DailyHub() {
   const market = useMarketData()
   const spreads = useSpreads()
   const { isPremium } = usePlan()
+  const { isCollector } = usePersona()
 
   return (
     <>
@@ -112,7 +114,8 @@ export function DailyHub() {
             />
           </div>
 
-          {/* 6-7. Vitrine v2.0 — teasers "Bientôt disponible", visibles par tous */}
+          {/* 6-7. Vitrine marché — investisseur uniquement */}
+          {!isCollector && <>
           <SoonSectionLabel />
           <HubMarketPulse indices={market.indices} loading={market.loading} />
           <div style={{
@@ -126,6 +129,7 @@ export function DailyHub() {
             />
             <HubMarketMovers />
           </div>
+          </>}
 
           {/* 8. Quote du jour */}
           <HubFooterQuote />

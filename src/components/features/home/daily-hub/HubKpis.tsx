@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { usePortfolio } from '@/lib/usePortfolio'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * 3 KPIs v1.0 collectionneur Snow+ : Master Set + Valeur portfolio + Cartes.
@@ -18,6 +19,7 @@ export function HubKpis({
   loading: boolean
 }) {
   const portfolio = usePortfolio()
+  const { labels, isCollector } = usePersona()
   // Type local pour acceder aux champs optionnels (set_slug/set_name/graded)
   const cards: Array<{
     qty?: number
@@ -85,11 +87,13 @@ export function HubKpis({
       <KpiCard
         icon={<EuroIcon />}
         accent={kpis.roiPct === null ? 'neutral' : kpis.roiPct >= 0 ? 'green' : 'red'}
-        label="Valeur portfolio"
+        label={labels.portfolioValue}
         value={loading ? '—'
           : kpis.totalValue > 0 ? formatValue(kpis.totalValue) + ' €'
           : '—'}
         sub={loading ? 'Chargement…'
+          : isCollector
+            ? (kpis.totalValue > 0 ? labels.portfolioSub : 'Ajoute des cartes à ta collection')
           : kpis.roiPct !== null
             ? <TrendBadge pct={kpis.roiPct} />
             : kpis.totalValue > 0 ? 'Renseigne ton coût pour le ROI'

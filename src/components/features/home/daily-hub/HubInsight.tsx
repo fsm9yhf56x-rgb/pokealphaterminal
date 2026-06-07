@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
+import { usePersona } from '@/lib/usePersona'
 
 interface PortfolioCard {
   qty?: number
@@ -31,7 +32,8 @@ export function HubInsight({
   indices: any[]   // ignore v2
   loading: boolean
 }) {
-  const insight = useMemo(() => generateV1Insight(cards), [cards])
+  const { isCollector } = usePersona()
+  const insight = useMemo(() => generateV1Insight(cards, isCollector), [cards, isCollector])
 
   if (loading) return <SkeletonInsight />
   if (!insight) return null
@@ -123,7 +125,7 @@ export function HubInsight({
 
 /* ── Insight generator v1 (collectionneur) ─────────────────────────── */
 
-function generateV1Insight(cards: PortfolioCard[]): InsightData | null {
+function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): InsightData | null {
   // Calcul stats portfolio
   let totalValue = 0
   let totalCost = 0
@@ -166,7 +168,7 @@ function generateV1Insight(cards: PortfolioCard[]): InsightData | null {
     candidates.push({
       icon: 'target',
       title: `${cards.length} carte${cards.length > 1 ? 's' : ''} dans ta collection`,
-      detail: 'Continue d\'ajouter tes cartes pour voir ton portfolio prendre forme. La valeur réelle se révèle au-delà de 10 cartes.',
+      detail: 'Continue d\'ajouter tes cartes pour voir ta collection prendre forme. Chaque pièce enrichit ton musée.',
       accent: 'gold',
       priority: 85,
     })
@@ -176,7 +178,7 @@ function generateV1Insight(cards: PortfolioCard[]): InsightData | null {
   if (topCard && topCardValue >= 50 && topCard.name) {
     candidates.push({
       icon: 'trophy',
-      title: `${topCard.name} mène ton portfolio`,
+      title: `${topCard.name}, joyau de ta collection`,
       detail: `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
       accent: 'gold',
       priority: 75,
@@ -184,7 +186,7 @@ function generateV1Insight(cards: PortfolioCard[]): InsightData | null {
   }
 
   // 4. Strong gain (perfo sur portfolio)
-  if (portfolioROI !== null && portfolioROI > 20) {
+  if (!isCollector && portfolioROI !== null && portfolioROI > 20) {
     candidates.push({
       icon: 'spark',
       title: `Ton portfolio est en plus-value de +${portfolioROI.toFixed(0)}%`,
@@ -206,7 +208,7 @@ function generateV1Insight(cards: PortfolioCard[]): InsightData | null {
   }
 
   // 6. Modest gain
-  if (portfolioROI !== null && portfolioROI > 0 && portfolioROI <= 20) {
+  if (!isCollector && portfolioROI !== null && portfolioROI > 0 && portfolioROI <= 20) {
     candidates.push({
       icon: 'spark',
       title: `Portfolio en croissance régulière (+${portfolioROI.toFixed(1)}%)`,

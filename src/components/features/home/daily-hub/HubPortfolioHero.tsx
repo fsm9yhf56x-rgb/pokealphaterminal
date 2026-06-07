@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react'
 import type { MarketIndex } from '@/lib/useMarketData'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION, SHADOW } from '@/lib/design/snow'
 import { useCountUp } from '@/lib/useCountUp'
+import { usePersona } from '@/lib/usePersona'
 
 interface PortfolioCard {
   qty?: number
@@ -28,6 +29,7 @@ export function HubPortfolioHero({
   loading: boolean
 }) {
   const router = useRouter()
+  const { labels, isCollector } = usePersona()
   const cardRef = useRef<HTMLDivElement | null>(null)
 
   // Tilt 3D subtle (hook sublime garde de l'ancienne version)
@@ -164,7 +166,7 @@ export function HubPortfolioHero({
                 background: SNOW.ink,
                 borderRadius: 2,
               }} />
-              Mon portfolio
+              {labels.portfolio}
             </span>
             {hasData && stats.totalValue === 0 && (
               <span style={{
@@ -247,7 +249,7 @@ export function HubPortfolioHero({
                     </span>
                   </span>
                 )
-              : stats.totalCost > 0
+              : (!isCollector && stats.totalCost > 0)
                 ? (
                   <>
                     <span>
@@ -269,7 +271,9 @@ export function HubPortfolioHero({
                     )}
                   </>
                 )
-                : (
+                : isCollector ? (
+                  <span>{labels.portfolioSub}</span>
+                ) : (
                   <span>
                     Valeur estimée · {' '}
                     <span style={{ color: SNOW.amberDark, fontWeight: 500 }}>

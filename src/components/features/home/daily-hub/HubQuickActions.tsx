@@ -2,20 +2,29 @@
 
 import { useRouter } from 'next/navigation'
 import { GlassButton } from '@/components/ui/GlassButton'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * HubQuickActions — rangée de pills glass v7 d'accès rapide.
  * Référence visuelle du site : tous les boutons s'alignent sur GlassButton.
  */
-const ACTIONS = [
+const ACTIONS_INVESTOR = [
   { label: 'Ajouter une carte', href: '/portfolio?add=1',      icon: 'plus' as const },
   { label: 'Pokédesk',          href: '/cartes',               icon: 'book' as const },
   { label: 'Marché',            href: '/market',               icon: 'chart' as const },
   { label: 'Mes objectifs',     href: '/portfolio/objectifs',  icon: 'target' as const },
 ]
+const ACTIONS_COLLECTOR = [
+  { label: 'Ajouter une carte', href: '/portfolio?add=1',      icon: 'plus' as const },
+  { label: 'Pokédesk',          href: '/cartes',               icon: 'book' as const },
+  { label: 'Culture',           href: '/culture',              icon: 'book' as const },
+  { label: 'Mes mastersets',    href: '/portfolio/objectifs',  icon: 'target' as const },
+]
 
 export function HubQuickActions() {
   const router = useRouter()
+  const { isCollector } = usePersona()
+  const ACTIONS = isCollector ? ACTIONS_COLLECTOR : ACTIONS_INVESTOR
   return (
     <>
       <style>{`

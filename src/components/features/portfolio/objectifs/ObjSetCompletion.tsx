@@ -198,6 +198,13 @@ function HeroSet({ set, sets, router }: { set: SetCompletionData; sets: Record<s
           <span style={{ fontSize:12, color:'#86868B', fontFamily:'var(--font-data)', marginTop:4 }}>{set.owned} / {set.total}</span>
         </div>
       </div>
+      {set.topCard && (
+        <div style={{ flex:'1 1 100%', display:'flex', alignItems:'center', gap:9, marginTop:6, paddingTop:18, borderTop:'1px solid '+hex(color,0.16), position:'relative', zIndex:1 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+          <span style={{ fontSize:10.5, color:'#86868B', fontFamily:'var(--font-display)', textTransform:'uppercase', letterSpacing:'.09em' }}>Pièce maîtresse</span>
+          <span style={{ fontSize:14, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.01em', minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{set.topCard}</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -254,6 +261,12 @@ function SetCard({ set, sets, router, completed }: { set: SetCompletionData; set
         <div className="obj-bar-fill" style={{ width:`${set.pct}%`, height:'100%', background: completed ? 'linear-gradient(90deg,#C9A84C,#E8D48B,#C9A84C)' : `linear-gradient(90deg, ${color}, ${hex(color,0.65)})`, borderRadius:3 }} />
       </div>
       <div style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-data)', marginTop:7 }}>{set.owned} / {set.total} cartes</div>
+      {set.topCard && (
+        <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:6 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill={completed ? '#C9A227' : color} style={{ flexShrink:0 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+          <span style={{ fontSize:11, color:'#6E6E73', fontFamily:'var(--font-display)', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{set.topCard}</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { useState, useEffect, useRef } from 'react'
+import { getSets, getCardsForSet } from '@/lib/cardDb'
 import type { GoalTarget, WishlistItem, GoalMetric } from '@/lib/useGoals'
 import { GlassButton } from '@/components/ui/GlassButton'
 
@@ -83,7 +85,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
     }
   }
 
-  return (
+  return createPortal((
     <div
       onClick={onClose}
       style={{
@@ -209,7 +211,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
         </div>
       </div>
     </div>
-  )
+  ), document.body)
 }
 
 /* ── Target form ────────────────────────── */
@@ -295,46 +297,68 @@ function WishForm({
 }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <Field label="Nom de la carte *">
-        <Input
-          value={wishName}
-          onChange={setWishName}
-          placeholder="Ex: Charizard Alt Art"
-          autoFocus
+      <Field label="Langue">
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {(['FR', 'EN', 'JP'] as const).map(l => (
+            <button
+              key={l}
+              onClick={() => { setWishLang(l); setWishSet(''); setWishName('') }}
+              style={{
+                flex: 1, padding: '10px 0',
+                background: wishLang === l ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
+                color: wishLang === l ? '#1D1D1F' : '#86868B',
+                border: '0.5px solid rgba(255,255,255,0.6)',
+                boxShadow: wishLang === l ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
+                borderRadius: 9, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '0.02em',
+                transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+              }}
+            >{l}</button>
+          ))}
+        </div>
+      </Field>
+
+      <Field label="Set">
+        <AutocompleteInput
+          value={wishSet}
+          onChange={setWishSet}
+          placeholder="Ex: 151, Évolutions Prismatiques…"
+          fetcher={async (q) => {
+            const sets = await getSets(wishLang)
+            const ql = q.toLowerCase()
+            return sets
+              .filter(st => st.name.toLowerCase().includes(ql) || st.id.toLowerCase().includes(ql))
+              .slice(0, 8)
+              .map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id }))
+          }}
+          deps={[wishLang]}
+          onPick={() => setWishName('')}
         />
       </Field>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-        <Field label="Set">
-          <Input value={wishSet} onChange={setWishSet} placeholder="Ex: SV151" />
-        </Field>
-
-        <Field label="Langue">
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {(['FR', 'EN', 'JP'] as const).map(l => (
-              <button
-                key={l}
-                onClick={() => setWishLang(l)}
-                style={{
-                  flex: 1,
-                  padding: '10px 0',
-                  background: wishLang === l ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
-                  color: wishLang === l ? '#1D1D1F' : '#86868B',
-                  border: `0.5px solid rgba(255,255,255,0.6)`,
-                  boxShadow: wishLang === l ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
-                  borderRadius: 9,
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                  letterSpacing: '0.02em',
-                  transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
-                }}
-              >{l}</button>
-            ))}
-          </div>
-        </Field>
-      </div>
+      <Field label="Nom de la carte *">
+        <AutocompleteInput
+          value={wishName}
+          onChange={setWishName}
+          placeholder="Ex: Dracaufeu, Pikachu…"
+          autoFocus
+          fetcher={async (q) => {
+            const sets = await getSets(wishLang)
+            const match = sets.find(st => st.name === wishSet || st.id === wishSet)
+            if (!match) return []
+            const cards = await getCardsForSet(wishLang, match.id)
+            const ql = q.toLowerCase()
+            return cards
+              .filter(c => c.n && c.n.toLowerCase().includes(ql))
+              .slice(0, 8)
+              .map(c => ({ label: c.n, sub: c.r || ('N° ' + c.lid), value: c.n, meta: c.r || '' }))
+          }}
+          deps={[wishLang, wishSet]}
+          disabled={!wishSet}
+          disabledHint="Choisis d'abord un set"
+          onPick={(item) => { if (item.meta) setWishRarity(item.meta) }}
+        />
+      </Field>
 
       <Field label="Rareté (optionnel)">
         <Input value={wishRarity} onChange={setWishRarity} placeholder="Ex: Illustration Rare" />
@@ -342,26 +366,21 @@ function WishForm({
 
       <Field label="Priorité">
         <div style={{ display: 'flex', gap: '6px' }}>
-          {([1, 2, 3] as const).map(p => {
-            const stars = '★'.repeat(p) + '☆'.repeat(3 - p)
-            const active = wishPriority === p
+          {([1, 2, 3] as const).map(pr => {
+            const stars = '★'.repeat(pr) + '☆'.repeat(3 - pr)
+            const active = wishPriority === pr
             return (
               <button
-                key={p}
-                onClick={() => setWishPriority(p)}
+                key={pr}
+                onClick={() => setWishPriority(pr)}
                 style={{
-                  flex: 1,
-                  padding: 11,
+                  flex: 1, padding: 11,
                   background: active ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
                   color: active ? '#1D1D1F' : '#86868B',
-                  border: `0.5px solid rgba(255,255,255,0.6)`,
+                  border: '0.5px solid rgba(255,255,255,0.6)',
                   boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)',
-                  borderRadius: 9,
-                  fontSize: 14,
-                  fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                  letterSpacing: '-1px',
-                  cursor: 'pointer',
-                  transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
+                  borderRadius: 9, fontSize: 14, fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                  letterSpacing: '-1px', cursor: 'pointer', transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
                 }}
               >{stars}</button>
             )
@@ -370,12 +389,7 @@ function WishForm({
       </Field>
 
       <Field label="Prix cible (€)">
-        <Input
-          type="number"
-          value={wishTargetPrice}
-          onChange={setWishTargetPrice}
-          placeholder="Ex: 80"
-        />
+        <Input type="number" value={wishTargetPrice} onChange={setWishTargetPrice} placeholder="Ex: 80" />
       </Field>
 
       <Field label="Notes (optionnel)">
@@ -386,6 +400,115 @@ function WishForm({
 }
 
 /* ── Form atoms ─────────────────────────── */
+
+function AutocompleteInput({
+  value, onChange, placeholder, autoFocus, fetcher, deps = [], onPick, disabled, disabledHint,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  autoFocus?: boolean
+  fetcher: (q: string) => Promise<{ label: string; sub?: string; value: string; meta?: string }[]>
+  deps?: any[]
+  onPick?: (item: { label: string; sub?: string; value: string; meta?: string }) => void
+  disabled?: boolean
+  disabledHint?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [items, setItems] = useState<{ label: string; sub?: string; value: string; meta?: string }[]>([])
+  const [active, setActive] = useState(0)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const tRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (disabled) { setItems([]); setOpen(false); return }
+    const q = value.trim()
+    if (q.length < 1) { setItems([]); setOpen(false); return }
+    if (tRef.current) clearTimeout(tRef.current)
+    tRef.current = setTimeout(async () => {
+      try {
+        const res = await fetcher(q)
+        setItems(res); setActive(0); setOpen(res.length > 0)
+      } catch { setItems([]); setOpen(false) }
+    }, 160)
+    return () => { if (tRef.current) clearTimeout(tRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, disabled, ...deps])
+
+  function pick(item: { label: string; sub?: string; value: string; meta?: string }) {
+    onChange(item.value)
+    onPick?.(item)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={boxRef} style={{ position: 'relative' }}>
+      <input
+        type="text"
+        value={value}
+        disabled={disabled}
+        onChange={e => onChange(e.target.value)}
+        placeholder={disabled ? (disabledHint || placeholder) : placeholder}
+        autoFocus={autoFocus}
+        onFocus={e => {
+          e.currentTarget.style.borderColor = '#1D1D1F'
+          e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+          e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(0,0,0,0.05)'
+          if (items.length > 0) setOpen(true)
+        }}
+        onBlur={e => {
+          e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
+          e.currentTarget.style.background = 'rgba(255,255,255,0.6)'
+          e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04)'
+          setTimeout(() => setOpen(false), 120)
+        }}
+        onKeyDown={e => {
+          if (!open || items.length === 0) return
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(a + 1, items.length - 1)) }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(a - 1, 0)) }
+          else if (e.key === 'Enter') { e.preventDefault(); pick(items[active]) }
+          else if (e.key === 'Escape') { setOpen(false) }
+        }}
+        style={{
+          width: '100%', padding: '11px 14px',
+          border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13,
+          background: disabled ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.6)',
+          backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          color: disabled ? '#AEAEB2' : '#1D1D1F', outline: 'none',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)', boxSizing: 'border-box' as const,
+          transition: 'all .15s cubic-bezier(.2,.85,.3,1)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
+          cursor: disabled ? 'not-allowed' : 'text',
+        }}
+      />
+      {open && items.length > 0 && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
+          background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
+          boxShadow: '0 12px 32px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.9)',
+          overflow: 'hidden', maxHeight: 264, overflowY: 'auto',
+        }}>
+          {items.map((it, idx) => (
+            <div
+              key={it.value + idx}
+              onMouseDown={e => { e.preventDefault(); pick(it) }}
+              onMouseEnter={() => setActive(idx)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                padding: '10px 14px', cursor: 'pointer',
+                background: idx === active ? 'rgba(0,0,0,0.05)' : 'transparent',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-sora, Sora, sans-serif)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{it.label}</span>
+              {it.sub && <span style={{ fontSize: 11, color: '#86868B', fontFamily: 'var(--font-data, "Space Mono", monospace)', flexShrink: 0 }}>{it.sub}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

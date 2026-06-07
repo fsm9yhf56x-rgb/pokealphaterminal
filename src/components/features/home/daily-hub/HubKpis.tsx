@@ -88,6 +88,7 @@ export function HubKpis({
         icon={<EuroIcon />}
         accent={kpis.roiPct === null ? 'neutral' : kpis.roiPct >= 0 ? 'green' : 'red'}
         label={labels.portfolioValue}
+        dim={isCollector}
         value={loading ? '—'
           : kpis.totalValue > 0 ? formatValue(kpis.totalValue) + ' €'
           : '—'}
@@ -125,12 +126,13 @@ export function HubKpis({
 /* ── KPI Card glass v5 ─────────────────────────────────────────────── */
 
 function KpiCard({
-  icon, accent, label, value, sub, onClick, clickable, loading,
+  icon, accent, label, value, sub, onClick, clickable, loading, dim,
 }: {
   icon: React.ReactNode
   accent: 'green' | 'red' | 'gold' | 'blue' | 'neutral'
   label: string
   value: string
+  dim?: boolean
   sub: React.ReactNode
   onClick: () => void
   clickable: boolean
@@ -236,9 +238,9 @@ function KpiCard({
 
       {/* Big value */}
       <div style={{
-        fontSize: 26,
+        fontSize: dim ? 17 : 26,
         fontWeight: 700,
-        color: loading ? SNOW.mutedExtraLight : a.valueColor,
+        color: loading ? SNOW.mutedExtraLight : dim ? SNOW.muted : a.valueColor,
         fontFamily: FONT.display,
         letterSpacing: '-0.5px',
         lineHeight: 1.1,

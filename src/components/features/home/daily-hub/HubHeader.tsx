@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
+import { usePersona } from '@/lib/usePersona'
 import { HubStreak } from './HubStreak'
 import { SNOW, FONT, GLASS, RADIUS } from '@/lib/design/snow'
 
@@ -22,6 +23,7 @@ export function HubHeader() {
   const firstName = getFirstName(user)
   const dateStr = formatLongDate(now)
   const timeStr = formatTime(now)
+  const { isCollector } = usePersona()
   const marketStatus = getMarketStatus(now)
 
   return (
@@ -83,8 +85,8 @@ export function HubHeader() {
 
       {/* Right : market status pill glass + clock */}
       <div className="hub-header-right" style={{ textAlign: 'right' }}>
-        {/* Market status pill - glass v5 */}
-        <div style={{
+        {/* Market status pill - glass v5 — investisseur uniquement */}
+        {!isCollector && <div style={{
           ...GLASS.cardSoft,
           display: 'inline-flex',
           alignItems: 'center',
@@ -112,7 +114,7 @@ export function HubHeader() {
           }}>
             {marketStatus.label}
           </span>
-        </div>
+        </div>}
 
         {/* Clock */}
         <div className="hub-clock">

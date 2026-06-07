@@ -135,6 +135,7 @@ export function HubMovers({
               isLast={i === gainers.length - 1 && !loser}
               variant={m.roiPct !== null && m.roiPct < 0 ? 'down' : 'up'}
               mode={mode}
+              isCollector={isCollector}
             />
           ))}
 
@@ -156,11 +157,11 @@ export function HubMovers({
                   À surveiller
                 </span>
               </div>
-              <Row mover={loser} rank={null} isLast variant="down" mode="roi" />
+              <Row mover={loser} rank={null} isLast variant="down" mode="roi" isCollector={isCollector} />
             </>
           )}
 
-          {mode === 'value' && (
+          {mode === 'value' && !isCollector && (
             <div style={{
               padding: '10px 18px',
               borderTop: `1px solid ${SNOW.borderSoft}`,
@@ -182,13 +183,14 @@ export function HubMovers({
 /* ── Row ──────────────────────────────── */
 
 function Row({
-  mover, rank, isLast, variant, mode,
+  mover, rank, isLast, variant, mode, isCollector,
 }: {
   mover: MoverItem
   rank: number | null
   isLast: boolean
   variant: 'up' | 'down'
   mode: Mode
+  isCollector?: boolean
 }) {
   const isUp = variant === 'up'
   const color = isUp ? SNOW.green : SNOW.red
@@ -267,9 +269,9 @@ function Row({
           </>
         ) : (
           <div style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: SNOW.ink,
+            fontSize: isCollector ? 12 : 14,
+            fontWeight: isCollector ? 500 : 700,
+            color: isCollector ? SNOW.mutedLight : SNOW.ink,
             fontFamily: FONT.data,
             fontVariantNumeric: 'tabular-nums',
             letterSpacing: '-0.3px',

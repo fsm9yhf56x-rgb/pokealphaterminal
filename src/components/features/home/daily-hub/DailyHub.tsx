@@ -6,6 +6,7 @@ import { useSpreads } from '@/lib/useSpreads'
 import { HubHeader } from './HubHeader'
 import { HubInsight } from './HubInsight'
 import { HubPortfolioHero } from './HubPortfolioHero'
+import { HubCardOfDay } from './HubCardOfDay'
 import { HubKpis } from './HubKpis'
 import { HubCultureDaily } from './HubCultureDaily'
 import { HubMovers } from './HubMovers'
@@ -88,12 +89,16 @@ export function DailyHub() {
             loading={portfolio.loading || spreads.loading || market.loading}
           />
 
-          {/* 3. Portfolio Hero (piece maitresse) */}
-          <HubPortfolioHero
-            cards={portfolio.cards || []}
-            indices={market.indices}
-            loading={portfolio.loading || market.loading}
-          />
+          {/* 3. Hero : Carte du jour (collector) / Portfolio (investor) */}
+          {isCollector ? (
+            <HubCardOfDay />
+          ) : (
+            <HubPortfolioHero
+              cards={portfolio.cards || []}
+              indices={market.indices}
+              loading={portfolio.loading || market.loading}
+            />
+          )}
 
           {/* 4. KPIs v1 (Master Set / Valeur / Ma collection) */}
           <HubKpis

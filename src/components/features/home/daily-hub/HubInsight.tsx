@@ -179,7 +179,9 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
     candidates.push({
       icon: 'trophy',
       title: `${topCard.name}, joyau de ta collection`,
-      detail: `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
+      detail: isCollector
+        ? `Une piece phare de ton musee${topCard.set_name ? ` — issue du set ${topCard.set_name}` : ''}. Le genre de carte qui fait toute la fierte d'une collection.`
+        : `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
       accent: 'gold',
       priority: 75,
     })

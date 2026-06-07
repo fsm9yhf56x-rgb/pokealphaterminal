@@ -1990,7 +1990,7 @@ export function Holdings() {
                       transition:'all .2s',
                     }}/>
                   </div>
-                  <div style={{ fontSize:'9px', color:'#AEAEB2', marginTop:'4px', fontFamily:'var(--font-display)' }}>Optionnel — permet le calcul du ROI</div>
+                  <div style={{ fontSize:'9px', color:'#AEAEB2', marginTop:'4px', fontFamily:'var(--font-display)' }}>{show.pnl ? 'Optionnel — permet le calcul du ROI' : 'Optionnel — pour garder une trace de tes acquisitions'}</div>
                 </div>
                 {/* Quantité */}
                 <div style={{ width:'120px', flexShrink:0 }}>
@@ -2082,7 +2082,7 @@ export function Holdings() {
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
                 {labels.portfolio}
               </div>
-              <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
+              <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:show.pnl?'38px':'30px', fontWeight:700, color:show.pnl?'#1D1D1F':'#48484A', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                 {portfolio.length>0 ? (
                   <>
                     <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>

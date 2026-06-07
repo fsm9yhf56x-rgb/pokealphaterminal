@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getSets, type StaticSet } from '@/lib/cardDb'
 import type { ObjAggregates, SetCompletionData } from './Objectifs'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * Complétion de sets auto-calculée :
@@ -11,6 +12,7 @@ import type { ObjAggregates, SetCompletionData } from './Objectifs'
  * - Progress bar + valeur investie + estimation finition
  */
 export function ObjSetCompletion({ agg }: { agg: ObjAggregates }) {
+  const { isCollector } = usePersona()
   const [setsByLang, setSetsByLang] = useState<Record<string, StaticSet>>({})
   const [loading, setLoading] = useState(true)
 
@@ -124,6 +126,7 @@ export function ObjSetCompletion({ agg }: { agg: ObjAggregates }) {
               key={s.setId}
               set={s}
               isLast={i === enriched.length - 1}
+              isCollector={isCollector}
             />
           ))}
         </div>
@@ -132,7 +135,7 @@ export function ObjSetCompletion({ agg }: { agg: ObjAggregates }) {
   )
 }
 
-function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
+function SetRow({ set, isLast, isCollector }: { set: SetCompletionData; isLast: boolean; isCollector?: boolean }) {
   const isComplete = set.pct >= 100 && set.total > 0
   const hasUnknownTotal = set.total === 0
 
@@ -244,10 +247,14 @@ function SetRow({ set, isLast }: { set: SetCompletionData; isLast: boolean }) {
         )}
         <div style={{
           fontSize: 11.5,
-          color: '#86868B',
+          color: isCollector && !isComplete && !hasUnknownTotal ? '#C9A84C' : '#86868B',
           fontFamily: 'var(--font-data, "Space Mono", monospace)',
           fontWeight: 600,
-        }}>{formatEUR(set.totalValue)}</div>
+        }}>{
+          isCollector
+            ? (isComplete ? 'Complet ✓' : hasUnknownTotal ? `${set.owned} cartes` : `plus que ${set.total - set.owned}`)
+            : formatEUR(set.totalValue)
+        }</div>
       </div>
     </div>
   )

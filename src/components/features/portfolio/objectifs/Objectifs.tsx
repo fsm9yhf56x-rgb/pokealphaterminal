@@ -8,6 +8,7 @@ import { ObjSetCompletion } from './ObjSetCompletion'
 import { ObjWishlist } from './ObjWishlist'
 import { ObjAddModal } from './ObjAddModal'
 import { SnowButton } from '@/components/ui/snow'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * Aggregates Objectifs : combine portfolio actuel + targets + wishlist.
@@ -62,6 +63,7 @@ export interface EnrichedWish extends WishlistItem {
 export function Objectifs() {
   const { cards, loading: pfLoading } = usePortfolio()
   const goals = useGoals()
+  const { isCollector } = usePersona()
   const [modalOpen, setModalOpen] = useState<null | 'target' | 'wish'>(null)
 
   const agg = useMemo<ObjAggregates>(() => {
@@ -89,11 +91,13 @@ export function Objectifs() {
 
       <SummaryKPIs agg={agg} />
 
-      <ObjFinancialTargets
-        agg={agg}
-        onAddTarget={() => setModalOpen('target')}
-        onDelete={goals.deleteTarget}
-      />
+      {!isCollector && (
+        <ObjFinancialTargets
+          agg={agg}
+          onAddTarget={() => setModalOpen('target')}
+          onDelete={goals.deleteTarget}
+        />
+      )}
 
       <ObjSetCompletion agg={agg} />
 
@@ -270,7 +274,8 @@ function Header({
 }
 
 function SummaryKPIs({ agg }: { agg: ObjAggregates }) {
-  const kpis = [
+  const { isCollector } = usePersona()
+  const kpisInvestor = [
     {
       label: 'Objectifs actifs',
       value: agg.totalTargets.toString(),
@@ -296,6 +301,33 @@ function SummaryKPIs({ agg }: { agg: ObjAggregates }) {
       color: agg.wishlistAlerts > 0 ? 'var(--perf-up)' : 'var(--ink)',
     },
   ]
+  const kpisCollector = [
+    {
+      label: 'Sets en cours',
+      value: agg.setProgress.length.toString(),
+      sub: 'Ta quête de complétion',
+      color: 'var(--ink)',
+    },
+    {
+      label: 'Cartes possédées',
+      value: agg.cardsCount.toString(),
+      sub: 'Dans ta collection',
+      color: 'var(--ink)',
+    },
+    {
+      label: 'Cartes gradées',
+      value: agg.gradedCount.toString(),
+      sub: agg.gradedCount > 0 ? 'Pièces certifiées' : 'Aucune pour l\'instant',
+      color: 'var(--ink)',
+    },
+    {
+      label: 'Wishlist',
+      value: agg.enrichedWishlist.length.toString(),
+      sub: 'Cartes convoitées',
+      color: 'var(--ink)',
+    },
+  ]
+  const kpis = isCollector ? kpisCollector : kpisInvestor
 
   return (
     <>

@@ -15,7 +15,7 @@ import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
  */
 export function HubCardOfDay() {
   const router = useRouter()
-  const { cards } = usePortfolio()
+  const { cards, loading } = usePortfolio()
   const cardRef = useRef<HTMLDivElement>(null)
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50, active: false })
 
@@ -36,6 +36,26 @@ export function HubCardOfDay() {
     })
   }
   function onLeave() { setTilt({ rx: 0, ry: 0, gx: 50, gy: 50, active: false }) }
+
+  if (loading) {
+    return (
+      <div style={{
+        position: 'relative', overflow: 'hidden', borderRadius: RADIUS.xl,
+        background: 'linear-gradient(135deg, rgba(224,48,32,0.05), rgba(255,255,255,0.5))',
+        border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 20px 60px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9)',
+        padding: 'clamp(24px,4vw,40px)', display: 'flex', alignItems: 'center', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap',
+      }}>
+        <div style={{ flex: '1 1 280px', minWidth: 260 }}>
+          <div style={{ width: 110, height: 24, borderRadius: 999, background: 'rgba(0,0,0,0.05)', marginBottom: 16, animation: 'codShimmer 1.4s ease-in-out infinite' }} />
+          <div style={{ width: 220, height: 38, borderRadius: 10, background: 'rgba(0,0,0,0.06)', marginBottom: 14, animation: 'codShimmer 1.4s ease-in-out infinite' }} />
+          <div style={{ width: '80%', height: 14, borderRadius: 6, background: 'rgba(0,0,0,0.04)', marginBottom: 8, animation: 'codShimmer 1.4s ease-in-out infinite' }} />
+          <div style={{ width: '60%', height: 14, borderRadius: 6, background: 'rgba(0,0,0,0.04)', animation: 'codShimmer 1.4s ease-in-out infinite' }} />
+        </div>
+        <div style={{ flex: '0 0 auto', width: 'clamp(180px,28vw,240px)', aspectRatio: '63/88', borderRadius: 14, background: 'rgba(0,0,0,0.05)', animation: 'codShimmer 1.4s ease-in-out infinite' }} />
+        <style>{`@keyframes codShimmer { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }`}</style>
+      </div>
+    )
+  }
 
   return (
     <div style={{

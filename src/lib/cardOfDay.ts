@@ -18,8 +18,8 @@ export const ICONIC_CARDS: IconicCard[] = [
     anecdote: 'Le Dracaufeu du Set de Base est si convoite que des joueurs des annees 90 echangeaient toute leur collection contre un seul exemplaire.' },
   { name: 'Pikachu', setId: 'base1', localId: '58', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Atsuko Nishida',
     anecdote: 'Pikachu devait initialement avoir une evolution intermediaire entre Pikachu et Raichu, appelee Gorochu. Elle n\u2019a jamais vu le jour.' },
-  { name: 'Mew', setId: 'wizards-promo', localId: '8', lang: 'en', era: 'Vintage WOTC', illustrator: 'Keiji Kinebuchi',
-    anecdote: 'Mew a ete cache dans le code de Pokemon Rouge/Bleu par un developpeur, a l\u2019insu de l\u2019equipe, juste avant la sortie du jeu.' },
+  { name: 'Mewtwo', setId: 'base1', localId: '10', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Ken Sugimori',
+    anecdote: 'Mewtwo, clone genetique de Mew, est l\u2019un des Pokemon les plus puissants — sa carte holo du Set de Base reste iconique.' },
   { name: 'Leviator', setId: 'base1', localId: '6', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Mitsuhiro Arita',
     anecdote: 'Le Leviator holographique du Set de Base est l\u2019une des illustrations les plus reproduites de toute la franchise TCG.' },
   { name: 'Demolosse', setId: 'neo2', localId: '5', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Kagemaru Himeno',
@@ -37,8 +37,14 @@ export interface CardOfDay {
   fromCollection: boolean
 }
 
+// Mapping setId -> serie TCGdex (pour construire l'URL image).
+const SERIE_OF: Record<string, string> = {
+  base1: 'base', base2: 'base', base3: 'base', base4: 'base', base5: 'base',
+  neo1: 'neo', neo2: 'neo', neo3: 'neo', neo4: 'neo',
+}
 function tcgdexImg(lang: string, setId: string, localId: string): string {
-  return `https://assets.tcgdex.net/${lang}/${setId.includes('-') ? setId.split('-')[0] : (setId.startsWith('base') ? 'base' : 'base')}/${setId}/${localId}/high.webp`
+  const serie = SERIE_OF[setId] ?? (setId.replace(/[0-9]+$/, '') || 'base')
+  return `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/high.webp`
 }
 
 function dayOfYear(date: Date): number {

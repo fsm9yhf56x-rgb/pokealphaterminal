@@ -97,10 +97,11 @@ const EMPTY: MarketDataState = {
  * Stratégie : queries optimisées (vues prices_v2, prices_snapshots avec indexes lang+rarity).
  * Fallback gracieux si Supabase indisponible.
  */
-export function useMarketData() {
+export function useMarketData(enabled = true) {
   const [state, setState] = useState<MarketDataState>(EMPTY)
 
   useEffect(() => {
+    if (!enabled) { setState(s => ({ ...s, loading: false })); return }
     let cancelled = false
     loadAll()
 
@@ -152,7 +153,7 @@ export function useMarketData() {
     }
 
     return () => { cancelled = true }
-  }, [])
+  }, [enabled])
 
   return state
 }

@@ -39,7 +39,7 @@ const DEFAULT_FILTERS: SpreadFilters = {
  * Hook qui charge tous les signaux sous-évalués depuis la vue SQL.
  * Filtres appliqués côté client (127 signaux ~30KB, négligeable).
  */
-export function useSpreads() {
+export function useSpreads(enabled = true) {
   const [allSignals, setAllSignals] = useState<SpreadSignal[]>([])
   const [filters, setFilters] = useState<SpreadFilters>(DEFAULT_FILTERS)
   const [loading, setLoading] = useState(true)
@@ -47,6 +47,7 @@ export function useSpreads() {
 
   /* Load once at mount */
   useEffect(() => {
+    if (!enabled) { setLoading(false); return }
     let cancelled = false
     loadSignals()
     async function loadSignals() {
@@ -85,7 +86,7 @@ export function useSpreads() {
       }
     }
     return () => { cancelled = true }
-  }, [])
+  }, [enabled])
 
   /* Apply filters */
   const filtered = allSignals.filter(s => {

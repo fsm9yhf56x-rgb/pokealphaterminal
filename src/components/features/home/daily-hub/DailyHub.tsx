@@ -35,10 +35,10 @@ import { SNOW, FONT } from '@/lib/design/snow'
  */
 export function DailyHub() {
   const portfolio = usePortfolio()
-  const market = useMarketData()
-  const spreads = useSpreads()
-  const { isPremium } = usePlan()
   const { isCollector } = usePersona()
+  const market = useMarketData(!isCollector)
+  const spreads = useSpreads(!isCollector)
+  const { isPremium } = usePlan()
 
   return (
     <>

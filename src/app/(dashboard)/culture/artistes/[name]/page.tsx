@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { fetchCardsByIllustrator, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 import { usePortfolio } from '@/lib/usePortfolio'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 function imgSrc(image?: string, q: 'high' | 'low' = 'low'): string | null {
   if (!image) return null
@@ -45,6 +46,7 @@ const MASTERS: Record<string, MasterBio> = {
 }
 
 export default function IllustrateurPage() {
+  const isMobile = useIsMobile()
   const params = useParams()
   const router = useRouter()
   const raw = Array.isArray(params.name) ? params.name[0] : params.name
@@ -108,7 +110,7 @@ export default function IllustrateurPage() {
   const master = MASTERS[name] ?? null
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 90px' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '20px 14px 80px' : '32px 20px 90px' }}>
       <button onClick={() => router.back()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 18, background: 'transparent', border: 'none', cursor: 'pointer', color: SNOW.muted, fontSize: 13, fontFamily: FONT.body, padding: 0 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Retour
@@ -149,13 +151,13 @@ export default function IllustrateurPage() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 104 : 130}px, 1fr))`, gap: isMobile ? 10 : 14 }}>
           {Array.from({ length: 14 }).map((_, i) => <div key={i} style={{ aspectRatio: '63/88', borderRadius: RADIUS.md, background: SNOW.surface, opacity: 0.5 }} />)}
         </div>
       ) : withImg.length === 0 ? (
         <div style={{ padding: 48, textAlign: 'center', color: SNOW.muted, fontFamily: FONT.body, fontSize: 14, background: 'rgba(255,255,255,0.55)', borderRadius: RADIUS.lg, border: `1px solid ${SNOW.border}` }}>Aucune carte avec illustration disponible.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 104 : 130}px, 1fr))`, gap: isMobile ? 10 : 14 }}>
           {withImg.map((c) => {
             const src = imgSrc(c.image, 'low')
             const own = isOwned(c.id)

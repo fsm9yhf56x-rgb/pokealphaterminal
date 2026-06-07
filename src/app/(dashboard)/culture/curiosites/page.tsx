@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 type Curio = { theme: string; cat: string; color: string; card: string; icon: string; title: string; text: string }
 
@@ -76,6 +77,7 @@ function CurioCard({ c, index }: { c: Curio; index: number }) {
 }
 
 export default function CuriositesPage() {
+  const isMobile = useIsMobile()
   const [theme, setTheme] = useState('Tout')
   const list = theme === 'Tout' ? CURIOS : CURIOS.filter(c => c.theme === theme)
   return (
@@ -101,7 +103,7 @@ export default function CuriositesPage() {
         })}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(380px, 1fr))', gap: 16 }}>
         {list.map((c, i) => <CurioCard key={c.title} c={c} index={i} />)}
       </div>
     </div>

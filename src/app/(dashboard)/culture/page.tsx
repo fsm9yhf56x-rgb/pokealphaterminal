@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 const A = 'https://assets.tcgdex.net/fr'
 function img(u: string) { return /\.(webp|png|jpg)$/i.test(u) ? u : `${u}/low.webp` }
@@ -43,6 +44,7 @@ function MiniCard({ src, rotate, z }: { src: string; rotate: number; z: number }
 }
 
 function PortalCard({ p, index }: { p: Portal; index: number }) {
+  const isMobile = useIsMobile()
   const router = useRouter()
   const ref = useRef<HTMLButtonElement>(null)
   const [shown, setShown] = useState(false)
@@ -68,7 +70,7 @@ function PortalCard({ p, index }: { p: Portal; index: number }) {
       {/* halo décoratif */}
       <div aria-hidden style={{ position: 'absolute', bottom: -50, left: -30, width: 180, height: 180, borderRadius: '50%', background: `radial-gradient(circle, ${p.color}22, transparent 70%)`, pointerEvents: 'none' }} />
       {/* mini-cartes en éventail, coin haut droit */}
-      <div style={{ position: 'absolute', top: 18, right: 18, display: 'flex', gap: -6 as any }}>
+      <div style={{ position: 'absolute', top: isMobile ? 14 : 18, right: isMobile ? 10 : 18, display: 'flex', gap: -6 as any, transform: isMobile ? 'scale(0.78)' : 'none', transformOrigin: 'top right' }}>
         <div style={{ display: 'flex' }}>
           {p.cards.map((c, i) => (
             <div key={i} style={{ marginLeft: i === 0 ? 0 : -22 }}>
@@ -93,6 +95,7 @@ function PortalCard({ p, index }: { p: Portal; index: number }) {
 }
 
 export default function CulturePage() {
+  const isMobile = useIsMobile()
   const [heroIn, setHeroIn] = useState(false)
   useEffect(() => { const t = setTimeout(() => setHeroIn(true), 60); return () => clearTimeout(t) }, [])
   return (
@@ -100,13 +103,17 @@ export default function CulturePage() {
       {/* HERO avec éventail de cartes en fond */}
       <div style={{ position: 'relative', marginBottom: 44, paddingTop: 28, paddingBottom: 12, overflow: 'hidden' }}>
         {/* éventail de cartes flouté */}
-        <div aria-hidden style={{ position: 'absolute', top: -30, right: -40, display: 'flex', pointerEvents: 'none', opacity: heroIn ? 0.5 : 0, transform: heroIn ? 'translateX(0)' : 'translateX(40px)', transition: 'opacity 1s ease, transform 1.2s cubic-bezier(.2,.85,.3,1)', filter: 'blur(1.5px)' }}>
-          {HERO_CARDS.map((c, i) => (
-            <div key={i} style={{ width: 120, aspectRatio: '63/88', borderRadius: 10, overflow: 'hidden', marginLeft: i === 0 ? 0 : -64, transform: `rotate(${(i - 2.5) * 7}deg) translateY(${Math.abs(i - 2.5) * 10}px)`, boxShadow: '0 12px 32px rgba(0,0,0,0.18)', border: '2px solid rgba(255,255,255,0.6)', background: '#fff' }}>
+        <div aria-hidden style={{ position: 'absolute', top: isMobile ? -10 : -30, right: isMobile ? -8 : -40, display: 'flex', pointerEvents: 'none', opacity: heroIn ? (isMobile ? 0.32 : 0.5) : 0, transform: heroIn ? 'translateX(0)' : 'translateX(40px)', transition: 'opacity 1s ease, transform 1.2s cubic-bezier(.2,.85,.3,1)', filter: isMobile ? 'blur(2.5px)' : 'blur(1.5px)' }}>
+          {HERO_CARDS.map((c, i) => {
+            const w = isMobile ? 78 : 120
+            const overlap = isMobile ? -42 : -64
+            return (
+            <div key={i} style={{ width: w, aspectRatio: '63/88', borderRadius: 10, overflow: 'hidden', marginLeft: i === 0 ? 0 : overlap, transform: `rotate(${(i - 2.5) * 7}deg) translateY(${Math.abs(i - 2.5) * (isMobile ? 6 : 10)}px)`, boxShadow: '0 12px 32px rgba(0,0,0,0.18)', border: '2px solid rgba(255,255,255,0.6)', background: '#fff' }}>
               <img src={img(c)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 onError={e => { const t = e.target as HTMLImageElement; if (t.src.includes('/low.webp')) t.src = t.src.replace('/low.webp', '/high.webp'); else t.style.display = 'none' }} />
             </div>
-          ))}
+            )
+          })}
         </div>
 
         <div style={{ position: 'relative', opacity: heroIn ? 1 : 0, transform: heroIn ? 'translateY(0)' : 'translateY(16px)', transition: 'opacity .7s ease, transform .8s cubic-bezier(.2,.85,.3,1)' }}>
@@ -118,7 +125,7 @@ export default function CulturePage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18 }}>
         {PORTALS.map((p, i) => <PortalCard key={p.href} p={p} index={i} />)}
       </div>
     </div>

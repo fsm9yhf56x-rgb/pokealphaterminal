@@ -6,6 +6,7 @@ import { usePortfolio } from '@/lib/usePortfolio'
 import { deriveEra } from '@/components/features/portfolio/allocation/Allocation'
 import { fetchCardDetail } from '@/lib/tcgApi'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 const ERA_ICONS: Record<string, string> = {
   crown: 'M3 17l2-9 4 5 3-7 3 7 4-5 2 9H3z',
@@ -69,6 +70,7 @@ function ProgressRing({ value, total, color }: { value: number; total: number; c
 }
 
 export default function MaCollectionCulturePage() {
+  const isMobile = useIsMobile()
   const router = useRouter()
   const { cards, loading } = usePortfolio()
   const [topArtist, setTopArtist] = useState<{ name: string; count: number } | null>(null)
@@ -123,7 +125,7 @@ export default function MaCollectionCulturePage() {
   const domColor = stats.eraRows[0]?.color ?? '#E03020'
 
   return (
-    <div style={{ maxWidth: 940, margin: '0 auto', padding: '32px 20px 100px' }}>
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '20px 14px 90px' : '32px 20px 100px' }}>
       <button onClick={() => router.push('/culture')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 20, background: 'transparent', border: 'none', cursor: 'pointer', color: SNOW.muted, fontSize: 13, fontFamily: FONT.body, padding: 0 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Culture
@@ -202,7 +204,7 @@ export default function MaCollectionCulturePage() {
             </div>
             <p style={{ fontFamily: FONT.body, fontSize: 13.5, color: SNOW.muted, margin: '0 0 22px' }}>Chaque colonne est une ère. Pleine si tu la possèdes, fantôme sinon. Clique pour explorer.</p>
             <div style={{ position: 'relative', padding: '18px 16px 14px', borderRadius: RADIUS.lg, background: 'linear-gradient(180deg, rgba(245,245,247,0.5), rgba(245,245,247,0.15))', border: `1px solid ${SNOW.borderSoft}`, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(6px,1.5vw,14px)', height: 200 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: isMobile ? 4 : 'clamp(6px,1.5vw,14px)', height: isMobile ? 130 : 200 }}>
               {stats.eraData.map((e, i) => {
                 const owned = e.count > 0
                 const h = owned ? Math.max(40, (e.count / stats.maxCount) * 140) : 28

@@ -154,8 +154,8 @@ export default function UserMenu() {
                 background: 'rgba(255,255,255,0.62)',
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255,255,255,0.6)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+                border: 'none',
+                boxShadow: 'none',
                 transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',
               }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}

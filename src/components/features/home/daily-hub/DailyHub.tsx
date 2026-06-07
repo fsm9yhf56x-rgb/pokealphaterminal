@@ -7,6 +7,7 @@ import { HubHeader } from './HubHeader'
 import { HubInsight } from './HubInsight'
 import { HubPortfolioHero } from './HubPortfolioHero'
 import { HubKpis } from './HubKpis'
+import { HubCultureDaily } from './HubCultureDaily'
 import { HubMovers } from './HubMovers'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
@@ -101,6 +102,7 @@ export function DailyHub() {
             cardsCount={portfolio.cards?.length || 0}
             loading={market.loading || spreads.loading || portfolio.loading}
           />
+          {isCollector && <HubCultureDaily />}
 
           {/* 5. Grille v1 - Ton portfolio */}
           <div style={{

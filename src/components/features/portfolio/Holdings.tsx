@@ -1498,7 +1498,7 @@ export function Holdings() {
           .kadd-btns > .gb, .kadd-btns > button:not(.kadd-mini){ width:100%!important; }
           /* La rangée des 3 mini-boutons : display:contents ne marche pas pour flexer, on remet un flex */
           .kadd-secondary{ display:flex!important; gap:8px!important; width:100%; }
-          .kadd-mini{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:52px; border-radius:10px; border:1px solid rgba(0,0,0,0.07); background:rgba(255,255,255,0.6); color:#48484A; font-size:11px; font-weight:600; font-family:var(--font-display); cursor:pointer; }
+          .kadd-mini{ flex:1; min-width:0; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:40px; border-radius:99px; border:none; background:rgba(255,255,255,0.5); backdrop-filter:blur(12px) saturate(180%); -webkit-backdrop-filter:blur(12px) saturate(180%); box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.7); color:#6E6E73; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; }
           .kadd-mini:active{ background:rgba(0,0,0,0.04); }
           /* Boutons colonnes binder : inutiles en mobile (densité forcée) */
           .kadd-cols{ display:none!important; }
@@ -1528,7 +1528,9 @@ export function Holdings() {
           .kbreadcrumb{ overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 20px),transparent 100%); mask-image:linear-gradient(to right,#000 calc(100% - 20px),transparent 100%); }
           .kbreadcrumb::-webkit-scrollbar{ display:none; }
           .kbreadcrumb > *{ flex-shrink:0; }
-          .kdetail-logo{ height:64px!important; maxWidth:240px!important; }
+          .kdetail-logo{ height:52px!important; max-width:200px!important; }
+          .kdetail-hero{ padding:14px 0 12px!important; }
+          .kdetail-halo{ display:none!important; }
         }
         @media (max-width:600px){
           .kbinder-grid{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
@@ -2173,8 +2175,8 @@ export function Holdings() {
             </div>
           )}
           {binderSet&&binderSet!=='__all__'&&view==='binder'&&(
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'0', padding:'28px 0 20px', position:'relative' }}>
-              <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'500px', height:'250px', borderRadius:'50%', background:'radial-gradient(ellipse, rgba(224,48,32,.07) 0%, rgba(255,107,53,.03) 35%, transparent 65%)', pointerEvents:'none' }}/>
+            <div className="kdetail-hero" style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'0', padding:'28px 0 20px', position:'relative' }}>
+              <div className="kdetail-halo" style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'500px', height:'250px', borderRadius:'50%', background:'radial-gradient(ellipse, rgba(224,48,32,.07) 0%, rgba(255,107,53,.03) 35%, transparent 65%)', pointerEvents:'none' }}/>
               {setLogos[binderSet||'']&&(
                 <img src={setLogos[binderSet||'']} alt={binderSet||''} className="kdetail-logo" style={{ height:'90px', maxWidth:'320px', objectFit:'contain', position:'relative', filter:'drop-shadow(0 4px 16px rgba(0,0,0,.10)) drop-shadow(0 2px 6px rgba(0,0,0,.05))' }}
                   onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
@@ -2253,11 +2255,7 @@ export function Holdings() {
               }}>
                 <div className="kcollection-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
                   <div className="kcollection-title">
-                    <div style={{ fontSize:10, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
-                      <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
-                      Ma Collection
-                    </div>
-                    <div style={{ fontSize:13, color:'#48484A', fontFamily:'var(--font-display)', marginTop:6 }}>
+                    <div style={{ fontSize:13, color:'#48484A', fontFamily:'var(--font-display)' }}>
                   {binderSet ? (
                     // Breadcrumb glass quand on est dans une vue set/all
                     <div className="kbreadcrumb" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 10px 5px 6px', background:'rgba(255,255,255,0.65)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:99, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)', maxWidth:'100%' }}>
@@ -2282,9 +2280,7 @@ export function Holdings() {
                         </>
                       )}
                     </div>
-                  ) : (
-                    <>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</>
-                  )}
+                  ) : null}
                 </div>
                   </div>
                   <div className="kadd-btns" style={{ display:'flex', gap:'6px', alignItems:'center' }}>

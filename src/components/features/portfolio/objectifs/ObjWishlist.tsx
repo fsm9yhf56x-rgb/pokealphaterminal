@@ -2,6 +2,7 @@
 
 import type { ObjAggregates, EnrichedWish } from './Objectifs'
 import { SnowButton } from '@/components/ui/snow'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * Wishlist : cartes à acheter avec priorité (★/★★/★★★) + prix cible.
@@ -15,12 +16,13 @@ export function ObjWishlist({
   onDelete: (id: string) => void
   onAcquire: (id: string) => void
 }) {
+  const { isCollector } = usePersona()
   const wishlist = agg.enrichedWishlist
 
   if (wishlist.length === 0) {
     return (
       <div>
-        <SectionTitle>Wishlist</SectionTitle>
+        <SectionTitle>{isCollector ? 'Cartes manquantes' : 'Wishlist'}</SectionTitle>
         <div style={{
           background: 'rgba(255,255,255,0.5)',
           backdropFilter: 'blur(12px) saturate(180%)',
@@ -37,13 +39,13 @@ export function ObjWishlist({
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             marginBottom: 7,
             letterSpacing: '-0.01em',
-          }}>Aucune carte dans votre wishlist</div>
+          }}>{isCollector ? 'Aucune carte recherchee pour le moment' : 'Aucune carte dans votre wishlist'}</div>
           <div style={{
             fontSize: 12,
             color: '#86868B',
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             marginBottom: 18,
-          }}>Trackez les cartes que vous voulez acquérir avec un prix cible.</div>
+          }}>{isCollector ? 'Note les cartes qu il te manque pour completer tes sets.' : 'Trackez les cartes que vous voulez acquerir avec un prix cible.'}</div>
           <SnowButton onClick={onAdd} variant="primary" size="md">+ Ajouter une carte</SnowButton>
         </div>
       </div>
@@ -59,8 +61,8 @@ export function ObjWishlist({
   return (
     <div>
       <SectionTitle>
-        Wishlist · {wishlist.length} carte{wishlist.length > 1 ? 's' : ''}
-        {agg.wishlistAlerts > 0 && (
+        {isCollector ? 'Cartes manquantes' : 'Wishlist'} · {wishlist.length} carte{wishlist.length > 1 ? 's' : ''}
+        {!isCollector && agg.wishlistAlerts > 0 && (
           <span style={{
             marginLeft: 8,
             padding: '3px 9px',
@@ -88,7 +90,7 @@ export function ObjWishlist({
         {/* Header row */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '40px 2.4fr 1fr 1fr 1fr auto',
+          gridTemplateColumns: isCollector ? '40px 3.4fr 1fr auto' : '40px 2.4fr 1fr 1fr 1fr auto',
           gap: 12,
           padding: '10px 18px',
           background: 'rgba(0,0,0,0.025)',
@@ -100,11 +102,17 @@ export function ObjWishlist({
           letterSpacing: '0.08em',
           fontFamily: 'var(--font-sora, Sora, sans-serif)',
         }}>
-          <div style={{ textAlign: 'center' }}>★</div>
+          <div style={{ textAlign: 'center' }}>{isCollector ? 'Envie' : '★'}</div>
           <div>Carte</div>
-          <div style={{ textAlign: 'right' }}>Prix cible</div>
-          <div style={{ textAlign: 'right' }}>Prix actuel</div>
-          <div style={{ textAlign: 'right' }}>État</div>
+          {isCollector ? (
+            <div style={{ textAlign: 'right' }}>Statut</div>
+          ) : (
+            <>
+              <div style={{ textAlign: 'right' }}>Prix cible</div>
+              <div style={{ textAlign: 'right' }}>Prix actuel</div>
+              <div style={{ textAlign: 'right' }}>État</div>
+            </>
+          )}
           <div></div>
         </div>
 
@@ -114,6 +122,7 @@ export function ObjWishlist({
             key={w.id}
             wish={w}
             isLast={i === sorted.length - 1}
+            isCollector={isCollector}
             onDelete={onDelete}
             onAcquire={onAcquire}
           />
@@ -144,7 +153,7 @@ export function ObjWishlist({
             e.currentTarget.style.color = '#86868B'
           }}
         >
-          + Ajouter une carte
+          {isCollector ? '+ Ajouter une carte a chercher' : '+ Ajouter une carte'}
         </button>
       </div>
     </div>
@@ -152,10 +161,11 @@ export function ObjWishlist({
 }
 
 function WishRow({
-  wish, isLast, onDelete, onAcquire,
+  wish, isLast, isCollector, onDelete, onAcquire,
 }: {
   wish: EnrichedWish
   isLast: boolean
+  isCollector: boolean
   onDelete: (id: string) => void
   onAcquire: (id: string) => void
 }) {
@@ -167,19 +177,19 @@ function WishRow({
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '40px 2.4fr 1fr 1fr 1fr auto',
+      gridTemplateColumns: isCollector ? '40px 3.4fr 1fr auto' : '40px 2.4fr 1fr 1fr 1fr auto',
       gap: 12,
       padding: '14px 18px',
       borderBottom: isLast ? 'none' : '1px solid rgba(0,0,0,0.04)',
       alignItems: 'center',
       transition: 'background .15s',
-      background: wish.alertActive ? 'rgba(29,158,117,0.08)' : 'transparent',
+      background: (!isCollector && wish.alertActive) ? 'rgba(29,158,117,0.08)' : 'transparent',
     }}
     onMouseEnter={e => {
-      if (!wish.alertActive) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
+      if (isCollector || !wish.alertActive) e.currentTarget.style.background = 'rgba(255,255,255,0.4)'
     }}
     onMouseLeave={e => {
-      e.currentTarget.style.background = wish.alertActive ? 'rgba(29,158,117,0.08)' : 'transparent'
+      e.currentTarget.style.background = (!isCollector && wish.alertActive) ? 'rgba(29,158,117,0.08)' : 'transparent'
     }}
     >
       {/* Stars */}
@@ -217,52 +227,70 @@ function WishRow({
         </div>
       </div>
 
-      {/* Target price */}
-      <div style={{
-        textAlign: 'right' as const,
-        fontSize: 12.5,
-        fontWeight: 600,
-        color: '#1D1D1F',
-        fontFamily: 'var(--font-data, "Space Mono", monospace)',
-      }}>{wish.target_price ? formatEUR(wish.target_price) : '—'}</div>
-
-      {/* Current price (placeholder for now) */}
-      <div style={{
-        textAlign: 'right' as const,
-        fontSize: 12.5,
-        color: '#AEAEB2',
-        fontFamily: 'var(--font-data, "Space Mono", monospace)',
-      }}>—</div>
-
-      {/* Alert state */}
-      <div style={{ textAlign: 'right' as const }}>
-        {wish.alertActive ? (
+      {isCollector ? (
+        /* Collector : statut de recherche, zero prix/alerte */
+        <div style={{ textAlign: 'right' as const }}>
           <span style={{
-            padding: '3px 9px',
-            background: '#1D9E75',
-            color: '#FFFFFF',
-            fontSize: 9.5,
-            fontWeight: 700,
+            padding: '3px 10px',
+            background: 'rgba(0,0,0,0.04)',
+            color: '#86868B',
+            fontSize: 10,
+            fontWeight: 600,
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.06em',
             borderRadius: 99,
-            boxShadow: '0 2px 6px rgba(29,158,117,0.3)',
-          }}>▲ Achat</span>
-        ) : (
-          <span style={{
-            fontSize: 10.5,
+            border: '1px solid rgba(0,0,0,0.06)',
+          }}>Recherchee</span>
+        </div>
+      ) : (
+        <>
+          {/* Target price */}
+          <div style={{
+            textAlign: 'right' as const,
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: '#1D1D1F',
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
+          }}>{wish.target_price ? formatEUR(wish.target_price) : '—'}</div>
+
+          {/* Current price (placeholder for now) */}
+          <div style={{
+            textAlign: 'right' as const,
+            fontSize: 12.5,
             color: '#AEAEB2',
-            fontFamily: 'var(--font-sora, Sora, sans-serif)',
-          }}>En attente</span>
-        )}
-      </div>
+            fontFamily: 'var(--font-data, "Space Mono", monospace)',
+          }}>—</div>
+
+          {/* Alert state */}
+          <div style={{ textAlign: 'right' as const }}>
+            {wish.alertActive ? (
+              <span style={{
+                padding: '3px 9px',
+                background: '#1D9E75',
+                color: '#FFFFFF',
+                fontSize: 9.5,
+                fontWeight: 700,
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.06em',
+                borderRadius: 99,
+                boxShadow: '0 2px 6px rgba(29,158,117,0.3)',
+              }}>▲ Achat</span>
+            ) : (
+              <span style={{
+                fontSize: 10.5,
+                color: '#AEAEB2',
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              }}>En attente</span>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '4px' }}>
         <button
           onClick={() => onAcquire(wish.id)}
-          title="Marquer comme acquise"
+          title={isCollector ? "Je l'ai trouvee - ajouter a ma collection" : "Marquer comme acquise"}
           style={iconBtnStyle()}
           onMouseEnter={e => {
             e.currentTarget.style.background = 'rgba(29,158,117,0.12)'

@@ -15,10 +15,10 @@ const ACTIONS_INVESTOR = [
   { label: 'Mes objectifs',     href: '/portfolio/objectifs',  icon: 'target' as const },
 ]
 const ACTIONS_COLLECTOR = [
-  { label: 'Ajouter une carte', href: '/portfolio?add=1',      icon: 'plus' as const },
-  { label: 'Pokédesk',          href: '/cartes',               icon: 'book' as const },
-  { label: 'Culture',           href: '/culture',              icon: 'book' as const },
-  { label: 'Mes mastersets',    href: '/portfolio/objectifs',  icon: 'target' as const },
+  { label: 'Ajouter une carte', href: '/portfolio?add=1',          icon: 'plus' as const },
+  { label: 'Mes mastersets',    href: '/portfolio/objectifs',      icon: 'target' as const },
+  { label: 'Mon musée',         href: '/culture/ma-collection',    icon: 'museum' as const },
+  { label: 'Pokédesk',          href: '/cartes',                   icon: 'book' as const },
 ]
 
 export function HubQuickActions() {
@@ -64,10 +64,12 @@ export function HubQuickActions() {
   )
 }
 
-function Icon({ name }: { name: 'plus' | 'book' | 'chart' | 'target' }) {
+function Icon({ name }: { name: 'plus' | 'book' | 'chart' | 'target' | 'heart' | 'museum' }) {
   const common = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   if (name === 'plus')  return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>
   if (name === 'book')  return <svg {...common}><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2zM17 3h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6" /></svg>
   if (name === 'chart') return <svg {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+  if (name === 'heart') return <svg {...common}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+  if (name === 'museum') return <svg {...common}><path d="M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-6h6v6" /></svg>
   return <svg {...common}><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /><circle cx="12" cy="12" r="5" /></svg>
 }

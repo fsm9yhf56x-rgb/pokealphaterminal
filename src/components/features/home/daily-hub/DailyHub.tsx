@@ -9,6 +9,7 @@ import { HubPortfolioHero } from './HubPortfolioHero'
 import { HubCardOfDay } from './HubCardOfDay'
 import { HubKpis } from './HubKpis'
 import { HubCultureDaily } from './HubCultureDaily'
+import { HubCompletion } from './HubCompletion'
 import { HubMovers } from './HubMovers'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
@@ -107,6 +108,7 @@ export function DailyHub() {
             cardsCount={portfolio.cards?.length || 0}
             loading={market.loading || spreads.loading || portfolio.loading}
           />
+          {isCollector && <HubCompletion />}
           {isCollector && <HubCultureDaily />}
 
           {/* 5. Grille v1 - Ton portfolio */}

@@ -1525,6 +1525,10 @@ export function Holdings() {
           .kfilt-chips{ overflow-x:auto; flex-shrink:1!important; padding-bottom:2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%); mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent 100%); }
           .kfilt-chips::-webkit-scrollbar{ display:none; }
           .kfilt-chips > *{ flex-shrink:0; }
+          .kbreadcrumb{ overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 20px),transparent 100%); mask-image:linear-gradient(to right,#000 calc(100% - 20px),transparent 100%); }
+          .kbreadcrumb::-webkit-scrollbar{ display:none; }
+          .kbreadcrumb > *{ flex-shrink:0; }
+          .kdetail-logo{ height:64px!important; maxWidth:240px!important; }
         }
         @media (max-width:600px){
           .kbinder-grid{ grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
@@ -2172,7 +2176,7 @@ export function Holdings() {
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'0', padding:'28px 0 20px', position:'relative' }}>
               <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'500px', height:'250px', borderRadius:'50%', background:'radial-gradient(ellipse, rgba(224,48,32,.07) 0%, rgba(255,107,53,.03) 35%, transparent 65%)', pointerEvents:'none' }}/>
               {setLogos[binderSet||'']&&(
-                <img src={setLogos[binderSet||'']} alt={binderSet||''} style={{ height:'140px', maxWidth:'480px', objectFit:'contain', position:'relative', filter:'drop-shadow(0 6px 24px rgba(0,0,0,.12)) drop-shadow(0 2px 6px rgba(0,0,0,.06))' }}
+                <img src={setLogos[binderSet||'']} alt={binderSet||''} className="kdetail-logo" style={{ height:'90px', maxWidth:'320px', objectFit:'contain', position:'relative', filter:'drop-shadow(0 4px 16px rgba(0,0,0,.10)) drop-shadow(0 2px 6px rgba(0,0,0,.05))' }}
                   onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
               )}
               {!setLogos[binderSet||'']&&(
@@ -2213,9 +2217,11 @@ export function Holdings() {
                   if(total2===0) return null
                   if(missing2===0) return (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
-                      <div style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'6px 16px', borderRadius:'99px', background:'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', border:'1px solid rgba(212,175,55,.4)', boxShadow:'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,240,.4)', overflow:'visible', position:'relative' }}>
-                        <div style={{ position:'absolute', inset:0, borderRadius:'99px', background:'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>
-                        <span style={{ position:'relative', zIndex:1, fontSize:'12px', fontWeight:700, color:'#5C4A12', fontFamily:'var(--font-display)', letterSpacing:'.08em' }}>{String.fromCharCode(9733)} MASTER SET {String.fromCharCode(9733)}</span>
+                      <div style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'8px', padding:'9px 22px', borderRadius:'99px', border:'0.5px solid rgba(255,255,255,0.7)', boxShadow:'0 4px 18px rgba(150,120,230,0.22), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+                        <div className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.78, pointerEvents:'none' }}/>
+                        <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.28)', pointerEvents:'none' }}/>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+                        <span style={{ position:'relative', zIndex:1, fontSize:'13px', fontWeight:800, color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)', letterSpacing:'.12em' }}>MASTER SET</span>
                       </div>
                     </div>
                   )
@@ -2254,7 +2260,7 @@ export function Holdings() {
                     <div style={{ fontSize:13, color:'#48484A', fontFamily:'var(--font-display)', marginTop:6 }}>
                   {binderSet ? (
                     // Breadcrumb glass quand on est dans une vue set/all
-                    <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 10px 5px 6px', background:'rgba(255,255,255,0.65)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:99, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+                    <div className="kbreadcrumb" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 10px 5px 6px', background:'rgba(255,255,255,0.65)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:99, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)', maxWidth:'100%' }}>
                       <button onClick={()=>setBinderSet(null)} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'transparent', border:'none', borderRadius:99, color:'#1D1D1F', fontSize:11, fontWeight:600, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .15s' }}
                         onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,0,0,0.06)' }}
                         onMouseLeave={e=>{ e.currentTarget.style.background='transparent' }}>
@@ -2659,27 +2665,27 @@ export function Holdings() {
                     })}
                   </div>
                 ):(<>
-                  <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-                    <div style={{ position:'relative', flex:1, minWidth:'120px' }}>
+                  <div className="kfilt-row" style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
+                    <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
                       <input type="text" placeholder="Rechercher une carte..."
-                        onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}}
-                        onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                        onFocus={e=>{e.currentTarget.style.background='rgba(255,255,255,0.8)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 0 0 3px rgba(0,0,0,0.05)'}}
+                        onBlur={e=>{e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7)'}}
                         value={setSearch} onChange={e=>{setSetSearch(e.target.value);setBinderPage(0)}}
-                        style={{ width:'100%', padding:'7px 12px 7px 32px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}/>
-                      <div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'#AEAEB2', pointerEvents:'none' }}>🔍</div>
-                      {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
+                        style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', border:'none', boxShadow:'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:'#1D1D1F', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .15s' }}/>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                      {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
                     </div>
-                    <div style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
+                    <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
                       {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
                         <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
-                          style={{ padding:'5px 12px',borderRadius:'99px',border:`1px solid ${binderFilter===fi.k?'#1D1D1F':'#E5E5EA'}`,background:binderFilter===fi.k?'#1D1D1F':'transparent',color:binderFilter===fi.k?'#fff':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                          style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {fi.l}
                         </button>
                       ))}
-                      <div style={{ width:'1px',height:'16px',background:'#E5E5EA',margin:'0 2px' }}/>
+                      <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
                       {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
                         <button key={so.k} onClick={()=>setBinderSort(so.k)}
-                          style={{ padding:'5px 10px',borderRadius:'99px',border:`1px solid ${binderSort===so.k?'#E03020':'#E5E5EA'}`,background:binderSort===so.k?'#FFF1EE':'transparent',color:binderSort===so.k?'#E03020':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                          style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {so.l}
                         </button>
                       ))}

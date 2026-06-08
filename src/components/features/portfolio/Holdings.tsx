@@ -2159,11 +2159,11 @@ export function Holdings() {
           {view==='binder' && portfolio.length>0 && (
             <div style={{ display:'flex', gap:'4px', marginTop:'6px' }}>
               <button onClick={()=>{ setBinderSet(null); setBinderPage(0) }}
-                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${!binderSet?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:!binderSet?'#1D1D1F':'transparent', color:!binderSet?'#fff':'rgba(29,29,31,.45)', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                style={{ padding:'7px 16px', borderRadius:'99px', border:'none', background:!binderSet?'#1D1D1F':'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', boxShadow:!binderSet?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:!binderSet?'#fff':'#6E6E73', fontSize:'11.5px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
                 Par séries
               </button>
               <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
-                style={{ padding:'5px 14px', borderRadius:'99px', border:`1px solid ${binderSet==='__all__'?'rgba(29,29,31,.24)':'rgba(29,29,31,.06)'}`, background:binderSet==='__all__'?'#1D1D1F':'transparent', color:binderSet==='__all__'?'#fff':'#86868B', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
+                style={{ padding:'7px 16px', borderRadius:'99px', border:'none', background:binderSet==='__all__'?'#1D1D1F':'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', boxShadow:binderSet==='__all__'?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:binderSet==='__all__'?'#fff':'#6E6E73', fontSize:'11.5px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
                 Toute ma collection
               </button>
             </div>
@@ -2327,25 +2327,25 @@ export function Holdings() {
                         <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
                           <input
                             type="text"
-                            placeholder="Rechercher une série..." onFocus={e=>{e.currentTarget.style.borderColor='#E03020';e.currentTarget.style.boxShadow='0 0 0 3px rgba(224,48,32,.08)'}} onBlur={e=>{e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.boxShadow=''}}
+                            placeholder="Rechercher une série..." onFocus={e=>{e.currentTarget.style.background='rgba(255,255,255,0.8)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 0 0 3px rgba(0,0,0,0.05)'}} onBlur={e=>{e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7)'}}
                             value={setSearch}
                             onChange={e=>setSetSearch(e.target.value)}
-                            style={{ width:'100%', padding:'7px 12px 7px 32px', borderRadius:'10px', background:'#fff', border:'1.5px solid #D1CEC9', color:'#48484A', fontSize:'11px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const }}
+                            style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', border:'none', boxShadow:'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:'#1D1D1F', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .15s' }}
                           />
-                          <div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'#AEAEB2', pointerEvents:'none' }}>🔍</div>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                           {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
                         </div>
                         <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
                           {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
                             <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
-                              style={{ padding:'5px 12px',borderRadius:'99px',border:`1px solid ${binderFilter===fi.k?'#1D1D1F':'#E5E5EA'}`,background:binderFilter===fi.k?'#1D1D1F':'transparent',color:binderFilter===fi.k?'#fff':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                              style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                               {fi.l}
                             </button>
                           ))}
-                          <div style={{ width:'1px',height:'16px',background:'#E5E5EA',margin:'0 2px' }}/>
+                          <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
                           {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
                             <button key={so.k} onClick={()=>setBinderSort(so.k)}
-                              style={{ padding:'5px 10px',borderRadius:'99px',border:`1px solid ${binderSort===so.k?'#E03020':'#E5E5EA'}`,background:binderSort===so.k?'#FFF1EE':'transparent',color:binderSort===so.k?'#E03020':'#86868B',fontSize:'10px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                              style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                               {so.l}
                             </button>
                           ))}
@@ -2446,8 +2446,8 @@ export function Holdings() {
                                 }}
                                 onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
                                 {isComplete&&(<>
-                                  <div className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.66, pointerEvents:'none' }}/>
-                                  <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.34)', pointerEvents:'none' }}/>
+                                  <div className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.8, pointerEvents:'none' }}/>
+                                  <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.26)', pointerEvents:'none' }}/>
                                 </>)}
                                 <div style={{ position:'relative', zIndex:1 }}>
                                 <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
@@ -2461,6 +2461,7 @@ export function Holdings() {
                                     <div>
                                       <div style={{ display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
                                         <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
+                                        {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#6E6E73', fontFamily:'var(--font-data)' }}>{pct}%</span>}
                                         {isComplete&&(
                                           <span style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'5px', padding:'4px 12px', borderRadius:99, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.2), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
                                             <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.5, pointerEvents:'none' }}/>
@@ -2479,7 +2480,6 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'9px', fontWeight:700, background:'rgba(52,211,153,.12)', border:'0.5px solid rgba(52,211,153,.3)', color:'#1D9A6C', padding:'2px 8px', borderRadius:99, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>Presque !</span>}
-                                    {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{pct}%</span>}
                                     <span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids).then(({error})=>{if(error)console.error('Set delete error:',error);else console.log('Set deleted from Supabase:',ids.length,'cards')});setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}

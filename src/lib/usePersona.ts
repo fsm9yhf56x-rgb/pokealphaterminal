@@ -34,7 +34,7 @@ export interface PersonaVisibility {
 const LABELS: Record<Persona, PersonaLabels> = {
   collector: {
     portfolio: 'Ma Collection',
-    portfolioValue: 'Valeur patrimoniale',
+    portfolioValue: 'Valeur de ma collection',
     portfolioSub: 'La valeur de ton musée personnel',
     dealHunter: 'Cartes manquantes',
     dexy: 'Assistant collection',

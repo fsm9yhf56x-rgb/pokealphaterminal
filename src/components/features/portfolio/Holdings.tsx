@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { usePersona } from '@/lib/usePersona'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
+import { LiquidProgress } from '@/components/ui/LiquidProgress'
 import { useAuth } from '@/lib/useAuth'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
@@ -145,6 +146,7 @@ export function Holdings() {
     try { const r=localStorage.getItem('pka_collapsed'); return r?new Set(JSON.parse(r)):new Set() } catch { return new Set() }
   })
   const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'>('number')
+  const [valueHidden, setValueHidden] = useState(true)
   const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
@@ -907,6 +909,8 @@ export function Holdings() {
   // Compteur isolé dans <AnimatedTotal/> (animation confinée, ne re-rend pas tout Holdings)
   const valuePulse: false | 'up' | 'down' = false
   const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
+  const bestByValue = portfolio.length>0?[...portfolio].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
+  const eraCount = new Set(portfolio.map(c=>{ const y=c.year||0; if(y&&y<=2002)return 'vintage'; if(y&&y<=2010)return 'classic'; if(y&&y<=2019)return 'modern'; if(y)return 'current'; return 'unknown' }).filter(e=>e!=='unknown')).size
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
@@ -1301,6 +1305,9 @@ export function Holdings() {
         .section-reveal-4 { animation-delay:.3s; }
 
         /* Progress bar fill animated */
+        @keyframes softHoloShift { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+        .holo-header-bg { animation: softHoloShift 14s linear infinite; }
+        @media (prefers-reduced-motion: reduce){ .holo-header-bg { animation: none; } }
         @keyframes barGrow {
           0%{transform:scaleX(0);transform-origin:left}
           100%{transform:scaleX(1);transform-origin:left}
@@ -1375,7 +1382,8 @@ export function Holdings() {
         .set-header:active {
           transform:scale(.995);
         }
-        .set-header { transition:background .2s,transform .1s; padding:4px 8px; margin:-4px -8px; border-radius:12px; }
+        .set-header { transition:background .2s,transform .1s; padding:14px 16px; margin:0; border-radius:16px; }
+        .set-header.is-master:hover { background:transparent !important; }
 
         /* Rarity shimmer on holo cards */
         .pocket-shell.gem.DISABLED::before {
@@ -2082,18 +2090,40 @@ export function Holdings() {
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
                 {labels.portfolio}
               </div>
-              <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:show.pnl?'38px':'30px', fontWeight:700, color:show.pnl?'#1D1D1F':'#48484A', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
-                {portfolio.length>0 ? (
-                  <>
-                    <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
-                    <AnimatedTotal target={totalCur} ready={!pricesLoading} />
-                  </>
-                ) : <span style={{ color:'#C7C7CC' }}>---</span>}
-              </div>
-              <div className="value-hero-sub" style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'8px' }}>
+              {show.pnl ? (
+                <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
+                  {portfolio.length>0 ? (
+                    <>
+                      <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
+                      <AnimatedTotal target={totalCur} ready={!pricesLoading} />
+                    </>
+                  ) : <span style={{ color:'#C7C7CC' }}>---</span>}
+                </div>
+              ) : (
+                <div className="value-hero" style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'8px' }}>
+                  {portfolio.length>0 ? (
+                    <>
+                      <span>{portfolio.length}</span>
+                      <span style={{ fontSize:'17px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>pièce{portfolio.length!==1?'s':''}</span>
+                    </>
+                  ) : <span style={{ color:'#C7C7CC' }}>---</span>}
+                </div>
+              )}
+              <div className="value-hero-sub" style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'8px', flexWrap:'wrap' }}>
                 {show.pnl&&portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
-                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{portfolio.length} carte{portfolio.length!==1?'s':''} · {[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}</span>}
-                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commencez votre collection</span>}
+                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}{!show.pnl&&eraCount>0?` · ${eraCount} ère${eraCount!==1?'s':''}`:''}</span>}
+                {!show.pnl&&portfolio.length>0&&(
+                  <button onClick={()=>setValueHidden(v=>!v)} style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:'12px', color:'#86868B', fontFamily:'var(--font-data)', background:'rgba(0,0,0,0.035)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:99, padding:'3px 11px', cursor:'pointer', transition:'all .15s' }}
+                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(0,0,0,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(0,0,0,0.035)'}}>
+                    {valueHidden ? (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                    {valueHidden ? `${labels.portfolioValue} masquée` : `EUR ${totalCur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`}
+                  </button>
+                )}
+                {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commence ta collection</span>}
               </div>
             </div>
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
@@ -2102,6 +2132,13 @@ export function Holdings() {
                   <div style={{ fontSize:10, color:'#8A6500', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:4, fontWeight:600 }}>Meilleure perf.</div>
                   <div style={{ fontSize:18, fontWeight:700, color:'#8A6500', fontFamily:'var(--font-display)' }}>+{Math.round(((bestCard.curPrice-bestCard.buyPrice)/bestCard.buyPrice)*100)}%</div>
                   <div style={{ fontSize:10, color:'#6E6E73' }}>{bestCard.name}</div>
+                </div>
+              )}
+              {!show.pnl&&bestByValue&&(
+                <div style={{ background:'rgba(255,248,229,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(212,175,55,0.25)', borderRadius:10, padding:'8px 14px', maxWidth:220 }}>
+                  <div style={{ fontSize:10, color:'#8A6500', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:4, fontWeight:600 }}>Pièce maîtresse</div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bestByValue.name}</div>
+                  <div style={{ fontSize:10, color:'#6E6E73' }}>{bestByValue.set}</div>
                 </div>
               )}
               <GlassButton onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }}
@@ -2180,11 +2217,8 @@ export function Holdings() {
                     </div>
                   )
                   return (<>
-                    <div style={{ height:'8px',borderRadius:'4px',background:'#E8E8ED',overflow:'hidden' }}>
-                      <div style={{ width:pct2+'%',height:'100%',background:'linear-gradient(90deg,#ff6b35,#ff4433)',borderRadius:'4px',transition:'width .5s' }}/>
-                    </div>
-                    <div style={{ position:'absolute',right:0,top:'-2px',width:'12px',height:'12px',borderRadius:'50%',background:'#E03020',border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,.15)' }}/>
-                    <div style={{ fontSize:'10px',color:'#E03020',marginTop:'6px',textAlign:'right' as const,fontFamily:'var(--font-display)',fontWeight:500 }}>{'Ajouter les '+missing2+' ›'}</div>
+                    <LiquidProgress pct={pct2} color={'#E03020'} height={10} />
+                    <div style={{ fontSize:'10px',color:'#86868B',marginTop:'7px',textAlign:'right' as const,fontFamily:'var(--font-display)',fontWeight:500 }}>{'Il te manque '+missing2+' carte'+(missing2>1?'s':'')+' ›'}</div>
                   </>)
                 })()}
               </div>
@@ -2357,8 +2391,8 @@ export function Holdings() {
                           {/* Header du set — XP Bar gamifiée exact artifact */}
                           {(()=>{
                             const p=pct??0
-                            const lvlColor = isComplete?'#fff':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'#EA580C'
-                            const lvlBg = isComplete?'linear-gradient(135deg,#D4AF37,#F0E080)':p>=75?'rgba(52,211,153,.22)':p>=50?'rgba(96,165,250,.22)':p>=25?'rgba(96,165,250,.2)':'rgba(255,107,53,.25)'
+                            const lvlColor = isComplete?'#C9A227':p>=75?'rgba(52,211,153,.95)':p>=50?'rgba(96,165,250,.9)':p>=25?'rgba(96,165,250,.75)':'#EA580C'
+                            const lvlBg = isComplete?'rgba(255,255,255,0.72)':p>=75?'rgba(52,211,153,.22)':p>=50?'rgba(96,165,250,.22)':p>=25?'rgba(96,165,250,.2)':'rgba(255,107,53,.25)'
                             const lvlBorder = isComplete?'#E8D48B':p>=75?'rgba(52,211,153,.3)':p>=50?'rgba(96,165,250,.3)':p>=25?'rgba(96,165,250,.25)':'rgba(255,107,53,.3)'
                             const lvl = isComplete?'★':String(si+1)
                             // Segments proportionnels exacts
@@ -2372,18 +2406,20 @@ export function Holdings() {
                             const s4col=isComplete?'linear-gradient(90deg,#FFD700,#FFF1A8,#FFD700,#C9A84C,#FFD700)':'linear-gradient(90deg,#34d399,#10b981)'
                             const segs=[[s1pct,s1col],[s2pct,s2col],[s3pct,s3col],[s4pct,s4col]]
                             return (
-                              <div className='set-header' style={{
+                              <div className={'set-header'+(isComplete?' is-master':'')} style={{
                                 marginBottom:'12px',
                                 cursor:'pointer',
                                 opacity:dragSet===setName?.5:1,
                                 borderTop:dragOverSet===setName?'2px solid #E03020':'2px solid transparent',
                                 transition:'opacity .2s, border-color .2s, transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s cubic-bezier(.2,.8,.2,1)',
-                                background: 'rgba(255,255,255,0.62)',
-                                backdropFilter: 'blur(20px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                                borderRadius: 14,
+                                background: 'rgba(255,255,255,0.55)',
+                                backdropFilter: 'blur(24px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                                borderRadius: 16,
                                 padding: '14px 16px',
-                                boxShadow: '0 4px 16px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.025), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.35)',
+                                position:'relative' as const,
+                                overflow:'hidden' as const,
+                                boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.7)',
                               }}
                                 draggable
                                 onDragStart={e=>{setDragSet(setName);e.dataTransfer.effectAllowed='move'}}
@@ -2406,16 +2442,32 @@ export function Holdings() {
                                   setDragOverSet(null)
                                 }}
                                 onClick={()=>{ setCollapsedSets(prev=>{ const n=new Set(prev); n.has(setName)?n.delete(setName):n.add(setName); return n }) }}>
+                                {isComplete&&(<>
+                                  <div className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.66, pointerEvents:'none' }}/>
+                                  <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.34)', pointerEvents:'none' }}/>
+                                </>)}
+                                <div style={{ position:'relative', zIndex:1 }}>
                                 <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div className="ksetrow-left" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
-                                    <div style={{ width:'22px', height:'22px', borderRadius:'6px', background:lvlBg, border:`1px solid ${lvlBorder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:isComplete?'12px':'9px', fontWeight:800, color:lvlColor, flexShrink:0, textShadow:isComplete?'0 1px 2px rgba(100,80,20,.4)':'none', boxShadow:'none', animation:isComplete?'starBreath 4s ease-in-out infinite':'none' }}>{lvl}</div>
+                                    {!isComplete&&(
+                                      <div style={{ width:'22px', height:'22px', borderRadius:'7px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.7)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:800, color:'#1D1D1F', flexShrink:0 }}>{lvl}</div>
+                                    )}
                                                                         {setLogos[setName]&&(
                                       <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
                                     <div>
-                                      <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
+                                        <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
+                                        {isComplete&&(
+                                          <span style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'5px', padding:'4px 12px', borderRadius:99, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.2), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+                                            <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.5, pointerEvents:'none' }}/>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+                                            <span style={{ position:'relative', zIndex:1, fontSize:'10px', fontWeight:800, letterSpacing:'.12em', color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)' }}>MASTER SET</span>
+                                          </span>
+                                        )}
+                                      </div>
                                       <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', flexWrap:'wrap' }}>
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
@@ -2424,7 +2476,7 @@ export function Holdings() {
                                     </div>
                                     {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
                                     {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
-                                    {isComplete&&<span style={{ fontSize:'7px', fontWeight:700, background:'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', color:'#5C4A12', padding:'2px 8px', borderRadius:'3px', letterSpacing:'.12em', border:'1px solid rgba(212,175,55,.4)', boxShadow:'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,240,.4)', display:'inline-flex', alignItems:'center', gap:'4px' }}><span style={{ fontSize:'10px' }}>{String.fromCharCode(9733)}</span>MASTER SET</span>}
+                                    
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
@@ -2437,52 +2489,25 @@ export function Holdings() {
                                     <span className="voir-pill" onClick={e=>{e.stopPropagation();setBinderSet(setName);setBinderPage(0)}} style={{ fontSize:11, color:'#1D1D1F', fontWeight:600, fontFamily:'var(--font-display)', padding:'5px 12px', borderRadius:99, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(229,229,234,0.6)', transition:'all .2s cubic-bezier(.2,.8,.2,1)', whiteSpace:'nowrap', cursor:'pointer', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>Voir la série complète ›</span>
                                   </div>
                                 </div>
-                                {resolvedTotal>0&&(
+                                {resolvedTotal>0&&!isComplete&&(
                                   <>
-                                    {isComplete?(
-                                      <div style={{ height:'8px', borderRadius:'4px', background:'#F0EBD8', overflow:'visible', position:'relative' }}>
-                                        <div style={{ width:'100%', height:'100%', borderRadius:'4px', background:'linear-gradient(90deg,#C9A84C,#D4AF37,#E8D48B,#D4AF37,#C9A84C)', overflow:'hidden' }}>
-                                          <div style={{ position:'absolute', top:0, width:'80px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,250,.7),transparent)', animation:'masterSweep 6s ease-in-out infinite', borderRadius:'4px' }}/>
-                                          <div style={{ position:'absolute', top:0, width:'50px', height:'100%', background:'linear-gradient(90deg,transparent,rgba(255,255,250,.45),transparent)', animation:'masterSweep 6s 3s ease-in-out infinite', borderRadius:'4px' }}/>
-                                        </div>
-                                        <div style={{ position:'absolute', inset:0, borderRadius:'4px', background:'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.3) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>
-                                        <div className='master-glitter-container' style={{ position:'absolute', inset:'-2px 0', pointerEvents:'none' }}/>
+                                    <LiquidProgress pct={p} color={ec2} height={10} />
+                                    {!isComplete&&(
+                                      <div style={{ display:'flex', justifyContent:'space-between', marginTop:'5px', padding:'0 2px' }}>
+                                        {(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
+                                          <span key={li} style={{ fontSize:'8px', fontFamily:'var(--font-data)', color:p>=(li*25)&&li>0?ec2:'#AEAEB2', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
+                                        ))}
                                       </div>
-                                    ):(
-                                    <div style={{ display:'flex', gap:'3px' }}>
-                                      {segs.map((seg,si2)=>(
-                                        <div key={si2} style={{ flex:1, height:'6px', borderRadius:'3px', overflow:'hidden', position:'relative', background:'#E8E8ED' }}>
-                                          {(seg[0] as number)>0&&<div style={{ width:(seg[0] as number)+'%', height:'100%', background:seg[1] as string, borderRadius:'3px', position:'relative', overflow:'hidden', transition:'width .5s ease' }}>
-                                            <div style={{ position:'absolute', top:0, bottom:0, width:'24px', background:'linear-gradient(90deg,transparent,rgba(29,29,31,.3),transparent)', animation:`shim ${1.8+si*.3}s ${si2*.35}s linear infinite` }}/>
-                                          </div>}
-                                        </div>
-                                      ))}
-                                    </div>
                                     )}
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:'3px', padding:'0 1px' }}>
-                                      {!isComplete&&(['0','25%','50%','75%','100%'] as string[]).map((label,li)=>(
-                                        <span key={li} style={{ fontSize:'8px', color:p>=(li*25)&&li>0?lvlColor:'#86868B', transition:'color .3s' }}>{p>=(li*25)&&li>0?label+' ✓':label}</span>
-                                      ))}
-                                    </div>
-                                    
                                   </>
                                 )}
                                 {!resolvedTotal&&(
                                   <>
-                                    <div style={{ display:'flex', gap:'3px' }}>
-                                      {[0,1,2,3].map(i=>(
-                                        <div key={i} style={{ flex:1, height:'6px', borderRadius:'3px', background:'#E8E8ED', overflow:'hidden', position:'relative' }}>
-                                          {i===0&&<div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg,#ff6b35,#ff4433)' }}><div style={{ position:'absolute', top:0, bottom:0, width:'24px', background:'linear-gradient(90deg,transparent,rgba(29,29,31,.3),transparent)', animation:'shim 2s linear infinite' }}/></div>}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:'3px', padding:'0 1px' }}>
-                                      {['0','25%','50%','75%','100%'].map((label,li)=>(
-                                        <span key={li} style={{ fontSize:'8px', color:li===0?'#EA580C99':'rgba(29,29,31,.07)' }}>{label}</span>
-                                      ))}
-                                    </div>
+                                    <LiquidProgress pct={0} color={ec2} height={10} />
+                                    <div style={{ fontSize:'9px', color:'#AEAEB2', fontFamily:'var(--font-data)', marginTop:'5px' }}>Total du set inconnu</div>
                                   </>
                                 )}
+                              </div>
                               </div>
                             )
                           })()}

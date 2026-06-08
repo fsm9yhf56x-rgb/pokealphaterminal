@@ -1493,6 +1493,8 @@ export function Holdings() {
           .kset-logobox{ width:40px!important; align-self:flex-start; margin-top:1px; }
           .kset-logobox img{ max-width:40px!important; height:24px!important; }
           .kset-textcol{ min-width:0; flex:1; }
+          .kmaster-pill{ width:26px; height:26px; padding:0!important; }
+          .kmaster-pill-txt{ display:none!important; }
           /* Carte collection : titre en haut pleine largeur, actions empilées en dessous */
           .kcollection-head{ flex-direction:column!important; align-items:stretch!important; gap:12px; }
           .kcollection-title{ width:100%; }
@@ -2468,6 +2470,13 @@ export function Holdings() {
                                       <div className="kset-titlerow" style={{ display:'flex', alignItems:'center', gap:'8px', minWidth:0 }}>
                                         <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', minWidth:0 }}>{setName}</div>
                                         {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>{pct}%</span>}
+                                        {isComplete&&(
+                                          <span className="kmaster-pill" title="Master Set complet" style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'5px', padding:'5px 13px', borderRadius:99, border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.25), inset 0 1px 0 rgba(255,255,255,0.9)', flexShrink:0 }}>
+                                            <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.7, pointerEvents:'none' }}/>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1, flexShrink:0 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+                                            <span className="kmaster-pill-txt" style={{ position:'relative', zIndex:1, fontSize:'10px', fontWeight:800, letterSpacing:'.1em', color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)', whiteSpace:'nowrap' }}>MASTER SET</span>
+                                          </span>
+                                        )}
                                       </div>
                                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px', flexWrap:'wrap' }}>
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
@@ -2479,12 +2488,6 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'9px', fontWeight:700, background:'rgba(52,211,153,.12)', border:'0.5px solid rgba(52,211,153,.3)', color:'#1D9A6C', padding:'2px 8px', borderRadius:99, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>Presque !</span>}
-                                    {isComplete&&(
-                                      <span title="Master Set complet" style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', justifyContent:'center', width:'26px', height:'26px', borderRadius:99, border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.25), inset 0 1px 0 rgba(255,255,255,0.9)', flexShrink:0 }}>
-                                        <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.7, pointerEvents:'none' }}/>
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
-                                      </span>
-                                    )}
                                     {!isComplete&&<span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>}
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids).then(({error})=>{if(error)console.error('Set delete error:',error);else console.log('Set deleted from Supabase:',ids.length,'cards')});setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}

@@ -6,7 +6,7 @@ import type { AllocAggregates, AllocBucket } from './Allocation'
  * 4 stacked bars : langue / ère / rareté / condition.
  * Vue analytique : où est l'argent par dimension.
  */
-export function AllocBreakdowns({ agg }: { agg: AllocAggregates }) {
+export function AllocBreakdowns({ agg, collector }: { agg: AllocAggregates; collector?: boolean }) {
   return (
     <div>
       <style>{`
@@ -15,17 +15,17 @@ export function AllocBreakdowns({ agg }: { agg: AllocAggregates }) {
           box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
         }
       `}</style>
-      <SectionTitle>Répartition par dimension</SectionTitle>
+      <SectionTitle>{collector ? 'Composition de ma collection' : 'Répartition par dimension'}</SectionTitle>
 
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: '14px',
       }}>
-        <BreakdownCard title="Par langue"    buckets={agg.byLang} />
-        <BreakdownCard title="Par ère"       buckets={agg.byEra} />
-        <BreakdownCard title="Par rareté"    buckets={agg.byRarity} />
-        <BreakdownCard title="Par état"      buckets={agg.byCondition} />
+        <BreakdownCard title="Par langue"    buckets={agg.byLang}      collector={collector} />
+        <BreakdownCard title="Par ère"       buckets={agg.byEra}       collector={collector} />
+        <BreakdownCard title="Par rareté"    buckets={agg.byRarity}    collector={collector} />
+        <BreakdownCard title="Par état"      buckets={agg.byCondition} collector={collector} />
       </div>
     </div>
   )
@@ -43,7 +43,7 @@ const PALETTE = [
   '#E5E5EA',  // border (last)
 ]
 
-function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket[] }) {
+function BreakdownCard({ title, buckets, collector }: { title: string; buckets: AllocBucket[]; collector?: boolean }) {
   if (buckets.length === 0) {
     return (
       <div style={{
@@ -69,12 +69,13 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
 
   const colored = buckets.map((b, i) => ({
     ...b,
+    dispPct: collector ? ((b.count || 0) / (buckets.reduce((q,x)=>q+(x.count||0),0)||1)) * 100 : (b.pct || 0),
     color: PALETTE[i % PALETTE.length],
   }))
 
   // Top bucket signals concentration
-  const topPct = colored[0]?.pct || 0
-  const isHighConcentration = topPct > 60
+  const topPct = colored[0]?.dispPct || 0
+  const isHighConcentration = !collector && topPct > 60
 
   return (
     <div className="alloc-breakdown-card" style={{
@@ -103,9 +104,9 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
         {colored.map((b) => (
           <div
             key={b.label}
-            title={`${b.label} : ${Number(b.pct ?? 0).toFixed(1)}%`}
+            title={`${b.label} : ${Number(b.dispPct ?? 0).toFixed(1)}%`}
             style={{
-              width: `${Math.max(b.pct, 0.3)}%`,
+              width: `${Math.max(b.dispPct, 0.3)}%`,
               background: b.color,
               minWidth: b.pct > 1 ? undefined : '3px',
               transition: 'width 0.4s ease',
@@ -150,7 +151,7 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
               fontFamily: 'var(--font-data, "Space Mono", monospace)',
               minWidth: 36,
               textAlign: 'right' as const,
-            }}>{Number(b.pct ?? 0).toFixed(1)}%</span>
+            }}>{Number(b.dispPct ?? 0).toFixed(1)}%</span>
             <span style={{
               fontSize: 11.5,
               fontWeight: 600,
@@ -158,7 +159,7 @@ function BreakdownCard({ title, buckets }: { title: string; buckets: AllocBucket
               fontFamily: 'var(--font-data, "Space Mono", monospace)',
               minWidth: 60,
               textAlign: 'right' as const,
-            }}>{formatEURcompact(b.value)}</span>
+            }}>{collector ? `${b.count} carte${b.count>1?'s':''}` : formatEURcompact(b.value)}</span>
           </div>
         ))}
       </div>

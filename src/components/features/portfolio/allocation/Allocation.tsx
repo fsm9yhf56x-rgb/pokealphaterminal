@@ -114,7 +114,7 @@ export function Allocation() {
       {!isCollector && <AllocConcentration agg={agg} />}
       {!isCollector && <AllocAlerts agg={agg} />}
       <AllocTreemap agg={agg} />
-      <AllocBreakdowns agg={agg} />
+      <AllocBreakdowns agg={agg} collector={isCollector} />
       <AllocTopHoldings agg={agg} />
     </div>
   )

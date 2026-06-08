@@ -2455,7 +2455,7 @@ export function Holdings() {
                                   <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.26)', pointerEvents:'none' }}/>
                                 </>)}
                                 <div style={{ position:'relative', zIndex:1 }}>
-                                <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
+                                <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:isComplete?'0':'8px' }}>
                                   <div className="ksetrow-left" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg className="kset-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
                                     <div className="kset-logobox" style={{ width:'48px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -2470,13 +2470,6 @@ export function Holdings() {
                                         {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>{pct}%</span>}
                                       </div>
                                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px', flexWrap:'wrap' }}>
-                                        {isComplete&&(
-                                          <span style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'4px', padding:'3px 10px', borderRadius:99, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.2), inset 0 1px 0 rgba(255,255,255,0.9)', flexShrink:0 }}>
-                                            <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.5, pointerEvents:'none' }}/>
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
-                                            <span style={{ position:'relative', zIndex:1, fontSize:'9px', fontWeight:800, letterSpacing:'.1em', color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)' }}>MASTER SET</span>
-                                          </span>
-                                        )}
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
                                         {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; return (<>{(sid.includes('-shadowless')&&!sid.includes('-ns'))||sid.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{sid.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
@@ -2486,6 +2479,12 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'9px', fontWeight:700, background:'rgba(52,211,153,.12)', border:'0.5px solid rgba(52,211,153,.3)', color:'#1D9A6C', padding:'2px 8px', borderRadius:99, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>Presque !</span>}
+                                    {isComplete&&(
+                                      <span title="Master Set complet" style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', justifyContent:'center', width:'26px', height:'26px', borderRadius:99, border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.25), inset 0 1px 0 rgba(255,255,255,0.9)', flexShrink:0 }}>
+                                        <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.7, pointerEvents:'none' }}/>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+                                      </span>
+                                    )}
                                     {!isComplete&&<span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>}
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids).then(({error})=>{if(error)console.error('Set delete error:',error);else console.log('Set deleted from Supabase:',ids.length,'cards')});setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}

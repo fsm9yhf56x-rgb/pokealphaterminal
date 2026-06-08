@@ -1222,6 +1222,9 @@ export function Holdings() {
         @keyframes fadeUp    { 0%{opacity:0;transform:translateY(24px) scale(.97)} 60%{opacity:1;transform:translateY(-4px) scale(1.005)} 100%{opacity:1;transform:translateY(0) scale(1)} }
         @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes slotIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+        @keyframes setExpand { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        .set-cards-in { animation: setExpand .42s cubic-bezier(.16,1,.3,1) both; }
+        @media (prefers-reduced-motion: reduce){ .set-cards-in { animation:none; } }
         @keyframes illuminate{ 0%{opacity:0;transform:scale(.93) translateY(12px)} 50%{opacity:1;transform:scale(1.02) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
         
         .pocket-shell { contain:layout style paint; }
@@ -2450,9 +2453,7 @@ export function Holdings() {
                                 <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div className="ksetrow-left" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
-                                    {!isComplete&&(
-                                      <div style={{ width:'22px', height:'22px', borderRadius:'7px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.7)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:800, color:'#1D1D1F', flexShrink:0 }}>{lvl}</div>
-                                    )}
+
                                                                         {setLogos[setName]&&(
                                       <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
@@ -2472,15 +2473,14 @@ export function Holdings() {
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
                                         {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; return (<>{(sid.includes('-shadowless')&&!sid.includes('-ns'))||sid.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{sid.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
+                                        {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400 }}>{frSetsMap[sid]}</span>:null })()}
                                       </div>
                                     </div>
-                                    {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400, marginLeft:'4px' }}>({frSetsMap[sid]})</span>:null })()}
-                                    {pct!==null&&!isComplete&&<span style={{ fontSize:'10px', fontWeight:700, color:lvlColor }}>{pct}%</span>}
-                                    
-                                    {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'8px', background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.25)', color:'rgba(52,211,153,.8)', padding:'1px 6px', borderRadius:'3px' }}>Presque !</span>}
                                   </div>
-                                  <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                    <span style={{ fontSize:'10px', color:'#48484A', fontFamily:'var(--font-display)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#86868B' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
+                                  <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                                    {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'9px', fontWeight:700, background:'rgba(52,211,153,.12)', border:'0.5px solid rgba(52,211,153,.3)', color:'#1D9A6C', padding:'2px 8px', borderRadius:99, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>Presque !</span>}
+                                    {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-data)' }}>{pct}%</span>}
+                                    <span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids).then(({error})=>{if(error)console.error('Set delete error:',error);else console.log('Set deleted from Supabase:',ids.length,'cards')});setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}
                                       onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>
@@ -2512,7 +2512,7 @@ export function Holdings() {
                             )
                           })()}
                           {/* Rayon de cartes */}
-                          {!collapsedSets.has(setName)&&<div>
+                          {!collapsedSets.has(setName)&&<div className="set-cards-in">
                           <div className="shelf-row" ref={el=>{scrollRefs.current[setName]=el}} onScroll={e=>handleShelfScroll(setName,e)} onMouseDown={e=>{e.preventDefault();onShelfMouseDown(e)}} style={{ display:'flex', gap:'8px', overflowX:'auto' as const, padding:'8px 0 8px', WebkitOverflowScrolling:'touch' as any, cursor:'grab', willChange:'scroll-position' }}>
                             {cardImgs.map((item,ci)=>{
                               if(item.type==='ghost'){
@@ -2813,7 +2813,7 @@ export function Holdings() {
                     ))}
                   </div>
                 </>)}
-                {binderPages>1&&(
+                {binderPages>1&&binderSet&&(
                   <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:8, marginTop:20, padding:'10px 12px', background:'rgba(255,255,255,0.6)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:14, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)', width:'fit-content', margin:'20px auto 0' }}>
                     <button onClick={()=>setBinderPage(Math.max(0,binderPage-1))} disabled={binderPage===0} style={{ width:28, height:28, borderRadius:8, border:'none', background:'transparent', cursor:binderPage===0?'default':'pointer', opacity:binderPage===0?.3:1, display:'flex', alignItems:'center', justifyContent:'center', color:'#1D1D1F', transition:'all .15s' }}
                       onMouseEnter={e=>{ if(binderPage>0) e.currentTarget.style.background='rgba(0,0,0,0.05)' }}

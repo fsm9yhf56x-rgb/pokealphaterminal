@@ -24,10 +24,11 @@ type UpcomingSet = {
 
 type Props = {
   sets: UpcomingSet[]
+  upcomingCount?: number
   lastSyncedAt?: string | null
 }
 
-export default function ReleasesClient({ sets, lastSyncedAt }: Props) {
+export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Props) {
   return (
     <main style={{
       minHeight: '80vh',
@@ -35,7 +36,7 @@ export default function ReleasesClient({ sets, lastSyncedAt }: Props) {
       maxWidth: 1100, margin: '0 auto',
       position: 'relative' as const, zIndex: 1,
     }}>
-      <Hero count={sets.length} lastSyncedAt={lastSyncedAt} />
+      <Hero count={upcomingCount ?? sets.filter(s => !s.isReleased).length} lastSyncedAt={lastSyncedAt} />
       {sets.length === 0 ? (
         <EmptyState />
       ) : (
@@ -131,6 +132,7 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
 // Set Card
 // ────────────────────────────────────────────────────────────
 function SetCard({ set }: { set: UpcomingSet }) {
+  const [imgError, setImgError] = useState(false)
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -192,11 +194,12 @@ function SetCard({ set }: { set: UpcomingSet }) {
           background: 'radial-gradient(circle, rgba(80,210,170,0.25), transparent 60%)',
           filter: 'blur(40px)', pointerEvents: 'none' as const,
         }} />
-        {set.imageUrl ? (
+        {set.imageUrl && !imgError ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={set.imageUrl}
             alt={set.name}
+            onError={() => setImgError(true)}
             style={{
               maxWidth: '100%', maxHeight: 260,
               width: 'auto', height: 'auto',

@@ -10,6 +10,7 @@ import { HubCardOfDay } from './HubCardOfDay'
 import { HubKpis } from './HubKpis'
 import { HubCultureDaily } from './HubCultureDaily'
 import { HubCompletion } from './HubCompletion'
+import { HubReleases } from './HubReleases'
 import { HubMovers } from './HubMovers'
 import { HubSpreadsTeaser } from './HubSpreadsTeaser'
 import { HubMarketMovers } from './HubMarketMovers'
@@ -110,6 +111,7 @@ export function DailyHub() {
           />
           {isCollector && <HubCompletion />}
           {isCollector && <HubCultureDaily />}
+          {isCollector && <HubReleases />}
 
           {/* 5. Grille v1 - Ton portfolio */}
           <div style={{

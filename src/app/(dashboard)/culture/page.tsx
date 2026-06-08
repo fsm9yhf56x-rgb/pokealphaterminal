@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
 import { useIsMobile } from '@/lib/useIsMobile'
+import { usePortfolio } from '@/lib/usePortfolio'
+import { deriveEra } from '@/components/features/portfolio/allocation/Allocation'
 
 const A = 'https://assets.tcgdex.net/fr'
 function img(u: string) { return /\.(webp|png|jpg)$/i.test(u) ? u : `${u}/low.webp` }
@@ -94,6 +96,97 @@ function PortalCard({ p, index }: { p: Portal; index: number }) {
   )
 }
 
+const GOLD = '#D4AF37'
+
+// Bande "Ton musee" : carte-bandeau glass v7 + frise des 8 eres (jauge de completion).
+// Reflet patrimonial du portfolio. Affichee seulement si la collection contient des cartes.
+const ERA_ORDER: { name: string; color: string }[] = [
+  { name: 'Vintage WOTC', color: '#D4AF37' },
+  { name: 'EX', color: '#2A82DD' },
+  { name: 'DPP / HGSS', color: '#0E9E8E' },
+  { name: 'Black & White', color: '#5C6270' },
+  { name: 'XY', color: '#C44E8E' },
+  { name: 'Sun & Moon', color: '#E07B39' },
+  { name: 'Sword & Shield', color: '#4F5FC4' },
+  { name: 'Scarlet & Violet', color: '#D93A3A' },
+]
+
+function MuseumStrip() {
+  const { cards: owned } = usePortfolio()
+  const total = (owned ?? []).length
+  if (total === 0) return null
+
+  const countByEra: Record<string, number> = {}
+  for (const c of owned ?? []) {
+    const era = deriveEra((c as any).set_name ?? null)
+    if (era && era !== 'N/A' && era !== 'Autre') {
+      countByEra[era] = (countByEra[era] ?? 0) + 1
+    }
+  }
+  const erasOwned = ERA_ORDER.filter(e => (countByEra[e.name] ?? 0) > 0).length
+  const dominant = Object.entries(countByEra).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  return (
+    <div style={{
+      position: 'relative', overflow: 'hidden',
+      marginBottom: 40, padding: '22px 26px',
+      borderRadius: 20,
+      background: 'linear-gradient(135deg, ' + GOLD + '12, rgba(255,255,255,0.6) 55%)',
+      backdropFilter: 'blur(22px) saturate(180%)', WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+      border: '1px solid ' + GOLD + '3D',
+      boxShadow: '0 10px 34px rgba(0,0,0,0.05), inset 0 0 0 0.5px rgba(255,255,255,0.75)',
+    }}>
+      {/* halo dore discret */}
+      <div aria-hidden style={{ position: 'absolute', top: -60, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, ' + GOLD + '22, transparent 70%)', pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+        {/* GAUCHE : identite + chiffres */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M12 2l2.6 6.4L21 9l-5 4.3L17.6 20 12 16.5 6.4 20 8 13.3 3 9l6.4-.6L12 2z" fill={GOLD} opacity="0.92" />
+            </svg>
+            <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 700, color: '#9A7B14', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Ton musée</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.03em', lineHeight: 1 }}>{total}</span>
+              <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>cartes</span>
+            </div>
+            {dominant && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 20, borderLeft: '1px solid rgba(0,0,0,0.07)' }}>
+                <span style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 700, color: SNOW.ink, letterSpacing: '-0.01em', lineHeight: 1.1 }}>{dominant}</span>
+                <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ère dominante</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* DROITE : jauge des 8 eres */}
+        <div style={{ minWidth: 240 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 9 }}>
+            <span style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ères traversées</span>
+            <span style={{ fontFamily: 'var(--font-data, "Space Mono", monospace)', fontSize: 14, fontWeight: 700, color: '#9A7B14' }}>{erasOwned} / 8</span>
+          </div>
+          <div style={{ display: 'flex', gap: 5 }}>
+            {ERA_ORDER.map((e) => {
+              const has = (countByEra[e.name] ?? 0) > 0
+              return (
+                <div key={e.name} title={e.name + (has ? ' · dans ta collection' : '')} style={{
+                  flex: 1, height: 8, borderRadius: 4,
+                  background: has ? 'linear-gradient(90deg, ' + e.color + ', ' + e.color + 'CC)' : 'rgba(0,0,0,0.07)',
+                  boxShadow: has ? '0 1px 4px ' + e.color + '66, inset 0 1px 0 rgba(255,255,255,0.4)' : 'none',
+                  transition: 'all .3s ease',
+                }} />
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CulturePage() {
   const isMobile = useIsMobile()
   const [heroIn, setHeroIn] = useState(false)
@@ -124,6 +217,8 @@ export default function CulturePage() {
           </p>
         </div>
       </div>
+
+      <MuseumStrip />
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(380px, 1fr))', gap: 18 }}>
         {PORTALS.map((p, i) => <PortalCard key={p.href} p={p} index={i} />)}

@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { GlassButton } from '@/components/ui/GlassButton'
 import { usePortfolio } from '@/lib/usePortfolio'
+import { usePersona } from '@/lib/usePersona'
 import { AllocConcentration } from './AllocConcentration'
 import { AllocTreemap } from './AllocTreemap'
 import { AllocBreakdowns } from './AllocBreakdowns'
@@ -79,6 +80,7 @@ export interface TreemapNode {
 
 export function Allocation() {
   const { cards, loading } = usePortfolio()
+  const { isCollector } = usePersona()
 
   const agg = useMemo<AllocAggregates>(() => {
     return computeAggregates(cards || [])
@@ -108,9 +110,9 @@ export function Allocation() {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <Header />
-      <AllocConcentration agg={agg} />
-      <AllocAlerts agg={agg} />
+      <Header collector={isCollector} />
+      {!isCollector && <AllocConcentration agg={agg} />}
+      {!isCollector && <AllocAlerts agg={agg} />}
       <AllocTreemap agg={agg} />
       <AllocBreakdowns agg={agg} />
       <AllocTopHoldings agg={agg} />
@@ -553,18 +555,18 @@ function computeAlerts(ctx: {
 
 /* ── UI helpers ──────────────────────────────── */
 
-function Header() {
+function Header({ collector }: { collector?: boolean }) {
   return (
     <div>
       <p style={{
         fontSize: 10, color: '#86868B', textTransform: 'uppercase',
         letterSpacing: '0.1em', margin: '0 0 4px',
         fontFamily: 'var(--font-sora, Sora, sans-serif)',
-      }}>Portfolio</p>
+      }}>{collector ? 'Ma Collection' : 'Portfolio'}</p>
       <h1 style={{
         fontSize: 28, fontWeight: 600, color: '#1D1D1F',
         fontFamily: 'var(--font-sora, Sora, sans-serif)', letterSpacing: '-0.5px', margin: 0,
-      }}>Allocation</h1>
+      }}>{collector ? 'Composition' : 'Allocation'}</h1>
     </div>
   )
 }

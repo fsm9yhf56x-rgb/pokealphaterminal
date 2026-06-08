@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Sora, DM_Sans, Space_Mono } from 'next/font/google'
 import './globals.css'
+import { AuthProvider } from '@/lib/auth/AuthProvider'
 const sora = Sora({
   subsets: ['latin'],
   variable: '--font-sora',
@@ -50,7 +51,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg font-sans">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

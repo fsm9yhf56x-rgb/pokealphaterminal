@@ -6,6 +6,10 @@ import { deriveEra } from './Allocation'
 import { usePersona } from '@/lib/usePersona'
 import { SNOW } from '@/lib/design/snow'
 
+// Drapeau lu par CustomNode (content renderer recharts, hors arbre React -> pas de hook possible).
+// Synchronise depuis AllocTreemap avant chaque rendu. OK en solo : un seul treemap monte a la fois.
+let __treemapShowPnl = true
+
 /**
  * Treemap Recharts v7 - piece maitresse visuelle d\'Allocation.
  * 1 rectangle = 1 set, taille = valeur, couleur = ROI moyen.
@@ -13,6 +17,7 @@ import { SNOW } from '@/lib/design/snow'
  */
 export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
   const { show } = usePersona()
+  __treemapShowPnl = show.pnl
   if (agg.treemapData.length === 0) return null
 
   // Couleur des cellules : ROI (investor) conservé tel quel,
@@ -51,7 +56,7 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
           cursor: pointer;
         }
       `}</style>
-      <SectionTitle>Carte de valeur</SectionTitle>
+      <SectionTitle>{show.pnl ? 'Carte de valeur' : 'Mes séries'}</SectionTitle>
 
       <div className="alloc-treemap-card" style={{
         background: 'rgba(255,255,255,0.65)',
@@ -160,7 +165,7 @@ export function AllocTreemap({ agg }: { agg: AllocAggregates }) {
           flexWrap: 'wrap' as const,
         }}>
           <span className="alloc-treemap-hover-hint">
-            <strong style={{ color: '#86868B' }}>Taille</strong> = valeur du set ·{' '}
+            <strong style={{ color: '#86868B' }}>Taille</strong> = {show.pnl ? 'valeur du set' : 'taille du set'} ·{' '}
             <strong style={{ color: '#86868B' }}>Couleur</strong> = {show.pnl ? 'performance moyenne' : 'ère du set'}
           </span>
           <span className="alloc-treemap-legend-mobile" style={{ display: 'none' }}>
@@ -208,7 +213,7 @@ function TreemapMobileList({ nodes }: { nodes: TreemapNode[] }) {
                 fontSize: 13, fontWeight: 700, color: '#1D1D1F',
                 fontFamily: 'var(--font-data, "Space Mono", monospace)',
                 flexShrink: 0,
-              }}>{formatEUR(n.size)}</span>
+              }}>{show.pnl ? formatEUR(n.size) : `${n.count} carte${n.count>1?'s':''}`}</span>
             </div>
             <div style={{
               height: 7, borderRadius: 4,
@@ -356,7 +361,7 @@ function CustomNode(props: any) {
               textShadow: `0 1px 2px ${shadowColor}`,
             }}
           >
-            {formatEURcompact(size)}
+            {__treemapShowPnl ? formatEURcompact(size) : `${props.count ?? ''}`}
           </text>
           <text
             x={x + 12}
@@ -438,7 +443,7 @@ function TreemapTooltip({ active, payload }: any) {
       }}>{d.name}</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <Row label="Valeur"   value={formatEUR(d.size)} />
+        {__treemapShowPnl && <Row label="Valeur"   value={formatEUR(d.size)} />}
         <Row label="Poids"    value={`${Number(d.pct ?? 0).toFixed(1)}%`} />
         <Row label="Cartes"   value={`${d.count}`} />
         <div style={{

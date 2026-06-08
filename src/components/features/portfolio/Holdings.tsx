@@ -1487,9 +1487,12 @@ export function Holdings() {
           .shelf-row{ -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); }
           /* Ligne de série : masquer la pill redondante (la ligne entière est cliquable) */
           .voir-pill{ display:none!important; }
-          /* Autoriser le wrap pour que compteur+poubelle ne soient jamais coupés */
-          .ksetrow-head{ flex-wrap:wrap!important; gap:8px; }
-          .ksetrow-left{ flex-wrap:wrap!important; min-width:0; flex:1; }
+          /* Ligne de set alignee : logo boite fixe -> le texte demarre au meme X partout */
+          .ksetrow-head{ flex-wrap:nowrap!important; gap:8px; align-items:flex-start; }
+          .ksetrow-left{ flex-wrap:nowrap!important; min-width:0; flex:1; align-items:flex-start!important; gap:6px!important; }
+          .kset-logobox{ width:40px!important; align-self:flex-start; margin-top:1px; }
+          .kset-logobox img{ max-width:40px!important; height:24px!important; }
+          .kset-textcol{ min-width:0; flex:1; }
           /* Carte collection : titre en haut pleine largeur, actions empilées en dessous */
           .kcollection-head{ flex-direction:column!important; align-items:stretch!important; gap:12px; }
           .kcollection-title{ width:100%; }
@@ -2454,25 +2457,26 @@ export function Holdings() {
                                 <div style={{ position:'relative', zIndex:1 }}>
                                 <div className="ksetrow-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'8px' }}>
                                   <div className="ksetrow-left" style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
-
-                                                                        {setLogos[setName]&&(
-                                      <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'80px', objectFit:'contain', flexShrink:0 }}
+                                    <svg className="kset-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.5" strokeLinecap="round" style={{ transition:'transform .3s cubic-bezier(.4,0,.2,1)', transform:collapsedSets.has(setName)?'rotate(-90deg)':'rotate(0deg)', flexShrink:0 }}><path d="M6 9l6 6 6-6"/></svg>
+                                    <div className="kset-logobox" style={{ width:'48px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                      {setLogos[setName]&&(
+                                      <img src={setLogos[setName]} alt="" style={{ height:'28px', maxWidth:'48px', objectFit:'contain' }}
                                         onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                     )}
-                                    <div>
-                                      <div style={{ display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' }}>
-                                        <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none' }}>{setName}</div>
-                                        {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#6E6E73', fontFamily:'var(--font-data)' }}>{pct}%</span>}
+                                    </div>
+                                    <div className="kset-textcol" style={{ minWidth:0, flex:1 }}>
+                                      <div className="kset-titlerow" style={{ display:'flex', alignItems:'center', gap:'8px', minWidth:0 }}>
+                                        <div style={{ fontSize:'14px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.2, textShadow:'none', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', minWidth:0 }}>{setName}</div>
+                                        {pct!==null&&!isComplete&&<span style={{ fontSize:'12px', fontWeight:800, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>{pct}%</span>}
+                                      </div>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px', flexWrap:'wrap' }}>
                                         {isComplete&&(
-                                          <span style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'5px', padding:'4px 12px', borderRadius:99, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.2), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+                                          <span style={{ position:'relative', overflow:'hidden', display:'inline-flex', alignItems:'center', gap:'4px', padding:'3px 10px', borderRadius:99, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.8)', boxShadow:'0 2px 8px rgba(150,120,230,0.2), inset 0 1px 0 rgba(255,255,255,0.9)', flexShrink:0 }}>
                                             <span className="holo-header-bg" aria-hidden style={{ position:'absolute', inset:0, background:'linear-gradient(105deg, #ffc9e0, #c9dbff, #c9ffe9, #fff2c0, #e6c9ff, #ffc9e0)', backgroundSize:'200% 100%', opacity:0.5, pointerEvents:'none' }}/>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
-                                            <span style={{ position:'relative', zIndex:1, fontSize:'10px', fontWeight:800, letterSpacing:'.12em', color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)' }}>MASTER SET</span>
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(55,35,90,0.92)" style={{ position:'relative', zIndex:1 }}><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+                                            <span style={{ position:'relative', zIndex:1, fontSize:'9px', fontWeight:800, letterSpacing:'.1em', color:'rgba(50,32,82,0.95)', fontFamily:'var(--font-display)' }}>MASTER SET</span>
                                           </span>
                                         )}
-                                      </div>
-                                      <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'2px', flexWrap:'wrap' }}>
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
                                         {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; return (<>{(sid.includes('-shadowless')&&!sid.includes('-ns'))||sid.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{sid.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
@@ -2482,7 +2486,7 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                                     {pct!==null&&!isComplete&&p>=75&&<span style={{ fontSize:'9px', fontWeight:700, background:'rgba(52,211,153,.12)', border:'0.5px solid rgba(52,211,153,.3)', color:'#1D9A6C', padding:'2px 8px', borderRadius:99, fontFamily:'var(--font-display)', letterSpacing:'.04em' }}>Presque !</span>}
-                                    <span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>
+                                    {!isComplete&&<span style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-data)' }}>{uniqueNums}{resolvedTotal>0?<span style={{ color:'#AEAEB2' }}> / {resolvedTotal}</span>:<span style={{ color:'#AEAEB2' }}> cartes</span>}</span>}
                                     <button onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer toutes les '+setCards.length+' cartes de "'+setName+'" ?')){const ids=setCards.filter(c=>!c.id.startsWith('u')).map(c=>c.id);if(user&&ids.length)supabase.from('portfolio_cards').delete().in('id',ids).then(({error})=>{if(error)console.error('Set delete error:',error);else console.log('Set deleted from Supabase:',ids.length,'cards')});setPortfolio(prev=>prev.filter(c=>c.set!==setName));showToast(setName+' supprimé')}}} style={{ width:'26px', height:'26px', borderRadius:'50%', background:'transparent', border:'1px solid #E5E5EA', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s', flexShrink:0 }}
                                       onMouseEnter={e=>{e.currentTarget.style.background='#FFF1EE';e.currentTarget.style.borderColor='rgba(224,48,32,.3)'}}
                                       onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='#E5E5EA'}}>

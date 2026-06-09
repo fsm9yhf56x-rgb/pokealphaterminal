@@ -128,6 +128,7 @@ export function ExplorerSavedSearches({
 
   const handleDelete = (id: string) => {
     persist(saved.filter(s => s.id !== id))
+    persistDelete(id)
   }
 
   const handleLoad = (s: SavedSearch) => {

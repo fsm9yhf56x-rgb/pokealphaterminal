@@ -114,15 +114,17 @@ async function fetchSet(setName, lang) {
   const url = `${PPT_BASE}/cards?set=${encodeURIComponent(setName)}&fetchAllInSet=true&includeEbay=true&includeHistory=true&days=180&language=${lang}`
   const r = await fetch(url, { headers: { Authorization: 'Bearer ' + KEY } })
   const remaining = Number(r.headers.get('x-ratelimit-daily-remaining') || 0)
+  const minuteRemaining = Number(r.headers.get('x-ratelimit-minute-remaining') || 60)
   const consumed = r.headers.get('x-api-calls-consumed') || '?'
 
   if (!r.ok) {
-    return { ok: false, status: r.status, remaining, error: await r.text().catch(() => '?') }
+    return { ok: false, status: r.status, remaining, minuteRemaining, error: await r.text().catch(() => '?') }
   }
   const j = await r.json()
   return {
     ok: true,
     remaining,
+    minuteRemaining,
     consumed,
     cards: j.data || [],
     total: j.metadata?.total || 0,
@@ -417,8 +419,13 @@ async function upsertCard(pool, pptCard, lang) {
       // Pause ADAPTATIVE selon taille du set: PPT decremente le quota minute (60/min)
       // proportionnellement a la charge (gros set 840c = ~11 unites minute, petit 92c = ~1).
       // ~70ms/carte => set de 840 ~59s, set de 100 ~7s. Evite le 429 sur les gros sets.
-      const adaptiveMs = Math.max(THROTTLE_MS, cards.length * 70)
-      await sleep(adaptiveMs)
+      const minLeft = res.minuteRemaining ?? 60
+      if (minLeft <= 15) {
+        console.log(`   quota minute bas (${minLeft}/60), pause 65s...`)
+        await sleep(65000)
+      } else {
+        await sleep(THROTTLE_MS)
+      }
     }
 
     console.log(`\n=== RÉCAP ===`)

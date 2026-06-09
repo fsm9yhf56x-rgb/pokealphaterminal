@@ -5,9 +5,7 @@ name: Sync JP PPT (referentiel + images)
 # --max-credits 16000 = arret propre sous le quota 20k/j.
 on:
   schedule:
-    - cron: '15 0 * * *'    # 00:15 UTC
-    - cron: '15 8 * * *'    # 08:15 UTC
-    - cron: '15 16 * * *'   # 16:15 UTC
+    - cron: '15 3 * * 0'   # hebdomadaire dimanche 03:15 UTC (maintenance: nouveaux sets JP)
   workflow_dispatch:
     inputs:
       max_credits:
@@ -38,7 +36,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
         run: |
-          node scripts/import-jp-ppt.js --all --resume --max-credits ${{ github.event.inputs.max_credits || '12000' }} --max-sets 60
+          node scripts/import-jp-ppt.js --all --resume --max-credits ${{ github.event.inputs.max_credits || '6000' }} --max-sets 30
       - name: Progress summary
         if: always()
         env:

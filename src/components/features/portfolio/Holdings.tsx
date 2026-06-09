@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { usePersona } from '@/lib/usePersona'
+import { HeaderSparkline } from './HeaderSparkline'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { LiquidProgress } from '@/components/ui/LiquidProgress'
 import { useAuth } from '@/lib/useAuth'
@@ -2098,7 +2099,7 @@ export function Holdings() {
             padding: '20px 26px 18px',
             marginBottom: 14,
           }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:'12px', marginBottom:'14px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'14px' }}>
             <div>
               <div style={{ fontSize:'10px', fontWeight:600, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px', display:'flex', alignItems:'center', gap:6 }} className='section-reveal'>
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
@@ -2140,6 +2141,11 @@ export function Holdings() {
                 {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commence ta collection</span>}
               </div>
             </div>
+            {show.pnl&&portfolio.length>0&&(
+              <div className='header-sparkline' style={{ flex:1, minWidth:200, maxWidth:580, display:'flex', flexDirection:'column' as const, justifyContent:'center', padding:'0 8px' }}>
+                <HeaderSparkline totalValue={totalCur} />
+              </div>
+            )}
             <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
               {show.pnl&&bestCard&&bestCard.buyPrice>0&&(
                 <div style={{ background:'rgba(255,248,229,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(212,175,55,0.25)', borderRadius:10, padding:'8px 14px' }}>
@@ -2608,7 +2614,7 @@ export function Holdings() {
                                   onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-6px)';p.style.transition='none'}}}
                                   onClick={e=>{e.stopPropagation();removeCard(card,e)}}
                                   style={{ position:'absolute', top:0, left:0, right:0, height:'25%', zIndex:20, cursor:'pointer', opacity:0, transition:'opacity .15s', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'8px', borderRadius:'12px 12px 0 0', background:'linear-gradient(to bottom, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 60%, transparent 100%)' }}>
-                                  <span style={{ background:'#fff', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'5px 14px', fontSize:'10px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)', pointerEvents:'none' }}>Retirer</span>
+                                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', color:'#E03020', borderRadius:'99px', padding:'5px 13px', fontSize:'10px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 10px rgba(0,0,0,.12), inset 0 0 0 0.5px rgba(255,255,255,0.7)', pointerEvents:'none' }}><svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>Retirer</span>
                                 </div>
                               </div>
                               )})())
@@ -2804,7 +2810,7 @@ export function Holdings() {
                             onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-8px)';p.style.transition='none'}}}
                             onClick={e=>{e.stopPropagation();removeCard(card,e)}}
                             style={{ position:'absolute', top:0, left:0, right:0, height:'25%', zIndex:20, cursor:'pointer', opacity:0, transition:'opacity .15s', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:'6px', borderRadius:'10px 10px 0 0', background:'linear-gradient(to bottom, rgba(255,255,255,.85) 0%, rgba(255,255,255,.4) 60%, transparent 100%)' }}>
-                            <span style={{ background:'#fff', border:'1px solid #E5E5EA', color:'#E03020', borderRadius:'99px', padding:'4px 12px', fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(0,0,0,.1)', pointerEvents:'none' }}>Retirer</span>
+                            <span style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', color:'#E03020', borderRadius:'99px', padding:'4px 11px', fontSize:'9px', fontWeight:600, fontFamily:'var(--font-display)', whiteSpace:'nowrap', boxShadow:'0 2px 10px rgba(0,0,0,.12), inset 0 0 0 0.5px rgba(255,255,255,0.7)', pointerEvents:'none' }}><svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>Retirer</span>
                           </div>
                         </div>
                       )

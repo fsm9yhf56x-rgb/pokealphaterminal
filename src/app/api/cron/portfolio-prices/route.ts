@@ -47,8 +47,25 @@ export async function GET(req: Request) {
       WHERE current_price IS NOT NULL
     `) as Array<{ cards_priced: number; total_value_eur: string | null }>
 
+    // Snapshot quotidien de la valeur par user (1 ligne/user/jour, idempotent)
+    const snap = (await sql`
+      INSERT INTO portfolio_value_snapshots (user_id, day, total_value, total_cost, currency)
+      SELECT user_id, CURRENT_DATE,
+             ROUND(COALESCE(SUM(current_price * COALESCE(qty,1)),0)::numeric, 2),
+             ROUND(COALESCE(SUM(buy_price * COALESCE(qty,1)),0)::numeric, 2),
+             'EUR'
+      FROM portfolio_cards
+      WHERE current_price IS NOT NULL
+      GROUP BY user_id
+      ON CONFLICT (user_id, day) DO UPDATE SET
+        total_value = EXCLUDED.total_value,
+        total_cost = EXCLUDED.total_cost
+      RETURNING user_id
+    `) as Array<{ user_id: string }>
+
     return NextResponse.json({
       ok: true,
+      snapshots: snap.length,
       updated,
       cards_priced: totals[0]?.cards_priced ?? 0,
       total_value_eur: totals[0]?.total_value_eur ? Number(totals[0].total_value_eur) : 0,

@@ -1479,31 +1479,28 @@ export function Encyclopedie() {
             </div>
           )}
           {browseMode==='bloc'&&!selBloc&&!loading&&(
-            <div className="kbloc-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'12px', marginBottom:'20px' }}>
-              {blocs.map(b=>(
-                <div key={b.name} className="enc-bloc-card" onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ background:'rgba(255,255,255,0.65)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'1px solid rgba(0,0,0,0.05)', borderRadius:14, padding:18, cursor:'pointer', transition:'all .25s cubic-bezier(.2,.85,.3,1)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.06)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#EBEBEB';e.currentTarget.style.boxShadow=''}}>
-                  {(()=>{ const logoSid = b.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'28px', maxWidth:'140px', objectFit:'contain', marginBottom:'6px' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
-                  <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'4px' }}>{b.name}</div>
-                  <div style={{ fontSize:'11px', color:'#86868B' }}>{b.sets.length} série{b.sets.length>1?'s':''} · {b.total.toLocaleString()} cartes</div>
-                  <div style={{ display:'flex', gap:'3px', marginTop:'10px', marginBottom:'8px' }}>
-                    {(()=>{
-                      const preview = allCards.filter(c=>c.era===b.name&&c.image).slice(0,5)
-                      return preview.map(c=>{
-                        const imgUrl = cardImageUrl(c, lang)
-                        return imgUrl ? <img key={c.id} src={imgUrl.includes('.')?imgUrl:imgUrl+'/low.webp'} alt="" style={{ height:'42px', width:'30px', objectFit:'cover', borderRadius:'4px', border:'1px solid #EBEBEB' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null
-                      })
-                    })()}
-                  </div>
-                  <div className="kbloc-chips" style={{ display:'flex', gap:'4px', flexWrap:'wrap' as const }}>
-                    {b.sets.slice(0,4).map(st=>{
-                      const enSet = allCards.find(c=>c.setId===st.id)?.enSetName
-                      return (<span key={st.id} style={{ fontSize:'9px', color:'#86868B', background:'rgba(0,0,0,0.04)', padding:'3px 7px', borderRadius:6, fontWeight:500 }}>{lang==='JP'&&enSet?enSet:st.name}</span>)
+            <div className="kbloc-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))', gap:'10px', marginBottom:'20px' }}>
+              {blocs.map(b=>{
+                const preview = allCards.filter(c=>c.era===b.name&&c.image).slice(0,3)
+                return (
+                <div key={b.name} className="enc-bloc-tile-v2" onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ display:'flex', alignItems:'center', gap:'14px', background:'rgba(255,255,255,0.6)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'0.5px solid rgba(0,0,0,0.05)', borderRadius:14, padding:'12px 16px', cursor:'pointer', transition:'all .25s cubic-bezier(.2,.85,.3,1)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.07), inset 0 1px 0 rgba(255,255,255,0.95)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.05)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
+                  <div style={{ display:'flex', alignItems:'center', width:'58px', height:'52px', flexShrink:0, position:'relative' }}>
+                    {preview.map((c,i)=>{
+                      const imgUrl = cardImageUrl(c, lang)
+                      const rot = [-7,0,7][i] ?? 0
+                      const left = [0,14,28][i] ?? 0
+                      return imgUrl ? <img key={c.id} src={imgUrl.includes('.')?imgUrl:imgUrl+'/low.webp'} alt="" style={{ position:'absolute', left:`${left}px`, height:'48px', width:'34px', objectFit:'cover', borderRadius:'4px', border:'1.5px solid #fff', boxShadow:'0 1px 4px rgba(0,0,0,0.12)', transform:`rotate(${rot}deg)`, zIndex:i }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null
                     })}
-                    {b.sets.length>4&&<span style={{ fontSize:'9px', color:'#AEAEB2', padding:'2px 4px' }}>+{b.sets.length-4}</span>}
                   </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{b.name}</div>
+                    <div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-mono, monospace)' }}>{b.total.toLocaleString()} cartes <span style={{ color:'#C7C7CC' }}>·</span> {b.sets.length} série{b.sets.length>1?'s':''}</div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style={{ flexShrink:0, opacity:0.3 }}><path d="M4.5 3L7.5 6L4.5 9" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
           {browseMode==='bloc'&&selBloc&&!loading&&(
@@ -1513,18 +1510,37 @@ export function Encyclopedie() {
                 {(()=>{ const logoSid = blocs.find(b=>b.name===selBloc)?.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'24px', maxWidth:'120px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
                 <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{selBloc}</span>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:'8px', marginBottom:'16px' }}>
-                <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet==='all'?'#1D1D1F':'#E5E5EA'), background:filSet==='all'?'#1D1D1F':'#fff', color:filSet==='all'?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)' }}>Toutes ({blocs.find(b=>b.name===selBloc)?.total.toLocaleString()})</div>
-                {blocs.find(b=>b.name===selBloc)?.sets.map(st=>(
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(178px,1fr))', gap:'6px', marginBottom:'16px' }}>
+                <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'8px 12px', borderRadius:'9px', border:'0.5px solid '+(filSet==='all'?'#1D1D1F':'rgba(0,0,0,0.08)'), background:filSet==='all'?'#1D1D1F':'rgba(255,255,255,0.6)', color:filSet==='all'?'#fff':'#1D1D1F', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'6px' }}>
+                  <span>Toutes</span><span style={{ fontFamily:'var(--font-mono, monospace)', fontSize:'10px', opacity:.6 }}>{blocs.find(b=>b.name===selBloc)?.total.toLocaleString()}</span>
+                </div>
+                {blocs.find(b=>b.name===selBloc)?.sets.map(st=>{
+                  const sel = filSet===st.id
+                  const ow = allCards.filter(c=>c.setId===st.id&&isOwned(c)).length
+                  const enSet = lang==='JP' ? allCards.find(c=>c.setId===st.id)?.enSetName : null
+                  const thumb = allCards.find(c=>c.setId===st.id&&c.image)
+                  const thumbUrl = thumb ? cardImageUrl(thumb, lang) : null
+                  return (
                   <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}}
-                    className='rh'
-                    style={{ padding:'10px 14px', borderRadius:'10px', border:'1px solid '+(filSet===st.id?'#1D1D1F':'#E5E5EA'), background:filSet===st.id?'#1D1D1F':'#fff', color:filSet===st.id?'#fff':'#48484A', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s', display:'flex', alignItems:'center', gap:'8px' }}
-                    onMouseEnter={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#1D1D1F';e.currentTarget.style.background='#F5F5F7';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,.06)'}}}
-                    onMouseLeave={e=>{if(filSet!==st.id){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff';e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}}>
-                    {setLogos[st.id]&&<img src={setLogos[st.id]} alt="" style={{ height:'16px', maxWidth:'60px', objectFit:'contain', opacity:filSet===st.id?.9:.5 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                    <span>{st.name}{lang==='JP'&&(()=>{const en=allCards.find(c=>c.setId===st.id)?.enSetName;return en?<span style={{ color:'#AEAEB2', fontSize:'10px', marginLeft:'4px' }}>{en}</span>:null})()}</span> <span style={{ opacity:.5 }}>({(()=>{const ow=allCards.filter(c=>c.setId===st.id&&isOwned(c)).length; return ow>0?<><span style={{ color:filSet===st.id?'#BBF7D0':'#2E9E6A' }}>{ow}</span>/{st.count}</>:st.count})()})</span>
+                    className='enc-serie-tile-v3 rh'
+                    style={{ padding:'7px 10px', borderRadius:'11px', border:'0.5px solid '+(sel?'#1D1D1F':'rgba(0,0,0,0.06)'), background:sel?'#1D1D1F':'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', color:sel?'#fff':'#1D1D1F', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', display:'flex', alignItems:'center', gap:'10px', minWidth:0, boxShadow:sel?'0 2px 10px rgba(0,0,0,0.12)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}
+                    onMouseEnter={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.92)';e.currentTarget.style.boxShadow='0 3px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1.08)'}}}
+                    onMouseLeave={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.7)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1)'}}}>
+                    <div style={{ width:'30px', height:'42px', borderRadius:'5px', overflow:'hidden', flexShrink:0, background:sel?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.04)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {thumbUrl ? <img src={thumbUrl.includes('.')?thumbUrl:thumbUrl+'/low.webp'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .25s cubic-bezier(.2,.85,.3,1)' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:'12px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.25 }}>
+                        {st.name}
+                      </div>
+                      <div style={{ fontSize:'10px', color:sel?'rgba(255,255,255,0.6)':'#86868B', marginTop:'1px' }}>
+                        {ow>0?<><span style={{ color:sel?'#86EFAC':'#2E9E6A', fontWeight:700 }}>{ow}</span><span>/{st.count} cartes</span></>:<>{st.count} cartes</>}
+                        {enSet&&<span style={{ color:sel?'rgba(255,255,255,0.35)':'#C7C7CC', marginLeft:'5px' }}>{enSet}</span>}
+                      </div>
+                    </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}

@@ -444,9 +444,9 @@ function TreemapTooltip({ active, payload }: any) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {__treemapShowPnl && <Row label="Valeur"   value={formatEUR(d.size)} />}
-        <Row label="Poids"    value={`${Number(d.pct ?? 0).toFixed(1)}%`} />
+        {__treemapShowPnl && <Row label="Poids"    value={`${Number(d.pct ?? 0).toFixed(1)}%`} />}
         <Row label="Cartes"   value={`${d.count}`} />
-        <div style={{
+        {__treemapShowPnl && <div style={{
           marginTop: 6,
           paddingTop: 8,
           borderTop: '1px solid rgba(0,0,0,0.06)',
@@ -457,7 +457,7 @@ function TreemapTooltip({ active, payload }: any) {
             valueColor={isUp ? '#1D9E75' : '#C42E1F'}
             bold
           />
-        </div>
+        </div>}
       </div>
     </div>
   )

@@ -156,14 +156,14 @@ function Row({
           fontFamily: 'var(--font-data, "Space Mono", monospace)',
           lineHeight: 1.1,
           letterSpacing: '-0.01em',
-        }}>{formatEUR(holding.value)}</div>
+        }}>{show.pnl ? formatEUR(holding.value) : (holding.rarity || holding.set_name || '—')}</div>
         <div style={{
           fontSize: 11,
           color: '#86868B',
           fontFamily: 'var(--font-data, "Space Mono", monospace)',
           marginTop: 3,
           fontWeight: 600,
-        }}>{Number(holding.weightPct ?? 0).toFixed(1)}%</div>
+        }}>{show.pnl ? `${Number(holding.weightPct ?? 0).toFixed(1)}%` : (holding.set_name || '')}</div>
       </div>
 
       {/* ROI — masqué en mode collector */}

@@ -6,6 +6,7 @@
  * collection from crashing when env vars are missing at build time.
  */
 import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth'
+import { bearer } from 'better-auth/plugins'
 import { Pool } from '@neondatabase/serverless'
 import { sendEmail } from '@/lib/email/resend'
 import ResetPasswordEmail from '@/emails/ResetPasswordEmail'
@@ -79,6 +80,10 @@ function buildAuth(): Auth<BetterAuthOptions> {
     },
 
     trustedOrigins,
+
+    // Bearer : permet l'auth par header Authorization (app mobile Expo).
+    // Le web continue en cookies, strictement inchange.
+    plugins: [bearer()],
 
     baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
     secret: process.env.BETTER_AUTH_SECRET,

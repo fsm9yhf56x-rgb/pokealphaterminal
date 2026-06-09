@@ -54,6 +54,7 @@ const PUBLIC_TABLES = new Set([
 // User-owned tables: read & write require auth, scoped to user_id
 const USER_TABLES = new Set([
   'portfolio_cards',
+  'saved_searches',
   'badges',
   'wishlist',
   'goal_targets',

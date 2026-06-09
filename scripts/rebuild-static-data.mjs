@@ -84,8 +84,14 @@ async function getTcgdexPattern(lang, setId) {
 
 async function exportLang(lang) {
   console.log(`\n━━━ ${lang} ━━━`)
-  const sets = await fetchAll('tcg_sets', { lang })
-  const cards = await fetchAll('tcg_cards', { lang })
+  let sets = await fetchAll('tcg_sets', { lang })
+  let cards = await fetchAll('tcg_cards', { lang })
+  // JP: ne garder que PPT (aopkm/artofpkm deprecie, remplace par PPT)
+  if (lang === 'JP') {
+    sets = sets.filter(s => s.source === 'ppt')
+    cards = cards.filter(c => c.source === 'ppt')
+    console.log(`  JP: filtre source=ppt -> ${sets.length} sets, ${cards.length} cards`)
+  }
   console.log(`  Loaded ${sets.length} sets, ${cards.length} cards`)
   
   // Discover TCGdex patterns for all tcgdex-source sets that have any has_image cards
@@ -109,8 +115,14 @@ async function exportLang(lang) {
     
     let img = ''
     
-    // Priority 1: explicit image_url
-    if (c.image_url) {
+    // JP PPT: laisser img vide -> l'app reconstruit l'URL R2 via getCardImageUrl
+    // (jp/{slug}/{localId}.jpg). NE PAS mettre l'image_url TCGPlayer CDN (souvent 403).
+    if (lang === 'JP' && c.source === 'ppt') {
+      img = ''  // has_image gere cote client par le fallback getCardImageUrl
+      if (c.has_image) imgFromUrl++; else imgMissing++
+    }
+    // Priority 1: explicit image_url (EN/FR ou autres sources)
+    else if (c.image_url) {
       img = c.image_url
       imgFromUrl++
     }

@@ -60,6 +60,8 @@ function arg(name, def = null) {
   return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : def
 }
 const onlySet = arg('set')
+const has = (n) => process.argv.includes('--' + n)
+const rotateMode = has('rotate')  // rotation maintenance: retraite les sets au fetched_at le plus ancien
 const language = arg('language', 'english')
 const dryRun = args.includes('--dry-run')
 const jobId = arg('job-id')              // ex: 'graded_ppt_en_full_coverage'
@@ -286,7 +288,33 @@ async function upsertCard(pool, pptCard, lang) {
   let SETS, job, progress, done
   const startedAt = Date.now()
 
-  if (useJobMode) {
+  if (rotateMode) {
+    // ─── MODE ROTATION (maintenance perpetuelle) ───────────────────────────
+    // Retraite les sets dont les prix sont les plus anciens (fetched_at ASC),
+    // EN+JP confondus. Le upsert remet fetched_at=now() => rotation naturelle.
+    console.log(`\n=== sync-graded-ppt (ROTATION MODE) ===`)
+    const rot = await pool.query(
+      `SELECT set_name, language
+       FROM graded_prices_ppt
+       GROUP BY set_name, language
+       ORDER BY MIN(fetched_at) ASC
+       LIMIT $1`,
+      [batchSize]
+    )
+    SETS = rot.rows.map(r => r.set_name)
+    // En rotation, la langue est portee par chaque set: on resout par set.
+    // On stocke un map set_name -> language pour le fetch.
+    global.__rotLangBySet = {}
+    for (const r of rot.rows) global.__rotLangBySet[r.set_name] = r.language
+    console.log(`Sets ce run (rotation) : ${SETS.length} (les plus anciens)`)
+    if (rot.rows.length) {
+      const oldest = rot.rows[0]
+      console.log(`Plus ancien            : ${oldest.set_name} (${oldest.language})`)
+    }
+    console.log()
+    done = new Set()
+    progress = { done: [], errors: [] }
+  } else if (useJobMode) {
     console.log(`\n=== sync-graded-ppt (JOB MODE: ${jobId}) ===`)
     job = await loadJobFromDb(pool, jobId)
     if (job.status === 'completed') {
@@ -328,7 +356,8 @@ async function upsertCard(pool, pptCard, lang) {
       }
 
       const t0 = Date.now()
-      const res = await fetchSet(set, language)
+      const fetchLang = rotateMode ? (global.__rotLangBySet?.[set] || language) : language
+      const res = await fetchSet(set, fetchLang)
       lastRemaining = res.remaining || lastRemaining
 
       if (!res.ok) {
@@ -367,7 +396,7 @@ async function upsertCard(pool, pptCard, lang) {
         let upserted = 0
         for (const c of cards) {
           try {
-            await upsertCard(pool, c, language)
+            await upsertCard(pool, c, rotateMode ? (global.__rotLangBySet?.[set] || language) : language)
             upserted++
           } catch (e) {
             progress.errors.push({ set, card: c.name, error: String(e.message).slice(0, 200) })

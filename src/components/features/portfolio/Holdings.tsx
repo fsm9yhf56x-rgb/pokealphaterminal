@@ -156,36 +156,49 @@ export function Holdings() {
   const [binderPage,  setBinderPage]  = useState(0)
   const [portfolio,   setPortfolio]   = useState<CardItem[]>([])
   const [portfolioLoaded, setPortfolioLoaded] = useState(false)
+  // ── Chargement portfolio : serveur si connecte, local sinon ──
+  const lastFetchAt = useRef(0)
+  const reloadPortfolio = useRef<() => void>(() => {})
+  reloadPortfolio.current = () => {
+    if (!user) return
+    lastFetchAt.current = Date.now()
+    supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          const mapped: CardItem[] = data.map((c: any) => ({
+            id: c.id, name: c.name, set: c.set_name || '', year: 0,
+            number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
+            lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
+            condition: c.condition || 'Raw', graded: c.graded || false,
+            buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
+            qty: c.qty || 1,
+            image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
+            setId: c.set_id || undefined, favorite: c.is_favorite || false,
+            showcasePos: c.showcase_position ?? undefined,
+            notes: c.notes || undefined,
+          }))
+          const visible = mapped.filter(c => !deletedIds.current.has(c.id))
+          // Valeurs serveur = nouvelle reference : vider les signatures pour
+          // que l'effect diff re-seede sans pousser d'UPDATE parasite.
+          lastSynced.current.clear()
+          setPortfolio(visible)
+        } else {
+          lastSynced.current.clear()
+          setPortfolio([])
+        }
+        setPortfolioLoaded(true)
+      })
+  }
+
   useEffect(() => {
     if (authLoading) return
     if (user) {
-      // User connecté → Supabase SEULE source. Vider le local pour éviter les ghosts.
+      // User connecte → Neon SEULE source. Vider le local pour eviter les ghosts.
       try { localStorage.removeItem('pka_portfolio') } catch {}
       dbSet('portfolio', [])
-      supabase.from('portfolio_cards').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-        .then(({ data, error }) => {
-          if (!error && data && data.length > 0) {
-            const mapped: CardItem[] = data.map((c: any) => ({
-              id: c.id, name: c.name, set: c.set_name || '', year: 0,
-              number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
-              lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
-              condition: c.condition || 'Raw', graded: c.graded || false,
-              buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
-              qty: c.qty || 1,
-              image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
-              setId: c.set_id || undefined, favorite: c.is_favorite || false,
-              showcasePos: c.showcase_position ?? undefined,
-              notes: c.notes || undefined,
-            }))
-            const visible = mapped.filter(c => !deletedIds.current.has(c.id))
-            setPortfolio(visible)
-          } else {
-            setPortfolio([])
-          }
-          setPortfolioLoaded(true)
-        })
+      reloadPortfolio.current()
     } else {
-      // Non connecté → IndexedDB puis localStorage
+      // Non connecte → IndexedDB puis localStorage
       dbGet<CardItem[]>('portfolio').then(data => {
         if (data && data.length > 0) {
           setPortfolio(data)
@@ -205,6 +218,18 @@ export function Holdings() {
       })
     }
   }, [user?.id, authLoading])
+
+  // Refetch quand l'onglet redevient visible (throttle 30s pour epargner Neon)
+  useEffect(() => {
+    if (!user) return
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastFetchAt.current < 30_000) return
+      reloadPortfolio.current()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [user?.id])
   const [localShowcase, setLocalShowcase] = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })

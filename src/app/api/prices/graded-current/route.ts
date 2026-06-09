@@ -56,12 +56,27 @@ export async function GET(req: Request) {
     const tcgCardId = searchParams.get('tcg_card_id')
     let setSlug = searchParams.get('set_slug')
     const cardNumber = searchParams.get('card_number')
+    const isJp = !!(tcgCardId && /^(jp|ja)-/.test(tcgCardId)) || !!(setSlug && /^jp-/.test(setSlug))
 
     let resolvedSetName: string | null = null
     let localIdForNumber: string | null = null
     let edition: 'unlimited' | 'shadowless' | '1st' = 'unlimited'
 
-    if (tcgCardId) {
+    // ── Branche JP: id = jp-{tcgPlayerId}, pas de slug dans l'id ──
+    // On resout set_name + numero via tcg_cards (qui contient set_id JP + local_id).
+    if (tcgCardId && /^(jp|ja)-/.test(tcgCardId)) {
+      const jpCard = await sql`
+        SELECT ts.name AS set_name, c.local_id
+        FROM tcg_cards c
+        JOIN tcg_sets ts ON ts.id = c.set_id
+        WHERE c.id = ${tcgCardId} AND c.lang = 'JP'
+        LIMIT 1
+      `
+      if (jpCard.length) {
+        resolvedSetName = jpCard[0].set_name
+        localIdForNumber = jpCard[0].local_id
+      }
+    } else if (tcgCardId) {
       const stripped = tcgCardId.replace(/^(en|fr|jp|ja)-/, '')
       const parts = stripped.split('-')
       localIdForNumber = parts[parts.length - 1]
@@ -128,7 +143,7 @@ export async function GET(req: Request) {
         FROM graded_prices_ppt
         WHERE set_name = ${sn}
           AND (card_number LIKE ${p1} OR card_number LIKE ${p2} OR card_number LIKE ${p3})
-        ORDER BY language = 'english' DESC
+        ORDER BY language = ${isJp ? 'japanese' : 'english'} DESC
         LIMIT 1
       `
       if (rows.length) { row = rows[0]; matchedSetName = sn; break }

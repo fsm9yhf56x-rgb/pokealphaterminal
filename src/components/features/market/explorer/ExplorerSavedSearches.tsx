@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { ExplorerFilters } from '@/lib/useExplorerSearch'
 import { GlassButton } from '@/components/ui/GlassButton'
+import { useAuth } from '@/lib/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const LS_KEY = 'pka_saved_searches'
 
@@ -15,7 +17,8 @@ interface SavedSearch {
 
 /**
  * Saved searches : sauvegarder/charger des combinaisons de filtres.
- * Stocké en localStorage (pas besoin de BDD pour V1).
+ * Connecte: Neon (cross-device). Invite: localStorage.
+ * Migration douce: les recherches locales montent en base a la 1re connexion.
  */
 export function ExplorerSavedSearches({
   currentFilters, onLoad,
@@ -24,18 +27,42 @@ export function ExplorerSavedSearches({
   onLoad: (filters: ExplorerFilters) => void
 }) {
   const [saved, setSaved] = useState<SavedSearch[]>([])
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [namingMode, setNamingMode] = useState(false)
   const [newName, setNewName] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  /* Load from localStorage at mount */
+  /* Load : Neon si connecte (+ migration douce du localStorage), sinon localStorage */
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY)
-      if (raw) setSaved(JSON.parse(raw))
-    } catch {}
-  }, [])
+    if (!user) {
+      try {
+        const raw = localStorage.getItem(LS_KEY)
+        if (raw) setSaved(JSON.parse(raw))
+      } catch {}
+      return
+    }
+    const load = async () => {
+      // Migration douce : recherches locales -> base, puis nettoyage
+      try {
+        const raw = localStorage.getItem(LS_KEY)
+        if (raw) {
+          const local: SavedSearch[] = JSON.parse(raw)
+          if (local.length > 0) {
+            await supabase.from('saved_searches').upsert(
+              local.map(it => ({ id: it.id, user_id: user.id, name: it.name, filters: it.filters, created_at: it.created_at })),
+              { onConflict: 'id', ignoreDuplicates: true },
+            )
+          }
+          localStorage.removeItem(LS_KEY)
+        }
+      } catch {}
+      const { data } = await supabase.from('saved_searches').select('*')
+        .eq('user_id', user.id).order('created_at', { ascending: false })
+      if (data) setSaved(data.map((r: any) => ({ id: r.id, name: r.name, filters: r.filters, created_at: r.created_at })))
+    }
+    load()
+  }, [user?.id])
 
   /* Click outside to close */
   useEffect(() => {
@@ -52,7 +79,28 @@ export function ExplorerSavedSearches({
 
   const persist = (items: SavedSearch[]) => {
     setSaved(items)
-    try { localStorage.setItem(LS_KEY, JSON.stringify(items)) } catch {}
+    if (!user) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(items)) } catch {}
+    }
+  }
+
+  const persistAdd = (item: SavedSearch) => {
+    if (!user) return
+    supabase.from('saved_searches').insert({
+      id: item.id, user_id: user.id, name: item.name,
+      filters: item.filters, created_at: item.created_at,
+    }).then(({ error }: any) => {
+      if (error) {
+        console.error('[KC SEARCH] insert failed:', error)
+        setSaved(prev => prev.filter(it => it.id !== item.id))
+      }
+    })
+  }
+
+  const persistDelete = (id: string) => {
+    if (!user) return
+    supabase.from('saved_searches').delete().eq('id', id)
+      .then(({ error }: any) => { if (error) console.error('[KC SEARCH] delete failed:', error) })
   }
 
   const hasActiveFilters =
@@ -73,6 +121,7 @@ export function ExplorerSavedSearches({
       created_at: new Date().toISOString(),
     }
     persist([newItem, ...saved])
+    persistAdd(newItem)
     setNewName('')
     setNamingMode(false)
   }

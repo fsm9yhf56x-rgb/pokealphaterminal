@@ -431,6 +431,10 @@ export function Holdings() {
   }
 
   const deletedIds = useRef<Set<string>>(new Set())
+  // Signature des champs user-edites : seuls leurs changements declenchent un UPDATE.
+  // curPrice exclu volontairement (le cron portfolio-prices gere les prix serveur).
+  const lastSynced = useRef<Map<string,string>>(new Map())
+  const syncSig = (c: CardItem) => [c.qty, c.buyPrice, c.favorite?1:0, c.condition, c.graded?1:0, cleanImageUrl(c.image)||''].join('|')
   const saveTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   useEffect(()=>{
     if (!portfolioLoaded || authLoading) return
@@ -470,18 +474,21 @@ export function Holdings() {
             }
           })
         }
-        // Update existing cards (skip recently deleted)
+        // Update UNIQUEMENT les cartes dont les champs user-edites ont change
         const existing = portfolio.filter(c => !c.id.startsWith('u') && !deletedIds.current.has(c.id))
-        if (existing.length > 0) {
-          existing.forEach(card => {
-            supabase.from('portfolio_cards').update({
-              qty: card.qty, buy_price: card.buyPrice || null,
-              current_price: card.curPrice || null, is_favorite: card.favorite || false,
-              condition: card.condition || 'NM', graded: card.graded || false,
-              image_url: cleanImageUrl(card.image) || null, updated_at: new Date().toISOString(),
-            }).eq('id', card.id)
-          })
-        }
+        existing.forEach(card => {
+          const sig = syncSig(card)
+          const prev = lastSynced.current.get(card.id)
+          lastSynced.current.set(card.id, sig)
+          // jamais vue = vient d'etre chargee/inseree (deja a jour en base) ; identique = rien a pousser
+          if (prev === undefined || prev === sig) return
+          supabase.from('portfolio_cards').update({
+            qty: card.qty, buy_price: card.buyPrice || null,
+            is_favorite: card.favorite || false,
+            condition: card.condition || 'NM', graded: card.graded || false,
+            image_url: cleanImageUrl(card.image) || null, updated_at: new Date().toISOString(),
+          }).eq('id', card.id)
+        })
       }
     }, 500)
   }, [portfolio, portfolioLoaded, user?.id])

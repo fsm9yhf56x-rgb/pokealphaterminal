@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { SNOW, FONT } from '@/lib/design/snow'
 import { SnowButton } from '@/components/ui/snow'
+import { useAuth } from '@/lib/useAuth'
+import { supabase } from '@/lib/supabase'
 
 type Lang = 'EN'|'FR'|'JP'
 type ProductType = 'booster'|'display'|'etb'|'bundle'
@@ -89,6 +91,24 @@ export function Scelles() {
   const [visible, setVisible] = useState(CHUNK)
   const [selId, setSelId] = useState<string|null>(null)
   const [portfolio, setPortfolio] = useState<PortfolioCard[]>([])
+  const { user } = useAuth()
+
+  // Connecte -> Neon = source de verite (cross-device)
+  useEffect(() => {
+    if (!user) return
+    supabase.from('portfolio_cards').select('*').eq('user_id', user.id)
+      .then(({ data, error }: any) => {
+        if (error || !data) return
+        setPortfolio(data.map((c: any) => ({
+          id: c.id, name: c.name, set: c.set_name || '', setId: c.set_id || undefined,
+          number: c.card_number || '', rarity: c.rarity || '',
+          type: c.card_type || '', lang: c.lang || 'FR',
+          condition: c.condition || 'Raw', graded: c.graded || false,
+          buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
+          qty: c.qty || 1, year: 0, image: c.image_url || undefined,
+        })))
+      })
+  }, [user?.id])
   const [groupBySet, setGroupBySet] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -528,16 +548,35 @@ export function Scelles() {
                 })()}
                 <SnowButton fullWidth variant="primary" onClick={()=>{
                     const card: PortfolioCard = {
-                      id:'sealed_'+Date.now(), name:selProduct.name, set:selProduct.setName,
+                      id:crypto.randomUUID(), name:selProduct.name, set:selProduct.setName,
                       setId:selProduct.setId, number:'SEALED', rarity:'Sealed',
                       type:selProduct.type, lang:'FR', condition:'Sealed', graded:false,
                       buyPrice:0, curPrice:0, qty:1, year:selProduct.year,
                       image:selProduct.logo||undefined
                     }
-                    const prev = JSON.parse(localStorage.getItem('portfolio')||'[]')
-                    prev.push(card)
-                    localStorage.setItem('portfolio', JSON.stringify(prev))
-                    setPortfolio(prev)
+                    setPortfolio(p=>[...p, card])
+                    if (user) {
+                      supabase.from('portfolio_cards').insert({
+                        id: card.id, user_id: user.id, name: card.name,
+                        set_name: card.set || null, set_id: card.setId || null,
+                        card_number: card.number, lang: card.lang,
+                        rarity: card.rarity, card_type: card.type,
+                        condition: card.condition, graded: false,
+                        qty: 1, buy_price: null, current_price: null,
+                        image_url: card.image || null,
+                      }).then(({ error }: any) => {
+                        if (error) {
+                          console.error('[KC SEALED] insert failed:', error)
+                          setPortfolio(p=>p.filter(c=>c.id!==card.id))
+                        }
+                      })
+                    } else {
+                      try {
+                        const prev = JSON.parse(localStorage.getItem('portfolio')||'[]')
+                        prev.push(card)
+                        localStorage.setItem('portfolio', JSON.stringify(prev))
+                      } catch {}
+                    }
                   }}>
                   + Ajouter au portfolio
                 </SnowButton>

@@ -111,6 +111,7 @@ export function Allocation() {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <Header collector={isCollector} />
+      {isCollector && <CollectorHero agg={agg} />}
       {!isCollector && <AllocConcentration agg={agg} />}
       {!isCollector && <AllocAlerts agg={agg} />}
       <AllocTreemap agg={agg} />
@@ -554,6 +555,35 @@ function computeAlerts(ctx: {
 }
 
 /* ── UI helpers ──────────────────────────────── */
+
+function CollectorHero({ agg }: { agg: AllocAggregates }) {
+  const pieces = agg.cardsCount
+  const series = agg.treemapData.length
+  const eraTop = agg.byEra[0]
+  const rarTop = agg.byRarity[0]
+  const eraStrong = eraTop && eraTop.pct >= 60
+  const phrase =
+    `Sacrée collec\u00a0! ${pieces} pièce${pieces>1?'s':''} sur ${series} série${series>1?'s':''}` +
+    (eraTop ? (eraStrong ? `, à fond sur le ${eraTop.label}` : `, du ${eraTop.label} et plus encore`) : '') +
+    (rarTop ? ` — et une belle pile de ${rarTop.label}.` : '.')
+  return (
+    <div style={{
+      padding: '14px 18px',
+      background: 'rgba(255,255,255,0.55)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      borderRadius: 14,
+      boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,0.03)',
+      fontFamily: 'var(--font-sora, Sora, sans-serif)',
+      fontSize: 14,
+      lineHeight: 1.55,
+      color: '#1D1D1F',
+      fontWeight: 500,
+    }}>
+      {phrase}
+    </div>
+  )
+}
 
 function Header({ collector }: { collector?: boolean }) {
   return (

@@ -8,6 +8,7 @@ import { usePersona } from '@/lib/usePersona'
  * Vue "qui pèse le plus" avec barre de progression visuelle.
  */
 export function AllocTopHoldings({ agg }: { agg: AllocAggregates }) {
+  const { isCollector } = usePersona()
   if (agg.topHoldings.length === 0) return null
 
   // Max weight for normalizing the bar widths
@@ -16,7 +17,7 @@ export function AllocTopHoldings({ agg }: { agg: AllocAggregates }) {
   return (
     <div>
       <SectionTitle>
-        Top {agg.topHoldings.length} cartes par poids
+        {isCollector ? 'Mes plus belles pièces' : `Top ${agg.topHoldings.length} cartes par poids`}
       </SectionTitle>
 
       <div style={{
@@ -48,7 +49,7 @@ export function AllocTopHoldings({ agg }: { agg: AllocAggregates }) {
         textAlign: 'right' as const,
       }}>
         {agg.topHoldings.length < agg.cardsCount
-          ? `Affichage du top ${agg.topHoldings.length} sur ${agg.cardsCount} cartes`
+          ? `${agg.topHoldings.length} pièces mises en avant sur ${agg.cardsCount}`
           : `${agg.cardsCount} carte${agg.cardsCount > 1 ? 's' : ''} au total`}
       </div>
     </div>

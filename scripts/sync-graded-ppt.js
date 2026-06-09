@@ -414,7 +414,11 @@ async function upsertCard(pool, pptCard, lang) {
         break
       }
 
-      await sleep(THROTTLE_MS)
+      // Pause ADAPTATIVE selon taille du set: PPT decremente le quota minute (60/min)
+      // proportionnellement a la charge (gros set 840c = ~11 unites minute, petit 92c = ~1).
+      // ~70ms/carte => set de 840 ~59s, set de 100 ~7s. Evite le 429 sur les gros sets.
+      const adaptiveMs = Math.max(THROTTLE_MS, cards.length * 70)
+      await sleep(adaptiveMs)
     }
 
     console.log(`\n=== RÉCAP ===`)

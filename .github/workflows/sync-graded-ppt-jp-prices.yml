@@ -1,0 +1,68 @@
+name: Sync Graded PPT JP prices
+# Remplit graded_prices_ppt avec les PRIX gradels JP (raw par etat + grades + historique).
+# Distinct de l'import referentiel (sync-graded-ppt-jp.yml = cartes+images).
+# Job sync_progress 'graded_ppt_jp_full' (415 sets pending), auto-resume.
+# 3 crons/jour (budget focus JP 20k/j), throttle script ~2.5s/carte = 24 req/min < 60 limite.
+# Stop natif quand status='completed'.
+on:
+  schedule:
+    - cron: '30 0 * * *'    # 00:30 UTC
+    - cron: '30 8 * * *'    # 08:30 UTC
+    - cron: '30 16 * * *'   # 16:30 UTC
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: 'Nombre de sets a traiter par run (default 25)'
+        default: '25'
+        required: false
+jobs:
+  sync:
+    name: Sync graded prices PPT JP
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: sync-graded-ppt-jp-prices
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Check job status before run
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node -e "
+            const { neon } = require('@neondatabase/serverless');
+            const sql = neon(process.env.DATABASE_URL);
+            (async () => {
+              const r = await sql\`SELECT status, items_done, items_total FROM sync_progress WHERE job_id='graded_ppt_jp_full'\`;
+              if (!r[0]) { console.log('Job introuvable. Exit.'); process.exit(0); }
+              console.log('Status:', r[0].status, '|', r[0].items_done, '/', r[0].items_total, 'sets');
+              if (r[0].status === 'completed') { console.log('Job DEJA COMPLETED. Skip.'); process.exit(0); }
+            })();
+          "
+      - name: Run sync batch JP
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKEMON_PRICE_TRACKER_API_KEY: ${{ secrets.POKEMON_PRICE_TRACKER_API_KEY }}
+        run: |
+          node scripts/sync-graded-ppt.js \
+            --job-id graded_ppt_jp_full \
+            --language japanese \
+            --batch-size ${{ github.event.inputs.batch_size || '25' }}
+      - name: Status summary
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node -e "
+            const { neon } = require('@neondatabase/serverless');
+            const sql = neon(process.env.DATABASE_URL);
+            (async () => {
+              const r = await sql\`SELECT status, items_done, items_total, jsonb_array_length(items_pending) AS pending FROM sync_progress WHERE job_id='graded_ppt_jp_full'\`;
+              console.log(JSON.stringify(r[0], null, 2));
+            })();
+          "

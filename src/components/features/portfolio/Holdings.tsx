@@ -227,7 +227,7 @@ export function Holdings() {
   }, [spotCard])
   const [editQty,     setEditQty]     = useState<number|null>(null)
   const [cardZoom,    setCardZoom]    = useState(false)
-  const [favs,        setFavs]        = useState<Set<string>>(new Set())
+  const favs = new Set(portfolio.filter(c=>c.favorite).map(c=>c.id))
   const [shareOpen,   setShareOpen]   = useState(false)
   const [shareCtx,    setShareCtx]    = useState<'portfolio'|'card'|'wrapped'|'showcase'>('portfolio')
   const [shareCard,   setShareCard]   = useState<CardItem|null>(null)
@@ -966,7 +966,19 @@ export function Holdings() {
   }
   const toggleFav = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
-    setFavs(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n})
+    const card = portfolio.find(c=>c.id===id)
+    if (!card) return
+    const nextFav = !card.favorite
+    setPortfolio(prev=>prev.map(c=>c.id===id?{...c,favorite:nextFav}:c))
+    if (user && !id.startsWith('u')) {
+      supabase.from('portfolio_cards').update({ is_favorite: nextFav }).eq('id', id)
+        .then(({ error }: any) => {
+          if (error) {
+            console.error('[KC FAV] update failed:', error)
+            setPortfolio(prev=>prev.map(c=>c.id===id?{...c,favorite:!nextFav}:c))
+          }
+        })
+    }
   }
   const removeCard = (card:CardItem, e:React.MouseEvent) => {
     e.stopPropagation()

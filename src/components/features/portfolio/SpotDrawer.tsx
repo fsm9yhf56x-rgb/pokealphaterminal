@@ -32,7 +32,6 @@ interface SpotDrawerProps {
   setShareOpen: (b: boolean) => void
   showToast: (msg: string) => void
   toggleFav: (id: string, e: React.MouseEvent) => void
-  triggerUpload: (id: string) => void
 }
 
 function SpotDrawerComponent(props: SpotDrawerProps) {
@@ -42,7 +41,7 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
     tiltCard, resetCard,
     setSpotCard, setEditQty, setCardZoom,
     setPortfolio, setShareCtx, setShareCard, setShareOpen,
-    showToast, toggleFav, triggerUpload,
+    showToast, toggleFav,
   } = props
 
   const isHolo = HOLO_RARITIES.includes(spotCard.rarity)
@@ -107,9 +106,6 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
                     <div style={{ width:'48px', height:'48px', borderRadius:'14px', background:'#F0F0F5', display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     </div>
-                    <button onClick={()=>triggerUpload(spotCard.id)} style={{ padding:'6px 14px', borderRadius:'999px', background:'linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%)', backdropFilter:'blur(18px) saturate(190%)', WebkitBackdropFilter:'blur(18px) saturate(190%)', color:'#1D1D1F', fontSize:'10px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', border:'0.5px solid rgba(255,255,255,0.6)', boxShadow:'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
-                      Ajouter une photo
-                    </button>
                   </div>
                 )}
               </div>

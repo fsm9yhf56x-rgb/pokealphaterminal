@@ -34,7 +34,7 @@ import { SoonModal, SoonBadge } from '@/components/ui/snow'
 type CardItem = {
   id: string; name: string; set: string; year: number; number: string
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
-  condition: string; graded: boolean; imageStatus?: 'pending'|'approved'|'rejected'
+  condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
   psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number
   image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
@@ -258,13 +258,6 @@ export function Holdings() {
   const [uploadCardId, setUploadCardId] = useState<string|null>(null)
   const ghostClickRef = useRef(false)
   const masterGlitterRef = useRef<HTMLDivElement|null>(null)
-  const uploadRef = useRef<HTMLInputElement|null>(null)
-  const uploadTargetId = useRef<string|null>(null)
-  const [uploadModal, setUploadModal] = useState<{
-    open:boolean; preview:string|null;
-    checks:{label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[];
-    done:boolean; success:boolean
-  }>({ open:false, preview:null, checks:[], done:false, success:false })
   const [scannerOpen,  setScannerOpen]  = useState(false)
   const [scannerSoonOpen, setScannerSoonOpen] = useState(false)
   // ── Prix via hook centralisé useCardPrices ──
@@ -1217,109 +1210,6 @@ export function Holdings() {
       setLocalShowcase(prev=>prev.filter(c=>c.id!==id))
     }
   }
-  const triggerUpload = (cardId: string) => {
-    uploadTargetId.current = cardId
-    uploadRef.current?.click()
-  }
-  const runUploadChecks = async (file: File, cardId: string) => {
-    const preview = URL.createObjectURL(file)
-    const checks: {label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[] = [
-      { label:'Format du fichier', status:'pending' },
-      { label:'Taille du fichier', status:'pending' },
-      { label:'Dimensions', status:'pending' },
-      { label:'Orientation portrait', status:'pending' },
-      { label:'Ratio carte standard', status:'pending' },
-      { label:'Résolution minimale', status:'pending' },
-      { label:'Cadrage des bords', status:'pending' },
-    ]
-    setUploadModal({ open:true, preview, checks:[...checks], done:false, success:false })
-    const delay = (ms:number) => new Promise(r=>setTimeout(r,ms))
-    const upd = (i:number, st:'checking'|'pass'|'fail', detail?:string) => {
-      checks[i] = { ...checks[i], status:st, detail }
-      setUploadModal(p=>({ ...p, checks:[...checks] }))
-    }
-    let ok = true
-    upd(0,'checking'); await delay(400)
-    if(['image/jpeg','image/png','image/webp'].includes(file.type)){
-      upd(0,'pass',file.type.replace('image/','').toUpperCase())
-    } else { upd(0,'fail','Format: '+file.type); ok=false }
-    upd(1,'checking'); await delay(350)
-    const mb = file.size/1024/1024
-    if(mb<=10){ upd(1,'pass',mb.toFixed(1)+' Mo') }
-    else { upd(1,'fail',mb.toFixed(1)+' Mo (max 10)'); ok=false }
-    upd(2,'checking')
-    const img = new Image()
-    try {
-      await new Promise<void>((res,rej)=>{ img.onload=()=>res(); img.onerror=()=>rej(); img.src=preview })
-      await delay(400)
-      if(img.width>=500&&img.height>=700){ upd(2,'pass',img.width+'\u00d7'+img.height+' px') }
-      else { upd(2,'fail',img.width+'\u00d7'+img.height+' px (min 500\u00d7700)'); ok=false }
-      upd(3,'checking'); await delay(300)
-      if(img.height>=img.width){ upd(3,'pass','Portrait') }
-      else { upd(3,'fail','Paysage detecte'); ok=false }
-
-      // 5. Ratio carte
-      upd(4,'checking'); await delay(350)
-      const ratio = img.width / img.height
-      if(ratio >= 0.63 && ratio <= 0.80){ upd(4,'pass','Ratio ' + ratio.toFixed(3)) }
-      else { upd(4,'fail','Ratio ' + ratio.toFixed(3) + ' (attendu 0.63-0.80)'); ok=false }
-
-      // 6. Resolution
-      upd(5,'checking'); await delay(350)
-      if(img.width >= 600 && img.height >= 840){ upd(5,'pass',img.width+'x'+img.height+' px') }
-      else { upd(5,'fail',img.width+'x'+img.height+' px (min 600x840)'); ok=false }
-
-      // 7. Cadrage des bords — consistance couleur le long des 4 bords
-      upd(6,'checking'); await delay(400)
-      try {
-        const cv = document.createElement('canvas')
-        cv.width = img.width; cv.height = img.height
-        const ctx = cv.getContext('2d')!
-        ctx.drawImage(img, 0, 0)
-        // Echantillonner une bande de 3px le long de chaque bord
-        const bw = 3
-        const topStrip = ctx.getImageData(0, 0, img.width, bw)
-        const botStrip = ctx.getImageData(0, img.height - bw, img.width, bw)
-        const leftStrip = ctx.getImageData(0, 0, bw, img.height)
-        const rightStrip = ctx.getImageData(img.width - bw, 0, bw, img.height)
-        // Calculer la variance de couleur pour chaque bord
-        const calcVariance = (data: Uint8ClampedArray) => {
-          let sumR=0,sumG=0,sumB=0
-          const n = data.length / 4
-          for(let i=0;i<data.length;i+=4){ sumR+=data[i]; sumG+=data[i+1]; sumB+=data[i+2] }
-          const avgR=sumR/n, avgG=sumG/n, avgB=sumB/n
-          let varSum=0
-          for(let i=0;i<data.length;i+=4){
-            varSum+=Math.pow(data[i]-avgR,2)+Math.pow(data[i+1]-avgG,2)+Math.pow(data[i+2]-avgB,2)
-          }
-          return Math.sqrt(varSum/(n*3))
-        }
-        const variances = [
-          calcVariance(topStrip.data),
-          calcVariance(botStrip.data),
-          calcVariance(leftStrip.data),
-          calcVariance(rightStrip.data),
-        ]
-        const avgVar = variances.reduce((a,b)=>a+b,0) / 4
-        // Une carte a des bords trés uniformes (variance < 35)
-        // Une photo random a des bords trés variés (variance > 50)
-        if (avgVar < 40) { upd(6,'pass','Bords uniformes (var: '+avgVar.toFixed(0)+')') }
-        else { upd(6,'fail','Bords irréguliers (var: '+avgVar.toFixed(0)+') \u2014 pas une carte recadrée'); ok=false }
-      } catch { upd(6,'fail','Analyse impossible'); ok=false }
-
-        } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); upd(4,'fail','\u2014'); upd(5,'fail','\u2014'); upd(6,'fail','\u2014'); ok=false }
-    await delay(300)
-    if(ok){
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string
-        setPortfolio(prev=>prev.map(c=>c.id===cardId?{...c,image:dataUrl,imageStatus:'pending' as const}:c))
-        if(spotCard?.id===cardId) setSpotCard(prev=>prev?{...prev,image:dataUrl,imageStatus:'pending' as const}:null)
-        setUploadModal(p=>({...p,done:true,success:true}))
-      }
-      reader.readAsDataURL(file)
-    } else { setUploadModal(p=>({...p,done:true,success:false})) }
-  }
   const canAdd = !!(addForm.name&&addForm.set)
 
   return (
@@ -1705,7 +1595,6 @@ export function Holdings() {
             setShareOpen={setShareOpen}
             showToast={showToast}
             toggleFav={toggleFav}
-            triggerUpload={triggerUpload}
           />
         )}
 
@@ -2697,7 +2586,7 @@ export function Holdings() {
                                 )}
                                 {inFullSet&&card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
-                                  {card.imageStatus==='pending'&&<div style={{ position:'absolute', top:'4px', left:'4px', zIndex:10, background:'rgba(255,165,0,.9)', color:'#fff', fontSize:'7px', fontWeight:700, padding:'2px 5px', borderRadius:'3px', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>EN ATTENTE</div>}
+                                  
                                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                     {inFullSet&&card.graded&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 5px', borderRadius:'4px', background:gradeBg, color:gradeFg, fontFamily:'var(--font-data)', letterSpacing:'.02em', flexShrink:0, backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none', position:'relative', overflow:'hidden' }}>{gn>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{card.condition}</span></span>}
@@ -2868,10 +2757,6 @@ export function Holdings() {
                               <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec}15,${ec}06)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', position:'relative' }}>
                                 <div style={{ position:'absolute', width:'60%', height:'60%', borderRadius:'50%', background:eg, filter:'blur(18px)', opacity:.5 }}/>
                                 <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
-                                <button onClick={e=>{e.stopPropagation();triggerUpload(card.id)}} style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,.85)', border:'1px solid rgba(0,0,0,.08)', borderRadius:'6px', padding:'3px 8px', fontSize:'8px', fontWeight:600, color:'#48484A', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'3px' }}>
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                  Photo
-                                </button>
                               </div>
                             )}
                             {/* Gradient bas pour lire les infos */}
@@ -3221,59 +3106,6 @@ export function Holdings() {
         />
 
       </div>
-      {/* ── UPLOAD GUIDELINES ── */}
-      {/* ── UPLOAD ── */}
-      <input ref={el=>{uploadRef.current=el}} type="file" accept="image/jpeg,image/png,image/webp" style={{ display:'none' }}
-        onChange={e=>{ const fi=e.target.files?.[0]; if(fi&&uploadTargetId.current) runUploadChecks(fi,uploadTargetId.current); if(uploadRef.current) uploadRef.current.value='' }}/>
-      {uploadModal.open&&(
-        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(4px)' }}
-          onClick={()=>{if(uploadModal.done)setUploadModal(p=>({...p,open:false}))}}>
-          <div style={{ maxWidth:'380px',width:'100%',background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.18)',overflow:'hidden',animation:'fadeUp .25s ease-out' }}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{ display:'flex',justifyContent:'center',padding:'20px 20px 0' }}>
-              {uploadModal.preview&&(
-                <div style={{ width:'100px',aspectRatio:'63/88',borderRadius:'10px',overflow:'hidden',border:`1px solid ${uploadModal.done?(uploadModal.success?'#BBF7D0':'#FECACA'):'#E5E5EA'}`,boxShadow:'0 4px 16px rgba(0,0,0,.08)',transition:'border-color .3s' }}>
-                  <img src={uploadModal.preview} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/>
-                </div>
-              )}
-            </div>
-            <div style={{ padding:'14px 20px' }}>
-              <div style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:'12px',textAlign:'center' }}>
-                {uploadModal.done?(uploadModal.success?'Illustration validee':'Illustration rejetee'):'Verification en cours...'}
-              </div>
-              <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
-                {uploadModal.checks.map((c,i)=>(
-                  <div key={i} style={{ display:'flex',alignItems:'center',gap:'10px',padding:'7px 10px',borderRadius:'8px',background:c.status==='fail'?'#FEF2F2':c.status==='pass'?'#F0FDF4':'#F5F5F7',border:`1px solid ${c.status==='fail'?'#FECACA':c.status==='pass'?'#BBF7D0':'#E5E5EA'}`,transition:'all .3s' }}>
-                    <div style={{ width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,background:c.status==='checking'?'#D2D2D7':c.status==='pass'?'#2E9E6A':c.status==='fail'?'#E03020':'#E5E5EA',transition:'all .3s' }}>
-                      {c.status==='checking'?<div style={{ width:'10px',height:'10px',border:'2px solid #fff',borderTop:'2px solid transparent',borderRadius:'50%',animation:'spin .6s linear infinite' }}/>
-                      :c.status==='pass'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-                      :c.status==='fail'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                      :<div style={{ width:'6px',height:'6px',borderRadius:'50%',background:'#C7C7CC' }}/>}
-                    </div>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:'11px',fontWeight:600,color:c.status==='fail'?'#991B1B':'#1D1D1F',fontFamily:'var(--font-display)' }}>{c.label}</div>
-                      {c.detail&&<div style={{ fontSize:'9px',color:c.status==='fail'?'#DC2626':'#86868B',fontFamily:'var(--font-data)' }}>{c.detail}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {uploadModal.done&&(
-              <div style={{ padding:'0 20px 16px',display:'flex',gap:'8px' }}>
-                {uploadModal.success?(
-                  <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#2E9E6A',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Fermer</button>
-                ):(
-                  <>
-                    <button onClick={()=>{setUploadModal(p=>({...p,open:false}));setTimeout(()=>uploadRef.current?.click(),150)}} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Reessayer</button>
-                    <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ padding:'12px 18px',borderRadius:'10px',background:'#F5F5F7',color:'#6E6E73',border:'1px solid #E5E5EA',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)' }}>Annuler</button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
             {/* CARD ZOOM */}
         {cardZoom&&spotCard&&spotCard.image&&(
           <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', cursor:'zoom-out', animation:'fadeUp .2s ease-out' }}

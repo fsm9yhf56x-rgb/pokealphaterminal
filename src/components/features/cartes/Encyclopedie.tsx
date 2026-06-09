@@ -366,24 +366,13 @@ export function Encyclopedie() {
     }), { ebay: null, tcg: null, cardmarket: null, poketrace: null, estimated: null })
   }
 
-  // ── Custom card images (user uploads) ──
-  const [customImgs, setCustomImgs] = useState<Record<string,string>>({})
   const [setLogos, setSetLogos] = useState<Record<string,string>>({})
   const [jpEnDict, setJpEnDict] = useState<Record<string,string>>({})
   const [setBlocks, setSetBlocks] = useState<Record<string,string>>({})
-  const uploadRef = useRef<HTMLInputElement>(null)
-  const [uploadTarget, setUploadTarget] = useState<string|null>(null)
-  const [uploadModal, setUploadModal] = useState<{
-    open:boolean; preview:string|null;
-    checks:{label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[];
-    done:boolean; success:boolean
-  }>({ open:false, preview:null, checks:[], done:false, success:false })
 
+  // Feature images custom supprimee : nettoyage du quota localStorage des anciens utilisateurs
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('pka_custom_imgs')
-      if (raw) setCustomImgs(JSON.parse(raw))
-    } catch {}
+    try { localStorage.removeItem('pka_custom_imgs') } catch {}
   }, [])
 
   // Load set logos from current language JSON
@@ -408,163 +397,6 @@ export function Encyclopedie() {
       fetch('/data/pokedex-jp-en.json').then(r => r.json()).then(d => setJpEnDict(d)).catch(() => {})
     }
   }, [lang])
-
-  const saveCustomImg = useCallback((cardKey: string, b64: string) => {
-    setCustomImgs(prev => {
-      const next = { ...prev, [cardKey]: b64 }
-      try { localStorage.setItem('pka_custom_imgs', JSON.stringify(next)) } catch {}
-      return next
-    })
-  }, [])
-
-  const customImgKey = (card: EnrichedCard) => `${card.setId}-${card.localId}-${lang}`
-
-  const handleUploadClick = (card: EnrichedCard, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setUploadTarget(customImgKey(card))
-    setTimeout(() => uploadRef.current?.click(), 50)
-  }
-
-  const runUploadChecks = useCallback(async (file: File) => {
-    if (!uploadTarget) return
-    const preview = URL.createObjectURL(file)
-    const checks: {label:string;status:'pending'|'checking'|'pass'|'fail';detail?:string}[] = [
-      { label:'Format du fichier', status:'pending' },
-      { label:'Taille du fichier', status:'pending' },
-      { label:'Dimensions', status:'pending' },
-      { label:'Orientation portrait', status:'pending' },
-      { label:'Ratio carte standard', status:'pending' },
-      { label:'Résolution minimale', status:'pending' },
-      { label:'Cadrage des bords', status:'pending' },
-      { label:'Contenu illustré', status:'pending' },
-    ]
-    setUploadModal({ open:true, preview, checks:[...checks], done:false, success:false })
-    const delay = (ms:number) => new Promise(r=>setTimeout(r,ms))
-    const upd = (i:number, st:'checking'|'pass'|'fail', detail?:string) => {
-      checks[i] = { ...checks[i], status:st, detail }
-      setUploadModal(p=>({ ...p, checks:[...checks] }))
-    }
-    let ok = true
-    // 1. Format
-    upd(0,'checking'); await delay(400)
-    if(['image/jpeg','image/png','image/webp'].includes(file.type)){
-      upd(0,'pass',file.type.replace('image/','').toUpperCase())
-    } else { upd(0,'fail','Format: '+file.type); ok=false }
-    // 2. Taille
-    upd(1,'checking'); await delay(350)
-    const mb = file.size/1024/1024
-    if(mb<=5){ upd(1,'pass',mb.toFixed(1)+' Mo') } else { upd(1,'fail',mb.toFixed(1)+' Mo (max 5)'); ok=false }
-    // 3-7. Image checks
-    upd(2,'checking')
-    const img = new Image()
-    try {
-      await new Promise<void>((res,rej)=>{ img.onload=()=>res(); img.onerror=()=>rej(); img.src=preview })
-      await delay(400)
-      if(img.width>=250&&img.height>=350){ upd(2,'pass',img.width+'\u00d7'+img.height+' px') }
-      else { upd(2,'fail',img.width+'\u00d7'+img.height+' px (min 250\u00d7350)'); ok=false }
-      upd(3,'checking'); await delay(300)
-      if(img.height>=img.width){ upd(3,'pass','Portrait') }
-      else { upd(3,'fail','Paysage detect\u00e9'); ok=false }
-      upd(4,'checking'); await delay(350)
-      const ratio = img.width / img.height
-      if(ratio >= 0.55 && ratio <= 0.85){ upd(4,'pass','Ratio ' + ratio.toFixed(3)) }
-      else { upd(4,'fail','Ratio ' + ratio.toFixed(3) + ' (attendu 0.55-0.85)'); ok=false }
-      upd(5,'checking'); await delay(350)
-      if(img.width >= 300 && img.height >= 420){ upd(5,'pass',img.width+'x'+img.height+' px') }
-      else { upd(5,'fail',img.width+'x'+img.height+' px (min 300x420)'); ok=false }
-      upd(6,'checking'); await delay(400)
-      try {
-        const cv = document.createElement('canvas')
-        cv.width = img.width; cv.height = img.height
-        const ctx = cv.getContext('2d')!
-        ctx.drawImage(img, 0, 0)
-        const bw = 3
-        const strips = [
-          ctx.getImageData(0,0,img.width,bw),
-          ctx.getImageData(0,img.height-bw,img.width,bw),
-          ctx.getImageData(0,0,bw,img.height),
-          ctx.getImageData(img.width-bw,0,bw,img.height),
-        ]
-        const calcVar = (data: Uint8ClampedArray) => {
-          let sR=0,sG=0,sB=0; const n=data.length/4
-          for(let i=0;i<data.length;i+=4){ sR+=data[i]; sG+=data[i+1]; sB+=data[i+2] }
-          const aR=sR/n,aG=sG/n,aB=sB/n; let v=0
-          for(let i=0;i<data.length;i+=4){ v+=Math.pow(data[i]-aR,2)+Math.pow(data[i+1]-aG,2)+Math.pow(data[i+2]-aB,2) }
-          return Math.sqrt(v/(n*3))
-        }
-        const avgVar = strips.map(s=>calcVar(s.data)).reduce((a,b)=>a+b,0)/4
-        if(avgVar<45){ upd(6,'pass','Bords uniformes (var: '+avgVar.toFixed(0)+')') }
-        else { upd(6,'fail','Bords irr\u00e9guliers (var: '+avgVar.toFixed(0)+')'); ok=false }
-      } catch { upd(6,'fail','Analyse impossible'); ok=false }
-      // 8. AI content verification — is this a Pokemon card illustration?
-      upd(7,'checking')
-      try {
-        const cv2 = document.createElement('canvas')
-        const maxDim = 256
-        const scale = Math.min(maxDim/img.width, maxDim/img.height, 1)
-        cv2.width = Math.round(img.width*scale); cv2.height = Math.round(img.height*scale)
-        const ctx2 = cv2.getContext('2d')!
-        ctx2.drawImage(img, 0, 0, cv2.width, cv2.height)
-        const smallB64 = cv2.toDataURL('image/jpeg', 0.7).split(',')[1]
-        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            model:'claude-sonnet-4-20250514', max_tokens:100,
-            messages:[{role:'user',content:[
-              {type:'image',source:{type:'base64',media_type:'image/jpeg',data:smallB64}},
-              {type:'text',text:'Is this image a Pokemon TCG card illustration or a scan/photo of a Pokemon card? Answer ONLY with JSON: {"isCard":true} or {"isCard":false,"reason":"brief reason"}'}
-            ]}]
-          })
-        })
-        const aiData = await aiRes.json()
-        const aiTxt = aiData.content?.find((x:any)=>x.type==='text')?.text??''
-        const aiClean = aiTxt.replace(/```json|```/g,'').trim()
-        const aiParsed = JSON.parse(aiClean)
-        if(aiParsed.isCard){
-          upd(7,'pass','Carte Pok\u00e9mon d\u00e9tect\u00e9e')
-        } else {
-          upd(7,'fail',aiParsed.reason||'Pas une illustration de carte')
-          ok=false
-        }
-      } catch {
-        // Fallback: saturation check if AI fails
-        try {
-          const cv3 = document.createElement('canvas')
-          cv3.width=100;cv3.height=100
-          const ctx3=cv3.getContext('2d')!
-          ctx3.drawImage(img,0,0,100,100)
-          const px=ctx3.getImageData(0,0,100,100).data
-          let satSum=0;const n3=px.length/4
-          for(let i=0;i<px.length;i+=4){
-            const mx=Math.max(px[i],px[i+1],px[i+2]),mn=Math.min(px[i],px[i+1],px[i+2])
-            const l=(mx+mn)/2
-            satSum+=mx===mn?0:(mx-mn)/(l>127?(510-mx-mn):(mx+mn))
-          }
-          if(satSum/n3>0.08) upd(7,'pass','Contenu color\u00e9')
-          else { upd(7,'fail','Image sans couleur'); ok=false }
-        } catch { upd(7,'fail','Analyse impossible'); ok=false }
-      }
-    } catch { upd(2,'fail','Lecture impossible'); upd(3,'fail','\u2014'); upd(4,'fail','\u2014'); upd(5,'fail','\u2014'); upd(6,'fail','\u2014'); ok=false }
-    await delay(300)
-    if(ok){
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string
-        saveCustomImg(uploadTarget, dataUrl)
-        setUploadModal(p=>({...p,done:true,success:true}))
-      }
-      reader.readAsDataURL(file)
-    } else { setUploadModal(p=>({...p,done:true,success:false})) }
-  }, [uploadTarget, saveCustomImg])
-
-  const handleUploadFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !uploadTarget) return
-    e.target.value = ''
-    runUploadChecks(file)
-  }, [uploadTarget, runUploadChecks])
-
 
   const [selId,      setSelId]       = useState<string|null>(null)
   const [detail,     setDetail]      = useState<TCGCardFull|null>(null)
@@ -1675,10 +1507,6 @@ export function Encyclopedie() {
                             else t.style.opacity='0'
                           }}/>
                         ) : (
-                          customImgs[customImgKey(card)] ? (
-                          <img src={customImgs[customImgKey(card)]} alt={card.name}
-                            style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', borderRadius:'inherit' }}/>
-                          ) : (
                           <div style={{
                             position: 'absolute' as const, inset: 0,
                             background: 'linear-gradient(145deg, rgba(0,0,0,0.025) 0%, rgba(0,0,0,0.045) 100%)',
@@ -1687,17 +1515,9 @@ export function Encyclopedie() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: 5,
-                            cursor: 'pointer',
-                            transition: 'background .2s ease',
-                          }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'linear-gradient(145deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.06) 100%)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(145deg, rgba(0,0,0,0.025) 0%, rgba(0,0,0,0.045) 100%)')}
-                            onClick={e => handleUploadClick(card, e)}>
-                            <div style={{ fontSize:cardSize==='S'?'16px':'20px', opacity:.25 }}>📷</div>
-                            {cardSize!=='S' && <div style={{ fontSize:'7px', color:'#BBB', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Ajouter<br/>illustration</div>}
-                            {lang==='JP' && cardSize!=='S' && <div style={{ fontSize:'7px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Image JP{String.fromCharCode(10)}non disponible</div>}
+                          }}>
+                            {cardSize!=='S' && <div style={{ fontSize:'7px', color:'#BBB', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Image non<br/>disponible</div>}
                           </div>
-                          )
                         )}
                         <div style={{
                           position: 'absolute' as const,
@@ -1971,19 +1791,9 @@ export function Encyclopedie() {
                         onError={e=>{ const t=e.target as HTMLImageElement; if(!t.src.includes('.jpg')) t.src=`${detail.image}/high.jpg`; else t.style.display='none' }}
                       />
                     ) : (
-                      selCard && customImgs[customImgKey(selCard)] ? (
-                      <img src={customImgs[customImgKey(selCard)]} alt={selCard.name}
-                        style={{ maxHeight:'340px', width:'auto', maxWidth:'82%', objectFit:'contain', borderRadius:'10px', boxShadow:'0 12px 36px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.08)' }}/>
-                      ) : (
-                      <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px', cursor:'pointer', border:'2px dashed #DDD', transition:'all .2s' }}
-                        onClick={e => { if(selCard) handleUploadClick(selCard, e) }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='#E03020'; (e.currentTarget as HTMLElement).style.background='#FFF5F5' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='#DDD'; (e.currentTarget as HTMLElement).style.background='#F5F5F5' }}>
-                        <div style={{ fontSize:'24px', opacity:.3 }}>📷</div>
-                        <div style={{ fontSize:'10px', color:'#999', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.4 }}>Ajouter une<br/>illustration</div>
-                        {lang==='JP' && <div style={{ fontSize:'9px', color:'#CCC', fontFamily:'var(--font-display)', textAlign:'center' as const }}>Image JP non disponible</div>}
+                      <div style={{ width:'140px', height:'196px', borderRadius:'8px', background:'#F5F5F5', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px', border:'2px dashed #DDD' }}>
+                        <div style={{ fontSize:'10px', color:'#999', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.4 }}>Image non<br/>disponible</div>
                       </div>
-                      )
                     )}
                     {selCard && (
                       <button className="zoom-btn" onClick={()=>setLightbox(selCard)}
@@ -2430,58 +2240,6 @@ export function Encyclopedie() {
       )}
 
             {/* Hidden upload input */}
-      <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display:'none' }}
-        onChange={handleUploadFile}/>
-
-      {/* Upload QC Modal */}
-      {uploadModal.open&&(
-        <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',backdropFilter:'blur(4px)' }}
-          onClick={()=>{if(uploadModal.done)setUploadModal(p=>({...p,open:false}))}}>
-          <div style={{ maxWidth:'380px',width:'100%',background:'#fff',borderRadius:'20px',border:'1px solid #E5E5EA',boxShadow:'0 24px 60px rgba(0,0,0,.18)',overflow:'hidden',animation:'fadeUp .25s ease-out' }}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{ display:'flex',justifyContent:'center',padding:'20px 20px 0' }}>
-              {uploadModal.preview&&(
-                <div style={{ width:'100px',aspectRatio:'63/88',borderRadius:'10px',overflow:'hidden',border:'1px solid '+(uploadModal.done?(uploadModal.success?'#BBF7D0':'#FECACA'):'#E5E5EA'),boxShadow:'0 4px 16px rgba(0,0,0,.08)',transition:'border-color .3s' }}>
-                  <img src={uploadModal.preview} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/>
-                </div>
-              )}
-            </div>
-            <div style={{ padding:'14px 20px' }}>
-              <div style={{ fontSize:'14px',fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:'12px',textAlign:'center' }}>
-                {uploadModal.done?(uploadModal.success?'Illustration validée':'Illustration rejetée'):'Vérification en cours...'}
-              </div>
-              <div style={{ display:'flex',flexDirection:'column',gap:'6px' }}>
-                {uploadModal.checks.map((c,i)=>(
-                  <div key={i} style={{ display:'flex',alignItems:'center',gap:'10px',padding:'7px 10px',borderRadius:'8px',background:c.status==='fail'?'#FEF2F2':c.status==='pass'?'#F0FDF4':'#F5F5F7',border:'1px solid '+(c.status==='fail'?'#FECACA':c.status==='pass'?'#BBF7D0':'#E5E5EA'),transition:'all .3s' }}>
-                    <div style={{ width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,background:c.status==='checking'?'#D2D2D7':c.status==='pass'?'#2E9E6A':c.status==='fail'?'#E03020':'#E5E5EA',transition:'all .3s' }}>
-                      {c.status==='checking'?<div style={{ width:'10px',height:'10px',border:'2px solid #fff',borderTop:'2px solid transparent',borderRadius:'50%',animation:'spin .6s linear infinite' }}/>
-                      :c.status==='pass'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-                      :c.status==='fail'?<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                      :<div style={{ width:'6px',height:'6px',borderRadius:'50%',background:'#C7C7CC' }}/>}
-                    </div>
-                    <div style={{ flex:1,minWidth:0 }}>
-                      <div style={{ fontSize:'11px',fontWeight:600,color:c.status==='fail'?'#991B1B':'#1D1D1F',fontFamily:'var(--font-display)' }}>{c.label}</div>
-                      {c.detail&&<div style={{ fontSize:'9px',color:c.status==='fail'?'#DC2626':'#86868B',fontFamily:'var(--font-data)' }}>{c.detail}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {uploadModal.done&&(
-              <div style={{ padding:'0 20px 16px',display:'flex',gap:'8px' }}>
-                {uploadModal.success?(
-                  <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#2E9E6A',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Fermer</button>
-                ):(
-                  <>
-                    <button onClick={()=>{setUploadModal(p=>({...p,open:false}));setTimeout(()=>uploadRef.current?.click(),150)}} style={{ flex:1,padding:'12px',borderRadius:'10px',background:'#1D1D1F',color:'#fff',border:'none',fontSize:'13px',fontWeight:700,cursor:'pointer',fontFamily:'var(--font-display)' }}>Réessayer</button>
-                    <button onClick={()=>setUploadModal(p=>({...p,open:false}))} style={{ padding:'12px 18px',borderRadius:'10px',background:'#F5F5F7',color:'#6E6E73',border:'1px solid #E5E5EA',fontSize:'13px',cursor:'pointer',fontFamily:'var(--font-display)' }}>Annuler</button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
             {lightbox && (()=>{
         const base = cardImageUrl(lightbox, lang)

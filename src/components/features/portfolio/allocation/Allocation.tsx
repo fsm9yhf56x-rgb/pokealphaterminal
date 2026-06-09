@@ -562,25 +562,36 @@ function CollectorHero({ agg }: { agg: AllocAggregates }) {
   const eraTop = agg.byEra[0]
   const rarTop = agg.byRarity[0]
   const eraStrong = eraTop && eraTop.pct >= 60
-  const phrase =
-    `Sacrée collec\u00a0! ${pieces} pièce${pieces>1?'s':''} sur ${series} série${series>1?'s':''}` +
-    (eraTop ? (eraStrong ? `, à fond sur le ${eraTop.label}` : `, du ${eraTop.label} et plus encore`) : '') +
-    (rarTop ? ` — et une belle pile de ${rarTop.label}.` : '.')
+  const strong = { fontWeight: 700, color: '#1D1D1F' }
   return (
     <div style={{
-      padding: '14px 18px',
-      background: 'rgba(255,255,255,0.55)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      padding: '16px 20px',
+      background: 'linear-gradient(135deg, rgba(255,250,240,0.75) 0%, rgba(255,255,255,0.55) 55%)',
       backdropFilter: 'blur(20px) saturate(180%)',
       WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      borderRadius: 14,
-      boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,0.03)',
+      borderRadius: 16,
+      boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.75), 0 4px 18px rgba(190,150,60,0.06)',
       fontFamily: 'var(--font-sora, Sora, sans-serif)',
-      fontSize: 14,
-      lineHeight: 1.55,
-      color: '#1D1D1F',
-      fontWeight: 500,
     }}>
-      {phrase}
+      <span style={{
+        flexShrink: 0,
+        width: 36, height: 36, borderRadius: 11,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(145deg, #FFF6DC, #F3D27E)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(200,160,60,0.25)',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(120,90,20,0.9)"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.5 6.8L12 17l-6 3.9 1.5-6.8L2.3 9.5l6.9-.6z"/></svg>
+      </span>
+      <div style={{ fontSize: 14, lineHeight: 1.5, color: '#48484A', fontWeight: 500 }}>
+        Sacrée collec&nbsp;! <span style={strong}>{pieces} pièce{pieces>1?'s':''}</span> sur <span style={strong}>{series} série{series>1?'s':''}</span>
+        {eraTop && (eraStrong
+          ? <>, à fond sur le <span style={strong}>{eraTop.label}</span></>
+          : <>, du <span style={strong}>{eraTop.label}</span> et plus encore</>)}
+        {rarTop && <> — et une belle pile de <span style={strong}>{rarTop.label}</span>.</>}
+      </div>
     </div>
   )
 }

@@ -30,6 +30,7 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
 import { getCurrentUser } from '@/lib/auth/helpers'
+import { canAddCards } from '@/lib/early'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,6 +98,17 @@ export async function POST(req: Request) {
 
   try {
     // Build the SQL query + params
+    // Gate plan Gratuit : plafond de cartes (non contournable, tout INSERT passe ici).
+    if (table === 'portfolio_cards' && (mode === 'insert' || mode === 'upsert') && currentUserId) {
+      const n = Array.isArray(body.insertRows) ? body.insertRows.length : 1
+      const chk = await canAddCards(currentUserId, n)
+      if (!chk.ok) {
+        return NextResponse.json(
+          { data: null, error: { message: 'free_limit', code: 'free_limit', current: chk.current, limit: chk.limit } },
+          { status: 403 }
+        )
+      }
+    }
     const { query, params, expectSingle } = buildQuery(body, currentUserId, isUserTable)
     const rawRows = await sql.query(query, params)
     // Neon returns PG NUMERIC/DECIMAL as strings. Coerce them to numbers

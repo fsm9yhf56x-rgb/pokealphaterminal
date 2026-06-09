@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { SNOW, FONT, GLASS, RADIUS, SHADOW, EASE } from '@/lib/design/snow'
 
@@ -24,7 +24,7 @@ const PRICES: Record<'pro' | 'premium', Record<Period, PriceCell>> = {
 
 const FEATURES: Record<PlanId, string[]> = {
   free: [
-    'Portefeuille + prix — jusqu’à 500 cartes',
+    'Portefeuille + prix — jusqu’à 800 cartes',
     'Prix consolidés eBay · Cardmarket · PSA',
     'Encyclopédie & recherche',
     'Valeur totale de la collection',
@@ -56,6 +56,14 @@ export default function AbonnementPage() {
   const [period, setPeriod] = useState<Period>('mensuel')
   const [busy, setBusy] = useState<PlanId | null>(null)
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  // Offre Early Supporter (-40% à vie sur Premium, places limitées)
+  const [early, setEarly] = useState<{ seatsLeft: number; seatsTotal: number; isOpen: boolean } | null>(null)
+  useEffect(() => {
+    fetch('/api/early-spots').then(r => r.json()).then(setEarly).catch(() => setEarly(null))
+  }, [])
+  // Early actif seulement sur cycle mensuel/annuel, offre ouverte, user pas déjà abonné
+  const earlyActive = !!early?.isOpen && period !== 'hebdo' && currentPlan === 'free'
 
   // Mapping période UI → cycle Stripe
   const periodToCycle: Record<Period, 'weekly' | 'monthly' | 'yearly'> = {
@@ -90,7 +98,7 @@ export default function AbonnementPage() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, cycle: periodToCycle[period] }),
+        body: JSON.stringify({ plan, cycle: periodToCycle[period], early: earlyActive && plan === 'premium' }),
       })
       const data = await res.json()
       if (data.url) { window.location.href = data.url; return }
@@ -181,6 +189,7 @@ export default function AbonnementPage() {
         <PlanCard id="premium" name="Premium" cell={PRICES.premium[period]}
           features={FEATURES.premium} cta="Passer Premium" recommended
           footnote="Market / Alpha / Whale en déploiement (v2.0 / v3.0)."
+          earlyActive={earlyActive} earlySeatsLeft={early?.seatsLeft} earlyPeriod={period}
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
         <PlanCard id="pro" name="Pro" cell={PRICES.pro[period]}
@@ -201,6 +210,7 @@ export default function AbonnementPage() {
 
 function PlanCard({
   id, name, cell, priceMain, priceSub, features, cta, recommended, footnote,
+  earlyActive, earlySeatsLeft, earlyPeriod,
   currentPlan, busy, onCta,
 }: {
   id: PlanId
@@ -212,6 +222,9 @@ function PlanCard({
   cta: string
   recommended?: boolean
   footnote?: string
+  earlyActive?: boolean
+  earlySeatsLeft?: number
+  earlyPeriod?: Period
   currentPlan: PlanId
   busy: PlanId | null
   onCta: (p: PlanId) => void
@@ -219,6 +232,14 @@ function PlanCard({
   const isCurrent = id === currentPlan
   const mainPrice = priceMain ?? cell?.price ?? ''
   const sub = priceSub ?? cell?.period ?? ''
+
+  // Prix Early Supporter (-40% à vie) : Premium, mensuel/annuel uniquement
+  const EARLY_PRICES: Record<string, { price: string; sub: string }> = {
+    mensuel: { price: '5,99 €', sub: 'au lieu de 9,99 € · tarif à vie' },
+    annuel: { price: '52,99 €', sub: 'soit 4,42 €/mois · tarif à vie' },
+  }
+  const showEarly = !!earlyActive && id === 'premium' && earlyPeriod && earlyPeriod !== 'hebdo'
+  const earlyCell = showEarly && earlyPeriod ? EARLY_PRICES[earlyPeriod] : null
 
   function label() {
     if (busy === id) return 'Redirection…'
@@ -238,15 +259,15 @@ function PlanCard({
         ? `${SHADOW.lift}, inset 0 0 0 1.5px ${SNOW.red}`
         : SHADOW.card,
     }}>
-      {recommended && (
+      {(recommended || showEarly) && (
         <span style={{
           position: 'absolute', top: -12, right: 24,
           fontFamily: FONT.display, fontSize: 11, fontWeight: 700,
           padding: '5px 12px', borderRadius: RADIUS.pill,
-          background: SNOW.red, color: '#fff', letterSpacing: '0.02em',
-          boxShadow: '0 4px 12px rgba(224,48,32,0.32)',
+          background: showEarly ? '#1D1D1F' : SNOW.red, color: '#fff', letterSpacing: '0.02em',
+          boxShadow: showEarly ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(224,48,32,0.32)',
         }}>
-          Recommandé
+          {showEarly ? '★ Early Supporter' : 'Recommandé'}
         </span>
       )}
 
@@ -254,7 +275,7 @@ function PlanCard({
         <h2 style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: SNOW.ink, margin: 0 }}>
           {name}
         </h2>
-        {cell?.trial && (
+        {cell?.trial && !showEarly && (
           <span style={{
             fontFamily: FONT.data, fontSize: 9, fontWeight: 700,
             padding: '3px 7px', borderRadius: RADIUS.sm,
@@ -267,18 +288,67 @@ function PlanCard({
       </div>
 
       <div style={{ marginBottom: 4 }}>
-        <span style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 700, color: SNOW.ink, letterSpacing: '-1px' }}>
-          {mainPrice}
-        </span>
-        <span style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.mutedLight, marginLeft: 4 }}>
-          {sub}
-        </span>
-      </div>
-      <div style={{ height: 18, marginBottom: 14 }}>
-        {cell?.sub && (
-          <span style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted }}>{cell.sub}</span>
+        {earlyCell ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 700, color: SNOW.ink, letterSpacing: '-1px' }}>
+              {earlyCell.price}
+            </span>
+            <span style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.mutedLight }}>
+              {sub}
+            </span>
+            <span style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 600, color: SNOW.mutedLight, textDecoration: 'line-through' }}>
+              {mainPrice}
+            </span>
+            <span style={{
+              fontFamily: FONT.data, fontSize: 14, fontWeight: 800,
+              padding: '4px 11px', borderRadius: RADIUS.pill,
+              background: SNOW.red, color: '#fff', letterSpacing: '0.02em',
+              boxShadow: '0 2px 8px rgba(224,48,32,0.3)',
+            }}>
+              −40 %
+            </span>
+          </div>
+        ) : (
+          <>
+            <span style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 700, color: SNOW.ink, letterSpacing: '-1px' }}>
+              {mainPrice}
+            </span>
+            <span style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.mutedLight, marginLeft: 4 }}>
+              {sub}
+            </span>
+          </>
         )}
       </div>
+      <div style={{ height: 18, marginBottom: 14 }}>
+        {earlyCell ? (
+          <span style={{ fontFamily: FONT.data, fontSize: 12, fontWeight: 700, color: '#1D1D1F' }}>
+            {earlyCell.sub}
+          </span>
+        ) : cell?.sub ? (
+          <span style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted }}>{cell.sub}</span>
+        ) : null}
+      </div>
+
+      {showEarly && (
+        <div style={{
+          marginBottom: 16, padding: '10px 12px', borderRadius: RADIUS.md,
+          background: 'rgba(0,0,0,0.035)', border: '1px solid rgba(0,0,0,0.06)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontFamily: FONT.display, fontSize: 12, fontWeight: 700, color: SNOW.ink }}>
+              Offre de lancement
+            </span>
+            {typeof earlySeatsLeft === 'number' && (
+              <span style={{ fontFamily: FONT.data, fontSize: 11, fontWeight: 700, color: SNOW.red }}>
+                {earlySeatsLeft} place{earlySeatsLeft > 1 ? 's' : ''} restante{earlySeatsLeft > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <p style={{ fontFamily: FONT.body, fontSize: 11.5, color: SNOW.muted, margin: 0, lineHeight: 1.4 }}>
+            Bloque ce tarif <strong style={{ color: SNOW.ink }}>à vie</strong> avant la sortie des fonctionnalités v2. Conservé tant que ton abonnement reste actif.
+          </p>
+        </div>
+      )}
 
       <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
         {features.map((feat, i) => (

@@ -23,6 +23,7 @@ export function usePortfolio() {
   const [cards, setCards] = useState<PortfolioCard[]>([])
   const [loading, setLoading] = useState(true)
   const [migrated, setMigrated] = useState(false)
+  const [limitGate, setLimitGate] = useState<{ current: number; limit: number } | null>(null)
 
   // Load cards — depend on user.id (string) not user (object that changes ref each render)
   useEffect(() => {
@@ -125,7 +126,14 @@ export function usePortfolio() {
       .select()
       .single()
 
-    if (error) { console.error('Add card error:', error); return null }
+    if (error) {
+      if ((error as any).code === 'free_limit') {
+        setLimitGate({ current: (error as any).current ?? cards.length, limit: (error as any).limit ?? 800 })
+      } else {
+        console.error('Add card error:', error)
+      }
+      return null
+    }
     setCards(prev => [data as PortfolioCard, ...prev])
     return data as PortfolioCard
   }, [user?.id, cards])
@@ -178,5 +186,7 @@ export function usePortfolio() {
     toggleFavorite,
     isCloud: !!user,
     cardCount: cards.length,
+    limitGate,
+    clearLimitGate: () => setLimitGate(null),
   }
 }

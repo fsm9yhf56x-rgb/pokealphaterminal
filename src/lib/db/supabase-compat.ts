@@ -12,7 +12,7 @@
 
 const IS_BROWSER = typeof window !== 'undefined'
 
-type QueryResult<T> = { data: T | null; error: { message: string } | null }
+type QueryResult<T> = { data: T | null; error: { message: string; code?: string; current?: number; limit?: number } | null }
 type QueryListResult<T> = {
   data: T[] | null
   error: { message: string } | null

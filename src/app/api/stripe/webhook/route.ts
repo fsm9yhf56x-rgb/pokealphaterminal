@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
-import { getStripe, planFromPriceId } from '@/lib/stripe'
+import { getStripe, planFromPriceId, isEarlyPriceId } from '@/lib/stripe'
 import type Stripe from 'stripe'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
           const sub = await stripe.subscriptions.retrieve(subscriptionId)
           const priceId = sub.items.data[0]?.price?.id
           const plan = planFromPriceId(priceId)
-          await applyPlan(userId, plan, customerId, subscriptionId)
+          await applyPlan(userId, plan, customerId, subscriptionId, priceId)
         }
         break
       }
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         const active = ['active', 'trialing', 'past_due'].includes(sub.status)
         const plan = active ? planFromPriceId(priceId) : 'free'
         if (userId) {
-          await applyPlan(userId, plan, sub.customer as string, sub.id)
+          await applyPlan(userId, plan, sub.customer as string, sub.id, active ? priceId : null)
         }
         break
       }
@@ -69,9 +69,10 @@ export async function POST(req: Request) {
           const stillActive = others.data.find((x) => x.id !== sub.id)
           if (stillActive) {
             const priceId = stillActive.items.data[0]?.price?.id
-            await applyPlan(userId, planFromPriceId(priceId), customerId, stillActive.id)
+            await applyPlan(userId, planFromPriceId(priceId), customerId, stillActive.id, priceId)
           } else {
-            await applyPlan(userId, 'free', customerId, null)
+            // Plus d'abo actif : retour free ET perte du statut early (libère une place)
+            await applyPlan(userId, 'free', customerId, null, null)
           }
         }
         break
@@ -92,16 +93,20 @@ async function applyPlan(
   userId: string,
   plan: 'free' | 'pro' | 'premium',
   customerId: string | undefined,
-  subscriptionId: string | null
+  subscriptionId: string | null,
+  priceId?: string | null
 ) {
+  // Early Supporter = abonnement actif sur un price early. Sinon false (perte si résiliation).
+  const early = isEarlyPriceId(priceId)
   await sql.query(
     `UPDATE profiles
        SET plan = $1,
            stripe_customer_id = COALESCE($2, stripe_customer_id),
            stripe_subscription_id = $3,
+           is_early_supporter = $4,
            updated_at = now()
-     WHERE id = $4`,
-    [plan, customerId ?? null, subscriptionId, userId]
+     WHERE id = $5`,
+    [plan, customerId ?? null, subscriptionId, early, userId]
   )
-  console.log(`[stripe/webhook] user ${userId} -> plan ${plan}`)
+  console.log(`[stripe/webhook] user ${userId} -> plan ${plan}${early ? ' (early)' : ''}`)
 }

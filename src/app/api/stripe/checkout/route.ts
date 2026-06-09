@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/server'
 import { headers } from 'next/headers'
 import { sql } from '@/lib/db/sql'
-import { getStripe, priceIdFor, type Plan, type Cycle } from '@/lib/stripe'
+import { getStripe, priceIdFor, earlyPriceIdFor, type Plan, type Cycle } from '@/lib/stripe'
+import { isEarlyOpen } from '@/lib/early'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,17 @@ export async function POST(req: Request) {
     }
 
     const stripe = getStripe()
-    const priceId = priceIdFor(plan, cycle)
+
+    // Offre Early Supporter : Premium uniquement, mensuel/annuel, places limitées.
+    const wantEarly = body.early === true && plan === 'premium' && (cycle === 'monthly' || cycle === 'yearly')
+    let priceId: string
+    let isEarly = false
+    if (wantEarly && (await isEarlyOpen())) {
+      priceId = earlyPriceIdFor(cycle as 'monthly' | 'yearly')
+      isEarly = true
+    } else {
+      priceId = priceIdFor(plan, cycle)
+    }
 
     // Récupère ou crée le customer Stripe lié à cet user
     const rows = await sql.query(
@@ -51,8 +62,8 @@ export async function POST(req: Request) {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       // metadata sur la session ET la subscription (le webhook lit subscription.metadata)
-      metadata: { userId, plan },
-      subscription_data: { metadata: { userId, plan } },
+      metadata: { userId, plan, early: isEarly ? '1' : '0' },
+      subscription_data: { metadata: { userId, plan, early: isEarly ? '1' : '0' } },
       allow_promotion_codes: true,
       success_url: `${APP_URL}/abonnement?success=1`,
       cancel_url: `${APP_URL}/abonnement?canceled=1`,

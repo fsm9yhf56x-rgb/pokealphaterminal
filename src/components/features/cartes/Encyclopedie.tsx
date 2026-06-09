@@ -255,7 +255,7 @@ export function Encyclopedie() {
       return
     }
     const newCard: PortfolioCard = {
-      id: 'enc_'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+      id: crypto.randomUUID(),
       name: card.name || 'Carte', set: card.setName || '', setId: card.setId || '',
       number: card.localId || '', rarity: card.rarity||'',
       type: 'fire', lang: lang, condition: 'Raw', graded: false,
@@ -274,6 +274,7 @@ export function Encyclopedie() {
     if (user) {
       console.log('[KC ADD] user.id =', user.id, '| card =', newCard.name)
       const { error } = await supabase.from('portfolio_cards').insert({
+        id: newCard.id,
         user_id: user.id,
         name: newCard.name,
         set_name: newCard.set || '',
@@ -286,7 +287,19 @@ export function Encyclopedie() {
         buy_price: newCard.buyPrice || 0,
         image_url: getCardImageUrl({ lang: newCard.lang as string, setId: newCard.setId, localId: newCard.number }) || newCard.image || '',
       })
-      if (error) { console.error('[KC ADD] INSERT ECHOUE:', JSON.stringify(error)) } else { console.log('[KC ADD] INSERT OK pour', newCard.name) }
+      if (error) {
+        // Rollback : le state ne doit pas mentir si la base a refuse
+        setPortfolioLocal(prev => prev.filter(c => c.id !== newCard.id))
+        const code = (error as any).code
+        if (code === 'free_limit') {
+          setToast('Limite de ' + ((error as any).limit ?? 800) + ' cartes atteinte (plan gratuit)')
+        } else {
+          console.error('[KC ADD] INSERT ECHOUE:', JSON.stringify(error))
+          setToast('Erreur de sauvegarde')
+        }
+        setTimeout(() => setToast(''), 2500)
+        return
+      }
     }
     setToast(card.name + ' ajouté')
     setTimeout(() => setToast(''), 2000)

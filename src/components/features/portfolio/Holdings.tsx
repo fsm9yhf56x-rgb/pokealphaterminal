@@ -15,6 +15,7 @@ import { HeaderSparkline } from './HeaderSparkline'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { LiquidProgress } from '@/components/ui/LiquidProgress'
 import { useAuth } from '@/lib/useAuth'
+import { normalizeCondition } from '@/lib/conditions'
 import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
 import { useCardConditions, CONDITION_ORDER, CONDITION_SHORT, CONDITION_LABELS } from '@/components/features/prices/hooks/useCardConditions'
@@ -35,7 +36,7 @@ type CardItem = {
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
   condition: string; graded: boolean; imageStatus?: 'pending'|'approved'|'rejected'
   buyPrice: number; curPrice: number; qty: number
-  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean
+  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number
   image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
 }
 
@@ -173,6 +174,7 @@ export function Holdings() {
               qty: c.qty || 1,
               image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
               setId: c.set_id || undefined, favorite: c.is_favorite || false,
+              showcasePos: c.showcase_position ?? undefined,
               notes: c.notes || undefined,
             }))
             const visible = mapped.filter(c => !deletedIds.current.has(c.id))
@@ -203,9 +205,13 @@ export function Holdings() {
       })
     }
   }, [user?.id, authLoading])
-  const [showcase,    setShowcase]    = useState<CardItem[]>(()=>{
+  const [localShowcase, setLocalShowcase] = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
+  // Connecte : vitrine derivee du portfolio (showcase_position). Invite : localStorage.
+  const showcase = user
+    ? portfolio.filter(c=>c.showcasePos!==undefined).sort((a,b)=>(a.showcasePos??0)-(b.showcasePos??0))
+    : localShowcase
   const [showPickerForShowcase, setShowPickerForShowcase] = useState(false)
   const [vitrineSearch, setVitrineSearch] = useState('')
   const [vitrineFilter, setVitrineFilter] = useState('all')
@@ -485,7 +491,7 @@ export function Holdings() {
           supabase.from('portfolio_cards').update({
             qty: card.qty, buy_price: card.buyPrice || null,
             is_favorite: card.favorite || false,
-            condition: card.condition || 'NM', graded: card.graded || false,
+            condition: normalizeCondition(card.condition), graded: card.graded || false,
             image_url: cleanImageUrl(card.image) || null, updated_at: new Date().toISOString(),
           }).eq('id', card.id)
         })
@@ -493,14 +499,16 @@ export function Holdings() {
     }, 500)
   }, [portfolio, portfolioLoaded, user?.id])
   useEffect(() => {
+    if (user) return
     dbGet<CardItem[]>('showcase').then(data => {
-      if (data && data.length > 0) setShowcase(data)
+      if (data && data.length > 0) setLocalShowcase(data)
     })
-  }, [])
+  }, [user?.id])
   useEffect(()=>{
-    dbSet('showcase', showcase)
-    try { const slim = showcase.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c); localStorage.setItem('pka_showcase', JSON.stringify(slim)) } catch {}
-  }, [showcase])
+    if (user) return
+    dbSet('showcase', localShowcase)
+    try { const slim = localShowcase.map(c => c.image && c.image.startsWith('data:') ? { ...c, image: '' } : c); localStorage.setItem('pka_showcase', JSON.stringify(slim)) } catch {}
+  }, [localShowcase, user?.id])
   useEffect(()=>{ try { localStorage.setItem('pka_collapsed', JSON.stringify([...collapsedSets])) } catch {} }, [collapsedSets])
   useEffect(()=>{ try { localStorage.setItem('pka_set_order', JSON.stringify(setOrder)) } catch {} }, [setOrder])
 
@@ -1008,7 +1016,7 @@ export function Holdings() {
           })
       }
     }
-    setShowcase(prev=>prev.filter(c=>c.id!==card.id))
+    if (!user) setLocalShowcase(prev=>prev.filter(c=>c.id!==card.id))
     showToast(card.name+' retiree')
   }
   const encyclopediaLookup = (name:string, set:string): Partial<CardItem> => {
@@ -1100,7 +1108,7 @@ export function Holdings() {
     lang: c.lang || 'FR',
     rarity: c.rarity || null,
     card_type: c.type || null,
-    condition: c.condition || 'Raw',
+    condition: normalizeCondition(c.condition),
     graded: c.graded || false,
     qty: c.qty || 1,
     buy_price: c.buyPrice || null,
@@ -1162,13 +1170,35 @@ export function Holdings() {
   }
   const addToShowcase = (card:CardItem) => {
     if(showcase.find(c=>c.id===card.id)) return
-    setShowcase(prev=>[...prev,card])
+    if (user) {
+      const pos = Math.max(0, ...showcase.map(c=>c.showcasePos??0)) + 1
+      setPortfolio(prev=>prev.map(c=>c.id===card.id?{...c,showcasePos:pos}:c))
+      if (!card.id.startsWith('u')) {
+        supabase.from('portfolio_cards').update({ showcase_position: pos }).eq('id', card.id)
+          .then(({ error }: any) => {
+            if (error) {
+              console.error('[KC SHOWCASE] update failed:', error)
+              setPortfolio(prev=>prev.map(c=>c.id===card.id?{...c,showcasePos:undefined}:c))
+            }
+          })
+      }
+    } else {
+      setLocalShowcase(prev=>[...prev,card])
+    }
     setShowPickerForShowcase(false)
     showToast(card.name+' dans la vitrine')
   }
   const removeFromShowcase = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
-    setShowcase(prev=>prev.filter(c=>c.id!==id))
+    if (user) {
+      setPortfolio(prev=>prev.map(c=>c.id===id?{...c,showcasePos:undefined}:c))
+      if (!id.startsWith('u')) {
+        supabase.from('portfolio_cards').update({ showcase_position: null }).eq('id', id)
+          .then(({ error }: any) => { if (error) console.error('[KC SHOWCASE] remove failed:', error) })
+      }
+    } else {
+      setLocalShowcase(prev=>prev.filter(c=>c.id!==id))
+    }
   }
   const triggerUpload = (cardId: string) => {
     uploadTargetId.current = cardId

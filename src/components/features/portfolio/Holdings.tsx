@@ -1188,6 +1188,23 @@ export function Holdings() {
     setShowPickerForShowcase(false)
     showToast(card.name+' dans la vitrine')
   }
+  const reorderShowcase = (from:number, to:number) => {
+    const a = [...showcase]
+    const [item] = a.splice(from, 1)
+    a.splice(to, 0, item)
+    if (user) {
+      const posById: Record<string,number> = {}
+      a.forEach((c, i) => { posById[c.id] = i + 1 })
+      setPortfolio(prev=>prev.map(c=>posById[c.id]!==undefined?{...c,showcasePos:posById[c.id]}:c))
+      a.forEach((c, i) => {
+        if (c.id.startsWith('u')) return
+        supabase.from('portfolio_cards').update({ showcase_position: i + 1 }).eq('id', c.id)
+          .then(({ error }: any) => { if (error) console.error('[KC SHOWCASE] reorder failed:', error) })
+      })
+    } else {
+      setLocalShowcase(a)
+    }
+  }
   const removeFromShowcase = (id:string, e:React.MouseEvent) => {
     e.stopPropagation()
     if (user) {
@@ -3067,7 +3084,7 @@ export function Holdings() {
                           draggable
                           onDragStart={()=>setDragIdx(idx)}
                           onDragOver={e=>e.preventDefault()}
-                          onDrop={()=>{ if(dragIdx===null||dragIdx===idx) return; setShowcase(prev=>{ const a=[...prev]; const [item]=a.splice(dragIdx,1); a.splice(idx,0,item); return a }); setDragIdx(null) }}
+                          onDrop={()=>{ if(dragIdx===null||dragIdx===idx) return; reorderShowcase(dragIdx, idx); setDragIdx(null) }}
                           onDragEnd={()=>setDragIdx(null)}
                           onClick={()=>{ setSpotCard(card); setEditQty(null) }}
                           className="kvitrine-card"

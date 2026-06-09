@@ -1070,6 +1070,48 @@ export function Holdings() {
       setAddForm(p=>({...p, condition:cond, graded:cond!=='Raw'&&cond!=='Scelle'}))
     }
   }
+  // ── Persistance serveur : Neon = source de vérité (cross-device) ──
+  const toDbRow = (c: CardItem) => ({
+    id: c.id,
+    user_id: user!.id,
+    name: c.name,
+    set_name: c.set || null,
+    set_id: c.setId || null,
+    card_number: c.number || null,
+    lang: c.lang || 'FR',
+    rarity: c.rarity || null,
+    card_type: c.type || null,
+    condition: c.condition || 'Raw',
+    graded: c.graded || false,
+    qty: c.qty || 1,
+    buy_price: c.buyPrice || null,
+    current_price: c.curPrice || null,
+    image_url: c.image && !c.image.startsWith('data:') ? c.image : null,
+    is_favorite: c.favorite || false,
+    variant: c.variant || 'Normal',
+    edition: c.edition || 'Unlimited',
+  })
+
+  const persistCards = async (cards: CardItem[]): Promise<boolean> => {
+    if (!user || cards.length === 0) return true
+    const { error } = await supabase.from('portfolio_cards').insert(cards.map(toDbRow))
+    if (error) {
+      // Rollback : la base a refusé, le state ne doit pas mentir
+      const ids = new Set(cards.map(c => c.id))
+      setPortfolio(prev => prev.filter(c => !ids.has(c.id)))
+      const code = (error as any).code
+      if (code === 'free_limit') {
+        const lim = (error as any).limit ?? 800
+        showToast('Limite de ' + lim + ' cartes atteinte sur le plan gratuit')
+      } else {
+        console.error('[KC PERSIST] insert failed:', error)
+        showToast('Erreur de sauvegarde, carte non ajoutée')
+      }
+      return false
+    }
+    return true
+  }
+
   const addCard = () => {
     if(!addForm.name||!addForm.set||!nameValidated) return
     const extra = encyclopediaLookup(addForm.name, addForm.set)
@@ -1079,7 +1121,7 @@ export function Holdings() {
     const resolvedNumber = addForm.number || liveMatch?.localId || extra.number || '???'
     const resolvedRarity = addForm.rarity || liveMatch?.rarity || extra.rarity || ''
     const newCard:CardItem = {
-      id:'u'+Date.now(), name:addForm.name, set:addForm.set,
+      id:crypto.randomUUID(), name:addForm.name, set:addForm.set,
       year:extra.year??addForm.year,
       number:resolvedNumber,
       rarity:resolvedRarity,
@@ -1093,10 +1135,8 @@ export function Holdings() {
       edition:addForm.edition||'Unlimited',
       variant:addForm.variant||'Normal',
     }
-    setPortfolio(prev=>{
-      const next=[...prev,newCard]
-      return next
-    })
+    setPortfolio(prev=>[...prev,newCard])
+    persistCards([newCard])
     setAddOpen(false); setAddSuggs([]); setNameValidated(false)
     setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
@@ -2209,7 +2249,7 @@ export function Holdings() {
                   const toAdd=fullSetCards.filter(c=>!existingNums.has(c.localId||''))
                   if(toAdd.length===0){showToast('Série déjà complète');return}
                   const newCards:CardItem[]=toAdd.map(c=>({
-                    id:'u'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+                    id:crypto.randomUUID(),
                     name:c.name,set:binderSet||'',year:new Date().getFullYear(),
                     number:c.localId||'',rarity:c.rarity||'',
                     type:'fire',lang:sc[0]?.lang||'FR',
@@ -2219,6 +2259,7 @@ export function Holdings() {
                     setId:sc[0]?.setId||'',setTotal:fullSetCards.length,
                   }))
                   setPortfolio(prev=>[...prev,...newCards])
+                  persistCards(newCards)
                   showToast(toAdd.length+' cartes ajoutées')
                 }}>
                 {(()=>{
@@ -3333,7 +3374,7 @@ export function Holdings() {
                     const newCards: CardItem[] = addSetCards
                       .filter(c=>!existingNums.has(c.localId||''))
                       .map(c=>({
-                        id:'u'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+                        id:crypto.randomUUID(),
                         name:c.name, set:addSetName, year:new Date().getFullYear(),
                         number:c.localId||'', rarity:c.rarity||'',
                         type:'fire', lang:addSetLang,
@@ -3343,6 +3384,7 @@ export function Holdings() {
                         setId:addSetId, setTotal:addSetCards.length,
                       }))
                     setPortfolio(prev=>[...prev,...newCards])
+                    persistCards(newCards)
                     setAddSetOpen(false)
                     showToast(toAdd+' cartes ajoutees')
                   }} style={{
@@ -3687,7 +3729,7 @@ export function Holdings() {
         onClose={()=>setImportOpen(false)}
         onImport={(imported)=>{
           const mapped = imported.map(c=>({
-            id: c.id,
+            id: crypto.randomUUID(),
             name: c.name,
             set: c.set,
             year: new Date().getFullYear(),
@@ -3702,6 +3744,7 @@ export function Holdings() {
             qty: c.qty,
           }))
           setPortfolio(prev=>[...prev, ...mapped])
+          persistCards(mapped)
           setImportOpen(false)
           showToast(imported.length+' cartes importées')
         }}

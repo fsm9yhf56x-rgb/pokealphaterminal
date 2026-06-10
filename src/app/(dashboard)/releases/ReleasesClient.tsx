@@ -4,17 +4,21 @@
  * /releases · Prochains Sets
  *
  * Reference glassmorphism v7: SpotDrawer.
- * Vocabulaire collector 2026: agregation des releases officielles.
+ * Filtres langue (FR/EN/JP) + sections "A venir" (cartes countdown)
+ * et "Sorties recentes" (grille compacte).
  */
 
 import { useState } from 'react'
 import { SNOW, FONT, GLASS } from '@/lib/design/snow'
+
+type Lang = 'FR' | 'EN' | 'JP'
 
 type UpcomingSet = {
   name: string
   slug: string
   pptId: string
   series: string
+  lang: Lang
   releaseDate: string
   releaseDateLocale: string
   imageUrl: string | null
@@ -28,7 +32,19 @@ type Props = {
   lastSyncedAt?: string | null
 }
 
+const LANG_META: Record<Lang, { flag: string; label: string }> = {
+  FR: { flag: '🇫🇷', label: 'FR' },
+  EN: { flag: '🇬🇧', label: 'EN' },
+  JP: { flag: '🇯🇵', label: 'JP' },
+}
+
 export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Props) {
+  const [langFilter, setLangFilter] = useState<'ALL' | Lang>('ALL')
+
+  const filtered = langFilter === 'ALL' ? sets : sets.filter(s => s.lang === langFilter)
+  const upcoming = filtered.filter(s => !s.isReleased)
+  const released = filtered.filter(s => s.isReleased)
+
   return (
     <main style={{
       minHeight: '80vh',
@@ -37,15 +53,129 @@ export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Pr
       position: 'relative' as const, zIndex: 1,
     }}>
       <Hero count={upcomingCount ?? sets.filter(s => !s.isReleased).length} lastSyncedAt={lastSyncedAt} />
-      {sets.length === 0 ? (
+
+      <LangFilter sets={sets} value={langFilter} onChange={setLangFilter} />
+
+      {filtered.length === 0 ? (
         <EmptyState />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 24 }}>
-          {sets.map(s => <SetCard key={s.pptId} set={s} />)}
-        </div>
+        <>
+          {upcoming.length > 0 && (
+            <section>
+              <SectionTitle dot="#2E9E6A" label="À venir" count={upcoming.length} />
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 24 }}>
+                {upcoming.map(s => <SetCard key={s.pptId} set={s} />)}
+              </div>
+            </section>
+          )}
+
+          {released.length > 0 && (
+            <section style={{ marginTop: upcoming.length > 0 ? 56 : 0 }}>
+              <SectionTitle dot={SNOW.muted} label="Sorties récentes" count={released.length} />
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 14,
+              }}>
+                {released.map(s => <ReleasedCard key={s.pptId} set={s} />)}
+              </div>
+            </section>
+          )}
+        </>
       )}
       <Footer />
     </main>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Filtre langue
+// ────────────────────────────────────────────────────────────
+function LangFilter({ sets, value, onChange }: {
+  sets: UpcomingSet[]
+  value: 'ALL' | Lang
+  onChange: (v: 'ALL' | Lang) => void
+}) {
+  const counts: Record<Lang, number> = { FR: 0, EN: 0, JP: 0 }
+  for (const s of sets) counts[s.lang]++
+  const options: { key: 'ALL' | Lang; label: string }[] = [
+    { key: 'ALL', label: 'Tous' },
+    ...(['FR', 'EN', 'JP'] as Lang[]).filter(l => counts[l] > 0)
+      .map(l => ({ key: l, label: `${LANG_META[l].flag} ${LANG_META[l].label}` })),
+  ]
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'center', gap: 8,
+      marginBottom: 36, flexWrap: 'wrap' as const,
+    }}>
+      {options.map(o => {
+        const active = value === o.key
+        return (
+          <button
+            key={o.key}
+            onClick={() => onChange(o.key)}
+            style={{
+              padding: '8px 18px', borderRadius: 99,
+              background: active ? SNOW.ink : 'rgba(255,255,255,0.62)',
+              backdropFilter: 'blur(16px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+              border: active ? '1px solid transparent' : '1px solid rgba(0,0,0,0.05)',
+              color: active ? '#fff' : SNOW.ink,
+              fontSize: 12.5, fontWeight: 700,
+              fontFamily: FONT.display, cursor: 'pointer',
+              letterSpacing: '0.02em',
+              transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
+              boxShadow: active
+                ? '0 4px 12px rgba(0,0,0,0.18)'
+                : '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+            }}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function SectionTitle({ dot, label, count }: { dot: string; label: string; count: number }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      marginBottom: 18,
+    }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot }} />
+      <h2 style={{
+        fontSize: 13, fontWeight: 800, color: SNOW.ink,
+        fontFamily: FONT.display, letterSpacing: '0.16em',
+        textTransform: 'uppercase' as const, margin: 0,
+      }}>{label}</h2>
+      <span style={{
+        fontSize: 11.5, fontWeight: 700, color: SNOW.muted,
+        fontFamily: FONT.data,
+      }}>{count}</span>
+    </div>
+  )
+}
+
+function LangBadge({ lang, size = 'md' }: { lang: Lang; size?: 'sm' | 'md' }) {
+  const m = LANG_META[lang]
+  const sm = size === 'sm'
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: sm ? '2px 8px' : '4px 11px', borderRadius: 99,
+      background: 'rgba(255,255,255,0.7)',
+      border: '1px solid rgba(0,0,0,0.05)',
+      fontSize: sm ? 10 : 11, fontWeight: 700,
+      fontFamily: FONT.display, color: SNOW.ink,
+      letterSpacing: '0.04em',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
+      whiteSpace: 'nowrap' as const,
+    }}>
+      <span style={{ fontSize: sm ? 11 : 13, lineHeight: 1 }}>{m.flag}</span>
+      {m.label}
+    </span>
   )
 }
 
@@ -70,7 +200,7 @@ function formatLastSynced(iso: string | null | undefined): string {
 function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | null }) {
   const lastSyncedLabel = formatLastSynced(lastSyncedAt)
   return (
-    <div style={{ marginBottom: 40, textAlign: 'center' as const, paddingTop: 20 }}>
+    <div style={{ marginBottom: 32, textAlign: 'center' as const, paddingTop: 20 }}>
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,
         padding: '7px 14px', borderRadius: 99,
@@ -129,7 +259,7 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
 }
 
 // ────────────────────────────────────────────────────────────
-// Set Card
+// Set Card (a venir — grande carte countdown)
 // ────────────────────────────────────────────────────────────
 function SetCard({ set }: { set: UpcomingSet }) {
   const [imgError, setImgError] = useState(false)
@@ -178,7 +308,6 @@ function SetCard({ set }: { set: UpcomingSet }) {
         borderRight: '1px solid rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}>
-        {/* Bokeh multi-points */}
         <div aria-hidden style={{
           position: 'absolute', top: '5%', left: '10%', width: 180, height: 180,
           background: 'radial-gradient(circle, rgba(255,140,80,0.32), transparent 60%)',
@@ -228,10 +357,15 @@ function SetCard({ set }: { set: UpcomingSet }) {
       }}>
         <div>
           <div style={{
-            fontSize: 10.5, fontWeight: 700, color: SNOW.muted,
-            fontFamily: FONT.display, letterSpacing: '0.2em',
-            textTransform: 'uppercase' as const, marginBottom: 10,
-          }}>{set.series}</div>
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+          }}>
+            <div style={{
+              fontSize: 10.5, fontWeight: 700, color: SNOW.muted,
+              fontFamily: FONT.display, letterSpacing: '0.2em',
+              textTransform: 'uppercase' as const,
+            }}>{set.series}</div>
+            <LangBadge lang={set.lang} size="sm" />
+          </div>
 
           <h2 style={{
             fontSize: 'clamp(22px, 2.5vw, 28px)',
@@ -347,6 +481,70 @@ function SetCard({ set }: { set: UpcomingSet }) {
   )
 }
 
+// ────────────────────────────────────────────────────────────
+// Released Card (sorti — carte compacte)
+// ────────────────────────────────────────────────────────────
+function ReleasedCard({ set }: { set: UpcomingSet }) {
+  const [imgError, setImgError] = useState(false)
+  return (
+    <article style={{
+      ...GLASS.card,
+      padding: '14px 16px',
+      display: 'flex', alignItems: 'center', gap: 14,
+    }}>
+      <div style={{
+        width: 64, height: 48, borderRadius: 10, flexShrink: 0,
+        background: 'rgba(245,245,247,0.8)',
+        border: '1px solid rgba(0,0,0,0.04)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+        {set.imageUrl && !imgError ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={set.imageUrl} alt={set.name}
+            onError={() => setImgError(true)}
+            style={{ maxWidth: '85%', maxHeight: '85%', width: 'auto', height: 'auto' }}
+          />
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={SNOW.muted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3,
+        }}>
+          <div style={{
+            fontSize: 13.5, fontWeight: 700, color: SNOW.ink,
+            fontFamily: FONT.display, letterSpacing: '-0.01em',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+          }}>{set.name}</div>
+          <LangBadge lang={set.lang} size="sm" />
+        </div>
+        <div style={{
+          fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display,
+        }}>{set.releaseDateLocale}</div>
+      </div>
+
+      <span style={{
+        flexShrink: 0,
+        padding: '4px 11px', borderRadius: 99,
+        background: 'rgba(29,158,117,0.1)',
+        border: '1px solid rgba(29,158,117,0.22)',
+        fontSize: 10, fontWeight: 800, color: '#1D9E75',
+        fontFamily: FONT.display, letterSpacing: '0.1em',
+        textTransform: 'uppercase' as const,
+      }}>Sorti</span>
+    </article>
+  )
+}
+
 function EmptyState() {
   return (
     <div style={{
@@ -369,10 +567,10 @@ function EmptyState() {
         </svg>
       </div>
       <h2 style={{ fontSize: 17, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, margin: 0 }}>
-        Aucun set en attente
+        Aucun set pour cette langue
       </h2>
       <p style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, maxWidth: 340, margin: 0 }}>
-        Tous les sets Pokémon TCG annoncés sont actuellement disponibles. Reviens bientôt pour voir les nouvelles annonces.
+        Aucune sortie référencée pour ce filtre. Essaye une autre langue ou reviens bientôt.
       </p>
     </div>
   )

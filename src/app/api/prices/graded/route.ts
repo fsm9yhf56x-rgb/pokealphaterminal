@@ -32,6 +32,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePlan } from '@/lib/plan'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
@@ -73,6 +74,9 @@ interface GradedPriceOutput {
 }
 
 export async function GET(req: NextRequest) {
+  const gate = await requirePlan('premium')
+  if (!gate.ok) return gate.res
+
   const params = req.nextUrl.searchParams
   const tcgCardId = params.get('tcg_card_id')
   const setSlug = params.get('set_slug')

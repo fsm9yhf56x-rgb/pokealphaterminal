@@ -30,7 +30,7 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
 import { getCurrentUser } from '@/lib/auth/helpers'
-import { canAddCards } from '@/lib/early'
+import { canAddCards, canAddWishlist } from '@/lib/early'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,6 +100,17 @@ export async function POST(req: Request) {
   try {
     // Build the SQL query + params
     // Gate plan Gratuit : plafond de cartes (non contournable, tout INSERT passe ici).
+    // Gate plan Gratuit : 3 items wishlist max (verrou serveur).
+    if (table === 'wishlist' && (mode === 'insert' || mode === 'upsert') && currentUserId) {
+      const n = Array.isArray(body.insertRows) ? body.insertRows.length : 1
+      const chk = await canAddWishlist(currentUserId, n)
+      if (!chk.ok) {
+        return NextResponse.json(
+          { data: null, error: { message: 'wishlist_limit', code: 'wishlist_limit', current: chk.current, limit: chk.limit } },
+          { status: 403 }
+        )
+      }
+    }
     if (table === 'portfolio_cards' && (mode === 'insert' || mode === 'upsert') && currentUserId) {
       const n = Array.isArray(body.insertRows) ? body.insertRows.length : 1
       const chk = await canAddCards(currentUserId, n)

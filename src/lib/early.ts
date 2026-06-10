@@ -51,3 +51,21 @@ export async function canAddCards(userId: string, n: number = 1): Promise<{
     plan, current, limit: FREE_CARD_LIMIT, remaining,
   }
 }
+
+
+/** Limite d'items wishlist pour le plan Gratuit. */
+export const FREE_WISHLIST_LIMIT = 3
+
+export async function canAddWishlist(userId: string, adding = 1): Promise<{
+  ok: boolean; plan: string; current: number; limit: number | null; remaining: number | null
+}> {
+  const prof = await sql.query('SELECT plan FROM profiles WHERE id = $1', [userId])
+  const plan = String(prof?.[0]?.plan ?? 'free')
+  if (plan !== 'free') {
+    return { ok: true, plan, current: 0, limit: null, remaining: null }
+  }
+  const cnt = await sql.query('SELECT COUNT(*)::int AS n FROM wishlist WHERE user_id = $1', [userId])
+  const current = Number(cnt?.[0]?.n ?? 0)
+  const remaining = Math.max(0, FREE_WISHLIST_LIMIT - current)
+  return { ok: current + adding <= FREE_WISHLIST_LIMIT, plan, current, limit: FREE_WISHLIST_LIMIT, remaining }
+}

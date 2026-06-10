@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requirePlan } from '@/lib/plan'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +20,9 @@ const LANG_PATTERNS = {
 }
 
 export async function GET(req: NextRequest) {
+  const gate = await requirePlan('premium')
+  if (!gate.ok) return gate.res
+
   const cardId = req.nextUrl.searchParams.get('card_id')
   const lang = (req.nextUrl.searchParams.get('lang') || 'EN').toUpperCase() as 'EN' | 'FR' | 'JP'
   if (!cardId) return NextResponse.json({ error: 'card_id required' }, { status: 400 })

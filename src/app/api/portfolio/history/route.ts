@@ -6,7 +6,7 @@
  * hasEnoughData = false si < 2 points (courbe en construction).
  */
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth/helpers'
+import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
 import { sql } from '@/lib/db/sql'
 
 export const dynamic = 'force-dynamic'
@@ -16,14 +16,14 @@ const PERIOD_DAYS: Record<string, number | null> = {
 }
 
 export async function GET(req: Request) {
-  const user = await getCurrentUser()
+  const user = await getCurrentUserWithProfile()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const requestedPeriod = searchParams.get('period') || '1M'
   // Plan Free: historique plafonne a 30 jours (verrou serveur, le client
   // peut demander ce qu'il veut). Pro/Premium: acces complet.
-  const isFree = ((user as any).plan || 'free') === 'free'
+  const isFree = user.plan === 'free'
   const requestedDays = PERIOD_DAYS[requestedPeriod] ?? null
   const capped = isFree && (requestedDays === null || requestedDays > 30)
   const period = capped ? '1M' : requestedPeriod

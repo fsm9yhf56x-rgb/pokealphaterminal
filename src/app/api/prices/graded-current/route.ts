@@ -5,9 +5,11 @@
  * Devise convertie USD -> EUR.
  */
 import { NextResponse } from 'next/server'
+import { requirePlan } from '@/lib/plan'
 import { neon } from '@neondatabase/serverless'
 
-export const revalidate = 300
+// Gate par plan => pas de cache ISR (une reponse cachee servirait le Premium aux Free)
+export const dynamic = 'force-dynamic'
 const sql = neon(process.env.DATABASE_URL!)
 
 const USD_TO_EUR = 0.92
@@ -51,6 +53,9 @@ const toEur = (usd: number | null): number | null =>
   usd == null ? null : Math.round(usd * USD_TO_EUR * 100) / 100
 
 export async function GET(req: Request) {
+  const gate = await requirePlan('premium')
+  if (!gate.ok) return gate.res
+
   try {
     const { searchParams } = new URL(req.url)
     const tcgCardId = searchParams.get('tcg_card_id')

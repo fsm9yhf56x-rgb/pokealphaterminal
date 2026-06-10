@@ -61,14 +61,18 @@ function numberVariants(localId: string): string[] {
 }
 
 export async function GET(request: Request) {
-  const gate = await requirePlan('premium')
-  if (!gate.ok) return gate.res
 
   const params = new URL(request.url).searchParams
   const tcgCardId = params.get('tcg_card_id')
   const setSlug = params.get('set_slug')
   const cardNumber = params.get('card_number')
   const mode = (params.get('mode') === 'raw' ? 'raw' : 'graded') as 'raw' | 'graded'
+  // Verrou Premium sur le GRADE uniquement — l'historique raw (conditions NM/LP/...)
+  // fait partie du produit Free.
+  if (mode === 'graded') {
+    const gate = await requirePlan('premium')
+    if (!gate.ok) return gate.res
+  }
 
   if (!tcgCardId && !(setSlug && cardNumber)) {
     return NextResponse.json(

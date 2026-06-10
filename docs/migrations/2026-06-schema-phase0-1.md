@@ -35,3 +35,9 @@
 - 3 routes lisent encore tcg_sets en direct: graded-current, graded-history, prices/tcgdex (+ spotlight/ebay à vérifier)
 - Refonte catalogue tcg_cards (1 ligne/carte, FK sets) — chantier découplé de la chaîne de prix (les vues n'en dépendent pas)
 - card_aliases.tcgplayer_product_id: 0 rempli sur 39 767 — à peupler depuis graded_prices_ppt.ppt_tcgplayer_id si besoin futur
+
+## Autorité des prix (acté juin 2026, commit b916ee8)
+- current_price serveur (cron + vue PPT) = vérité d'affichage; le moteur client useCardPrices ne price QUE les cartes serverPriced=false
+- Hiérarchie sources: EN+JP = PPT (vues card_price_resolved/_jp) | FR = client en attendant PokeTrace Pro
+- Intégration PokeTrace Pro FR future: vue card_price_resolved_fr + branche cron → les cartes FR passeront serverPriced=true automatiquement, zéro changement client
+- Nuance variantes (1st/shadowless): le serveur donne le prix générique; la finesse variante se réintroduira côté vue via set_variants, pas côté client

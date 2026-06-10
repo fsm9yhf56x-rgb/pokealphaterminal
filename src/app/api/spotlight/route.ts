@@ -224,6 +224,18 @@ export async function GET(req: NextRequest) {
       bySource.ppt_graded = pptGradedEntries
     }
 
+    // ── Qualite: le grade vient de PPT uniquement (eBay sold reels). ─────
+    // Les variantes gradees des autres sources (legacy prices_canonical,
+    // asks figees) sont exclues — donnees perimees, prix non fiables.
+    {
+      const GRADE_PREFIXES_Q = ['psa_', 'bgs_', 'cgc_', 'sgc_', 'ace_', 'tag_', 'cca_', 'pca_', 'ccc_']
+      const isGradedQ = (v: any) => GRADE_PREFIXES_Q.some(p => String(v ?? '').toLowerCase().startsWith(p))
+      for (const src of Object.keys(bySource)) {
+        if (src === 'ppt_graded' || src.startsWith('__')) continue
+        bySource[src] = (bySource[src] as any[]).filter(e => !isGradedQ(e?.variant))
+      }
+    }
+
     // ── Verrou Premium sur le grade, TOUTES SOURCES confondues ──────────
     // Les variantes gradees existent dans ppt_graded ET dans ebay
     // (prices_canonical asks). Troncature unique apres construction complete:

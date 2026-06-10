@@ -36,7 +36,7 @@ type CardItem = {
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
   condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
-  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number
+  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean
   image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
 }
 
@@ -171,6 +171,7 @@ export function Holdings() {
             lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
             condition: c.condition || 'Raw', graded: c.graded || false,
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
+            serverPriced: Number(c.current_price) > 0,
             qty: c.qty || 1,
             image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
             setId: c.set_id || undefined, favorite: c.is_favorite || false,
@@ -376,6 +377,9 @@ export function Holdings() {
         const srcs = [det.ebay, det.tcg, det.cardmarket].filter(Boolean) as number[]
         if (srcs.length) priceEUR = Math.round((srcs.reduce((a, b) => a + b, 0) / srcs.length) * 100) / 100
       }
+      // Cron owns curPrice : le serveur (vue PPT) fait foi quand il a un prix.
+      // Le moteur client ne comble que les trous (FR hors PPT, variantes).
+      if (c.serverPriced) return c
       if (priceEUR && priceEUR !== c.curPrice) return { ...c, curPrice: priceEUR }
       return c
     }))

@@ -7,7 +7,11 @@ import {
 } from 'recharts'
 import type { PerfAggregates } from './Performance'
 
+import { useAuth } from '@/lib/useAuth'
+
 const PERIODS = ['7J', '1M', '3M', '6M', '1A', 'Tout'] as const
+// Plan Free: historique plafonne a 30j (verrou serveur dans /api/portfolio/history).
+const FREE_PERIODS: readonly string[] = ['7J', '1M']
 type Period = typeof PERIODS[number]
 
 type HistPoint = { day: string; value: number; cost: number }
@@ -18,7 +22,9 @@ type HistPoint = { day: string; value: number; cost: number }
  * Si < 2 points : ligne plate au niveau de la valeur actuelle (historique en construction).
  */
 export function PerfChart({ agg }: { agg: PerfAggregates }) {
+  const { isPro } = useAuth() as any
   const [period, setPeriod] = useState<Period>('1M')
+  const [upsell, setUpsell] = useState(false)
   const [points, setPoints] = useState<HistPoint[]>([])
   const [enough, setEnough] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -70,7 +76,34 @@ export function PerfChart({ agg }: { agg: PerfAggregates }) {
             <LegendItem color={!enough ? '#AEAEB2' : (isUp ? '#1D9E75' : '#E03020')} label="Mon portfolio" />
             <LegendItem color="#AEAEB2" label="Coût d'acquisition" dashed />
           </div>
-          <PeriodSelector value={period} onChange={setPeriod} />
+          <div style={{ position: 'relative' }}>
+            <PeriodSelector
+              value={period}
+              locked={isPro ? [] : PERIODS.filter(p => !FREE_PERIODS.includes(p))}
+              onChange={(p) => {
+                if (!isPro && !FREE_PERIODS.includes(p)) { setUpsell(true); return }
+                setUpsell(false); setPeriod(p)
+              }}
+            />
+            {upsell && (
+              <a href="/abonnement" style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 20,
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px', borderRadius: 12,
+                background: 'rgba(29,29,31,0.92)',
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                color: 'rgba(255,255,255,0.95)', fontSize: 12, fontWeight: 600,
+                fontFamily: 'var(--font-sora, Sora, sans-serif)',
+                textDecoration: 'none', whiteSpace: 'nowrap' as const,
+                boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Historique complet avec Pro
+                <span style={{ color: '#FF7A6E', fontWeight: 700 }}>→</span>
+              </a>
+            )}
+          </div>
         </div>
 
         <div style={{ width: '100%', height: '240px', opacity: loading ? 0.6 : 1, transition: 'opacity .2s' }}>
@@ -130,7 +163,7 @@ function formatDayLabel(day: string): string {
   return `${d}/${m}`
 }
 
-function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
+function PeriodSelector({ value, onChange, locked = [] }: { value: Period; onChange: (p: Period) => void; locked?: readonly string[] }) {
   return (
     <div style={{
       display: 'flex', gap: 2,
@@ -142,6 +175,7 @@ function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Peri
     }}>
       {PERIODS.map(p => {
         const active = value === p
+        const isLocked = locked.includes(p)
         return (
           <button key={p} onClick={() => onChange(p)} style={{
             padding: '6px 14px', borderRadius: 999, border: 'none',
@@ -151,10 +185,17 @@ function PeriodSelector({ value, onChange }: { value: Period; onChange: (p: Peri
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
             transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
             boxShadow: active ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            opacity: isLocked ? 0.55 : 1,
           }}
             onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.color = '#1D1D1F' } }}
             onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#86868B' } }}
-          >{p}</button>
+          >
+            {p}
+            {isLocked && (
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            )}
+          </button>
         )
       })}
     </div>

@@ -20,8 +20,14 @@ export async function GET(req: Request) {
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
-  const period = searchParams.get('period') || '1M'
-  const days = PERIOD_DAYS[period] ?? null
+  const requestedPeriod = searchParams.get('period') || '1M'
+  // Plan Free: historique plafonne a 30 jours (verrou serveur, le client
+  // peut demander ce qu'il veut). Pro/Premium: acces complet.
+  const isFree = ((user as any).plan || 'free') === 'free'
+  const requestedDays = PERIOD_DAYS[requestedPeriod] ?? null
+  const capped = isFree && (requestedDays === null || requestedDays > 30)
+  const period = capped ? '1M' : requestedPeriod
+  const days = capped ? 30 : requestedDays
 
   try {
     const rows = (days === null
@@ -48,6 +54,8 @@ export async function GET(req: Request) {
       points,
       hasEnoughData: points.length >= 2,
       period,
+      capped,
+      maxFreeDays: 30,
     })
   } catch (e: any) {
     console.error('[portfolio/history]', e?.message)

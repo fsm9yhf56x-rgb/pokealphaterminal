@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
+import { PlanLockPanel } from '@/components/ui/snow/PlanLockPanel'
 
 const SNOW = {
   bg: '#FFFFFF', surface: '#F5F5F7', borderSoft: '#E5E5EA', borderMid: '#C7C7CC',
@@ -191,6 +192,7 @@ function ChartSVG({ points }: { points: Pt[] }) {
 export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded', isPro = false, fallback }: GradedHistoryChartProps) {
   const [resp, setResp] = useState<ApiResp | null>(null)
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
   const [company, setCompany] = useState<string>('')
   const [grade, setGrade] = useState<string>('')
   const [condition, setCondition] = useState<string>('')
@@ -205,10 +207,13 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
 
   useEffect(() => {
     let alive = true
-    setLoading(true); setResp(null)
-    fetch(`/api/prices/graded-history?${qs}`, { cache: 'default' })
-      .then(r => r.json())
-      .then(d => { if (alive) { setResp(d); setLoading(false) } })
+    setLoading(true); setResp(null); setLocked(false)
+    fetch(`/api/prices/graded-history?${qs}`, { cache: 'no-store' })
+      .then(r => {
+        if (r.status === 403) { if (alive) { setLocked(true); setLoading(false) } ; return null }
+        return r.json()
+      })
+      .then(d => { if (alive && d) { setResp(d); setLoading(false) } })
       .catch(() => { if (alive) { setResp(null); setLoading(false) } })
     return () => { alive = false }
   }, [qs])
@@ -261,6 +266,8 @@ export function GradedHistoryChart({ setId, localId, tcgCardId, mode = 'graded',
     : (resp?.dimensions?.conditions?.length ?? 0) > 0
 
   // Loading — skeleton glass v7
+  if (locked) return <PlanLockPanel variant="gradedHistory" compact />
+
   if (loading) {
     return (
       <div style={{

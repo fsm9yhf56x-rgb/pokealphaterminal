@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     // Build the SQL query + params
     // Gate plan Gratuit : plafond de cartes (non contournable, tout INSERT passe ici).
     // Gate plan Gratuit : 3 items wishlist max (verrou serveur).
-    if (table === 'wishlist' && (mode === 'insert' || mode === 'upsert') && currentUserId) {
+    if (table === 'goal_wishlist' && (mode === 'insert' || mode === 'upsert') && currentUserId) {
       const n = Array.isArray(body.insertRows) ? body.insertRows.length : 1
       const chk = await canAddWishlist(currentUserId, n)
       if (!chk.ok) {

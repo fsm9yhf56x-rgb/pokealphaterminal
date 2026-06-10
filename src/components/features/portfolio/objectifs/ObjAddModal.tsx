@@ -10,7 +10,7 @@ interface Props {
   mode: 'target' | 'wish'
   onClose: () => void
   onAddTarget: (target: Omit<GoalTarget, 'id'>) => Promise<GoalTarget>
-  onAddWish: (item: Omit<WishlistItem, 'id'>) => Promise<WishlistItem>
+  onAddWish: (item: Omit<WishlistItem, 'id'>) => Promise<WishlistItem | { error: 'wishlist_limit' }>
 }
 
 const METRIC_OPTIONS: { value: GoalMetric; label: string; placeholder: string; unit?: string }[] = [
@@ -37,6 +37,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
   const [wishNotes, setWishNotes] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
+  const [limitErr, setLimitErr] = useState(false)
 
   /* ESC key closes modal */
   useEffect(() => {
@@ -69,7 +70,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
           deadline: deadline || null,
         })
       } else {
-        await onAddWish({
+        const res = await onAddWish({
           card_name: wishName.trim(),
           set_name: wishSet.trim() || null,
           lang: wishLang,
@@ -78,6 +79,10 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
           target_price: wishTargetPrice ? parseFloat(wishTargetPrice) : null,
           notes: wishNotes.trim() || null,
         })
+        if (res && typeof res === 'object' && 'error' in res) {
+          setLimitErr(true)
+          return
+        }
       }
       onClose()
     } finally {
@@ -150,6 +155,17 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
             }}>{mode === 'target' ? 'Définir une cible' : 'Ajouter une carte'}</div>
           </div>
+          {limitErr && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const,
+              padding: '10px 14px', borderRadius: 12, marginBottom: 10,
+              background: 'rgba(224,48,32,0.07)', border: '1px solid rgba(224,48,32,0.18)',
+              fontSize: 12.5, color: '#1D1D1F', fontFamily: 'var(--font-dm,"DM Sans",system-ui)',
+            }}>
+              <span>Wishlist limitée à <strong>3 cartes</strong> en Gratuit.</span>
+              <a href="/abonnement" style={{ color: '#E03020', fontWeight: 700, textDecoration: 'none' }}>Passer Pro pour l'illimité →</a>
+            </div>
+          )}
           <button
             onClick={onClose}
             style={{

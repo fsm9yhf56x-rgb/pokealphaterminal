@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import { PlanLockPanel } from '@/components/ui/snow/PlanLockPanel'
 import { formatEUR } from '@/lib/formatPrice'
 
 const SNOW = {
@@ -48,6 +49,7 @@ function fmtDate(iso: string | null): string | null {
 export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props) {
   const [data, setData] = useState<ApiResp | null>(null)
   const [loading, setLoading] = useState(true)
+  const [locked, setLocked] = useState(false)
   const [selCond, setSelCond] = useState<string>('NM')
   const [selCompany, setSelCompany] = useState<string>('')
   const [selGrade, setSelGrade] = useState<string>('')
@@ -55,9 +57,13 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setLocked(false)
     fetch(`/api/prices/graded-current?tcg_card_id=${encodeURIComponent(cardId)}`)
-      .then((r) => r.json())
-      .then((j: ApiResp) => { if (!cancelled) setData(j) })
+      .then((r) => {
+        if (r.status === 403) { if (!cancelled) setLocked(true); return null }
+        return r.json()
+      })
+      .then((j: ApiResp | null) => { if (!cancelled && j) setData(j) })
       .catch(() => { if (!cancelled) setData(null) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -118,6 +124,8 @@ export function PricePanelPpt({ cardId, fallbackMarket, fallbackSources }: Props
       </div>
     )
   }
+
+  if (locked) return <PlanLockPanel variant="graded" />
 
   if (loading) {
     return (

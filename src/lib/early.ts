@@ -64,7 +64,7 @@ export async function canAddWishlist(userId: string, adding = 1): Promise<{
   if (plan !== 'free') {
     return { ok: true, plan, current: 0, limit: null, remaining: null }
   }
-  const cnt = await sql.query('SELECT COUNT(*)::int AS n FROM wishlist WHERE user_id = $1', [userId])
+  const cnt = await sql.query('SELECT COUNT(*)::int AS n FROM goal_wishlist WHERE user_id = $1', [userId])
   const current = Number(cnt?.[0]?.n ?? 0)
   const remaining = Math.max(0, FREE_WISHLIST_LIMIT - current)
   return { ok: current + adding <= FREE_WISHLIST_LIMIT, plan, current, limit: FREE_WISHLIST_LIMIT, remaining }

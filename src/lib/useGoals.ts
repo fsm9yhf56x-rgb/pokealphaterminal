@@ -147,6 +147,11 @@ export function useGoals() {
         setWishlist(prev => [data as WishlistItem, ...prev])
         return data as WishlistItem
       }
+      // Verrou serveur (plan Gratuit, 3 max) : ne PAS fallback en localStorage,
+      // sinon l'item apparait localement puis disparait au refresh.
+      if (error && (error.code === 'wishlist_limit' || error.message === 'wishlist_limit')) {
+        return { error: 'wishlist_limit' as const }
+      }
     }
     const updated = [newItem, ...wishlist]
     setWishlist(updated)

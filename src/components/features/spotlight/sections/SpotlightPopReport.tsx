@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { PlanLockPanel } from '@/components/ui/snow/PlanLockPanel'
 import { SNOW, FONT } from '../snowTokens'
 
 interface Variant { psa_spec_id: string; grades: Record<string, number>; total: number }
@@ -11,14 +12,19 @@ export function SpotlightPopReport({ cardId }: { cardId: string }) {
   const [variants, setVariants] = useState<Variant[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSpec, setSelectedSpec] = useState<string | null>(null)
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setLocked(false)
     fetch(`/api/pop-report?card_id=${encodeURIComponent(cardId)}`)
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 403) { if (!cancelled) { setLocked(true); setLoading(false) } ; return null }
+        return r.json()
+      })
       .then(j => {
-        if (cancelled) return
+        if (cancelled || !j) return
         const v = j?.variants || []
         setVariants(v)
         if (v[0]) setSelectedSpec(v[0].psa_spec_id)
@@ -28,6 +34,11 @@ export function SpotlightPopReport({ cardId }: { cardId: string }) {
     return () => { cancelled = true }
   }, [cardId])
 
+  if (locked) return (
+    <div style={{ marginTop: 24 }}>
+      <PlanLockPanel variant="pop" compact />
+    </div>
+  )
   if (loading || variants.length === 0) return null
 
   const sel = variants.find(v => v.psa_spec_id === selectedSpec) || variants[0]

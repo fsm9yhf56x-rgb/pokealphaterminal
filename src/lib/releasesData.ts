@@ -23,6 +23,15 @@ const TCGDEX: Record<Lang, string> = {
   EN: 'https://api.tcgdex.net/v2/en/sets',
   JP: 'https://api.tcgdex.net/v2/ja/sets',
 }
+// La liste /sets de TCGdex n'est PAS triee chronologiquement (surtout JA:
+// la serie M est rangee avant SV). Le tail seul rate donc des sets recents.
+// On force l'inclusion des sets de la serie de la generation courante.
+const TCGDEX_SERIES: Record<Lang, string> = {
+  FR: 'https://api.tcgdex.net/v2/fr/series',
+  EN: 'https://api.tcgdex.net/v2/en/series',
+  JP: 'https://api.tcgdex.net/v2/ja/series',
+}
+const CURRENT_SERIES: Record<Lang, string[]> = { FR: ['me'], EN: ['me'], JP: ['M'] }
 
 function norm(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -36,7 +45,15 @@ function localeDate(iso: string): string {
 async function fetchTcgdex(lang: Lang): Promise<ReleaseSet[]> {
   try {
     const list: { id: string }[] = await fetch(TCGDEX[lang], { next: { revalidate: 21600 } }).then(r => r.json())
-    const tail = list.slice(-16)
+    const ids = new Set(list.slice(-16).map(x => x.id))
+    // Sets des series de la generation courante (fix tail non chronologique)
+    for (const serieId of CURRENT_SERIES[lang]) {
+      try {
+        const serie = await fetch(TCGDEX_SERIES[lang] + '/' + serieId, { next: { revalidate: 21600 } }).then(r => r.json())
+        for (const st of (serie.sets || [])) ids.add(st.id)
+      } catch {}
+    }
+    const tail = [...ids].map(id => ({ id }))
     const now = Date.now()
     const out = await Promise.all(tail.map(async (s) => {
       try {

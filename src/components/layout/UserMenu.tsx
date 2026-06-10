@@ -235,6 +235,24 @@ export default function UserMenu() {
           <span className="kum-badge-menu" style={{ display: 'none', marginBottom: 8 }}><PlanBadge plan={plan} hideFree /></span>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', margin: 0, fontFamily: 'var(--font-sora,Sora,system-ui)' }}>{profile?.display_name || 'Utilisateur'}</p>
           <p style={{ fontSize: 11, color: '#AEAEB2', margin: '2px 0 0', fontFamily: 'var(--font-dm,"DM Sans",system-ui)' }}>{user.email}</p>
+          {profile?.is_early_supporter && typeof profile?.early_rank === 'number' && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              marginTop: 8, padding: '4px 11px', borderRadius: 99,
+              background: '#1D1D1F', color: '#fff',
+              fontSize: 10, fontWeight: 700,
+              fontFamily: 'var(--font-sora,Sora,system-ui)',
+              letterSpacing: '0.04em',
+              boxShadow: '0 3px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12)',
+              whiteSpace: 'nowrap' as const,
+            }}>
+              <span style={{ color: '#FFD60A', fontSize: 11, lineHeight: 1 }}>★</span>
+              Early Supporter
+              <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
+                #{String(profile.early_rank).padStart(3, '0')}/300
+              </span>
+            </span>
+          )}
         </div>
         {items.map((item, i) => (
           <button key={i} className="kum-row" onClick={() => { setMenuOpen(false); requestAnimationFrame(() => router.push(item.href)) }} style={{

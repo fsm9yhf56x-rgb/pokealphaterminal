@@ -26,6 +26,8 @@ export type BetterAuthUser = {
 export type UserWithProfile = BetterAuthUser & {
   isPro: boolean
   isPremium: boolean
+  isEarlySupporter: boolean
+  earlyRank: number | null
   plan: 'free' | 'pro' | 'premium'
   isAdmin: boolean
 }
@@ -51,8 +53,8 @@ export async function getCurrentUserWithProfile(): Promise<UserWithProfile | nul
 
   try {
     const rows = (await sql`
-      SELECT is_pro, is_admin, plan FROM "profiles" WHERE id = ${user.id} LIMIT 1
-    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null }>
+      SELECT is_pro, is_admin, plan, is_early_supporter, early_rank FROM "profiles" WHERE id = ${user.id} LIMIT 1
+    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null; is_early_supporter: boolean | null; early_rank: number | null }>
 
     const profile = rows[0]
     const plan = (profile?.plan as 'free'|'pro'|'premium') || (profile?.is_pro ? 'pro' : 'free')
@@ -61,10 +63,12 @@ export async function getCurrentUserWithProfile(): Promise<UserWithProfile | nul
       plan,
       isPro: plan === 'pro' || plan === 'premium',
       isPremium: plan === 'premium',
+      isEarlySupporter: !!profile?.is_early_supporter,
+      earlyRank: profile?.early_rank ?? null,
       isAdmin: profile?.is_admin === true,
     }
   } catch {
-    return { ...user, plan: 'free' as const, isPro: false, isPremium: false, isAdmin: false }
+    return { ...user, plan: 'free' as const, isPro: false, isPremium: false, isEarlySupporter: false, earlyRank: null, isAdmin: false }
   }
 }
 

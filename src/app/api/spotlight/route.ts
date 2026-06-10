@@ -218,6 +218,13 @@ export async function GET(req: NextRequest) {
       // Verrou Premium: les non-Premium recoivent UNE seule note gradee
       // (teaser de conversion) + flag gradedLocked. Donnees jamais envoyees
       // = verrou reel, pas un masquage client.
+      // Teaser: servir la note la plus parlante (PSA d'abord, puis volume de ventes)
+      pptGradedEntries.sort((a, b) => {
+        const aPsa = String(a.variant).startsWith('psa_') ? 1 : 0
+        const bPsa = String(b.variant).startsWith('psa_') ? 1 : 0
+        if (aPsa !== bPsa) return bPsa - aPsa
+        return (b.nb_sales ?? 0) - (a.nb_sales ?? 0)
+      })
       const u = await getCurrentUserWithProfile().catch(() => null)
       const isPremium = u?.isPremium === true
       if (isPremium) {

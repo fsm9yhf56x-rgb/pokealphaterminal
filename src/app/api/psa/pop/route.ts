@@ -24,13 +24,13 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // Determine Pro status (non-blocking — anon users can still see free data)
-  let isPro = false
-  try {
-    const userWithProfile = await getCurrentUserWithProfile()
-    isPro = userWithProfile?.isPro === true
-  } catch {
-    isPro = false
+  // Pop Reports = Pro entier (decision pricing 10/06).
+  // isPro garde son role pour le split variantes exotiques (conserve).
+  const userWithProfile = await getCurrentUserWithProfile().catch(() => null)
+  if (!userWithProfile) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  const isPro = userWithProfile.isPro === true
+  if (!isPro) {
+    return NextResponse.json({ error: 'plan_required', need: 'pro', current: userWithProfile.plan }, { status: 403 })
   }
 
   try {

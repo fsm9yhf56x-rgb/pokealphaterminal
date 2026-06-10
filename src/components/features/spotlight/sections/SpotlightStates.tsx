@@ -44,6 +44,8 @@ export function SpotlightStates({ prices, portfolio }: Props) {
   }
   // BEDROCK: prix gradés viennent de PPT (eBay sold real), fallback ebay (asks listings)
   const graded = (prices.bySource.ppt_graded || prices.bySource.ebay || []).filter(p => gradeFromVariant(p.variant))
+  const gradedLocked = (prices.bySource as any).__gradedLocked === true
+  const gradedHiddenCount = Number((prices.bySource as any).__gradedHiddenCount || 0)
 
   const nm = rawByCond.NEAR_MINT
   const sortedGraded = [...graded].sort((a, b) => b.price_avg - a.price_avg)
@@ -100,7 +102,31 @@ export function SpotlightStates({ prices, portfolio }: Props) {
         ) : null}
       </div>
 
-      {hasMore ? (
+      {gradedLocked ? (
+        <div style={{ marginTop: 10 }}>
+          <a
+            href="/abonnement"
+            className="kc-glass-btn"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              background: 'rgba(29,29,31,0.92)',
+              backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)',
+              border: '1px solid rgba(0,0,0,0.2)',
+              fontSize: 12, color: '#fff', fontWeight: 600,
+              padding: '8px 16px', borderRadius: 10,
+              fontFamily: FONT.display, textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12)',
+              transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            {gradedHiddenCount > 0
+              ? `${gradedHiddenCount} autre${gradedHiddenCount > 1 ? 's' : ''} note${gradedHiddenCount > 1 ? 's' : ''} gradée${gradedHiddenCount > 1 ? 's' : ''} avec Premium`
+              : 'Toutes les notes gradées avec Premium'}
+            <span style={{ color: '#FF7A6E', fontWeight: 700 }}>→</span>
+          </a>
+        </div>
+      ) : hasMore ? (
         <div style={{ marginTop: 10 }}>
           <button
             onClick={() => setExpanded(v => !v)}

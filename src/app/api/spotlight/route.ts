@@ -14,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
@@ -214,7 +215,18 @@ export async function GET(req: NextRequest) {
       })
     }
     if (pptGradedEntries.length > 0) {
-      bySource.ppt_graded = pptGradedEntries
+      // Verrou Premium: les non-Premium recoivent UNE seule note gradee
+      // (teaser de conversion) + flag gradedLocked. Donnees jamais envoyees
+      // = verrou reel, pas un masquage client.
+      const u = await getCurrentUserWithProfile().catch(() => null)
+      const isPremium = u?.isPremium === true
+      if (isPremium) {
+        bySource.ppt_graded = pptGradedEntries
+      } else if (pptGradedEntries.length > 0) {
+        bySource.ppt_graded = [pptGradedEntries[0]]
+        ;(bySource as any).__gradedLocked = true
+        ;(bySource as any).__gradedHiddenCount = pptGradedEntries.length - 1
+      }
     }
 
     // 4. Marche estime (raw NM cross-source average, inchange)

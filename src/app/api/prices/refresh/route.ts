@@ -34,6 +34,12 @@ function getTier(topPrice: number | null): string {
 }
 
 export async function POST(request: Request) {
+  // Protection quota PokeTrace (250 req/jour): cron/admin uniquement.
+  const secret = request.headers.get('authorization')?.replace('Bearer ', '') || new URL(request.url).searchParams.get('secret')
+  if (secret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
   const { sets = [] } = await request.json().catch(() => ({}))
   if (!sets.length) return NextResponse.json({ skipped: true, reason: 'no sets' })
   const log = await startSyncLog('prices_poketrace_refresh', 'event')

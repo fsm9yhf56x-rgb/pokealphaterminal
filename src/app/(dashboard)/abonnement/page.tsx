@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { SNOW, FONT, GLASS, RADIUS, SHADOW, EASE } from '@/lib/design/snow'
+import { SoonBadge } from '@/components/ui/snow/SoonBadge'
 
 type PlanId = 'free' | 'pro' | 'premium'
 type Period = 'hebdo' | 'mensuel' | 'annuel'
@@ -33,6 +34,7 @@ const FEATURES: Record<PlanId, string[]> = {
   pro: [
     'Tout le plan Gratuit',
     'Cartes illimitées',
+    'Cartes gradées valorisées dans ton portefeuille',
     'Graphique d’évolution du portefeuille',
     'Statistiques avancées & P&L',
     'Export du portefeuille',
@@ -41,13 +43,18 @@ const FEATURES: Record<PlanId, string[]> = {
   premium: [
     'Tout le plan Pro',
     'PSA Pop Reports',
-    'Market Terminal & indices',
-    'Alpha Signals (S / A / B)',
-    'Whale Tracker',
-    'Deal Hunter — eBay & Cardmarket',
-    'Kodo AI illimité + support prioritaire',
+    'Prix gradés détaillés — toutes cartes, toutes notes (PSA, CGC…)',
   ],
 }
+
+// Features Premium a venir — incluses pour les abonnes a leur sortie, sans surcout
+const PREMIUM_SOON: { label: string; v: 'v2.0' | 'v3.0' }[] = [
+  { label: 'Market Terminal & indices', v: 'v2.0' },
+  { label: 'Alpha Signals (S / A / B)', v: 'v2.0' },
+  { label: 'Deal Hunter — eBay & Cardmarket', v: 'v2.0' },
+  { label: 'Kodo AI illimité + support prioritaire', v: 'v2.0' },
+  { label: 'Whale Tracker', v: 'v3.0' },
+]
 
 export default function AbonnementPage() {
   const { user, profile, isPro } = useAuth() as any
@@ -187,8 +194,7 @@ export default function AbonnementPage() {
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
         <PlanCard id="premium" name="Premium" cell={PRICES.premium[period]}
-          features={FEATURES.premium} cta="Passer Premium" recommended
-          footnote="Market / Alpha / Whale en déploiement (v2.0 / v3.0)."
+          features={FEATURES.premium} featuresSoon={PREMIUM_SOON} cta="Passer Premium" recommended
           earlyActive={earlyActive} earlySeatsLeft={early?.seatsLeft} earlyPeriod={period}
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
@@ -209,7 +215,7 @@ export default function AbonnementPage() {
 /* ---------- PlanCard ---------- */
 
 function PlanCard({
-  id, name, cell, priceMain, priceSub, features, cta, recommended, footnote,
+  id, name, cell, priceMain, priceSub, features, featuresSoon, cta, recommended, footnote,
   earlyActive, earlySeatsLeft, earlyPeriod,
   currentPlan, busy, onCta,
 }: {
@@ -219,6 +225,7 @@ function PlanCard({
   priceMain?: string
   priceSub?: string
   features: string[]
+  featuresSoon?: { label: string; v: 'v2.0' | 'v3.0' }[]
   cta: string
   recommended?: boolean
   footnote?: string
@@ -350,18 +357,47 @@ function PlanCard({
         </div>
       )}
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
-        {features.map((feat, i) => (
-          <li key={i} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-            fontFamily: FONT.body, fontSize: 14, lineHeight: 1.45, color: SNOW.inkSoft,
-            marginBottom: 11,
-          }}>
-            <span style={{ color: SNOW.greenAccent, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
-            {feat}
-          </li>
-        ))}
-      </ul>
+      <div style={{ flex: 1, marginBottom: 24 }}>
+        {featuresSoon && featuresSoon.length > 0 && (
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display,
+            letterSpacing: '0.14em', textTransform: 'uppercase' as const, marginBottom: 10,
+          }}>Disponible maintenant</div>
+        )}
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {features.map((feat, i) => (
+            <li key={i} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              fontFamily: FONT.body, fontSize: 14, lineHeight: 1.45, color: SNOW.inkSoft,
+              marginBottom: 11,
+            }}>
+              <span style={{ color: SNOW.greenAccent, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
+              {feat}
+            </li>
+          ))}
+        </ul>
+        {featuresSoon && featuresSoon.length > 0 && (
+          <>
+            <div style={{
+              fontSize: 10, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display,
+              letterSpacing: '0.14em', textTransform: 'uppercase' as const, margin: '14px 0 10px',
+            }}>Inclus à leur sortie</div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {featuresSoon.map((f, i) => (
+                <li key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  fontFamily: FONT.body, fontSize: 14, lineHeight: 1.45, color: SNOW.muted,
+                  marginBottom: 11,
+                }}>
+                  <span style={{ color: SNOW.muted, fontWeight: 700, flexShrink: 0 }}>◌</span>
+                  <span style={{ flex: 1 }}>{f.label}</span>
+                  <SoonBadge version={f.v} variant="inline" />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
 
       <button
         onClick={() => onCta(id)}

@@ -108,5 +108,22 @@ async function applyPlan(
      WHERE id = $5`,
     [plan, customerId ?? null, subscriptionId, early, userId]
   )
+  // Rang de membre fondateur: attribue une seule fois, jamais reattribue (meme apres resiliation).
+  // Index unique partiel sur early_rank => retry si course entre deux webhooks.
+  if (early) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await sql.query(
+          `UPDATE profiles
+             SET early_rank = (SELECT COALESCE(MAX(early_rank), 0) + 1 FROM profiles)
+           WHERE id = $1 AND early_rank IS NULL`,
+          [userId]
+        )
+        break
+      } catch (e: any) {
+        if (attempt === 2) console.error('[stripe/webhook] early_rank failed:', e?.message)
+      }
+    }
+  }
   console.log(`[stripe/webhook] user ${userId} -> plan ${plan}${early ? ' (early)' : ''}`)
 }

@@ -691,6 +691,7 @@ export default function LandingPage() {
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Gratuit</li>
               <li><Glyph d="check" size={16} /> Cartes <strong>illimitées</strong></li>
+              <li><Glyph d="check" size={16} /> Cartes gradées valorisées dans ton portefeuille</li>
               <li><Glyph d="check" size={16} /> Graphique d’évolution du portefeuille</li>
               <li><Glyph d="check" size={16} /> Statistiques avancées & P&amp;L</li>
               <li><Glyph d="check" size={16} /> Export du portefeuille</li>
@@ -726,14 +727,19 @@ export default function LandingPage() {
                 {billing === 'yearly' && <div className="kc-permonth">soit {PERMONTH.premium}</div>}
               </>
             )}
+            <div className="kc-plan-sublabel">Disponible maintenant</div>
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Pro</li>
               <li><Glyph d="check" size={16} /> PSA Pop Reports</li>
-              <li><Glyph d="check" size={16} /> Market Terminal & indices</li>
-              <li><Glyph d="check" size={16} /> Alpha Signals (S / A / B)</li>
-              <li><Glyph d="check" size={16} /> Whale Tracker</li>
-              <li><Glyph d="check" size={16} /> Deal Hunter — eBay & Cardmarket</li>
-              <li><Glyph d="check" size={16} /> Kodo AI illimité + support prioritaire</li>
+              <li><Glyph d="check" size={16} /> Prix gradés détaillés — toutes cartes, toutes notes</li>
+            </ul>
+            <div className="kc-plan-sublabel">Inclus à leur sortie — sans surcoût</div>
+            <ul className="kc-plan-list kc-plan-list-soon">
+              <li><span className="kc-soon-dot">◌</span> Market Terminal & indices</li>
+              <li><span className="kc-soon-dot">◌</span> Alpha Signals (S / A / B)</li>
+              <li><span className="kc-soon-dot">◌</span> Deal Hunter — eBay & Cardmarket</li>
+              <li><span className="kc-soon-dot">◌</span> Kodo AI illimité + support prioritaire</li>
+              <li><span className="kc-soon-dot">◌</span> Whale Tracker</li>
             </ul>
             <a href="/signup" className="kc-btn kc-btn-primary kc-btn-block">Passer Premium</a>
             <p className="kc-plan-note">Market / Alpha / Whale en déploiement (v2.0 / v3.0).</p>
@@ -1002,7 +1008,10 @@ const CSS = `
 .kc-price{font-family:var(--display);font-weight:700;font-size:38px;letter-spacing:-.03em;margin:14px 0 0;line-height:1;}
 .kc-price span{font-size:15px;font-weight:500;color:var(--faint);margin-left:5px;}
 .kc-permonth{font-size:12.5px;color:var(--faint);margin-top:8px;}
-.kc-plan-list{list-style:none;padding:0;margin:22px 0 24px;display:flex;flex-direction:column;gap:12px;flex:1;}
+.kc-plan-sublabel { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #86868B; margin: 14px 0 8px; font-family: var(--font-display); }
+        .kc-plan-list-soon li { color: #86868B; }
+        .kc-soon-dot { font-weight: 700; margin-right: 2px; }
+        .kc-plan-list{list-style:none;padding:0;margin:22px 0 24px;display:flex;flex-direction:column;gap:12px;flex:1;}
 .kc-plan-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);line-height:1.4;}
 .kc-plan-list svg{color:var(--green);flex-shrink:0;margin-top:2px;}
 .kc-plan-note{font-size:11.5px;color:var(--faint);margin:13px 0 0;line-height:1.4;text-align:center;}

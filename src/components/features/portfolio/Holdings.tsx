@@ -272,7 +272,7 @@ export function Holdings() {
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
     condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string; edition:string; variant:string;
   }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
-  const [toast, setToast] = useState<string|null>(null)
+  const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
   const [addSetLang,   setAddSetLang]   = useState<'FR'|'EN'|'JP'>('FR')
@@ -441,6 +441,7 @@ export function Holdings() {
   const [showWelcome,  setShowWelcome]  = useState(false)
   const [welcomeCards, setWelcomeCards] = useState<{name:string;lang:string;setId:string;localId:string}[]>([])
   const toastRef = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const pendingDelete = useRef<{card:CardItem;index:number;timer:ReturnType<typeof setTimeout>}|null>(null)
   const scrollRefs = useRef<Record<string, HTMLDivElement|null>>({})
   const [scrollPcts, setScrollPcts] = useState<Record<string, number>>({})
   const handleShelfScroll = (setName: string, e: React.UIEvent<HTMLDivElement>) => {
@@ -997,7 +998,7 @@ export function Holdings() {
   const binderPages = Math.max(1,Math.ceil(gridItems.length/slotsPer))
 
   const showToast = (msg:string) => {
-    setToast(msg)
+    setToast({msg})
     if(toastRef.current) clearTimeout(toastRef.current)
     toastRef.current = setTimeout(()=>setToast(null),2400)
   }
@@ -1017,29 +1018,59 @@ export function Holdings() {
         })
     }
   }
-  const removeCard = (card:CardItem, e:React.MouseEvent) => {
-    e.stopPropagation()
-    deletedIds.current.add(card.id)
-    setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
+  // DELETE serveur effectif (appele apres la fenetre d'undo)
+  const commitDelete = (card:CardItem) => {
     if (user) {
       if (card.id.startsWith('u')) {
         // Local ID — delete by name + set + user
         supabase.from('portfolio_cards').delete()
           .eq('user_id', user.id).eq('name', card.name).eq('set_name', card.set || '')
-          .then(({ error }) => {
+          .then(({ error }: any) => {
             if (error) console.error('Delete by name failed:', error)
-            else console.log('Deleted from Supabase by name:', card.name)
           })
       } else {
         supabase.from('portfolio_cards').delete().eq('id', card.id)
-          .then(({ error }) => {
+          .then(({ error }: any) => {
             if (error) console.error('Delete failed:', error)
-            else console.log('Deleted from Supabase:', card.id)
           })
       }
     }
     if (!user) setLocalShowcase(prev=>prev.filter(c=>c.id!==card.id))
-    showToast(card.name+' retiree')
+  }
+  const removeCard = (card:CardItem, e:React.MouseEvent) => {
+    e.stopPropagation()
+    // Une suppression deja en attente ? On la valide immediatement
+    if (pendingDelete.current) {
+      clearTimeout(pendingDelete.current.timer)
+      commitDelete(pendingDelete.current.card)
+      pendingDelete.current = null
+    }
+    const index = portfolio.findIndex(c=>c.id===card.id)
+    deletedIds.current.add(card.id)
+    setPortfolio(prev=>prev.filter(c=>c.id!==card.id))
+    const timer = setTimeout(()=>{
+      commitDelete(card)
+      pendingDelete.current = null
+      setToast(t=>t&&t.undo?null:t)
+    },5000)
+    pendingDelete.current = { card, index, timer }
+    if(toastRef.current) clearTimeout(toastRef.current)
+    setToast({
+      msg: card.name+' retiree',
+      undo: () => {
+        if (!pendingDelete.current || pendingDelete.current.card.id !== card.id) return
+        clearTimeout(pendingDelete.current.timer)
+        pendingDelete.current = null
+        deletedIds.current.delete(card.id)
+        setPortfolio(prev=>{
+          if (prev.some(c=>c.id===card.id)) return prev
+          const next = [...prev]
+          next.splice(Math.min(Math.max(index,0), next.length), 0, card)
+          return next
+        })
+        setToast(null)
+      }
+    })
   }
   const encyclopediaLookup = (name:string, set:string): Partial<CardItem> => {
     const found = ENCYCLOPEDIA.find(cc=>cc.name.toLowerCase()===name.toLowerCase()&&(set===''||cc.set===set))
@@ -1599,8 +1630,13 @@ export function Holdings() {
         {/* Bokeh AppShell traverse - pas de blob local */}
 
         {toast&&(
-          <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(29,29,31,.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', color:'rgba(255,255,255,.95)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
-            {toast}
+          <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', display:'flex', alignItems:'center', gap:'14px', background:'rgba(29,29,31,.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', color:'rgba(255,255,255,.95)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
+            <span>{toast.msg}</span>
+            {toast.undo && (
+              <button onClick={toast.undo} style={{ background:'none', border:'none', color:'#FF7A6E', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', padding:0 }}>
+                Annuler
+              </button>
+            )}
           </div>
         )}
 

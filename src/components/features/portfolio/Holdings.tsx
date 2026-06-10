@@ -1301,6 +1301,7 @@ export function Holdings() {
         @keyframes shimGlow  { 0%,100%{opacity:.5} 50%{opacity:1} }
         @keyframes shim { 0%{left:-100%} 100%{left:200%} }
         @keyframes toastIn   { 0%{opacity:0;transform:translateX(-50%) translateY(12px) scale(.95)} 60%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1.01)} 100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} }
+        @keyframes undoBar   { from{width:100%} to{width:0%} }
         @keyframes wrappedIn { 0%{opacity:0;transform:scale(.94) translateY(20px)} 60%{opacity:1;transform:scale(1.01) translateY(-3px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes shareUp   { 0%{opacity:0;transform:translateY(100%)} 60%{opacity:1;transform:translateY(-8px)} 100%{opacity:1;transform:translateY(0)} }
         .gem { position:relative;border-radius:14px;overflow:hidden;cursor:pointer;will-change:transform; }
@@ -1630,12 +1631,18 @@ export function Holdings() {
         {/* Bokeh AppShell traverse - pas de blob local */}
 
         {toast&&(
-          <div style={{ position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)', display:'flex', alignItems:'center', gap:'14px', background:'rgba(29,29,31,.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', color:'rgba(255,255,255,.95)', padding:'9px 20px', borderRadius:'22px', fontSize:'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:99, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)' }}>
+          <div style={{ position:'fixed', bottom:toast.undo?'32px':'24px', left:'50%', transform:'translateX(-50%)', display:'flex', alignItems:'center', gap:toast.undo?'16px':'14px', background:'rgba(29,29,31,.92)', backdropFilter:'blur(16px) saturate(180%)', WebkitBackdropFilter:'blur(16px) saturate(180%)', color:'rgba(255,255,255,.95)', padding:toast.undo?'14px 22px':'9px 20px', borderRadius:toast.undo?'16px':'22px', fontSize:toast.undo?'13px':'12px', fontWeight:500, border:'1.5px solid #D1CEC9', whiteSpace:'nowrap', zIndex:999, animation:'toastIn .3s ease-out', fontFamily:'var(--font-display)', boxShadow:toast.undo?'0 12px 40px rgba(0,0,0,.45), inset 0 0 0 0.5px rgba(255,255,255,0.12)':'none', overflow:'hidden' }}>
+            {toast.undo && (
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#FF7A6E' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round' style={{ flexShrink:0 }}><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/></svg>
+            )}
             <span>{toast.msg}</span>
             {toast.undo && (
-              <button onClick={toast.undo} style={{ background:'none', border:'none', color:'#FF7A6E', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', padding:0 }}>
+              <button onClick={toast.undo} style={{ background:'rgba(255,255,255,.12)', border:'1px solid rgba(255,255,255,.18)', color:'#FF7A6E', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', padding:'6px 14px', borderRadius:'10px', flexShrink:0 }}>
                 Annuler
               </button>
+            )}
+            {toast.undo && (
+              <div style={{ position:'absolute', bottom:0, left:0, height:'2.5px', background:'#FF7A6E', animation:'undoBar 5s linear forwards', borderRadius:'2px' }}/>
             )}
           </div>
         )}

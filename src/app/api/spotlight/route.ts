@@ -215,24 +215,53 @@ export async function GET(req: NextRequest) {
       })
     }
     if (pptGradedEntries.length > 0) {
-      // Verrou Premium: les non-Premium recoivent UNE seule note gradee
-      // (teaser de conversion) + flag gradedLocked. Donnees jamais envoyees
-      // = verrou reel, pas un masquage client.
-      // Teaser: servir la note la plus parlante (PSA d'abord, puis volume de ventes)
       pptGradedEntries.sort((a, b) => {
         const aPsa = String(a.variant).startsWith('psa_') ? 1 : 0
         const bPsa = String(b.variant).startsWith('psa_') ? 1 : 0
         if (aPsa !== bPsa) return bPsa - aPsa
         return (b.nb_sales ?? 0) - (a.nb_sales ?? 0)
       })
+      bySource.ppt_graded = pptGradedEntries
+    }
+
+    // ── Verrou Premium sur le grade, TOUTES SOURCES confondues ──────────
+    // Les variantes gradees existent dans ppt_graded ET dans ebay
+    // (prices_canonical asks). Troncature unique apres construction complete:
+    // non-Premium = 1 note teaser (la plus parlante), le reste retire serveur.
+    // Donnees jamais envoyees = verrou reel.
+    {
+      const GRADE_PREFIXES = ['psa_', 'bgs_', 'cgc_', 'sgc_', 'ace_', 'tag_', 'cca_', 'pca_', 'ccc_']
+      const isGradedVariant = (v: any) => GRADE_PREFIXES.some(p => String(v ?? '').toLowerCase().startsWith(p))
       const u = await getCurrentUserWithProfile().catch(() => null)
       const isPremium = u?.isPremium === true
-      if (isPremium) {
-        bySource.ppt_graded = pptGradedEntries
-      } else if (pptGradedEntries.length > 0) {
-        bySource.ppt_graded = [pptGradedEntries[0]]
-        ;(bySource as any).__gradedLocked = true
-        ;(bySource as any).__gradedHiddenCount = pptGradedEntries.length - 1
+      if (!isPremium) {
+        const allGraded: { src: string; entry: any }[] = []
+        for (const [src, entries] of Object.entries(bySource)) {
+          if (src.startsWith('__')) continue
+          for (const e of entries as any[]) {
+            if (isGradedVariant(e?.variant)) allGraded.push({ src, entry: e })
+          }
+        }
+        if (allGraded.length > 1) {
+          // Teaser: PSA d'abord, puis volume de ventes
+          allGraded.sort((a, b) => {
+            const aPsa = String(a.entry.variant).startsWith('psa_') ? 1 : 0
+            const bPsa = String(b.entry.variant).startsWith('psa_') ? 1 : 0
+            if (aPsa !== bPsa) return bPsa - aPsa
+            return (b.entry.nb_sales ?? 0) - (a.entry.nb_sales ?? 0)
+          })
+          const keep = allGraded[0]
+          for (const src of Object.keys(bySource)) {
+            if (src.startsWith('__')) continue
+            bySource[src] = (bySource[src] as any[]).filter(
+              e => !isGradedVariant(e?.variant) || e === keep.entry
+            )
+          }
+          ;(bySource as any).__gradedLocked = true
+          ;(bySource as any).__gradedHiddenCount = allGraded.length - 1
+        } else if (allGraded.length === 1) {
+          // Une seule note au total: on la laisse, pas de lock (rien a cacher)
+        }
       }
     }
 

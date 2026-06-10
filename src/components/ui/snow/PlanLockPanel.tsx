@@ -25,6 +25,13 @@ const COPY: Record<Variant, { title: string; desc: string }> = {
   },
 }
 
+// Plan requis par variante (le CTA s'adapte)
+const NEED: Record<Variant, { plan: string; cta: string }> = {
+  graded: { plan: 'premium', cta: 'Découvrir Premium' },
+  gradedHistory: { plan: 'premium', cta: 'Découvrir Premium' },
+  pop: { plan: 'pro', cta: 'Découvrir Pro' },
+}
+
 export function PlanLockPanel({ variant, compact = false }: { variant: Variant; compact?: boolean }) {
   const c = COPY[variant]
   // Faux mini-chart decoratif (barres aleatoires fixes, illisible derriere le blur)
@@ -89,7 +96,7 @@ export function PlanLockPanel({ variant, compact = false }: { variant: Variant; 
         textDecoration: 'none', letterSpacing: '0.02em',
         boxShadow: '0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)',
       }}>
-        Découvrir Premium
+        {NEED[variant].cta}
         <span style={{ color: '#FF7A6E' }}>→</span>
       </a>
     </div>

@@ -20,7 +20,7 @@ const LANG_PATTERNS = {
 }
 
 export async function GET(req: NextRequest) {
-  const gate = await requirePlan('premium')
+  const gate = await requirePlan('pro')
   if (!gate.ok) return gate.res
 
   const cardId = req.nextUrl.searchParams.get('card_id')

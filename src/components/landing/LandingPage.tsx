@@ -692,6 +692,7 @@ export default function LandingPage() {
               <li><Glyph d="check" size={16} /> Tout le plan Gratuit</li>
               <li><Glyph d="check" size={16} /> Cartes <strong>illimitées</strong></li>
               <li><Glyph d="check" size={16} /> Cartes gradées valorisées dans ton portefeuille</li>
+              <li><Glyph d="check" size={16} /> PSA Pop Reports</li>
               <li><Glyph d="check" size={16} /> Graphique d’évolution du portefeuille</li>
               <li><Glyph d="check" size={16} /> Statistiques avancées & P&amp;L</li>
               <li><Glyph d="check" size={16} /> Export du portefeuille</li>
@@ -730,7 +731,6 @@ export default function LandingPage() {
             <div className="kc-plan-sublabel">Disponible maintenant</div>
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Pro</li>
-              <li><Glyph d="check" size={16} /> PSA Pop Reports</li>
               <li><Glyph d="check" size={16} /> Prix gradés détaillés — toutes cartes, toutes notes</li>
             </ul>
             <div className="kc-plan-sublabel">Inclus à leur sortie — sans surcoût</div>

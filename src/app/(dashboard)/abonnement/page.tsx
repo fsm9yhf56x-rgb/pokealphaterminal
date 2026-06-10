@@ -35,6 +35,7 @@ const FEATURES: Record<PlanId, string[]> = {
     'Tout le plan Gratuit',
     'Cartes illimitées',
     'Cartes gradées valorisées dans ton portefeuille',
+    'PSA Pop Reports',
     'Graphique d’évolution du portefeuille',
     'Statistiques avancées & P&L',
     'Export du portefeuille',
@@ -42,7 +43,6 @@ const FEATURES: Record<PlanId, string[]> = {
   ],
   premium: [
     'Tout le plan Pro',
-    'PSA Pop Reports',
     'Prix gradés détaillés — toutes cartes, toutes notes (PSA, CGC…)',
   ],
 }

@@ -260,7 +260,7 @@ Pas critique tant que c'est manuel. Si v1.0 a un admin dashboard
 ### Toutes les semaines — Health check workflows
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Status des 5 workflows core
 for wf in prices-tcgdex prices-poketrace prices-tcgplayer prices-ebay psa-sync-hot; do

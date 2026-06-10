@@ -95,7 +95,7 @@ Migration **idempotente** (`CREATE INDEX IF NOT EXISTS`) — peut être rejouée
 À runner avant chaque release majeure pour détecter les régressions :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Inventaire indexes
 node -e "

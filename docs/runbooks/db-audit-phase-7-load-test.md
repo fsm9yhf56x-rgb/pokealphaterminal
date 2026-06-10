@@ -153,7 +153,7 @@ Option A ou B en v2.0 (Phase B perf approfondie).
 Avant chaque release majeure, runner le load test :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Spotlight endpoint critique
 npx autocannon --connections 10 --duration 30 \

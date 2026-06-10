@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const challengeCode = searchParams.get('challenge_code')
   if (challengeCode) {
     const crypto = require('crypto')
-    const verificationToken = 'pokealpha_2026'
+    const verificationToken = 'kodocards_2026'
     const endpoint = 'https://kodocards.com/api/ebay/deletion'
     const hash = crypto.createHash('sha256')
     hash.update(challengeCode + verificationToken + endpoint)

@@ -126,7 +126,7 @@ Puis remplacer les 3 implémentations locales par `import { coerceNumerics } fro
 À ajouter dans la checklist pre-release :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Lister tout caller direct sql sans coerceNumerics
 grep -rn "await sql\`" src/ --include="*.ts" 2>/dev/null | grep -v node_modules | while read line; do

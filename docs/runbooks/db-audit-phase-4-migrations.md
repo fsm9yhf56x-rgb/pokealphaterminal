@@ -118,7 +118,7 @@ Pattern `.gitignore` ajouté pour éviter futur push : `migrations/neon-migratio
 Avant chaque release majeure, exécuter :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Detecter CREATE sans IF NOT EXISTS / OR REPLACE
 grep -rn "^CREATE TABLE [^I]\|^CREATE INDEX [^I]\|^CREATE UNIQUE INDEX [^I]\|^CREATE VIEW [^O]\|^CREATE MATERIALIZED VIEW [^I]" migrations/*.sql 2>/dev/null

@@ -170,7 +170,7 @@ Effort estimé : 1 jour (audit toutes les queries USER_TABLES + injection SET LO
 À runner avant chaque release majeure :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Lister tous endpoints qui touchent les tables user
 grep -rn "portfolio_cards\|goal_targets\|goal_wishlist\|badges" src/app/api/ 2>/dev/null | grep -v node_modules

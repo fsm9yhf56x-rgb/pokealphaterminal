@@ -167,7 +167,7 @@ Avant ouverture publique v1.0 :
 ### Tous les mois — Test PITR
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Voir docs/runbooks/db-restore.md
 # 1. Créer branche restore-monthly-test-YYYY-MM

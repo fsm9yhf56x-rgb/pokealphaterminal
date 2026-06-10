@@ -51,7 +51,7 @@
 ### Étape 4 — Valider la branche restore
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 # Crée le fichier env temporaire (gitignored)
 echo "DATABASE_URL_RESTORE=$(pbpaste)" > .env.restore-test

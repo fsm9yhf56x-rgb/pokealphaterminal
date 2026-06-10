@@ -95,7 +95,7 @@ Re-runner ces 7 grep avant chaque release majeure (v1.0, v2.0, v3.0).
 À ajouter dans la checklist pre-release :
 
 ```bash
-cd "/Users/alonguez/Dev/PokéAlpha Terminal"
+cd "/Users/alonguez/Dev/KodoCards"
 
 grep -rn "useEffect.*\[user\]\|useEffect.*\[user," src/ --include="*.tsx" --include="*.ts" 2>/dev/null | grep -v node_modules
 ```

@@ -419,6 +419,15 @@ export default function LandingPage() {
 
   // — Tarifs : Pro aligné Pokéitem (hors offre à vie) · Premium = le total
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('yearly')
+
+  // — Offre Early Supporter (-40% a vie Premium, places limitees)
+  const [early, setEarly] = useState<{ seatsLeft: number; seatsTotal: number; isOpen: boolean } | null>(null)
+  useEffect(() => {
+    fetch('/api/early-spots').then(r => r.json()).then(setEarly).catch(() => setEarly(null))
+  }, [])
+  const EARLY_PRICES = { monthly: '5,99 €', yearly: '52,79 €' } as const
+  const EARLY_PERMONTH = '4,40 €/mois'
+  const earlyOn = !!early?.isOpen && billing !== 'weekly'
   const PRICES = {
     pro: { weekly: '1,99 €', monthly: '3,99 €', yearly: '34,99 €' },
     premium: { weekly: '4,99 €', monthly: '9,99 €', yearly: '87,99 €' },
@@ -662,7 +671,7 @@ export default function LandingPage() {
             </div>
             <div className="kc-price">0 €<span>toujours</span></div>
             <ul className="kc-plan-list">
-              <li><Glyph d="check" size={16} /> Portefeuille + prix — jusqu’à 500 cartes</li>
+              <li><Glyph d="check" size={16} /> Portefeuille + prix — jusqu’à 800 cartes</li>
               <li><Glyph d="check" size={16} /> Prix consolidés eBay · Cardmarket · PSA</li>
               <li><Glyph d="check" size={16} /> Encyclopédie & recherche</li>
               <li><Glyph d="check" size={16} /> Valeur totale de la collection</li>
@@ -692,13 +701,31 @@ export default function LandingPage() {
 
           {/* PREMIUM */}
           <Reveal className="kc-plan kc-plan-pro" style={GLASS} delay={160}>
-            <span className="kc-plan-pop">Recommandé</span>
+            <span className="kc-plan-pop" style={earlyOn ? { background:'#1D1D1F', boxShadow:'0 4px 12px rgba(0,0,0,0.3)' } : undefined}>{earlyOn ? '★ Early Supporter −40 %' : 'Recommandé'}</span>
             <div className="kc-plan-head">
               <h3>Premium</h3>
               <span className="kc-trial">{TRIAL[billing]}</span>
             </div>
-            <div className="kc-price">{PRICES.premium[billing]}<span>{SUFFIX[billing]}</span></div>
-            {billing === 'yearly' && <div className="kc-permonth">soit {PERMONTH.premium}</div>}
+            {earlyOn ? (
+              <>
+                <div className="kc-price">
+                  <span style={{ textDecoration:'line-through', opacity:.38, fontSize:'0.55em', fontWeight:600, marginRight:'8px' }}>{PRICES.premium[billing]}</span>
+                  {EARLY_PRICES[billing as 'monthly' | 'yearly']}<span>{SUFFIX[billing]}</span>
+                </div>
+                {billing === 'yearly' && <div className="kc-permonth">soit {EARLY_PERMONTH} · tarif garanti à vie</div>}
+                {billing === 'monthly' && <div className="kc-permonth">tarif garanti à vie</div>}
+                {typeof early?.seatsLeft === 'number' && (
+                  <div style={{ fontSize:'12px', fontWeight:700, color:'#E03020', marginTop:'4px', fontFamily:'var(--font-display)' }}>
+                    {early.seatsLeft} place{early.seatsLeft > 1 ? 's' : ''} restante{early.seatsLeft > 1 ? 's' : ''} sur {early.seatsTotal}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="kc-price">{PRICES.premium[billing]}<span>{SUFFIX[billing]}</span></div>
+                {billing === 'yearly' && <div className="kc-permonth">soit {PERMONTH.premium}</div>}
+              </>
+            )}
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Pro</li>
               <li><Glyph d="check" size={16} /> PSA Pop Reports</li>

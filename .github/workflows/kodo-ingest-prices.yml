@@ -1,0 +1,40 @@
+name: Kodo Engine - Ingest Prices (PokeTrace)
+
+# 3 runs par nuit apres reset quota PokeTrace (minuit UTC).
+# Le script est resumable via kodo_sync_state et s'arrete a 6000 req / 25 min.
+# Une fois status=completed, les runs suivants skip immediatement.
+
+on:
+  schedule:
+    - cron: '10 0 * * *'
+    - cron: '45 0 * * *'
+    - cron: '20 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    name: Ingest PokeTrace prices
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: kodo-ingest-prices
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund --prefer-offline
+
+      - name: Run ingest batch
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-prices.js

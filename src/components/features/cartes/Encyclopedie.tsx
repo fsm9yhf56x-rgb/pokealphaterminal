@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 import { formatEUR } from '@/lib/formatPrice'
+import KodoPricePanel from '@/components/features/prices/KodoPricePanel'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 
@@ -2055,20 +2056,11 @@ export function Encyclopedie() {
                       const setOwned = allCards.filter(c=>c.setId===selCard.setId && isOwned(c)).length
                       const pct = setTotal>0 ? Math.round(setOwned/setTotal*100) : 0
                       return (<>
-                      {selCard?.setId && selCard?.localId ? (() => {
-                        const det = getPriceDetail(selCard)
-                        return (
-                          <PricePanelPpt
-                            cardId={`${selCard.setId}-${selCard.localId}`}
-                            fallbackMarket={getPrice(selCard)}
-                            fallbackSources={det ? [
-                              { label: 'eBay', price: det.ebay, color: '#E03020' },
-                              { label: 'TCGPlayer', price: det.tcg, color: '#0072CE' },
-                              { label: 'Cardmarket', price: det.cardmarket, color: '#E08A1F' },
-                            ] : []}
-                          />
-                        )
-                      })() : null}
+                      {selCard?.setId && selCard?.localId ? (
+                        <div style={{ marginBottom:'12px' }}>
+                          <KodoPricePanel cardId={kodoIdOf(selCard)} />
+                        </div>
+                      ) : null}
                       {selCard?.setId && selCard?.localId ? (
                         <div style={{ marginBottom:'12px' }}>
                           <PsaPopBlock

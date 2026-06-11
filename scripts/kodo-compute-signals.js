@@ -59,8 +59,8 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
 
   console.log('\n=== 5. SNAPSHOT price_history (jour 1) ===')
   const r5 = await sql`
-    INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count)
-    SELECT print_id, CURRENT_DATE, tier, source, market, spot, sale_count
+    INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
+    SELECT print_id, CURRENT_DATE, tier, source, market, spot, sale_count, currency
     FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
     ON CONFLICT DO NOTHING RETURNING print_id`
   console.log('rows history:', r5.length)

@@ -74,16 +74,39 @@ export async function GET(req: NextRequest) {
     const card = cardRows[0]
 
     // 2. Multi-source latest prices (cardmarket / ebay / tcgplayer asks)
-    const latestPrices = await sql`
-      SELECT DISTINCT ON (source, variant, condition)
-        source, variant, condition, price_avg, price_low, price_high,
-        currency, nb_sales, fetched_at
-      FROM prices_canonical
-      WHERE tcg_card_id = ${cardId}
-        AND price_avg IS NOT NULL
-        AND price_avg > 0
-      ORDER BY source, variant, condition, fetched_at DESC
+    // Kodo Engine: matrice de prix par print (remplace prices_canonical vide)
+    const fxRow = await sql`SELECT rate FROM fx_rates WHERE from_currency='USD' AND to_currency='EUR' ORDER BY rate_date DESC LIMIT 1` as Array<any>
+    const USD_EUR = Number(fxRow[0]?.rate || 0.92)
+    const matrixRows = await sql`
+      SELECT pm.market, pm.tier, pm.source, pm.spot, pm.low, pm.high,
+             pm.sale_count, pm.is_asking, pm.currency, pm.as_of
+      FROM k_cards kc
+      JOIN price_matrix pm ON pm.print_id = kc.print_id
+      WHERE kc.id = ${cardId} AND pm.spot IS NOT NULL AND pm.spot > 0
     ` as Array<any>
+    const RAW_TIERS: Record<string, string> = {
+      NEAR_MINT: 'NEAR_MINT', LIGHTLY_PLAYED: 'LIGHTLY_PLAYED', MODERATELY_PLAYED: 'MODERATELY_PLAYED',
+      HEAVILY_PLAYED: 'HEAVILY_PLAYED', DAMAGED: 'DAMAGED', MINT: 'MINT', AGGREGATED: 'CARDMARKET_TREND',
+    }
+    const toEur = (v: any, cur: string) => v == null ? null : (cur === 'USD' ? Math.round(Number(v) * USD_EUR * 100) / 100 : Number(v))
+    const latestPrices = matrixRows
+      .filter((r: any) => !r.is_asking || r.source === 'cardmarket')
+      .map((r: any) => {
+        const isGrade = /^(PSA|BGS|CGC|SGC|ACE|TAG)_/.test(r.tier)
+        const src = r.source === 'ppt_tcgplayer' ? 'tcgplayer' : (r.source === 'ppt_ebay' ? 'ebay' : r.source)
+        return {
+          source: src,
+          variant: isGrade ? r.tier.toLowerCase() : 'raw',
+          condition: isGrade ? null : (RAW_TIERS[r.tier] || r.tier),
+          price_avg: toEur(r.spot, r.currency),
+          price_low: toEur(r.low, r.currency),
+          price_high: toEur(r.high, r.currency),
+          currency: 'EUR',
+          nb_sales: r.sale_count,
+          fetched_at: r.as_of,
+        }
+      })
+      .filter((r: any) => r.price_avg != null && r.price_avg > 0)
 
     // 2b. History selon condition de l'user
     //  - User a un grade (PSA 9, CGC 10...) -> timeseries graded eBay sold (grades_history)
@@ -146,17 +169,32 @@ export async function GET(req: NextRequest) {
 
     // 2. Si toujours rien, fallback Cardmarket historique (l'ancien comportement)
     if (history.length === 0) {
-      const cmHistRows = await sql`
-        SELECT fetched_at, price_avg
-        FROM prices_canonical
-        WHERE tcg_card_id = ${cardId}
-          AND source = 'cardmarket'
-          AND variant = 'raw'
-          AND price_avg > 0
-        ORDER BY fetched_at ASC
-        LIMIT 120
+      // UNE seule serie coherente: priorite NM tcgplayer > NM ppt > Trend cardmarket.
+      // Jamais melanger les tiers (variation fictive sinon).
+      const khRows = await sql`
+        WITH series AS (
+          SELECT ph.tier, ph.source, count(*) AS pts,
+            CASE WHEN ph.tier='NEAR_MINT' AND ph.source='tcgplayer' THEN 0
+                 WHEN ph.tier='NEAR_MINT' AND ph.source='ppt_tcgplayer' THEN 1
+                 WHEN ph.tier='AGGREGATED' AND ph.source='cardmarket' THEN 2
+                 ELSE 9 END AS prio
+          FROM k_cards kc JOIN price_history ph ON ph.print_id = kc.print_id
+          WHERE kc.id = ${cardId} AND ph.price > 0
+          GROUP BY ph.tier, ph.source
+        ), best AS (
+          SELECT tier, source FROM series WHERE prio < 9 ORDER BY prio, pts DESC LIMIT 1
+        )
+        SELECT ph.day, ph.price, ph.currency
+        FROM k_cards kc
+        JOIN price_history ph ON ph.print_id = kc.print_id
+        JOIN best b ON b.tier = ph.tier AND b.source = ph.source
+        WHERE kc.id = ${cardId} AND ph.price > 0
+        ORDER BY ph.day ASC LIMIT 365
       ` as Array<any>
-      history = cmHistRows.map(r => ({ date: r.fetched_at, price: Number(r.price_avg) }))
+      history = khRows.map((r: any) => ({
+        date: String(r.day),
+        price: r.currency === 'USD' ? Math.round(Number(r.price) * USD_EUR * 100) / 100 : Number(r.price),
+      }))
     }
 
     // 2c. NEW: PPT graded prices (real eBay sold).

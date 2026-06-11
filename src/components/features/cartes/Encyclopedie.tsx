@@ -323,7 +323,35 @@ export function Encyclopedie() {
   // ── Prix via hook centralisé useCardPrices ──
   // Encyclopedie affiche toutes les cartes → setIds=null charge tous les prix
   const { priceDetails, priceMap, setMapping } = useCardPrices(null, { byName: false })
+  // ── Kodo Engine: prix par lot pour les cartes visibles (fallback legacy si absent) ──
+  const [kodoPrices, setKodoPrices] = useState<Record<string, { displayEur: number|null; coteFrEur: number|null; liquidity: number|null }>>({})
+  const kodoRequested = useRef<Set<string>>(new Set())
+  const kodoIdOf = useCallback((c: any): string => {
+    const sid: string = c.setId || ''
+    const num = String(c.localId ?? c.number ?? '').replace(/^0+(?=\d)/, '')
+    if (!sid || !num) return ''
+    const prefixed = /^(en|fr|jp)-/.test(sid)
+    const lg = String(c.lang || lang || 'EN').toLowerCase()
+    const langPrefix = lg === 'ja' || lg === 'jp' ? 'jp' : (lg === 'fr' ? 'fr' : 'en')
+    return (prefixed ? sid : langPrefix + '-' + sid) + '-' + num
+  }, [lang])
+  const requestKodoPrices = useCallback((ids: string[]) => {
+    const fresh = ids.filter(id => id && !kodoRequested.current.has(id))
+    if (!fresh.length) return
+    fresh.forEach(id => kodoRequested.current.add(id))
+    for (let i = 0; i < fresh.length; i += 150) {
+      const chunk = fresh.slice(i, i + 150)
+      fetch('/api/kodo/prices/batch?ids=' + encodeURIComponent(chunk.join(',')))
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j?.prices) setKodoPrices(prev => ({ ...prev, ...j.prices })) })
+        .catch(() => {})
+    }
+  }, [])
   const getPrice = (card: { name: string; setName?: string; localId?: string; setId?: string }): number|null => {
+    // Priority 0: Kodo Engine
+    const kid = kodoIdOf(card)
+    const kp = kid ? kodoPrices[kid] : undefined
+    if (kp?.displayEur != null) return kp.displayEur
     const USD_TO_EUR = 0.92
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
@@ -664,6 +692,11 @@ export function Encyclopedie() {
 
   const pageCount = Math.ceil(filtered.length/CHUNK_SIZE)||1
   const pageCards = filtered.slice(0, visibleCount)
+  // Kodo Engine: charger les prix des cartes affichees
+  useEffect(() => {
+    const ids = pageCards.map((c: any) => kodoIdOf(c)).filter(Boolean)
+    requestKodoPrices(ids)
+  }, [pageCards, requestKodoPrices, kodoIdOf])
   const hasMore = visibleCount < filtered.length
 
   const handleCardClick = useCallback(async (id:string) => {

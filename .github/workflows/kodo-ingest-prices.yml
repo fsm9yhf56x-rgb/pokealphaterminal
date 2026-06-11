@@ -38,3 +38,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
         run: node scripts/kodo-ingest-prices.js
+
+      - name: Compute signals + history snapshot
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-compute-signals.js

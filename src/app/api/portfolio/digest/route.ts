@@ -1,8 +1,8 @@
 /**
  * GET /api/portfolio/digest
  *
- * Valorise le portfolio de l'utilisateur courant via la vue card_price_resolved
- * (source réelle : PPT pour EN). Calcul à la volée (source de vérité).
+ * Valorise le portfolio de l'utilisateur courant via Kodo Engine
+ * (price_signals via k_card_id : cote FR si carte FR, fair value sinon).
  */
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth/helpers'
@@ -23,12 +23,11 @@ export async function GET() {
         pc.card_number,
         pc.lang,
         COALESCE(pc.qty, 1)               AS qty,
-        r.price_eur                       AS price_eur
+        CASE WHEN kc.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL
+             THEN ps.cote_fr_eur ELSE ps.fair_value_eur END AS price_eur
       FROM portfolio_cards pc
-      LEFT JOIN card_price_resolved r
-        ON r.set_id = pc.set_id
-       AND r.card_number = ltrim(pc.card_number, '0')
-       AND r.lang = pc.lang
+      LEFT JOIN k_cards kc ON kc.id = pc.k_card_id
+      LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
       WHERE pc.user_id = ${user.id}
     `) as Array<{
       id: string

@@ -1,8 +1,8 @@
 /**
  * GET /api/cron/portfolio-prices
  *
- * Rafraîchit portfolio_cards.current_price depuis la vue card_price_resolved
- * (source de référence : PPT pour EN/JP, PokeTrace pour FR — selon ce que la vue résout).
+ * Rafraîchit portfolio_cards.current_price depuis Kodo Engine
+ * (price_signals via k_card_id : cote FR pour les cartes FR, fair value sinon).
  * Cache durable : le Hero / Holdings lisent current_price sans recalcul.
  *
  * 1×/jour après les crons prix. Protégé par CRON_SECRET (Bearer ou ?secret=).
@@ -26,15 +26,22 @@ export async function GET(req: Request) {
   }
 
   try {
+    // Kodo Engine: resolution via k_card_id -> print -> signals.
+    // Cote FR pour les cartes FR si dispo, sinon fair value.
     const res = (await sql`
       UPDATE portfolio_cards pc
-      SET current_price = r.price_eur,
+      SET current_price = v.price_eur,
           updated_at = now()
-      FROM card_price_resolved r
-      WHERE r.set_id = pc.set_id
-        AND r.card_number = ltrim(pc.card_number, '0')
-        AND r.lang = pc.lang
-        AND pc.current_price IS DISTINCT FROM r.price_eur
+      FROM (
+        SELECT kc.id AS k_card_id,
+               CASE WHEN kc.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL
+                    THEN ps.cote_fr_eur ELSE ps.fair_value_eur END AS price_eur
+        FROM k_cards kc
+        JOIN price_signals ps ON ps.print_id = kc.print_id
+      ) v
+      WHERE v.k_card_id = pc.k_card_id
+        AND v.price_eur IS NOT NULL
+        AND pc.current_price IS DISTINCT FROM v.price_eur
     `) as unknown as { rowCount?: number }
 
     const updated = (res as any)?.rowCount ?? null

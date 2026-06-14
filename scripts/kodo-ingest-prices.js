@@ -28,16 +28,18 @@ async function ingestOne(kodoCardId, ptId) {
   const currency = card.currency || (market === 'EU' ? 'EUR' : 'USD')
   const variant = card.variant || null
   const asOf = card.lastUpdated || new Date().toISOString()
+  const kcRow = await sql`SELECT print_id FROM k_cards WHERE id = ${kodoCardId}`
+  const printId = kcRow[0] ? kcRow[0].print_id : null
   let rows = 0
 
   for (const [source, tiers] of Object.entries(card.prices)) {
     const isAsking = source === 'cardmarket_unsold'
     for (const [tier, d] of Object.entries(tiers || {})) {
       if (!d || typeof d !== 'object') continue
-      await sql`INSERT INTO price_matrix (kodo_card_id, market, tier, source, variant,
+      await sql`INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,
           spot, low, high, avg7d, avg30d, median7d, median30d, sale_count, is_asking,
           currency, country_breakdown, as_of)
-        VALUES (${kodoCardId}, ${market}, ${tier}, ${source}, ${variant},
+        VALUES (${kodoCardId}, ${printId}, ${market}, ${tier}, ${source}, ${variant},
           ${d.avg ?? null}, ${d.low ?? null}, ${d.high ?? null},
           ${d.avg7d ?? null}, ${d.avg30d ?? null}, ${d.median7d ?? null}, ${d.median30d ?? null},
           ${d.saleCount ?? null}, ${isAsking}, ${currency},
@@ -47,7 +49,8 @@ async function ingestOne(kodoCardId, ptId) {
           avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
           median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,
           is_asking=EXCLUDED.is_asking, currency=EXCLUDED.currency,
-          country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of`
+          country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of,
+          print_id=COALESCE(EXCLUDED.print_id, price_matrix.print_id)`
       rows++
     }
   }

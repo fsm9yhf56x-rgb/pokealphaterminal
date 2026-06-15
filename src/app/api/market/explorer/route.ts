@@ -13,6 +13,8 @@ const SORT_COL: Record<string, string> = {
   card_name: 'card_name',
   cardmarket_trend: 'top_price',
   ebay_sales: 'top_sales',
+  grade_ev: 'grade_ev',
+  spread_pct: 'spread_pct',
 }
 
 // Prix raw au plus gros volume, toutes sources confondues (exclut le grade et le trend Cardmarket).
@@ -105,7 +107,9 @@ export async function GET(req: NextRequest) {
               ${PRICE_EXPR} AS top_price,
               vol.source AS top_source_raw, vol.tier AS top_condition, vol.sale_count AS top_sales,
               ps.fair_value_method AS fv_method,
-              ps.grade_ev_psa10_eur AS grade_ev
+              ps.grade_ev_psa10_eur AS grade_ev,
+              ps.spread_us_eu_pct AS spread_pct,
+              ps.liquidity_score AS liquidity
        ${fromFull}
        WHERE ${allWhere}
        ORDER BY ${orderCol} ${sortDir} NULLS LAST
@@ -132,6 +136,9 @@ export async function GET(req: NextRequest) {
         top_sales: sales,
         top_condition: sales != null ? r.top_condition : null,
         fv_method: r.fv_method || null,
+        grade_ev: r.grade_ev != null ? Number(r.grade_ev) : null,
+        spread_pct: r.spread_pct != null ? Number(r.spread_pct) : null,
+        liquidity: r.liquidity != null ? Number(r.liquidity) : null,
         cardmarket_trend: null,
         ebay_avg: null,
         ebay_sales: sales,

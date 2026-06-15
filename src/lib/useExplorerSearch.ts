@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 /* ── Types ───────────────────────────────────── */
 
 export type Lang = 'ALL' | 'EN' | 'FR' | 'JA'
-export type SortField = 'top_price' | 'card_name' | 'cardmarket_trend' | 'ebay_sales'
+export type SortField = 'top_price' | 'card_name' | 'cardmarket_trend' | 'ebay_sales' | 'grade_ev' | 'spread_pct'
 export type SortDir   = 'asc' | 'desc'
 export type ViewMode  = 'grid' | 'table'
 
@@ -45,6 +45,9 @@ export interface ExplorerResult {
   top_sales?: number | null
   top_condition?: string | null
   fv_method?: string | null
+  grade_ev?: number | null
+  spread_pct?: number | null
+  liquidity?: number | null
 }
 
 const PAGE_SIZE = 50

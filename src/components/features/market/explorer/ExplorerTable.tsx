@@ -3,8 +3,8 @@
 import type { ExplorerResult, SortField, SortDir } from '@/lib/useExplorerSearch'
 
 /**
- * Table dense : 1 row par carte avec toutes les sources de prix.
- * Vue "Bloomberg" pour collectors/traders pros.
+ * Table dense facon terminal : 1 row/carte, colonnes reelles et triables.
+ * Prix (source NM) · Ventes · Plus-value PSA 10 · Spread US/EU · Liquidite.
  */
 export function ExplorerTable({
   results, onSelect, sortField, sortDir, onSortChange,
@@ -22,7 +22,6 @@ export function ExplorerTable({
       borderRadius: '12px',
       overflow: 'hidden',
     }}>
-      {/* Header (sortable) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: COLS,
@@ -39,15 +38,13 @@ export function ExplorerTable({
       }}>
         <SortHeader label="Carte" field="card_name" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="left" />
         <SortHeader label="Set" field={null} align="left" />
-        <SortHeader label="Top prix" field="top_price" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
-        <SortHeader label="Tendance" field="cardmarket_trend" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
-        <SortHeader label="eBay avg" field={null} align="right" />
-        <SortHeader label="TCGP avg" field={null} align="right" />
-        <SortHeader label="PSA10" field={null} align="right" />
+        <SortHeader label="Prix" field="top_price" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
         <SortHeader label="Ventes" field="ebay_sales" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
+        <SortHeader label="+Value PSA 10" field="grade_ev" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
+        <SortHeader label="Spread US/EU" field="spread_pct" sortField={sortField} sortDir={sortDir} onChange={onSortChange} align="right" />
+        <SortHeader label="Liquidité" field={null} align="right" />
       </div>
 
-      {/* Rows */}
       {results.map((card, i) => (
         <Row
           key={card.card_ref}
@@ -60,7 +57,21 @@ export function ExplorerTable({
   )
 }
 
-const COLS = '2.4fr 1.4fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr 0.7fr'
+const COLS = '2.2fr 1.3fr 1fr 0.7fr 1.1fr 0.95fr 0.85fr'
+
+const SRC_LABEL: Record<string, string> = { ebay: 'eBay', tcgplayer: 'TCGplayer', cardmarket: 'Cardmarket' }
+const METHOD_LABEL: Record<string, string> = { cardmarket_trend: 'Cardmarket', ebay_sold: 'eBay', tcgplayer: 'TCGplayer' }
+const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', LIGHTLY_PLAYED: 'LP', MODERATELY_PLAYED: 'MP', HEAVILY_PLAYED: 'HP', DAMAGED: 'DMG', MINT: 'MINT' }
+
+function priceSub(card: ExplorerResult): string {
+  if (card.top_sales != null && card.top_source) {
+    const src = SRC_LABEL[card.top_source] || card.top_source
+    const cond = card.top_condition ? COND_SHORT[card.top_condition] || '' : ''
+    return cond ? `${src} · ${cond}` : src
+  }
+  if (card.fv_method) return METHOD_LABEL[card.fv_method] || 'Estimation'
+  return ''
+}
 
 function Row({
   card, isLast, onClick,
@@ -69,10 +80,11 @@ function Row({
   isLast: boolean
   onClick: () => void
 }) {
-  const isUp = card.cardmarket_trend != null && card.cardmarket_trend > 0
-  const trendColor = card.cardmarket_trend == null
-    ? 'var(--ink-faint)'
-    : isUp ? 'var(--perf-up)' : 'var(--perf-down)'
+  const sub = priceSub(card)
+  const ev = card.grade_ev
+  const evPositive = ev != null && ev >= 0
+  const spread = card.spread_pct
+  const liq = card.liquidity
 
   return (
     <button
@@ -95,112 +107,75 @@ function Row({
       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.015)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
-      {/* Carte (name + variant + tier) */}
+      {/* Carte */}
       <div style={{ minWidth: 0 }}>
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          marginBottom: '2px',
+          display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px',
         }}>
           {card.tier && (
             <span style={{
-              padding: '1px 5px',
-              fontSize: '9px',
-              fontWeight: 700,
-              borderRadius: '3px',
+              padding: '1px 5px', fontSize: '9px', fontWeight: 700, borderRadius: '3px',
               background: card.tier === 'S' ? '#FFF8E1' : card.tier === 'A' ? 'var(--perf-up-soft)' : 'var(--border)',
-              color:      card.tier === 'S' ? '#B8860B' : card.tier === 'A' ? 'var(--perf-up)'      : 'var(--ink-muted)',
-              fontFamily: 'var(--font-data, var(--font-display))',
-              flexShrink: 0,
+              color: card.tier === 'S' ? '#B8860B' : card.tier === 'A' ? 'var(--perf-up)' : 'var(--ink-muted)',
+              fontFamily: 'var(--font-data, var(--font-display))', flexShrink: 0,
             }}>{card.tier}</span>
           )}
           <span style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: 'var(--ink)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            fontSize: '12px', fontWeight: 500, color: 'var(--ink)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{card.card_name}</span>
         </div>
-        {(card.variant || card.has_graded) && (
-          <div style={{
-            fontSize: '9px',
-            color: 'var(--ink-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            display: 'flex',
-            gap: '6px',
-          }}>
-            {card.variant && card.variant !== 'raw' && <span>{card.variant}</span>}
-            {card.has_graded && <span style={{ color: 'var(--premium)' }}>● GRADED</span>}
-          </div>
-        )}
+        {card.variant && card.variant !== 'raw' ? (
+          <div style={{ fontSize: '9px', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{card.variant}</div>
+        ) : null}
       </div>
 
       {/* Set */}
       <div style={{
-        fontSize: '11px',
-        color: 'var(--ink-muted)',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        fontSize: '11px', color: 'var(--ink-muted)',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }}>
         {card.set_name || card.set_slug || '—'}
       </div>
 
-      {/* Top prix */}
-      <div style={tdRight()}>
-        <div style={{
-          fontWeight: 600,
-          color: 'var(--ink)',
-          fontSize: '12px',
-        }}>{formatEUR(card.top_price)}</div>
-      </div>
-
-      {/* Tendance */}
-      <div style={tdRight()}>
-        {card.cardmarket_trend != null && card.cardmarket_trend !== 0 ? (
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2px',
-            color: trendColor,
-            fontWeight: 600,
-            fontSize: '11px',
-          }}>
-            {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{card.cardmarket_trend.toFixed(1)}%
-          </span>
-        ) : (
-          <span style={{ color: 'var(--ink-faint)' }}>—</span>
-        )}
-      </div>
-
-      {/* eBay avg */}
-      <div style={tdRight()}>
-        {card.ebay_avg != null ? formatEURNum(card.ebay_avg) : '—'}
-      </div>
-
-      {/* TCGP avg */}
-      <div style={tdRight()}>
-        {card.tcg_avg != null ? formatEURNum(card.tcg_avg) : '—'}
-      </div>
-
-      {/* PSA 10 */}
-      <div style={tdRight()}>
-        {card.psa10_avg != null ? (
-          <span style={{ color: 'var(--premium-dark, #B8860B)', fontWeight: 500 }}>
-            {formatEURNum(card.psa10_avg)}
-          </span>
-        ) : '—'}
+      {/* Prix + source */}
+      <div style={{ textAlign: 'right', minWidth: 0 }}>
+        <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: '12px', fontFamily: 'var(--font-data, var(--font-display))', fontVariantNumeric: 'tabular-nums' }}>
+          {formatEUR(card.top_price)}
+        </div>
+        {sub ? (
+          <div style={{ fontSize: '9px', color: 'var(--ink-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+        ) : null}
       </div>
 
       {/* Ventes */}
       <div style={tdRight()}>
-        {card.ebay_sales != null && card.ebay_sales > 0 ? (
-          <span style={{ color: 'var(--ink-muted)' }}>
-            {card.ebay_sales.toLocaleString('fr-FR')}
+        {card.top_sales != null && card.top_sales > 0 ? card.top_sales.toLocaleString('fr-FR') : '—'}
+      </div>
+
+      {/* Plus-value PSA 10 */}
+      <div style={tdRight()}>
+        {ev != null ? (
+          <span style={{ color: evPositive ? '#00A368' : 'var(--perf-down, #C0392B)', fontWeight: 600 }}>
+            {evPositive ? '+' : '−'}{formatEURNum(Math.abs(ev))}
+          </span>
+        ) : '—'}
+      </div>
+
+      {/* Spread US/EU */}
+      <div style={tdRight()}>
+        {spread != null ? (
+          <span style={{ color: Math.abs(spread) >= 40 ? '#C77700' : 'var(--ink-muted)', fontWeight: 600 }}>
+            {spread > 0 ? '+' : ''}{Math.round(spread)}%
+          </span>
+        ) : '—'}
+      </div>
+
+      {/* Liquidité */}
+      <div style={tdRight()}>
+        {liq != null ? (
+          <span style={{ color: liq >= 70 ? '#00A368' : liq >= 40 ? '#C77700' : 'var(--ink-muted)', fontWeight: 600 }}>
+            {liq}
           </span>
         ) : '—'}
       </div>
@@ -208,11 +183,8 @@ function Row({
   )
 }
 
-/* ── Sort header ─────────────────────────── */
-
 function SortHeader({
-  label, field, align,
-  sortField, sortDir, onChange,
+  label, field, align, sortField, sortDir, onChange,
 }: {
   label: string
   field: SortField | null
@@ -225,64 +197,38 @@ function SortHeader({
   const isActive = isSortable && field === sortField
 
   if (!isSortable) {
-    return (
-      <div style={{ textAlign: align }}>{label}</div>
-    )
+    return <div style={{ textAlign: align }}>{label}</div>
   }
 
   const handleClick = () => {
     if (!onChange || !field) return
-    if (sortField === field) {
-      onChange(field, sortDir === 'asc' ? 'desc' : 'asc')
-    } else {
-      onChange(field, 'desc')
-    }
+    if (sortField === field) onChange(field, sortDir === 'asc' ? 'desc' : 'asc')
+    else onChange(field, 'desc')
   }
 
   return (
     <button
       onClick={handleClick}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: 0,
-        background: 'transparent',
-        border: 'none',
+        display: 'inline-flex', alignItems: 'center', gap: '4px', padding: 0,
+        background: 'transparent', border: 'none',
         color: isActive ? 'var(--ink)' : 'var(--ink-muted)',
-        fontSize: '9px',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        cursor: 'pointer',
-        fontFamily: 'var(--font-display)',
-        textAlign: align,
-        justifyContent: align === 'right' ? 'flex-end' : 'flex-start',
-        width: '100%',
+        fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em',
+        cursor: 'pointer', fontFamily: 'var(--font-display)', textAlign: align,
+        justifyContent: align === 'right' ? 'flex-end' : 'flex-start', width: '100%',
       }}
     >
       <span>{label}</span>
-      {isActive && (
-        <span style={{ fontSize: '8px' }}>
-          {sortDir === 'asc' ? '▲' : '▼'}
-        </span>
-      )}
+      {isActive && (<span style={{ fontSize: '8px' }}>{sortDir === 'asc' ? '▲' : '▼'}</span>)}
     </button>
   )
 }
 
-/* ── Helpers ─────────────────────────────── */
-
 function tdRight(): React.CSSProperties {
   return {
-    textAlign: 'right',
-    fontSize: '11px',
-    color: 'var(--ink-muted)',
-    fontFamily: 'var(--font-data, var(--font-display))',
-    fontVariantNumeric: 'tabular-nums',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    textAlign: 'right', fontSize: '11px', color: 'var(--ink-muted)',
+    fontFamily: 'var(--font-data, var(--font-display))', fontVariantNumeric: 'tabular-nums',
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   }
 }
 
@@ -292,6 +238,6 @@ function formatEUR(v: number): string {
 }
 
 function formatEURNum(v: number): string {
-  if (v >= 1000) return `${Number(v / 1000).toFixed(1)}K`
-  return v.toFixed(0)
+  if (v >= 1000) return `€${Number(v / 1000).toFixed(1)}K`
+  return `€${v.toFixed(0)}`
 }

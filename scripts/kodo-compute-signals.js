@@ -29,11 +29,18 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
       CASE WHEN psa10.p IS NOT NULL AND us_nm.p IS NOT NULL
         THEN ROUND(((psa10.p - us_nm.p) * ${usdEur})::numeric, 2) END,
       false, now()
-    FROM (SELECT DISTINCT print_id FROM price_matrix WHERE print_id IS NOT NULL) pm
+    FROM (
+      SELECT DISTINCT pm0.print_id,
+        CASE WHEN kp.rarity ILIKE '%holo%' THEN 'Holofoil' ELSE 'Normal' END AS mainvar
+      FROM price_matrix pm0
+      LEFT JOIN k_prints kp ON kp.id = pm0.print_id
+      WHERE pm0.print_id IS NOT NULL
+    ) pm
     LEFT JOIN LATERAL (SELECT spot AS trend FROM price_matrix
       WHERE print_id = pm.print_id AND source='cardmarket' AND tier='AGGREGATED' LIMIT 1) eu ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = pm.print_id AND market='US' AND tier='NEAR_MINT' AND NOT is_asking
+      AND variant = pm.mainvar
       ORDER BY CASE source WHEN 'tcgplayer' THEN 0 ELSE 1 END LIMIT 1) us_nm ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = pm.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT' LIMIT 1) eu_nm_ask ON true
@@ -46,9 +53,9 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
       WHERE print_id = pm.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'
         AND country_breakdown IS NOT NULL LIMIT 6) x WHERE v ? 'language') eu_langs ON true
     LEFT JOIN LATERAL (SELECT sum(sale_count) AS sales FROM price_matrix
-      WHERE print_id = pm.print_id AND NOT is_asking) tot ON true
+      WHERE print_id = pm.print_id AND NOT is_asking AND variant = pm.mainvar) tot ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
-      WHERE print_id = pm.print_id AND tier='PSA_10' AND market='US' LIMIT 1) psa10 ON true
+      WHERE print_id = pm.print_id AND tier='PSA_10' AND market='US' AND variant = pm.mainvar LIMIT 1) psa10 ON true
     ON CONFLICT (print_id) DO UPDATE SET
       fair_value_eur=EXCLUDED.fair_value_eur, fair_value_method=EXCLUDED.fair_value_method,
       cote_fr_eur=EXCLUDED.cote_fr_eur, cote_lang=EXCLUDED.cote_lang,

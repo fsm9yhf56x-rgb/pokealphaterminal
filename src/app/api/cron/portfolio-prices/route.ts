@@ -42,6 +42,7 @@ export async function GET(req: Request) {
         FROM portfolio_cards pc
         JOIN k_cards kc ON kc.id = pc.k_card_id
         LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
+        LEFT JOIN LATERAL (SELECT rarity AS r FROM k_prints WHERE id = kc.print_id) kc_rarity ON true
         CROSS JOIN LATERAL (
           SELECT CASE
             WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG)[ _]'
@@ -52,7 +53,14 @@ export async function GET(req: Request) {
             WHEN upper(coalesce(pc.condition,'')) IN ('HP','HEAVILY PLAYED','HEAVILY_PLAYED') THEN 'HEAVILY_PLAYED'
             WHEN upper(coalesce(pc.condition,'')) IN ('DMG','DAMAGED') THEN 'DAMAGED'
             ELSE 'NEAR_MINT'
-          END AS tier
+          END AS tier,
+          CASE
+            WHEN pc.variant ILIKE '%holo%' THEN 'Holofoil'
+            WHEN pc.variant ILIKE '%reverse%' THEN 'Reverse_Holofoil'
+            WHEN pc.variant IS NOT NULL AND pc.variant <> '' THEN 'Normal'
+            WHEN kc_rarity.r ILIKE '%holo%' THEN 'Holofoil'
+            ELSE 'Normal'
+          END AS vmatch
         ) t
         LEFT JOIN LATERAL (
           SELECT pm.spot, pm.currency
@@ -62,6 +70,7 @@ export async function GET(req: Request) {
             AND pm.is_asking = false
             AND pm.spot IS NOT NULL
           ORDER BY
+            CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
             CASE
               WHEN kc.lang = 'jp' THEN
                 CASE pm.source WHEN 'ppt_tcgplayer' THEN 0 WHEN 'ppt_ebay' THEN 1 ELSE 2 END

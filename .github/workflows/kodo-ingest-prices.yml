@@ -33,11 +33,17 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-fx-refresh.js
-      - name: Run ingest batch
+      - name: Run ingest batch (EN/JP)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
         run: node scripts/kodo-ingest-prices.js
+      - name: Run ingest batch (FR)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-eu-lang.js fr
       - name: Merge PPT into matrix
         if: always()
         env:

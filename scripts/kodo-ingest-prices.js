@@ -44,7 +44,7 @@ async function ingestOne(kodoCardId, ptId) {
           ${d.avg7d ?? null}, ${d.avg30d ?? null}, ${d.median7d ?? null}, ${d.median30d ?? null},
           ${d.saleCount ?? null}, ${isAsking}, ${currency},
           ${d.country ? JSON.stringify(d.country) : null}, ${asOf})
-        ON CONFLICT (kodo_card_id, market, tier, source) DO UPDATE SET
+        ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
           variant=EXCLUDED.variant, spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
           avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
           median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,

@@ -22,12 +22,13 @@ async function withRetry(label, fn, tries = 3) {
   console.log('[merge-ppt] raw: ' + rawBatches.length + ' lots set+langue')
   for (const b of rawBatches) {
     const r = await withRetry('raw:' + b.set_name, () => sql`
-      INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, spot, is_asking, currency, as_of)
+      INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, variant, source, spot, is_asking, currency, as_of)
       SELECT DISTINCT ON (kc.id, cond.key)
         kc.id, kp.id, 'US',
         CASE cond.key WHEN 'NM' THEN 'NEAR_MINT' WHEN 'LP' THEN 'LIGHTLY_PLAYED'
           WHEN 'MP' THEN 'MODERATELY_PLAYED' WHEN 'HP' THEN 'HEAVILY_PLAYED'
           WHEN 'DMG' THEN 'DAMAGED' ELSE cond.key END,
+        CASE WHEN kp.rarity ILIKE '%holo%' THEN 'Holofoil' ELSE 'Normal' END,
         'ppt_tcgplayer', (cond.value)::numeric, false, 'USD',
         COALESCE(g.graded_updated_at, g.fetched_at, now())
       FROM graded_prices_ppt g
@@ -40,7 +41,7 @@ async function withRetry(label, fn, tries = 3) {
       WHERE g.prices_by_condition IS NOT NULL
         AND g.set_name = ${b.set_name} AND g.language = ${b.language}
       ORDER BY kc.id, cond.key, g.fetched_at DESC
-      ON CONFLICT (kodo_card_id, market, tier, source) DO UPDATE SET
+      ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
         spot=EXCLUDED.spot, as_of=EXCLUDED.as_of, print_id=EXCLUDED.print_id
       RETURNING 1`)
     rawTotal += r.length
@@ -53,10 +54,11 @@ async function withRetry(label, fn, tries = 3) {
   console.log('[merge-ppt] grades: ' + setBatches.length + ' lots set+langue')
   for (const b of setBatches) {
     const r = await withRetry('grades:' + b.set_name, () => sql`
-      INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, spot, low, high, sale_count, is_asking, currency, as_of)
+      INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, variant, source, spot, low, high, sale_count, is_asking, currency, as_of)
       SELECT DISTINCT ON (kc.id, gr.key)
         kc.id, kp.id, 'US',
         upper(regexp_replace(gr.key, '^([a-z]+)([0-9].*)$', '\\1_\\2')),
+        CASE WHEN kp.rarity ILIKE '%holo%' THEN 'Holofoil' ELSE 'Normal' END,
         'ppt_ebay',
         (gr.value->>'smartPrice')::numeric, (gr.value->>'min')::numeric, (gr.value->>'max')::numeric,
         (gr.value->>'count')::int, false, 'USD',
@@ -71,7 +73,7 @@ async function withRetry(label, fn, tries = 3) {
       WHERE g.grades IS NOT NULL AND (gr.value->>'smartPrice') IS NOT NULL
         AND g.set_name = ${b.set_name} AND g.language = ${b.language}
       ORDER BY kc.id, gr.key, g.fetched_at DESC
-      ON CONFLICT (kodo_card_id, market, tier, source) DO UPDATE SET
+      ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
         spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
         sale_count=EXCLUDED.sale_count, as_of=EXCLUDED.as_of, print_id=EXCLUDED.print_id
       RETURNING 1`)

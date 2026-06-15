@@ -16,6 +16,7 @@ export interface PortfolioContext {
   acquiredAt: string | null
   condition?: string | null
   graded?: boolean
+  curPrice?: number | null
 }
 
 export interface SpotlightV2Props {
@@ -107,7 +108,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         )}
         {card && prices ? (
           <div style={GLASS_CARD}>
-            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={isJp} />
+            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={isJp} kodo={kodo} />
           </div>
         ) : (
           <SkeletonBox height={80} />

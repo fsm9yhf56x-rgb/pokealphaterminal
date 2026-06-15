@@ -122,6 +122,7 @@ function SpotDrawerComponent(props: SpotDrawerProps) {
                     portfolio={{
                       qty: spotCard.qty,
                       buyPrice: spotCard.buyPrice > 0 ? spotCard.buyPrice : null,
+                      curPrice: spotCard.curPrice > 0 ? spotCard.curPrice : null,
                       acquiredAt: null,
                       condition: spotCard.condition,
                       graded: spotCard.graded,

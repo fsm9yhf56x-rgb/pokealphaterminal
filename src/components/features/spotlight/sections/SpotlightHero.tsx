@@ -32,12 +32,13 @@ function normalizeCondition(c: string | null | undefined): string {
 interface Props {
   card: CardInfo
   prices: { bySource: Record<string, PriceEntry[]>; marketEst: number | null }
+  kodo?: { fairValueEur: number | null; coteFrEur: number | null } | null
   portfolio?: PortfolioContext | null
   hideTitle?: boolean
   hidePrice?: boolean
 }
 
-export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice }: Props) {
+export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, kodo }: Props) {
   const userCondition = portfolio?.condition ? normalizeCondition(portfolio.condition) : 'NEAR_MINT'
   const userGraded = portfolio?.graded || false
 
@@ -53,7 +54,11 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice }:
 
   const ebayNm = prices.bySource.ebay?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
   const cm = prices.bySource.cardmarket?.find(p => p.variant === 'raw')
-  const heroPrice = userPriceEntry?.price_avg ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
+  // Carte FR -> cote FR ; sinon fair value Kodo. eBay/marketEst en dernier recours.
+  const isFr = String(card.lang || '').toUpperCase() === 'FR'
+  const kodoVal = isFr ? (kodo?.coteFrEur ?? kodo?.fairValueEur ?? null) : (kodo?.fairValueEur ?? null)
+  // Gradee: le tier exact prime (userPriceEntry). Raw: Kodo prime sur eBay brut.
+  const heroPrice = (portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
 
   const flag = FLAG[card.lang] || '🌐'
   const lang = LANG[card.lang] || card.lang

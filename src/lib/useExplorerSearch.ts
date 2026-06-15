@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from './supabase'
 
 /* ── Types ───────────────────────────────────── */
 
@@ -14,11 +13,11 @@ export type ViewMode  = 'grid' | 'table'
 export interface ExplorerFilters {
   q: string
   lang: Lang
-  set: string | null         // set_slug or null
-  rarity: string | null      // rarity_normalized or null
+  set: string | null
+  rarity: string | null
   minPrice: number | null
   maxPrice: number | null
-  hasGraded: boolean | null  // null = all, true = only graded
+  hasGraded: boolean | null
   sortField: SortField
   sortDir: SortDir
   page: number
@@ -77,6 +76,8 @@ export function useExplorerSearch() {
 
   // Debounce timer for q
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Anti-race: seule la derniere requete lancee peut ecrire le state
+  const reqIdRef = useRef(0)
 
   /* Sync filters → URL */
   useEffect(() => {
@@ -99,71 +100,27 @@ export function useExplorerSearch() {
   }, [filters])
 
   async function runSearch(f: ExplorerFilters) {
+    const myReq = ++reqIdRef.current
     setLoading(true)
     setError(null)
 
     try {
-      // Build query
-      let q = (supabase as any)
-        .from('prices_v2')
-        .select('*', { count: 'exact' })
-        .gt('top_price', 0)
+      const url = `/api/market/explorer?${filtersToQuery(f)}`
+      const res = await fetch(url)
+      const json = await res.json()
+      if (myReq !== reqIdRef.current) return // une requete plus recente a pris le relais
+      if (json.error) throw new Error(json.error)
 
-      if (f.q && f.q.trim().length > 0) {
-        q = q.ilike('card_name', `%${f.q.trim()}%`)
-      }
-      if (f.set) q = q.eq('set_slug', f.set)
-      if (f.minPrice != null) q = q.gte('top_price', f.minPrice)
-      if (f.maxPrice != null) q = q.lte('top_price', f.maxPrice)
-      if (f.hasGraded === true) q = q.eq('has_graded', true)
-
-      // Sort
-      q = q.order(f.sortField, { ascending: f.sortDir === 'asc', nullsFirst: false })
-
-      // Pagination
-      const from = f.page * PAGE_SIZE
-      const to   = from + PAGE_SIZE - 1
-      q = q.range(from, to)
-
-      const { data, count, error: qErr } = await q
-
-      if (qErr) throw new Error(qErr.message)
-
-      let rows = (data || []) as any[]
-
-      // Lang/rarity filter (client-side, since prices_v2 doesn't have lang directly)
-      // For Vague 1 we skip lang filtering and add it via JOIN in Vague 2 if needed
-      // (or use card_aliases JOIN here later)
-
-      const enriched: ExplorerResult[] = rows.map(r => ({
-        card_ref: r.card_ref,
-        card_name: r.card_name || 'Unknown',
-        set_name: r.set_name,
-        set_slug: r.set_slug,
-        tcgdex_set_id: r.tcgdex_set_id || null,
-        card_number: r.card_number || null,
-        lang: r.lang || null,  // Resolved via set_aliases JOIN in prices_v2
-        rarity: null,
-        top_price: Number(r.top_price) || 0,
-        cardmarket_trend: r.cardmarket_trend != null ? Number(r.cardmarket_trend) : null,
-        ebay_avg: r.ebay_avg != null ? Number(r.ebay_avg) : null,
-        ebay_sales: r.ebay_sales,
-        tcg_avg: r.tcg_avg != null ? Number(r.tcg_avg) : null,
-        psa10_avg: r.psa10_avg != null ? Number(r.psa10_avg) : null,
-        has_graded: !!r.has_graded,
-        tier: r.tier,
-        variant: r.variant,
-      }))
-
-      setResults(enriched)
-      setTotal(count || 0)
+      setResults(Array.isArray(json.results) ? json.results : [])
+      setTotal(Number(json.total) || 0)
     } catch (e: any) {
+      if (myReq !== reqIdRef.current) return
       console.warn('[useExplorerSearch]', e)
       setError(e.message || 'Search failed')
       setResults([])
       setTotal(0)
     } finally {
-      setLoading(false)
+      if (myReq === reqIdRef.current) setLoading(false)
     }
   }
 
@@ -172,7 +129,6 @@ export function useExplorerSearch() {
     key: K, value: ExplorerFilters[K]
   ) => {
     setFilters(prev => {
-      // Reset page if anything changes (except page itself)
       const newFilters = { ...prev, [key]: value }
       if (key !== 'page') newFilters.page = 0
       return newFilters
@@ -196,6 +152,23 @@ export function useExplorerSearch() {
     /* Setters */
     updateFilter, resetFilters, setView,
   }
+}
+
+/* ── Query string pour l'API ─────────────────── */
+
+function filtersToQuery(f: ExplorerFilters): string {
+  const p = new URLSearchParams()
+  if (f.q)                p.set('q', f.q.trim())
+  if (f.lang !== 'ALL')   p.set('lang', f.lang)
+  if (f.set)              p.set('set', f.set)
+  if (f.rarity)           p.set('rarity', f.rarity)
+  if (f.minPrice != null) p.set('min', String(f.minPrice))
+  if (f.maxPrice != null) p.set('max', String(f.maxPrice))
+  if (f.hasGraded)        p.set('graded', '1')
+  p.set('sort', f.sortField)
+  p.set('dir', f.sortDir)
+  p.set('p', String(f.page))
+  return p.toString()
 }
 
 /* ── URL ↔ Filters serialization ─────────────── */
@@ -231,5 +204,4 @@ function filtersToURL(f: ExplorerFilters): string {
   return p.toString()
 }
 
-// Type alias to avoid Next.js TypeScript pain on ReadonlyURLSearchParams
 type ReadonlyURLSearchParams = ReturnType<typeof useSearchParams>

@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts'
-import { supabase } from '@/lib/supabase'
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { getCardImageUrl, parseLocalIdR2 } from '@/lib/images'
+import { SpotlightV2 } from '@/components/features/spotlight/SpotlightV2'
 import type { ExplorerResult } from '@/lib/useExplorerSearch'
 
 /**
- * Drawer slide-in à droite : détail complet d'une carte.
- * Affiche : grosse image · sources prix · sparkline 30j · variants · raw vs graded.
+ * Drawer detail Explorer : meme coque que le Portfolio (SpotDrawer),
+ * mais carte NON possedee -> SpotlightV2 sans portfolio = mode "Prix de marche".
+ * Image a gauche (calculee comme la grille), fiche riche a droite.
  */
 export function ExplorerDrawer({
   card, onClose,
@@ -17,61 +18,13 @@ export function ExplorerDrawer({
   onClose: () => void
 }) {
   const isOpen = card !== null
-  const [history, setHistory] = useState<{ day: string; price: number }[]>([])
-  const [historyLoading, setHistoryLoading] = useState(false)
 
-  /* ESC to close */
   useEffect(() => {
     if (!isOpen) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
-
-  /* Load price history when card changes */
-  useEffect(() => {
-    if (!card) {
-      setHistory([])
-      return
-    }
-    let cancelled = false
-    loadHistory()
-    async function loadHistory() {
-      setHistoryLoading(true)
-      try {
-        const { data } = await (supabase as any)
-          .from('prices_snapshots')
-          .select('fetched_at, price_avg')
-          .eq('card_ref', card!.card_ref)
-          .gt('price_avg', 0)
-          .gte('fetched_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-          .order('fetched_at', { ascending: true })
-          .limit(200)
-
-        if (cancelled) return
-
-        // Aggregate to 1 point/day (avg)
-        const byDay = new Map<string, number[]>()
-        for (const r of (data || []) as any[]) {
-          const day = r.fetched_at.split('T')[0]
-          const prices = byDay.get(day) || []
-          prices.push(Number(r.price_avg))
-          byDay.set(day, prices)
-        }
-        const points = [...byDay.entries()]
-          .map(([day, prices]) => ({
-            day,
-            price: prices.reduce((s, p) => s + p, 0) / prices.length,
-          }))
-          .sort((a, b) => a.day.localeCompare(b.day))
-
-        setHistory(points)
-      } finally {
-        if (!cancelled) setHistoryLoading(false)
-      }
-    }
-    return () => { cancelled = true }
-  }, [card])
 
   if (!card) return null
 
@@ -82,352 +35,60 @@ export function ExplorerDrawer({
         localId: parseLocalIdR2(card.card_number),
       })
     : ''
-  const isUp = card.cardmarket_trend != null && card.cardmarket_trend > 0
-  const trendColor = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.32)',
-          backdropFilter: 'blur(2px)',
-          zIndex: 100,
-          animation: 'fadeIn 0.2s ease-out',
-        }}
-      />
-      <style>{`
-        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-        @keyframes slideIn { from{transform:translateX(100%)} to{transform:translateX(0)} }
-      `}</style>
+  return createPortal(
+    <div className="spot-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }} onClick={onClose}>
+      <div className="spot-modal" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(40px) saturate(200%)', WebkitBackdropFilter: 'blur(40px) saturate(200%)', borderRadius: '20px', border: 'none', boxShadow: '0 24px 60px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,0.9)', padding: 0, maxWidth: '1280px', width: '95vw', height: '90vh', animation: 'kcSpringIn 0.22s cubic-bezier(.2,.85,.3,1)', position: 'relative', display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' as const, isolation: 'isolate' as const }} onClick={e => e.stopPropagation()}>
+        <style>{`
+          @media (max-width: 900px) {
+            .spot-overlay { padding: 0 !important; }
+            .spot-modal { width: 100% !important; height: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+            .spot-cols { flex-direction: column !important; overflow-y: auto !important; }
+            .spot-imgcol { width: 100% !important; flex-shrink: 0 !important; padding: 6px 16px 0 !important; border-radius: 0 !important; }
+            .spot-imgcol .gem { max-width: 130px !important; }
+            .spot-close { top: 12px !important; right: 12px !important; background: rgba(0,0,0,0.45) !important; border-color: rgba(255,255,255,0.2) !important; }
+            .spot-modal svg { max-width: 100% !important; }
+          }
+        `}</style>
 
-      {/* Drawer */}
-      <div style={{
-        position: 'fixed',
-        top: 0, right: 0, bottom: 0,
-        width: '100%',
-        maxWidth: '440px',
-        background: 'var(--surface)',
-        borderLeft: '1px solid var(--border)',
-        boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.08)',
-        zIndex: 101,
-        overflowY: 'auto',
-        animation: 'slideIn 0.25s cubic-bezier(0.32, 0.72, 0, 1)',
-        fontFamily: 'var(--font-display)',
-      }}>
-        {/* Header */}
-        <div style={{
-          position: 'sticky',
-          top: 0,
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--border)',
-          padding: '14px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          zIndex: 2,
-        }}>
-          <div style={{
-            fontSize: '10px',
-            fontWeight: 600,
-            color: 'var(--ink-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}>Détail carte</div>
-
-          <button
-            onClick={onClose}
-            title="Fermer (ESC)"
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              color: 'var(--ink-muted)',
-              fontSize: '15px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >×</button>
+        {/* Halo glassmorphism (identique SpotDrawer) */}
+        <div style={{ position: 'absolute' as const, inset: 0, overflow: 'hidden' as const, borderRadius: '20px', pointerEvents: 'none' as const, zIndex: 0 }}>
+          <div style={{ position: 'absolute' as const, top: '-10%', left: '-15%', width: '70%', height: '70%', background: 'radial-gradient(circle, rgba(255,165,80,0.42) 0%, rgba(255,165,80,0.15) 40%, transparent 75%)', filter: 'blur(110px)' }} />
+          <div style={{ position: 'absolute' as const, top: '15%', right: '-15%', width: '70%', height: '70%', background: 'radial-gradient(circle, rgba(110,150,255,0.36) 0%, rgba(110,150,255,0.12) 40%, transparent 75%)', filter: 'blur(130px)' }} />
+          <div style={{ position: 'absolute' as const, bottom: '-10%', right: '-10%', width: '70%', height: '60%', background: 'radial-gradient(circle, rgba(0,210,150,0.28) 0%, rgba(0,210,150,0.1) 40%, transparent 75%)', filter: 'blur(120px)' }} />
         </div>
 
-        {/* Content */}
-        <div style={{ padding: '20px' }}>
-          {/* Image + name */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{
-              width: '100%',
-              maxWidth: '240px',
-              aspectRatio: '0.7',
-              margin: '0 auto 14px',
-              background: '#F5F5F7',
-              borderRadius: '10px',
-              overflow: 'hidden',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
-            }}>
-              {imgUrl ? (
-                <img
-                  src={imgUrl}
-                  alt={card.card_name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                />
-              ) : (
-                <div style={{
-                  width: '100%', height: '100%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--ink-faint)', fontSize: '40px',
-                }}>🃏</div>
-              )}
-            </div>
+        <button className="spot-close" onClick={onClose} style={{ position: 'absolute', top: 0, right: '-56px', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(24px) saturate(200%)', WebkitBackdropFilter: 'blur(24px) saturate(200%)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, transition: 'all .2s cubic-bezier(.2,.8,.2,1)', boxShadow: '0 4px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.3)' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
 
-            <h2 style={{
-              fontSize: '17px',
-              fontWeight: 600,
-              color: 'var(--ink)',
-              letterSpacing: '-0.3px',
-              margin: '0 0 4px',
-              textAlign: 'center',
-            }}>{card.card_name}</h2>
-
-            <div style={{
-              fontSize: '11px',
-              color: 'var(--ink-muted)',
-              textAlign: 'center',
-            }}>
-              {[card.set_name, card.variant && card.variant !== 'raw' ? card.variant : null]
-                .filter(Boolean).join(' · ') || '—'}
-            </div>
-
-            {/* Tier + Graded badges */}
-            {(card.tier || card.has_graded) && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '6px',
-                marginTop: '10px',
-              }}>
-                {card.tier && (
-                  <span style={{
-                    padding: '3px 8px',
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    borderRadius: '4px',
-                    background: card.tier === 'S' ? '#FFF8E1' : card.tier === 'A' ? 'var(--perf-up-soft)' : 'var(--border)',
-                    color:      card.tier === 'S' ? '#B8860B' : card.tier === 'A' ? 'var(--perf-up)'      : 'var(--ink-muted)',
-                    fontFamily: 'var(--font-data, var(--font-display))',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}>Tier {card.tier}</span>
-                )}
-                {card.has_graded && (
-                  <span style={{
-                    padding: '3px 8px',
-                    background: 'var(--premium)',
-                    color: 'var(--surface)',
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    borderRadius: '4px',
-                  }}>GRADED DISPONIBLE</span>
+        <div className="spot-cols" style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' as const }}>
+          <div className="spot-imgcol" style={{ flexShrink: 0, width: '380px', position: 'relative' as const, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 32px', overflow: 'hidden' as const, borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+            <div className="gem" style={{ background: 'transparent', borderRadius: '18px', width: '100%', maxWidth: '280px', position: 'relative' as const, zIndex: 1, filter: 'drop-shadow(0 24px 40px rgba(0,0,0,.18)) drop-shadow(0 8px 16px rgba(0,0,0,.08)) drop-shadow(0 0 36px rgba(255,150,80,0.16))' }}>
+              <div style={{ aspectRatio: '63/88', margin: '6px 6px 0', borderRadius: '14px', background: '#EBEBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                {imgUrl ? (
+                  <img src={imgUrl} alt={card.card_name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'relative', zIndex: 1 }}
+                    onError={e => { const t = e.target as HTMLImageElement; t.onerror = null; t.style.opacity = '0' }} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', zIndex: 1 }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F0F0F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </div>
+                  </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Top price big */}
-          <Section title="Prix de marché">
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
-              alignItems: 'baseline',
-              gap: '12px',
-              marginBottom: '6px',
-            }}>
-              <div>
-                <div style={{
-                  fontSize: '24px',
-                  fontWeight: 600,
-                  color: 'var(--ink)',
-                  fontFamily: 'var(--font-data, var(--font-display))',
-                  letterSpacing: '-0.5px',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>{formatEUR(card.top_price)}</div>
-                <div style={{
-                  fontSize: '10px',
-                  color: 'var(--ink-muted)',
-                  marginTop: '2px',
-                }}>Top prix observé · toutes sources</div>
-              </div>
-              {card.cardmarket_trend != null && card.cardmarket_trend !== 0 && (
-                <div style={{
-                  textAlign: 'right',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: trendColor,
-                  fontFamily: 'var(--font-data, var(--font-display))',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{card.cardmarket_trend.toFixed(1)}%
-                  <div style={{
-                    fontSize: '9px',
-                    fontWeight: 400,
-                    color: 'var(--ink-muted)',
-                    marginTop: '2px',
-                  }}>Tendance</div>
-                </div>
-              )}
+          <div style={{ flex: 1, minWidth: 0, padding: 0, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const }}>
+            <div style={{ padding: '18px 22px 16px' }}>
+              <SpotlightV2 cardId={card.card_ref} lang={card.lang || 'EN'} />
             </div>
-
-            {/* Sparkline */}
-            {historyLoading ? (
-              <div style={{
-                height: '80px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-                color: 'var(--ink-faint)',
-              }}>Chargement de l'historique…</div>
-            ) : history.length >= 2 ? (
-              <div style={{ width: '100%', height: '80px', marginTop: '8px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-                    <YAxis hide domain={['dataMin', 'dataMax']} />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke={isUp ? '#1D9E75' : '#E03020'}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-                <div style={{
-                  fontSize: '9px',
-                  color: 'var(--ink-faint)',
-                  textAlign: 'right',
-                  marginTop: '2px',
-                }}>{history.length} points · 30 jours</div>
-              </div>
-            ) : (
-              <div style={{
-                fontSize: '10px',
-                color: 'var(--ink-faint)',
-                fontStyle: 'italic',
-                marginTop: '6px',
-              }}>Pas assez de données pour afficher l'historique.</div>
-            )}
-          </Section>
-
-          {/* Sources breakdown */}
-          <Section title="Sources">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              <SourceRow label="Cardmarket"  value={card.cardmarket_trend != null ? formatEUR(card.top_price) : null} />
-              <SourceRow label="eBay (avg)" value={card.ebay_avg ? formatEUR(card.ebay_avg) : null}
-                         meta={card.ebay_sales ? `${card.ebay_sales} ventes` : undefined} />
-              <SourceRow label="TCGPlayer (avg)" value={card.tcg_avg ? formatEUR(card.tcg_avg) : null} />
-              <SourceRow label="PSA 10 (avg)" value={card.psa10_avg ? formatEUR(card.psa10_avg) : null}
-                         premium />
-            </div>
-          </Section>
-
-          {/* Tech meta */}
-          <Section title="Référence">
-            <div style={{
-              fontSize: '10px',
-              color: 'var(--ink-muted)',
-              fontFamily: 'var(--font-data, var(--font-display))',
-              wordBreak: 'break-all',
-              padding: '8px 10px',
-              background: '#FAFAFA',
-              borderRadius: '6px',
-              border: '1px solid var(--border)',
-            }}>
-              {card.card_ref}
-            </div>
-          </Section>
+          </div>
         </div>
       </div>
-    </>
+    </div>,
+    document.body,
   )
-}
-
-/* ── Section + SourceRow ───────────────────── */
-
-function Section({
-  title, children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{
-        fontSize: '9px',
-        fontWeight: 600,
-        color: 'var(--ink-muted)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        marginBottom: '10px',
-      }}>{title}</div>
-      {children}
-    </div>
-  )
-}
-
-function SourceRow({
-  label, value, meta, premium,
-}: {
-  label: string
-  value: string | null
-  meta?: string
-  premium?: boolean
-}) {
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr auto',
-      alignItems: 'center',
-      gap: '12px',
-      padding: '10px 0',
-      borderBottom: '1px solid var(--border)',
-    }}>
-      <div>
-        <div style={{
-          fontSize: '12px',
-          color: premium ? 'var(--premium-dark, #B8860B)' : 'var(--ink)',
-          fontWeight: 500,
-        }}>{label}</div>
-        {meta && (
-          <div style={{
-            fontSize: '10px',
-            color: 'var(--ink-muted)',
-            marginTop: '1px',
-          }}>{meta}</div>
-        )}
-      </div>
-      <div style={{
-        fontSize: '12px',
-        fontWeight: 600,
-        color: value ? (premium ? 'var(--premium-dark, #B8860B)' : 'var(--ink)') : 'var(--ink-faint)',
-        fontFamily: 'var(--font-data, var(--font-display))',
-        fontVariantNumeric: 'tabular-nums',
-      }}>{value || '—'}</div>
-    </div>
-  )
-}
-
-function formatEUR(v: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(v)
 }

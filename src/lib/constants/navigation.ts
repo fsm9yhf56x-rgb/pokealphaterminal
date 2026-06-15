@@ -46,19 +46,8 @@ export const NAV: NavItem[] = [
   },
   {
     label: 'Market',
-    href:  '/market',
+    href:  '/market/explorer',
     collectorHide: true,
-    soon: {
-      feature: 'Market Terminal',
-      version: 'v2.0',
-      description: 'Bloomberg du TCG. Indices marche temps reel, explorer multi-criteres, spreads inter-marketplaces detectes automatiquement.',
-      bullets: [
-        'Indices Vintage US, Modern FR, Modern EN, Japan',
-        'Explorer 50k+ cartes filtre par prix/condition/langue',
-        'Spreads CM EU vs eBay US (gaps > 15%)',
-        'Ticker live des plus gros mouvements',
-      ],
-    },
     children: [
       {
         label: 'Terminal',
@@ -77,17 +66,6 @@ export const NAV: NavItem[] = [
       {
         label: 'Explorer',
         href:  '/market/explorer',
-        soon: {
-          feature: 'Market Explorer',
-          version: 'v2.0',
-          description: 'Cherche dans 50k+ cartes avec filtres avances multi-criteres.',
-          bullets: [
-            'Filtres prix / condition / langue / rarete',
-            'Tri par variation / volume / liquidite',
-            'Sauvegarde de recherches',
-            'Export CSV pour analyse externe',
-          ],
-        },
       },
       {
         label: 'Spreads',

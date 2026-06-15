@@ -13,6 +13,7 @@ const COND_LABEL: Record<string, string> = {
   MODERATELY_PLAYED: 'Moderately Played',
   HEAVILY_PLAYED: 'Heavily Played',
   DAMAGED: 'Damaged',
+  MINT: 'Mint',
 }
 
 const COND_SUB: Record<string, string> = {
@@ -23,42 +24,95 @@ const COND_SUB: Record<string, string> = {
   DAMAGED: 'abîmée',
 }
 
+const SRC_LABEL: Record<string, string> = {
+  ebay: 'eBay',
+  tcgplayer: 'TCGplayer',
+  cardmarket: 'Cardmarket',
+}
+const METHOD_LABEL: Record<string, string> = {
+  cardmarket_trend: 'Tendance Cardmarket',
+  ebay_sold: 'eBay',
+  tcgplayer: 'TCGplayer',
+}
+
 function normalizeCondition(c: string | null | undefined): string {
   if (!c) return 'NEAR_MINT'
   if (c === 'Raw') return 'NEAR_MINT'
   return c.toUpperCase().replace(/ /g, '_')
 }
 
+function fmtDate(iso: string | null): string {
+  if (!iso) return ''
+  try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) } catch { return '' }
+}
+
+// Prix raw au plus gros volume, toutes sources confondues (== logique de la grille Explorer).
+function pickMaxVolumeRaw(bySource: Record<string, PriceEntry[]>) {
+  let best: { price: number; source: string; condition: string; sales: number; date: string | null } | null = null
+  for (const src of Object.keys(bySource || {})) {
+    if (src === 'ppt_graded') continue
+    for (const e of bySource[src] || []) {
+      if ((e as any).variant !== 'raw') continue
+      if ((e as any).condition === 'CARDMARKET_TREND') continue
+      const sales = (e as any).nb_sales
+      const price = (e as any).price_avg
+      if (sales == null || sales <= 0) continue
+      if (price == null || price <= 0) continue
+      if (!best || sales > best.sales) {
+        best = { price, source: src, condition: (e as any).condition || 'NEAR_MINT', sales, date: (e as any).fetched_at || null }
+      }
+    }
+  }
+  return best
+}
+
 interface Props {
   card: CardInfo
   prices: { bySource: Record<string, PriceEntry[]>; marketEst: number | null }
-  kodo?: { fairValueEur: number | null; coteFrEur: number | null } | null
+  kodo?: { fairValueEur: number | null; fairValueMethod?: string | null; coteFrEur: number | null } | null
   portfolio?: PortfolioContext | null
   hideTitle?: boolean
   hidePrice?: boolean
 }
 
 export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, kodo }: Props) {
+  const showPortfolio = portfolio != null
   const userCondition = portfolio?.condition ? normalizeCondition(portfolio.condition) : 'NEAR_MINT'
   const userGraded = portfolio?.graded || false
 
   let userPriceEntry: PriceEntry | null = null
   if (userGraded && portfolio?.condition) {
-    // BEDROCK: l'user a une carte gradee -> lookup ppt_graded avec variant key
-    // 'PSA 9' -> 'psa_9', 'CGC 9.5' -> 'cgc_9_5'
     const variantKey = portfolio.condition.toLowerCase().replace(/\s+/g, '_').replace('.', '_')
-    userPriceEntry = (prices.bySource.ppt_graded || []).find(p => p.variant === variantKey) || null
+    userPriceEntry = (prices.bySource.ppt_graded || []).find(p => (p as any).variant === variantKey) || null
   } else if (!userGraded) {
-    userPriceEntry = (prices.bySource.ebay || []).find(p => p.variant === 'raw' && p.condition === userCondition) || null
+    userPriceEntry = (prices.bySource.ebay || []).find(p => (p as any).variant === 'raw' && (p as any).condition === userCondition) || null
   }
 
-  const ebayNm = prices.bySource.ebay?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
-  const cm = prices.bySource.cardmarket?.find(p => p.variant === 'raw')
-  // Carte FR -> cote FR ; sinon fair value Kodo. eBay/marketEst en dernier recours.
+  const ebayNm = prices.bySource.ebay?.find(p => (p as any).variant === 'raw' && (p as any).condition === 'NEAR_MINT')
+  const cm = prices.bySource.cardmarket?.find(p => (p as any).variant === 'raw')
   const isFr = String(card.lang || '').toUpperCase() === 'FR'
   const kodoVal = isFr ? (kodo?.coteFrEur ?? kodo?.fairValueEur ?? null) : (kodo?.fairValueEur ?? null)
-  // Gradee: le tier exact prime (userPriceEntry). Raw: Kodo prime sur eBay brut.
-  const heroPrice = (portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
+
+  // Mode marche : reference = max-volume raw (identique a la grille). Mode portfolio : exemplaire de l'user.
+  const maxVol = !showPortfolio ? pickMaxVolumeRaw(prices.bySource) : null
+
+  let heroPrice: number | null = null
+  let sourceChip: { label: string; sub: string | null } | null = null
+
+  if (showPortfolio) {
+    heroPrice = (portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
+  } else if (maxVol) {
+    heroPrice = maxVol.price
+    const dateStr = fmtDate(maxVol.date)
+    sourceChip = {
+      label: `${SRC_LABEL[maxVol.source] || maxVol.source} · ${COND_LABEL[maxVol.condition] || maxVol.condition}`,
+      sub: `${maxVol.sales} vente${maxVol.sales > 1 ? 's' : ''}${dateStr ? ' · ' + dateStr : ''}`,
+    }
+  } else {
+    heroPrice = kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
+    const m = kodo?.fairValueMethod || ''
+    sourceChip = heroPrice != null ? { label: METHOD_LABEL[m] || 'Estimation marché', sub: 'pas de vente récente' } : null
+  }
 
   const flag = FLAG[card.lang] || '🌐'
   const lang = LANG[card.lang] || card.lang
@@ -73,14 +127,11 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   const { main: priceMain, cents: priceCents } = formatPrice(heroPrice)
 
   const userStateLabel = userGraded ? 'Gradé' : COND_LABEL[userCondition] || 'Near Mint'
-  const userStateSub = userGraded ? 'note à confirmer' : COND_SUB[userCondition] || 'comme neuf'
 
   let roi: number | null = null
   if (portfolio && portfolio.buyPrice && portfolio.buyPrice > 0 && heroPrice != null) {
     roi = ((heroPrice - portfolio.buyPrice) / portfolio.buyPrice) * 100
   }
-
-  const showPortfolio = portfolio != null
 
   return (
     <div className="spot-hero-clean" style={{ padding: 0 }}>
@@ -108,23 +159,33 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display }}>
             {showPortfolio ? 'Ton exemplaire' : 'Prix de marché'}
           </div>
-          <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display }}>{userStateLabel}</div>
+          <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {showPortfolio ? userStateLabel : (sourceChip?.label || '—')}
+          </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
           <div>
             <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
             <span style={{ fontSize: 18, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
           </div>
-          {roi != null ? (
-            <div style={{ fontSize: 11.5, marginTop: 4, color: roi >= 0 ? '#00A368' : SNOW.red, fontWeight: 600 }}>
-              {roi >= 0 ? '+' : ''}{roi.toFixed(1).replace('.', ',')} % <span style={{ color: SNOW.mutedLight, fontWeight: 400 }}>depuis achat</span>
-            </div>
-          ) : null}
-          {showPortfolio && portfolio!.qty > 1 ? (
-            <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 3 }}>
-              ×{portfolio!.qty} = <strong style={{ color: SNOW.ink, fontWeight: 500 }}>{fmtPrice((heroPrice || 0) * portfolio!.qty, 'EUR')}</strong>
-            </div>
-          ) : null}
+          {showPortfolio ? (
+            <>
+              {roi != null ? (
+                <div style={{ fontSize: 11.5, marginTop: 4, color: roi >= 0 ? '#00A368' : SNOW.red, fontWeight: 600 }}>
+                  {roi >= 0 ? '+' : ''}{roi.toFixed(1).replace('.', ',')} % <span style={{ color: SNOW.mutedLight, fontWeight: 400 }}>depuis achat</span>
+                </div>
+              ) : null}
+              {portfolio!.qty > 1 ? (
+                <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 3 }}>
+                  ×{portfolio!.qty} = <strong style={{ color: SNOW.ink, fontWeight: 500 }}>{fmtPrice((heroPrice || 0) * portfolio!.qty, 'EUR')}</strong>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            sourceChip?.sub ? (
+              <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 4, fontFamily: FONT.display }}>{sourceChip.sub}</div>
+            ) : null
+          )}
         </div>
       </div>
       ) : null}

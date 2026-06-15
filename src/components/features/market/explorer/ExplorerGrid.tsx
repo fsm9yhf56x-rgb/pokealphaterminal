@@ -5,8 +5,8 @@ import { getCardImageUrl, parseLocalIdR2 } from '@/lib/images'
 import type { ExplorerResult } from '@/lib/useExplorerSearch'
 
 /**
- * Grid view : cartes avec image + nom + prix + variation cardmarket.
- * Click → ouvre le drawer détail.
+ * Grid view : carte avec image + nom + prix au plus gros volume + source.
+ * Click -> ouvre le panneau detail.
  */
 export function ExplorerGrid({
   results, onSelect,
@@ -25,6 +25,29 @@ export function ExplorerGrid({
       ))}
     </div>
   )
+}
+
+const SRC_LABEL: Record<string, string> = {
+  ebay: 'eBay',
+  tcgplayer: 'TCGplayer',
+  cardmarket: 'Cardmarket',
+}
+const METHOD_LABEL: Record<string, string> = {
+  cardmarket_trend: 'Cardmarket',
+  ebay_sold: 'eBay',
+  tcgplayer: 'TCGplayer',
+}
+
+function sourceLine(card: ExplorerResult): string | null {
+  const sales = card.top_sales
+  if (sales != null && card.top_source) {
+    const src = SRC_LABEL[card.top_source] || card.top_source
+    return `${src} · ${sales} vente${sales > 1 ? 's' : ''}`
+  }
+  if (card.fv_method) {
+    return METHOD_LABEL[card.fv_method] || 'Estimation'
+  }
+  return null
 }
 
 function CardTile({
@@ -46,6 +69,7 @@ function CardTile({
   const isUp = card.cardmarket_trend != null && card.cardmarket_trend > 0
   const trendColor = isUp ? 'var(--perf-up)' : 'var(--perf-down)'
   const sign = isUp ? '+' : ''
+  const srcLine = sourceLine(card)
 
   return (
     <button
@@ -142,25 +166,9 @@ function CardTile({
             letterSpacing: '0.05em',
           }}>{card.tier}</div>
         )}
-
-        {/* Graded badge */}
-        {card.has_graded && (
-          <div style={{
-            position: 'absolute',
-            top: '6px',
-            right: '6px',
-            padding: '2px 6px',
-            background: 'var(--premium)',
-            color: 'var(--surface)',
-            fontSize: '9px',
-            fontWeight: 700,
-            borderRadius: '4px',
-            fontFamily: 'var(--font-display)',
-          }}>GRADED</div>
-        )}
       </div>
 
-      {/* Body : name + meta + price */}
+      {/* Body : name + meta + price + source */}
       <div style={{
         padding: '10px 12px 12px',
         display: 'flex',
@@ -217,6 +225,19 @@ function CardTile({
             </div>
           )}
         </div>
+
+        {/* Source du prix : transparence des la grille */}
+        {srcLine && (
+          <div style={{
+            fontSize: '9.5px',
+            color: 'var(--ink-muted)',
+            fontFamily: 'var(--font-display)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            marginTop: '1px',
+          }}>{srcLine}</div>
+        )}
       </div>
     </button>
   )

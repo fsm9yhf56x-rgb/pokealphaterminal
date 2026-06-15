@@ -7,13 +7,15 @@ import { ExplorerFilters } from './ExplorerFilters'
 import { ExplorerResults } from './ExplorerResults'
 import { ExplorerGrid } from './ExplorerGrid'
 import { ExplorerTable } from './ExplorerTable'
-import { ExplorerDrawer } from './ExplorerDrawer'
+import { ExplorerDetailPanel } from './ExplorerDetailPanel'
 import { ExplorerSavedSearches } from './ExplorerSavedSearches'
 import { ExplorerExportCSV } from './ExplorerExportCSV'
 
 /**
- * Explorer = moteur de recherche du marché.
- * Layout : header (search) → filters panel collapsible → results (grid|table) → drawer detail.
+ * Explorer = moteur de recherche du marche.
+ * Layout split master-detail facon terminal : barre (search/filtres/resultats)
+ * pleine largeur, puis grille a gauche + reading-pane fiche colle a droite.
+ * Au clic, la grille retrecit (reflow auto-fill) et reste une grille scannable.
  */
 export function Explorer() {
   const search = useExplorerSearch()
@@ -26,7 +28,7 @@ export function Explorer() {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <Header />
+      <Header total={search.total} />
 
       <ExplorerSearch
         q={search.filters.q}
@@ -48,7 +50,6 @@ export function Explorer() {
         <ExplorerSavedSearches
           currentFilters={search.filters}
           onLoad={(f) => {
-            // Load each filter
             Object.entries(f).forEach(([k, v]) => {
               search.updateFilter(k as any, v as any)
             })
@@ -76,41 +77,51 @@ export function Explorer() {
         }}
       />
 
-      {search.hasResults && (
-        search.view === 'grid' ? (
-          <ExplorerGrid
-            results={search.results}
-            onSelect={setSelectedCardRef}
-          />
-        ) : (
-          <ExplorerTable
-            results={search.results}
-            onSelect={setSelectedCardRef}
-            sortField={search.filters.sortField}
-            sortDir={search.filters.sortDir}
-            onSortChange={(field, dir) => {
-              search.updateFilter('sortField', field)
-              search.updateFilter('sortDir', dir)
-            }}
-          />
-        )
-      )}
+      {/* SPLIT : grille (gauche, retrecit) + reading-pane (droite, sticky) */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', width: '100%' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {search.hasResults && (
+            search.view === 'grid' ? (
+              <ExplorerGrid
+                results={search.results}
+                onSelect={setSelectedCardRef}
+              />
+            ) : (
+              <ExplorerTable
+                results={search.results}
+                onSelect={setSelectedCardRef}
+                sortField={search.filters.sortField}
+                sortDir={search.filters.sortDir}
+                onSortChange={(field, dir) => {
+                  search.updateFilter('sortField', field)
+                  search.updateFilter('sortDir', dir)
+                }}
+              />
+            )
+          )}
 
-      {!search.loading && !search.hasResults && !search.error && (
-        <EmptyState hasQuery={search.filters.q.length > 0} />
-      )}
+          {!search.loading && !search.hasResults && !search.error && (
+            <EmptyState hasQuery={search.filters.q.length > 0} />
+          )}
+        </div>
 
-      <ExplorerDrawer
-        card={selectedCard}
-        onClose={() => setSelectedCardRef(null)}
-      />
+        {selectedCard && (
+          <ExplorerDetailPanel
+            card={selectedCard}
+            onClose={() => setSelectedCardRef(null)}
+          />
+        )}
+      </div>
     </div>
   )
 }
 
-/* ── UI helpers ───────────────────────────── */
+/* UI helpers */
 
-function Header() {
+function Header({ total }: { total: number }) {
+  const count = total > 0
+    ? total.toLocaleString('fr-FR')
+    : 'des milliers de'
   return (
     <div>
       <p style={{
@@ -134,7 +145,7 @@ function Header() {
         color: 'var(--ink-muted)',
         fontFamily: 'var(--font-display)',
         marginTop: '6px',
-      }}>Recherchez parmi 33 000 cartes avec prix réels du marché.</p>
+      }}>Recherchez parmi {count} cartes avec prix réels du marché.</p>
     </div>
   )
 }

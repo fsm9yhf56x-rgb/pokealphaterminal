@@ -41,6 +41,10 @@ export interface ExplorerResult {
   has_graded: boolean
   tier: string | null
   variant: string | null
+  top_source?: string | null
+  top_sales?: number | null
+  top_condition?: string | null
+  fv_method?: string | null
 }
 
 const PAGE_SIZE = 50

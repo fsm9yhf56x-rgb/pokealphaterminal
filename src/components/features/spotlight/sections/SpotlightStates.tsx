@@ -22,7 +22,7 @@ const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', LIGHTLY_PLAYED: 'L
 
 function gradeFromVariant(v: string): { tier: string; n: string; lab: string } | null {
   const m = v.match(/^(psa|cgc|bgs|sgc|pca|ccc)_(\d+(?:_\d)?)$/i)
-  if (!m) return null
+  if (m === null) return null
   const tier = m[1].toUpperCase()
   const n = m[2].replace('_', '.')
   return { tier, n, lab: `${tier} ${n}` }
@@ -33,7 +33,7 @@ interface Props {
   portfolio?: import('../SpotlightV2').PortfolioContext | null
 }
 
-export function SpotlightStates({ prices, portfolio }: Props) {
+export function SpotlightStates({ prices }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const rawByCond: Record<string, PriceEntry> = {}
@@ -42,7 +42,6 @@ export function SpotlightStates({ prices, portfolio }: Props) {
       rawByCond[r.condition] = r
     }
   }
-  // BEDROCK: prix gradés viennent de PPT (eBay sold real), fallback ebay (asks listings)
   const graded = (prices.bySource.ppt_graded || prices.bySource.ebay || []).filter(p => gradeFromVariant(p.variant))
   const gradedLocked = (prices.bySource as any).__gradedLocked === true
   const gradedHiddenCount = Number((prices.bySource as any).__gradedHiddenCount || 0)
@@ -50,15 +49,16 @@ export function SpotlightStates({ prices, portfolio }: Props) {
   const nm = rawByCond.NEAR_MINT
   const sortedGraded = [...graded].sort((a, b) => b.price_avg - a.price_avg)
   const topGraded = sortedGraded[0]
+  const topG = topGraded ? gradeFromVariant(topGraded.variant) : null
   const otherRaw = (['LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const).filter(c => rawByCond[c]).map(c => rawByCond[c])
   const otherGraded = sortedGraded.slice(1)
   const hasMore = otherRaw.length + otherGraded.length > 0
 
-  if (!nm && !topGraded) return null
+  if (nm == null && topGraded == null) return null
 
   const tagStyle = (variant: string) => {
     const g = gradeFromVariant(variant)
-    if (!g) return { background: SNOW.surface, color: '#48484A' }
+    if (g === null) return { background: SNOW.surface, color: '#48484A' }
     const map: Record<string, { background: string; color: string }> = {
       PSA: { background: SNOW.blueLight, color: '#042C53' },
       CGC: { background: SNOW.pink, color: SNOW.pinkDark },
@@ -70,40 +70,25 @@ export function SpotlightStates({ prices, portfolio }: Props) {
 
   return (
     <div className="kc-section-card" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRadius: 14, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)', padding: '14px 18px' }}>
-      <h2 style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 500, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.1em', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8, position: 'relative' as const, paddingLeft: 12 }}>
-        <span style={{ position: 'absolute' as const, left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 12, background: '#1D1D1F', borderRadius: 2 }} />
-        Prix par état
-      </h2>
-      <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: '0 0 8px', lineHeight: 1.5 }}>
-        Une carte en parfait état (<strong style={{ color: SNOW.ink, fontWeight: 500 }}>Near Mint</strong>) ou notée par un organisme (<strong style={{ color: SNOW.ink, fontWeight: 500 }}>PSA, CGC</strong>) vaut beaucoup plus qu'une carte abîmée.
-      </p>
+      <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.08em', margin: '0 0 2px' }}>Prix par état</div>
+      <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: '0 0 12px', lineHeight: 1.4 }}>Moyenne des ventes confirmées</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
         {nm ? (
-          <StateCard
-            label="État Near Mint"
-            tagText="Prix réel"
-            tagKind="real"
-            value={fmtPrice(nm.price_avg, nm.currency)}
-            sub={`${nm.nb_sales || 0} ventes confirmées sur eBay`}
-            subItalic="90 derniers jours"
-          />
+          <StateCard label="Near Mint" value={fmtPrice(nm.price_avg, nm.currency)} salesCount={nm.nb_sales || 0} />
         ) : null}
-        {topGraded ? (
+        {topGraded && topG ? (
           <StateCard
-            label={`Notée ${gradeFromVariant(topGraded.variant)!.n}/10 (${gradeFromVariant(topGraded.variant)!.tier})`}
-            tagText="Prix réel"
-            tagKind="real"
+            label={`${topG.tier} ${topG.n}`}
             value={fmtPrice(topGraded.price_avg, topGraded.currency)}
-            highlight={gradeFromVariant(topGraded.variant)!.tier === 'PSA' && gradeFromVariant(topGraded.variant)!.n === '10'}
-            sub={`${topGraded.nb_sales || 0} ventes confirmées sur eBay`}
-            subItalic="90 derniers jours"
+            highlight={topG.tier === 'PSA' && topG.n === '10'}
+            salesCount={topGraded.nb_sales || 0}
           />
         ) : null}
       </div>
 
       {gradedLocked ? (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 12 }}>
           <a
             href="/abonnement"
             className="kc-glass-btn"
@@ -127,9 +112,9 @@ export function SpotlightStates({ prices, portfolio }: Props) {
           </a>
         </div>
       ) : hasMore ? (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 12 }}>
           <button
-            onClick={() => setExpanded(v => !v)}
+            onClick={() => setExpanded(v => v ? false : true)}
             className="kc-glass-btn"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -144,7 +129,7 @@ export function SpotlightStates({ prices, portfolio }: Props) {
             }}
           >
             <span style={{ display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s ease', fontSize: 10 }}>▶</span>
-            {expanded ? 'Masquer les autres états' : `Voir les ${otherRaw.length + otherGraded.length} autres états observés`}
+            {expanded ? 'Masquer les autres états' : `Voir les ${otherRaw.length + otherGraded.length} autres états`}
           </button>
 
           {expanded ? (
@@ -169,7 +154,7 @@ export function SpotlightStates({ prices, portfolio }: Props) {
                         </span>
                       </div>
                       <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 1 }}>
-                        {g ? `${r.nb_sales || 0} listings · prix demandé` : `${r.nb_sales || 0} ventes eBay 90j`}
+                        {g ? `${r.nb_sales || 0} listings · prix demandé` : `${r.nb_sales || 0} ventes`}
                       </div>
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 500, fontFamily: FONT.data, textAlign: 'right' as const }}>{fmtPrice(r.price_avg, r.currency)}</span>
@@ -180,24 +165,20 @@ export function SpotlightStates({ prices, portfolio }: Props) {
           ) : null}
         </div>
       ) : null}
+
+      <div style={{ marginTop: 12, fontSize: 10, color: SNOW.mutedLight, letterSpacing: '0.01em' }}>
+        Source : ventes eBay · 90 derniers jours
+      </div>
     </div>
   )
 }
 
-function StateCard({ label, tagText, tagKind, value, sub, subItalic, highlight }: { label: string; tagText: string; tagKind: 'real' | 'ask'; value: string; sub: string; subItalic?: string; highlight?: boolean }) {
-  const tagBg = tagKind === 'real' ? '#EAF3DE' : '#FFF8E5'
-  const tagFg = tagKind === 'real' ? '#27500A' : '#8A6500'
+function StateCard({ label, value, salesCount, highlight }: { label: string; value: string; salesCount: number; highlight?: boolean }) {
   return (
-    <div style={{ padding: '10px 12px', background: '#FAFAFB', borderRadius: 10, border: '1px solid transparent', transition: 'all .2s cubic-bezier(.2,.8,.2,1)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontSize: 11, color: SNOW.mutedLight, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display }}>{label}</span>
-        <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, fontWeight: 500, fontFamily: FONT.data, background: tagBg, color: tagFg }}>{tagText}</span>
-      </div>
-      <div style={{ fontSize: 16, fontWeight: 500, fontFamily: FONT.display, letterSpacing: '-0.015em', marginTop: 5, color: highlight ? '#A32D2D' : SNOW.ink }}>{value}</div>
-      <p style={{ fontSize: 11, color: SNOW.mutedLight, margin: '2px 0 0' }}>
-        {sub}
-        {subItalic ? <> <span style={{ fontFamily: 'Times New Roman, serif', fontStyle: 'italic' }}>{subItalic}</span></> : null}
-      </p>
+    <div style={{ padding: '12px 14px', background: '#FAFAFB', borderRadius: 10 }}>
+      <div style={{ fontSize: 10.5, color: SNOW.mutedLight, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 600, fontFamily: FONT.display }}>{label}</div>
+      <div style={{ fontSize: 19, fontWeight: 600, fontFamily: FONT.display, letterSpacing: '-0.02em', marginTop: 6, color: highlight ? '#A32D2D' : SNOW.ink }}>{value}</div>
+      <div style={{ fontSize: 11, color: SNOW.mutedLight, marginTop: 3 }}>{salesCount} vente{salesCount > 1 ? 's' : ''}</div>
     </div>
   )
 }

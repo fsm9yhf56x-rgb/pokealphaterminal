@@ -11,6 +11,11 @@ interface Props {
   history?: HistoryPoint[]
 }
 
+const SECTION_LABEL: React.CSSProperties = {
+  fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted,
+  textTransform: 'uppercase' as const, letterSpacing: '0.08em',
+}
+
 export function SpotlightChart({ history }: Props) {
   const [tab, setTab] = useState<Tab>('30j')
   const [tooltip, setTooltip] = useState<{ x: number; price: number; day: string } | null>(null)
@@ -48,13 +53,13 @@ export function SpotlightChart({ history }: Props) {
     return (
       <div style={{ marginTop: 0, padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display }}>Historique de prix</span>
+          <div style={SECTION_LABEL}>Historique de prix</div>
           {periodTabs}
         </div>
-        <div style={{ marginTop: 10, height: 110, borderRadius: 10, background: SNOW.surface, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center' as const, padding: '0 24px' }}>
+        <div style={{ marginTop: 12, height: 110, borderRadius: 10, background: SNOW.surface, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center' as const, padding: '0 24px' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>
           <div style={{ fontSize: 12.5, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display }}>Pas encore assez d&apos;historique</div>
-          <div style={{ fontSize: 11.5, color: SNOW.mutedLight, lineHeight: 1.4 }}>Les variations s&apos;afficheront a mesure que les ventes s&apos;accumulent.</div>
+          <div style={{ fontSize: 11.5, color: SNOW.mutedLight, lineHeight: 1.4 }}>Les variations s&apos;afficheront à mesure que les ventes s&apos;accumulent.</div>
         </div>
       </div>
     )
@@ -89,12 +94,16 @@ export function SpotlightChart({ history }: Props) {
   return (
     <div style={{ marginTop: 0, padding: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 14, fontWeight: 500, color, fontFamily: FONT.display }}>
+        <div style={SECTION_LABEL}>Historique de prix</div>
+        {periodTabs}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 7, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 15, fontWeight: 600, color, fontFamily: FONT.display }}>
           <span style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', [isUp ? 'borderBottom' : 'borderTop']: `7px solid ${color}` } as any} />
           {isUp ? '+ ' : '- '}{Math.abs(deltaAbs).toFixed(2).replace('.', ',')} € ({isUp ? '+' : ''}{delta.toFixed(1).replace('.', ',')} %)
         </span>
-        <span style={{ fontSize: 13, color: SNOW.mutedLight }}>en {tab === '1a' ? '1 an' : tab}</span>
-        {periodTabs}
+        <span style={{ fontSize: 12.5, color: SNOW.mutedLight }}>en {tab === '1a' ? '1 an' : tab}</span>
       </div>
 
       <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => setTooltip(null)} style={{ marginTop: 10, position: 'relative', cursor: 'crosshair' }}>

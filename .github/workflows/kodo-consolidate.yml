@@ -1,0 +1,32 @@
+name: Kodo Engine - Consolidate (merge + signals)
+# Fusionne PPT dans price_matrix puis calcule signals + history snapshot.
+# Tourne APRES les ingests EN/JP (00:10) et FR (00:15), budget 18min chacun.
+# 01:00 = marge confortable pour que les deux ingests soient finis.
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 01:00 UTC, apres les ingests
+  workflow_dispatch:
+jobs:
+  consolidate:
+    name: Merge + signals
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: kodo-consolidate
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Merge PPT into matrix
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-merge-ppt.js
+      - name: Compute signals + history snapshot
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-compute-signals.js

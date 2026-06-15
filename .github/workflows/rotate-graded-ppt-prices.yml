@@ -31,6 +31,7 @@ jobs:
           cache: 'npm'
       - run: npm ci --no-audit --no-fund --prefer-offline
       - name: Guard - ne pas tourner si job initial JP pas fini
+        id: guard
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -41,12 +42,14 @@ jobs:
               const r = await sql\`SELECT status FROM sync_progress WHERE job_id='graded_ppt_jp_full'\`;
               if (r[0] && r[0].status !== 'completed') {
                 console.log('Job JP initial pas encore completed (' + r[0].status + '). Rotation reportee.');
-                process.exit(78); // exit neutre, skip le reste
+                require('fs').appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'skip=true\n');
+                process.exit(0); // skip neutre = succes pour GitHub (pas un echec)
               }
               console.log('Job JP completed (ou absent), rotation autorisee.');
             })();
           "
       - name: Run rotation batch
+        if: steps.guard.outputs.skip != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKEMON_PRICE_TRACKER_API_KEY: ${{ secrets.POKEMON_PRICE_TRACKER_API_KEY }}

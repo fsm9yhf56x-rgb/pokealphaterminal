@@ -1,0 +1,28 @@
+name: Kodo Engine - Ingest FR (PokeTrace)
+# Ingestion prix FR (Cardmarket EUR) via PokeTrace. AUTONOME.
+# Decouple de l'EN/JP: tourne meme si l'autre plante (langue prioritaire FR).
+# Plafonne a 18min cote script. Structure dupliquable pour DE/ES/IT plus tard.
+on:
+  schedule:
+    - cron: '15 0 * * *'   # 00:15 UTC, +5min apres EN/JP (eviter parallele PokeTrace)
+  workflow_dispatch:
+jobs:
+  ingest-fr:
+    name: Ingest FR
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: kodo-ingest-fr
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Ingest FR batch (Cardmarket EUR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-eu-lang.js fr

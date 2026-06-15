@@ -1,0 +1,56 @@
+name: Kodo Engine - Ingest Prices (PokeTrace)
+
+# 1 run/nuit apres reset quota PokeTrace (minuit UTC).
+# Chaine: ingest (resumable, plafonne a 18min) -> merge PPT -> signals + history.
+# Timeout large (50min) pour laisser merge+signals finir apres l'ingest.
+# Resumable via kodo_sync_state: l'ingest reprend ou il s'est arrete chaque nuit.
+
+on:
+  schedule:
+    - cron: '10 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    name: Ingest PokeTrace prices
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    concurrency:
+      group: kodo-ingest-prices
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Refresh FX rates (BCE/Frankfurter)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-fx-refresh.js
+      - name: Run ingest batch (EN/JP)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-prices.js
+      - name: Run ingest batch (FR)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-eu-lang.js fr
+      - name: Merge PPT into matrix
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-merge-ppt.js
+      - name: Compute signals + history snapshot
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-compute-signals.js

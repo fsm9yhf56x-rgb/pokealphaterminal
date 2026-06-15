@@ -1,0 +1,32 @@
+name: Kodo Engine - Ingest EN/JP (PokeTrace)
+# Ingestion prix EN/JP via PokeTrace. Autonome, decouple du FR.
+# Resumable (kodo_sync_state), plafonne a 18min cote script.
+# Budget-conscious: 1 run/nuit. Augmenter la frequence quand revenus.
+on:
+  schedule:
+    - cron: '10 0 * * *'   # 00:10 UTC, apres reset quota PokeTrace minuit
+  workflow_dispatch:
+jobs:
+  ingest:
+    name: Ingest EN/JP
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: kodo-ingest-en-jp
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Refresh FX rates (BCE/Frankfurter)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-fx-refresh.js
+      - name: Ingest EN/JP batch
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-ingest-prices.js

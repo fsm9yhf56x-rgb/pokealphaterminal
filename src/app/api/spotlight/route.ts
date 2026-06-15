@@ -77,6 +77,23 @@ export async function GET(req: NextRequest) {
     // Kodo Engine: matrice de prix par print (remplace prices_canonical vide)
     const fxRow = await sql`SELECT rate FROM fx_rates WHERE from_currency='USD' AND to_currency='EUR' ORDER BY rate_date DESC LIMIT 1` as Array<any>
     const USD_EUR = Number(fxRow[0]?.rate || 0.92)
+    // Kodo Engine: signaux derives (fair value, cote FR, liquidite, grade EV)
+    const sigRows = await sql`
+      SELECT ps.fair_value_eur, ps.fair_value_method, ps.cote_fr_eur, ps.cote_lang,
+             ps.liquidity_score, ps.spread_us_eu_pct, ps.grade_ev_psa10_eur
+      FROM k_cards kc JOIN price_signals ps ON ps.print_id = kc.print_id
+      WHERE kc.id = ${cardId} LIMIT 1
+    ` as Array<any>
+    const sig = sigRows[0] || null
+    const kodo = sig ? {
+      fairValueEur: sig.fair_value_eur != null ? Number(sig.fair_value_eur) : null,
+      fairValueMethod: sig.fair_value_method || null,
+      coteFrEur: sig.cote_fr_eur != null ? Number(sig.cote_fr_eur) : null,
+      coteLang: sig.cote_lang || null,
+      liquidityScore: sig.liquidity_score != null ? Number(sig.liquidity_score) : null,
+      spreadUsEuPct: sig.spread_us_eu_pct != null ? Number(sig.spread_us_eu_pct) : null,
+      gradeEvPsa10Eur: sig.grade_ev_psa10_eur != null ? Number(sig.grade_ev_psa10_eur) : null,
+    } : null
     const matrixRows = await sql`
       SELECT pm.market, pm.tier, pm.source, pm.spot, pm.low, pm.high,
              pm.sale_count, pm.is_asking, pm.currency, pm.as_of
@@ -326,6 +343,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       card,
+      kodo,
       prices: {
         bySource,
         marketEst,

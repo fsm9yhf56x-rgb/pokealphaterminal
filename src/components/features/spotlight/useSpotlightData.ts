@@ -31,8 +31,18 @@ export interface HistoryPoint {
   price: number
 }
 
+export interface KodoSignals {
+  fairValueEur: number | null
+  fairValueMethod: string | null
+  coteFrEur: number | null
+  coteLang: any | null
+  liquidityScore: number | null
+  spreadUsEuPct: number | null
+  gradeEvPsa10Eur: number | null
+}
 export interface SpotlightData {
   card: CardInfo
+  kodo: KodoSignals | null
   prices: {
     bySource: Record<string, PriceEntry[]>
     marketEst: number | null

@@ -63,6 +63,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
 
   const card = data?.card
   const prices = data?.prices
+  const kodo = data?.kodo ?? null
   const hasHistory = prices?.history && prices.history.length >= 2
   const isJp = (lang || card?.lang || '').toString().toUpperCase().startsWith('J')
 
@@ -126,7 +127,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         ) : null}
 
         {prices ? (
-          <SpotlightTLDR prices={prices} portfolio={portfolio} />
+          <SpotlightTLDR prices={prices} portfolio={portfolio} kodo={kodo} />
         ) : (
           <SkeletonBox height={60} />
         )}

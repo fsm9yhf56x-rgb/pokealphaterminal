@@ -29,4 +29,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+          KODO_MAX_REQ: '4000'
+          KODO_MAINT_REQ: '1500'
         run: node scripts/kodo-ingest-prices.js

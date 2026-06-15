@@ -11,11 +11,14 @@ const LANG = (process.argv[2] || 'fr').toLowerCase()
 const JOB = 'kodo_ingest_eu_' + LANG
 const START = Date.now()
 const MAX_MS = 18 * 60 * 1000
-const budget = () => Date.now() - START < MAX_MS
+const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 5500
+let reqCount = 0
+const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 async function get(p, tries = 4) {
   for (let i = 1; i <= tries; i++) {
+    reqCount++
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 15000)
     try {
@@ -83,7 +86,35 @@ async function ingestOne(kodoCardId, printId, ptId) {
     st = { items_pending: pending, items_done: 0 }
     console.log('Job initialise:', pending.length, 'cartes', LANG.toUpperCase())
   } else if (st.status === 'completed') {
-    console.log('Job', JOB, 'deja COMPLETED.'); return
+    // MODE MAINTENANCE: job FR rempli -> rafraichir les cartes au as_of le plus vieux
+    console.log('Job', JOB, 'COMPLETED -> mode MAINTENANCE (refresh FR plus vieux)')
+    const maintBudget = Number(process.env.KODO_MAINT_REQ) || Math.floor(MAX_REQ / 2)
+    const oldestCards = await sql`
+      SELECT t.kodo_card_id, kc.print_id,
+        COALESCE(r.poketrace_eu_holo_id, r.poketrace_eu_id) AS eu_id
+      FROM (
+        SELECT kodo_card_id, MAX(as_of) AS last_seen
+        FROM price_matrix
+        WHERE kodo_card_id LIKE ${LANG + '-%'}
+        GROUP BY kodo_card_id
+      ) t
+      JOIN source_refs r ON r.kodo_card_id = t.kodo_card_id
+      JOIN k_cards kc ON kc.id = t.kodo_card_id
+      WHERE (r.poketrace_eu_id IS NOT NULL OR r.poketrace_eu_holo_id IS NOT NULL)
+      ORDER BY t.last_seen ASC LIMIT ${maintBudget}`
+    let mPending = oldestCards.map(r => ({ id: r.kodo_card_id, print: r.print_id, eu: r.eu_id }))
+    let mDone = 0, mRows = 0
+    console.log('Maintenance FR: ' + mPending.length + ' cartes a rafraichir (plus vieilles)')
+    while (mPending.length && budget()) {
+      const item = mPending[0]
+      if (item.eu) mRows += await ingestOne(item.id, item.print, item.eu)
+      mPending = mPending.slice(1)
+      mDone++
+    }
+    await sql`UPDATE kodo_sync_state SET last_run_at = now(),
+      notes = ${'maintenance ' + LANG + ': ' + new Date().toISOString()} WHERE job_id = ${JOB}`
+    console.log('=== FIN MAINTENANCE ' + LANG.toUpperCase() + ' === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)
+    return
   }
   let pending = st.items_pending
   let done = st.items_done

@@ -5,7 +5,7 @@ const KEY = process.env.POKETRACE_API_KEY
 const BASE = 'https://api.poketrace.com/v1'
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-const MAX_REQ = 6000
+const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 6000
 const MAX_MS = 18 * 60 * 1000
 const START = Date.now()
 let reqCount = 0
@@ -80,7 +80,41 @@ async function ingestOne(kodoCardId, ptId) {
     st = { items_pending: pending, items_done: 0 }
     console.log('Job initialise:', pending.length, 'cartes')
   } else if (st.status === 'completed') {
-    console.log('Job deja COMPLETED.'); return
+    // MODE MAINTENANCE: job rempli 100% -> rafraichir les cartes au as_of le plus vieux
+    console.log('Job COMPLETED -> mode MAINTENANCE (refresh des plus vieux prix)')
+    const maintBudget = Number(process.env.KODO_MAINT_REQ) || Math.floor(MAX_REQ / 2)
+    const oldestCards = await sql`
+      SELECT kodo_card_id FROM (
+        SELECT kodo_card_id, MAX(as_of) AS last_seen
+        FROM price_matrix
+        WHERE (kodo_card_id LIKE 'en-%' OR kodo_card_id LIKE 'jp-%' OR kodo_card_id LIKE 'ja-%')
+        GROUP BY kodo_card_id
+      ) t ORDER BY last_seen ASC LIMIT ${maintBudget}`
+    let mPending = oldestCards.map(r => r.kodo_card_id)
+    let mDone = 0, mRows = 0
+    console.log('Maintenance: ' + mPending.length + ' cartes EN/JP a rafraichir (plus vieilles)')
+    while (mPending.length && budget()) {
+      const batch = mPending.slice(0, 50)
+      const refs = await sql`SELECT kodo_card_id, poketrace_us_id, poketrace_us_holo_id,
+        poketrace_eu_id, poketrace_eu_holo_id FROM source_refs WHERE kodo_card_id = ANY(${batch})`
+      const byId = Object.fromEntries(refs.map(r => [r.kodo_card_id, r]))
+      for (const cardId of batch) {
+        if (!budget()) break
+        mPending = mPending.filter(x => x !== cardId)
+        const r = byId[cardId]
+        if (!r) { mDone++; continue }
+        const usId = r.poketrace_us_holo_id || r.poketrace_us_id
+        const euId = r.poketrace_eu_holo_id || r.poketrace_eu_id
+        if (usId) mRows += await ingestOne(cardId, usId)
+        if (euId && budget()) mRows += await ingestOne(cardId, euId)
+        mDone++
+      }
+    }
+    await sql`UPDATE kodo_sync_state SET requests_used = requests_used + ${reqCount},
+      last_run_at = now(), notes = ${'maintenance: ' + new Date().toISOString()}
+      WHERE job_id = ${JOB}`
+    console.log('=== FIN MAINTENANCE EN/JP === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)
+    return
   }
 
   let pending = st.items_pending

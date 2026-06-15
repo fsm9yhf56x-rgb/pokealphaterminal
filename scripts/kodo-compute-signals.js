@@ -22,7 +22,7 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
       eu_fr.p AS cote_fr_eur,
       eu_langs.j AS cote_lang,
       LEAST(100, ROUND(
-        COALESCE(LOG(GREATEST(tot.sales, 1)) * 25, 0)
+        COALESCE(LOG(tot.sales + 1) * 28, 0)
       ))::real AS liquidity_score,
       CASE WHEN eu.trend IS NOT NULL AND us_nm.p IS NOT NULL AND eu.trend > 0
         THEN ROUND(((us_nm.p * ${usdEur} - eu.trend) / eu.trend * 100)::numeric, 1)::real END,
@@ -40,8 +40,8 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
       WHERE print_id = pm.print_id AND source='cardmarket' AND tier='AGGREGATED' LIMIT 1) eu ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = pm.print_id AND market='US' AND tier='NEAR_MINT' AND NOT is_asking
-      AND variant = pm.mainvar
-      ORDER BY CASE source WHEN 'tcgplayer' THEN 0 ELSE 1 END LIMIT 1) us_nm ON true
+      ORDER BY CASE WHEN variant = pm.mainvar THEN 0 ELSE 1 END,
+               CASE source WHEN 'tcgplayer' THEN 0 ELSE 1 END LIMIT 1) us_nm ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = pm.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT' LIMIT 1) eu_nm_ask ON true
     LEFT JOIN LATERAL (SELECT (country_breakdown->'FR'->>'avg')::numeric AS p FROM price_matrix
@@ -53,9 +53,9 @@ console.log('\n=== 4. CALCUL DES SIGNAUX (1er passage) ===')
       WHERE print_id = pm.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'
         AND country_breakdown IS NOT NULL LIMIT 6) x WHERE v ? 'language') eu_langs ON true
     LEFT JOIN LATERAL (SELECT sum(sale_count) AS sales FROM price_matrix
-      WHERE print_id = pm.print_id AND NOT is_asking AND variant = pm.mainvar) tot ON true
+      WHERE print_id = pm.print_id AND NOT is_asking) tot ON true
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
-      WHERE print_id = pm.print_id AND tier='PSA_10' AND market='US' AND variant = pm.mainvar LIMIT 1) psa10 ON true
+      WHERE print_id = pm.print_id AND tier='PSA_10' AND market='US' ORDER BY spot DESC NULLS LAST LIMIT 1) psa10 ON true
     ON CONFLICT (print_id) DO UPDATE SET
       fair_value_eur=EXCLUDED.fair_value_eur, fair_value_method=EXCLUDED.fair_value_method,
       cote_fr_eur=EXCLUDED.cote_fr_eur, cote_lang=EXCLUDED.cote_lang,

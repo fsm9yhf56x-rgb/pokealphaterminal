@@ -29,14 +29,17 @@ function liqColor(s: number): string {
 
 export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
   if (!kodo) return null
-  const { liquidityScore, spreadUsEuPct, gradeEvPsa10Eur, coteFrEur, coteLang } = kodo
+  const { liquidityScore, gradeEvPsa10Eur, coteFrEur, coteLang } = kodo
 
   const coteEntries: { lang: string; avg: number }[] = []
-  if (coteFrEur != null) coteEntries.push({ lang: 'FR', avg: coteFrEur })
+  const seenLang = new Set<string>()
+  if (coteFrEur != null) { coteEntries.push({ lang: 'FR', avg: coteFrEur }); seenLang.add('FR') }
   if (coteLang && typeof coteLang === 'object') {
     for (const lg of Object.keys(coteLang)) {
+      const code = LANG_NAME[lg] || lg
+      if (seenLang.has(code)) continue
       const node = coteLang[lg]?.ALL
-      if (node && node.avg != null) coteEntries.push({ lang: LANG_NAME[lg] || lg, avg: Number(node.avg) })
+      if (node && node.avg != null) { coteEntries.push({ lang: code, avg: Number(node.avg) }); seenLang.add(code) }
     }
   }
 
@@ -49,19 +52,13 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
       color: liqColor(liquidityScore),
     })
   }
-  if (spreadUsEuPct != null) {
-    const sign = spreadUsEuPct > 0 ? '+' : ''
-    tiles.push({
-      label: 'Spread US ↔ EU',
-      value: <>{sign}{Math.round(spreadUsEuPct)}<span style={{ fontSize: 13, color: SNOW.mutedLight, fontWeight: 400 }}> %</span></>,
-      sub: 'écart de prix entre marchés',
-    })
-  }
   if (gradeEvPsa10Eur != null) {
+    const positive = gradeEvPsa10Eur >= 0
     tiles.push({
-      label: 'Si gradée PSA 10',
-      value: fmtPrice(gradeEvPsa10Eur, 'EUR'),
-      sub: 'valeur estimée',
+      label: 'Plus-value PSA 10',
+      value: `${positive ? '+' : '−'}${fmtPrice(Math.abs(gradeEvPsa10Eur), 'EUR')}`,
+      sub: positive ? 'gain estimé si gradée' : 'gradation non rentable',
+      color: positive ? '#00A368' : SNOW.red,
     })
   }
 

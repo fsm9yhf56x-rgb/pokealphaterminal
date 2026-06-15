@@ -46,9 +46,9 @@ function fmtDate(iso: string | null): string {
   try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) } catch { return '' }
 }
 
-// Prix raw au plus gros volume, toutes sources confondues (== logique de la grille Explorer).
-function pickMaxVolumeRaw(bySource: Record<string, PriceEntry[]>) {
-  let best: { price: number; source: string; condition: string; sales: number; date: string | null } | null = null
+// Prix de reference : Near Mint en priorite (standard), sinon volume max. Tie-break par ventes puis prix.
+function pickReference(bySource: Record<string, PriceEntry[]>) {
+  const all: { price: number; source: string; condition: string; sales: number; date: string | null }[] = []
   for (const src of Object.keys(bySource || {})) {
     if (src === 'ppt_graded') continue
     if (!Array.isArray(bySource[src])) continue
@@ -59,12 +59,13 @@ function pickMaxVolumeRaw(bySource: Record<string, PriceEntry[]>) {
       const price = (e as any).price_avg
       if (sales == null || sales <= 0) continue
       if (price == null || price <= 0) continue
-      if (!best || sales > best.sales) {
-        best = { price, source: src, condition: (e as any).condition || 'NEAR_MINT', sales, date: (e as any).fetched_at || null }
-      }
+      all.push({ price, source: src, condition: (e as any).condition || 'NEAR_MINT', sales, date: (e as any).fetched_at || null })
     }
   }
-  return best
+  if (all.length === 0) return null
+  const best = (arr: typeof all) => arr.slice().sort((a, b) => b.sales - a.sales || b.price - a.price)[0]
+  const nm = all.filter(x => x.condition === 'NEAR_MINT')
+  return nm.length > 0 ? best(nm) : best(all)
 }
 
 interface Props {
@@ -95,7 +96,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   const kodoVal = isFr ? (kodo?.coteFrEur ?? kodo?.fairValueEur ?? null) : (kodo?.fairValueEur ?? null)
 
   // Mode marche : reference = max-volume raw (identique a la grille). Mode portfolio : exemplaire de l'user.
-  const maxVol = !showPortfolio ? pickMaxVolumeRaw(prices.bySource) : null
+  const maxVol = !showPortfolio ? pickReference(prices.bySource) : null
 
   let heroPrice: number | null = null
   let sourceChip: { label: string; sub: string | null } | null = null

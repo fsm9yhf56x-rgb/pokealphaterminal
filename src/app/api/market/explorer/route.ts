@@ -26,7 +26,7 @@ const LATERAL_VOL = `
       AND pm.tier !~ '^(PSA|BGS|CGC|SGC|ACE|TAG)_'
       AND pm.tier <> 'AGGREGATED'
       AND (pm.is_asking IS NOT TRUE OR pm.source = 'cardmarket')
-    ORDER BY pm.sale_count DESC, pm.spot DESC
+    ORDER BY (CASE WHEN pm.tier = 'NEAR_MINT' THEN 0 ELSE 1 END), pm.sale_count DESC, pm.spot DESC
     LIMIT 1
   ) vol ON true
 `

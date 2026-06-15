@@ -6,7 +6,7 @@ const BASE = 'https://api.poketrace.com/v1'
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 const MAX_REQ = 6000
-const MAX_MS = 25 * 60 * 1000
+const MAX_MS = 18 * 60 * 1000
 const START = Date.now()
 let reqCount = 0
 const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS

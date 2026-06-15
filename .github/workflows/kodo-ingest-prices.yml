@@ -28,6 +28,11 @@ jobs:
           cache: 'npm'
       - name: Install deps
         run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Refresh FX rates (BCE/Frankfurter)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-fx-refresh.js
       - name: Run ingest batch
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

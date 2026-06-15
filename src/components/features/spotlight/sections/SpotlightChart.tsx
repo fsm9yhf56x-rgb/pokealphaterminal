@@ -1,9 +1,9 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import type { HistoryPoint } from '../useSpotlightData'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
 
+interface HistoryPoint { date: string; price: number }
 interface Point { day: string; price: number }
 type Tab = '7j' | '30j' | '90j' | '1a'
 
@@ -17,7 +17,6 @@ export function SpotlightChart({ history }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
 
   const points: Point[] = (history || []).map(p => ({ day: p.date, price: p.price })).filter(p => p.price > 0)
-  if (points.length < 2) return null
 
   const days = tab === '7j' ? 7 : tab === '30j' ? 30 : tab === '90j' ? 90 : 365
   const cutoff = Date.now() - days * 86400000
@@ -25,8 +24,42 @@ export function SpotlightChart({ history }: Props) {
   const used = filtered.length >= 2 ? filtered : points
 
   const prices = used.map(p => p.price)
-  const min = Math.min(...prices)
-  const max = Math.max(...prices)
+  const min = prices.length ? Math.min(...prices) : 0
+  const max = prices.length ? Math.max(...prices) : 0
+  const flat = used.length < 2 || max === min
+
+  const periodTabs = (
+    <div style={{ marginLeft: 'auto', display: 'inline-flex', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: 'none', borderRadius: 10, padding: 3, gap: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+      {(['7j', '30j', '90j', '1a'] as Tab[]).map(t => (
+        <button key={t} onClick={() => setTab(t)} style={{
+          padding: '4px 9px', fontSize: 11, fontWeight: 500,
+          color: tab === t ? SNOW.ink : SNOW.muted,
+          background: tab === t ? 'rgba(255,255,255,0.95)' : 'transparent',
+          border: 'none', borderRadius: 7, cursor: 'pointer',
+          boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,1)' : 'none',
+          fontFamily: FONT.display, textTransform: 'uppercase' as const,
+          transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
+        }}>{t}</button>
+      ))}
+    </div>
+  )
+
+  if (flat) {
+    return (
+      <div style={{ marginTop: 0, padding: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display }}>Historique de prix</span>
+          {periodTabs}
+        </div>
+        <div style={{ marginTop: 10, height: 110, borderRadius: 10, background: SNOW.surface, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center' as const, padding: '0 24px' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>
+          <div style={{ fontSize: 12.5, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display }}>Pas encore assez d&apos;historique</div>
+          <div style={{ fontSize: 11.5, color: SNOW.mutedLight, lineHeight: 1.4 }}>Les variations s&apos;afficheront a mesure que les ventes s&apos;accumulent.</div>
+        </div>
+      </div>
+    )
+  }
+
   const minIdx = prices.indexOf(min)
   const maxIdx = prices.indexOf(max)
   const first = prices[0]
@@ -43,7 +76,7 @@ export function SpotlightChart({ history }: Props) {
   const color = isUp ? '#00A368' : '#E03020'
 
   const onMove = (e: React.MouseEvent) => {
-    if (!wrapRef.current) return
+    if (wrapRef.current === null) return
     const rect = wrapRef.current.getBoundingClientRect()
     const rx = (e.clientX - rect.left) / rect.width
     const idx = Math.max(0, Math.min(used.length - 1, Math.round(rx * (used.length - 1))))
@@ -61,19 +94,7 @@ export function SpotlightChart({ history }: Props) {
           {isUp ? '+ ' : '- '}{Math.abs(deltaAbs).toFixed(2).replace('.', ',')} € ({isUp ? '+' : ''}{delta.toFixed(1).replace('.', ',')} %)
         </span>
         <span style={{ fontSize: 13, color: SNOW.mutedLight }}>en {tab === '1a' ? '1 an' : tab}</span>
-        <div style={{ marginLeft: 'auto', display: 'inline-flex', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: 'none', borderRadius: 10, padding: 3, gap: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
-          {(['7j', '30j', '90j', '1a'] as Tab[]).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding: '4px 9px', fontSize: 11, fontWeight: 500,
-              color: tab === t ? SNOW.ink : SNOW.muted,
-              background: tab === t ? 'rgba(255,255,255,0.95)' : 'transparent',
-              border: 'none', borderRadius: 7, cursor: 'pointer',
-              boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,1)' : 'none',
-              fontFamily: FONT.display, textTransform: 'uppercase' as const,
-              transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
-            }}>{t}</button>
-          ))}
-        </div>
+        {periodTabs}
       </div>
 
       <div ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => setTooltip(null)} style={{ marginTop: 10, position: 'relative', cursor: 'crosshair' }}>
@@ -100,21 +121,6 @@ export function SpotlightChart({ history }: Props) {
         </svg>
         <div style={{ position: 'absolute', left: `${(maxIdx / Math.max(1, used.length - 1)) * 100}%`, top: -2, transform: 'translateX(-50%) translateY(-100%)', fontSize: 10, color: SNOW.ink, fontFamily: FONT.data, fontWeight: 500, whiteSpace: 'nowrap' as const, pointerEvents: 'none' as const, background: '#fff', padding: '1px 5px', borderRadius: 4, border: `0.5px solid ${SNOW.borderSoft}` }}>↑ {fmtPrice(max, 'EUR')}</div>
         <div style={{ position: 'absolute', left: `${(minIdx / Math.max(1, used.length - 1)) * 100}%`, bottom: -2, transform: 'translateX(-50%) translateY(100%)', fontSize: 10, color: SNOW.muted, fontFamily: FONT.data, fontWeight: 500, whiteSpace: 'nowrap' as const, pointerEvents: 'none' as const, background: '#fff', padding: '1px 5px', borderRadius: 4, border: `0.5px solid ${SNOW.borderSoft}` }}>↓ {fmtPrice(min, 'EUR')}</div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 }}>
-        <div style={{ background: SNOW.surface, borderRadius: 8, padding: '6px 10px' }}>
-          <div style={{ fontSize: 9, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display }}>Variation</div>
-          <div style={{ fontSize: 12, fontWeight: 500, fontFamily: FONT.data, marginTop: 2, color: isUp ? '#00A368' : SNOW.red, letterSpacing: '-0.01em' }}>{isUp ? '+' : ''}{delta.toFixed(1).replace('.', ',')} %</div>
-        </div>
-        <div style={{ background: SNOW.surface, borderRadius: 8, padding: '6px 10px' }}>
-          <div style={{ fontSize: 9, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display }}>Plus haut</div>
-          <div style={{ fontSize: 12, fontWeight: 500, fontFamily: FONT.data, marginTop: 2, letterSpacing: '-0.01em' }}>{fmtPrice(max, 'EUR')}</div>
-        </div>
-        <div style={{ background: SNOW.surface, borderRadius: 8, padding: '6px 10px' }}>
-          <div style={{ fontSize: 9, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 500, fontFamily: FONT.display }}>Plus bas</div>
-          <div style={{ fontSize: 12, fontWeight: 500, fontFamily: FONT.data, marginTop: 2, letterSpacing: '-0.01em' }}>{fmtPrice(min, 'EUR')}</div>
-        </div>
       </div>
     </div>
   )

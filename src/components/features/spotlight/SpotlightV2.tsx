@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useSpotlightData } from './useSpotlightData'
 import { SpotlightHero } from './sections/SpotlightHero'
 import { SpotlightChart } from './sections/SpotlightChart'
-import { SpotlightTLDR } from './sections/SpotlightTLDR'
 import { SpotlightStates } from './sections/SpotlightStates'
 import { SpotlightPopExpandable } from './sections/SpotlightPopExpandable'
 import { JpPriceSoon } from './sections/JpPriceSoon'
@@ -58,14 +57,13 @@ type SpotTab = 'vue' | 'marche' | 'pop'
 
 export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
   const [tab, setTab] = useState<SpotTab>('vue')
-  const { data, loading, error } = useSpotlightData(cardId, lang, portfolio?.condition)
+  const { data, error } = useSpotlightData(cardId, lang, portfolio?.condition)
 
   if (error) return <div style={{ padding: 24, fontSize: 13, color: SNOW.red, fontFamily: FONT.body }}>Erreur : {error}</div>
 
   const card = data?.card
   const prices = data?.prices
   const kodo = data?.kodo ?? null
-  const hasHistory = prices?.history && prices.history.length >= 2
   const isJp = (lang || card?.lang || '').toString().toUpperCase().startsWith('J')
 
   return (
@@ -119,18 +117,12 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         ) : (
         <>
         <div className={`spot-sec spot-sec-vue ${tab === 'vue' ? 'on' : ''}`}>
-        {hasHistory ? (
-          <div style={GLASS_CARD}>
-            <SpotlightChart history={prices!.history} />
-          </div>
-        ) : loading ? (
-          <SkeletonBox height={200} />
-        ) : null}
-
         {prices ? (
-          <SpotlightTLDR prices={prices} portfolio={portfolio} kodo={kodo} />
+          <div style={GLASS_CARD}>
+            <SpotlightChart history={prices.history} />
+          </div>
         ) : (
-          <SkeletonBox height={60} />
+          <SkeletonBox height={200} />
         )}
         </div>
 

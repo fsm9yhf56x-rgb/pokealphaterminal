@@ -51,6 +51,7 @@ function pickMaxVolumeRaw(bySource: Record<string, PriceEntry[]>) {
   let best: { price: number; source: string; condition: string; sales: number; date: string | null } | null = null
   for (const src of Object.keys(bySource || {})) {
     if (src === 'ppt_graded') continue
+    if (!Array.isArray(bySource[src])) continue
     for (const e of bySource[src] || []) {
       if ((e as any).variant !== 'raw') continue
       if ((e as any).condition === 'CARDMARKET_TREND') continue

@@ -2849,6 +2849,7 @@ export function Holdings() {
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
+                            {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:'2px', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}

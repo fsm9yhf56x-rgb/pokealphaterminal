@@ -30,7 +30,7 @@ const sql = neon(databaseUrl)
 
 async function fetchAll(table, filter) {
   // Whitelist des tables autorisees (anti-injection sur nom de table)
-  const ALLOWED = ['tcg_cards', 'tcg_sets']
+  const ALLOWED = ['tcg_cards', 'tcg_sets', 'k_cards_export', 'k_sets_export']
   if (!ALLOWED.includes(table)) throw new Error(`Table non autorisee: ${table}`)
   const all = []
   let offset = 0
@@ -84,8 +84,8 @@ async function getTcgdexPattern(lang, setId) {
 
 async function exportLang(lang) {
   console.log(`\n━━━ ${lang} ━━━`)
-  let sets = await fetchAll('tcg_sets', { lang })
-  let cards = await fetchAll('tcg_cards', { lang })
+  let sets = await fetchAll('k_sets_export', { lang })
+  let cards = await fetchAll('k_cards_export', { lang })
   // JP: ne garder que PPT (aopkm/artofpkm deprecie, remplace par PPT)
   if (lang === 'JP') {
     sets = sets.filter(s => s.source === 'ppt')

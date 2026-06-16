@@ -51,7 +51,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     -- Annonces EU (fallback prix uniquement, decote)
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = base.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'
-        AND split_part(kodo_card_id,'-',1) = base.lang LIMIT 1) eu_nm_ask ON true
+        AND split_part(kodo_card_id,'-',1) = base.lang
+        AND spot * (CASE WHEN currency='USD' THEN ${usdEur}::numeric ELSE 1::numeric END) <= 20000 LIMIT 1) eu_nm_ask ON true
     -- Cote FR = VENTES (cardmarket trend) du marche FR, PAS les annonces
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = base.print_id AND source='cardmarket' AND tier='AGGREGATED'
@@ -69,7 +70,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
         AND split_part(kodo_card_id,'-',1) = base.lang) tot ON true
     -- Grade EV PSA10 (US, partage entre langues car gradage surtout EN)
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
-      WHERE print_id = base.print_id AND tier='PSA_10' AND market='US'
+      WHERE print_id = base.print_id AND tier='PSA_10' AND market='US' AND NOT is_asking
+        AND spot * (CASE WHEN currency='USD' THEN ${usdEur}::numeric ELSE 1::numeric END) <= 20000
       ORDER BY spot DESC NULLS LAST LIMIT 1) psa10 ON true
     ON CONFLICT (print_id, lang) DO UPDATE SET
       fair_value_eur=EXCLUDED.fair_value_eur, fair_value_method=EXCLUDED.fair_value_method,
@@ -78,6 +80,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       grade_ev_psa10_eur=EXCLUDED.grade_ev_psa10_eur, computed_at=now()
     RETURNING print_id`
   console.log('signaux calcules (par langue):', r4.length)
+  const rz = await sql`UPDATE price_signals SET fair_value_eur = NULL WHERE fair_value_eur < 0.02 AND fair_value_eur IS NOT NULL RETURNING print_id`
+  console.log('quasi-zeros nulles (< 0.02 EUR):', rz.length)
 
   console.log('\n=== SNAPSHOT price_history ===')
   const r5 = await sql`

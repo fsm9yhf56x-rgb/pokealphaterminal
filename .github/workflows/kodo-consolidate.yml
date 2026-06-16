@@ -21,6 +21,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Ensure price_signals schema (print_id, lang)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-migrate-signals-lang.js
       - name: Merge PPT into matrix
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

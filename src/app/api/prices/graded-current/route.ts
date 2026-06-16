@@ -72,8 +72,8 @@ export async function GET(req: Request) {
     if (tcgCardId && /^(jp|ja)-/.test(tcgCardId)) {
       const jpCard = await sql`
         SELECT ts.name AS set_name, c.local_id
-        FROM tcg_cards c
-        JOIN tcg_sets ts ON ts.id = c.set_id
+        FROM k_cards_export c
+        JOIN k_sets_export ts ON ts.id = c.set_id
         WHERE c.id = ${tcgCardId} AND c.lang = 'JP'
         LIMIT 1
       `
@@ -96,14 +96,14 @@ export async function GET(req: Request) {
       }
 
       const exact = await sql`
-        SELECT name FROM tcg_sets WHERE id = ${'en-' + setSlugFromId} OR id = ${setSlugFromId} LIMIT 1
+        SELECT name FROM k_sets_export WHERE id = ${'en-' + setSlugFromId} OR id = ${setSlugFromId} LIMIT 1
       `
       if (exact.length) {
         resolvedSetName = exact[0].name
       } else {
         const fuzzy = await sql`
-          SELECT name FROM tcg_sets
-          WHERE id LIKE ${'%' + setSlugFromId.replace(/-/g, '%') + '%'}
+          SELECT name FROM k_sets_export
+          WHERE lower(name) = ${setSlugFromId.replace(/-/g, ' ')} AND lang='EN'
           LIMIT 1
         `
         if (fuzzy.length) resolvedSetName = fuzzy[0].name
@@ -117,11 +117,14 @@ export async function GET(req: Request) {
         setSlug = setSlug.replace(/-?1st$/, '')
       }
       localIdForNumber = cardNumber
-      const fuzzy = await sql`
-        SELECT name FROM tcg_sets
-        WHERE id LIKE ${'%' + setSlug.replace(/-/g, '%') + '%'}
-        LIMIT 1
+      let fuzzy = await sql`
+        SELECT name FROM k_sets_export WHERE id = ${'en-' + setSlug} OR id = ${setSlug} LIMIT 1
       `
+      if (!fuzzy.length) {
+        fuzzy = await sql`
+          SELECT name FROM k_sets_export WHERE lower(name) = ${setSlug.replace(/-/g, ' ')} AND lang='EN' LIMIT 1
+        `
+      }
       if (fuzzy.length) resolvedSetName = fuzzy[0].name
     } else {
       return NextResponse.json({ error: 'Provide tcg_card_id OR (set_slug + card_number)' }, { status: 400 })

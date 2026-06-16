@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       `SELECT pm.market, pm.source, pm.tier, pm.spot, pm.currency, pm.sale_count, pm.is_asking, pm.as_of
        FROM k_cards kc
        JOIN price_matrix pm ON pm.print_id = kc.print_id
+         AND split_part(pm.kodo_card_id, '-', 1) = kc.lang
        WHERE kc.id = $1 AND pm.spot IS NOT NULL AND pm.spot > 0`,
       [cardId],
     ) as Array<any>

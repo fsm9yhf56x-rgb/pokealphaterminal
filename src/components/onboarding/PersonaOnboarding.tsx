@@ -55,7 +55,7 @@ const CHOICES: Choice[] = [
     points: [
       'P&L, ROI & allocation de tes actifs',
       'Alpha Signals, Whale Tracker, indices marché',
-      'Deal Hunter arbitrage & flux temps réel',
+      'Prix multi-langues EN / JP / FR par carte',
     ],
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>

@@ -5,7 +5,6 @@ import { useSpotlightData } from './useSpotlightData'
 import { SpotlightHero } from './sections/SpotlightHero'
 import { SpotlightChart } from './sections/SpotlightChart'
 import { SpotlightEngine } from './sections/SpotlightEngine'
-import { SpotlightArbitrage } from './sections/SpotlightArbitrage'
 import { SpotlightStates } from './sections/SpotlightStates'
 import { SpotlightPopExpandable } from './sections/SpotlightPopExpandable'
 import { JpPriceSoon } from './sections/JpPriceSoon'
@@ -120,7 +119,6 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         <>
         <div className={`spot-sec spot-sec-vue ${tab === 'vue' ? 'on' : ''}`}>
         {kodo ? <SpotlightEngine kodo={kodo} /> : null}
-        {card ? <SpotlightArbitrage cardId={card.id} /> : null}
         {prices ? (
           <div style={GLASS_CARD}>
             <SpotlightChart history={prices.history} />

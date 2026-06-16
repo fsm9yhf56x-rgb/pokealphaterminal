@@ -113,8 +113,8 @@ export async function GET(req: NextRequest) {
       for (const cid of idCandidates) {
         setRow = await sql`
           SELECT s.name AS set_name
-          FROM tcg_cards c
-          LEFT JOIN tcg_sets s ON s.id = c.set_id
+          FROM k_cards_export c
+          LEFT JOIN k_sets_export s ON s.id = c.set_id
           WHERE c.id = ${cid}
           LIMIT 1
         ` as Array<{ set_name: string | null }>
@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       resolvedLocalIdPadded = String(cardNumber).split('/')[0].replace(/\D/g, '').replace(/^0+/, '') || '0'
 
       const setRow = await sql`
-        SELECT name FROM tcg_sets WHERE id LIKE ${'%' + setSlug.replace(/-/g, '%') + '%'} LIMIT 1
+        SELECT name FROM k_sets_export WHERE id LIKE ${'%' + setSlug.replace(/-/g, '%') + '%'} LIMIT 1
       ` as Array<{ name: string | null }>
       resolvedSetName = setRow[0]?.name ?? null
     }

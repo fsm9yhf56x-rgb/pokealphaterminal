@@ -17,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ car
         `SELECT market, tier, source, spot, low, high, avg7d, avg30d, median7d, median30d,
                 sale_count, is_asking, currency, country_breakdown, as_of
          FROM price_matrix WHERE print_id = $1 ORDER BY market, source, tier`, [card.print_id]),
-      sql.query(`SELECT * FROM price_signals WHERE print_id = $1`, [card.print_id]),
+      sql.query(`SELECT * FROM price_signals WHERE print_id = $1 AND lang = $2`, [card.print_id, String(card.lang || 'en').toLowerCase()]),
     ])
 
     const sig = signals[0] || null

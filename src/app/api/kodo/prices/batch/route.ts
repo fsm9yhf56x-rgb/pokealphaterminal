@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
               ps.fair_value_eur, ps.fair_value_method, ps.cote_fr_eur,
               ps.liquidity_score, ps.computed_at
        FROM k_cards kc
-       LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
+       LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND ps.lang = kc.lang
        WHERE kc.id = ANY($1)`, [ids])
 
     const prices: Record<string, any> = {}

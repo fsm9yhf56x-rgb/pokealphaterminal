@@ -18,6 +18,7 @@ const sql = neon(process.env.DATABASE_URL)
       kp.number AS local_id,
       kc.name_localized AS name,
       kc.rarity,
+      kc.rarity_normalized,
       kc.image_url,
       kc.has_image,
       kc.source,
@@ -33,7 +34,11 @@ const sql = neon(process.env.DATABASE_URL)
     CREATE VIEW k_sets_export AS
     SELECT
       l.lang || '-' || ks.id AS id,
-      ks.name,
+      CASE l.lang
+        WHEN 'fr' THEN COALESCE(ks.name_fr, ks.name)
+        WHEN 'jp' THEN COALESCE(ks.name_jp, ks.name)
+        ELSE ks.name
+      END AS name,
       ks.logo_url,
       ks.series,
       ks.release_date,

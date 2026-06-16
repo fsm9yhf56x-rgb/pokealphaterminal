@@ -12,10 +12,12 @@ const sql = neon(process.env.DATABASE_URL)
 
   // ===== 1. SETS canoniques manquants (core_id = set sans prefixe langue) =====
   const rs = await sql`
-    INSERT INTO k_sets (id, name, langs, tcgdex_slug, total_cards, source, logo_url)
+    INSERT INTO k_sets (id, name, name_fr, name_jp, langs, tcgdex_slug, total_cards, source, logo_url)
     SELECT
       regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', ''),
-      min(ts.name),
+      (array_agg(ts.name ORDER BY CASE WHEN c.lang='EN' THEN 0 ELSE 1 END))[1],
+      (array_agg(ts.name) FILTER (WHERE c.lang='FR'))[1],
+      (array_agg(ts.name) FILTER (WHERE c.lang='JP'))[1],
       array_agg(DISTINCT lower(c.lang)),
       regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', ''),
       max(ts.total_cards),
@@ -51,11 +53,11 @@ const sql = neon(process.env.DATABASE_URL)
 
   // ===== 3. CARTES manquantes — k_cards.id = c.id (ID TCG BRUT, jamais reconstruit) =====
   const rc = await sql`
-    INSERT INTO k_cards (id, print_id, lang, name_localized, rarity, image_url, has_image, source)
+    INSERT INTO k_cards (id, print_id, lang, name_localized, rarity, rarity_normalized, image_url, has_image, source)
     SELECT
       c.id,
       regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', '') || '-' || c.local_id,
-      lower(c.lang), c.name, c.rarity, c.image_url, c.has_image, c.source
+      lower(c.lang), c.name, c.rarity, c.rarity_normalized, c.image_url, c.has_image, c.source
     FROM tcg_cards c
     JOIN k_prints kp ON kp.id = regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', '') || '-' || c.local_id
     WHERE c.set_id IS NOT NULL AND c.local_id IS NOT NULL

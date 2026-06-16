@@ -5,15 +5,15 @@ export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/sets/logos
- * Retourne un map { [setId]: { logo, symbol, total, era, name } } depuis tcg_sets.
+ * Retourne un map { [setId]: { logo, symbol, total, era, name } } depuis k_sets_export (Kodo Engine).
  * Sert a afficher les vrais logos officiels des sets (completion, etc.).
  */
 export async function GET() {
   try {
     const r = await sql.query(`
-      SELECT id, name, logo_url, symbol_url, era, total_cards
-      FROM tcg_sets
-      WHERE logo_url IS NOT NULL OR symbol_url IS NOT NULL OR total_cards IS NOT NULL
+      SELECT id, name, logo_url, NULL AS symbol_url, NULL AS era, total_cards
+      FROM k_sets_export
+      WHERE logo_url IS NOT NULL OR total_cards IS NOT NULL
     `)
     const rows: any[] = (r as any).rows ?? r ?? []
     const map: Record<string, { logo: string | null; symbol: string | null; total: number; era: string | null; name: string }> = {}

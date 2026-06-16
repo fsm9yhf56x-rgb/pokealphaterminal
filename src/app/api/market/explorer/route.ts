@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
       FROM k_cards_export c
       LEFT JOIN k_sets_export s ON s.id = c.set_id
       JOIN k_cards kc ON kc.id = c.id
-      JOIN price_signals ps ON ps.print_id = kc.print_id
+      JOIN price_signals ps ON ps.print_id = kc.print_id AND ps.lang = kc.lang
     `
     const fromFull = fromCore + LATERAL_VOL
     const coreWhere = whereCore.join(' AND ')

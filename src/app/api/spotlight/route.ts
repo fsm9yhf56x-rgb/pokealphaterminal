@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     const sigRows = await sql`
       SELECT ps.fair_value_eur, ps.fair_value_method, ps.cote_fr_eur, ps.cote_lang,
              ps.liquidity_score, ps.spread_us_eu_pct, ps.grade_ev_psa10_eur
-      FROM k_cards kc JOIN price_signals ps ON ps.print_id = kc.print_id
+      FROM k_cards kc JOIN price_signals ps ON ps.print_id = kc.print_id AND ps.lang = kc.lang
       WHERE kc.id = ${cardId} LIMIT 1
     ` as Array<any>
     const sig = sigRows[0] || null

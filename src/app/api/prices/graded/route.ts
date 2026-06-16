@@ -125,9 +125,16 @@ export async function GET(req: NextRequest) {
       // set_slug "base-set" → set_name "Base Set" via tcg_sets
       resolvedLocalIdPadded = String(cardNumber).split('/')[0].replace(/\D/g, '').replace(/^0+/, '') || '0'
 
-      const setRow = await sql`
-        SELECT name FROM k_sets_export WHERE id LIKE ${'%' + setSlug.replace(/-/g, '%') + '%'} LIMIT 1
+      // Resolution robuste: match exact sur id reconstruit, fallback par nom (slug-lisible).
+      let setRow = await sql`
+        SELECT name FROM k_sets_export WHERE id = ${'en-' + setSlug} OR id = ${setSlug} LIMIT 1
       ` as Array<{ name: string | null }>
+      if (!setRow.length) {
+        const asName = setSlug.replace(/-/g, ' ')
+        setRow = await sql`
+          SELECT name FROM k_sets_export WHERE lower(name) = ${asName} AND lang='EN' LIMIT 1
+        ` as Array<{ name: string | null }>
+      }
       resolvedSetName = setRow[0]?.name ?? null
     }
 

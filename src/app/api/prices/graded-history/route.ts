@@ -107,14 +107,14 @@ export async function GET(request: Request) {
         setSlugFromId = setSlugFromId.replace(/-?1st$/, '')
       }
       let setRows = await sqlClient`
-        SELECT name FROM tcg_sets
+        SELECT name FROM k_sets_export
         WHERE id = ${'en-' + setSlugFromId} OR id = ${setSlugFromId}
         LIMIT 1
       `
       if (!setRows?.length) {
         setRows = await sqlClient`
-          SELECT name FROM tcg_sets
-          WHERE id LIKE ${'%' + setSlugFromId.replace(/-/g, '%') + '%'}
+          SELECT name FROM k_sets_export
+          WHERE lower(name) = ${setSlugFromId.replace(/-/g, ' ')} AND lang='EN'
           LIMIT 1
         `
       }
@@ -125,11 +125,14 @@ export async function GET(request: Request) {
       else if (/-?1st$/.test(ss)) { edition = '1st'; ss = ss.replace(/-?1st$/, '') }
       const num = String(cardNumber).split('/')[0].replace(/\D/g, '')
       resolvedLocalIdPadded = String(num).padStart(3, '0')
-      const setRows = await sqlClient`
-        SELECT name FROM tcg_sets
-        WHERE id LIKE ${'%' + ss.replace(/-/g, '%') + '%'}
-        LIMIT 1
+      let setRows = await sqlClient`
+        SELECT name FROM k_sets_export WHERE id = ${'en-' + ss} OR id = ${ss} LIMIT 1
       `
+      if (!setRows?.length) {
+        setRows = await sqlClient`
+          SELECT name FROM k_sets_export WHERE lower(name) = ${ss.replace(/-/g, ' ')} AND lang='EN' LIMIT 1
+        `
+      }
       resolvedSetName = setRows?.[0]?.name ?? null
     }
 

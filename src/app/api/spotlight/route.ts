@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
                     : ['en', 'fr', 'jp']
     const candidates = langOrder.map(l => `${l}-${cardId}`)
     const found = await sql`
-      SELECT id FROM tcg_cards WHERE id = ANY(${candidates as any}) LIMIT 5
+      SELECT id FROM k_cards_export WHERE id = ANY(${candidates as any}) LIMIT 5
     ` as Array<{ id: string }>
     if (found.length > 0) {
       for (const prefix of langOrder) {
@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
     // 1. Card info
     const cardRows = await sql`
       SELECT c.id, c.name, c.local_id, c.lang, c.rarity_normalized, c.image_url,
-             c.set_id, s.name AS set_name, s.release_date, s.era
-      FROM tcg_cards c
-      LEFT JOIN tcg_sets s ON s.id = c.set_id
+             c.set_id, s.name AS set_name, s.release_date, NULL AS era
+      FROM k_cards_export c
+      LEFT JOIN k_sets_export s ON s.id = c.set_id
       WHERE c.id = ${cardId}
     ` as Array<any>
 

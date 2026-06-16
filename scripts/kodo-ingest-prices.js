@@ -13,7 +13,17 @@ const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
 
 async function get(path) {
   reqCount++
-  const r = await fetch(BASE + path, { headers: { 'X-API-Key': KEY } })
+  const ctrl = new AbortController()
+  const to = setTimeout(() => ctrl.abort(), 15000)
+  let r
+  try {
+    r = await fetch(BASE + path, { headers: { 'X-API-Key': KEY }, signal: ctrl.signal })
+  } catch (e) {
+    clearTimeout(to)
+    if (e.name === 'AbortError') { console.warn('timeout 15s:', path); return null }
+    throw e
+  }
+  clearTimeout(to)
   if (r.status === 429) { await sleep(12000); reqCount--; return get(path) }
   if (r.status !== 200) return null
   return r.json()

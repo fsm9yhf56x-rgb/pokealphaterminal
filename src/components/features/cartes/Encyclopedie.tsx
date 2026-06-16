@@ -328,6 +328,11 @@ export function Encyclopedie() {
   const [kodoPrices, setKodoPrices] = useState<Record<string, { displayEur: number|null; coteFrEur: number|null; liquidity: number|null }>>({})
   const kodoRequested = useRef<Set<string>>(new Set())
   const kodoIdOf = useCallback((c: any): string => {
+    // L'id reel de la carte est deja l'id Kodo (fr-ecard1-1, jp-603707, en-base1-4).
+    // On l'utilise en priorite: la reconstruction ci-dessous echoue pour le JP
+    // (format jp-{tcgPlayerId}, pas jp-{setId}-{num}) et quand c.lang est absent.
+    if (c.id && /^(en|fr|jp)-/i.test(String(c.id))) return String(c.id).toLowerCase()
+    // Fallback (cartes sans id exploitable): reconstruction depuis setId + langue + numero.
     const sid: string = c.setId || ''
     const num = String(c.localId ?? c.number ?? '').replace(/^0+(?=\d)/, '')
     if (!sid || !num) return ''
@@ -516,7 +521,7 @@ export function Encyclopedie() {
           ;(cards as any[]).forEach(c => {
             const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
             enriched.push({
-              id: sid+'-'+c.lid, localId: c.lid, name: c.n,
+              id: c.id || (sid+'-'+c.lid), localId: c.lid, name: c.n,
               image: cleanLegacyUrl(c.img) || getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }),
               rarity: c.r||'',
               setId: sid, setName: set?.name ?? sid, year, era,

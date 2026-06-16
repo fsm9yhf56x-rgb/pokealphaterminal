@@ -439,11 +439,11 @@ export function Encyclopedie() {
     setAllCards([]); setFilSet('all'); setFilEra('all')
     setPage(0); setSelId(null); setDetail(null); setEnDetail(null)
 
-    // JP: charger depuis notre BDD Supabase (22k+ cartes)
+    // JP: charger depuis Kodo Engine (k_*_export, 27k cartes)
     const loadFromSupabase = async (): Promise<{sets: {id:string;name:string;releaseDate?:string|null}[]; cards: EnrichedCard[]}|null> => {
       try {
         // Charger les sets JP
-        const { data: setsData } = await supabase.from('tcg_sets').select('*').eq('lang', 'JP').order('id')
+        const { data: setsData } = await supabase.from('k_sets_export').select('*').eq('lang', 'JP').order('id')
         if (!setsData || setsData.length === 0) return null
 
         // Charger les cartes JP par batch
@@ -451,7 +451,7 @@ export function Encyclopedie() {
         let from = 0
         const batchSize = 1000
         while (true) {
-          const { data } = await supabase.from('tcg_cards').select('*').eq('lang', 'JP').range(from, from + batchSize - 1)
+          const { data } = await supabase.from('k_cards_export').select('*').eq('lang', 'JP').range(from, from + batchSize - 1)
           if (!data || data.length === 0) break
           allDbCards.push(...data)
           from += batchSize

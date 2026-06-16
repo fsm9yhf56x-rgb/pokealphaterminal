@@ -78,8 +78,8 @@ export async function GET(req: NextRequest) {
     const hasPriceFilter = priceWhere.length > 0
 
     const fromCore = `
-      FROM tcg_cards c
-      LEFT JOIN tcg_sets s ON s.id = c.set_id
+      FROM k_cards_export c
+      LEFT JOIN k_sets_export s ON s.id = c.set_id
       JOIN k_cards kc ON kc.id = c.id
       JOIN price_signals ps ON ps.print_id = kc.print_id
     `

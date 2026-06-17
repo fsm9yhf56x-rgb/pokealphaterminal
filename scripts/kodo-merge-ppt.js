@@ -34,7 +34,11 @@ async function withRetry(label, fn, tries = 3) {
       FROM graded_prices_ppt g
       JOIN k_prints kp ON
         (g.language='japanese' AND kp.ppt_card_id = g.ppt_tcgplayer_id::text)
-        OR (g.language='english' AND kp.tcgplayer_id = g.ppt_tcgplayer_id::text)
+        OR (g.language='english' AND kp.tcgplayer_id = g.ppt_tcgplayer_id::text
+            -- Variants (Shadowless/1st Ed) partagent le meme tcgplayer_id: PPT ne les distingue pas.
+            -- On exclut ces prints du merge PPT; leurs prix viennent de PokeTrace (qui distingue les variants).
+            -- (rapide grace a l'index idx_kprints_tcgid)
+            AND NOT EXISTS (SELECT 1 FROM k_prints o WHERE o.tcgplayer_id = kp.tcgplayer_id AND o.id <> kp.id))
       JOIN k_cards kc ON kc.print_id = kp.id
         AND kc.lang = CASE g.language WHEN 'japanese' THEN 'jp' ELSE 'en' END
       CROSS JOIN LATERAL jsonb_each_text(g.prices_by_condition) AS cond(key, value)
@@ -66,7 +70,11 @@ async function withRetry(label, fn, tries = 3) {
       FROM graded_prices_ppt g
       JOIN k_prints kp ON
         (g.language='japanese' AND kp.ppt_card_id = g.ppt_tcgplayer_id::text)
-        OR (g.language='english' AND kp.tcgplayer_id = g.ppt_tcgplayer_id::text)
+        OR (g.language='english' AND kp.tcgplayer_id = g.ppt_tcgplayer_id::text
+            -- Variants (Shadowless/1st Ed) partagent le meme tcgplayer_id: PPT ne les distingue pas.
+            -- On exclut ces prints du merge PPT; leurs prix viennent de PokeTrace (qui distingue les variants).
+            -- (rapide grace a l'index idx_kprints_tcgid)
+            AND NOT EXISTS (SELECT 1 FROM k_prints o WHERE o.tcgplayer_id = kp.tcgplayer_id AND o.id <> kp.id))
       JOIN k_cards kc ON kc.print_id = kp.id
         AND kc.lang = CASE g.language WHEN 'japanese' THEN 'jp' ELSE 'en' END
       CROSS JOIN LATERAL jsonb_each(g.grades) AS gr(key, value)

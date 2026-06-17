@@ -98,11 +98,12 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   // Mode marche : reference = max-volume raw (identique a la grille). Mode portfolio : exemplaire de l'user.
   const maxVol = !showPortfolio ? pickReference(prices.bySource) : null
 
+  const insufficient = (kodo?.fairValueMethod === 'insufficient_data') && !userGraded
   let heroPrice: number | null = null
   let sourceChip: { label: string; sub: string | null } | null = null
 
   if (showPortfolio) {
-    heroPrice = (portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
+    heroPrice = insufficient ? null : ((portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null)
   } else if (maxVol) {
     heroPrice = maxVol.price
     const dateStr = fmtDate(maxVol.date)
@@ -166,10 +167,14 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+          {insufficient ? (
+            <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>Données insuffisantes</div>
+          ) : (
           <div>
             <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
             <span style={{ fontSize: 18, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
           </div>
+          )}
           {showPortfolio ? (
             <>
               {roi != null ? (

@@ -36,7 +36,7 @@ type CardItem = {
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
   condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
-  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean
+  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean; priceBasis?: string
   image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
 }
 
@@ -171,7 +171,7 @@ export function Holdings() {
             lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
             condition: c.condition || 'Raw', graded: c.graded || false,
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
-            serverPriced: Number(c.current_price) > 0,
+            serverPriced: Number(c.current_price) > 0, priceBasis: c.price_basis || undefined,
             qty: c.qty || 1,
             image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
             setId: c.set_id || undefined, favorite: c.is_favorite || false,
@@ -2668,6 +2668,7 @@ export function Holdings() {
                                     {inFullSet&&card.graded&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 5px', borderRadius:'4px', background:gradeBg, color:gradeFg, fontFamily:'var(--font-data)', letterSpacing:'.02em', flexShrink:0, backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none', position:'relative', overflow:'hidden' }}>{gn>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{card.condition}</span></span>}
                                   </div>
                                   {card.curPrice > 0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', marginTop:'1px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
+                                  {card.curPrice <= 0 && (card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote') && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', marginTop:'1px', fontStyle:'italic' }}>Données insuffisantes</div>}
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
@@ -2850,6 +2851,7 @@ export function Holdings() {
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
                             {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:'2px', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
+                            {card.curPrice<=0&&(card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote')&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', marginTop:'2px', fontStyle:'italic' }}>Données insuffisantes</div>}
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}

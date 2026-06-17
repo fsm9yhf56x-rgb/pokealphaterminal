@@ -38,7 +38,7 @@ export async function GET(req: Request) {
                t.tier AS wanted_tier,
                best.spot, best.currency,
                kc.lang,
-               ps.cote_fr_eur, ps.fair_value_eur
+               ps.cote_fr_eur, ps.fair_value_eur, ps.fair_value_method
         FROM portfolio_cards pc
         JOIN k_cards kc ON kc.id = pc.k_card_id
         LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
@@ -91,6 +91,9 @@ export async function GET(req: Request) {
       FROM (
         SELECT r.pc_id,
           CASE
+            -- Echelle raw jugee non fiable par le compute (garde-fou coherence): pas de prix raw
+            WHEN r.wanted_tier IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+              AND r.fair_value_method = 'insufficient_data' THEN NULL
             WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL
               THEN ROUND(r.cote_fr_eur::numeric, 2)
             WHEN r.spot IS NOT NULL THEN
@@ -99,6 +102,8 @@ export async function GET(req: Request) {
             ELSE ROUND(r.fair_value_eur::numeric, 2)
           END AS price_eur,
           CASE
+            WHEN r.wanted_tier IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+              AND r.fair_value_method = 'insufficient_data' THEN 'insufficient_data'
             WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL THEN 'cote_fr'
             WHEN r.spot IS NOT NULL THEN 'tier:' || r.wanted_tier
             WHEN r.fair_value_eur IS NOT NULL THEN 'fair_value_fallback'
@@ -107,7 +112,7 @@ export async function GET(req: Request) {
         FROM resolved r
       ) v
       WHERE v.pc_id = pc.id
-        AND v.price_eur IS NOT NULL
+        AND (v.price_eur IS NOT NULL OR v.basis = 'insufficient_data')
         AND (pc.current_price IS DISTINCT FROM v.price_eur OR pc.price_basis IS DISTINCT FROM v.basis)
     `) as unknown as { rowCount?: number }
     const updated = (res as any)?.rowCount ?? null

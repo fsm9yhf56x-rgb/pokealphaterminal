@@ -20,7 +20,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       )::numeric, 2) AS fair_value_eur,
       CASE WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
            WHEN us_nm.p IS NOT NULL THEN 'us_nm_fx'
-           ELSE 'eu_asking_decote' END,
+           WHEN eu_nm_ask.p IS NOT NULL THEN 'eu_asking_decote'
+           ELSE 'insufficient_data' END,
       fr_sale.p AS cote_fr_eur,
       eu_langs.j AS cote_lang,
       LEAST(100, ROUND(COALESCE(LOG(tot.sales + 1) * 28, 0)))::real AS liquidity_score,
@@ -43,11 +44,25 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       WHERE print_id = base.print_id AND source='cardmarket' AND tier='AGGREGATED'
         AND split_part(kodo_card_id,'-',1) = base.lang LIMIT 1) eu ON true
     -- US Near Mint (sold) de cette langue
-    LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
-      WHERE print_id = base.print_id AND market='US' AND tier='NEAR_MINT' AND NOT is_asking
-        AND split_part(kodo_card_id,'-',1) = base.lang
-      ORDER BY CASE WHEN variant = base.mainvar THEN 0 ELSE 1 END,
-               CASE source WHEN 'tcgplayer' THEN 0 ELSE 1 END LIMIT 1) us_nm ON true
+    -- Garde-fou coherence v2: on ecarte le NM si l'echelle raw est multi-incoherente.
+    -- L'etat est declare par le vendeur, donc le raw NM est parfois pollue sur les cartes rares.
+    -- Regle: NM ecarte si >= 2 etats degrades (LP/MP/HP/DMG) AVEC VENTES depassent 2x le NM.
+    -- Un seul etat aberrant (ex un DAMAGED outlier) ne suffit pas -> on garde le NM.
+    LEFT JOIN LATERAL (
+      SELECT spot AS p FROM price_matrix nm
+      WHERE nm.print_id = base.print_id AND nm.market='US' AND nm.tier='NEAR_MINT' AND NOT nm.is_asking
+        AND split_part(nm.kodo_card_id,'-',1) = base.lang
+        AND (
+          SELECT count(*) FROM (
+            SELECT tier, max(spot) AS s FROM price_matrix d
+            WHERE d.print_id = base.print_id AND NOT d.is_asking AND d.sale_count > 0
+              AND split_part(d.kodo_card_id,'-',1) = base.lang
+              AND d.tier IN ('LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+            GROUP BY tier
+          ) lo WHERE lo.s > nm.spot * 2
+        ) < 2
+      ORDER BY CASE WHEN nm.variant = base.mainvar THEN 0 ELSE 1 END,
+               CASE nm.source WHEN 'tcgplayer' THEN 0 ELSE 1 END LIMIT 1) us_nm ON true
     -- Annonces EU (fallback prix uniquement, decote)
     LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
       WHERE print_id = base.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'

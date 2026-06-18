@@ -4,7 +4,6 @@ import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import AuthModal from '@/components/layout/AuthModal'
 import { CollectionGate } from './CollectionGate'
 import { SetPicker } from './SetPicker'
-import { PriceHistoryChart } from '@/components/features/prices/PriceHistoryChart'
 import { GradedHistoryChart } from '@/components/features/prices/GradedHistoryChart'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
@@ -2130,13 +2129,6 @@ export function Encyclopedie() {
                             localId={selCard.localId}
                             mode="raw"
                             isPro={isPro}
-                            fallback={
-                              <PriceHistoryChart
-                                setId={selCard.setId}
-                                localId={selCard.localId}
-                                isPro={isPro}
-                              />
-                            }
                           />
                         </div>
                       )}

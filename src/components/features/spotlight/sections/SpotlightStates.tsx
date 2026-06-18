@@ -57,13 +57,15 @@ function bestRawByCond(bySource: Record<string, PriceEntry[]>): Record<string, R
 interface Props {
   prices: { bySource: Record<string, PriceEntry[]>; marketEst: number | null }
   portfolio?: import('../SpotlightV2').PortfolioContext | null
+  kodo?: { fairValueEur: number | null; fairValueMethod?: string | null; coteFrEur: number | null } | null
 }
 
-export function SpotlightStates({ prices }: Props) {
+export function SpotlightStates({ prices, kodo }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const bestRaw = bestRawByCond(prices.bySource)
-  const nmBest = bestRaw.NEAR_MINT || null
+  const nmInsufficient = kodo?.fairValueMethod === 'insufficient_data'
+  const nmBest = nmInsufficient ? null : (bestRaw.NEAR_MINT || null)
   const nm = nmBest?.entry || null
 
   const graded = (prices.bySource.ppt_graded || prices.bySource.ebay || []).filter(p => gradeFromVariant((p as any).variant))

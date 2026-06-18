@@ -130,7 +130,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
 
         <div className={`spot-sec ${tab === 'marche' ? 'on' : ''}`}>
         {prices ? (
-          <SpotlightStates prices={prices} portfolio={portfolio} />
+          <SpotlightStates prices={prices} portfolio={portfolio} kodo={kodo} />
         ) : (
           <SkeletonBox height={140} />
         )}

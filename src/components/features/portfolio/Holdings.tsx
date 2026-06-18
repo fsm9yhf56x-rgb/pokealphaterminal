@@ -16,9 +16,6 @@ import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { LiquidProgress } from '@/components/ui/LiquidProgress'
 import { useAuth } from '@/lib/useAuth'
 import { normalizeCondition } from '@/lib/conditions'
-import { ConditionPriceTable } from '@/components/features/prices/ConditionPriceTable'
-import { useCardConditions, CONDITION_ORDER, CONDITION_SHORT, CONDITION_LABELS } from '@/components/features/prices/hooks/useCardConditions'
-import type { CardCondition } from '@/components/features/prices/hooks/useCardConditions'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { PsaPopBlock } from '@/components/features/psa/PsaPopBlock'
 import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
@@ -319,24 +316,8 @@ export function Holdings() {
   const setMappingRef = useRef<Record<string, string>>({})
   useEffect(() => { setMappingRef.current = hookSetMapping }, [hookSetMapping])
 
-  // Per-condition prices for the spotlight card (for auto-recompute curPrice)
-  // Note: relies on hookSetMapping (state from useCardPrices) for set slug resolution
-  const spotSetSlug = (() => {
-    if (!spotCard?.setId) return null
-    const sid = spotCard.setId
-    const cleanSid = sid.replace(/-shadowless(-ns)?|-1st/g, '')
-    return hookSetMapping[sid] || hookSetMapping[cleanSid] || null
-  })()
-  const _useCardConditionsParams: any = spotSetSlug && spotCard?.number
-    ? { setSlug: spotSetSlug, cardNumber: spotCard.number }
-    : null
-  const [conditionsEnabled, setConditionsEnabled] = useState(false)
-  const { conditions: spotConditions } = useCardConditions(conditionsEnabled ? _useCardConditionsParams : null)
-  useEffect(() => {
-    if (!spotCard) { setConditionsEnabled(false); return }
-    const t = setTimeout(() => setConditionsEnabled(true), 600)
-    return () => clearTimeout(t)
-  }, [spotCard?.id])
+  // Prix par etat: gere par la modale Spotlight (SpotlightStates <- price_matrix Kodo).
+  // Ancien useCardConditions (prices_v2_by_condition legacy) retire: recompute client desactive.
 
   // Pricing assure par Kodo Engine (cron portfolio-prices + priceCards a l'ajout).
   // Ancien appel /api/prices/refresh (PokeTrace -> prices_snapshots legacy) supprime:

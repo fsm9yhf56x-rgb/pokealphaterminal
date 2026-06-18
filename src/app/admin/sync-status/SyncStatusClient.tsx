@@ -150,10 +150,6 @@ export default function SyncStatusClient(props: Props) {
     try {
       // Map job_name → API route
       const routeMap: Record<string, { url: string; method: 'GET' | 'POST' }> = {
-        prices_poketrace_cron: { url: '/api/cron/prices', method: 'GET' },
-        prices_poketrace_sync: { url: '/api/prices/sync', method: 'POST' },
-        prices_tcgdex_en: { url: '/api/prices/tcgdex?lang=en', method: 'GET' },
-        prices_tcgdex_fr: { url: '/api/prices/tcgdex?lang=fr', method: 'GET' },
       }
       const target = routeMap[jobName]
       if (!target) {

@@ -338,19 +338,9 @@ export function Holdings() {
     return () => clearTimeout(t)
   }, [spotCard?.id])
 
-  // Trigger event-driven refresh of stale Hot prices when portfolio changes
-  const refreshTriggered = useRef<string | false>(false)
-  useEffect(() => {
-    if (!portfolioLoaded || portfolio.length === 0) return
-    const portfolioKey = portfolio.map(c => c.name).sort().join(',')
-    if (refreshTriggered.current === portfolioKey) return
-    refreshTriggered.current = portfolioKey as any
-    fetch('/api/prices/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sets: portfolioSetIds })
-    }).catch(() => {})
-  }, [portfolioLoaded, portfolio.length, portfolioSetIds])
+  // Pricing assure par Kodo Engine (cron portfolio-prices + priceCards a l'ajout).
+  // Ancien appel /api/prices/refresh (PokeTrace -> prices_snapshots legacy) supprime:
+  // il renvoyait 401 (CRON_SECRET requis) et le pricing Kodo le rend inutile.
 
   // Update curPrice on portfolio cards once prices are loaded
   const curPriceApplied = useRef<string | false>(false)

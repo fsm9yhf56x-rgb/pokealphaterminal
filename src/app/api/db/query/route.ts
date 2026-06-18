@@ -41,15 +41,9 @@ const PUBLIC_TABLES = new Set([
   'tcg_sets',
   'card_aliases',
   'set_aliases',
-  'prices_snapshots',
-  'prices_v2',
-  'prices_v2_by_condition',
   'psa_pop_reports',
   'psa_pop_latest',
-  'market_indices_v1',
-  'undervalued_signals_v1',
   'alpha_signals',
-  '_deprecated_prices',
 ])
 
 // User-owned tables: read & write require auth, scoped to user_id

@@ -296,25 +296,9 @@ async function fetchHotCards(): Promise<HotCard[]> {
 }
 
 async function fetchActivityFeed(): Promise<TradeEvent[]> {
-  // 20 derniers snapshots de prix (= "activité" du marché)
-  const { data, error } = await (supabase as any)
-    .from('prices_snapshots')
-    .select('id, card_ref, source, price_avg, fetched_at, variant, lang')
-    .gt('price_avg', 5)
-    .order('fetched_at', { ascending: false })
-    .limit(20)
-
-  if (error || !data) return []
-  return data.map((r: any) => ({
-    id: r.id,
-    card_name: r.card_ref,  // À enrichir via card_aliases V2
-    set_slug: '',
-    source: r.source as any,
-    price: Number(r.price_avg) || 0,
-    fetched_at: r.fetched_at,
-    variant: r.variant,
-    lang: r.lang,
-  }))
+  // TODO Kodo v2.0: rebrancher le feed d'activite du Market Terminal sur price_history (Kodo).
+  // Debranche de prices_snapshots (legacy, en cours de suppression). Le terminal gere l'etat vide.
+  return []
 }
 
 async function fetchAlphaPreview(): Promise<AlphaSignalPreview[]> {

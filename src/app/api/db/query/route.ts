@@ -128,18 +128,29 @@ export async function POST(req: Request) {
     // l'id (lower(lang)-set_id-card_number) doit exister dans k_cards, sinon on laisse NULL.
     // Les variants shadowless/1st ed n'existent qu'en EN -> formule fiable.
     if (table === 'portfolio_cards' && (mode === 'insert' || mode === 'upsert') && Array.isArray(body.insertRows) && body.insertRows.length) {
-      const mkId = (r: any) => r && r.lang && r.set_id && r.card_number != null
-        ? `${String(r.lang).toLowerCase()}-${r.set_id}-${r.card_number}` : null
+      // Candidats d'id selon la langue. Le format k_cards differe:
+      //  - EN/FR: {lang}-{set_id}-{number} (ex en-base1-4)
+      //  - JP: jp-{number} (le number EST l'id tcgPlayer complet, ex jp-606746)
+      // On genere tous les candidats plausibles; la validation contre k_cards tranche.
+      const mkCandidates = (r: any): string[] => {
+        if (!r || !r.lang || r.card_number == null) return []
+        const lang = String(r.lang).toLowerCase()
+        const out: string[] = []
+        if (r.set_id) out.push(`${lang}-${r.set_id}-${r.card_number}`)
+        if (lang === 'jp') out.push(`jp-${r.card_number}`)
+        return out
+      }
       const candidates = Array.from(new Set(
-        body.insertRows.map((r: any) => (!r.k_card_id ? mkId(r) : null)).filter(Boolean)
+        body.insertRows.flatMap((r: any) => (!r.k_card_id ? mkCandidates(r) : [])).filter(Boolean)
       )) as string[]
       if (candidates.length) {
         const foundRows = await sql.query('SELECT id FROM k_cards WHERE id = ANY($1)', [candidates])
         const valid = new Set((foundRows as any[]).map((x: any) => x.id))
         for (const r of body.insertRows) {
           if (!r.k_card_id) {
-            const id = mkId(r)
-            if (id && valid.has(id)) r.k_card_id = id
+            const cands = mkCandidates(r)
+            const match = cands.find((id) => valid.has(id))
+            if (match) r.k_card_id = match
           }
         }
       }

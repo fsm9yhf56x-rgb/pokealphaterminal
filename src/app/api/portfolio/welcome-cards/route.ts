@@ -20,20 +20,20 @@ export const runtime = 'nodejs'
  */
 const getWelcomeCards = unstable_cache(
   async () => {
+    // Kodo: cartes vitrine (fair_value > 80EUR) depuis price_signals + k_prints + k_sets.
+    // set_id = id Kodo complet (variant integre); getCardImageUrl strippe les variants pour R2.
     const rows = await sql`
-      SELECT DISTINCT ON (p.card_name)
-        p.card_name,
-        regexp_replace(p.card_ref, '^.*-', '')                 AS local_id,
-        regexp_replace(sa.internal_set_id, '^(en|fr|jp|aopkm)-', '') AS set_id,
-        sa.lang
-      FROM prices_v2 p
-      JOIN set_aliases sa ON sa.tcgdex_slug = p.set_slug
-      WHERE p.top_price > 80
-        AND p.card_name IS NOT NULL
-        AND sa.internal_set_id IS NOT NULL
-        -- localId plausible : soit numérique pur, soit promo (lettres+chiffres courts)
-        AND regexp_replace(p.card_ref, '^.*-', '') ~ '^([0-9]{1,4}|[A-Za-z]{1,4}[0-9]{1,4})$'
-      ORDER BY p.card_name, p.top_price DESC
+      SELECT DISTINCT ON (kp.name_en)
+        kp.name_en       AS card_name,
+        kp.number        AS local_id,
+        kp.set_id        AS set_id,
+        upper(ps.lang)   AS lang
+      FROM price_signals ps
+      JOIN k_prints kp ON kp.id = ps.print_id
+      WHERE ps.fair_value_eur > 80
+        AND kp.name_en IS NOT NULL
+        AND kp.number ~ '^([0-9]{1,4}|[A-Za-z]{1,4}[0-9]{1,4})$'
+      ORDER BY kp.name_en, ps.fair_value_eur DESC
       LIMIT 40
     `
     // Mélange + 12 max

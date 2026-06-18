@@ -29,6 +29,7 @@
  */
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
+import { priceCards } from '@/lib/portfolio-pricing'
 import { getCurrentUser } from '@/lib/auth/helpers'
 import { canAddCards, canAddWishlist } from '@/lib/early'
 
@@ -151,6 +152,26 @@ export async function POST(req: Request) {
     // Neon returns PG NUMERIC/DECIMAL as strings. Coerce them to numbers
     // so that React components calling .toFixed() etc. don't crash.
     const rows = rawRows.map(coerceNumerics)
+    // Pricing immediat des cartes ajoutees au portfolio (meme regle que le cron, source unique).
+    // Scale: 1 requete price toutes les lignes inserees, quel que soit leur nombre.
+    // Le front recoit current_price/price_basis directement -> affichage sans attendre le cron.
+    if (table === 'portfolio_cards' && (mode === 'insert' || mode === 'upsert') && rows.length) {
+      const insertedIds = rows.map((r: any) => r.id).filter(Boolean) as string[]
+      if (insertedIds.length) {
+        try {
+          const priced = await priceCards(sql, { ids: insertedIds })
+          const byId = new Map(priced.map((x) => [x.id, x]))
+          for (const r of rows) {
+            const px = byId.get(r.id)
+            if (px) { r.current_price = px.current_price; r.price_basis = px.price_basis }
+          }
+        } catch (priceErr: any) {
+          // Le pricing immediat ne doit jamais faire echouer l'ajout: la carte est inseree,
+          // le cron nocturne la pricera de toute facon. On log et on continue.
+          console.error('[api/db/query] pricing immediat echoue:', priceErr?.message)
+        }
+      }
+    }
     if (expectSingle) {
       return NextResponse.json({ data: rows[0] ?? null, error: null })
     }

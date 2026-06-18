@@ -274,7 +274,7 @@ export function Encyclopedie() {
     // Si connecté, sauvegarder dans Supabase
     if (user) {
       console.log('[KC ADD] user.id =', user.id, '| card =', newCard.name)
-      const { error } = await supabase.from('portfolio_cards').insert({
+      const { data: insData, error } = await supabase.from('portfolio_cards').insert({
         id: newCard.id,
         user_id: user.id,
         name: newCard.name,
@@ -287,7 +287,7 @@ export function Encyclopedie() {
         qty: newCard.qty || 1,
         buy_price: newCard.buyPrice || 0,
         image_url: getCardImageUrl({ lang: newCard.lang as string, setId: newCard.setId, localId: newCard.number }) || newCard.image || '',
-      })
+      }).select()
       if (error) {
         // Rollback : le state ne doit pas mentir si la base a refuse
         setPortfolioLocal(prev => prev.filter(c => c.id !== newCard.id))
@@ -300,6 +300,13 @@ export function Encyclopedie() {
         }
         setTimeout(() => setToast(''), 2500)
         return
+      }
+      // Prix calcule a l'insert (meme regle que le cron) -> affichage immediat
+      const px = insData && insData[0] ? (insData[0] as any) : null
+      if (px && px.current_price != null) {
+        setPortfolioLocal(prev => prev.map(c => c.id === newCard.id
+          ? { ...c, curPrice: Number(px.current_price) || 0 }
+          : c))
       }
     }
     setToast(card.name + ' ajouté')

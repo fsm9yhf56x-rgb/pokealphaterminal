@@ -515,7 +515,13 @@ export function Holdings() {
                 const next = [...prev]
                 data.forEach((row: any, i: number) => {
                   const idx = next.findIndex(c => c.id === localOnly[i]?.id)
-                  if (idx >= 0) next[idx] = { ...next[idx], id: row.id }
+                  if (idx >= 0) next[idx] = {
+                    ...next[idx],
+                    id: row.id,
+                    curPrice: Number(row.current_price) || next[idx].curPrice || 0,
+                    serverPriced: Number(row.current_price) > 0,
+                    priceBasis: row.price_basis || next[idx].priceBasis,
+                  }
                 })
                 return next
               })

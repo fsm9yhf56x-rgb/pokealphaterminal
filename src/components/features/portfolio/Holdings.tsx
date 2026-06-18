@@ -147,10 +147,22 @@ export function Holdings() {
   const [collapsedSets, setCollapsedSets] = useState<Set<string>>(()=>{
     try { const r=localStorage.getItem('pka_collapsed'); return r?new Set(JSON.parse(r)):new Set() } catch { return new Set() }
   })
-  const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'>('number')
+  const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'|'series'>('number')
   const [valueHidden, setValueHidden] = useState(true)
   const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
+  const [binderSetFilter, setBinderSetFilter] = useState<string>('all')
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
+  const [setDateMap, setSetDateMap] = useState<Record<string,string>>({})
+  useEffect(()=>{
+    const _c=localStorage.getItem('pka_set_dates_v1')
+    if(_c){ try{ setSetDateMap(JSON.parse(_c)); return }catch(e){} }
+    Promise.all(['EN','FR','JP'].map(l=>fetch('/data/sets-'+l+'.json').then(r=>r.ok?r.json():[]).catch(()=>[]))).then(all=>{
+      const m:Record<string,string>={}
+      ;([] as any[]).concat(...all).forEach((x:any)=>{ if(x&&x.releaseDate){ if(x.id)m[x.id]=x.releaseDate; if(x.name)m['n:'+String(x.name).toLowerCase()]=x.releaseDate } })
+      setSetDateMap(m)
+      try{ localStorage.setItem('pka_set_dates_v1', JSON.stringify(m)) }catch(e){}
+    }).catch(()=>{})
+  },[])
   const [showcaseBg,  setShowcaseBg]  = useState('obsidienne')
   const [binderCols,  setBinderCols]  = useState(7)
   const [binderPage,  setBinderPage]  = useState(0)
@@ -955,9 +967,11 @@ export function Holdings() {
   const bestByValue = portfolio.length>0?[...portfolio].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
   const eraCount = new Set(portfolio.map(c=>{ const y=c.year||0; if(y&&y<=2002)return 'vintage'; if(y&&y<=2010)return 'classic'; if(y&&y<=2019)return 'modern'; if(y)return 'current'; return 'unknown' }).filter(e=>e!=='unknown')).size
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
-  const binderFiltered = (!binderSet || binderSet==='__all__') ? portfolio : portfolio.filter(c=>c.set===binderSet)
+  const binderFiltered = (!binderSet || binderSet==='__all__') ? (binderSetFilter==='all' ? portfolio : portfolio.filter(c=>c.set===binderSetFilter)) : portfolio.filter(c=>c.set===binderSet)
   // binderPages moved after gridItems
+  const setDateOf = (c:CardItem) => (c.setId&&setDateMap[c.setId])||setDateMap['n:'+String(c.set??'').toLowerCase()]||'9999-99-99'
   const binderSorted = [...binderFiltered].sort((a,b)=>{
+    if(binderSort==='series'){ const da=setDateOf(a), db=setDateOf(b); if(da!==db) return da<db?-1:1; const sa=String(a.set??''),sb=String(b.set??''); if(sa!==sb) return sa.localeCompare(sb); return (parseInt(a.number)||999)-(parseInt(b.number)||999) }
     if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
     if(binderSort==='name') return a.name.localeCompare(b.name)
     if(binderSort==='price') return b.curPrice-a.curPrice
@@ -2428,7 +2442,7 @@ export function Holdings() {
                             </button>
                           ))}
                           <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                          {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
+                          {(([{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}].concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
                             <button key={so.k} onClick={()=>setBinderSort(so.k)}
                               style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                               {so.l}
@@ -2747,6 +2761,16 @@ export function Holdings() {
                   </div>
                 ):(<>
                   <div className="kfilt-row" style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
+                    <div className="kfilt-serie" style={{ position:'relative', flexShrink:0 }}>
+                      <select value={binderSetFilter} onChange={e=>{setBinderSetFilter(e.target.value);setBinderPage(0)}}
+                        style={{ maxWidth:'170px', padding:'8px 30px 8px 14px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'none', boxShadow:binderSetFilter==='all'?'inset 0 0 0 0.5px rgba(255,255,255,0.7)':'inset 0 0 0 1px rgba(224,48,32,0.45)', color:binderSetFilter==='all'?'#6E6E73':'#1D1D1F', fontSize:'11px', fontWeight:600, fontFamily:'var(--font-display)', cursor:'pointer', outline:'none', appearance:'none' as const, WebkitAppearance:'none' as const, textOverflow:'ellipsis', whiteSpace:'nowrap' as const, overflow:'hidden' }}>
+                        <option value="all">Toutes les séries</option>
+                        {[...new Set(portfolio.map(c=>c.set))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(sname=>(
+                          <option key={sname} value={sname}>{sname}</option>
+                        ))}
+                      </select>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
                     <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
                       <input type="text" placeholder="Rechercher une carte..."
                         onFocus={e=>{e.currentTarget.style.background='rgba(255,255,255,0.8)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 0 0 3px rgba(0,0,0,0.05)'}}
@@ -2764,7 +2788,7 @@ export function Holdings() {
                         </button>
                       ))}
                       <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                      {([{k:'number' as const,l:'N°'},{k:'name' as const,l:'A→Z'},{k:'price' as const,l:'Prix'}] as const).map(so=>(
+                      {(([{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}].concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
                         <button key={so.k} onClick={()=>setBinderSort(so.k)}
                           style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {so.l}

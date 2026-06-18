@@ -1203,7 +1203,7 @@ export function Holdings() {
 
   const persistCards = async (cards: CardItem[]): Promise<boolean> => {
     if (!user || cards.length === 0) return true
-    const { error } = await supabase.from('portfolio_cards').insert(cards.map(toDbRow))
+    const { data: insData, error } = await supabase.from('portfolio_cards').insert(cards.map(toDbRow)).select()
     if (error) {
       // Rollback : la base a refusé, le state ne doit pas mentir
       const ids = new Set(cards.map(c => c.id))
@@ -1217,6 +1217,16 @@ export function Holdings() {
         showToast('Erreur de sauvegarde, carte non ajoutée')
       }
       return false
+    }
+    // Prix calcule a l'insert (meme regle que le cron) -> affichage immediat, toutes langues
+    if (insData && insData.length) {
+      const byId = new Map((insData as any[]).map((r: any) => [r.id, r]))
+      setPortfolio(prev => prev.map(c => {
+        const r = byId.get(c.id)
+        return r && r.current_price != null
+          ? { ...c, curPrice: Number(r.current_price) || 0, serverPriced: Number(r.current_price) > 0, priceBasis: r.price_basis || c.priceBasis }
+          : c
+      }))
     }
     return true
   }

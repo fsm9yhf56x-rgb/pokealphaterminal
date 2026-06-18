@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from './supabase'
 
 export type SignalTier = 'S' | 'A' | 'B'
 
@@ -51,39 +50,13 @@ export function useSpreads(enabled = true) {
     let cancelled = false
     loadSignals()
     async function loadSignals() {
-      setLoading(true)
-      setError(null)
-      try {
-        const { data, error: qErr } = await (supabase as any)
-          .from('undervalued_signals_v1')
-          .select('*')
-        if (qErr) throw new Error(qErr.message)
-        if (cancelled) return
-        const enriched: SpreadSignal[] = (data || []).map((r: any) => ({
-          card_ref: r.card_ref,
-          card_name: r.card_name || 'Unknown',
-          set_name: r.set_name,
-          set_slug: r.set_slug,
-          card_number: r.card_number,
-          variant: r.variant,
-          price_eu: Number(r.price_eu) || 0,
-          price_us: Number(r.price_us) || 0,
-          gap_eur: Number(r.gap_eur) || 0,
-          upside_pct: Number(r.upside_pct) || 0,
-          ebay_sales: Number(r.ebay_sales) || 0,
-          has_graded: !!r.has_graded,
-          confidence: Number(r.confidence) || 0,
-          signal_tier: (r.signal_tier as SignalTier) || 'B',
-          reason: r.reason || '',
-        }))
-        setAllSignals(enriched)
-      } catch (e: any) {
-        if (cancelled) return
-        console.warn('[useSpreads]', e)
-        setError(e.message || 'Failed to load signals')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+      // TODO Kodo v2.0: Spreads Cross-Marketplace (feature SOON, cf /market/spreads).
+      // Debranche de undervalued_signals_v1 (legacy <- prices_v2, en cours de suppression).
+      // Recalcul a faire sur price_signals (spread_us_eu_pct / fair_value_eur / cote_fr_eur)
+      // + price_matrix au moment du dev v2.0. Les consommateurs (HubInsight ignore v2,
+      // HubKpis [0]||null, HubSpreadsTeaser = teaser SOON autonome) tolerent le vide.
+      setLoading(false)
+      setAllSignals([])
     }
     return () => { cancelled = true }
   }, [enabled])

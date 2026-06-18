@@ -292,6 +292,10 @@ export async function GET(req: NextRequest) {
     // Donnees jamais envoyees = verrou reel.
     {
       const GRADE_PREFIXES = ['psa_', 'bgs_', 'cgc_', 'sgc_', 'ace_', 'tag_', 'cca_', 'pca_', 'ccc_']
+      const gradeNum = (v: any): number => {
+        const m = String(v ?? '').match(/_(\d+)(?:_(\d))?$/)
+        return m ? Number(m[1]) + (m[2] ? Number(m[2]) / 10 : 0) : 0
+      }
       const isGradedVariant = (v: any) => GRADE_PREFIXES.some(p => String(v ?? '').toLowerCase().startsWith(p))
       const u = await getCurrentUserWithProfile().catch(() => null)
       const isPremium = u?.isPremium === true
@@ -306,9 +310,13 @@ export async function GET(req: NextRequest) {
         if (allGraded.length > 1) {
           // Teaser: PSA d'abord, puis volume de ventes
           allGraded.sort((a, b) => {
+            // Teaser le plus parlant: PSA prioritaire, puis le grade le plus haut (PSA 10 > 9...),
+            // puis volume. Met en avant la note emblematique (ex Charizard PSA 10) plutot qu'un grade liquide bas.
             const aPsa = String(a.entry.variant).startsWith('psa_') ? 1 : 0
             const bPsa = String(b.entry.variant).startsWith('psa_') ? 1 : 0
             if (aPsa !== bPsa) return bPsa - aPsa
+            const ga = gradeNum(a.entry.variant), gb = gradeNum(b.entry.variant)
+            if (ga !== gb) return gb - ga
             return (b.entry.nb_sales ?? 0) - (a.entry.nb_sales ?? 0)
           })
           const keep = allGraded[0]

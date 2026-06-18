@@ -2559,7 +2559,7 @@ export function Holdings() {
                                       <div style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'4px', flexWrap:'wrap' }}>
                                         <span style={{ fontSize:'11px', lineHeight:1 }}>{(setCards[0]?.lang||'FR')==='EN'?'\u{1F1FA}\u{1F1F8}':(setCards[0]?.lang||'FR')==='JP'?'\u{1F1EF}\u{1F1F5}':'\u{1F1EB}\u{1F1F7}'}</span>
                                         {setBlocks[setName]?<span style={{ fontSize:'10px', color:'#86868B', fontFamily:'var(--font-display)' }}>{setBlocks[setName]}</span>:null}
-                                        {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; return (<>{(sid.includes('-shadowless')&&!sid.includes('-ns'))||sid.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{sid.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
+                                        {(()=>{ const sid=setCards.find(c=>c.setId)?.setId||''; const is1st=sid.includes('-shadowless-ns')||sid.includes('-1st'); const isShadow=sid.includes('-shadowless'); return (<>{is1st?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}{isShadow?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}</>)})()}
                                         {(()=>{ const sid=setCards.find(c=>c.setId)?.setId; return sid&&frSetsMap[sid]&&frSetsMap[sid]!==setName?<span style={{ fontSize:'10px', color:'#AEAEB2', fontWeight:400 }}>{frSetsMap[sid]}</span>:null })()}
                                       </div>
                                     </div>
@@ -2677,8 +2677,8 @@ export function Holdings() {
                                   </div>
                                   {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                                     <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
-                                      {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
-                                      {card.setId?.includes('-shadowless')&&<span className="ed-badge ed-shadowless">SHADOWLESS</span>}
+                                      {card.setId?.includes('-shadowless-ns')||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
+                                      {card.setId?.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}
                                     </div>
                                   )}
                                 </div>
@@ -2861,7 +2861,7 @@ export function Holdings() {
                             </div>
                             {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                               <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
-                                {(card.setId?.includes('-shadowless')&&!card.setId?.includes('-ns'))||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
+                                {card.setId?.includes('-shadowless-ns')||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
                                 {card.setId?.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}
                               </div>
                             )}

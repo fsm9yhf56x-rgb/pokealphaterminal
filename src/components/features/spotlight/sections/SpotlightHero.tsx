@@ -99,6 +99,24 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   const maxVol = !showPortfolio ? pickReference(prices.bySource) : null
 
   const insufficient = (kodo?.fairValueMethod === 'insufficient_data') && !userGraded
+  // Marche grade (ventes reelles) a remonter quand le raw n'est pas fiable.
+  // Transparence: on montre la vraie valeur gradee SANS laisser croire qu'un raw vaut autant.
+  const gradeFromVar = (v: any): { lab: string } | null => {
+    const m = String(v || '').match(/^(psa|cgc|bgs|sgc|pca|ccc)_(\d+(?:_\d)?)$/i)
+    if (!m) return null
+    return { lab: m[1].toUpperCase() + ' ' + m[2].replace('_', '.') }
+  }
+  const gradedMarket = (prices.bySource.ppt_graded || prices.bySource.ebay || [])
+    .map((e: any) => {
+      const g = gradeFromVar(e.variant)
+      return g && e.price_avg > 0 ? { lab: g.lab, price: e.price_avg, sales: e.nb_sales || 0 } : null
+    })
+    .filter((x: any): x is { lab: string; price: number; sales: number } => x !== null)
+    .sort((a, b) => b.sales - a.sales || b.price - a.price)
+    .slice(0, 3)
+  const gradedLocked = (prices.bySource as any).__gradedLocked === true
+  const gradedHidden = Number((prices.bySource as any).__gradedHiddenCount || 0)
+  const showGradedFallback = insufficient && gradedMarket.length > 0
   let heroPrice: number | null = null
   let sourceChip: { label: string; sub: string | null } | null = null
 
@@ -163,11 +181,24 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
             {showPortfolio ? 'Ton exemplaire' : 'Prix de marché'}
           </div>
           <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {showPortfolio ? userStateLabel : (sourceChip?.label || '—')}
+            {showGradedFallback ? (userStateLabel + ' — pas de vente fiable') : (showPortfolio ? userStateLabel : (sourceChip?.label || '—'))}
           </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
-          {insufficient ? (
+          {showGradedFallback ? (
+            <div style={{ textAlign: 'right' as const, maxWidth: 230 }}>
+              <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 3 }}>Marché gradé</div>
+              {gradedMarket.map((g, i) => (
+                <div key={i} style={{ fontSize: 12.5, fontFamily: FONT.display, color: SNOW.ink, fontWeight: 500, lineHeight: 1.5 }}>
+                  <span style={{ color: SNOW.muted, fontWeight: 600 }}>{g.lab}</span>{' · '}{Math.round(g.price).toLocaleString('fr-FR')} $
+                </div>
+              ))}
+              {gradedLocked && gradedHidden > 0 ? (
+                <div style={{ fontSize: 10.5, color: SNOW.red, fontWeight: 600, fontFamily: FONT.display, marginTop: 3 }}>+ {gradedHidden} notes · Premium</div>
+              ) : null}
+              <div style={{ fontSize: 9.5, color: SNOW.mutedLight, fontStyle: 'italic' as const, marginTop: 4, whiteSpace: 'normal' as const, lineHeight: 1.3 }}>Ventes gradées — ton exemplaire non gradé peut valoir nettement moins</div>
+            </div>
+          ) : insufficient ? (
             <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>Données insuffisantes</div>
           ) : (
           <div>

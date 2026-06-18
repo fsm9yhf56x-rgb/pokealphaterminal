@@ -2446,11 +2446,11 @@ export function Holdings() {
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
                       const resolvedTotal=total||(setIdKey?setTotalsMap[setIdKey]:0)||setTotalsMap[setName]||setTotalsMap[String(setName ?? '').toLowerCase()]||0
-                      const uniqueNums=new Set(setCards.map(c=>c.number)).size
-                      const pct=resolvedTotal>0?Math.round((uniqueNums/resolvedTotal)*100):null
+                      const uniqueNums=(()=>{const _n=(x:any)=>String(x??'').trim().replace(/^0+/,'')||'0';const _g=shelfSetCards[setName]||[];const _o=new Set(setCards.map(c=>_n(c.number)));return _g.length>0?_g.filter((q:any)=>_o.has(_n(q.localId||''))).length:Math.min(_o.size,resolvedTotal||_o.size)})()
+                      const pct=resolvedTotal>0?Math.min(100,Math.round((uniqueNums/resolvedTotal)*100)):null
                       const totalForDisplay=resolvedTotal
                       const ec2=EC[setCards[0]?.type??'fire']??'#888'
-                      const isComplete=pct===100
+                      const isComplete=resolvedTotal>0&&uniqueNums>=resolvedTotal
                       const filteredSetCards=[...setCards].filter(c=>{
                         if(binderFilter==='graded') return c.graded
                         if(binderFilter==='raw') return !c.graded

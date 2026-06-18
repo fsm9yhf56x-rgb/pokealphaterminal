@@ -37,7 +37,7 @@ type CardItem = {
   condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
   psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean; priceBasis?: string
-  image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string
+  image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string; createdAt?: string
 }
 
 const ENCYCLOPEDIA: CardItem[] = [
@@ -147,10 +147,12 @@ export function Holdings() {
   const [collapsedSets, setCollapsedSets] = useState<Set<string>>(()=>{
     try { const r=localStorage.getItem('pka_collapsed'); return r?new Set(JSON.parse(r)):new Set() } catch { return new Set() }
   })
-  const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'|'series'>('number')
+  const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'|'series'|'recent'>('number')
   const [valueHidden, setValueHidden] = useState(true)
   const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
   const [binderSetFilter, setBinderSetFilter] = useState<string>('all')
+  const [binderLangFilter, setBinderLangFilter] = useState<'all'|'EN'|'FR'|'JP'>('all')
+  useEffect(()=>{ if(binderSet==='__all__'){ setBinderSort(prev=> prev==='number' ? 'series' : prev) } else if(binderSet){ setBinderSort(prev=> (prev==='series'||prev==='recent') ? 'number' : prev) } },[binderSet])
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [setDateMap, setSetDateMap] = useState<Record<string,string>>({})
   useEffect(()=>{
@@ -189,6 +191,7 @@ export function Holdings() {
             setId: c.set_id || undefined, favorite: c.is_favorite || false,
             showcasePos: c.showcase_position ?? undefined,
             notes: c.notes || undefined,
+            createdAt: c.created_at || undefined,
           }))
           const visible = mapped.filter(c => !deletedIds.current.has(c.id))
           // Valeurs serveur = nouvelle reference : vider les signatures pour
@@ -971,6 +974,7 @@ export function Holdings() {
   // binderPages moved after gridItems
   const setDateOf = (c:CardItem) => (c.setId&&setDateMap[c.setId])||setDateMap['n:'+String(c.set??'').toLowerCase()]||'9999-99-99'
   const binderSorted = [...binderFiltered].sort((a,b)=>{
+    if(binderSort==='recent') return String(b.createdAt??'').localeCompare(String(a.createdAt??''))
     if(binderSort==='series'){ const da=setDateOf(a), db=setDateOf(b); if(da!==db) return da<db?-1:1; const sa=String(a.set??''),sb=String(b.set??''); if(sa!==sb) return sa.localeCompare(sb); return (parseInt(a.number)||999)-(parseInt(b.number)||999) }
     if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
     if(binderSort==='name') return a.name.localeCompare(b.name)
@@ -980,6 +984,7 @@ export function Holdings() {
   const binderFilteredFinal = binderSorted.filter(c=>{
     if(binderFilter==='graded' && !c.graded) return false
     if(binderFilter==='raw' && c.graded) return false
+    if(binderSet==='__all__' && binderLangFilter!=='all' && c.lang!==binderLangFilter) return false
     if(setSearch && !String(c.name ?? '').toLowerCase().includes(setSearch.toLowerCase()) && !String(c.set ?? '').toLowerCase().includes(setSearch.toLowerCase())) return false
     return true
   })
@@ -2435,7 +2440,7 @@ export function Holdings() {
                           {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
                         </div>
                         <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
-                          {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
+                          {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradées'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
                             <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
                               style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                               {fi.l}
@@ -2781,14 +2786,21 @@ export function Holdings() {
                       {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
                     </div>
                     <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
-                      {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradees'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
+                      {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradées'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
                         <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
                           style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {fi.l}
                         </button>
                       ))}
                       <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                      {(([{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}].concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
+                      {([{k:'all',l:'Toutes'},{k:'FR',l:'\u{1F1EB}\u{1F1F7}'},{k:'EN',l:'\u{1F1FA}\u{1F1F8}'},{k:'JP',l:'\u{1F1EF}\u{1F1F5}'}] as {k:'all'|'EN'|'FR'|'JP';l:string}[]).map(lg=>(
+                        <button key={lg.k} onClick={()=>{setBinderLangFilter(lg.k);setBinderPage(0)}}
+                          style={{ padding:'6px 11px',borderRadius:'99px',border:'none',background:binderLangFilter===lg.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderLangFilter===lg.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderLangFilter===lg.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
+                          {lg.l}
+                        </button>
+                      ))}
+                      <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
+                      {((binderSet==='__all__'?[{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}]:[{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}]) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
                         <button key={so.k} onClick={()=>setBinderSort(so.k)}
                           style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {so.l}

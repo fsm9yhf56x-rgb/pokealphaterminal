@@ -161,140 +161,30 @@ export function useMarketData(enabled = true) {
 /* ── Queries ─────────────────────────────────── */
 
 async function fetchTicker(): Promise<TickerItem[]> {
-  // Top 20 cards with biggest absolute price change in last 24h
-  // Pour V1 : on prend les Top movers (gainers + losers mélangés) depuis la query mover
-  const { data, error } = await (supabase as any)
-    .from('prices_v2')
-    .select('card_ref, card_name, set_slug, top_price')
-    .order('top_price', { ascending: false })
-    .gt('top_price', 5)
-    .limit(20)
-
-  if (error) {
-    console.warn('[ticker] error', error.message)
-    return []
-  }
-  return (data || []).map((r: any) => ({
-    card_ref: r.card_ref,
-    card_name: r.card_name || 'Unknown',
-    set_slug: r.set_slug || '',
-    current_price: Number(r.top_price) || 0,
-    change_pct: 0,  // TODO: enrichir avec snapshots historiques quand backend prêt
-  }))
+  // TODO Kodo v2.0: rebrancher sur price_signals/price_matrix lors du dev Market Terminal.
+  // Debranche de prices_v2/market_indices_v1 (legacy, en cours de suppression). Composants gerent l etat vide (preview SOON).
+  return []
 }
-
 async function fetchIndices(): Promise<MarketIndex[]> {
-  // V2 : utilise la vue SQL market_indices_v1 (rolling window 7d, top N cards par valeur)
-  const { data, error } = await (supabase as any)
-    .from('market_indices_v1')
-    .select('*')
-
-  if (error || !data) {
-    console.warn('[indices] error', error?.message)
-    return []
-  }
-
-  const indices: MarketIndex[] = data.map((row: any) => {
-    const meta = INDEX_META[row.index_id as keyof typeof INDEX_META]
-    if (!meta) return null
-    return {
-      id: row.index_id as MarketIndex['id'],
-      label: meta.label,
-      ticker: meta.ticker,
-      current: Number(row.current_value) || 0,
-      change_24h_pct: Number(row.change_24h_pct) || 0,
-      sparkline: Array.isArray(row.sparkline) ? row.sparkline.map((v: any) => Number(v)) : [],
-      description: meta.description,
-    }
-  }).filter(Boolean) as MarketIndex[]
-
-  // Tri logique : Vintage US, Modern FR, Modern EN, Japan
-  const order: Record<string, number> = { vintage_us: 0, modern_fr: 1, modern_en: 2, japan: 3 }
-  indices.sort((a, b) => (order[a.id] ?? 99) - (order[b.id] ?? 99))
-
-  return indices
+  // TODO Kodo v2.0: rebrancher sur price_signals/price_matrix lors du dev Market Terminal.
+  // Debranche de prices_v2/market_indices_v1 (legacy, en cours de suppression). Composants gerent l etat vide (preview SOON).
+  return []
 }
-
 async function fetchHeatmap(): Promise<HeatmapNode[]> {
-  // Top 30 sets par activité (nombre de cartes avec prix > 0)
-  const { data, error } = await (supabase as any)
-    .from('prices_v2')
-    .select('set_slug, set_name, top_price')
-    .gt('top_price', 5)
-    .limit(2000)
-
-  if (error || !data) return []
-
-  // Aggregate by set
-  const setMap = new Map<string, { name: string; volume: number; sumPrice: number; count: number }>()
-  for (const r of data) {
-    if (!r.set_slug) continue
-    const cur = setMap.get(r.set_slug) || { name: r.set_name || r.set_slug, volume: 0, sumPrice: 0, count: 0 }
-    cur.volume += Number(r.top_price) || 0
-    cur.sumPrice += Number(r.top_price) || 0
-    cur.count += 1
-    setMap.set(r.set_slug, cur)
-  }
-
-  return [...setMap.entries()]
-    .map(([set_slug, { name, volume, count }]) => ({
-      set_slug,
-      set_name: name,
-      volume,
-      variation_24h: 0,  // V1 placeholder
-      cards_count: count,
-    }))
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 30)
+  // TODO Kodo v2.0: rebrancher sur price_signals/price_matrix lors du dev Market Terminal.
+  // Debranche de prices_v2/market_indices_v1 (legacy, en cours de suppression). Composants gerent l etat vide (preview SOON).
+  return []
 }
-
 async function fetchTopMovers(direction: 'asc' | 'desc'): Promise<MoverCard[]> {
-  // V1 : top cards par valeur absolue. À enrichir V2 avec snapshots t-24h pour vrai change_pct
-  const { data, error } = await (supabase as any)
-    .from('prices_v2')
-    .select('card_ref, card_name, set_slug, set_name, top_price, variant, source')
-    .gt('top_price', 10)
-    .order('top_price', { ascending: direction === 'asc' })
-    .limit(10)
-
-  if (error || !data) return []
-  return data.map((r: any) => ({
-    card_ref: r.card_ref,
-    card_name: r.card_name || 'Unknown',
-    set_slug: r.set_slug || '',
-    set_name: r.set_name,
-    lang: 'EN',  // V1 placeholder, à enrichir via card_aliases
-    rarity: null,
-    current_price: Number(r.top_price) || 0,
-    change_pct: direction === 'desc' ? Math.random() * 15 + 5 : -(Math.random() * 10 + 2),  // V1 placeholder
-    source: r.source || 'cardmarket',
-  }))
+  // TODO Kodo v2.0: rebrancher sur price_signals/price_matrix lors du dev Market Terminal.
+  // Debranche de prices_v2/market_indices_v1 (legacy, en cours de suppression). Composants gerent l etat vide (preview SOON).
+  return []
 }
-
 async function fetchHotCards(): Promise<HotCard[]> {
-  // V1 : hot = cartes avec sales count > 0 sur eBay/TCGPlayer
-  const { data, error } = await (supabase as any)
-    .from('prices_v2')
-    .select('card_ref, card_name, set_slug, set_name, top_price, ebay_sales, tcg_sales, source')
-    .or('ebay_sales.gt.5,tcg_sales.gt.5')
-    .order('ebay_sales', { ascending: false, nullsFirst: false })
-    .limit(10)
-
-  if (error || !data) return []
-  return data.map((r: any) => ({
-    card_ref: r.card_ref,
-    card_name: r.card_name || 'Unknown',
-    set_slug: r.set_slug || '',
-    set_name: r.set_name,
-    lang: 'EN',
-    rarity: null,
-    current_price: Number(r.top_price) || 0,
-    change_pct: 0,
-    source: r.source || 'ebay',
-    volume_24h: (r.ebay_sales || 0) + (r.tcg_sales || 0),
-  }))
+  // TODO Kodo v2.0: rebrancher sur price_signals/price_matrix lors du dev Market Terminal.
+  // Debranche de prices_v2/market_indices_v1 (legacy, en cours de suppression). Composants gerent l etat vide (preview SOON).
+  return []
 }
-
 async function fetchActivityFeed(): Promise<TradeEvent[]> {
   // TODO Kodo v2.0: rebrancher le feed d'activite du Market Terminal sur price_history (Kodo).
   // Debranche de prices_snapshots (legacy, en cours de suppression). Le terminal gere l'etat vide.

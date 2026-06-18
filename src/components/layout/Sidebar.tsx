@@ -195,7 +195,6 @@ export function Sidebar() {
           </div>
           {[
             { href: '/admin', label: 'Dashboard', icon: '◐' },
-            { href: '/admin/sync-status', label: 'Sync Status', icon: '◑' },
           ].map(item => {
             const active = pathname === item.href
             return (

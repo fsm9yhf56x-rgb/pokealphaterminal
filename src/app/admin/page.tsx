@@ -29,21 +29,6 @@ export default async function AdminPage() {
             Logged in as <strong>{user?.email}</strong>
           </div>
           
-          <a
-            href="/admin/sync-status"
-            style={{
-              fontSize: 13,
-              padding: '6px 12px',
-              border: '1px solid #E5E5EA',
-              borderRadius: 8,
-              color: '#1D1D1F',
-              textDecoration: 'none',
-              fontWeight: 500,
-              background: '#FFF',
-            }}
-          >
-            📡 Sync Status →
-          </a>
           <RefreshButton />
         </div>
       </div>

@@ -60,7 +60,7 @@ export async function getSystemStats(): Promise<SystemStats> {
       supa.from('tcg_cards').select('*', { count: 'exact', head: true }),
       supa.from('tcg_cards').select('*', { count: 'exact', head: true }).eq('has_image', true),
       supa.from('tcg_sets').select('*', { count: 'exact', head: true }),
-      supa.from('prices_v2').select('*', { count: 'exact', head: true }),
+      (supa as any).from('price_signals').select('*', { count: 'exact', head: true }),
       supa.from('portfolio_cards').select('*', { count: 'exact', head: true }),
       supa.from('profiles').select('*', { count: 'exact', head: true }),
     ]);
@@ -186,12 +186,12 @@ export async function getPricesOverview(): Promise<PricesOverview> {
   const supa = getAdminClient();
 
   const [totalRows, priceRows, lastRow] = await Promise.all([
-    supa.from('prices_v2').select('*', { count: 'exact', head: true }),
-    supa.from('prices_v2').select('source, tier').limit(5000),
-    supa
-      .from('prices_v2')
-      .select('fetched_at')
-      .order('fetched_at', { ascending: false })
+    (supa as any).from('price_matrix').select('*', { count: 'exact', head: true }),
+    (supa as any).from('price_matrix').select('source, tier').limit(5000),
+    (supa as any)
+      .from('price_matrix')
+      .select('as_of')
+      .order('as_of', { ascending: false })
       .limit(1)
       .maybeSingle(),
   ]);
@@ -213,6 +213,6 @@ export async function getPricesOverview(): Promise<PricesOverview> {
     byTier: Array.from(byTierMap.entries())
       .map(([tier, count]) => ({ tier, count }))
       .sort((a, b) => b.count - a.count),
-    lastUpdated: lastRow.data?.fetched_at ?? null,
+    lastUpdated: lastRow.data?.as_of ?? null,
   };
 }

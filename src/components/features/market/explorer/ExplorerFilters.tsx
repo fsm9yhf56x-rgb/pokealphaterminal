@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import type { ExplorerFilters as TFilters, Lang } from '@/lib/useExplorerSearch'
 import { GlassButton } from '@/components/ui/GlassButton'
 
@@ -27,36 +26,16 @@ export function ExplorerFilters({
     async function loadOptions() {
       setOptsLoading(true)
       try {
-        const [setsRes, rarRes] = await Promise.all([
-          (supabase as any)
-            .from('prices_v2')
-            .select('set_slug, set_name')
-            .gt('top_price', 0)
-            .limit(2000),
-          (supabase as any)
-            .from('card_aliases')
-            .select('rarity_normalized')
-            .not('rarity_normalized', 'is', null)
-            .limit(5000),
-        ])
+        // Kodo: options depuis /api/market/filter-options (slug = k_sets.id = c.set_id attendu par /api/market/explorer)
+        const res = await fetch('/api/market/filter-options', { cache: 'default' })
+        const json = await res.json()
 
         if (cancelled) return
 
-        // Dedupe sets
-        const setMap = new Map<string, string>()
-        for (const r of (setsRes.data || []) as any[]) {
-          if (r.set_slug) setMap.set(r.set_slug, r.set_name || r.set_slug)
-        }
-        const sets = [...setMap.entries()]
-          .map(([slug, name]) => ({ slug, name }))
+        const sets = ((json.sets || []) as { slug: string; name: string }[])
+          .slice()
           .sort((a, b) => a.name.localeCompare(b.name))
-
-        // Dedupe rarities
-        const rarSet = new Set<string>()
-        for (const r of (rarRes.data || []) as any[]) {
-          if (r.rarity_normalized) rarSet.add(r.rarity_normalized)
-        }
-        const rarities = [...rarSet].sort()
+        const rarities = ((json.rarities || []) as string[]).slice().sort()
 
         setSetOptions(sets)
         setRarityOptions(rarities)

@@ -121,6 +121,31 @@ export async function POST(req: Request) {
         )
       }
     }
+    // Resolution k_card_id pour portfolio_cards (insert/upsert) si absent.
+    // Les cartes invisibles au pricing venaient d'un k_card_id NULL. On le calcule ici,
+    // cote serveur (couvre web + mobile + tous les points d'insert), AVEC validation:
+    // l'id (lower(lang)-set_id-card_number) doit exister dans k_cards, sinon on laisse NULL.
+    // Les variants shadowless/1st ed n'existent qu'en EN -> formule fiable.
+    if (table === 'portfolio_cards' && (mode === 'insert' || mode === 'upsert') && Array.isArray(body.insertRows) && body.insertRows.length) {
+      const mkId = (r: any) => r && r.lang && r.set_id && r.card_number != null
+        ? `${String(r.lang).toLowerCase()}-${r.set_id}-${r.card_number}` : null
+      const candidates = Array.from(new Set(
+        body.insertRows.map((r: any) => (!r.k_card_id ? mkId(r) : null)).filter(Boolean)
+      )) as string[]
+      if (candidates.length) {
+        const foundRows = await sql.query('SELECT id FROM k_cards WHERE id = ANY($1)', [candidates])
+        const valid = new Set((foundRows as any[]).map((x: any) => x.id))
+        for (const r of body.insertRows) {
+          if (!r.k_card_id) {
+            const id = mkId(r)
+            if (id && valid.has(id)) r.k_card_id = id
+          }
+        }
+      }
+      // Normalisation: toutes les rows doivent avoir la MEME cle k_card_id (null si non resolu),
+      // sinon buildQuery (Object.keys(rows[0])) produit un nombre de colonnes incoherent entre rows.
+      for (const r of body.insertRows) { if (r.k_card_id === undefined) r.k_card_id = null }
+    }
     const { query, params, expectSingle } = buildQuery(body, currentUserId, isUserTable)
     const rawRows = await sql.query(query, params)
     // Neon returns PG NUMERIC/DECIMAL as strings. Coerce them to numbers

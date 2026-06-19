@@ -63,39 +63,17 @@ export function DexyChat({ isPro = false }: { isPro?: boolean }) {
     setInput('')
     setLoading(true)
 
-    try {
-      const history = [...messages, userMsg].map(m => ({
-        role: m.role === 'dexy' ? 'assistant' : 'user',
-        content: m.text,
-      }))
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: history,
-        }),
-      })
-
-      const data = await res.json()
-      const reply = data.content?.[0]?.text ?? "Désolé, je n'ai pas pu répondre. Réessaie dans un instant."
+    // Nori n'est pas encore disponible au chat (activation post-lancement, via route serveur).
+    // Aucun appel direct a l'API depuis le front.
+    void SYSTEM_PROMPT
+    setTimeout(() => {
       setMessages(prev => [...prev, {
         role: 'dexy',
-        text: reply,
+        text: "Je ne suis pas encore dispo pour discuter — ca arrive tres vite ! En attendant, explore les insights du jour ci-dessous.",
         time: new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
       }])
-    } catch {
-      setMessages(prev => [...prev, {
-        role: 'dexy',
-        text: "Connexion impossible au moment. Vérifie ta connexion et réessaie.",
-        time: new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
-      }])
-    } finally {
       setLoading(false)
-    }
+    }, 400)
   }
 
   const glassShadow = GLASS.card.boxShadow as string

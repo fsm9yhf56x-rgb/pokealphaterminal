@@ -3516,39 +3516,11 @@ export function Holdings() {
       {scannerOpen&&(()=>{
         const fileRef = { current: null as HTMLInputElement|null }
         const handleScan = async (file: File) => {
-          setScannerLoad(true)
-          const reader = new FileReader()
-          reader.onload = async (e) => {
-            const b64 = (e.target?.result as string).split(',')[1]
-            setScannerImg(e.target?.result as string)
-            try {
-              const res = await fetch('https://api.anthropic.com/v1/messages',{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({
-                  model:'claude-sonnet-4-20250514', max_tokens:500,
-                  messages:[{role:'user',content:[
-                    {type:'image',source:{type:'base64',media_type:file.type as 'image/jpeg'|'image/png'|'image/webp',data:b64}},
-                    {type:'text',text:'Identifie cette carte Pokemon TCG. Reponds UNIQUEMENT en JSON valide sans markdown: {"name":"nom exact","set":"nom du set","lang":"EN ou FR ou JP","type":"fire ou water ou psychic ou dark ou electric ou grass ou normal","year":2023,"rarity":"rarity"}'}
-                  ]}]
-                })
-              })
-              const data = await res.json()
-              const txt = data.content?.find((x:any)=>x.type==='text')?.text??''
-              const clean = txt.replace(/```json|```/g,'').trim()
-              const parsed = JSON.parse(clean)
-              setAddForm(p=>({...p,
-                name:parsed.name??'', set:parsed.set??'',
-                lang:(parsed.lang==='JP'?'JP':parsed.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
-                type:parsed.type??'fire', year:parsed.year??new Date().getFullYear(),
-                rarity:parsed.rarity??'', setId:'',image:'',setTotal:0,
-              }))
-              setScannerOpen(false); setScannerImg(null); setScannerLoad(false)
-              setAddOpen(true); setNameValidated(true)
-              showToast('Carte identifiee — verifiez et ajoutez')
-            } catch { setScannerLoad(false); showToast('Identification echouee') }
-          }
-          reader.readAsDataURL(file)
+          // Scan photo: pas encore actif (le bouton 'Scan' ouvre scannerSoonOpen = ecran SOON).
+          // Code conserve pour reactivation post-lancement via route serveur. Aucun appel API direct.
+          void file
+          setScannerLoad(false)
+          showToast('Le scan arrive bientot')
         }
         return (
           <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.35)', backdropFilter:'blur(12px) saturate(150%)', WebkitBackdropFilter:'blur(12px) saturate(150%)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}

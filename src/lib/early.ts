@@ -21,8 +21,8 @@ export async function isEarlyOpen(): Promise<boolean> {
   return (await earlySpotsLeft()) > 0
 }
 
-/** Limite de cartes pour le plan Gratuit (illimité au-delà). */
-export const FREE_CARD_LIMIT = 800
+// FREE_CARD_LIMIT vit desormais dans un fichier client-safe (sans sql) et est re-exporte ici.
+export { FREE_CARD_LIMIT } from '@/lib/constants/plan'
 
 /**
  * Vérifie si un user peut ajouter `n` carte(s).

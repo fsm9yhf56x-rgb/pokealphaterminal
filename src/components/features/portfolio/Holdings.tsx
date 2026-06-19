@@ -1174,6 +1174,17 @@ export function Holdings() {
     edition: c.edition || 'Unlimited',
   })
 
+  // Garde de limite Free centralisee : retourne true si l'ajout de `n` carte(s)
+  // depasserait FREE_CARD_LIMIT (et ouvre alors la modale de conversion).
+  // Appelee en tete de CHAQUE point d'ajout -> zero ajout optimiste, zero clignotement.
+  const guardLimit = (n: number): boolean => {
+    if (!isPro && portfolio.length + n > FREE_CARD_LIMIT) {
+      setGate({ current: portfolio.length, limit: FREE_CARD_LIMIT })
+      return true
+    }
+    return false
+  }
+
   const persistCards = async (cards: CardItem[]): Promise<boolean> => {
     if (!user || cards.length === 0) return true
     const { data: insData, error } = await supabase.from('portfolio_cards').insert(cards.map(toDbRow)).select()
@@ -1228,6 +1239,7 @@ export function Holdings() {
       edition:addForm.edition||'Unlimited',
       variant:addForm.variant||'Normal',
     }
+    if (guardLimit(1)) { setAddOpen(false); setAddSuggs([]); setNameValidated(false); return }
     setPortfolio(prev=>[...prev,newCard])
     persistCards([newCard])
     setAddOpen(false); setAddSuggs([]); setNameValidated(false)
@@ -2325,6 +2337,7 @@ export function Holdings() {
                     image:c.image||undefined,
                     setId:sc[0]?.setId||'',setTotal:fullSetCards.length,
                   }))
+                  if (guardLimit(newCards.length)) return
                   setPortfolio(prev=>[...prev,...newCards])
                   persistCards(newCards)
                   showToast(toAdd.length+' cartes ajoutées')
@@ -3413,6 +3426,7 @@ export function Holdings() {
                         image:c.image||undefined,
                         setId:addSetId, setTotal:addSetCards.length,
                       }))
+                    if (guardLimit(newCards.length)) { setAddSetOpen(false); return }
                     setPortfolio(prev=>[...prev,...newCards])
                     persistCards(newCards)
                     setAddSetOpen(false)
@@ -3745,6 +3759,7 @@ export function Holdings() {
             curPrice: c.price,
             qty: c.qty,
           }))
+          if (guardLimit(mapped.length)) { setImportOpen(false); return }
           setPortfolio(prev=>[...prev, ...mapped])
           persistCards(mapped)
           setImportOpen(false)

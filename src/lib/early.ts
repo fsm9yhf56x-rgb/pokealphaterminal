@@ -21,8 +21,10 @@ export async function isEarlyOpen(): Promise<boolean> {
   return (await earlySpotsLeft()) > 0
 }
 
-// FREE_CARD_LIMIT vit desormais dans un fichier client-safe (sans sql) et est re-exporte ici.
-export { FREE_CARD_LIMIT } from '@/lib/constants/plan'
+// FREE_CARD_LIMIT vit dans un fichier client-safe (sans sql).
+// Import pour l'usage interne (canAddCards) + re-export pour les consommateurs.
+import { FREE_CARD_LIMIT } from '@/lib/constants/plan'
+export { FREE_CARD_LIMIT }
 
 /**
  * Vérifie si un user peut ajouter `n` carte(s).

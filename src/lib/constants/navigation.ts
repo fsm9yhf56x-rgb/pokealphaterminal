@@ -136,7 +136,7 @@ export const NAV: NavItem[] = [
           bullets: [
             '4 profils whales LEGEND-tier suivis',
             'Notifications quand un whale move',
-            'Kodo AI genere un signal sur chaque move',
+            'Nori genere un signal sur chaque move',
             'Historique des transactions sur 90j',
           ],
         },
@@ -157,7 +157,7 @@ export const NAV: NavItem[] = [
   },
 ]
 
-// DEXY / KODO AI : retire de la NAV (etait en doublon: top-level + sous-item Alpha).
+// NORI (ex-Dexy/Kodo AI) : retire de la NAV (etait en doublon: top-level + sous-item Alpha). Composant flottant DexyFloat conserve.
 // Devient un bouton flottant transversal (present sur toutes les pages).
 // PASSE 2: quota par plan (free 1-3 req/j, pro X/j, premium illimite).
 // Le composant flottant pointera vers /alpha/dexy (route inchangee pour l'instant).

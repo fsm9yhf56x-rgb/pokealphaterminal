@@ -219,8 +219,8 @@ const FEATURES = [
   },
   {
     icon: 'spark' as const,
-    title: 'Dexy, ton expert cartes',
-    desc: 'Une question sur une carte, un illustrateur, une rareté, un set à compléter ? Dexy répond, en clair, à toute heure.',
+    title: 'Nori, ton experte cartes',
+    desc: 'Une question sur une carte, un illustrateur, une rareté, un set à compléter ? Nori répond, en clair, à toute heure.',
     badge: 'Bientôt',
     live: false,
   },
@@ -417,7 +417,7 @@ export default function LandingPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
 
   // — Tarifs : Pro aligné Pokéitem (hors offre à vie) · Premium = le total
-  const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('yearly')
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly')
 
   // — Offre Early Supporter (-40% a vie Premium, places limitees)
   const [early, setEarly] = useState<{ seatsLeft: number; seatsTotal: number; isOpen: boolean } | null>(null)
@@ -426,14 +426,14 @@ export default function LandingPage() {
   }, [])
   const EARLY_PRICES = { monthly: '5,99 €', yearly: '52,79 €' } as const
   const EARLY_PERMONTH = '4,40 €/mois'
-  const earlyOn = !!early?.isOpen && billing !== 'weekly'
+  const earlyOn = !!early?.isOpen
   const PRICES = {
-    pro: { weekly: '1,99 €', monthly: '3,99 €', yearly: '34,99 €' },
-    premium: { weekly: '4,99 €', monthly: '9,99 €', yearly: '87,99 €' },
+    pro: { monthly: '3,99 €', yearly: '34,99 €' },
+    premium: { monthly: '9,99 €', yearly: '87,99 €' },
   } as const
-  const SUFFIX = { weekly: '/semaine', monthly: '/mois', yearly: '/an' } as const
+  const SUFFIX = { monthly: '/mois', yearly: '/an' } as const
   const PERMONTH = { pro: '2,92 €/mois', premium: '7,33 €/mois' } as const
-  const TRIAL = { weekly: '3 jours offerts', monthly: '3 jours offerts', yearly: '7 jours offerts' } as const
+  const TRIAL = { monthly: '3 jours offerts', yearly: '7 jours offerts' } as const
 
   async function submitWaitlist(source: string) {
     if (status === 'loading') return
@@ -639,11 +639,10 @@ export default function LandingPage() {
       <section className="kc-section" id="pricing">
         <Reveal>
           <span className="kc-section-tag">Tarifs</span>
-          <h2 className="kc-h2">Trois formules, une seule source de vérité.</h2>
+          <h2 className="kc-h2">Commence gratuitement, évolue à ton rythme.</h2>
         </Reveal>
         <Reveal className="kc-billing-wrap">
           <div className="kc-billing" role="tablist">
-            <button className={billing === 'weekly' ? 'kc-bill-on' : ''} onClick={() => setBilling('weekly')}>Hebdo</button>
             <button className={billing === 'monthly' ? 'kc-bill-on' : ''} onClick={() => setBilling('monthly')}>Mensuel</button>
             <button className={billing === 'yearly' ? 'kc-bill-on' : ''} onClick={() => setBilling('yearly')}>
               Annuel <span className="kc-bill-save">−27 %</span>
@@ -680,6 +679,7 @@ export default function LandingPage() {
               <li><Glyph d="check" size={16} /> Tout le plan Gratuit</li>
               <li><Glyph d="check" size={16} /> Cartes <strong>illimitées</strong></li>
               <li><Glyph d="check" size={16} /> Cartes gradées valorisées dans ton portefeuille</li>
+              <li><Glyph d="check" size={16} /> Aperçu « Faut-il la grader ? » (note PSA 10)</li>
               <li><Glyph d="check" size={16} /> PSA Pop Reports</li>
               <li><Glyph d="check" size={16} /> Graphique d’évolution du portefeuille</li>
               <li><Glyph d="check" size={16} /> Statistiques avancées & P&amp;L</li>
@@ -720,13 +720,13 @@ export default function LandingPage() {
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Pro</li>
               <li><Glyph d="check" size={16} /> Prix gradés détaillés — toutes cartes, toutes notes</li>
+              <li><Glyph d="check" size={16} /> Faut-il la grader ? — le calcul complet (note probable, gain net)</li>
             </ul>
             <div className="kc-plan-sublabel">Inclus à leur sortie — sans surcoût</div>
             <ul className="kc-plan-list kc-plan-list-soon">
-              <li><span className="kc-soon-dot">◌</span> Faut-il la grader ? — calcul complet</li>
               <li><span className="kc-soon-dot">◌</span> Bonnes affaires — eBay &amp; Cardmarket</li>
               <li><span className="kc-soon-dot">◌</span> Le marché en direct &amp; tendances</li>
-              <li><span className="kc-soon-dot">◌</span> Dexy illimité + support prioritaire</li>
+              <li><span className="kc-soon-dot">◌</span> Nori, ton experte cartes — en illimité + support prioritaire</li>
             </ul>
             <a href="/signup" className="kc-btn kc-btn-primary kc-btn-block">Passer Premium</a>
             <p className="kc-plan-note">Plusieurs outils arrivent — inclus sans surcoût quand ils sortent.</p>

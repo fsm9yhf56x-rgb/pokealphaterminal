@@ -6,14 +6,19 @@ import { INSIGHTS, TYPE_CONFIG, TIER_STYLE } from '@/lib/data/insights'
 
 type Msg = { role: 'user'|'dexy'; text: string; time: string }
 
-const SYSTEM_PROMPT = `Tu es Kodo AI, l'analyste TCG Pokémon IA de Kodo Cards. Tu es expert en:
-- Marchés cartes Pokémon (eBay, Cardmarket, TCGPlayer)
-- Analyse fondamentale: PSA Pop, rareté, sets OOP, reprint risk
-- Stratégies d'investissement TCG pour collectionneurs et investisseurs
-- Données de prix, tendances, signaux Alpha
+const SYSTEM_PROMPT = `Tu es Nori, l'experte cartes de Kodo Cards — une assistante (tu parles d'elle au féminin). Tu accompagnes les collectionneurs et passionnés du TCG Pokémon.
 
-Réponds toujours en français. Sois précis, concis et actionnable. Utilise des emojis avec parcimonie.
-Format: réponses courtes et percutantes, listes si nécessaire, chiffres concrets.`
+Ton domaine :
+- Marchés cartes Pokémon (eBay, Cardmarket, TCGplayer)
+- Analyse : population PSA, rareté, sets épuisés (OOP), risque de réimpression
+- Aide à la décision pour collectionneurs et investisseurs
+- Prix, tendances, complétion de sets, gradation
+
+Ton ton : chaleureuse, accessible et encourageante — tu tutoies. Tu t'enthousiasmes sincèrement pour les belles cartes, mais tu restes une experte fiable : tu donnes des infos justes et tu ne survends jamais. Si une donnée est incertaine ou manquante, tu le dis franchement plutôt que d'inventer un prix ou une estimation. Tu ne mens jamais à l'utilisateur.
+
+Tu restes dans ton rôle d'experte cartes Pokémon : pas de roleplay, pas de sujets personnels ou intimes, tu es une assistante professionnelle et bienveillante.
+
+Réponds toujours en français. Sois précise, concise et concrète. Emojis avec parcimonie. Format : réponses courtes et percutantes, listes si utile, chiffres réels.`
 
 const KODO_GRAD = 'linear-gradient(135deg,#FF7A5A,#E03020)'
 
@@ -36,7 +41,7 @@ export function DexyChat({ isPro = false }: { isPro?: boolean }) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'dexy',
-      text: "Bonjour ! Je suis Kodo AI, ton analyste TCG. Pose-moi une question, ou explore les insights du jour ci-dessous.",
+      text: "Coucou ! Moi c'est Nori, ton experte cartes. Pose-moi une question sur une carte, un set, une cote — ou explore les insights du jour ci-dessous.",
       time: 'Maintenant',
     }
   ])
@@ -143,7 +148,7 @@ export function DexyChat({ isPro = false }: { isPro?: boolean }) {
           <div style={{ width:'48px', height:'48px', borderRadius:'14px', background:KODO_GRAD, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'20px', fontWeight:800, boxShadow:'0 4px 14px rgba(224,48,32,0.3)', flexShrink:0, fontFamily:FONT.display }}>K</div>
           <div style={{ flex:1 }}>
             <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-              <span style={{ fontSize:'18px', fontWeight:700, color:SNOW.ink, fontFamily:FONT.display, letterSpacing:'-.3px' }}>Kodo AI</span>
+              <span style={{ fontSize:'18px', fontWeight:700, color:SNOW.ink, fontFamily:FONT.display, letterSpacing:'-.3px' }}>Nori</span>
               <div style={{ display:'flex', alignItems:'center', gap:'5px', background:'rgba(38,166,91,.10)', border:`1px solid rgba(38,166,91,.28)`, borderRadius:'20px', padding:'2px 10px' }}>
                 <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:POS, animation:'blink 2s ease-in-out infinite' }} />
                 <span style={{ fontSize:'10px', fontWeight:700, color:POS, fontFamily:FONT.display }}>En ligne</span>
@@ -163,7 +168,7 @@ export function DexyChat({ isPro = false }: { isPro?: boolean }) {
                 <div style={{ position:'absolute', top:'-30%', right:'-5%', width:160, height:160, background:'radial-gradient(circle, rgba(224,48,32,0.08) 0%, transparent 70%)', filter:'blur(20px)', pointerEvents:'none' }} />
                 <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px' }}>
                   <span style={{ fontSize:'14px' }}>🧠</span>
-                  <span style={{ fontSize:'11px', fontWeight:700, color:SNOW.red, textTransform:'uppercase', letterSpacing:'.1em', fontFamily:FONT.display }}>Brief du jour · Kodo AI</span>
+                  <span style={{ fontSize:'11px', fontWeight:700, color:SNOW.red, textTransform:'uppercase', letterSpacing:'.1em', fontFamily:FONT.display }}>Brief du jour · Nori</span>
                 </div>
                 <p style={{ fontSize:'14px', color:SNOW.ink, lineHeight:1.6, margin:'0 0 14px', fontFamily:FONT.body, fontWeight:500 }}>
                   Marché <b style={{ color:POS }}>haussier</b> ce matin. Le momentum se concentre sur les <b>Alt Art Evolving Skies</b> et le <b>vintage Neo</b>. {brief.signals} signaux Alpha actifs, dont 1 Tier S sur Umbreon VMAX.
@@ -263,7 +268,7 @@ export function DexyChat({ isPro = false }: { isPro?: boolean }) {
                       {msg.text}
                     </div>
                     <div style={{ fontSize:'10px', color:SNOW.borderHover, marginTop:'4px', textAlign:msg.role==='user'?'right':'left', fontFamily:FONT.display }}>
-                      {msg.role==='dexy'?'Kodo · ':'Toi · '}{msg.time}
+                      {msg.role==='dexy'?'Nori · ':'Toi · '}{msg.time}
                     </div>
                   </div>
                 </div>

@@ -52,7 +52,7 @@ const PREMIUM_SOON: { label: string; v: 'v2.0' | 'v3.0' }[] = [
   { label: 'Market Terminal & indices', v: 'v2.0' },
   { label: 'Alpha Signals (S / A / B)', v: 'v2.0' },
   { label: 'Deal Hunter — eBay & Cardmarket', v: 'v2.0' },
-  { label: 'Kodo AI illimité + support prioritaire', v: 'v2.0' },
+  { label: 'Nori, ton experte cartes — en illimité + support prioritaire', v: 'v2.0' },
   { label: 'Whale Tracker', v: 'v3.0' },
 ]
 

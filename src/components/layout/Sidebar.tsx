@@ -7,7 +7,7 @@ import { useIsAdmin } from '@/lib/useIsAdmin'
 const NAV = [
   { href: '/terminal', label: 'Market Terminal', icon: '◈', desc: 'Indices & tendances'  },
   { href: '/signals',  label: 'Alpha Signals',   icon: '◆', desc: 'Cartes sous-évaluées' },
-  { href: '/dexy',     label: 'Kodo AI',         icon: '✦', desc: 'Analyste TCG'         },
+  { href: '/dexy',     label: 'Nori',         icon: '✦', desc: 'Experte cartes'         },
   { href: '/whales',   label: 'Whale Tracker',   icon: '◉', desc: 'Gros collectionneurs'  },
   { href: '/deals',    label: 'Deal Hunter',     icon: '◎', desc: 'Meilleures affaires'   },
 ] as const

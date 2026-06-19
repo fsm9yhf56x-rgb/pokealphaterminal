@@ -298,7 +298,7 @@ export default function AlphaSignals() {
                           <div style={{position:'absolute',top:0,left:0,width:'3px',height:'100%',background:tc.grad}}/>
                           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
                             <div style={{width:'22px',height:'22px',borderRadius:'7px',background:'linear-gradient(135deg,#FF7A5A,#E03020)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',fontWeight:800,color:'#fff'}}>D</div>
-                            <span style={{fontSize:'10px',fontWeight:700,color:SNOW.red,textTransform:'uppercase',letterSpacing:'.1em',fontFamily:FONT.display}}>Analyse Kodo AI</span>
+                            <span style={{fontSize:'10px',fontWeight:700,color:SNOW.red,textTransform:'uppercase',letterSpacing:'.1em',fontFamily:FONT.display}}>Analyse Nori</span>
                           </div>
                           <p style={{fontSize:'13px',color:SNOW.inkSoft,lineHeight:1.7,margin:0,fontFamily:FONT.body}}>{sig.aiReason}</p>
                         </div>

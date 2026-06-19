@@ -20,7 +20,7 @@ const DAILY: Mission[] = [
   { id:'d1', title:'Consulter le Market Terminal',  desc:'Ouvre le terminal marché et consulte les indices du jour.',          xp:50,  icon:'📊', category:'daily',  progress:1, total:1, done:true,  locked:false },
   { id:'d2', title:'Analyser 3 signaux Alpha',       desc:'Ouvre et lis le détail de 3 signaux dans la section Alpha.',         xp:80,  icon:'⚡', category:'daily',  progress:1, total:3, done:false, locked:false },
   { id:'d3', title:'Ajouter une carte au portfolio', desc:'Ajoute ou modifie une carte dans ton portfolio holdings.',           xp:60,  icon:'🃏', category:'daily',  progress:0, total:1, done:false, locked:false },
-  { id:'d4', title:'Poser une question à Kodo AI',      desc:'Utilise Kodo AI pour analyser une carte ou une tendance marché.',   xp:100, icon:'🤖', category:'daily',  progress:0, total:1, done:false, locked:false },
+  { id:'d4', title:'Poser une question à Nori',      desc:'Utilise Nori, ton experte cartes, pour analyser une carte ou une tendance marché.',   xp:100, icon:'🤖', category:'daily',  progress:0, total:1, done:false, locked:false },
 ]
 
 const WEEKLY: Mission[] = [

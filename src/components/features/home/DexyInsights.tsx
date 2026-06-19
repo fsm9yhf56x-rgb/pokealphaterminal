@@ -39,7 +39,7 @@ export function DexyInsights() {
             <h1 style={{ fontSize:'26px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)', letterSpacing:'-0.5px', margin:'0 0 5px' }}>Kodo Insights</h1>
             <div style={{ fontSize:'12px', color:'#888' }}>
               {unread > 0 && <><span style={{ fontWeight:700, color:'#E03020' }}>{unread} non lus</span> · </>}
-              {insights.length} insights · mis à jour en continu par Kodo AI
+              {insights.length} insights · mis à jour en continu par Nori
             </div>
           </div>
           <button onClick={()=>setInsights(prev=>prev.map(i=>({...i,read:true})))} style={{ padding:'7px 16px', borderRadius:'999px', background:'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 100%)', backdropFilter:'blur(18px) saturate(180%)', WebkitBackdropFilter:'blur(18px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.6)', fontSize:'12px', color:'#48484A', cursor:'pointer', fontFamily:'var(--font-display)', fontWeight:600, boxShadow:'0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}>

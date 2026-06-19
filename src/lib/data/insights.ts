@@ -1,4 +1,4 @@
-/** Source unique des Kodo Insights — partagée par /home/insights et Kodo AI. */
+/** Source unique des Kodo Insights — partagée par /home/insights et Nori. */
 
 export type Insight = {
   id: string

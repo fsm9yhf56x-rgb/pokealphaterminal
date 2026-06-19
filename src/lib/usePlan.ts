@@ -8,7 +8,7 @@ export type Plan = 'free' | 'pro' | 'premium'
  * Source de vérité côté client pour le forfait de l'utilisateur.
  *   - free    : portfolio + prix (max 500 cartes)
  *   - pro     : cartes illimitées + stats/P&L/export
- *   - premium : le total (Market, Alpha, Spreads, Whale, Dexy, PSA Pop)
+ *   - premium : le total (Market, Alpha, Spreads, Whale, Nori, PSA Pop)
  */
 export function usePlan() {
   const auth = useAuth() as {

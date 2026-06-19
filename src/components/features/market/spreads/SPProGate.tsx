@@ -137,7 +137,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
         <Chip>Tous les spreads S/A/B</Chip>
         <Chip>Alertes temps réel</Chip>
         <Chip>Whale Tracker</Chip>
-        <Chip>Kodo AI illimité</Chip>
+        <Chip>Nori illimitée</Chip>
         <Chip>Export portfolio</Chip>
       </div>
     </div>

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     default: 'Kodo Cards',
     template: '%s | Kodo Cards',
   },
-  description: 'Le Bloomberg des cartes Pokémon — prix temps réel, signaux IA, détection d\'opportunités.',
+  description: 'Réunis toute ta collection Pokémon, suis sa valeur au jour le jour et termine tes sets. FR, EN et JP.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   openGraph: {
     type: 'website',

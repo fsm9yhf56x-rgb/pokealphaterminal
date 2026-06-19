@@ -177,9 +177,9 @@ export function Signals({ isPro = false }: { isPro?: boolean }) {
                   <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.88)', backdropFilter:'blur(2px)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'14px' }}>
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', textAlign:'center', padding:'20px' }}>
                       <div style={{ fontSize:'14px' }}>🔒</div>
-                      <div style={{ fontSize:'13px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Signal Tier {sig.tier} — Pro</div>
-                      <div style={{ fontSize:'12px', color:'#888', maxWidth:'220px', lineHeight:1.5 }}>Accède à tous les signaux avec un abonnement Pro</div>
-                      <button onClick={() => router.push('/signup')} style={{ padding:'7px 18px', borderRadius:'20px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Passer Pro →</button>
+                      <div style={{ fontSize:'13px', fontWeight:600, color:'#111', fontFamily:'var(--font-display)' }}>Signal Tier {sig.tier} — Premium</div>
+                      <div style={{ fontSize:'12px', color:'#888', maxWidth:'220px', lineHeight:1.5 }}>Accède à tous les signaux avec l’abonnement Premium</div>
+                      <button onClick={() => router.push('/signup')} style={{ padding:'7px 18px', borderRadius:'20px', background:'#111', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>Passer Premium →</button>
                     </div>
                   </div>
                 )}

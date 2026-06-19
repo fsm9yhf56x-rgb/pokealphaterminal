@@ -42,7 +42,7 @@ const CFG: Record<string, { title:string; desc:string; preview:string; features:
   dexy: {
     title:   'Nori',
     desc:    "Ton experte cartes, disponible 24h/24, propulsée par Claude. Analyse de cartes, comparaisons d'investissement, stratégies portfolio — avec contexte de marché réel intégré.",
-    preview: 'Requêtes illimitées avec Pro',
+    preview: 'Requêtes illimitées avec Premium',
     features: [
       { icon:'🤖', label:'Propulsé par Claude (Anthropic)' },
       { icon:'💬', label:'Requêtes illimitées' },
@@ -93,7 +93,7 @@ export function ProGate({ page, children }: { page: keyof typeof CFG; children: 
             className="pro-cta"
             onClick={() => router.push('/signup')}
             style={{ padding:'15px 40px', borderRadius:'14px', background:'linear-gradient(135deg,#E03020,#FF4433)', color:'#fff', border:'none', fontSize:'15px', fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 6px 20px rgba(224,48,32,0.45)', letterSpacing:'-0.2px', transition:'all 0.15s' }}>
-            Passer Pro — €9,99 / mois
+            Passer Premium — €9,99 / mois
           </button>
           <div style={{ marginTop:'10px', fontSize:'11px', color:'rgba(255,255,255,0.2)', fontFamily:'var(--font-display)' }}>Sans engagement · Annulation à tout moment</div>
 

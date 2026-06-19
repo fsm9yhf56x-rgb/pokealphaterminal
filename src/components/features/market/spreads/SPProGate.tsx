@@ -76,7 +76,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
             marginBottom: '12px',
           }}>
             <span>◆</span>
-            Pro · Spreads &amp; Signals
+            Premium · Spreads &amp; Signals
           </div>
 
           <div style={{
@@ -97,7 +97,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
             fontFamily: 'var(--font-body)',
             marginBottom: '4px',
           }}>
-            Débloquez tous les spreads en passant à Pro. Plus l&apos;accès anticipé aux Alpha Signals (sous-cotation, momentum, set heat — bientôt disponibles).
+            Débloquez tous les spreads en passant à Premium. Plus l&apos;accès anticipé aux Alpha Signals (sous-cotation, momentum, set heat — bientôt disponibles).
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export function SPProGate({ hiddenCount }: { hiddenCount: number }) {
           flexShrink: 0,
         }}>
           <GlassButton size="lg" onClick={() => router.push('/pricing')}>
-            Découvrir Pro
+            Découvrir Premium
           </GlassButton>
 
           <div style={{

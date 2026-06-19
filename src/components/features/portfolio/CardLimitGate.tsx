@@ -47,7 +47,8 @@ export function CardLimitGate({ gate, onClose }: Props) {
             background:'#E03020', color:'#fff',
             boxShadow:'0 4px 14px rgba(224,48,32,0.28)',
           }}>
-            Passer Pro — cartes illimitées
+            {/* prix Pro: 3,99 EUR/mois (cf. LandingPage PRICES.pro.monthly) */}
+            Passer Pro — 3,99 €/mois
           </a>
           <a href="/abonnement" style={{
             display:'flex', alignItems:'center', justifyContent:'center', gap:8,

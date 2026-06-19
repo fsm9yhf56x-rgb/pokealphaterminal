@@ -22,6 +22,8 @@ import { GradedPriceTable } from '@/components/features/prices/GradedPriceTable'
 import { SpotlightV2 } from '@/components/features/spotlight/SpotlightV2'
 import { SNOW, PERF } from '@/lib/design/colors'
 import { ShareSheet } from './ShareSheet'
+import { CardLimitGate } from './CardLimitGate'
+import { FREE_CARD_LIMIT } from '@/lib/early'
 import { SpotDrawer } from './SpotDrawer'
 import { WrappedView } from './WrappedView'
 import { GlassButton } from '@/components/ui/GlassButton'
@@ -253,6 +255,7 @@ export function Holdings() {
   const [vitrineSearch, setVitrineSearch] = useState('')
   const [vitrineFilter, setVitrineFilter] = useState('all')
   const [spotCard,    setSpotCard]    = useState<CardItem|null>(null)
+  const [gate,        setGate]        = useState<{ current: number; limit: number } | null>(null)
   useEffect(() => {
     if (spotCard) {
       document.body.classList.add('kc-modal-open')
@@ -1181,7 +1184,8 @@ export function Holdings() {
       const code = (error as any).code
       if (code === 'free_limit') {
         const lim = (error as any).limit ?? 800
-        showToast('Limite de ' + lim + ' cartes atteinte sur le plan gratuit')
+        // Ouvre la modale de conversion (au lieu d'un simple toast) : moment cle Free -> Pro.
+        setGate({ current: lim, limit: lim })
       } else {
         console.error('[KC PERSIST] insert failed:', error)
         showToast('Erreur de sauvegarde, carte non ajoutée')
@@ -1283,6 +1287,7 @@ export function Holdings() {
 
   return (
     <>
+      <CardLimitGate gate={gate} onClose={() => setGate(null)} />
     <div>
       <style dangerouslySetInnerHTML={{__html:`
         @keyframes fadeUp    { 0%{opacity:0;transform:translateY(24px) scale(.97)} 60%{opacity:1;transform:translateY(-4px) scale(1.005)} 100%{opacity:1;transform:translateY(0) scale(1)} }
@@ -2216,6 +2221,32 @@ export function Holdings() {
                 )}
                 {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commence ta collection</span>}
               </div>
+              {!isPro && portfolio.length > 0 && (() => {
+                const used = portfolio.length
+                const pctRaw = (used / FREE_CARD_LIMIT) * 100
+                const pct = Math.min(100, pctRaw)
+                const near = pctRaw >= 85
+                const remaining = Math.max(0, FREE_CARD_LIMIT - used)
+                const barColor = pctRaw >= 85 ? '#E03020' : pctRaw >= 75 ? '#F59E0B' : '#8E8E93'
+                return (
+                  <div style={{ marginTop: 14, maxWidth: 340 }}>
+                    <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize:'11px', fontWeight:600, color:'#6E6E73', fontFamily:'var(--font-data)', letterSpacing:'.02em' }}>
+                        {used} / {FREE_CARD_LIMIT} cartes
+                      </span>
+                      <span style={{ fontSize:'10px', fontWeight:600, color: barColor, fontFamily:'var(--font-data)' }}>
+                        {Math.round(pctRaw)}%
+                      </span>
+                    </div>
+                    <LiquidProgress pct={pct} color={barColor} height={8} />
+                    {near && (
+                      <a href="/abonnement" style={{ display:'inline-flex', alignItems:'center', gap:5, marginTop:8, fontSize:'12px', fontWeight:600, color:'#E03020', textDecoration:'none', fontFamily:'var(--font-display)' }}>
+                        {remaining > 0 ? `Plus que ${remaining} carte${remaining !== 1 ? 's' : ''} — passe Pro pour l'illimité` : "Passe Pro pour un portfolio illimité"} →
+                      </a>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
             {show.pnl&&portfolio.length>0&&(
               <div className='header-sparkline' style={{ flex:1, minWidth:200, maxWidth:580, display:'flex', flexDirection:'column' as const, justifyContent:'center', padding:'0 8px' }}>

@@ -30,13 +30,13 @@ export function CardLimitGate({ gate, onClose }: Props) {
         }}>×</button>
 
         <div style={{ fontSize:11, fontWeight:700, color:'#E03020', letterSpacing:'.12em', fontFamily:'var(--font-data)', marginBottom:10, textTransform:'uppercase' }}>
-          Limite atteinte
+          Plan Gratuit
         </div>
         <h2 style={{ fontFamily:'var(--font-display)', fontSize:23, fontWeight:700, color:'#1D1D1F', margin:'0 0 8px', letterSpacing:'-0.5px', lineHeight:1.15 }}>
-          Tu as atteint {gate.limit} cartes
+          Belle collection !
         </h2>
         <p style={{ fontFamily:'var(--font-body, sans-serif)', fontSize:14, color:'#6E6E73', lineHeight:1.5, margin:'0 0 22px' }}>
-          Le plan Gratuit te permet de suivre jusqu'à {gate.limit} cartes. Passe en illimité pour continuer à enrichir ta collection sans limite.
+          Tu as rempli ton espace Gratuit — {gate.limit} cartes. Passe Pro pour continuer à l'enrichir sans limite.
         </p>
 
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>

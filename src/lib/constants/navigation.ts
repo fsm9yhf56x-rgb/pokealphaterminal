@@ -9,6 +9,8 @@ export type NavItem = {
   label:    string
   href:     string
   pro?:     boolean
+  // PASSE 2 (axe plan): remplacer `pro?: boolean` par `tier?: 'pro' | 'premium'`
+  // sur cet item ET sur les enfants, puis adapter useNav + TopNav/SubMenu/MobileNav.
   soon?:    SoonInfo
   collectorHide?: boolean
   collectorOnly?: boolean
@@ -33,20 +35,26 @@ export const NAV: NavItem[] = [
       { label:'Performance',  href:'/portfolio/performance', collectorHide: true },
       { label:'Allocations',  href:'/portfolio/allocation'  },
       { label:'Objectifs',    href:'/portfolio/objectifs'   },
+      // PASSE 2: ajouter "Graded.ev" ici. Teaser (tier:'pro') -> moteur complet (tier:'premium').
+      // C'est le 2e trigger de conversion Pro->Premium (le plus tangible).
     ],
   },
   {
     label: 'Pokedesk',
     href:  '/cartes',
     children: [
-      { label:'Cartes', href:'/cartes'        },
-      { label:'Scelles',      href:'/cartes/scelles'},
-      { label:'Jeux Video',    href:'/cartes/jeux'},
+      { label:'Cartes',     href:'/cartes'        },
+      { label:'Scelles',    href:'/cartes/scelles'},
+      { label:'Jeux Video', href:'/cartes/jeux'   },
     ],
   },
   {
+    // MARKET = une seule destination. Alpha a ete dissous ici (couche "Signaux").
+    // Tendances + Movers = descriptif (tous plans). Signaux = premium (preview SOON).
+    // PASSE 2: la page /market affichera Tendances/Movers en clair + Signaux floutes
+    // avec preview => 1er point de contact du trigger Pro->Premium cote Market.
     label: 'Market',
-    href:  '/market/explorer',
+    href:  '/market',
     collectorHide: true,
     children: [
       {
@@ -67,6 +75,40 @@ export const NAV: NavItem[] = [
         label: 'Explorer',
         href:  '/market/explorer',
       },
+      // ── Couche SIGNAUX (ex-Alpha) — premium, toutes SOON v2.0 ──
+      // PASSE 2: marquer ce groupe tier:'premium'.
+      {
+        label: 'Sous-evalues',
+        href:  '/market/sous-evalues',
+        pro:   true,
+        soon: {
+          feature: 'Alpha Signals',
+          version: 'v2.0',
+          description: 'Cartes sous-evaluees detectees par IA, classees S / A / B avec score de confiance.',
+          bullets: [
+            'Tier S: opportunites premium (gap > 25%, confidence > 80)',
+            'Tier A: opportunites moyennes solides',
+            'Tier B: opportunites a surveiller',
+            'Notifications push instantanees',
+          ],
+        },
+      },
+      {
+        label: 'Deal Hunter',
+        href:  '/market/deals',
+        pro:   true,
+        soon: {
+          feature: 'Deal Hunter',
+          version: 'v2.0',
+          description: 'Scanne automatiquement eBay et Cardmarket pour faire remonter les cartes sous-cotees.',
+          bullets: [
+            'Mise a jour toutes les 5 minutes',
+            'Filtres par etat / langue / source',
+            'Sauvegarde des deals favoris',
+            'Click direct vers le vendeur',
+          ],
+        },
+      },
       {
         label: 'Spreads',
         href:  '/market/spreads',
@@ -83,58 +125,10 @@ export const NAV: NavItem[] = [
           ],
         },
       },
-    ],
-  },
-  {
-    label: 'Alpha',
-    href:  '/alpha',
-    pro:   true,
-    collectorHide: true,
-    soon: {
-      feature: 'Alpha Signals',
-      version: 'v2.0',
-      description: 'Detection IA des opportunites avant le marche. 4 modules: Signals, Deal Hunter, Whale Tracker, Kodo AI.',
-      bullets: [
-        'Signals: cartes sous-evaluees detectees par IA (S/A/B tier)',
-        'Deal Hunter: scan eBay/Cardmarket automatique',
-        'Whale Tracker: mouvements des gros collectionneurs',
-        'Kodo AI: analyste TCG 24/7 (Claude API)',
-      ],
-    },
-    children: [
-      {
-        label: 'Signals',
-        href:  '/alpha',
-        soon: {
-          feature: 'Alpha Signals',
-          version: 'v2.0',
-          description: 'Cartes sous-evaluees detectees par IA, classees S / A / B avec score de confiance.',
-          bullets: [
-            'Tier S: opportunites premium (gap > 25%, confidence > 80)',
-            'Tier A: opportunites moyennes solides',
-            'Tier B: opportunites a surveiller',
-            'Notifications push instantanees',
-          ],
-        },
-      },
-      {
-        label: 'Deal Hunter',
-        href:  '/alpha/deals',
-        soon: {
-          feature: 'Deal Hunter',
-          version: 'v2.0',
-          description: 'Scanne automatiquement eBay et Cardmarket pour faire remonter les cartes sous-cotees.',
-          bullets: [
-            'Mise a jour toutes les 5 minutes',
-            'Filtres par etat / langue / source',
-            'Sauvegarde des deals favoris',
-            'Click direct vers le vendeur',
-          ],
-        },
-      },
       {
         label: 'Whale Tracker',
-        href:  '/alpha/whales',
+        href:  '/market/whales',
+        pro:   true,
         soon: {
           feature: 'Whale Tracker',
           version: 'v2.0',
@@ -144,23 +138,6 @@ export const NAV: NavItem[] = [
             'Notifications quand un whale move',
             'Kodo AI genere un signal sur chaque move',
             'Historique des transactions sur 90j',
-          ],
-        },
-      },
-      {
-        label: 'Kodo AI',
-        href:  '/alpha/dexy',
-        pro:   true,
-        soon: {
-          feature: 'Kodo AI',
-          version: 'v2.0',
-          description: 'Ton analyste TCG personnel propulse par Claude. Insights quotidiens proactifs + chat illimite sur n\'importe quelle question marche.',
-          bullets: [
-            'Resume marche personnalise chaque matin (proactif)',
-            'Detection automatique des mouvements anormaux',
-            'Chat 24/7 avec expert TCG (Claude API)',
-            'Conseils grading, investissement, timing',
-            'Memoire conversation contextuelle + alertes ciblees',
           ],
         },
       },
@@ -178,19 +155,9 @@ export const NAV: NavItem[] = [
       { label:'Curiosités',  href:'/culture/curiosites' },
     ],
   },
-  {
-    label: 'Kodo AI',
-    href:  '/alpha/dexy',
-    soon: {
-      feature: 'Kodo AI',
-      version: 'v2.0',
-      description: 'Ton assistant collection propulse par Claude. Questions sur les cartes, illustrateurs, completion, raretes — chat illimite.',
-      bullets: [
-        'Reconnaissance carte, illustrateur, set et rarete',
-        'Aide a la completion de tes mastersets',
-        'Anecdotes et lore des cartes iconiques',
-        'Chat 24/7 avec expert TCG (Claude API)',
-      ],
-    },
-  },
 ]
+
+// DEXY / KODO AI : retire de la NAV (etait en doublon: top-level + sous-item Alpha).
+// Devient un bouton flottant transversal (present sur toutes les pages).
+// PASSE 2: quota par plan (free 1-3 req/j, pro X/j, premium illimite).
+// Le composant flottant pointera vers /alpha/dexy (route inchangee pour l'instant).

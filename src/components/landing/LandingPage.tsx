@@ -205,56 +205,61 @@ function Glyph({ d, size = 22 }: { d: keyof typeof Icon; size?: number }) {
 const FEATURES = [
   {
     icon: 'book' as const,
-    title: 'Encyclopédie & Prix',
-    desc: 'Chaque carte, FR comme EN, avec sa vraie cote. Historique, états, prix gradés PSA — réunis au même endroit.',
+    title: 'Toutes les cartes',
+    desc: 'Chaque carte, en français, anglais et japonais, avec sa vraie cote du jour. Historique, états, versions gradées — au même endroit.',
     badge: 'Disponible',
     live: true,
   },
   {
     icon: 'chart' as const,
-    title: 'Suivi de portefeuille',
-    desc: 'Vos holdings, votre ROI réel, votre valeur nette. Votre collection devient un actif que vous pilotez.',
+    title: 'Ta collection',
+    desc: 'Ajoute tes cartes, vois ce qu’elles valent et suis ta progression set par set. Toute ta collection, réunie et estimée.',
     badge: 'Disponible',
     live: true,
   },
   {
-    icon: 'bolt' as const,
-    title: 'Alpha Signals',
-    desc: 'L’IA repère les cartes sous-évaluées avant le marché. Score S/A/B, raison claire, objectif de prix chiffré.',
-    badge: 'Bientôt · v2.0',
-    live: false,
-  },
-  {
     icon: 'spark' as const,
-    title: 'Kodo AI',
-    desc: 'Un analyste TCG 24/7. Gradation, timing, thèse d’achat — des réponses, pas des graphiques à déchiffrer.',
-    badge: 'Bientôt · v2.0',
+    title: 'Dexy, ton expert cartes',
+    desc: 'Une question sur une carte, un illustrateur, une rareté, un set à compléter ? Dexy répond, en clair, à toute heure.',
+    badge: 'Bientôt',
     live: false,
   },
   {
-    icon: 'whale' as const,
-    title: 'Whale Tracker',
-    desc: 'Ce que les plus gros collectionneurs accumulent, en direct. Lisez le marché par ceux qui le font bouger.',
-    badge: 'Bientôt · v3.0',
+    icon: 'bolt' as const,
+    title: 'Bonnes affaires',
+    desc: 'On surveille eBay et Cardmarket pour toi et on fait remonter les cartes sous leur cote. Les occasions viennent à toi.',
+    badge: 'Bientôt',
     live: false,
   },
   {
     icon: 'target' as const,
-    title: 'Deal Hunter',
-    desc: 'Scan permanent eBay & Cardmarket. Les bonnes affaires arrivent à vous, déjà triées et filtrées.',
-    badge: 'Bientôt · v2.0',
+    title: 'Faut-il la grader ?',
+    desc: 'Avant d’envoyer une carte en gradation, vois ce qu’elle pourrait valoir selon la note. De quoi décider sans se tromper.',
+    badge: 'Bientôt',
+    live: false,
+  },
+  {
+    icon: 'whale' as const,
+    title: 'Le marché en direct',
+    desc: 'Les tendances, les cartes qui montent, ce qui bouge. Garde une longueur d’avance sur le marché.',
+    badge: 'Bientôt',
     live: false,
   },
 ]
 
 const PERSONAS = [
-  { tag: 'Le Gardien', sub: 'Collectionneur', line: 'Finir le master set, valoriser son musée.' },
-  { tag: 'Le Chasseur', sub: 'Trader', line: 'Arbitrer, sniper, encaisser vite.' },
-  { tag: 'La Baleine', sub: 'Investisseur', line: 'Piloter un patrimoine, sécuriser le capital.' },
-  { tag: 'Grading Hunter', sub: 'Gradation', line: 'Acheter raw, sortir en 10, maximiser le yield.' },
-  { tag: 'Le Seller', sub: 'Revendeur', line: 'Une source de vérité pour fixer ses prix.' },
-  { tag: 'Trend Follower', sub: 'Hype', line: 'Entrer avant la masse, sortir avant le top.' },
+  { tag: 'Tu complètes tes sets', icon: 'book' as const, line: 'Vois où tu en es, set par set, et repère les cartes qui te manquent encore.' },
+  { tag: 'Tu y tiens', icon: 'shield' as const, line: 'Garde toute ta collection au même endroit et suis sa valeur au fil du temps.' },
+  { tag: 'Tu achètes & revends', icon: 'chart' as const, line: 'Les vrais prix du marché, pour acheter et céder une carte au juste prix.' },
+  { tag: 'Tu fais grader', icon: 'target' as const, line: 'Sache si une carte vaut le coup d’être gradée avant de l’envoyer.' },
 ]
+
+const COLLECTION_PREVIEW = [
+  { n: 'Dracaufeu', s: 'Set de Base · FR', p: '3 381 €' },
+  { n: 'Tortank',   s: 'Set de Base · FR', p: '540 €'   },
+  { n: 'Mewtwo',    s: 'Set de Base · holo', p: '188 €' },
+  { n: 'Léviator',  s: 'Néo · 1re éd.', p: '412 €'      },
+] as const
 
 const TICKER = [
   { n: 'Dracaufeu', s: 'Base FR · PSA 9', p: '3 381 €', up: true, d: '+4,2 %' },
@@ -270,19 +275,19 @@ const TICKER = [
 const FAQ = [
   {
     q: 'C’est vraiment gratuit ?',
-    a: 'Oui. L’encyclopédie, les prix et le suivi de portefeuille sont gratuits, sans carte bancaire. Le plan Pro débloque les outils avancés à venir.',
+    a: 'Oui. Suivre tes cartes, voir leur cote et gérer ta collection, c’est gratuit et sans carte bancaire. Les formules payantes débloquent les outils avancés.',
   },
   {
     q: 'D’où viennent les prix ?',
     a: 'Agrégation des sources de référence du marché — eBay, Cardmarket, PSA et PokeTrace — consolidées et mises à jour chaque jour.',
   },
   {
-    q: 'Les cartes françaises sont-elles couvertes ?',
-    a: 'Oui, avec une cote FR native. Pas une simple conversion du prix US : la spécificité du marché français est traitée pour elle-même.',
+    q: 'Quels jeux et quelles langues ?',
+    a: 'Pokémon pour commencer, en français, anglais et japonais. D’autres jeux suivront. Les cartes françaises ont leur vraie cote, pas une conversion du prix américain.',
   },
   {
-    q: 'Quand arrivent le Terminal et les signaux IA ?',
-    a: 'En cours de déploiement (v2.0 et v3.0). Rejoignez l’accès anticipé pour être prévenu en premier et tester avant tout le monde.',
+    q: 'Et les nouveautés à venir ?',
+    a: 'On ajoute régulièrement de nouvelles fonctionnalités. Crée ton compte pour en profiter dès qu’elles arrivent.',
   },
 ]
 
@@ -370,14 +375,14 @@ function TerminalPreview() {
         <span className="kc-dot" />
         <span className="kc-dot" />
         <span className="kc-dot" />
-        <span className="kc-terminal-title">MARKET TERMINAL</span>
+        <span className="kc-terminal-title">MA COLLECTION</span>
         <span className="kc-live">
-          <i /> LIVE
+          <i /> À JOUR
         </span>
       </div>
 
       <div className="kc-terminal-rows">
-        {TICKER.slice(0, 4).map((r) => (
+        {COLLECTION_PREVIEW.map((r) => (
           <div key={r.n} className="kc-trow">
             <div className="kc-trow-l">
               <div className="kc-trow-name">{r.n}</div>
@@ -385,12 +390,6 @@ function TerminalPreview() {
             </div>
             <div className="kc-trow-r">
               <div className="kc-trow-price">{r.p}</div>
-              <div
-                className="kc-trow-delta"
-                style={{ color: r.up ? SNOW.green : SNOW.accent }}
-              >
-                {r.d}
-              </div>
             </div>
           </div>
         ))}
@@ -398,12 +397,12 @@ function TerminalPreview() {
 
       <div className="kc-alpha">
         <div className="kc-alpha-head">
-          <span className="kc-tier">S</span>
-          <span className="kc-alpha-title">ALPHA SIGNAL</span>
-          <span className="kc-alpha-conf">conf. 92 %</span>
+          <span className="kc-alpha-title">SET DE BASE · FR</span>
+          <span className="kc-alpha-conf">93 / 102</span>
         </div>
         <div className="kc-alpha-body">
-          Sous-évaluée de <strong style={{ color: SNOW.green }}>+34 %</strong> vs cote — objectif 250 €
+          <div className="kc-prog"><div className="kc-prog-bar" style={{ width: '91%' }} /></div>
+          <span>Plus que <strong style={{ color: SNOW.accent }}>9 cartes</strong> pour compléter</span>
         </div>
       </div>
     </div>
@@ -466,19 +465,19 @@ export default function LandingPage() {
         <div className="kc-hero-grid">
           <div className="kc-hero-copy">
             <Reveal>
-              <span className="kc-eyebrow">Intelligence de marché Pokémon TCG</span>
+              <span className="kc-eyebrow">Ta collection Pokémon, enfin réunie</span>
             </Reveal>
             <Reveal delay={80}>
               <h1 className="kc-h1">
-                Vos cartes ont une vraie valeur.{' '}
-                <span className="kc-grad">Prouvez-la.</span>
+                Toutes tes cartes.{' '}
+                <span className="kc-grad">Leur vraie valeur.</span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
               <p className="kc-sub">
-                Cote FR native, prix consolidés eBay · Cardmarket · PSA et suivi de
-                portefeuille en temps réel. L’intelligence de marché que 95 % des
-                collectionneurs n’ont pas encore.
+                Ajoute tes cartes, vois ce qu’elles valent au jour le jour et
+                termine tes sets. En français, anglais et japonais — d’autres
+                jeux bientôt.
               </p>
             </Reveal>
             <Reveal delay={240}>
@@ -495,7 +494,7 @@ export default function LandingPage() {
             <Reveal delay={320}>
               <p className="kc-trust">
                 <Glyph d="shield" size={15} />
-                Gratuit jusqu’à 500 cartes · sans carte bancaire · mis à jour chaque jour.
+                Gratuit jusqu’à 800 cartes · sans carte bancaire · mis à jour chaque jour.
               </p>
             </Reveal>
           </div>
@@ -507,19 +506,6 @@ export default function LandingPage() {
           </Reveal>
         </div>
       </section>
-
-      {/* ── TICKER ─────────────────────────────────────────────── */}
-      <div className="kc-ticker" aria-hidden>
-        <div className="kc-ticker-track">
-          {[...TICKER, ...TICKER].map((r, i) => (
-            <span key={i} className="kc-tick">
-              <b>{r.n}</b>
-              <span>{r.p}</span>
-              <em style={{ color: r.up ? SNOW.green : SNOW.accent }}>{r.d}</em>
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* ── STATS ──────────────────────────────────────────────── */}
       <section className="kc-stats">
@@ -563,19 +549,19 @@ export default function LandingPage() {
           <Reveal className="kc-ps-col kc-ps-problem" style={GLASS} delay={60}>
             <h3>Le problème</h3>
             <ul>
-              <li>Prix éparpillés sur eBay, Cardmarket, TCGPlayer — aucune source de vérité.</li>
-              <li>Décisions à l’intuition, au feeling, parfois à la chance.</li>
-              <li>Impossible de repérer une carte sous-évaluée systématiquement.</li>
-              <li>Les mouvements des gros acteurs restent invisibles.</li>
+              <li>Les prix sont éparpillés sur eBay, Cardmarket, TCGplayer — aucune source fiable.</li>
+              <li>Tu ne sais pas vraiment ce que vaut ta collection.</li>
+              <li>Suivre l’avancement de tes sets, c’est un casse-tête.</li>
+              <li>Une carte française ne vaut pas son équivalent US — et personne ne le dit clairement.</li>
             </ul>
           </Reveal>
           <Reveal className="kc-ps-col kc-ps-solution" style={GLASS} delay={140}>
             <h3>Avec Kodo Cards</h3>
             <ul>
-              <li>Un terminal unifié : prix consolidés, historique, conditions, gradés PSA.</li>
-              <li>Des signaux IA qui détectent l’opportunité avant qu’elle ne soit publique.</li>
-              <li>Un portefeuille qui calcule votre ROI réel et votre valeur nette.</li>
-              <li>Une lecture du marché, pas une suite de captures d’écran.</li>
+              <li>Toutes tes cartes au même endroit, avec leur vraie cote du jour.</li>
+              <li>La valeur de ta collection, claire et à jour.</li>
+              <li>Ta progression set par set, d’un coup d’œil.</li>
+              <li>Les cartes FR, EN et JP — chacune à sa juste valeur.</li>
             </ul>
           </Reveal>
         </div>
@@ -585,7 +571,7 @@ export default function LandingPage() {
       <section className="kc-section" id="features">
         <Reveal>
           <span className="kc-section-tag">Le produit</span>
-          <h2 className="kc-h2">Tout le marché, dans une seule fenêtre.</h2>
+          <h2 className="kc-h2">Tout ce qu’il te faut, au même endroit.</h2>
         </Reveal>
         <div className="kc-grid-3">
           {FEATURES.map((f, i) => (
@@ -609,24 +595,24 @@ export default function LandingPage() {
       {/* ── SPÉCIAL MARCHÉ FRANÇAIS ───────────────────────────── */}
       <section className="kc-section" id="france">
         <Reveal>
-          <span className="kc-section-tag">Spécial marché français</span>
-          <h2 className="kc-h2">La cote FR, traitée pour ce qu’elle est.</h2>
+          <span className="kc-section-tag">Toutes les langues</span>
+          <h2 className="kc-h2">Chaque langue a sa vraie valeur.</h2>
         </Reveal>
         <div className="kc-grid-3">
           <Reveal className="kc-feature" style={GLASS}>
             <div className="kc-feature-icon" data-live={true}><Glyph d="book" /></div>
-            <div className="kc-feature-head"><h3>Souveraineté de la langue</h3></div>
-            <p>Le prix d’une carte FR n’est pas une conversion du prix US — on le suit pour lui-même. Ex. : un Dracaufeu Set de Base FR PSA 9, suivi à 3 381 €. La donnée, pas l’estimation.</p>
+            <div className="kc-feature-head"><h3>La cote FR, pour de vrai</h3></div>
+            <p>Le prix d’une carte française n’est pas une conversion du prix US : on le suit pour lui-même. Un Dracaufeu Set de Base FR, c’est sa propre cote — pas une estimation.</p>
           </Reveal>
           <Reveal className="kc-feature" style={GLASS} delay={80}>
             <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
-            <div className="kc-feature-head"><h3>Arbitre neutre des certificateurs</h3></div>
-            <p>PSA, PCA, CCC — on vous dit lequel offre la meilleure liquidité, carte par carte. Vous gradez chez le bon, pas par habitude.</p>
+            <div className="kc-feature-head"><h3>PSA, PCA, CCC réunis</h3></div>
+            <p>Vois la valeur d’une carte selon chaque certificateur, et lequel a le plus de demande. De quoi choisir en connaissance de cause.</p>
           </Reveal>
           <Reveal className="kc-feature" style={GLASS} delay={160}>
             <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
-            <div className="kc-feature-head"><h3>Tout le marché continental</h3></div>
-            <p>eBay et Cardmarket, les deux leaders européens, consolidés en une seule cote lisible. Fini de jongler entre dix onglets.</p>
+            <div className="kc-feature-head"><h3>EN, JP, et bientôt plus</h3></div>
+            <p>L’anglais et le japonais suivis comme le français, chacun à sa juste cote. Et d’autres jeux que Pokémon arrivent.</p>
           </Reveal>
         </div>
       </section>
@@ -634,14 +620,16 @@ export default function LandingPage() {
       <section className="kc-section" id="personas">
         <Reveal>
           <span className="kc-section-tag">Pour qui</span>
-          <h2 className="kc-h2">Pensé pour chaque profil du marché.</h2>
+          <h2 className="kc-h2">Pensé pour ta façon de collectionner.</h2>
         </Reveal>
         <div className="kc-grid-3 kc-personas">
           {PERSONAS.map((p, i) => (
             <Reveal key={p.tag} delay={i * 50} className="kc-persona" style={GLASS}>
-              <div className="kc-persona-tag">{p.tag}</div>
-              <div className="kc-persona-sub">{p.sub}</div>
-              <p>{p.line}</p>
+              <div className="kc-persona-icon"><Glyph d={p.icon} /></div>
+              <div className="kc-persona-body">
+                <div className="kc-persona-tag">{p.tag}</div>
+                <p>{p.line}</p>
+              </div>
             </Reveal>
           ))}
         </div>
@@ -735,14 +723,13 @@ export default function LandingPage() {
             </ul>
             <div className="kc-plan-sublabel">Inclus à leur sortie — sans surcoût</div>
             <ul className="kc-plan-list kc-plan-list-soon">
-              <li><span className="kc-soon-dot">◌</span> Market Terminal & indices</li>
-              <li><span className="kc-soon-dot">◌</span> Alpha Signals (S / A / B)</li>
-              <li><span className="kc-soon-dot">◌</span> Deal Hunter — eBay & Cardmarket</li>
-              <li><span className="kc-soon-dot">◌</span> Kodo AI illimité + support prioritaire</li>
-              <li><span className="kc-soon-dot">◌</span> Whale Tracker</li>
+              <li><span className="kc-soon-dot">◌</span> Faut-il la grader ? — calcul complet</li>
+              <li><span className="kc-soon-dot">◌</span> Bonnes affaires — eBay &amp; Cardmarket</li>
+              <li><span className="kc-soon-dot">◌</span> Le marché en direct &amp; tendances</li>
+              <li><span className="kc-soon-dot">◌</span> Dexy illimité + support prioritaire</li>
             </ul>
             <a href="/signup" className="kc-btn kc-btn-primary kc-btn-block">Passer Premium</a>
-            <p className="kc-plan-note">Market / Alpha / Whale en déploiement (v2.0 / v3.0).</p>
+            <p className="kc-plan-note">Plusieurs outils arrivent — inclus sans surcoût quand ils sortent.</p>
           </Reveal>
         </div>
       </section>
@@ -750,18 +737,18 @@ export default function LandingPage() {
       {/* ── WAITLIST / FUNNEL ──────────────────────────────────── */}
       <section className="kc-cta-band">
         <Reveal className="kc-cta-card" style={GLASS}>
-          <span className="kc-section-tag">Accès anticipé</span>
+          <span className="kc-section-tag">Reste au courant</span>
           <h2 className="kc-h2 kc-h2-center">
-            Le Terminal arrive. Soyez dans la première vague.
+            De nouveaux outils arrivent.
           </h2>
           <p className="kc-cta-sub">
-            Signaux Alpha, Whale Tracker, Kodo AI. Laissez votre email : accès prioritaire,
-            sans engagement — on vous prévient le jour J.
+            Laisse ton email pour être prévenu des nouveautés. Ou crée ton compte
+            maintenant — c’est gratuit, et tu peux commencer ta collection tout de suite.
           </p>
 
           {status === 'ok' ? (
             <div className="kc-form-ok">
-              <Glyph d="check" size={18} /> C’est noté — on vous écrit très bientôt.
+              <Glyph d="check" size={18} /> C’est noté — on t’écrit très bientôt.
             </div>
           ) : (
             <div className="kc-form">
@@ -782,7 +769,7 @@ export default function LandingPage() {
                 onClick={() => submitWaitlist('landing_waitlist')}
                 disabled={status === 'loading'}
               >
-                {status === 'loading' ? 'Envoi…' : 'Rejoindre l’accès anticipé'}
+                {status === 'loading' ? 'Envoi…' : 'Me tenir au courant'}
               </button>
             </div>
           )}
@@ -976,6 +963,7 @@ const CSS = `
 
 /* FEATURES */
 .kc-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:36px;}
+.kc-personas{grid-template-columns:repeat(2,1fr);}
 .kc-feature{border-radius:20px;padding:26px 24px;}
 .kc-feature-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--muted);margin-bottom:18px;}
 .kc-feature-icon[data-live="true"]{background:linear-gradient(135deg,rgba(224,48,32,.1),rgba(255,68,51,.06));color:var(--accent);}
@@ -986,10 +974,11 @@ const CSS = `
 .kc-badge-live{color:var(--green);background:rgba(46,158,106,.1);}
 
 /* PERSONAS */
-.kc-persona{border-radius:18px;padding:22px 22px;}
-.kc-persona-tag{font-family:var(--display);font-weight:700;font-size:18px;}
-.kc-persona-sub{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:3px 0 12px;}
-.kc-persona p{font-size:14px;color:var(--muted);margin:0;line-height:1.5;}
+.kc-persona{border-radius:20px;padding:26px 26px;display:flex;flex-direction:row;align-items:flex-start;gap:18px;}
+.kc-persona-icon{flex:none;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--accent);}
+.kc-persona-body{flex:1;min-width:0;}
+.kc-persona-tag{font-family:var(--display);font-weight:700;font-size:18px;margin-bottom:6px;}
+.kc-persona p{font-size:14.5px;color:var(--muted);margin:0;line-height:1.5;}
 
 /* PRICING */
 .kc-billing-wrap{display:flex;justify-content:center;margin-top:30px;}

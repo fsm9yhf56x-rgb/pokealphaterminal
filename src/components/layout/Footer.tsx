@@ -181,8 +181,8 @@ export function Footer() {
               maxWidth: 260,
             }}
           >
-            L’intelligence du marché Pokémon TCG. Cote FR native, prix temps réel et
-            suivi de portefeuille.
+            Toute ta collection Pokémon, réunie et estimée. En français, anglais
+            et japonais.
           </p>
         </div>
 
@@ -194,7 +194,6 @@ export function Footer() {
             <Link href="/portfolio" className="kfoot-link">Portefeuille</Link>
             <Link href="/cartes" className="kfoot-link">Pokédesk</Link>
             <Link href="/market" className="kfoot-link">Market</Link>
-            <Link href="/alpha" className="kfoot-link">Alpha Signals</Link>
             <Link href="/releases" className="kfoot-link">Prochains Sets</Link>
           </div>
         </div>
@@ -229,11 +228,8 @@ export function Footer() {
       <div className="kfoot-bottom">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' as const }}>
           <span>© {year} Kodo Cards · Tous droits réservés</span>
-          <span className="kfoot-sep" style={{ color: '#C7C7CC' }}>·</span>
-          <span>Conçu en France</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>v0.9 · Infra Solide</span>
           <span
             style={{
               width: 5,

@@ -40,9 +40,17 @@ async function ingestOne(kodoCardId, ptId) {
   const asOf = card.lastUpdated || new Date().toISOString()
   const kcRow = await sql`SELECT print_id FROM k_cards WHERE id = ${kodoCardId}`
   const printId = kcRow[0] ? kcRow[0].print_id : null
+  // Variants (Shadowless/1st Ed...) partagent le meme tcgplayer_id: TCGplayer ne les distingue pas.
+  // On ecarte les sources tcgplayer pour ces prints (eBay/Cardmarket distinguent, eux).
+  let tcgShared = false
+  if (printId) {
+    const sh = await sql`SELECT 1 FROM k_prints a JOIN k_prints b ON b.tcgplayer_id = a.tcgplayer_id AND b.id <> a.id WHERE a.id = ${printId} AND a.tcgplayer_id IS NOT NULL LIMIT 1`
+    tcgShared = sh.length > 0
+  }
   let rows = 0
 
   for (const [source, tiers] of Object.entries(card.prices)) {
+    if (tcgShared && (source === 'tcgplayer' || source === 'ppt_tcgplayer')) continue
     const isAsking = source === 'cardmarket_unsold'
     for (const [tier, d] of Object.entries(tiers || {})) {
       if (!d || typeof d !== 'object') continue

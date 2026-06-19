@@ -94,7 +94,7 @@ export function MobileNav() {
               >
                 <span className="kmnav-dot" />
                 <span>{item.label}</span>
-                {item.pro && <span className="kmnav-pro">PRO</span>}
+                {item.tier && !item.soon && <span className={`kmnav-pro${item.tier === 'premium' ? ' kmnav-pro--premium' : ''}`}>{item.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
               </Link>
             )
           })}

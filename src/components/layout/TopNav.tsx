@@ -182,7 +182,7 @@ export function TopNav() {
               className={`knav-link${isActive ? ' act' : ''}`}
             >
               {item.label}
-              {item.pro && <span className="knav-pro">PRO</span>}
+              {item.tier && !item.soon && <span className={`knav-pro${item.tier === 'premium' ? ' knav-pro--premium' : ''}`}>{item.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
             </Link>
           )
         })}

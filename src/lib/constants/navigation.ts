@@ -8,13 +8,11 @@ export type SoonInfo = {
 export type NavItem = {
   label:    string
   href:     string
-  pro?:     boolean
-  // PASSE 2 (axe plan): remplacer `pro?: boolean` par `tier?: 'pro' | 'premium'`
-  // sur cet item ET sur les enfants, puis adapter useNav + TopNav/SubMenu/MobileNav.
+  tier?:    'pro' | 'premium'
   soon?:    SoonInfo
   collectorHide?: boolean
   collectorOnly?: boolean
-  children?: { label: string; href: string; pro?: boolean; soon?: SoonInfo; collectorHide?: boolean }[]
+  children?: { label: string; href: string; tier?: 'pro' | 'premium'; soon?: SoonInfo; collectorHide?: boolean }[]
 }
 
 export const NAV: NavItem[] = [
@@ -80,7 +78,7 @@ export const NAV: NavItem[] = [
       {
         label: 'Sous-evalues',
         href:  '/market/sous-evalues',
-        pro:   true,
+        tier:  'premium',
         soon: {
           feature: 'Alpha Signals',
           version: 'v2.0',
@@ -96,7 +94,7 @@ export const NAV: NavItem[] = [
       {
         label: 'Deal Hunter',
         href:  '/market/deals',
-        pro:   true,
+        tier:  'premium',
         soon: {
           feature: 'Deal Hunter',
           version: 'v2.0',
@@ -112,7 +110,7 @@ export const NAV: NavItem[] = [
       {
         label: 'Spreads',
         href:  '/market/spreads',
-        pro:   true,
+        tier:  'premium',
         soon: {
           feature: 'Spreads Cross-Marketplace',
           version: 'v2.0',
@@ -128,7 +126,7 @@ export const NAV: NavItem[] = [
       {
         label: 'Whale Tracker',
         href:  '/market/whales',
-        pro:   true,
+        tier:  'premium',
         soon: {
           feature: 'Whale Tracker',
           version: 'v2.0',

@@ -154,7 +154,7 @@ export function SubMenu() {
                     className={`ksub-link${isActive ? ' act' : ''}`}
                   >
                     {child.label}
-                    {child.pro && <span className="ksub-pro">PRO</span>}
+                    {child.tier && !child.soon && <span className={`ksub-pro${child.tier === 'premium' ? ' ksub-pro--premium' : ''}`}>{child.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
                   </Link>
                 )
               })}

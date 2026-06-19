@@ -130,7 +130,7 @@ async function ingestOne(kodoCardId, printId, ptId) {
     }
   }
   const status = pending.length === 0 ? 'completed' : 'running'
-  await sql`UPDATE kodo_sync_state SET items_pending=${JSON.stringify(pending)}, items_done=${done}, status=${status} WHERE job_id=${JOB}`
+  await sql`UPDATE kodo_sync_state SET items_pending=${JSON.stringify(pending)}, items_done=${done}, status=${status}, last_run_at=now() WHERE job_id=${JOB}`
   console.log('\n=== FIN DE RUN ' + LANG.toUpperCase() + ' ===')
   console.log('Cartes:', cardsThisRun, '| rows:', rowsThisRun, '| status:', status)
   if (status === 'running') console.log('PAUSE — relancer pour continuer (' + pending.length + ' restantes)')

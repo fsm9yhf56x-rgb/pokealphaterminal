@@ -321,9 +321,7 @@ function Nav() {
         <nav className="kc-nav-links">
           <a href="#features">Produit</a>
           <a href="#pricing">Tarifs</a>
-          <a href="/blog">Blog</a>
-          <a href="/a-propos">À propos</a>
-          <a href="/telecharger">Télécharger</a>
+          <a href="#personas">Pour qui</a>
           <a href="#faq">FAQ</a>
         </nav>
 
@@ -351,9 +349,6 @@ function Nav() {
           <a href="#pricing" onClick={() => setOpen(false)}>Tarifs</a>
           <a href="#personas" onClick={() => setOpen(false)}>Pour qui</a>
           <a href="#faq" onClick={() => setOpen(false)}>FAQ</a>
-          <a href="/blog" onClick={() => setOpen(false)}>Blog</a>
-          <a href="/a-propos" onClick={() => setOpen(false)}>À propos</a>
-          <a href="/telecharger" onClick={() => setOpen(false)}>Télécharger</a>
           <a href="/login" onClick={() => setOpen(false)}>Se connecter</a>
           <a
             href="/signup"

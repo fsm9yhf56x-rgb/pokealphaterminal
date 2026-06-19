@@ -332,7 +332,7 @@ function Nav() {
             Se connecter
           </a>
           <a href="/signup" className="kc-btn kc-btn-primary kc-btn-sm">
-            Commencer
+            Créer mon compte
           </a>
         </div>
 
@@ -465,19 +465,18 @@ export default function LandingPage() {
         <div className="kc-hero-grid">
           <div className="kc-hero-copy">
             <Reveal>
-              <span className="kc-eyebrow">Ta collection Pokémon, enfin réunie</span>
+              <span className="kc-eyebrow">L’app des collectionneurs Pokémon</span>
             </Reveal>
             <Reveal delay={80}>
               <h1 className="kc-h1">
-                Toutes tes cartes.{' '}
-                <span className="kc-grad">Leur vraie valeur.</span>
+                Toute ta collection Pokémon.{' '}
+                <span className="kc-grad">Sa valeur, jour après jour.</span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
               <p className="kc-sub">
-                Ajoute tes cartes, vois ce qu’elles valent au jour le jour et
-                termine tes sets. En français, anglais et japonais — d’autres
-                jeux bientôt.
+                Ajoute tes cartes, suis leur cote au jour le jour et termine
+                tes sets. FR, EN et JP — chaque carte à sa juste valeur.
               </p>
             </Reveal>
             <Reveal delay={240}>
@@ -512,27 +511,27 @@ export default function LandingPage() {
         <Reveal className="kc-stats-grid">
           <div className="kc-stat">
             <div className="kc-stat-num">
-              <CountUp to={8.8} decimals={1} suffix=" Md€" />
+              <CountUp to={3} />
             </div>
-            <div className="kc-stat-label">Le marché mondial du TCG en 2025</div>
+            <div className="kc-stat-label">Langues suivies · FR / EN / JP</div>
           </div>
           <div className="kc-stat">
             <div className="kc-stat-num">
-              <CountUp to={34} suffix=" M+" />
+              <CountUp to={20} suffix=" k+" />
             </div>
-            <div className="kc-stat-label">Collectionneurs dans le monde</div>
+            <div className="kc-stat-label">Cartes au catalogue</div>
           </div>
           <div className="kc-stat">
             <div className="kc-stat-num">
-              <CountUp to={1.4} decimals={1} suffix=" Md" />
+              <CountUp to={100} suffix=" %" />
             </div>
-            <div className="kc-stat-label">Cartes vendues chaque année</div>
+            <div className="kc-stat-label">De tes sets, suivis carte par carte</div>
           </div>
           <div className="kc-stat">
             <div className="kc-stat-num">
-              <CountUp to={340} prefix="+" suffix=" %" />
+              24<span style={{ fontSize: '0.5em', fontWeight: 500 }}>/</span>7
             </div>
-            <div className="kc-stat-label">De croissance depuis 2020</div>
+            <div className="kc-stat-label">Cotes mises à jour chaque jour</div>
           </div>
         </Reveal>
       </section>

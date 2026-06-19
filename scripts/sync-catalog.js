@@ -2,6 +2,12 @@
  * Pipeline de sync TCGdex → R2 + tcg_sets + tcg_cards
  * Migré Supabase → Neon (@neondatabase/serverless)
  *
+ * OPTIM (autonomisation) :
+ *   - skip HEAD R2 pour les cartes deja has_image=true (plus de re-check inutile du catalogue)
+ *   - plus de sleep(30) systematique : pause uniquement apres un vrai upload reseau
+ *   - timeout (AbortController) sur tous les fetch TCGdex/image (anti-hang)
+ *   Logique d'ecriture tcg_* (INSERT/ON CONFLICT/canonicalisation) INCHANGEE.
+ *
  * Usage:
  *   node scripts/sync-catalog.js                  → sync EN + FR
  *   node scripts/sync-catalog.js --dry            → dry run, zéro écriture
@@ -9,6 +15,7 @@
  *   node scripts/sync-catalog.js --set=en-base1   → un seul set (préfixe lang inclus)
  *   node scripts/sync-catalog.js --only-fill-images → ne fait que combler les images manquantes
  *   node scripts/sync-catalog.js --trigger=cron   → marque le log triggered_by='cron'
+ *   node scripts/sync-catalog.js --recheck-images → force le re-check R2 meme si has_image=true
  */
 
 require('dotenv').config({ path: '.env.local' });
@@ -24,13 +31,14 @@ const R2_SECRET = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET = process.env.R2_BUCKET;
 
 for (const [k, v] of Object.entries({ DATABASE_URL, R2_ACCOUNT, R2_KEY, R2_SECRET, R2_BUCKET })) {
-  if (!v) { console.error(`❌ Env manquante: ${k}`); process.exit(1); }
+  if (!v) { console.error(`Env manquante: ${k}`); process.exit(1); }
 }
 
 // ── CLI args ──
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry');
 const ONLY_IMAGES = args.includes('--only-fill-images');
+const RECHECK_IMAGES = args.includes('--recheck-images');
 const LANG_FILTER = args.find(a => a.startsWith('--lang='))?.split('=')[1];
 const SET_FILTER = args.find(a => a.startsWith('--set='))?.split('=')[1];
 const TRIGGER = args.find(a => a.startsWith('--trigger='))?.split('=')[1] || 'manual';
@@ -46,6 +54,17 @@ const r2 = new S3Client({
 
 const TCGDEX = 'https://api.tcgdex.net/v2';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// fetch avec timeout (anti-hang reseau)
+async function fetchT(url, opts = {}, timeoutMs = 20000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 // ── R2 helpers ──
 async function r2Exists(key) {
@@ -64,7 +83,7 @@ async function r2Upload(key, buffer, contentType = 'image/webp') {
 async function fetchJson(url, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch(url);
+      const res = await fetchT(url);
       if (res.ok) return await res.json();
       if (res.status === 404) return null;
       throw new Error(`HTTP ${res.status}`);
@@ -76,7 +95,7 @@ async function fetchJson(url, retries = 3) {
 }
 
 async function fetchImage(url) {
-  const res = await fetch(url);
+  const res = await fetchT(url, {}, 30000);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
 }
@@ -85,6 +104,14 @@ async function fetchImage(url) {
 async function getExistingCardIds(langPrefix) {
   const ids = new Set();
   const rows = await sql`SELECT id FROM tcg_cards WHERE id LIKE ${langPrefix + '-%'}`;
+  rows.forEach(r => ids.add(r.id));
+  return ids;
+}
+
+// NEW: set des cartes deja imagees -> permet de skip le HEAD R2
+async function getImagedCardIds(langPrefix) {
+  const ids = new Set();
+  const rows = await sql`SELECT id FROM tcg_cards WHERE id LIKE ${langPrefix + '-%'} AND has_image = true`;
   rows.forEach(r => ids.add(r.id));
   return ids;
 }
@@ -126,22 +153,26 @@ async function syncCardImage(lang, setId, localId, tcgdexImage) {
 
 // ── Sync pour une langue ──
 async function syncLang(lang) {
-  console.log(`\n🌐 === ${lang.toUpperCase()} ===`);
+  console.log(`\n=== ${lang.toUpperCase()} ===`);
   const stats = { new_cards: 0, new_sets: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
 
   if (ONLY_IMAGES) {
-    console.log('📸 Mode: comblement images uniquement');
+    console.log('Mode: comblement images uniquement');
     const cards = await getCardsWithoutImage(lang, SET_FILTER);
-    console.log(`🎯 ${cards.length} cartes sans image R2`);
+    console.log(`${cards.length} cartes sans image R2`);
     return stats;
   }
 
   const existingIds = await getExistingCardIds(lang);
-  console.log(`📚 ${existingIds.size} cartes déjà en DB`);
+  console.log(`${existingIds.size} cartes deja en DB`);
+
+  // NEW: cartes deja imagees (pour skip le HEAD R2). Ignore si --recheck-images.
+  const imagedIds = RECHECK_IMAGES ? new Set() : await getImagedCardIds(lang);
+  if (!RECHECK_IMAGES) console.log(`${imagedIds.size} cartes deja imagees (HEAD R2 skip)`);
 
   const sets = await fetchJson(`${TCGDEX}/${lang}/sets`);
-  if (!sets) { console.log('⚠️  Aucun set TCGdex'); return stats; }
-  console.log(`📦 ${sets.length} sets sur TCGdex`);
+  if (!sets) { console.log('Aucun set TCGdex'); return stats; }
+  console.log(`${sets.length} sets sur TCGdex`);
 
   for (const setMeta of sets) {
     const dbSetId = `${lang}-${setMeta.id}`;
@@ -173,6 +204,31 @@ async function syncLang(lang) {
       } catch (e) { stats.errors.push(`set ${dbSetId}: ${e.message}`); }
     }
 
+    // OPTIM: si le set est deja connu ET toutes ses cartes sont imagees, on saute
+    // l'appel detaille TCGdex (le plus couteux). On ne le fait que s'il peut y avoir
+    // du travail (set nouveau, ou cartes non imagees dans ce set).
+    if (!RECHECK_IMAGES && !SET_FILTER) {
+      const setPrefix = `${dbSetId}-`;
+      let allKnownAndImaged = true;
+      let anyKnown = false;
+      for (const id of existingIds) {
+        if (id.startsWith(setPrefix)) {
+          anyKnown = true;
+          if (!imagedIds.has(id)) { allKnownAndImaged = false; break; }
+        }
+      }
+      // total attendu vs connu : si le set TCGdex a plus de cartes que ce qu'on connait,
+      // il y a potentiellement des nouveautes -> on ne saute pas.
+      const expected = setRow.total_cards || 0;
+      let knownCount = 0;
+      for (const id of existingIds) if (id.startsWith(setPrefix)) knownCount++;
+      const fullyKnown = expected > 0 ? knownCount >= expected : anyKnown;
+
+      if (anyKnown && allKnownAndImaged && fullyKnown) {
+        continue; // rien a faire pour ce set, zero appel reseau detaille
+      }
+    }
+
     const setData = await fetchJson(`${TCGDEX}/${lang}/sets/${setMeta.id}`);
     if (!setData?.cards) continue;
 
@@ -195,6 +251,12 @@ async function syncLang(lang) {
         setNewCards++;
       }
 
+      // OPTIM: carte deja connue ET deja imagee -> aucun appel reseau (skip HEAD R2)
+      if (cardInDb && imagedIds.has(dbId)) {
+        stats.images_skipped++;
+        continue;
+      }
+
       const imgResult = await syncCardImage(lang, dbSetId, card.localId, card.image);
 
       if (imgResult.status === 'uploaded') {
@@ -203,21 +265,20 @@ async function syncLang(lang) {
         if (!DRY) {
           await sql`UPDATE tcg_cards SET has_image = true, image_synced_at = NOW() WHERE id = ${dbId}`;
         }
+        await sleep(30); // pause uniquement apres un vrai upload
       } else if (imgResult.status === 'already_on_r2') {
         stats.images_skipped++;
-        if (!DRY && !cardInDb) {
+        if (!DRY) {
           await sql`UPDATE tcg_cards SET has_image = true, image_synced_at = NOW() WHERE id = ${dbId}`;
         }
       } else if (imgResult.status === 'failed') {
         stats.images_failed++;
         stats.errors.push(`img ${dbId}: ${imgResult.error}`);
       }
-
-      await sleep(30);
     }
 
     if (setNewCards > 0 || setImagesUploaded > 0) {
-      console.log(`  📦 ${setMeta.id}: +${setNewCards} cartes, +${setImagesUploaded} images`);
+      console.log(`  ${setMeta.id}: +${setNewCards} cartes, +${setImagesUploaded} images`);
     }
   }
 
@@ -226,7 +287,7 @@ async function syncLang(lang) {
 
 // ── Main ──
 (async () => {
-  if (DRY) console.log('🧪 DRY RUN — aucune écriture\n');
+  if (DRY) console.log('DRY RUN — aucune ecriture\n');
   const jobName = `sync-catalog${LANG_FILTER ? '-' + LANG_FILTER : ''}`;
   const log = await startSyncLog(jobName, TRIGGER);
   const start = Date.now();
@@ -248,22 +309,22 @@ async function syncLang(lang) {
   } catch (e) {
     status = 'failed';
     errorMsg = e.message;
-    console.error('❌', e);
+    console.error('ERR', e);
   }
 
   allStats.duration_ms = Date.now() - start;
   allStats.dry = DRY;
 
-  console.log(`\n📊 TOTAL`);
+  console.log(`\nTOTAL`);
   console.log(`   Nouvelles cartes     : +${allStats.new_cards}`);
-  console.log(`   Images uploadées     : +${allStats.images_uploaded}`);
-  console.log(`   Images déjà présentes: ${allStats.images_skipped}`);
-  console.log(`   Images échouées      : ${allStats.images_failed}`);
+  console.log(`   Images uploadees     : +${allStats.images_uploaded}`);
+  console.log(`   Images deja presentes: ${allStats.images_skipped}`);
+  console.log(`   Images echouees      : ${allStats.images_failed}`);
   if (allStats.errors.length) {
     console.log(`   Erreurs              : ${allStats.errors.length}`);
     console.log('   Exemples :', allStats.errors.slice(0, 5).join(' | '));
   }
-  console.log(`   Durée                : ${(allStats.duration_ms / 1000).toFixed(1)}s`);
+  console.log(`   Duree                : ${(allStats.duration_ms / 1000).toFixed(1)}s`);
 
   await finishSyncLog(log.id, status, allStats, errorMsg);
   if (status === 'failed') process.exit(1);

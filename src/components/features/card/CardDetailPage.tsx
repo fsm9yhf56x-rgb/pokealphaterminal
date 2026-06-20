@@ -1,9 +1,15 @@
 "use client"
 /**
  * CardDetailPage — la fiche de reference complete d'une carte.
- * Palier 2a : Hero pleine largeur (image XL + identite + prix + signaux cles).
+ * Palier 2b : Hero + Section Carte (signaux, historique, etats, population).
+ * Sections "objectives" (la carte). La section "Ma collection" (perso) viendra
+ * au palier 4, visuellement separee.
  */
 import { useSpotlightData } from "@/components/features/spotlight/useSpotlightData"
+import { SpotlightEngine } from "@/components/features/spotlight/sections/SpotlightEngine"
+import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
+import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
+import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
 import { resolveCardImage } from "@/lib/images"
 import { SNOW, FONT } from "@/lib/design/snow"
 
@@ -33,6 +39,14 @@ function eraOf(id: string): { era: string; color: string } | null {
   for (const e of ERA_BY_PREFIX) if (e.test.test(prefix)) return { era: e.era, color: e.color }
   return null
 }
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: "0 0 16px" }}>{children}</h2>
+)
+
+const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{ background: SNOW.bg, borderRadius: 18, border: `1px solid ${SNOW.border}`, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.03)", ...style }}>{children}</div>
+)
 
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
@@ -72,9 +86,12 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const fairValue = kodo?.fairValueEur ?? null
   const liquidity = kodo?.liquidityScore ?? null
   const market = prices.marketEst
+  const history = prices.history || []
+  const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
 
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto", padding: "40px 24px 80px" }}>
+      {/* ═══ HERO ═══ */}
       <div className="kcard-hero" style={{ display: "flex", gap: 44, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           {img ? (
@@ -131,14 +148,47 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 48, padding: 20, borderRadius: 14, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, fontSize: 13, color: SNOW.muted, fontFamily: FONT.body }}>
-        Hero en place. Prochaine étape (palier 2b) : signaux détaillés, graphique d’historique, prix par état, population PSA.
+      {/* ═══ SEPARATEUR (B) ═══ */}
+      <div style={{ margin: "44px 0 36px", height: 1, background: `linear-gradient(90deg, transparent, ${SNOW.border} 18%, ${SNOW.border} 82%, transparent)` }} />
+
+      {/* ═══ SECTION CARTE (objectif) ═══ */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+        {/* Signaux */}
+        {hasEngine ? (
+          <section>
+            <SectionTitle>Signaux de marché</SectionTitle>
+            <Card><SpotlightEngine kodo={kodo} /></Card>
+          </section>
+        ) : null}
+
+        {/* Historique */}
+        {history.length > 0 ? (
+          <section>
+            <SectionTitle>Historique des prix</SectionTitle>
+            <Card><SpotlightChart history={history} /></Card>
+          </section>
+        ) : null}
+
+        {/* Etats + Population (2 colonnes) */}
+        <div className="kcard-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+          <section>
+            <SectionTitle>Prix par état</SectionTitle>
+            <Card><SpotlightStates prices={prices} kodo={kodo} /></Card>
+          </section>
+          <section>
+            <SectionTitle>Population gradée</SectionTitle>
+            <Card><SpotlightPopExpandable cardId={card.id} lang={card.lang} /></Card>
+          </section>
+        </div>
       </div>
 
       <style>{`
         @media (max-width: 720px) {
           .kcard-hero img { width: 100% !important; max-width: 340px; margin: 0 auto; }
           .kcard-hero { gap: 28px !important; }
+        }
+        @media (max-width: 900px) {
+          .kcard-2col { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

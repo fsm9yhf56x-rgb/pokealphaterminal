@@ -204,7 +204,7 @@ export function Footer() {
           <div className="kfoot-col">
             <Link href="/blog" className="kfoot-link">Blog</Link>
             <Link href="/a-propos" className="kfoot-link">À propos</Link>
-            <Link href="/telecharger" className="kfoot-link">Télécharger l’app</Link>
+            <Link href="/telecharger" className="kfoot-link">L’app mobile</Link>
             <a href="https://discord.gg" className="kfoot-link" target="_blank" rel="noopener noreferrer">Discord</a>
             <a href="https://x.com" className="kfoot-link" target="_blank" rel="noopener noreferrer">X / Twitter</a>
             <a href="https://instagram.com" className="kfoot-link" target="_blank" rel="noopener noreferrer">Instagram</a>

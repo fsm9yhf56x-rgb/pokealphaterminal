@@ -27,6 +27,16 @@ export interface SpotlightV2Props {
   hideHero?: boolean
 }
 
+// Design a plat: les sections ne sont plus des cards emboitees mais des blocs
+// transparents separes par un filet fin. La seule surface glass = le panneau lui-meme.
+// On garde la DA Snow+ (glass du panneau, pills, accent) — on retire juste l'imbrication.
+const SECTION: React.CSSProperties = {
+  background: 'transparent',
+  padding: '4px 2px 14px',
+  border: 'none',
+  borderBottom: '1px solid rgba(0,0,0,0.06)',
+}
+// Conserve pour les skeletons (besoin d'un fond visible pendant le chargement)
 const GLASS_CARD: React.CSSProperties = {
   background: 'rgba(255,255,255,0.45)',
   backdropFilter: 'blur(20px) saturate(180%)',
@@ -106,7 +116,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           </div>
         )}
         {card && prices ? (
-          <div style={GLASS_CARD}>
+          <div style={{ ...SECTION, paddingTop: 0 }}>
             <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={isJp} kodo={kodo} />
           </div>
         ) : (
@@ -120,7 +130,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         <div className={`spot-sec spot-sec-vue ${tab === 'vue' ? 'on' : ''}`}>
         {kodo ? <SpotlightEngine kodo={kodo} /> : null}
         {prices ? (
-          <div style={GLASS_CARD}>
+          <div style={SECTION}>
             <SpotlightChart history={prices.history} />
           </div>
         ) : (

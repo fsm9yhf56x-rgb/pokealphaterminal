@@ -81,7 +81,7 @@ interface Props {
 
 export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, kodo }: Props) {
   const [imgError, setImgError] = useState(false)
-  const heroImg = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url })
+  const heroImg = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url ?? undefined })
   const showPortfolio = portfolio != null
   const userCondition = portfolio?.condition ? normalizeCondition(portfolio.condition) : 'NEAR_MINT'
   const userGraded = portfolio?.graded || false

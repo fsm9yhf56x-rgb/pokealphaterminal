@@ -7,7 +7,6 @@ import { SpotlightChart } from './sections/SpotlightChart'
 import { SpotlightEngine } from './sections/SpotlightEngine'
 import { SpotlightStates } from './sections/SpotlightStates'
 import { SpotlightPopExpandable } from './sections/SpotlightPopExpandable'
-import { JpPriceSoon } from './sections/JpPriceSoon'
 import { SNOW, FONT } from './snowTokens'
 
 export interface PortfolioContext {
@@ -174,17 +173,17 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               marginTop: 8, padding: '14px 18px', borderRadius: 13,
               background: 'rgba(255,255,255,0.7)',
-              border: `1px solid ${SNOW.accent}33`,
+              border: `1px solid ${SNOW.red}33`,
               boxShadow: '0 2px 12px rgba(224,48,32,0.06), inset 0 1px 0 rgba(255,255,255,0.95)',
               color: SNOW.ink, fontFamily: FONT.display, fontWeight: 600, fontSize: 14.5,
               textDecoration: 'none', cursor: 'pointer',
               transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(224,48,32,0.04)'; e.currentTarget.style.borderColor = SNOW.accent; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(224,48,32,0.14), inset 0 1px 0 rgba(255,255,255,0.95)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = `${SNOW.accent}33`; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(224,48,32,0.06), inset 0 1px 0 rgba(255,255,255,0.95)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(224,48,32,0.04)'; e.currentTarget.style.borderColor = SNOW.red; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(224,48,32,0.14), inset 0 1px 0 rgba(255,255,255,0.95)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = `${SNOW.red}33`; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(224,48,32,0.06), inset 0 1px 0 rgba(255,255,255,0.95)' }}
           >
             Voir la fiche complète
-            <span className="spot-fullcard-arrow" style={{ display: 'inline-flex', transition: 'transform .18s cubic-bezier(.2,.8,.2,1)', color: SNOW.accent }}>
+            <span className="spot-fullcard-arrow" style={{ display: 'inline-flex', transition: 'transform .18s cubic-bezier(.2,.8,.2,1)', color: SNOW.red }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </span>
           </a>

@@ -166,7 +166,7 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         {/* Lien vers la fiche complete de la carte (page dediee) */}
         {card ? (
           <a
-            href={`/carte/${encodeURIComponent(card.id)}`}
+            href={`/cartes/${encodeURIComponent(card.id)}`}
             className="spot-fullcard-link"
             style={{
               position: 'relative', overflow: 'hidden',

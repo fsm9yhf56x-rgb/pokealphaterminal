@@ -1761,7 +1761,7 @@ export function Holdings() {
                   </div>
 
                   {/* CTA page complete (mis en avant) */}
-                  <a href={`/carte/${encodeURIComponent(cleanId)}`}
+                  <a href={`/cartes/${encodeURIComponent(cleanId)}`}
                     style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:16, padding:'15px 18px', borderRadius:13, background:'#1D1D1F', color:'#fff', textDecoration:'none', fontSize:14.5, fontWeight:700, fontFamily:'var(--font-display)', boxShadow:'0 6px 18px rgba(0,0,0,0.18)', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }}
                     onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 10px 26px rgba(0,0,0,0.24)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='translateX(3px)' }}
                     onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='none' }}>

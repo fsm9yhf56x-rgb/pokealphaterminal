@@ -3,6 +3,8 @@
 import type { CardInfo, PriceEntry } from '../useSpotlightData'
 import type { PortfolioContext } from '../SpotlightV2'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
+import { resolveCardImage } from '@/lib/images'
+import { useState } from 'react'
 
 const FLAG: Record<string, string> = { EN: '🇺🇸', FR: '🇫🇷', JP: '🇯🇵' }
 const LANG: Record<string, string> = { EN: 'Anglais', FR: 'Français', JP: 'Japonais' }
@@ -78,6 +80,8 @@ interface Props {
 }
 
 export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, kodo }: Props) {
+  const [imgError, setImgError] = useState(false)
+  const heroImg = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url })
   const showPortfolio = portfolio != null
   const userCondition = portfolio?.condition ? normalizeCondition(portfolio.condition) : 'NEAR_MINT'
   const userGraded = portfolio?.graded || false
@@ -155,7 +159,25 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   }
 
   return (
-    <div className="spot-hero-clean" style={{ padding: 0 }}>
+    <div className="spot-hero-clean" style={{ padding: 0, display: 'flex', gap: 14, alignItems: 'stretch' }}>
+      {/* Image de la carte a gauche (collection: on voit la carte). Cachee en mode hideTitle. */}
+      {!hideTitle && heroImg && !imgError ? (
+        <div style={{
+          flexShrink: 0, width: 88, alignSelf: 'flex-start',
+          borderRadius: 8, overflow: 'hidden',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
+          background: 'rgba(0,0,0,0.03)',
+        }}>
+          <img
+            src={heroImg}
+            alt={card.name}
+            loading="lazy"
+            onError={() => setImgError(true)}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
+        </div>
+      ) : null}
+      <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {!hideTitle ? (
         <>
           <div style={{ fontFamily: FONT.display, fontSize: 10.5, fontWeight: 600, color: SNOW.mutedLight, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -227,6 +249,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
         </div>
       </div>
       ) : null}
+    </div>
     </div>
   )
 }

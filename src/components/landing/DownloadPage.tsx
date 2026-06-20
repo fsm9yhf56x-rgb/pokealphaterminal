@@ -40,8 +40,8 @@ export default function DownloadPage() {
           <span className="kc-dl-eyebrow">Application mobile</span>
           <h1 className="kc-dl-h1">L’app Kodo <span className="kc-dl-grad">arrive bientôt.</span></h1>
           <p className="kc-dl-sub">
-            Votre portefeuille, vos prix et vos alertes dans la poche. iOS et Android,
-            en cours de finition. Laissez votre email — vous serez prévenu le jour du lancement.
+            Toute ta collection et sa valeur du jour, dans ta poche. iOS et Android,
+            en cours de finition. Laisse ton email — on te prévient le jour du lancement.
           </p>
 
           <div className="kc-dl-stores">
@@ -56,7 +56,7 @@ export default function DownloadPage() {
           </div>
 
           {status === 'ok' ? (
-            <div className="kc-dl-ok">✓ Parfait — on vous écrit dès la sortie.</div>
+            <div className="kc-dl-ok">✓ Parfait — on t’écrit dès la sortie.</div>
           ) : (
             <div className="kc-dl-form">
               <input
@@ -71,7 +71,7 @@ export default function DownloadPage() {
               </button>
             </div>
           )}
-          {status === 'err' && <p className="kc-dl-err">Email invalide ou envoi impossible — réessayez.</p>}
+          {status === 'err' && <p className="kc-dl-err">Email invalide ou envoi impossible — réessaie.</p>}
         </div>
 
         <div className="kc-dl-visual">
@@ -81,9 +81,9 @@ export default function DownloadPage() {
               <div className="kc-ph-status"><span>9:41</span><span className="kc-ph-dots"><i /><i /><i /></span></div>
               <div className="kc-ph-head"><span className="kc-ph-logo">K</span><b>Kodo Cards</b></div>
               <div className="kc-ph-hero">
-                <span>Portefeuille</span>
+                <span>Ma collection</span>
                 <div className="kc-ph-val">4 280 €</div>
-                <div className="kc-ph-up">+12,4 % ce mois</div>
+                <div className="kc-ph-up">128 cartes · 6 sets</div>
               </div>
               <div className="kc-ph-row"><span>Dracaufeu · PSA 9</span><b>3 381 €</b></div>
               <div className="kc-ph-row"><span>Mewtwo · holo</span><b>188 €</b></div>

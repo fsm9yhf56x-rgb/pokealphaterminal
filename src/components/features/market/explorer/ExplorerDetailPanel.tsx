@@ -26,12 +26,13 @@ export function ExplorerDetailPanel({
     <div
       className="explorer-detail-dock"
       style={{
-        width: '460px',
+        width: '440px',
         flexShrink: 0,
-        alignSelf: 'flex-start',
-        position: 'sticky',
-        top: '16px',
-        maxHeight: 'calc(100vh - 32px)',
+        position: 'fixed',
+        top: '76px',
+        right: '24px',
+        height: 'calc(100vh - 100px)',
+        zIndex: 40,
         overflowY: 'auto',
         background: 'rgba(255,255,255,0.78)',
         backdropFilter: 'blur(24px) saturate(180%)',

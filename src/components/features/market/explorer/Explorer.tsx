@@ -27,7 +27,7 @@ export function Explorer() {
     : null
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', paddingRight: selectedCard ? 484 : 0, transition: 'padding-right .28s cubic-bezier(.2,.8,.2,1)' }}>
       <Header total={search.total} />
 
       <ExplorerSearch
@@ -77,7 +77,9 @@ export function Explorer() {
         }}
       />
 
-      {/* SPLIT : grille (gauche, retrecit) + reading-pane (droite, sticky) */}
+      {/* SPLIT : grille (gauche) + reading-pane (droite, position:fixed).
+          Le panneau etant fixed (sorti du flux), on reserve sa largeur via paddingRight
+          sur la zone grille quand il est ouvert -> plus de chevauchement. */}
       <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', width: '100%' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {search.hasResults && (

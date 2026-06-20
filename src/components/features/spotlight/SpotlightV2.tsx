@@ -155,6 +155,31 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           <SkeletonBox height={100} />
         )}
         </div>
+
+        {/* Lien vers la fiche complete de la carte (page dediee) */}
+        {card ? (
+          <a
+            href={`/carte/${encodeURIComponent(card.id)}`}
+            className="spot-fullcard-link"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              marginTop: 6, padding: '13px 18px', borderRadius: 13,
+              background: 'rgba(255,255,255,0.6)',
+              border: `1px solid ${SNOW.border}`,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+              color: SNOW.ink, fontFamily: FONT.display, fontWeight: 600, fontSize: 14,
+              textDecoration: 'none', cursor: 'pointer',
+              transition: 'all .18s cubic-bezier(.2,.8,.2,1)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'; const a = e.currentTarget.querySelector('.spot-fullcard-arrow') as HTMLElement | null; if (a) a.style.transform = 'translateX(3px)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)'; const a = e.currentTarget.querySelector('.spot-fullcard-arrow') as HTMLElement | null; if (a) a.style.transform = 'none' }}
+          >
+            Voir la fiche complète
+            <span className="spot-fullcard-arrow" style={{ display: 'inline-flex', transition: 'transform .18s cubic-bezier(.2,.8,.2,1)', color: SNOW.accent }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+        ) : null}
       </div>
     </div>
   )

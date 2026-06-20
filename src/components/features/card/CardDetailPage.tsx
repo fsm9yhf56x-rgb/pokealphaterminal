@@ -1,15 +1,16 @@
 "use client"
 /**
- * CardDetailPage — la fiche de reference complete d'une carte.
- * Palier 2b : Hero + Section Carte (signaux, historique, etats, population).
- * Sections "objectives" (la carte). La section "Ma collection" (perso) viendra
- * au palier 4, visuellement separee.
+ * CardDetailPage — fiche de reference complete.
+ * P3a : fil d'Ariane + fetchCardDetail (illustrateur + details carte pour P4) + Hero v2.
  */
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useSpotlightData } from "@/components/features/spotlight/useSpotlightData"
 import { SpotlightEngine } from "@/components/features/spotlight/sections/SpotlightEngine"
 import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
 import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
+import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { resolveCardImage } from "@/lib/images"
 import { SNOW, FONT } from "@/lib/design/snow"
 
@@ -18,6 +19,10 @@ function langFromId(id: string): "EN" | "FR" | "JP" {
   if (p === "fr") return "FR"
   if (p === "jp") return "JP"
   return "EN"
+}
+// id court pour tcgApi (en-base1-1 -> base1-1)
+function shortId(id: string): string {
+  return id.replace(/^(en|fr|jp|aopkm)-/i, "")
 }
 
 const FLAG: Record<string, string> = { EN: "🇺🇸", FR: "🇫🇷", JP: "🇯🇵" }
@@ -43,7 +48,6 @@ function eraOf(id: string): { era: string; color: string } | null {
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: "0 0 16px" }}>{children}</h2>
 )
-
 const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
   <div style={{ background: SNOW.bg, borderRadius: 18, border: `1px solid ${SNOW.border}`, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.03)", ...style }}>{children}</div>
 )
@@ -51,6 +55,20 @@ const Card = ({ children, style }: { children: React.ReactNode; style?: React.CS
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
+  const [detail, setDetail] = useState<TCGCardFull | null>(null)
+
+  useEffect(() => {
+    let off = false
+    const sid = shortId(cardId)
+    fetchCardDetail(lang, sid).then(d => {
+      if (off) return
+      if (d) { setDetail(d); return }
+      // fallback id sans suffixe variante
+      const clean = sid.replace(/-shadowless-ns-|-shadowless-|-1st-/, "-")
+      if (clean !== sid) fetchCardDetail(lang, clean).then(d2 => { if (!off && d2) setDetail(d2) })
+    }).catch(() => {})
+    return () => { off = true }
+  }, [cardId, lang])
 
   if (loading) {
     return (
@@ -88,9 +106,19 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const market = prices.marketEst
   const history = prices.history || []
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
+  const illustrator = detail?.illustrator || null
 
   return (
-    <div style={{ maxWidth: 1120, margin: "0 auto", padding: "40px 24px 80px" }}>
+    <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 24px 80px" }}>
+      {/* ═══ FIL D'ARIANE ═══ */}
+      <nav style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 12.5, fontFamily: FONT.display, color: SNOW.mutedLight, flexWrap: "wrap" }}>
+        <Link href="/cartes" style={{ color: SNOW.muted, textDecoration: "none" }}>Pokédesk</Link>
+        <span>›</span>
+        <span style={{ color: SNOW.muted }}>{card.set_name}</span>
+        <span>›</span>
+        <span style={{ color: SNOW.ink, fontWeight: 600 }}>{card.name}</span>
+      </nav>
+
       {/* ═══ HERO ═══ */}
       <div className="kcard-hero" style={{ display: "flex", gap: 44, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
@@ -118,7 +146,10 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
 
           <h1 style={{ fontSize: 40, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 8px" }}>{card.name}</h1>
 
-          <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 28, textTransform: "capitalize" }}>{card.rarity_normalized}</div>
+          <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 28 }}>
+            <span style={{ textTransform: "capitalize" }}>{card.rarity_normalized}</span>
+            {illustrator ? <span> · Illustré par {illustrator}</span> : null}
+          </div>
 
           {market != null ? (
             <div style={{ marginBottom: 24 }}>
@@ -148,12 +179,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         </div>
       </div>
 
-      {/* ═══ SEPARATEUR (B) ═══ */}
+      {/* ═══ SEPARATEUR ═══ */}
       <div style={{ margin: "44px 0 36px", height: 1, background: `linear-gradient(90deg, transparent, ${SNOW.border} 18%, ${SNOW.border} 82%, transparent)` }} />
 
-      {/* ═══ SECTION CARTE (objectif) ═══ */}
+      {/* ═══ SECTION CARTE ═══ */}
       <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-        {/* Signaux */}
         {hasEngine ? (
           <section>
             <SectionTitle>Signaux de marché</SectionTitle>
@@ -161,7 +191,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           </section>
         ) : null}
 
-        {/* Historique */}
         {history.length > 0 ? (
           <section>
             <SectionTitle>Historique des prix</SectionTitle>
@@ -169,7 +198,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           </section>
         ) : null}
 
-        {/* Etats + Population (2 colonnes) */}
         <div className="kcard-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
           <section>
             <SectionTitle>Prix par état</SectionTitle>

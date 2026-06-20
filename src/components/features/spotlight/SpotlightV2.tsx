@@ -122,24 +122,19 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
       `}</style>
 
       <div style={{ position: 'relative' as const, zIndex: 1, display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
-        {!isJp && (
-          <div className="spot-tabbar">
-            <button className={tab === 'vue' ? 'on' : ''} onClick={() => setTab('vue')}>Vue</button>
-            <button className={tab === 'marche' ? 'on' : ''} onClick={() => setTab('marche')}>Marché</button>
-            <button className={tab === 'pop' ? 'on' : ''} onClick={() => setTab('pop')}>Population</button>
-          </div>
-        )}
+        <div className="spot-tabbar">
+          <button className={tab === 'vue' ? 'on' : ''} onClick={() => setTab('vue')}>Vue</button>
+          <button className={tab === 'marche' ? 'on' : ''} onClick={() => setTab('marche')}>Marché</button>
+          <button className={tab === 'pop' ? 'on' : ''} onClick={() => setTab('pop')}>Population</button>
+        </div>
         {card && prices ? (
           <div style={{ ...SECTION, paddingTop: 0 }}>
-            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={isJp} kodo={kodo} />
+            <SpotlightHero card={card} prices={prices} portfolio={portfolio} hidePrice={false} kodo={kodo} />
           </div>
         ) : (
           <SkeletonBox height={80} />
         )}
 
-        {isJp ? (
-          <JpPriceSoon cardId={cardId} />
-        ) : (
         <>
         <div className={`spot-sec spot-sec-vue ${tab === 'vue' ? 'on' : ''}`}>
         {kodo ? <SpotlightEngine kodo={kodo} /> : null}
@@ -160,7 +155,6 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
         )}
         </div>
         </>
-        )}
 
         <div className={`spot-sec ${tab === 'pop' ? 'on' : ''}`}>
         {card ? (

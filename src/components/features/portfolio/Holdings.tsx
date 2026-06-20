@@ -1,4 +1,5 @@
 'use client'
+import { createPortal } from 'react-dom'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { AnimatedTotal } from './AnimatedTotal'
@@ -25,6 +26,7 @@ import { ShareSheet } from './ShareSheet'
 import { CardLimitGate } from './CardLimitGate'
 import { FREE_CARD_LIMIT } from '@/lib/constants/plan'
 import { SpotDrawer } from './SpotDrawer'
+import { CardSidePanel } from '@/components/features/card/CardSidePanel'
 import { WrappedView } from './WrappedView'
 import { GlassButton } from '@/components/ui/GlassButton'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
@@ -98,7 +100,7 @@ const GRADE_COMPANIES = [
 type GridItem = { type:'owned'; card:CardItem } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
 export function Holdings() {
-  const { labels, show } = usePersona()
+  const { labels, show, isInvestor } = usePersona()
   // -- IndexedDB persistence --
   const dbOpen = () => new Promise<IDBDatabase>((res, rej) => {
     const req = indexedDB.open('pka_db', 1)
@@ -1674,27 +1676,108 @@ export function Holdings() {
         )}
 
         {/* SPOTLIGHT */}
-        {spotCard && (
-          <SpotDrawer
-            card={spotCard}
-            editQty={editQty}
-            favs={favs}
-            portfolio={portfolio}
-            HOLO_RARITIES={HOLO_RARITIES}
-            TIER_BG={TIER_BG}
-            tiltCard={tiltCard}
-            resetCard={resetCard}
-            setSpotCard={setSpotCard}
-            setEditQty={setEditQty}
-            setCardZoom={setCardZoom}
-            setPortfolio={setPortfolio}
-            setShareCtx={setShareCtx}
-            setShareCard={setShareCard}
-            setShareOpen={setShareOpen}
-            showToast={showToast}
-            toggleFav={toggleFav}
-          />
-        )}
+        {spotCard && (() => {
+          const curQty = editQty ?? spotCard.qty
+          const isFav = favs.has(spotCard.id)
+          // ID nettoye (retire suffixes variante -1st/-shadowless) pour la page complete
+          const cleanId = spotCard.id.replace(/-shadowless-ns|-shadowless|-1st/g, '')
+          const hasPrice = spotCard.curPrice > 0
+          const flag = spotCard.lang === 'JP' ? '\uD83C\uDDEF\uD83C\uDDF5' : spotCard.lang === 'EN' ? '\uD83C\uDDFA\uD83C\uDDF8' : '\uD83C\uDDEB\uD83C\uDDF7'
+          return createPortal(
+            <div onClick={() => { setSpotCard(null); setEditQty(null) }}
+              style={{ position:'fixed', inset:0, zIndex:120, display:'flex', alignItems:'center', justifyContent:'center', padding:24, background:'rgba(20,20,25,0.32)', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)', animation:'kcFadeIn .18s ease' }}>
+              <div onClick={e => e.stopPropagation()}
+                style={{ width:'min(420px, 94vw)', maxHeight:'90vh', overflowY:'auto', background:'rgba(255,255,255,0.96)', backdropFilter:'blur(30px) saturate(180%)', WebkitBackdropFilter:'blur(30px) saturate(180%)', borderRadius:20, border:'1px solid var(--border)', boxShadow:'0 24px 60px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.9)', animation:'kcSpringIn .22s cubic-bezier(.2,.85,.3,1)', position:'relative' }}>
+                <style>{`@keyframes kcFadeIn{from{opacity:0}to{opacity:1}}@keyframes kcSpringIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}`}</style>
+
+                {/* Fermer */}
+                <button onClick={() => { setSpotCard(null); setEditQty(null) }} aria-label="Fermer"
+                  style={{ position:'absolute', top:14, right:14, width:30, height:30, borderRadius:9, background:'rgba(255,255,255,0.7)', border:'1px solid var(--border)', color:'#86868B', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+
+                <div style={{ padding:'22px 22px 20px' }}>
+                  {/* Image + identite */}
+                  <div style={{ display:'flex', gap:16, alignItems:'flex-start' }}>
+                    {spotCard.image ? (
+                      <img src={spotCard.image} alt={spotCard.name}
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        style={{ width:96, borderRadius:8, boxShadow:'0 6px 18px rgba(0,0,0,0.16)', flexShrink:0 }} />
+                    ) : null}
+                    <div style={{ flex:1, minWidth:0, paddingTop:4 }}>
+                      <div style={{ fontSize:11, color:'#86868B', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                        <span>{flag}</span>
+                        <span style={{ textTransform:'uppercase', letterSpacing:'.04em' }}>{spotCard.set}</span>
+                        {spotCard.number ? <span>· #{spotCard.number}</span> : null}
+                      </div>
+                      <div style={{ fontSize:19, fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.01em', lineHeight:1.2, marginBottom:6 }}>{spotCard.name}</div>
+                      {/* Badge condition / grading */}
+                      <div style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 9px', borderRadius:7, marginBottom:10, background: spotCard.graded ? 'rgba(224,48,32,0.08)' : 'rgba(0,0,0,0.05)', border: `1px solid ${spotCard.graded ? 'rgba(224,48,32,0.2)' : 'var(--border)'}` }}>
+                        <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color: spotCard.graded ? '#E03020' : '#6E6E73', fontFamily:'var(--font-display)', textTransform:'uppercase' }}>
+                          {spotCard.graded ? `PSA ${spotCard.psa || '?'}` : normalizeCondition(spotCard.condition)}
+                        </span>
+                      </div>
+                      {hasPrice ? (
+                        <div>
+                          <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'.06em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:2 }}>{isInvestor ? 'Prix de marché' : 'Valeur'}</div>
+                          <div style={{ fontSize:24, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.1 }}>{formatEUR(spotCard.curPrice)}</div>
+                          {spotCard.qty > 1 ? (
+                            <div style={{ fontSize:12, color:'#6E6E73', fontFamily:'var(--font-display)', marginTop:3 }}>{'\u00D7'}{spotCard.qty} {'\u00B7'} {formatEUR(spotCard.curPrice * spotCard.qty)} au total</div>
+                          ) : null}
+                          {show.pnl && spotCard.buyPrice > 0 ? (() => {
+                            const pv = spotCard.curPrice - spotCard.buyPrice
+                            const pct = spotCard.buyPrice > 0 ? Math.round((pv / spotCard.buyPrice) * 100) : 0
+                            const up = pv >= 0
+                            return (
+                              <div style={{ fontSize:12, fontFamily:'var(--font-display)', marginTop:5, color:'#86868B' }}>
+                                Acheté {formatEUR(spotCard.buyPrice)} {'\u00B7'} <span style={{ fontWeight:700, color: up ? '#1D9E75' : '#E03020' }}>{up ? '+' : ''}{formatEUR(pv)} ({up ? '+' : ''}{pct}%)</span>
+                              </div>
+                            )
+                          })() : null}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize:13, color:'#86868B', fontStyle:'italic', fontFamily:'var(--font-display)' }}>Données insuffisantes</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Gestion : quantite */}
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:18, padding:'10px 14px', borderRadius:14, background:'rgba(0,0,0,0.025)', border:'1px solid var(--border)' }}>
+                    <span style={{ fontSize:12, color:'#6E6E73', fontWeight:500, fontFamily:'var(--font-display)' }}>Quantité</span>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <button onClick={()=>setEditQty(Math.max(1,curQty-1))} style={{ width:28, height:28, borderRadius:9, background:'#fff', border:'1px solid var(--border)', color:'#48484A', fontSize:14, fontWeight:600, cursor:'pointer' }}>-</button>
+                      <span style={{ fontSize:14, fontWeight:600, color:'#1D1D1F', minWidth:20, textAlign:'center', fontFamily:'var(--font-display)' }}>{curQty}</span>
+                      <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:28, height:28, borderRadius:9, background:'#fff', border:'1px solid var(--border)', color:'#48484A', fontSize:14, fontWeight:600, cursor:'pointer' }}>+</button>
+                      {editQty!==null && editQty!==spotCard.qty && (
+                        <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantité mise à jour') }} style={{ padding:'6px 14px', borderRadius:10, background:'#1D1D1F', color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' }}>OK</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Gestion : partager + favori */}
+                  <div style={{ display:'flex', gap:8, marginTop:8 }}>
+                    <button onClick={()=>{ setShareCtx('card'); setShareCard(spotCard); setShareOpen(true) }} style={{ flex:1, padding:12, borderRadius:12, background:'rgba(255,255,255,0.7)', border:'1px solid var(--border)', color:'#1D1D1F', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>Partager</button>
+                    <button onClick={e=>toggleFav(spotCard.id,e)} style={{ width:44, borderRadius:12, background:isFav?'rgba(224,48,32,0.12)':'rgba(255,255,255,0.7)', border:`1px solid ${isFav?'rgba(224,48,32,.3)':'var(--border)'}`, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={isFav?'#E03020':'none'} stroke={isFav?'#E03020':'#86868B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                    </button>
+                  </div>
+
+                  {/* CTA page complete (mis en avant) */}
+                  <a href={`/carte/${encodeURIComponent(cleanId)}`}
+                    style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:16, padding:'15px 18px', borderRadius:13, background:'#1D1D1F', color:'#fff', textDecoration:'none', fontSize:14.5, fontWeight:700, fontFamily:'var(--font-display)', boxShadow:'0 6px 18px rgba(0,0,0,0.18)', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }}
+                    onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 10px 26px rgba(0,0,0,0.24)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='translateX(3px)' }}
+                    onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='none' }}>
+                    Voir la fiche complète
+                    <span className="kc-cta-arrow" style={{ display:'inline-flex', transition:'transform .18s cubic-bezier(.2,.8,.2,1)' }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        })()}
 
         
         {/* Retour en haut */}

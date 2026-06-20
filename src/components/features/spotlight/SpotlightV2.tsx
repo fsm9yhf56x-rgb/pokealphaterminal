@@ -105,6 +105,20 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
           .spotv2-root [style*="font-size: 32"],
           .spotv2-root [style*="fontSize: 32"] { font-size: 22px !important; }
         }
+        /* Fleche du lien fiche: pulse subtil en continu pour attirer l'oeil sans saturer */
+        @keyframes kcArrowPulse {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        .spot-fullcard-link .spot-fullcard-arrow { animation: kcArrowPulse 1.8s ease-in-out infinite; }
+        .spot-fullcard-link:hover .spot-fullcard-arrow { animation: none; }
+        .spot-fullcard-link::before {
+          content: ''; position: absolute; inset: 0; border-radius: 13px;
+          background: linear-gradient(90deg, transparent, rgba(224,48,32,0.06), transparent);
+          transform: translateX(-100%); pointer-events: none;
+        }
+        .spot-fullcard-link:hover::before { animation: kcShimmerLink 0.7s ease; }
+        @keyframes kcShimmerLink { to { transform: translateX(100%); } }
       `}</style>
 
       <div style={{ position: 'relative' as const, zIndex: 1, display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
@@ -162,17 +176,18 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
             href={`/carte/${encodeURIComponent(card.id)}`}
             className="spot-fullcard-link"
             style={{
+              position: 'relative', overflow: 'hidden',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              marginTop: 6, padding: '13px 18px', borderRadius: 13,
-              background: 'rgba(255,255,255,0.6)',
-              border: `1px solid ${SNOW.border}`,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
-              color: SNOW.ink, fontFamily: FONT.display, fontWeight: 600, fontSize: 14,
+              marginTop: 8, padding: '14px 18px', borderRadius: 13,
+              background: 'rgba(255,255,255,0.7)',
+              border: `1px solid ${SNOW.accent}33`,
+              boxShadow: '0 2px 12px rgba(224,48,32,0.06), inset 0 1px 0 rgba(255,255,255,0.95)',
+              color: SNOW.ink, fontFamily: FONT.display, fontWeight: 600, fontSize: 14.5,
               textDecoration: 'none', cursor: 'pointer',
-              transition: 'all .18s cubic-bezier(.2,.8,.2,1)',
+              transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)'; const a = e.currentTarget.querySelector('.spot-fullcard-arrow') as HTMLElement | null; if (a) a.style.transform = 'translateX(3px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)'; const a = e.currentTarget.querySelector('.spot-fullcard-arrow') as HTMLElement | null; if (a) a.style.transform = 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(224,48,32,0.04)'; e.currentTarget.style.borderColor = SNOW.accent; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 22px rgba(224,48,32,0.14), inset 0 1px 0 rgba(255,255,255,0.95)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = `${SNOW.accent}33`; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(224,48,32,0.06), inset 0 1px 0 rgba(255,255,255,0.95)' }}
           >
             Voir la fiche complète
             <span className="spot-fullcard-arrow" style={{ display: 'inline-flex', transition: 'transform .18s cubic-bezier(.2,.8,.2,1)', color: SNOW.accent }}>

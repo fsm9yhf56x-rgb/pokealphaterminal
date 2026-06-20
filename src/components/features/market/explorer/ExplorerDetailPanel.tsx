@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { SpotlightV2 } from '@/components/features/spotlight/SpotlightV2'
 import type { ExplorerResult } from '@/lib/useExplorerSearch'
 
@@ -22,6 +22,25 @@ export function ExplorerDetailPanel({
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
+  // Empeche le panneau (fixed) de recouvrir le footer: on mesure de combien le footer
+  // remonte dans le viewport et on raccourcit le bas du panneau d'autant.
+  const [footerOverlap, setFooterOverlap] = useState(0)
+  useEffect(() => {
+    const footer = document.querySelector('footer') as HTMLElement | null
+    if (!footer) return
+    const compute = () => {
+      const rect = footer.getBoundingClientRect()
+      const vh = window.innerHeight
+      // overlap = portion du footer visible depuis le bas du viewport
+      const overlap = Math.max(0, vh - rect.top)
+      setFooterOverlap(overlap)
+    }
+    compute()
+    window.addEventListener('scroll', compute, { passive: true })
+    window.addEventListener('resize', compute)
+    return () => { window.removeEventListener('scroll', compute); window.removeEventListener('resize', compute) }
+  }, [])
+
   return (
     <div
       className="explorer-detail-dock"
@@ -31,7 +50,7 @@ export function ExplorerDetailPanel({
         position: 'fixed',
         top: '76px',
         right: '24px',
-        height: 'calc(100vh - 100px)',
+        height: `calc(100vh - 100px - ${footerOverlap}px)`,
         zIndex: 40,
         overflowY: 'auto',
         background: 'rgba(255,255,255,0.78)',

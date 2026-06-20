@@ -19,6 +19,7 @@ import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFu
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 import { formatEUR } from '@/lib/formatPrice'
 import KodoPricePanel from '@/components/features/prices/KodoPricePanel'
+import { CardSidePanel } from '@/components/features/card/CardSidePanel'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 
@@ -1139,7 +1140,7 @@ export function Encyclopedie() {
       <div style={{ animation:'fadeIn .25s ease-out', width:'100%', display:'flex', gap:'20px', alignItems:'flex-start' }}>
 
         {/* ── MAIN ── */}
-        <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ flex:1, minWidth:0, paddingRight: (drawerMounted && selId) ? 484 : 0, transition:'padding-right .28s cubic-bezier(.2,.8,.2,1)' }}>
 
           {/* Header */}
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'12px', marginBottom:'20px', flexWrap:'wrap' }}>
@@ -1747,8 +1748,31 @@ export function Encyclopedie() {
 
         </div>
 
-        {/* ── DETAIL PANEL (portal sur body) ── */}
-        {drawerMounted && selId && createPortal(
+        {/* ── DETAIL PANEL : CardSidePanel unifie (SpotlightV2) ── */}
+        {drawerMounted && selId && selCard && createPortal(
+          <CardSidePanel
+            cardId={kodoIdOf(selCard)}
+            lang={lang === 'JP' ? 'JP' : lang === 'EN' ? 'EN' : 'FR'}
+            onClose={() => { setSelId(null); setDetail(null); setEnDetail(null) }}
+            actions={
+              isOwned(selCard) ? (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px 18px', borderRadius:12, background:'rgba(29,158,117,0.1)', border:'1px solid rgba(29,158,117,0.25)', color:'#1D9E75', fontSize:14, fontWeight:700, fontFamily:'var(--font-display)' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  Dans ma collection
+                </div>
+              ) : (
+                <button onClick={() => { if(selCard) addToPortfolio(selCard) }} style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px 18px', borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:14, fontWeight:700, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }} onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)' }} onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  Ajouter au portfolio
+                </button>
+              )
+            }
+          />,
+          document.body
+        )}
+
+        {/* ── ANCIEN DRAWER (neutralise, a supprimer apres validation) ── */}
+        {false && drawerMounted && selId && createPortal(
           <>
           <div
             className="detail-backdrop"

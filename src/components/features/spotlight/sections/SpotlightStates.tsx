@@ -105,7 +105,7 @@ export function SpotlightStates({ prices, kodo }: Props) {
   }
 
   return (
-    <div className="kc-section-card" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRadius: 14, border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)', padding: '14px 18px' }}>
+    <div className="kc-section-card" style={{ background: 'transparent', border: 'none', padding: '2px 2px' }}>
       <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.08em', margin: '0 0 2px' }}>Prix par état</div>
       <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: '0 0 12px', lineHeight: 1.4 }}>Moyenne des ventes confirmées, par source</p>
 

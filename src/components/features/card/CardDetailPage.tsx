@@ -88,6 +88,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
   const [detail, setDetail] = useState<CardDetailExtra | null>(null)
+  const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
 
   useEffect(() => {
     let off = false
@@ -98,6 +99,28 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
       const clean = sid.replace(/-shadowless-ns-|-shadowless-|-1st-/, "-")
       if (clean !== sid) fetchCardDetail(lang, clean).then(d2 => { if (!off && d2) setDetail(d2 as CardDetailExtra) })
     }).catch(() => {})
+    return () => { off = true }
+  }, [cardId, lang])
+
+  // Versions soeurs (autres langues) : memes set/numero, prefixe langue different.
+  // On interroge spotlight par version (le batch ne remonte pas le marketEst brut).
+  useEffect(() => {
+    let off = false
+    const base = cardId.replace(/^(en|fr|jp|aopkm)-/i, "")
+    const others: Array<"EN" | "FR" | "JP"> = (["EN", "FR", "JP"] as const).filter(l => l !== lang)
+    Promise.all(others.map(async (l) => {
+      const id = `${l.toLowerCase()}-${base}`
+      try {
+        const r = await fetch(`/api/spotlight?card_id=${encodeURIComponent(id)}&lang=${l}`)
+        const j = await r.json()
+        if (j.error || !j.card) return null
+        const price = j.prices?.marketEst ?? j.kodo?.fairValueEur ?? j.kodo?.coteFrEur ?? null
+        return { lang: l, id, priceEur: price as number | null }
+      } catch { return null }
+    })).then(res => {
+      if (off) return
+      setSiblings(res.filter((x): x is { lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null } => x != null))
+    })
     return () => { off = true }
   }, [cardId, lang])
 
@@ -362,6 +385,40 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                   <p style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>« {d.description} »</p>
                 </div>
               ) : null}
+            </Card>
+          </section>
+        ) : null}
+
+        {/* ═══ CETTE CARTE EXISTE AUSSI EN (versions soeurs) ═══ */}
+        {siblings.length > 0 ? (
+          <section>
+            <SectionTitle>Cette carte existe aussi en</SectionTitle>
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              {siblings.map((sib, i) => {
+                const sFlag = FLAG[sib.lang] || ""
+                const sLabel = LANG_LABEL[sib.lang] || sib.lang
+                return (
+                  <Link key={sib.id} href={`/cartes/${encodeURIComponent(sib.id)}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 22px", textDecoration: "none", borderTop: i > 0 ? `1px solid ${SNOW.borderSoft}` : "none", transition: "background .15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = SNOW.surfaceSoft }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 22 }}>{sFlag}</span>
+                      <div>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{sLabel}</div>
+                        <div style={{ fontSize: 12, color: SNOW.mutedLight, fontFamily: FONT.display }}>{card.set_name} · #{card.local_id}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {sib.priceEur != null ? (
+                        <span style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(sib.priceEur)}</span>
+                      ) : (
+                        <span style={{ fontSize: 13, color: SNOW.mutedLight, fontStyle: "italic", fontFamily: FONT.body }}>voir le prix</span>
+                      )}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
+                  </Link>
+                )
+              })}
             </Card>
           </section>
         ) : null}

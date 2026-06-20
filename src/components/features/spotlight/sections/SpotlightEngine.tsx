@@ -64,14 +64,13 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
 
   if (tiles.length === 0 && coteEntries.length === 0) return null
 
+  // Design a plat: bloc transparent (le panneau est la seule surface glass).
+  // Les sous-tuiles stats gardent un micro-cadre subtil (DA dashboard), le gros fond gris part.
   const CARD: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.45)',
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    borderRadius: 16,
-    padding: '14px 18px',
+    background: 'transparent',
+    borderRadius: 0,
+    padding: '2px 2px',
     border: 'none',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
   }
 
   return (
@@ -88,7 +87,7 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
       {tiles.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${tiles.length === 1 ? 1 : tiles.length === 2 ? 2 : 3}, 1fr)`, gap: 10 }}>
           {tiles.map((t, idx) => (
-            <div key={idx} style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 12, padding: '10px 12px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9)' }}>
+            <div key={idx} style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 12, padding: '11px 13px', boxShadow: '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
               <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: t.color || SNOW.ink, fontFamily: FONT.display, letterSpacing: '-0.02em', lineHeight: 1 }}>{t.value}</div>
               <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.display, marginTop: 4 }}>{t.sub}</div>

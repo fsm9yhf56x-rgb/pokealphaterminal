@@ -14,6 +14,8 @@ import { SpotlightPopExpandable } from "@/components/features/spotlight/sections
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { usePortfolio } from "@/lib/usePortfolio"
 import { usePersona } from "@/lib/usePersona"
+import { useGoals } from "@/lib/useGoals"
+import { useAuth } from "@/lib/useAuth"
 import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
 import { SNOW, FONT } from "@/lib/design/snow"
@@ -92,6 +94,9 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const { data, loading, error } = useSpotlightData(cardId, lang)
   const { cards } = usePortfolio()
   const { show, isInvestor } = usePersona()
+  const { wishlist, addWishItem, deleteWishItem } = useGoals()
+  const { user } = useAuth()
+  const [followMsg, setFollowMsg] = useState<string | null>(null)
   const [detail, setDetail] = useState<CardDetailExtra | null>(null)
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
   const [sourcesOpen, setSourcesOpen] = useState(false)
@@ -192,6 +197,31 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     return chosen.price_avg ?? null
   }
   const nmPrice = priceForCondition("NEAR_MINT")
+
+  // P8 — Suivre (wishlist). Match souple set + numero + langue.
+  const followed = (wishlist || []).find(w => {
+    const wSet = cleanSetId(w.set_id)
+    const wNum = String(w.card_number ?? "").replace(/^0+/, "") || "0"
+    return wSet === pageSet && wNum === pageNum && String(w.lang || "").toUpperCase() === card.lang
+  })
+  const isFollowed = !!followed
+  const toggleFollow = async () => {
+    setFollowMsg(null)
+    if (!user) { setFollowMsg("Connecte-toi pour suivre cette carte."); return }
+    if (isFollowed && followed) { await deleteWishItem(followed.id); return }
+    const res = await addWishItem({
+      card_name: card.name,
+      set_id: card.set_id,
+      set_name: card.set_name,
+      card_number: String(card.local_id ?? ""),
+      lang: card.lang,
+      rarity: (card as any).rarity_normalized ?? null,
+      priority: 2,
+    })
+    if (res && typeof res === "object" && "error" in res && res.error === "wishlist_limit") {
+      setFollowMsg("Plan Gratuit limité à 3 cartes suivies. Passe Pro pour l'illimité.")
+    }
+  }
 
   // Contexte 2 — toutes les sources de prix, groupees par etat (seuil volume >= 3).
   const COND_ORDER = ["NEAR_MINT", "LIGHTLY_PLAYED", "MODERATELY_PLAYED", "HEAVILY_PLAYED", "DAMAGED"]
@@ -336,6 +366,20 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               ) : null}
             </div>
           ) : null}
+
+          {/* P8 Suivre (wishlist) */}
+          <div style={{ marginTop: 24 }}>
+            <button onClick={toggleFollow} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 20px", borderRadius: 13, background: isFollowed ? "rgba(224,48,32,0.08)" : "#1D1D1F", border: isFollowed ? "1px solid rgba(224,48,32,0.25)" : "1px solid #1D1D1F", color: isFollowed ? "#E03020" : "#fff", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", boxShadow: isFollowed ? "none" : "0 4px 14px rgba(0,0,0,0.16)", transition: "all .2s cubic-bezier(.2,.8,.2,1)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : "#fff"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              {isFollowed ? "Suivie" : "Suivre"}
+            </button>
+            {followMsg ? (
+              <div style={{ marginTop: 10, fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.body, display: "flex", alignItems: "center", gap: 6 }}>
+                <span>{followMsg}</span>
+                {followMsg.includes("Pro") ? <a href="/abonnement" style={{ color: "#E03020", fontWeight: 600, textDecoration: "none" }}>Voir Pro</a> : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

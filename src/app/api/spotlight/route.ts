@@ -334,14 +334,60 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Marche estime (raw NM cross-source average, inchange)
+    // 4. Prix d'affichage = NM (etat de reference), moyenne ponderee par volume.
+    //    Regle Kodo: NM-first, seuil volume >= 3, garde-fou anti-aberration,
+    //    priorite source selon le marche (FR -> Cardmarket EU, EN/US -> TCGplayer US).
+    const VOL_MIN = 3
+    const cardLangUp = String((card as any)?.lang || '').toUpperCase()
+    const isEuMarket = cardLangUp === 'FR'
+
+    // NM strict de chaque source (+ volume). Doublon TCGplayer: garder celui avec nb_sales.
     const cmTrend = bySource.cardmarket?.find(p => p.variant === 'raw' && p.condition === 'CARDMARKET_TREND')
-    const ebayRawNm = bySource.ebay?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
-    const tcgPrice = bySource.tcgplayer?.find(p => p.variant === 'raw' || p.variant === 'holo')
-    const sources = [cmTrend, ebayRawNm, tcgPrice].filter(Boolean) as any[]
-    const marketEst = sources.length > 0
-      ? sources.reduce((sum, p) => sum + p.price_avg, 0) / sources.length
-      : null
+    const cmNm = bySource.cardmarket?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
+    const ebayNm = bySource.ebay?.find(p => p.variant === 'raw' && p.condition === 'NEAR_MINT')
+    const tcgNmAll = (bySource.tcgplayer || []).filter(p => p.condition === 'NEAR_MINT')
+    const tcgNm = tcgNmAll.find(p => p.nb_sales != null) || tcgNmAll[0]
+
+    // Candidats : NM de chaque source. nb_sales null = prix de reference (volume
+    // inconnu, PAS zero vente) -> garde avec poids forfaitaire. nb_sales connu mais
+    // faible (< VOL_MIN) -> ecarte (peu fiable).
+    const DEFAULT_WEIGHT = 10  // poids d'un NM de reference sans volume connu
+    type Cand = { price: number; vol: number; volKnown: boolean; src: string; priority: number }
+    const raw: Cand[] = []
+    const mkCand = (p: any, src: string, priority: number): Cand => ({
+      price: p.price_avg,
+      vol: p.nb_sales != null ? p.nb_sales : DEFAULT_WEIGHT,
+      volKnown: p.nb_sales != null,
+      src, priority,
+    })
+    if (cmNm && cmNm.price_avg > 0) raw.push(mkCand(cmNm, 'cardmarket', isEuMarket ? 3 : 2))
+    if (tcgNm && tcgNm.price_avg > 0) raw.push(mkCand(tcgNm, 'tcgplayer', isEuMarket ? 2 : 3))
+    if (ebayNm && ebayNm.price_avg > 0) raw.push(mkCand(ebayNm, 'ebay', 1))
+
+    // Filtre volume: on n'ecarte QUE les sources avec volume connu ET faible.
+    // Les sources sans volume connu (reference) sont conservees.
+    let cands = raw.filter(c => !c.volKnown || c.vol >= VOL_MIN)
+
+    // Garde-fou anti-aberration: exclure les prix hors [0.4x, 2.5x] de la mediane
+    if (cands.length >= 2) {
+      const sorted = [...cands].map(c => c.price).sort((a, b) => a - b)
+      const median = sorted[Math.floor(sorted.length / 2)]
+      cands = cands.filter(c => c.price >= median * 0.4 && c.price <= median * 2.5)
+    }
+
+    // cmTrend en renfort si on n'a rien (ou comme reference marche EU)
+    if (cands.length === 0 && cmTrend && cmTrend.price_avg > 0) {
+      cands = [{ price: cmTrend.price_avg, vol: 1, src: 'cardmarket_trend', priority: isEuMarket ? 3 : 2 }]
+    }
+
+    // Moyenne ponderee par volume (poids = volume, mineure ponderation par priorite source)
+    let marketEst: number | null = null
+    if (cands.length > 0) {
+      const wsum = cands.reduce((s, c) => s + (c.vol * c.priority), 0)
+      marketEst = wsum > 0
+        ? cands.reduce((s, c) => s + c.price * (c.vol * c.priority), 0) / wsum
+        : cands.reduce((s, c) => s + c.price, 0) / cands.length
+    }
 
     return NextResponse.json({
       card,

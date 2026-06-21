@@ -165,6 +165,48 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     const cNum = String(c.card_number ?? "").replace(/^0+/, "") || "0"
     return cSet === pageSet && cNum === pageNum && String(c.lang || "").toUpperCase() === card.lang
   })
+
+  // Contexte 3 — prix d'un exemplaire selon son etat/grade.
+  // Map condition collection -> condition donnees (NEAR_MINT, etc.)
+  const CONDITION_MAP: Record<string, string> = {
+    "Near Mint": "NEAR_MINT", "NM": "NEAR_MINT", "Mint": "NEAR_MINT",
+    "Lightly Played": "LIGHTLY_PLAYED", "LP": "LIGHTLY_PLAYED",
+    "Moderately Played": "MODERATELY_PLAYED", "MP": "MODERATELY_PLAYED",
+    "Heavily Played": "HEAVILY_PLAYED", "HP": "HEAVILY_PLAYED",
+    "Damaged": "DAMAGED", "DMG": "DAMAGED",
+  }
+  type SrcRow = { variant?: string; condition?: string; price_avg?: number; nb_sales?: number | null }
+  const allRows: SrcRow[] = []
+  Object.entries((prices?.bySource || {}) as Record<string, unknown>).forEach(([k, v]) => {
+    if (k.startsWith("__") || !Array.isArray(v)) return
+    ;(v as SrcRow[]).forEach(r => allRows.push(r))
+  })
+  // Prix d'un etat raw donne: meilleure source par volume (garde-fou simple).
+  const priceForCondition = (condDb: string): number | null => {
+    const matches = allRows.filter(r => r.variant === "raw" && r.condition === condDb && (r.price_avg ?? 0) > 0)
+    if (matches.length === 0) return null
+    // priorite au plus gros volume connu, sinon le prix de reference (nb_sales null)
+    const withVol = matches.filter(r => r.nb_sales != null).sort((a, b) => (b.nb_sales || 0) - (a.nb_sales || 0))
+    const chosen = withVol[0] || matches[0]
+    return chosen.price_avg ?? null
+  }
+  const nmPrice = priceForCondition("NEAR_MINT")
+  // Cote d'un exemplaire possede.
+  const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
+    if (c.graded) {
+      const gl = `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim()
+      // Les grades sont lockes (Premium) ou indisponibles -> pas de faux prix.
+      return { value: null, locked: true, gradeLabel: gl }
+    }
+    const raw = normalizeCondition(c.condition)
+    if (raw === "Raw") return { value: nmPrice }  // etat non precise -> NM par defaut
+    const condDb = CONDITION_MAP[raw]
+    if (condDb) {
+      const p = priceForCondition(condDb)
+      return { value: p != null ? p : nmPrice }  // etat connu mais pas de prix -> NM fallback
+    }
+    return { value: nmPrice }
+  }
   const img = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url ?? undefined })
   const era = card.era ? { era: card.era, color: "#8A8A8E" } : eraOf(card.id)
   const flag = FLAG[card.lang] || ""
@@ -446,21 +488,32 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         {owned.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {owned.map((c, i) => {
+              const cote = coteFor(c)
               const cond = normalizeCondition(c.condition)
-              const gradeLabel = c.graded ? `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim() : cond
-              const cur = c.current_price != null ? Number(c.current_price) : null
+              const gradeLabel = c.graded ? (cote.gradeLabel || `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim()) : (cond === "Raw" ? "Near Mint" : cond)
+              const cur = cote.value
               const buy = c.buy_price != null ? Number(c.buy_price) : null
               const pv = (cur != null && buy != null && buy > 0) ? cur - buy : null
               const pct = (pv != null && buy && buy > 0) ? Math.round((pv / buy) * 100) : null
               const up = pv != null && pv >= 0
+              const isRawNoState = !c.graded && cond === "Raw"
               return (
                 <div key={c.id || i} style={{ background: SNOW.bg, borderRadius: 14, border: `1px solid ${SNOW.border}`, padding: "16px 18px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 11px", borderRadius: 8, background: c.graded ? "rgba(224,48,32,0.08)" : SNOW.surface, border: `1px solid ${c.graded ? "rgba(224,48,32,0.2)" : SNOW.border}`, fontSize: 11, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", color: c.graded ? "#E03020" : SNOW.muted, fontFamily: FONT.display }}>{gradeLabel}</span>
+                      {isRawNoState ? <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, fontStyle: "italic" }}>état non précisé</span> : null}
                       {c.qty > 1 ? <span style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display, fontWeight: 600 }}>{"\u00D7"}{c.qty}</span> : null}
                     </div>
-                    {cur != null ? (
+                    {cote.locked ? (
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>Cote {gradeLabel}</div>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 2, fontSize: 12.5, fontWeight: 700, color: "#E03020", fontFamily: FONT.display }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                          Premium
+                        </span>
+                      </div>
+                    ) : cur != null ? (
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>{isInvestor ? "Valeur" : "Cote actuelle"}</div>
                         <div style={{ fontSize: 17, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(cur)}</div>

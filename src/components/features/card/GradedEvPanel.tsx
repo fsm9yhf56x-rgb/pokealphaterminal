@@ -168,20 +168,29 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
         </div>
       )}
 
-      {/* Distribution */}
-      {high.length > 0 ? (
+      {/* Le calcul transparent (distribution detaillee dans POPULATION GRADEE) */}
+      {reco !== "INSUFFISANT" && data.evBrute != null ? (
         <>
-          <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 6 }}>
-            Distribution des notes · valeur par note
+          <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 10 }}>
+            Le calcul
           </div>
-          {high.map((r) => <Bar key={r.grade} proba={r.proba} label={`PSA ${r.grade}`} price={r.price} />)}
-          {low.length > 0 ? <Bar proba={lowProba} label="≤ PSA 5" price={lowAvgPrice} /> : null}
-
-          {/* Transparence */}
-          <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${SNOW.borderSoft}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "9px 14px", alignItems: "baseline" }}>
+            <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Valeur espérée <span style={{ color: SNOW.mutedLight, fontSize: 12 }}>(toutes notes pondérées par leur probabilité)</span></div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data, textAlign: "right" }}>{fmtEur2(data.evBrute)}</div>
+            <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Frais de gradation PSA</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(data.gradingFee ?? 0)}</div>
+            <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Valeur actuelle <span style={{ color: SNOW.mutedLight, fontSize: 12 }}>(carte non gradée)</span></div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(data.rawPrice ?? 0)}</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "baseline", marginTop: 10, paddingTop: 12, borderTop: `1.5px solid ${SNOW.border}` }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>Gain espéré net</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: (data.evNette ?? 0) >= 0 ? "#00A368" : SNOW.red, fontFamily: FONT.data, textAlign: "right" }}>{(data.evNette ?? 0) >= 0 ? "+ " : "− "}{fmtEur2(Math.abs(data.evNette ?? 0))}</div>
+          </div>
+          <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${SNOW.borderSoft}` }}>
             Sur {fmtInt(data.popTotal ?? 0)} exemplaires gradés
             {data.coverage != null ? ` · ${Math.round(data.coverage * 100)}% des notes valorisées` : ""}
             {data.variety ? ` · ${data.variety}` : ""}
+            {" · distribution détaillée ci-dessus dans Population gradée"}
           </div>
         </>
       ) : null}

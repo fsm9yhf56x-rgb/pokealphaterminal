@@ -12,6 +12,9 @@ import { SpotlightChart } from "@/components/features/spotlight/sections/Spotlig
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
 import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
+import { usePortfolio } from "@/lib/usePortfolio"
+import { usePersona } from "@/lib/usePersona"
+import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
 import { SNOW, FONT } from "@/lib/design/snow"
 
@@ -87,6 +90,8 @@ const EnergyDots = ({ cost }: { cost: string[] }) => (
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
+  const { cards } = usePortfolio()
+  const { show, isInvestor } = usePersona()
   const [detail, setDetail] = useState<CardDetailExtra | null>(null)
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
 
@@ -150,6 +155,16 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   }
 
   const { card, kodo, prices } = data
+
+  // Exemplaires possedes : match souple par set + numero + langue
+  const cleanSetId = (x: string | null | undefined) => String(x ?? "").replace(/^(en|fr|jp|aopkm)-/i, "").replace(/-shadowless-ns|-shadowless|-1st/g, "")
+  const pageSet = cleanSetId(card.set_id)
+  const pageNum = String(card.local_id ?? "").replace(/^0+/, "") || "0"
+  const owned = (cards || []).filter(c => {
+    const cSet = cleanSetId(c.set_id)
+    const cNum = String(c.card_number ?? "").replace(/^0+/, "") || "0"
+    return cSet === pageSet && cNum === pageNum && String(c.lang || "").toUpperCase() === card.lang
+  })
   const img = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url ?? undefined })
   const era = card.era ? { era: card.era, color: "#8A8A8E" } : eraOf(card.id)
   const flag = FLAG[card.lang] || ""
@@ -422,6 +437,58 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             </Card>
           </section>
         ) : null}
+      </div>
+
+      {/* ═══ SEPARATION FORTE + MA COLLECTION (zone perso) ═══ */}
+      <div style={{ marginTop: 52, padding: "32px 28px", borderRadius: 22, background: "linear-gradient(180deg, #FBFAF8 0%, #F7F6FA 100%)", border: `1px solid ${SNOW.border}` }}>
+        <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: "0 0 18px" }}>Dans ma collection</h2>
+
+        {owned.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {owned.map((c, i) => {
+              const cond = normalizeCondition(c.condition)
+              const gradeLabel = c.graded ? `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim() : cond
+              const cur = c.current_price != null ? Number(c.current_price) : null
+              const buy = c.buy_price != null ? Number(c.buy_price) : null
+              const pv = (cur != null && buy != null && buy > 0) ? cur - buy : null
+              const pct = (pv != null && buy && buy > 0) ? Math.round((pv / buy) * 100) : null
+              const up = pv != null && pv >= 0
+              return (
+                <div key={c.id || i} style={{ background: SNOW.bg, borderRadius: 14, border: `1px solid ${SNOW.border}`, padding: "16px 18px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 11px", borderRadius: 8, background: c.graded ? "rgba(224,48,32,0.08)" : SNOW.surface, border: `1px solid ${c.graded ? "rgba(224,48,32,0.2)" : SNOW.border}`, fontSize: 11, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", color: c.graded ? "#E03020" : SNOW.muted, fontFamily: FONT.display }}>{gradeLabel}</span>
+                      {c.qty > 1 ? <span style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display, fontWeight: 600 }}>{"\u00D7"}{c.qty}</span> : null}
+                    </div>
+                    {cur != null ? (
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>{isInvestor ? "Valeur" : "Cote actuelle"}</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(cur)}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                  {show.pnl && pv != null ? (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${SNOW.borderSoft}`, fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.display }}>
+                      Acheté {buy != null ? fmtEur(buy) : "—"} {"\u00B7"} <span style={{ fontWeight: 700, color: up ? "#1D9E75" : "#E03020" }}>{up ? "+" : ""}{fmtEur(pv)}{pct != null ? ` (${up ? "+" : ""}${pct}%)` : ""}</span>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+            <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: 13, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
+              Gérer dans mon portfolio
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </Link>
+          </div>
+        ) : (
+          <div style={{ textAlign: "center", padding: "20px 0 8px" }}>
+            <div style={{ fontSize: 14.5, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16 }}>Tu ne possèdes pas encore cette carte.</div>
+            <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 22px", borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.16)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Ajouter à ma collection
+            </Link>
+          </div>
+        )}
       </div>
 
       <style>{`

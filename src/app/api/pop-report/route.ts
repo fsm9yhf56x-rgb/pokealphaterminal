@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePlan } from '@/lib/plan'
+import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
@@ -19,9 +19,13 @@ const LANG_PATTERNS = {
   JP: { match: /japanese/i, label: 'Japanese' },
 }
 
+const PLAN_LEVEL: Record<string, number> = { free: 0, pro: 1, premium: 2 }
+
 export async function GET(req: NextRequest) {
-  const gate = await requirePlan('pro')
-  if (!gate.ok) return gate.res
+  // On NE bloque PAS : on lit le plan pour decider donnees completes (premium)
+  // ou apercu locke (free/pro) avec teaser.
+  const user = await getCurrentUserWithProfile()
+  const isPremium = !!user && (PLAN_LEVEL[user.plan] ?? 0) >= PLAN_LEVEL['premium']
 
   const cardId = req.nextUrl.searchParams.get('card_id')
   const lang = (req.nextUrl.searchParams.get('lang') || 'EN').toUpperCase() as 'EN' | 'FR' | 'JP'
@@ -112,8 +116,25 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Apercu locke pour free/pro : total recense seulement, pas la distribution.
+    if (!isPremium) {
+      const totalGraded = variants.reduce((sum, v) => sum + (v.total || 0), 0)
+      const pop10Total = variants.reduce((sum, v) => sum + (v.grades?.['10'] || 0), 0)
+      return NextResponse.json({
+        locked: true,
+        totalGraded,
+        pop10Total,
+        variantCount: variants.length,
+        lang,
+        langFallback,
+      }, {
+        headers: { 'Cache-Control': 'private, no-store' },
+      })
+    }
+
+    // Premium : donnees completes.
     return NextResponse.json({ variants, shortRef, lang, langFallback }, {
-      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+      headers: { 'Cache-Control': 'private, no-store' },
     })
   } catch (e: any) {
     console.error('[pop-report] error:', e?.message)

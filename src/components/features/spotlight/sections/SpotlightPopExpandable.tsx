@@ -19,6 +19,7 @@ const SHOWN = ['10', '9', '8.5', '8', '7', '6', '≤5'] as const
 
 export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?: string }) {
   const [variants, setVariants] = useState<Variant[]>([])
+  const [locked, setLocked] = useState<{ totalGraded: number; pop10Total: number; variantCount: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [tabIdx, setTabIdx] = useState(0)
   const [expanded, setExpanded] = useState(false)
@@ -33,7 +34,13 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
       .then(r => r.json())
       .then(j => {
         if (cancelled) return
-        setVariants(j?.variants || [])
+        if (j?.locked) {
+          setLocked({ totalGraded: j.totalGraded || 0, pop10Total: j.pop10Total || 0, variantCount: j.variantCount || 0 })
+          setVariants([])
+        } else {
+          setLocked(null)
+          setVariants(j?.variants || [])
+        }
         setLangFallback(!!j?.langFallback)
         setLoading(false)
       })
@@ -42,6 +49,34 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
   }, [cardId, lang])
 
   if (loading) return null
+
+  // Apercu locke (free/pro) : teaser avec total recense, distribution en Premium.
+  if (locked && locked.totalGraded > 0) {
+    return (
+      <div style={{ position: 'relative', overflow: 'hidden', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRadius: 14, boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)', padding: '18px 20px' }}>
+        <h2 style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 500, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 12, position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 12, background: '#1D1D1F', borderRadius: 2 }} />
+          Population gradée
+        </h2>
+        <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: '0 0 14px', lineHeight: 1.5 }}>
+          Combien de cartes de cette référence existent notées par <strong style={{ color: SNOW.ink, fontWeight: 500 }}>PSA</strong> ?
+        </p>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 30, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: '-0.02em' }}>{locked.totalGraded.toLocaleString('fr-FR')}</span>
+          <span style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display }}>exemplaires PSA recensés</span>
+        </div>
+        <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: '0 0 16px', lineHeight: 1.5 }}>
+          Distribution complète des notes (PSA 10, 9, 8...) et gem rate disponibles avec Premium.
+        </p>
+        <a href="/abonnement" className="kc-glass-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(29,29,31,0.92)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: '1px solid rgba(0,0,0,0.2)', fontSize: 12.5, color: '#fff', fontWeight: 600, padding: '9px 18px', borderRadius: 10, fontFamily: FONT.display, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12)', transition: 'all .2s cubic-bezier(.2,.8,.2,1)' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Voir la distribution avec Premium
+          <span style={{ color: '#FF7A6E', fontWeight: 700 }}>→</span>
+        </a>
+      </div>
+    )
+  }
+
   if (variants.length === 0) {
     if (langFallback && (lang === 'FR' || lang === 'JP')) {
       const langLabel = lang === 'FR' ? 'française' : 'japonaise'

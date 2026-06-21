@@ -377,7 +377,7 @@ export async function GET(req: NextRequest) {
 
     // cmTrend en renfort si on n'a rien (ou comme reference marche EU)
     if (cands.length === 0 && cmTrend && cmTrend.price_avg > 0) {
-      cands = [{ price: cmTrend.price_avg, vol: 1, src: 'cardmarket_trend', priority: isEuMarket ? 3 : 2 }]
+      cands = [{ price: cmTrend.price_avg, vol: DEFAULT_WEIGHT, volKnown: false, src: 'cardmarket_trend', priority: isEuMarket ? 3 : 2 }]
     }
 
     // Moyenne ponderee par volume (poids = volume, mineure ponderation par priorite source)

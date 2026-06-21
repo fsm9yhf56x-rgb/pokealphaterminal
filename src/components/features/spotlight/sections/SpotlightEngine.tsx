@@ -55,9 +55,9 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
   if (gradeEvPsa10Eur != null) {
     const positive = gradeEvPsa10Eur >= 0
     tiles.push({
-      label: 'Plus-value PSA 10',
+      label: 'Écart PSA 10',
       value: `${positive ? '+' : '−'}${fmtPrice(Math.abs(gradeEvPsa10Eur), 'EUR')}`,
-      sub: positive ? 'gain estimé si gradée' : 'gradation non rentable',
+      sub: 'hors frais et probabilité de note',
       color: positive ? '#00A368' : SNOW.red,
     })
   }

@@ -227,6 +227,9 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     if (deduped.length > 0) sourcesByCond.push({ cond, label: COND_FR[cond], lines: deduped })
   }
   const hasSources = sourcesByCond.length > 0
+
+  const gradedLocked = (prices?.bySource as any)?.__gradedLocked === true
+  const gradedHiddenCount = Number((prices?.bySource as any)?.__gradedHiddenCount || 0)
   // Cote d'un exemplaire possede.
   const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
     if (c.graded) {
@@ -358,23 +361,29 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         <div className="kcard-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
           <section>
             <SectionTitle>Prix par état</SectionTitle>
-            <Card><SpotlightStates prices={prices} kodo={kodo} /></Card>
-
             {hasSources ? (
               <Card>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <div>
-                    <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: "uppercase", letterSpacing: ".08em" }}>Sources de prix</div>
-                    <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "2px 0 0", lineHeight: 1.4 }}>Ventes confirmées par source et par état · 90 jours</p>
-                  </div>
-                  <button onClick={() => setSourcesOpen(v => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: SNOW.surface, border: `1px solid ${SNOW.border}`, borderRadius: 9, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {(sourcesOpen || isInvestor) ? "Masquer" : "Voir le détail"}
-                    <span style={{ display: "inline-block", transform: (sourcesOpen || isInvestor) ? "rotate(90deg)" : "rotate(0)", transition: "transform .2s", fontSize: 9 }}>▶</span>
-                  </button>
+                <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.4 }}>Moyenne des ventes confirmées, par état · 90 jours</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {sourcesByCond.map((grp, gi) => {
+                    const best = grp.lines[0]
+                    return (
+                      <div key={grp.cond} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "center", padding: "11px 0", borderBottom: gi < sourcesByCond.length - 1 ? `1px solid ${SNOW.borderSoft}` : "none" }}>
+                        <div>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{grp.label}</div>
+                          <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, marginTop: 1 }}>{SRC_FR[best.src] || best.src}{best.vol != null ? ` · ${best.vol} vente${best.vol > 1 ? "s" : ""}` : ""}</div>
+                        </div>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: gi === 0 ? SNOW.ink : "#48484A", fontFamily: FONT.display, textAlign: "right" }}>{fmtEur(best.price)}</span>
+                      </div>
+                    )
+                  })}
                 </div>
-
+                <button onClick={() => setSourcesOpen(v => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 14, background: SNOW.surface, border: `1px solid ${SNOW.border}`, borderRadius: 9, padding: "7px 14px", fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {(sourcesOpen || isInvestor) ? "Masquer le détail par source" : "Voir le détail par source"}
+                  <span style={{ display: "inline-block", transform: (sourcesOpen || isInvestor) ? "rotate(90deg)" : "rotate(0)", transition: "transform .2s", fontSize: 9 }}>▶</span>
+                </button>
                 {(sourcesOpen || isInvestor) ? (
-                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${SNOW.borderSoft}`, display: "flex", flexDirection: "column", gap: 14 }}>
                     {sourcesByCond.map(grp => (
                       <div key={grp.cond}>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: SNOW.mutedLight, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: FONT.display, marginBottom: 6 }}>{grp.label}</div>
@@ -392,11 +401,28 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                   </div>
                 ) : null}
               </Card>
-            ) : null}
+            ) : (
+              <Card><SpotlightStates prices={prices} kodo={kodo} /></Card>
+            )}
           </section>
-          <section>
-            <SectionTitle>Population gradée</SectionTitle>
-            <Card><SpotlightPopExpandable cardId={card.id} lang={card.lang} /></Card>
+          <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {gradedLocked && gradedHiddenCount > 0 ? (
+              <div>
+                <SectionTitle>Prix gradés</SectionTitle>
+                <Card>
+                  <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.45 }}>Les prix des cartes notées (PSA, CGC, BGS…) par note.</p>
+                  <a href="/abonnement" className="kc-glass-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(29,29,31,0.92)", backdropFilter: "blur(20px) saturate(200%)", WebkitBackdropFilter: "blur(20px) saturate(200%)", border: "1px solid rgba(0,0,0,0.2)", fontSize: 12.5, color: "#fff", fontWeight: 600, padding: "9px 18px", borderRadius: 10, fontFamily: FONT.display, textDecoration: "none", boxShadow: "0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    {gradedHiddenCount} note{gradedHiddenCount > 1 ? "s" : ""} gradée{gradedHiddenCount > 1 ? "s" : ""} avec Premium
+                    <span style={{ color: "#FF7A6E", fontWeight: 700 }}>→</span>
+                  </a>
+                </Card>
+              </div>
+            ) : null}
+            <div>
+              <SectionTitle>Population gradée</SectionTitle>
+              <Card><SpotlightPopExpandable cardId={card.id} lang={card.lang} /></Card>
+            </div>
           </section>
         </div>
 

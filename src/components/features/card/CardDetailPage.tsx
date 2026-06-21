@@ -94,6 +94,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const { show, isInvestor } = usePersona()
   const [detail, setDetail] = useState<CardDetailExtra | null>(null)
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
+  const [sourcesOpen, setSourcesOpen] = useState(false)
 
   useEffect(() => {
     let off = false
@@ -191,6 +192,41 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     return chosen.price_avg ?? null
   }
   const nmPrice = priceForCondition("NEAR_MINT")
+
+  // Contexte 2 — toutes les sources de prix, groupees par etat (seuil volume >= 3).
+  const COND_ORDER = ["NEAR_MINT", "LIGHTLY_PLAYED", "MODERATELY_PLAYED", "HEAVILY_PLAYED", "DAMAGED"]
+  const COND_FR: Record<string, string> = {
+    NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played", MODERATELY_PLAYED: "Moderately Played",
+    HEAVILY_PLAYED: "Heavily Played", DAMAGED: "Damaged",
+  }
+  const SRC_FR: Record<string, string> = { tcgplayer: "TCGplayer", ebay: "eBay", cardmarket: "Cardmarket" }
+  const VOL_MIN_SRC = 3
+  type SrcLine = { src: string; price: number; vol: number | null }
+  const sourcesByCond: Array<{ cond: string; label: string; lines: SrcLine[] }> = []
+  for (const cond of COND_ORDER) {
+    const lines: SrcLine[] = []
+    Object.entries((prices?.bySource || {}) as Record<string, unknown>).forEach(([src, v]) => {
+      if (src.startsWith("__") || !Array.isArray(v)) return
+      ;(v as SrcRow[]).forEach(r => {
+        if (r.variant === "raw" && r.condition === cond && (r.price_avg ?? 0) > 0) {
+          // seuil volume: garde si volume connu >= 3, OU volume inconnu (prix de reference)
+          const vol = r.nb_sales != null ? r.nb_sales : null
+          if (vol == null || vol >= VOL_MIN_SRC) lines.push({ src, price: r.price_avg!, vol })
+        }
+      })
+    })
+    // dedup par source: garder la ligne au plus gros volume (ou prix de reference)
+    const bySrc = new Map<string, SrcLine>()
+    for (const l of lines) {
+      const cur = bySrc.get(l.src)
+      if (!cur) { bySrc.set(l.src, l); continue }
+      const lv = l.vol ?? -1, cv = cur.vol ?? -1
+      if (lv > cv) bySrc.set(l.src, l)
+    }
+    const deduped = Array.from(bySrc.values()).sort((a, b) => (b.vol ?? 0) - (a.vol ?? 0))
+    if (deduped.length > 0) sourcesByCond.push({ cond, label: COND_FR[cond], lines: deduped })
+  }
+  const hasSources = sourcesByCond.length > 0
   // Cote d'un exemplaire possede.
   const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
     if (c.graded) {
@@ -323,6 +359,40 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           <section>
             <SectionTitle>Prix par état</SectionTitle>
             <Card><SpotlightStates prices={prices} kodo={kodo} /></Card>
+
+            {hasSources ? (
+              <Card>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div>
+                    <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: "uppercase", letterSpacing: ".08em" }}>Sources de prix</div>
+                    <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "2px 0 0", lineHeight: 1.4 }}>Ventes confirmées par source et par état · 90 jours</p>
+                  </div>
+                  <button onClick={() => setSourcesOpen(v => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: SNOW.surface, border: `1px solid ${SNOW.border}`, borderRadius: 9, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {(sourcesOpen || isInvestor) ? "Masquer" : "Voir le détail"}
+                    <span style={{ display: "inline-block", transform: (sourcesOpen || isInvestor) ? "rotate(90deg)" : "rotate(0)", transition: "transform .2s", fontSize: 9 }}>▶</span>
+                  </button>
+                </div>
+
+                {(sourcesOpen || isInvestor) ? (
+                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
+                    {sourcesByCond.map(grp => (
+                      <div key={grp.cond}>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: SNOW.mutedLight, textTransform: "uppercase", letterSpacing: ".05em", fontFamily: FONT.display, marginBottom: 6 }}>{grp.label}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                          {grp.lines.map((l, i) => (
+                            <div key={l.src} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 14, alignItems: "center", padding: "8px 0", borderBottom: i < grp.lines.length - 1 ? `1px solid ${SNOW.borderSoft}` : "none" }}>
+                              <span style={{ fontSize: 13, color: SNOW.ink, fontFamily: FONT.display }}>{SRC_FR[l.src] || l.src}</span>
+                              <span style={{ fontSize: 12, color: SNOW.mutedLight, fontFamily: FONT.display, textAlign: "right" }}>{l.vol != null ? `${l.vol} vente${l.vol > 1 ? "s" : ""}` : "référence"}</span>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, textAlign: "right", minWidth: 72 }}>{fmtEur(l.price)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </Card>
+            ) : null}
           </section>
           <section>
             <SectionTitle>Population gradée</SectionTitle>

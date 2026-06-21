@@ -58,15 +58,20 @@ export function SubMenu() {
         
         .ksub-pro {
           font-size: 8.5px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #C9A84C, #FFE08A);
-          color: #5C4200;
+          font-weight: 700;
+          background: #F5F5F7;
+          color: #6E6E73;
+          border: 1px solid #E5E5EA;
           padding: 1px 6px;
-          border-radius: 4px;
+          border-radius: 5px;
           font-family: var(--font-sora, \'Sora\', sans-serif);
           margin-left: auto;
-          letter-spacing: 0.05em;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+          letter-spacing: 0.04em;
+        }
+        .ksub-pro--premium {
+          background: rgba(224,48,32,0.08);
+          color: #E03020;
+          border-color: rgba(224,48,32,0.20);
         }
 
         /* Responsive — sidebar 220px -> bandeau horizontal scrollable < 1024 */

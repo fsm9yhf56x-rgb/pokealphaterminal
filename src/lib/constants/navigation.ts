@@ -33,8 +33,7 @@ export const NAV: NavItem[] = [
       { label:'Performance',  href:'/portfolio/performance', collectorHide: true },
       { label:'Allocations',  href:'/portfolio/allocation'  },
       { label:'Objectifs',    href:'/portfolio/objectifs'   },
-      // PASSE 2: ajouter "Graded.ev" ici. Teaser (tier:'pro') -> moteur complet (tier:'premium').
-      // C'est le 2e trigger de conversion Pro->Premium (le plus tangible).
+      { label:'Faut-il grader', href:'/portfolio/graded-ev', tier:'premium' },
     ],
   },
   {

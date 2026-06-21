@@ -215,11 +215,14 @@ export function MobileNav() {
         }
 
         .kmnav-pro {
-          margin-left: auto; font-size: 8.5px; font-weight: 800;
-          background: linear-gradient(135deg, #C9A84C, #FFE08A); color: #5C4200;
-          padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em;
+          margin-left: auto; font-size: 8.5px; font-weight: 700;
+          background: #F5F5F7; color: #6E6E73; border: 1px solid #E5E5EA;
+          padding: 2px 6px; border-radius: 5px; letter-spacing: 0.04em;
           font-family: var(--font-sora, Sora, sans-serif);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        .kmnav-pro--premium {
+          background: rgba(224,48,32,0.08); color: #E03020;
+          border-color: rgba(224,48,32,0.20);
         }
 
         @keyframes kmnavPulse {

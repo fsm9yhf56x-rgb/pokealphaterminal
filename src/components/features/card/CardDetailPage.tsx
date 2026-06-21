@@ -11,6 +11,7 @@ import { SpotlightEngine } from "@/components/features/spotlight/sections/Spotli
 import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
 import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
+import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { usePortfolio } from "@/lib/usePortfolio"
 import { usePersona } from "@/lib/usePersona"
@@ -469,6 +470,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             </div>
           </section>
         </div>
+
+        {/* FAUT-IL LA GRADER (Graded.ev) */}
+        <section>
+          <GradedEvPanel printId={card.id} lang={card.lang} />
+        </section>
 
         {/* ═══ A PROPOS DE LA CARTE ═══ */}
         {hasAbout ? (

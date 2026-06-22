@@ -30,6 +30,7 @@ import { GlassButton } from '@/components/ui/GlassButton'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 type CardItem = {
+  kCardId?: string
   id: string; name: string; set: string; year: number; number: string
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
   condition: string; graded: boolean
@@ -178,7 +179,7 @@ export function Holdings() {
       .then(({ data, error }) => {
         if (!error && data && data.length > 0) {
           const mapped: CardItem[] = data.map((c: any) => ({
-            id: c.id, name: c.name, set: c.set_name || '', year: 0,
+            id: c.id, kCardId: c.k_card_id || undefined, name: c.name, set: c.set_name || '', year: 0,
             number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
             lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
             condition: c.condition || 'Raw', graded: c.graded || false,
@@ -1678,7 +1679,7 @@ export function Holdings() {
           const curQty = editQty ?? spotCard.qty
           const isFav = favs.has(spotCard.id)
           // ID nettoye (retire suffixes variante -1st/-shadowless) pour la page complete
-          const cleanId = spotCard.id.replace(/-shadowless-ns|-shadowless|-1st/g, '')
+          const cleanId = spotCard.kCardId || spotCard.id
           const hasPrice = spotCard.curPrice > 0
           const flag = spotCard.lang === 'JP' ? '\uD83C\uDDEF\uD83C\uDDF5' : spotCard.lang === 'EN' ? '\uD83C\uDDFA\uD83C\uDDF8' : '\uD83C\uDDEB\uD83C\uDDF7'
           return createPortal(

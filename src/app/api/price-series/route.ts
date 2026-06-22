@@ -1,3 +1,11 @@
+// ============================================================================
+// ROLE DE CETTE ROUTE : SELECTEUR de serie uniquement (etat NM/LP... ou note PSA/CGC).
+// La COURBE PRINCIPALE (par defaut) n'est PAS servie ici : elle vient de
+// prices.history via /api/spotlight (source canonique, lang-aware, lue par le
+// drawer ET la fiche). SpotlightChart n'appelle cette route QUE si l'utilisateur
+// change de serie (userPicked=true). NE PAS rebrancher la courbe par defaut ici
+// -> sinon on recree la divergence drawer/fiche corrigee en juin 2026.
+// ============================================================================
 /**
  * /api/price-series?card_id=xxx&lang=FR&series=NEAR_MINT
  *

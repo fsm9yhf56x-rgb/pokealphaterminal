@@ -1,3 +1,6 @@
+// NOTE COURBE : prices.history renvoye ici est la SOURCE CANONIQUE de l'historique
+// affiche par defaut (drawer + fiche via SpotlightChart). /api/price-series ne sert
+// QUE le selecteur d'etat/note. Ne pas dupliquer la logique de courbe ailleurs.
 /**
  * /api/spotlight?card_id=xxx&lang=FR
  *

@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
     })
 
     // ── Construit la serie demandee
-    let history: Array<{ date: string; price: number }> = []
+    let history: Array<{ date: string; price: number; volume?: number }> = []
     let seriesLabel = ''
     const isGraded = !RAW_ORDER.includes(series)
 
@@ -150,6 +150,7 @@ export async function GET(req: NextRequest) {
         .map(([date, pt]: [string, any]) => ({
           date,
           price: Math.round((Number(pt.sevenDayAverage || pt.average || 0)) * USD_TO_EUR * 100) / 100,
+          volume: Number(pt.count ?? 0) || 0,
         }))
         .filter(p => p.price > 0)
         .sort((a, b) => a.date.localeCompare(b.date))
@@ -161,6 +162,7 @@ export async function GET(req: NextRequest) {
           .map((p: any) => ({
             date: typeof p.date === 'string' ? p.date : new Date(p.date).toISOString(),
             price: Math.round(Number(p.market || 0) * USD_TO_EUR * 100) / 100,
+            volume: Number(p.volume ?? 0) || 0,
           }))
           .filter((p: any) => p.price > 0)
           .sort((a: any, b: any) => a.date.localeCompare(b.date))
@@ -169,6 +171,7 @@ export async function GET(req: NextRequest) {
 
     const pointCount = history.length
     const sparse = pointCount < SPARSE_THRESHOLD
+    const hasVolume = history.some(p => (p.volume ?? 0) > 0)
 
     return NextResponse.json({
       series,
@@ -176,6 +179,7 @@ export async function GET(req: NextRequest) {
       history,
       pointCount,
       sparse,
+      hasVolume,
       availableSeries: { raw: availRaw, graded: availGraded },
       gradedByCompany,
       companies,

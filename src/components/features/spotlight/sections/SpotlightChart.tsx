@@ -3,8 +3,8 @@
 import { useRef, useState, useEffect } from 'react'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
 
-interface HistoryPoint { date: string; price: number }
-interface Point { day: string; price: number; t: number }
+interface HistoryPoint { date: string; price: number; volume?: number }
+interface Point { day: string; price: number; t: number; volume: number }
 type Tab = '7j' | '30j' | '90j' | '1a'
 interface SeriesOpt { key: string; label: string }
 
@@ -88,7 +88,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
   const sourceHistory: HistoryPoint[] = hasSelector ? (fetched || []) : (history || [])
 
   const points: Point[] = sourceHistory
-    .map(p => ({ day: p.date, price: p.price, t: new Date(p.date).getTime() }))
+    .map(p => ({ day: p.date, price: p.price, t: new Date(p.date).getTime(), volume: Number((p as any).volume ?? 0) || 0 }))
     .filter(p => p.price > 0 && !Number.isNaN(p.t))
     .sort((a, b) => a.t - b.t)
 
@@ -296,10 +296,18 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
 
   const W = 640, H = 240
   const padL = 4, padR = 14, padT = 16, padB = 26
+  // Volume : bande basse si au moins un point a du volume
+  const volumes = used.map(p => p.volume)
+  const maxVol = volumes.length ? Math.max(...volumes) : 0
+  const showVolume = maxVol > 0
+  const volH = showVolume ? 42 : 0       // hauteur bande volume
+  const volGap = showVolume ? 8 : 0      // espace courbe/volume
   const plotW = W - padL - padR
-  const plotH = H - padT - padB
+  const plotH = H - padT - padB - volH - volGap
   const xAt = (i: number) => padL + (used.length > 1 ? (i / (used.length - 1)) * plotW : 0)
   const yAt = (p: number) => padT + (1 - (p - min) / Math.max(1e-9, max - min)) * plotH
+  const volBaseY = padT + plotH + volGap + volH  // bas des barres
+  const volBarH = (v: number) => maxVol > 0 ? (v / maxVol) * volH : 0
 
   const linePts = used.map((p, i) => ({ x: xAt(i), y: yAt(p.price) }))
   const linePath = smoothPath(linePts)
@@ -341,6 +349,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
         {hov && !showUpsell ? (
           <div style={{ position: 'absolute', left: `${(hovX / W) * 100}%`, top: -2, transform: `translateX(${hoverIdx! > used.length * 0.8 ? '-100%' : hoverIdx! < used.length * 0.2 ? '0' : '-50%'})`, background: SNOW.ink, color: '#fff', fontFamily: FONT.data, fontSize: 11.5, padding: '6px 9px', borderRadius: 7, whiteSpace: 'nowrap', zIndex: 6, pointerEvents: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
             <span style={{ fontWeight: 700 }}>{fmtPrice(hov.price, 'EUR')}</span>
+            {hov.volume > 0 ? <span style={{ opacity: 0.85, marginLeft: 6 }}>· {hov.volume} vente{hov.volume > 1 ? 's' : ''}</span> : null}
             <span style={{ opacity: 0.7, marginLeft: 6 }}>{new Date(hov.day).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
           </div>
         ) : null}
@@ -370,6 +379,12 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
           <path d={areaPath} fill="url(#kcAreaGrad)" />
           <path d={linePath} stroke={color} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
 
+          {showVolume ? used.map((p, i) => {
+            if (p.volume <= 0) return null
+            const bh = volBarH(p.volume)
+            const bw = Math.max(1.5, (plotW / Math.max(1, used.length)) * 0.6)
+            return <rect key={`v${i}`} x={xAt(i) - bw / 2} y={volBaseY - bh} width={bw} height={bh} rx={0.8} fill={color} opacity={0.22} />
+          }) : null}
           <circle cx={xAt(maxIdx)} cy={yAt(max)} r="3" fill={SNOW.ink} />
           <circle cx={xAt(minIdx)} cy={yAt(min)} r="3" fill={SNOW.mutedLight} />
           <circle cx={xAt(used.length - 1)} cy={yAt(last)} r="4.5" fill={color} stroke="#fff" strokeWidth="1.5" />

@@ -12,7 +12,7 @@ const sql = neon(process.env.DATABASE_URL)
 
   // ===== 1. SETS canoniques manquants (core_id = set sans prefixe langue) =====
   const rs = await sql`
-    INSERT INTO k_sets (id, name, name_fr, name_jp, langs, tcgdex_slug, total_cards, source, logo_url)
+    INSERT INTO k_sets (id, name, name_fr, name_jp, langs, tcgdex_slug, total_cards, source, logo_url, release_date, series)
     SELECT
       regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', ''),
       (array_agg(ts.name ORDER BY CASE WHEN c.lang='EN' THEN 0 ELSE 1 END))[1],
@@ -22,7 +22,9 @@ const sql = neon(process.env.DATABASE_URL)
       regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', ''),
       max(ts.total_cards),
       min(ts.source),
-      (array_remove(array_agg(ts.logo_url), NULL))[1]
+      (array_remove(array_agg(ts.logo_url), NULL))[1],
+      (array_remove(array_agg(ts.release_date ORDER BY ts.release_date), NULL))[1],
+      (array_remove(array_agg(ts.series), NULL))[1]
     FROM tcg_cards c
     LEFT JOIN tcg_sets ts ON ts.id = c.set_id
     WHERE c.set_id IS NOT NULL

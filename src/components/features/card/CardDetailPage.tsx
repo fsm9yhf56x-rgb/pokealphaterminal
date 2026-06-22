@@ -11,6 +11,7 @@ import { useSpotlightData } from "@/components/features/spotlight/useSpotlightDa
 import { SpotlightEngine } from "@/components/features/spotlight/sections/SpotlightEngine"
 import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
+import { PriceByConditionFR } from "@/components/features/spotlight/sections/PriceByConditionFR"
 import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
 import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
@@ -463,12 +464,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         <div><SpotlightEngine kodo={kodo} /></div>
       ) : null}
       <div>
-        <BlockTitle>Prix par état</BlockTitle>
         {isFrCard ? (
-          <div style={{ padding: "16px 18px", borderRadius: 14, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5 }}>
-            Le détail par état en français se construit à mesure que les ventes FR s'accumulent. On l'affichera dès qu'il sera fiable.
-          </div>
-        ) : hasSources ? (
+          <PriceByConditionFR lang={card.lang} frByCondition={prices.frByCondition} />
+        ) : (<>
+        <BlockTitle>Prix par état</BlockTitle>
+        {hasSources ? (
           <>
             <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.4 }}>Moyenne des ventes confirmées, par état · 90 jours</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -523,6 +523,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         ) : (
           <SpotlightStates prices={prices} kodo={kodo} lang={card.lang} />
         )}
+        </>)}
       </div>
       <GradedPricesSection />
     </div>

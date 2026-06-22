@@ -45,6 +45,7 @@ export interface SpotlightData {
   kodo: KodoSignals | null
   prices: {
     bySource: Record<string, PriceEntry[]>
+    frByCondition?: Record<string, { price: number; saleCount: number; isAsking: boolean }>
     marketEst: number | null
     primaryCurrency: string
     history?: HistoryPoint[]

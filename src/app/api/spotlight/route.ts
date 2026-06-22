@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     } : null
     const matrixRows = await sql`
       SELECT pm.market, pm.tier, pm.source, pm.spot, pm.low, pm.high,
-             pm.sale_count, pm.is_asking, pm.currency, pm.as_of
+             pm.sale_count, pm.is_asking, pm.currency, pm.as_of, pm.country_breakdown
       FROM k_cards kc
       JOIN price_matrix pm ON pm.print_id = kc.print_id
       WHERE kc.id = ${cardId} AND pm.spot IS NOT NULL AND pm.spot > 0
@@ -393,6 +393,31 @@ export async function GET(req: NextRequest) {
         : cands.reduce((s, c) => s + c.price, 0) / cands.length
     }
 
+    // ── frByCondition : prix FR par etat (raw), depuis country.FR.language.FR.
+    //    Asking-only (le vendu FR par etat n'existe pas), seuil saleCount>=3,
+    //    MINT ignore (ambigu), dedup par tier (saleCount max), garde-fou outlier.
+    //    Le composant <PriceByCondition> affiche ces donnees labellees "annonces FR"
+    //    si non vide, sinon placeholder. Se remplit tout seul quand la densite arrive.
+    const FR_RAW_TIERS = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
+    const FR_MIN_ASKING = 3
+    const frByCondition: Record<string, { price: number; saleCount: number; isAsking: boolean }> = {}
+    const coteRef = (kodo?.coteFrEur ?? kodo?.fairValueEur ?? marketEst ?? null)
+    const outlierMax = coteRef != null ? coteRef * 5 : Infinity
+    for (const r of matrixRows) {
+      if (!FR_RAW_TIERS.includes(r.tier)) continue
+      if (r.source !== 'cardmarket_unsold') continue  // asking-only
+      const fr = r.country_breakdown?.FR?.language?.FR
+      if (!fr || fr.avg == null) continue
+      const price = Number(fr.avg)
+      const sc = Number(fr.saleCount ?? 0)
+      if (!(price > 0) || price > outlierMax) continue
+      if (sc < FR_MIN_ASKING) continue
+      const prev = frByCondition[r.tier]
+      if (!prev || sc > prev.saleCount) {
+        frByCondition[r.tier] = { price: Math.round(price * 100) / 100, saleCount: sc, isAsking: true }
+      }
+    }
+
     return NextResponse.json({
       card,
       kodo,
@@ -401,6 +426,7 @@ export async function GET(req: NextRequest) {
         marketEst,
         primaryCurrency: 'EUR',
         history,
+        frByCondition,
       },
       resolved_id: cardId,
     }, {

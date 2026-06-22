@@ -73,7 +73,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
 
   const titleBlock = (
     <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 18 }}>
-      Faut-il la grader ?
+      Analyse de gradation
     </div>
   )
 
@@ -86,7 +86,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
         <div style={{ display: "flex", alignItems: "flex-start", gap: 20, flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 320px" }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, marginBottom: 8 }}>
-              Analyse Graded.ev
+              Faut-il la grader ?
             </div>
             <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, marginBottom: 14 }}>
               Découvre si grader cette carte est rentable : gain réellement espéré après frais,

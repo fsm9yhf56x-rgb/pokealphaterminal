@@ -48,6 +48,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
 
   const hasSelector = !!cardId
   const [series, setSeries] = useState<string>('NEAR_MINT')
+  const [userPicked, setUserPicked] = useState(false)  // l'user a-t-il change de serie ? sinon -> courbe canonique (history, = drawer)
   const [seriesLabel, setSeriesLabel] = useState<string>('Near Mint')
   const [avail, setAvail] = useState<{ raw: SeriesOpt[]; graded: SeriesOpt[] }>({ raw: [], graded: [] })
   const [fetched, setFetched] = useState<HistoryPoint[] | null>(null)
@@ -85,7 +86,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
     return () => { off = true }
   }, [cardId, lang, series])
 
-  const sourceHistory: HistoryPoint[] = hasSelector ? (fetched || []) : (history || [])
+  const sourceHistory: HistoryPoint[] = (hasSelector && userPicked) ? (fetched || []) : (history || [])
 
   const points: Point[] = sourceHistory
     .map(p => ({ day: p.date, price: p.price, t: new Date(p.date).getTime(), volume: Number((p as any).volume ?? 0) || 0 }))
@@ -126,7 +127,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
           <div onClick={() => setStateMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 18 }} />
           <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, minWidth: 170, background: '#fff', borderRadius: 12, border: `1px solid ${SNOW.border}`, boxShadow: '0 12px 36px rgba(0,0,0,0.14)', zIndex: 19, padding: 6 }}>
             {avail.raw.map(o => (
-              <button key={o.key} onClick={() => { setSeries(o.key); setStateMenuOpen(false); setShowUpsell(false) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 8, border: 'none', background: series === o.key ? 'rgba(224,48,32,0.08)' : 'transparent', color: series === o.key ? '#E03020' : SNOW.ink, fontSize: 12.5, fontWeight: series === o.key ? 700 : 500, fontFamily: FONT.display, cursor: 'pointer' }}>{o.label}</button>
+              <button key={o.key} onClick={() => { setSeries(o.key); setUserPicked(true); setStateMenuOpen(false); setShowUpsell(false) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 8, border: 'none', background: series === o.key ? 'rgba(224,48,32,0.08)' : 'transparent', color: series === o.key ? '#E03020' : SNOW.ink, fontSize: 12.5, fontWeight: series === o.key ? 700 : 500, fontFamily: FONT.display, cursor: 'pointer' }}>{o.label}</button>
             ))}
           </div>
         </>
@@ -147,7 +148,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
             <button key={co} onClick={() => {
               setActiveCompany(co)
               const notes = gradedByCompany[co] || []
-              if (notes.length > 0) { setSeries(notes[0].key); setShowUpsell(false) }
+              if (notes.length > 0) { setSeries(notes[0].key); setUserPicked(true); setShowUpsell(false) }
             }} style={{ padding: '3px 9px', borderRadius: 7, fontSize: 11, fontWeight: 700, fontFamily: FONT.data, letterSpacing: '.02em', cursor: 'pointer', border: 'none', background: on ? col : 'rgba(0,0,0,0.04)', color: on ? '#fff' : SNOW.muted, transition: 'all .15s' }}>{co}</button>
           )
         })}
@@ -163,7 +164,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
               <div onClick={() => setNoteMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 18 }} />
               <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, minWidth: 90, maxHeight: 260, overflowY: 'auto', background: '#fff', borderRadius: 10, border: `1px solid ${SNOW.border}`, boxShadow: '0 12px 36px rgba(0,0,0,0.14)', zIndex: 19, padding: 5 }}>
                 {notesForCompany.map(n => (
-                  <button key={n.key} onClick={() => { setSeries(n.key); setNoteMenuOpen(false); setShowUpsell(false) }} style={{ display: 'block', width: '100%', textAlign: 'center', padding: '6px 10px', borderRadius: 7, border: 'none', background: series === n.key ? 'rgba(224,48,32,0.08)' : 'transparent', color: series === n.key ? '#E03020' : SNOW.ink, fontSize: 12.5, fontWeight: series === n.key ? 700 : 500, fontFamily: FONT.data, cursor: 'pointer' }}>{n.grade}</button>
+                  <button key={n.key} onClick={() => { setSeries(n.key); setUserPicked(true); setNoteMenuOpen(false); setShowUpsell(false) }} style={{ display: 'block', width: '100%', textAlign: 'center', padding: '6px 10px', borderRadius: 7, border: 'none', background: series === n.key ? 'rgba(224,48,32,0.08)' : 'transparent', color: series === n.key ? '#E03020' : SNOW.ink, fontSize: 12.5, fontWeight: series === n.key ? 700 : 500, fontFamily: FONT.data, cursor: 'pointer' }}>{n.grade}</button>
                 ))}
               </div>
             </>
@@ -229,7 +230,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
     </div>
   ) : null
 
-  if (hasSelector && loadingSeries) {
+  if (hasSelector && userPicked && loadingSeries) {
     return (
       <div style={{ marginTop: 0, padding: 0 }}>
         {header}
@@ -241,7 +242,7 @@ export function SpotlightChart({ history, lockLongRange = false, cardId, lang }:
     )
   }
 
-  if (hasSelector && sparse) {
+  if (hasSelector && userPicked && sparse) {
     const pts = used.slice(-5).reverse()
     return (
       <div style={{ marginTop: 0, padding: 0 }}>

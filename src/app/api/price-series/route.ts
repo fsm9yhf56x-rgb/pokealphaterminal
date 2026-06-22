@@ -107,18 +107,23 @@ export async function GET(req: NextRequest) {
       //                      + market='FR' cardmarket_fr (snapshot FR pur, s'accumule)
       //  - autres tiers raw + grade <- market='FR' (FR pur ; souvent sparse, normal)
       // On normalise AGGREGATED -> NEAR_MINT pour que la serie raw par defaut soit tracable.
-      const rows = await sql`
-        SELECT day::text AS date,
-               CASE WHEN tier='AGGREGATED' THEN 'NEAR_MINT' ELSE tier END AS tier,
-               source, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history
-        WHERE print_id = ${printId} AND price > 0
-          AND (
-            (market='FR')
-            OR (market='EU' AND tier='AGGREGATED' AND source='cardmarket')
-          )
-        ORDER BY day ASC
-      ` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
+      // NEAR_MINT raw : UNE seule source, jamais melangee (sinon fausse variation).
+      //   priorite cardmarket_fr SI dense (>=SPARSE_THRESHOLD), sinon cote Cardmarket EU.
+      const frNm = await sql`
+        SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        FROM price_history WHERE print_id=${printId} AND market='FR' AND tier='NEAR_MINT' AND source='cardmarket_fr' AND price>0
+        ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
+      const euNm = await sql`
+        SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        FROM price_history WHERE print_id=${printId} AND market='EU' AND tier='AGGREGATED' AND source='cardmarket' AND price>0
+        ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
+      const nmRows = (frNm.length >= SPARSE_THRESHOLD ? frNm : euNm).map(r => ({ ...r, tier: 'NEAR_MINT', source: frNm.length >= SPARSE_THRESHOLD ? 'cardmarket_fr' : 'cardmarket' }))
+      // Autres tiers raw + grade : uniquement FR pur (souvent sparse, normal).
+      const otherRows = await sql`
+        SELECT day::text AS date, tier, source, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        FROM price_history WHERE print_id=${printId} AND market='FR' AND tier <> 'NEAR_MINT' AND price>0
+        ORDER BY day ASC` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
+      const rows = [...nmRows, ...otherRows] as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
 
       // availableSeries : tiers ayant >=1 point
       const tiersPresent = new Set(rows.map(r => r.tier))

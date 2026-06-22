@@ -361,9 +361,12 @@ export async function GET(req: NextRequest) {
       volKnown: p.nb_sales != null,
       src, priority,
     })
+    // Kodo: une carte FR se price SUR LE MARCHE FR/EU uniquement.
+    // On n'autorise JAMAIS une source US (tcgplayer/ebay US) a composer le prix
+    // d'une carte FR -> sinon fuite US deguisee en cote FR (ex base2-3 vintage non mappe).
     if (cmNm && cmNm.price_avg > 0) raw.push(mkCand(cmNm, 'cardmarket', isEuMarket ? 3 : 2))
-    if (tcgNm && tcgNm.price_avg > 0) raw.push(mkCand(tcgNm, 'tcgplayer', isEuMarket ? 2 : 3))
-    if (ebayNm && ebayNm.price_avg > 0) raw.push(mkCand(ebayNm, 'ebay', 1))
+    if (!isEuMarket && tcgNm && tcgNm.price_avg > 0) raw.push(mkCand(tcgNm, 'tcgplayer', 3))
+    if (!isEuMarket && ebayNm && ebayNm.price_avg > 0) raw.push(mkCand(ebayNm, 'ebay', 1))
 
     // Filtre volume: on n'ecarte QUE les sources avec volume connu ET faible.
     // Les sources sans volume connu (reference) sont conservees.

@@ -380,7 +380,10 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
 
   const fairValue = kodo?.fairValueEur ?? null
   const liquidity = kodo?.liquidityScore ?? null
-  const market = prices.marketEst
+  // Carte FR : si pas de marketEst (sources EU absentes), on montre la cote FR
+  // consolidee par l'Engine (cote_fr_eur). Jamais de prix US sur une carte FR.
+  const isFrCard = String(card.lang || '').toUpperCase() === 'FR'
+  const market = prices.marketEst ?? (isFrCard ? (kodo?.coteFrEur ?? null) : null)
   const history = prices.history || []
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
   const illustrator = detail?.illustrator || null

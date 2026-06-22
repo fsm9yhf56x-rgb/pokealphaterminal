@@ -12,6 +12,7 @@ import { SpotlightEngine } from "@/components/features/spotlight/sections/Spotli
 import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
 import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
+import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { usePortfolio } from "@/lib/usePortfolio"
@@ -382,8 +383,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const liquidity = kodo?.liquidityScore ?? null
   // Carte FR : si pas de marketEst (sources EU absentes), on montre la cote FR
   // consolidee par l'Engine (cote_fr_eur). Jamais de prix US sur une carte FR.
-  const isFrCard = String(card.lang || '').toUpperCase() === 'FR'
-  const market = prices.marketEst ?? (isFrCard ? (kodo?.coteFrEur ?? null) : null)
+  const market = resolveDisplayPrice(card.lang, prices, kodo).price
   const history = prices.history || []
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
   const illustrator = detail?.illustrator || null
@@ -516,7 +516,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             )}
           </>
         ) : (
-          <SpotlightStates prices={prices} kodo={kodo} />
+          <SpotlightStates prices={prices} kodo={kodo} lang={card.lang} />
         )}
       </div>
       <GradedPricesSection />

@@ -3,6 +3,7 @@
 import type { CardInfo, PriceEntry } from '../useSpotlightData'
 import type { PortfolioContext } from '../SpotlightV2'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
+import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import { resolveCardImage } from '@/lib/images'
 import { useState } from 'react'
 
@@ -126,17 +127,18 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
 
   if (showPortfolio) {
     heroPrice = insufficient ? null : ((portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null)
-  } else if (maxVol) {
-    heroPrice = maxVol.price
-    const dateStr = fmtDate(maxVol.date)
-    sourceChip = {
-      label: `${SRC_LABEL[maxVol.source] || maxVol.source} · ${COND_LABEL[maxVol.condition] || maxVol.condition}`,
-      sub: `${maxVol.sales} vente${maxVol.sales > 1 ? 's' : ''}${dateStr ? ' · ' + dateStr : ''}`,
-    }
   } else {
-    heroPrice = kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null
-    const m = kodo?.fairValueMethod || ''
-    sourceChip = heroPrice != null ? { label: METHOD_LABEL[m] || 'Estimation marché', sub: 'pas de vente récente' } : null
+    const resolved = resolveDisplayPrice(card.lang, prices, kodo)
+    heroPrice = resolved.price
+    if (heroPrice != null && !isFr && maxVol && Math.abs(maxVol.price - heroPrice) < 0.01) {
+      const dateStr = fmtDate(maxVol.date)
+      sourceChip = {
+        label: `${SRC_LABEL[maxVol.source] || maxVol.source} · ${COND_LABEL[maxVol.condition] || maxVol.condition}`,
+        sub: `${maxVol.sales} vente${maxVol.sales > 1 ? 's' : ''}${dateStr ? ' · ' + dateStr : ''}`,
+      }
+    } else {
+      sourceChip = resolved.source
+    }
   }
 
   const flag = FLAG[card.lang] || '🌐'

@@ -60,7 +60,19 @@ interface Props {
   kodo?: { fairValueEur: number | null; fairValueMethod?: string | null; coteFrEur: number | null } | null
 }
 
-export function SpotlightStates({ prices, kodo }: Props) {
+export function SpotlightStates({ prices, kodo, lang }: Props & { lang?: string }) {
+  const isFr = String(lang || '').toUpperCase() === 'FR'
+  if (isFr) {
+    return (
+      <div>
+        <div style={{ fontFamily: FONT.display, fontSize: 11, fontWeight: 600, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.08em', margin: '0 0 8px' }}>Prix par etat</div>
+        <div style={{ padding: '16px 18px', borderRadius: 14, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5 }}>
+          Le detail par etat en francais se construit a mesure que les ventes FR s'accumulent. On l'affichera des qu'il sera fiable.
+        </div>
+      </div>
+    )
+  }
+
   const [expanded, setExpanded] = useState(false)
 
   const bestRaw = bestRawByCond(prices.bySource)

@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
   try {
     // Recup set_name (via jointure k_sets_export, comme l'API spotlight) + local_id
     const cardRows = await sql`
-      SELECT c.local_id, s.name AS set_name
+      SELECT c.local_id, c.print_id, c.lang AS card_lang, s.name AS set_name
       FROM k_cards_export c
       LEFT JOIN k_sets_export s ON s.id = c.set_id
       WHERE c.id = ${cardId}
@@ -94,6 +94,65 @@ export async function GET(req: NextRequest) {
     const setName = cardRows[0].set_name
     const localId = cardRows[0].local_id
     const numberPrefix = String(localId ?? '').padStart(3, '0') + '/%'
+
+    // ── CHEMIN FR : l'historique FR vit dans price_history (source='cardmarket_fr'
+    //    = snapshot FR pur quotidien, sinon market='EU' Cardmarket). graded_prices_ppt
+    //    est EN/JP only -> aveugle au FR. On sert donc l'Engine, format identique.
+    const printId = (cardRows[0] as any).print_id as string
+    const isFrCard = ((cardRows[0] as any).card_lang || '').toLowerCase() === 'fr' || lang === 'FR'
+    if (isFrCard && printId) {
+      const RAW_TIERS_FR = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
+      // Toutes les lignes FR de cette carte (raw + grade), source FR pur prioritaire.
+      const rows = await sql`
+        SELECT day::text AS date, tier, source, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        FROM price_history
+        WHERE print_id = ${printId} AND market = 'FR' AND price > 0
+        ORDER BY day ASC
+      ` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
+
+      // availableSeries : tiers ayant >=1 point
+      const tiersPresent = new Set(rows.map(r => r.tier))
+      const availRawFr: Array<{ key: string; label: string }> = []
+      for (const k of RAW_TIERS_FR) if (tiersPresent.has(k)) availRawFr.push({ key: k, label: RAW_FR[k] || k })
+      const availGradedFr: Array<{ key: string; label: string }> = []
+      for (const t of tiersPresent) {
+        if (RAW_TIERS_FR.includes(t)) continue
+        const key = t.toLowerCase()
+        availGradedFr.push({ key, label: gradeLabel(key) })
+      }
+      availGradedFr.sort((a, b) => gradeSortKey(a.key) - gradeSortKey(b.key))
+      const gradedByCompanyFr: Record<string, Array<{ key: string; label: string; grade: string }>> = {}
+      for (const g of availGradedFr) {
+        const co = slabOf(g.key)
+        if (!gradedByCompanyFr[co]) gradedByCompanyFr[co] = []
+        gradedByCompanyFr[co].push({ key: g.key, label: g.label, grade: gradeNum(g.key) })
+      }
+      const companiesFr = Object.keys(gradedByCompanyFr).sort((a, b) => {
+        const ia = COMPANY_ORDER.indexOf(a), ib = COMPANY_ORDER.indexOf(b)
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+      })
+
+      // Serie demandee : on filtre par tier (raw = tier direct, grade = key.toUpperCase())
+      const wantTier = RAW_TIERS_FR.includes(series) ? series : series.toUpperCase()
+      const isGradedFr = !RAW_TIERS_FR.includes(series)
+      const histFr = rows
+        .filter(r => r.tier === wantTier)
+        .map(r => ({ date: r.date, price: Math.round(r.price * 100) / 100, volume: r.volume }))
+      const seriesLabelFr = isGradedFr ? gradeLabel(series) : (RAW_FR[series] || series)
+      const pointCountFr = histFr.length
+
+      return NextResponse.json({
+        series,
+        seriesLabel: seriesLabelFr,
+        history: histFr,
+        pointCount: pointCountFr,
+        sparse: pointCountFr < SPARSE_THRESHOLD,
+        hasVolume: histFr.some(p => (p.volume ?? 0) > 0),
+        availableSeries: { raw: availRawFr, graded: availGradedFr },
+        gradedByCompany: gradedByCompanyFr,
+        companies: companiesFr,
+      }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } })
+    }
 
     // Charge la ligne graded_prices_ppt (raw_history + grades_history) la plus riche
     const pptRows = await sql`

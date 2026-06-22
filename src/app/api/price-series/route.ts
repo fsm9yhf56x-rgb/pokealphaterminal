@@ -102,11 +102,21 @@ export async function GET(req: NextRequest) {
     const isFrCard = ((cardRows[0] as any).card_lang || '').toLowerCase() === 'fr' || lang === 'FR'
     if (isFrCard && printId) {
       const RAW_TIERS_FR = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
-      // Toutes les lignes FR de cette carte (raw + grade), source FR pur prioritaire.
+      // Sources FR pertinentes (priorite a la cote Cardmarket = reference FR sur ce marche) :
+      //  - NEAR_MINT raw  <- market='EU' AGGREGATED cardmarket (la courbe du drawer, dense)
+      //                      + market='FR' cardmarket_fr (snapshot FR pur, s'accumule)
+      //  - autres tiers raw + grade <- market='FR' (FR pur ; souvent sparse, normal)
+      // On normalise AGGREGATED -> NEAR_MINT pour que la serie raw par defaut soit tracable.
       const rows = await sql`
-        SELECT day::text AS date, tier, source, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        SELECT day::text AS date,
+               CASE WHEN tier='AGGREGATED' THEN 'NEAR_MINT' ELSE tier END AS tier,
+               source, price::float AS price, COALESCE(sale_count,0)::int AS volume
         FROM price_history
-        WHERE print_id = ${printId} AND market = 'FR' AND price > 0
+        WHERE print_id = ${printId} AND price > 0
+          AND (
+            (market='FR')
+            OR (market='EU' AND tier='AGGREGATED' AND source='cardmarket')
+          )
         ORDER BY day ASC
       ` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
 

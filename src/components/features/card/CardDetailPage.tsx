@@ -384,6 +384,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   // Carte FR : si pas de marketEst (sources EU absentes), on montre la cote FR
   // consolidee par l'Engine (cote_fr_eur). Jamais de prix US sur une carte FR.
   const market = resolveDisplayPrice(card.lang, prices, kodo).price
+  const isFrCard = String(card.lang || '').toUpperCase() === 'FR'
   const history = prices.history || []
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
   const illustrator = detail?.illustrator || null
@@ -463,7 +464,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
       ) : null}
       <div>
         <BlockTitle>Prix par état</BlockTitle>
-        {hasSources ? (
+        {isFrCard ? (
+          <div style={{ padding: "16px 18px", borderRadius: 14, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5 }}>
+            Le détail par état en français se construit à mesure que les ventes FR s'accumulent. On l'affichera dès qu'il sera fiable.
+          </div>
+        ) : hasSources ? (
           <>
             <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.4 }}>Moyenne des ventes confirmées, par état · 90 jours</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>

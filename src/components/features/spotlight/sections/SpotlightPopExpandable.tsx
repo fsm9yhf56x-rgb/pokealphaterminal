@@ -65,13 +65,10 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
           <span style={{ fontSize: 30, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: '-0.02em' }}>{locked.totalGraded.toLocaleString('fr-FR')}</span>
           <span style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display }}>exemplaires PSA recensés</span>
         </div>
-        <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: '0 0 16px', lineHeight: 1.5 }}>
-          Distribution complète des notes (PSA 10, 9, 8...) et gem rate disponibles avec Premium.
-        </p>
-        <a href="/abonnement" className="kc-glass-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(29,29,31,0.92)', backdropFilter: 'blur(20px) saturate(200%)', WebkitBackdropFilter: 'blur(20px) saturate(200%)', border: '1px solid rgba(0,0,0,0.2)', fontSize: 12.5, color: '#fff', fontWeight: 600, padding: '9px 18px', borderRadius: 10, fontFamily: FONT.display, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12)', transition: 'all .2s cubic-bezier(.2,.8,.2,1)' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Voir la distribution avec Premium
-          <span style={{ color: '#FF7A6E', fontWeight: 700 }}>→</span>
+        <a href="/abonnement" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 4, fontSize: 12, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display, textDecoration: 'none' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Distribution complète des notes
+          <span style={{ color: '#E03020', fontWeight: 700 }}>Premium</span>
         </a>
       </div>
     )

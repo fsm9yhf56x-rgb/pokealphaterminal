@@ -298,8 +298,9 @@ export async function GET(req: NextRequest) {
       }
       const isGradedVariant = (v: any) => GRADE_PREFIXES.some(p => String(v ?? '').toLowerCase().startsWith(p))
       const u = await getCurrentUserWithProfile().catch(() => null)
-      const isPremium = u?.isPremium === true
-      if (!isPremium) {
+      // Prix gradés = Pro (et Premium, car isPro couvre les deux). Le moteur Graded.ev reste Premium.
+      const isPro = u?.isPro === true
+      if (!isPro) {
         const allGraded: { src: string; entry: any }[] = []
         for (const [src, entries] of Object.entries(bySource)) {
           if (src.startsWith('__')) continue

@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       // Fond dégradé subtil (30% intensité du Login)
       background: '#FAFAFB',
       position: 'relative',
-      overflow: 'hidden',
+      overflowX: 'clip' as any,
     }}>
       
 

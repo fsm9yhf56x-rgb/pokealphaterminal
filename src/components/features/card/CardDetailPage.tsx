@@ -1,10 +1,11 @@
 "use client"
 /**
- * CardDetailPage — fiche de reference complete.
- * P4 : + section "A propos de la carte" (caracteristiques, pouvoirs, attaques,
- * faiblesses, legalite, lore) via fetchCardDetail.
+ * CardDetailPage — fiche de reference (structure + couche vivante + gating Pro).
+ * Carte sticky a gauche (tilt 3D) + panneau a onglets a droite.
+ * Gating : detail par source = Pro, historique long (90j/1a) = Pro.
+ * Un seul CTA Premium fort (Graded.ev), le reste en lignes discretes.
  */
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useSpotlightData } from "@/components/features/spotlight/useSpotlightData"
 import { SpotlightEngine } from "@/components/features/spotlight/sections/SpotlightEngine"
@@ -15,13 +16,13 @@ import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { usePortfolio } from "@/lib/usePortfolio"
 import { usePersona } from "@/lib/usePersona"
+import { usePlan } from "@/lib/usePlan"
 import { useGoals } from "@/lib/useGoals"
 import { useAuth } from "@/lib/useAuth"
 import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
-import { SNOW, FONT } from "@/lib/design/snow"
+import { SNOW, FONT, GLASS, RADIUS, EASE } from "@/lib/design/snow"
 
-// Champs TCGdex non declares dans TCGCardFull
 type CardDetailExtra = TCGCardFull & {
   description?: string
   retreat?: number
@@ -42,7 +43,6 @@ function shortId(id: string): string {
 const FLAG: Record<string, string> = { EN: "🇺🇸", FR: "🇫🇷", JP: "🇯🇵" }
 const LANG_LABEL: Record<string, string> = { EN: "Anglais", FR: "Français", JP: "Japonais" }
 
-// Couleurs par type d'energie Pokemon
 const ENERGY: Record<string, { c: string; bg: string }> = {
   Psychic: { c: "#A040A0", bg: "#F3E8F7" },
   Fire: { c: "#E0402A", bg: "#FCE9E5" },
@@ -76,12 +76,6 @@ function eraOf(id: string): { era: string; color: string } | null {
   return null
 }
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: "0 0 16px" }}>{children}</h2>
-)
-const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-  <div style={{ background: SNOW.bg, borderRadius: 18, border: `1px solid ${SNOW.border}`, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.03)", ...style }}>{children}</div>
-)
 const EnergyDots = ({ cost }: { cost: string[] }) => (
   <span style={{ display: "inline-flex", gap: 3, verticalAlign: "middle" }}>
     {cost.map((t, i) => { const s = energyStyle(t); return (
@@ -89,18 +83,102 @@ const EnergyDots = ({ cost }: { cost: string[] }) => (
     )})}
   </span>
 )
+const Label = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4 }}>{children}</div>
+)
+const BlockTitle = ({ children }: { children: React.ReactNode }) => (
+  <h3 style={{ fontSize: 11, fontWeight: 700, color: SNOW.mutedLight, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".07em", margin: "0 0 12px" }}>{children}</h3>
+)
+
+// Badge de variant (1st Edition / Shadowless / Unlimited) — meme DA que la grille Encyclopedie
+function variantOf(setId: string | null | undefined): "1st" | "shadowless" | "unlimited" | null {
+  const id = String(setId ?? "")
+  if (!/-shadowless|-1st/.test(id)) {
+    if (/^(en|fr|jp)?-?(base1|base2|base3|base5|gym1|gym2|neo1|neo2|neo3|neo4|jungle|fossil|wizards)/i.test(id)) return "unlimited"
+    return null
+  }
+  if (id.includes("-shadowless-ns") || id.includes("-1st")) return "1st"
+  if (id.includes("-shadowless")) return "shadowless"
+  return "unlimited"
+}
+const VARIANT_STYLE: Record<string, { label: string; bg: string; color: string; tip: string }> = {
+  "1st": { label: "1ST EDITION", bg: "linear-gradient(135deg,#1a1a2e,#2d2b55)", color: "#d4c5ff", tip: "Tout premier tirage, avec le tampon « Édition 1 ». Le plus recherché et le plus rare." },
+  shadowless: { label: "SHADOWLESS", bg: "linear-gradient(135deg,#e8eeff,#dde4ff)", color: "#4338ca", tip: "Premier tirage sans ombre portée sur le cadre de l'illustration, sans tampon Édition 1. Rare." },
+  unlimited: { label: "UNLIMITED", bg: "linear-gradient(135deg,#f5f5f7,#ebebef)", color: "#6e6e73", tip: "Tirage standard, avec ombre portée. Le plus courant de la série." },
+}
+function VariantBadge({ setId }: { setId: string | null | undefined }) {
+  const [open, setOpen] = useState(false)
+  const v = variantOf(setId)
+  if (!v) return null
+  const st = VARIANT_STYLE[v]
+  return (
+    <span style={{ position: "relative", display: "inline-flex" }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 11px", borderRadius: 20, background: st.bg, cursor: "help" }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".04em", color: st.color, fontFamily: FONT.data }}>{st.label}</span>
+      </span>
+      {open ? (
+        <span style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%) translateY(-8px)", width: 230, background: "rgba(29,29,31,0.96)", color: "#fff", fontSize: 11.5, lineHeight: 1.5, fontWeight: 400, fontFamily: FONT.body, padding: "9px 12px", borderRadius: 9, boxShadow: "0 6px 22px rgba(0,0,0,0.28)", zIndex: 30, textAlign: "left", pointerEvents: "none" }}>
+          {st.tip}
+          <span style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid rgba(29,29,31,0.96)" }} />
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+function HeroTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span style={{ position: "relative", display: "inline-flex", verticalAlign: "middle", marginLeft: 5 }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 13, height: 13, borderRadius: "50%", border: `1px solid ${SNOW.mutedLight}`, color: SNOW.mutedLight, fontSize: 9, fontWeight: 700, fontFamily: FONT.display, cursor: "help", lineHeight: 1 }}>i</span>
+      {open ? (
+        <span style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%) translateY(-8px)", width: 230, background: "rgba(29,29,31,0.96)", color: "#fff", fontSize: 11.5, lineHeight: 1.5, fontWeight: 400, fontFamily: FONT.body, padding: "9px 12px", borderRadius: 9, boxShadow: "0 6px 22px rgba(0,0,0,0.28)", zIndex: 30, textAlign: "left", textTransform: "none", letterSpacing: 0, pointerEvents: "none" }}>
+          {text}
+          <span style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid rgba(29,29,31,0.96)" }} />
+        </span>
+      ) : null}
+    </span>
+  )
+}
+const TIP_MARKET = "Dernier prix de référence observé sur le marché, en état Near Mint."
+const TIP_FAIR = "Notre estimation de la valeur de la carte à partir des ventes récentes, toutes sources confondues. Peut différer du dernier prix affiché."
+const TIP_LIQUIDITE = "Facilité à acheter ou revendre cette carte rapidement, selon le volume de ventes récentes. 100 = très facile à échanger."
+
+type TabKey = "prix" | "histo" | "grade" | "infos"
 
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
   const { cards } = usePortfolio()
   const { show, isInvestor } = usePersona()
+  const { isFree } = usePlan()
   const { wishlist, addWishItem, deleteWishItem } = useGoals()
   const { user } = useAuth()
   const [followMsg, setFollowMsg] = useState<string | null>(null)
   const [detail, setDetail] = useState<CardDetailExtra | null>(null)
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
   const [sourcesOpen, setSourcesOpen] = useState(false)
+  const [gradedCompany, setGradedCompany] = useState<string>("PSA")
+  const [activeTab, setActiveTab] = useState<TabKey>("prix")
+
+  // Tilt 3D + reflet (DOM direct = zero re-render)
+  const tiltRef = useRef<HTMLDivElement>(null)
+  const glareRef = useRef<HTMLDivElement>(null)
+  const onCardMove = (e: React.MouseEvent) => {
+    const el = tiltRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const px = (e.clientX - r.left) / r.width
+    const py = (e.clientY - r.top) / r.height
+    const ry = (px - 0.5) * 9
+    const rx = (0.5 - py) * 9
+    el.style.transform = `perspective(1000px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(1.025)`
+    const g = glareRef.current
+    if (g) { g.style.opacity = "1"; g.style.background = `radial-gradient(circle at ${(px * 100).toFixed(0)}% ${(py * 100).toFixed(0)}%, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%)` }
+  }
+  const onCardLeave = () => {
+    const el = tiltRef.current; if (el) el.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)"
+    const g = glareRef.current; if (g) g.style.opacity = "0"
+  }
 
   useEffect(() => {
     let off = false
@@ -114,8 +192,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     return () => { off = true }
   }, [cardId, lang])
 
-  // Versions soeurs (autres langues) : memes set/numero, prefixe langue different.
-  // On interroge spotlight par version (le batch ne remonte pas le marketEst brut).
   useEffect(() => {
     let off = false
     const base = cardId.replace(/^(en|fr|jp|aopkm)-/i, "")
@@ -138,7 +214,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "40px 24px" }}>
+      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "40px 24px" }}>
         <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
           <div style={{ width: 300, height: 418, borderRadius: 16, background: SNOW.surface, animation: "kcPulse 1.4s ease-in-out infinite" }} />
           <div style={{ flex: 1, minWidth: 280 }}>
@@ -154,16 +230,15 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
 
   if (error || !data) {
     return (
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
+      <div style={{ maxWidth: 1160, margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
         <div style={{ fontSize: 17, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display, marginBottom: 8 }}>Carte introuvable</div>
-        <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body }}>{error || "Cette carte n’existe pas ou n’est pas encore référencée."}</div>
+        <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body }}>{error || "Cette carte n'existe pas ou n'est pas encore référencée."}</div>
       </div>
     )
   }
 
   const { card, kodo, prices } = data
 
-  // Exemplaires possedes : match souple par set + numero + langue
   const cleanSetId = (x: string | null | undefined) => String(x ?? "").replace(/^(en|fr|jp|aopkm)-/i, "").replace(/-shadowless-ns|-shadowless|-1st/g, "")
   const pageSet = cleanSetId(card.set_id)
   const pageNum = String(card.local_id ?? "").replace(/^0+/, "") || "0"
@@ -173,8 +248,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     return cSet === pageSet && cNum === pageNum && String(c.lang || "").toUpperCase() === card.lang
   })
 
-  // Contexte 3 — prix d'un exemplaire selon son etat/grade.
-  // Map condition collection -> condition donnees (NEAR_MINT, etc.)
   const CONDITION_MAP: Record<string, string> = {
     "Near Mint": "NEAR_MINT", "NM": "NEAR_MINT", "Mint": "NEAR_MINT",
     "Lightly Played": "LIGHTLY_PLAYED", "LP": "LIGHTLY_PLAYED",
@@ -188,18 +261,15 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     if (k.startsWith("__") || !Array.isArray(v)) return
     ;(v as SrcRow[]).forEach(r => allRows.push(r))
   })
-  // Prix d'un etat raw donne: meilleure source par volume (garde-fou simple).
   const priceForCondition = (condDb: string): number | null => {
     const matches = allRows.filter(r => r.variant === "raw" && r.condition === condDb && (r.price_avg ?? 0) > 0)
     if (matches.length === 0) return null
-    // priorite au plus gros volume connu, sinon le prix de reference (nb_sales null)
     const withVol = matches.filter(r => r.nb_sales != null).sort((a, b) => (b.nb_sales || 0) - (a.nb_sales || 0))
     const chosen = withVol[0] || matches[0]
     return chosen.price_avg ?? null
   }
   const nmPrice = priceForCondition("NEAR_MINT")
 
-  // P8 — Suivre (wishlist). Match souple set + numero + langue.
   const followed = (wishlist || []).find(w => {
     const wSet = cleanSetId(w.set_id)
     const wNum = String(w.card_number ?? "").replace(/^0+/, "") || "0"
@@ -224,7 +294,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     }
   }
 
-  // Contexte 2 — toutes les sources de prix, groupees par etat (seuil volume >= 3).
   const COND_ORDER = ["NEAR_MINT", "LIGHTLY_PLAYED", "MODERATELY_PLAYED", "HEAVILY_PLAYED", "DAMAGED"]
   const COND_FR: Record<string, string> = {
     NEAR_MINT: "Near Mint", LIGHTLY_PLAYED: "Lightly Played", MODERATELY_PLAYED: "Moderately Played",
@@ -240,13 +309,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
       if (src.startsWith("__") || !Array.isArray(v)) return
       ;(v as SrcRow[]).forEach(r => {
         if (r.variant === "raw" && r.condition === cond && (r.price_avg ?? 0) > 0) {
-          // seuil volume: garde si volume connu >= 3, OU volume inconnu (prix de reference)
           const vol = r.nb_sales != null ? r.nb_sales : null
           if (vol == null || vol >= VOL_MIN_SRC) lines.push({ src, price: r.price_avg!, vol })
         }
       })
     })
-    // dedup par source: garder la ligne au plus gros volume (ou prix de reference)
     const bySrc = new Map<string, SrcLine>()
     for (const l of lines) {
       const cur = bySrc.get(l.src)
@@ -259,21 +326,50 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   }
   const hasSources = sourcesByCond.length > 0
 
+  // ── Prix gradés actuels : groupés par société (pills) -> grille de notes ───
+  const SLAB_FR: Record<string, string> = { psa: 'PSA', cgc: 'CGC', bgs: 'BGS', sgc: 'SGC', ace: 'ACE', tag: 'TAG', cca: 'CCA', pca: 'PCA', ccc: 'CCC' }
+  const SLAB_COMPANY_COLOR: Record<string, string> = { PSA: '#E03020', CGC: '#2A6FDB', BGS: '#1D1D1F', SGC: '#0E8A5F', ACE: '#7A4FC4', TAG: '#C77700', CCA: '#6E6E73', PCA: '#6E6E73', CCC: '#6E6E73' }
+  const COMPANY_RANK: Record<string, number> = { PSA: 0, CGC: 1, BGS: 2, SGC: 3, ACE: 4, TAG: 5 }
+  type GradedNote = { slab: string; grade: number; gradeLabel: string; price: number }
+  const gradedNotes: GradedNote[] = []
+  Object.entries((prices?.bySource || {}) as Record<string, unknown>).forEach(([src, v]) => {
+    if (src.startsWith("__") || !Array.isArray(v)) return
+    ;(v as Array<any>).forEach(r => {
+      const variant = String(r?.variant ?? "")
+      const m = variant.match(/^([a-z]+)_(\d+)(?:_(\d))?$/i)
+      if (!m) return
+      const slab = (SLAB_FR[m[1].toLowerCase()] || m[1].toUpperCase())
+      const grade = Number(m[2]) + (m[3] ? Number(m[3]) / 10 : 0)
+      const price = Number(r?.price_avg ?? 0)
+      if (price > 0) gradedNotes.push({ slab, grade, gradeLabel: `${slab} ${m[2]}${m[3] ? '.' + m[3] : ''}`, price })
+    })
+  })
+  // Dédup (garde le prix le + élevé par slab+grade, souvent le + fiable)
+  const gradedMap = new Map<string, GradedNote>()
+  for (const n of gradedNotes) {
+    const k = `${n.slab}_${n.grade}`
+    const cur = gradedMap.get(k)
+    if (!cur || n.price > cur.price) gradedMap.set(k, n)
+  }
+  const gradedDedup = Array.from(gradedMap.values())
+  const gradedCompanies = Array.from(new Set(gradedDedup.map(n => n.slab)))
+    .sort((a, b) => (COMPANY_RANK[a] ?? 99) - (COMPANY_RANK[b] ?? 99))
+  const hasGradedPrices = gradedDedup.length > 0
+
+
   const gradedLocked = (prices?.bySource as any)?.__gradedLocked === true
   const gradedHiddenCount = Number((prices?.bySource as any)?.__gradedHiddenCount || 0)
-  // Cote d'un exemplaire possede.
   const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
     if (c.graded) {
       const gl = `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim()
-      // Les grades sont lockes (Premium) ou indisponibles -> pas de faux prix.
       return { value: null, locked: true, gradeLabel: gl }
     }
     const raw = normalizeCondition(c.condition)
-    if (raw === "Raw") return { value: nmPrice }  // etat non precise -> NM par defaut
+    if (raw === "Raw") return { value: nmPrice }
     const condDb = CONDITION_MAP[raw]
     if (condDb) {
       const p = priceForCondition(condDb)
-      return { value: p != null ? p : nmPrice }  // etat connu mais pas de prix -> NM fallback
+      return { value: p != null ? p : nmPrice }
     }
     return { value: nmPrice }
   }
@@ -289,145 +385,113 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
   const illustrator = detail?.illustrator || null
 
-  // Donnees "A propos"
   const d = detail
   const hasAbout = d != null && (d.hp != null || (d.types && d.types.length) || d.stage || d.evolveFrom || (d.attacks && d.attacks.length) || (d.abilities && d.abilities.length) || (d.weaknesses && d.weaknesses.length) || d.description)
   const typeMain = d?.types && d.types.length ? d.types[0] : null
   const tStyle = typeMain ? energyStyle(typeMain) : null
 
-  const Label = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4 }}>{children}</div>
-  )
+  // Espace perso : agregats
+  const ownedUnits = owned.reduce((s, c) => s + (c.qty || 1), 0)
+  let ownedValue = 0, ownedHasValue = false, ownedCost = 0, ownedHasCost = false
+  owned.forEach(c => {
+    const cote = coteFor(c)
+    if (cote.value != null) { ownedValue += cote.value * (c.qty || 1); ownedHasValue = true }
+    if (c.buy_price != null && Number(c.buy_price) > 0) { ownedCost += Number(c.buy_price) * (c.qty || 1); ownedHasCost = true }
+  })
+  const ownedPnl = (ownedHasValue && ownedHasCost) ? ownedValue - ownedCost : null
+  const ownedPnlPct = (ownedPnl != null && ownedCost > 0) ? Math.round((ownedPnl / ownedCost) * 100) : null
 
-  return (
-    <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 24px 80px" }}>
-      {/* ═══ FIL D'ARIANE ═══ */}
-      <nav style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 12.5, fontFamily: FONT.display, color: SNOW.mutedLight, flexWrap: "wrap" }}>
-        <Link href="/cartes" style={{ color: SNOW.muted, textDecoration: "none" }}>Pokédesk</Link>
-        <span>›</span>
-        <span style={{ color: SNOW.muted }}>{card.set_name}</span>
-        <span>›</span>
-        <span style={{ color: SNOW.ink, fontWeight: 600 }}>{card.name}</span>
-      </nav>
+  // ─────────────────────────────────────────────────────────────────────────
+  // Onglets
+  // ─────────────────────────────────────────────────────────────────────────
 
-      {/* ═══ HERO ═══ */}
-      <div className="kcard-hero" style={{ display: "flex", gap: 44, flexWrap: "wrap", alignItems: "flex-start" }}>
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          {img ? (
-            <img src={img} alt={card.name} style={{ width: 300, borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.10)", display: "block" }} />
-          ) : (
-            <div style={{ width: 300, height: 418, borderRadius: 16, background: SNOW.surface, display: "flex", alignItems: "center", justifyContent: "center", color: SNOW.mutedLight, fontSize: 13, fontFamily: FONT.body }}>Image indisponible</div>
-          )}
+  // Section Prix gradés (rendue dans l'onglet Prix)
+  const GradedPricesSection = () => {
+    if (isFree) {
+      // Teaser Pro discret (cohérent avec le reste)
+      const hidden = gradedHiddenCount > 0 ? gradedHiddenCount : (hasGradedPrices ? gradedDedup.length : 0)
+      if (hidden <= 0 && !gradedLocked) return null
+      return (
+        <div>
+          <BlockTitle>Prix gradés</BlockTitle>
+          <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 10px", lineHeight: 1.45 }}>Le prix actuel des cartes notées (PSA, CGC, BGS…), par note.</p>
+          <a href="/abonnement" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            {hidden > 0 ? `${hidden} prix gradés (PSA, CGC, BGS…)` : "Prix gradés (PSA, CGC, BGS…)"}
+            <span style={{ color: "#E03020", fontWeight: 700 }}>Pro</span>
+          </a>
         </div>
-
-        <div style={{ flex: 1, minWidth: 300, paddingTop: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-            {era ? (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 11px", borderRadius: 8, background: era.color + "14", border: `1px solid ${era.color}33` }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: era.color }} />
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".04em", color: era.color, fontFamily: FONT.display, textTransform: "uppercase" }}>{era.era}</span>
-              </span>
-            ) : null}
-            <span style={{ fontSize: 12, color: SNOW.muted, fontFamily: FONT.display }}>{flag} {LANG_LABEL[card.lang] || card.lang}</span>
+      )
+    }
+    // Pro+ : pills société + grille 3 colonnes
+    if (!hasGradedPrices) return null
+    const activeCo = gradedCompanies.includes(gradedCompany) ? gradedCompany : gradedCompanies[0]
+    const notes = gradedDedup.filter(n => n.slab === activeCo).sort((a, b) => b.grade - a.grade)
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+          <BlockTitle>Prix gradés</BlockTitle>
+          <div style={{ display: "inline-flex", gap: 3 }}>
+            {gradedCompanies.map(co => {
+              const on = activeCo === co
+              const col = SLAB_COMPANY_COLOR[co] || SNOW.muted
+              return (
+                <button key={co} onClick={() => setGradedCompany(co)} style={{ padding: "3px 9px", borderRadius: 7, fontSize: 11, fontWeight: 700, fontFamily: FONT.data, letterSpacing: ".02em", cursor: "pointer", border: "none", background: on ? col : "rgba(0,0,0,0.04)", color: on ? "#fff" : SNOW.muted, transition: "all .15s" }}>{co}</button>
+              )
+            })}
           </div>
-
-          <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
-            {card.set_name}{card.local_id ? ` · #${card.local_id}` : ""}
-          </div>
-
-          <h1 style={{ fontSize: 40, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.025em", lineHeight: 1.05, margin: "0 0 8px" }}>{card.name}</h1>
-
-          <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 28 }}>
-            <span style={{ textTransform: "capitalize" }}>{card.rarity_normalized}</span>
-            {illustrator ? <span> · Illustré par {illustrator}</span> : null}
-          </div>
-
-          {market != null ? (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 3 }}>Prix de marché</div>
-              <div style={{ fontSize: 38, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {notes.map(n => (
+            <div key={n.gradeLabel} style={{ background: SNOW.surfaceSoft, borderRadius: 10, border: `1px solid ${SNOW.border}`, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: ".02em", marginBottom: 3 }}>{n.gradeLabel}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(n.price)}</div>
             </div>
-          ) : (
-            <div style={{ marginBottom: 24, fontSize: 14, color: SNOW.muted, fontStyle: "italic", fontFamily: FONT.body }}>Données de prix insuffisantes pour le moment.</div>
-          )}
-
-          {(fairValue != null || liquidity != null) ? (
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              {fairValue != null ? (
-                <div style={{ padding: "12px 16px", borderRadius: 13, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, minWidth: 130 }}>
-                  <Label>Valeur estimée</Label>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(fairValue)}</div>
-                </div>
-              ) : null}
-              {liquidity != null ? (
-                <div style={{ padding: "12px 16px", borderRadius: 13, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}`, minWidth: 130 }}>
-                  <Label>Liquidité</Label>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{Math.round(liquidity)}<span style={{ fontSize: 12, color: SNOW.mutedLight, fontWeight: 500 }}>/100</span></div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* P8 Suivre (wishlist) */}
-          <div style={{ marginTop: 24 }}>
-            <button onClick={toggleFollow} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "11px 20px", borderRadius: 13, background: isFollowed ? "rgba(224,48,32,0.08)" : "#1D1D1F", border: isFollowed ? "1px solid rgba(224,48,32,0.25)" : "1px solid #1D1D1F", color: isFollowed ? "#E03020" : "#fff", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", boxShadow: isFollowed ? "none" : "0 4px 14px rgba(0,0,0,0.16)", transition: "all .2s cubic-bezier(.2,.8,.2,1)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : "#fff"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              {isFollowed ? "Suivie" : "Suivre"}
-            </button>
-            {followMsg ? (
-              <div style={{ marginTop: 10, fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.body, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{followMsg}</span>
-                {followMsg.includes("Pro") ? <a href="/abonnement" style={{ color: "#E03020", fontWeight: 600, textDecoration: "none" }}>Voir Pro</a> : null}
-              </div>
-            ) : null}
-          </div>
+          ))}
         </div>
       </div>
+    )
+  }
 
-      {/* ═══ SEPARATEUR ═══ */}
-      <div style={{ margin: "44px 0 36px", height: 1, background: `linear-gradient(90deg, transparent, ${SNOW.border} 18%, ${SNOW.border} 82%, transparent)` }} />
+  const TabPrix = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+      {hasEngine ? (
+        <div><SpotlightEngine kodo={kodo} /></div>
+      ) : null}
+      <div>
+        <BlockTitle>Prix par état</BlockTitle>
+        {hasSources ? (
+          <>
+            <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.4 }}>Moyenne des ventes confirmées, par état · 90 jours</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {sourcesByCond.map((grp, gi) => {
+                const best = grp.lines[0]
+                return (
+                  <div key={grp.cond} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "center", padding: "11px 0", borderBottom: gi < sourcesByCond.length - 1 ? `1px solid ${SNOW.borderSoft}` : "none" }}>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{grp.label}</div>
+                      <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, marginTop: 1 }}>{SRC_FR[best.src] || best.src}{best.vol != null ? ` · ${best.vol} vente${best.vol > 1 ? "s" : ""}` : ""}</div>
+                    </div>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: gi === 0 ? SNOW.ink : "#48484A", fontFamily: FONT.display, textAlign: "right" }}>{fmtEur(best.price)}</span>
+                  </div>
+                )
+              })}
+            </div>
 
-      {/* ═══ SECTION CARTE ═══ */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-        {hasEngine ? (
-          <section>
-            <SectionTitle>Signaux de marché</SectionTitle>
-            <Card><SpotlightEngine kodo={kodo} /></Card>
-          </section>
-        ) : null}
-
-        {history.length > 0 ? (
-          <section>
-            <SectionTitle>Historique des prix</SectionTitle>
-            <Card><SpotlightChart history={history} /></Card>
-          </section>
-        ) : null}
-
-        <div className="kcard-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
-          <section>
-            <SectionTitle>Prix par état</SectionTitle>
-            {hasSources ? (
-              <Card>
-                <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.4 }}>Moyenne des ventes confirmées, par état · 90 jours</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                  {sourcesByCond.map((grp, gi) => {
-                    const best = grp.lines[0]
-                    return (
-                      <div key={grp.cond} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "center", padding: "11px 0", borderBottom: gi < sourcesByCond.length - 1 ? `1px solid ${SNOW.borderSoft}` : "none" }}>
-                        <div>
-                          <div style={{ fontSize: 13.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{grp.label}</div>
-                          <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, marginTop: 1 }}>{SRC_FR[best.src] || best.src}{best.vol != null ? ` · ${best.vol} vente${best.vol > 1 ? "s" : ""}` : ""}</div>
-                        </div>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: gi === 0 ? SNOW.ink : "#48484A", fontFamily: FONT.display, textAlign: "right" }}>{fmtEur(best.price)}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+            {/* Detail par source : Pro (teaser pour Free) */}
+            {isFree ? (
+              <a href="/abonnement" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 14, background: SNOW.surface, border: `1px solid ${SNOW.border}`, borderRadius: 9, padding: "8px 14px", fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2.4"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                Détail par source (TCGplayer · eBay · Cardmarket)
+                <span style={{ color: "#E03020", fontWeight: 700 }}>Pro</span>
+              </a>
+            ) : (
+              <>
                 <button onClick={() => setSourcesOpen(v => !v)} style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 14, background: SNOW.surface, border: `1px solid ${SNOW.border}`, borderRadius: 9, padding: "7px 14px", fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {(sourcesOpen || isInvestor) ? "Masquer le détail par source" : "Voir le détail par source"}
-                  <span style={{ display: "inline-block", transform: (sourcesOpen || isInvestor) ? "rotate(90deg)" : "rotate(0)", transition: "transform .2s", fontSize: 9 }}>▶</span>
+                  {sourcesOpen ? "Masquer le détail par source" : "Voir le détail par source"}
+                  <span style={{ display: "inline-block", transform: sourcesOpen ? "rotate(90deg)" : "rotate(0)", transition: "transform .2s", fontSize: 9 }}>▶</span>
                 </button>
-                {(sourcesOpen || isInvestor) ? (
+                {sourcesOpen ? (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${SNOW.borderSoft}`, display: "flex", flexDirection: "column", gap: 14 }}>
                     {sourcesByCond.map(grp => (
                       <div key={grp.cond}>
@@ -445,191 +509,347 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                     ))}
                   </div>
                 ) : null}
-              </Card>
-            ) : (
-              <Card><SpotlightStates prices={prices} kodo={kodo} /></Card>
+              </>
             )}
-          </section>
-          <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {gradedLocked && gradedHiddenCount > 0 ? (
-              <div>
-                <SectionTitle>Prix gradés</SectionTitle>
-                <Card>
-                  <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 14px", lineHeight: 1.45 }}>Les prix des cartes notées (PSA, CGC, BGS…) par note.</p>
-                  <a href="/abonnement" className="kc-glass-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(29,29,31,0.92)", backdropFilter: "blur(20px) saturate(200%)", WebkitBackdropFilter: "blur(20px) saturate(200%)", border: "1px solid rgba(0,0,0,0.2)", fontSize: 12.5, color: "#fff", fontWeight: 600, padding: "9px 18px", borderRadius: 10, fontFamily: FONT.display, textDecoration: "none", boxShadow: "0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.12)" }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    {gradedHiddenCount} note{gradedHiddenCount > 1 ? "s" : ""} gradée{gradedHiddenCount > 1 ? "s" : ""} avec Premium
-                    <span style={{ color: "#FF7A6E", fontWeight: 700 }}>→</span>
-                  </a>
-                </Card>
+          </>
+        ) : (
+          <SpotlightStates prices={prices} kodo={kodo} />
+        )}
+      </div>
+      <GradedPricesSection />
+    </div>
+  )
+
+  const TabHisto = () => (
+    <div>
+      {history.length > 0 ? <SpotlightChart history={history} lockLongRange={isFree} cardId={card.id} lang={card.lang} /> : (
+        <p style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body }}>Pas encore d'historique pour cette carte.</p>
+      )}
+    </div>
+  )
+
+  const TabGrade = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* CTA FORT unique : Graded.ev */}
+      <GradedEvPanel printId={card.id} lang={card.lang} />
+
+      {/* Prix gradés : ligne discrète (pas un gros bouton) */}
+      {gradedLocked && gradedHiddenCount > 0 ? (
+        <div>
+          <BlockTitle>Prix gradés</BlockTitle>
+          <p style={{ fontSize: 12, color: SNOW.mutedLight, margin: "0 0 10px", lineHeight: 1.45 }}>Les prix des cartes notées (PSA, CGC, BGS…) par note.</p>
+          <a href="/abonnement" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 500, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            {gradedHiddenCount} note{gradedHiddenCount > 1 ? "s" : ""} gradée{gradedHiddenCount > 1 ? "s" : ""} disponible{gradedHiddenCount > 1 ? "s" : ""}
+            <span style={{ color: "#E03020", fontWeight: 700 }}>Premium</span>
+          </a>
+        </div>
+      ) : null}
+
+      {/* Population : chiffre gratuit + (interne) ligne discrète Premium */}
+      <div>
+        <SpotlightPopExpandable cardId={card.id} lang={card.lang} />
+      </div>
+    </div>
+  )
+
+  // ── Onglet DETAILS enrichi : carte d'identite visuelle ─────────────────────
+  const TabInfos = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+      {hasAbout ? (
+        <div>
+          <BlockTitle>Carte d&apos;identité</BlockTitle>
+
+          {/* Bandeau stats colore par type */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginBottom: 18 }}>
+            {d?.hp != null ? (
+              <div style={{ borderRadius: 13, padding: "13px 15px", background: tStyle ? tStyle.bg : SNOW.surface, border: `1px solid ${tStyle ? tStyle.c + "33" : SNOW.border}` }}>
+                <Label>Points de vie</Label>
+                <div style={{ fontSize: 26, fontWeight: 800, color: tStyle ? tStyle.c : SNOW.ink, fontFamily: FONT.display, lineHeight: 1 }}>{d.hp}<span style={{ fontSize: 12, fontWeight: 600, opacity: 0.6 }}> PV</span></div>
               </div>
             ) : null}
-            <div>
-              <SectionTitle>Population gradée</SectionTitle>
-              <Card><SpotlightPopExpandable cardId={card.id} lang={card.lang} /></Card>
+            {typeMain && tStyle ? (
+              <div style={{ borderRadius: 13, padding: "13px 15px", background: SNOW.surface, border: `1px solid ${SNOW.border}` }}>
+                <Label>Type</Label>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 2 }}>
+                  <span style={{ width: 20, height: 20, borderRadius: "50%", background: tStyle.bg, border: `2px solid ${tStyle.c}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: tStyle.c, fontFamily: FONT.display }}>{typeMain[0]}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{typeMain}</span>
+                </div>
+              </div>
+            ) : null}
+            {d?.stage ? (
+              <div style={{ borderRadius: 13, padding: "13px 15px", background: SNOW.surface, border: `1px solid ${SNOW.border}` }}>
+                <Label>Stade</Label>
+                <div style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, marginTop: 2 }}>{STAGE_LABEL[d.stage] || d.stage}</div>
+                {d.evolveFrom ? <div style={{ fontSize: 11, color: SNOW.muted, fontFamily: FONT.body, marginTop: 2 }}>évolue de {d.evolveFrom}</div> : null}
+              </div>
+            ) : null}
+            {d?.retreat != null ? (
+              <div style={{ borderRadius: 13, padding: "13px 15px", background: SNOW.surface, border: `1px solid ${SNOW.border}` }}>
+                <Label>Coût de retraite</Label>
+                <div style={{ display: "inline-flex", gap: 3, marginTop: 5 }}>
+                  {d.retreat > 0 ? Array.from({ length: d.retreat }).map((_, i) => (
+                    <span key={i} style={{ width: 17, height: 17, borderRadius: "50%", background: "#F0F0F2", border: `1.5px solid ${SNOW.mutedLight}` }} />
+                  )) : <span style={{ fontSize: 14, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>0</span>}
+                </div>
+              </div>
+            ) : null}
+            {d?.weaknesses && d.weaknesses.length ? (
+              <div style={{ borderRadius: 13, padding: "13px 15px", background: SNOW.surface, border: `1px solid ${SNOW.border}` }}>
+                <Label>Faiblesse</Label>
+                <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+                  {d.weaknesses.map((w, i) => { const s = energyStyle(w.type); return (
+                    <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 700, color: s.c, fontFamily: FONT.display }}>
+                      <span style={{ width: 14, height: 14, borderRadius: "50%", background: s.bg, border: `1.5px solid ${s.c}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800 }}>{w.type[0]}</span>{w.value}
+                    </span>
+                  )})}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Pouvoirs */}
+          {d?.abilities && d.abilities.length ? (
+            <div style={{ marginBottom: 16 }}>
+              {d.abilities.map((ab, i) => (
+                <div key={i} style={{ background: "#FCF6F5", border: "1px solid #F0D9D4", borderRadius: 13, padding: "14px 16px", marginBottom: i < d.abilities!.length - 1 ? 10 : 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "#E0402A", background: "#FCE0DA", padding: "3px 8px", borderRadius: 6, fontFamily: FONT.display }}>{ab.type || "Pouvoir"}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{ab.name}</span>
+                  </div>
+                  {ab.effect ? <div style={{ fontSize: 13.5, color: SNOW.inkSoft, fontFamily: FONT.body, lineHeight: 1.55 }}>{ab.effect}</div> : null}
+                </div>
+              ))}
             </div>
-          </section>
+          ) : null}
+
+          {/* Attaques */}
+          {d?.attacks && d.attacks.length ? (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: SNOW.mutedLight, textTransform: "uppercase", letterSpacing: ".06em", fontFamily: FONT.display, marginBottom: 10 }}>Attaques</div>
+              {d.attacks.map((at, i) => (
+                <div key={i} style={{ borderRadius: 13, border: `1px solid ${SNOW.border}`, padding: "13px 16px", marginBottom: i < d.attacks!.length - 1 ? 8 : 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: at.effect ? 6 : 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {at.cost && at.cost.length ? <EnergyDots cost={at.cost} /> : null}
+                      <span style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{at.name}</span>
+                    </div>
+                    {at.damage != null ? <span style={{ fontSize: 20, fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display }}>{at.damage}</span> : null}
+                  </div>
+                  {at.effect ? <div style={{ fontSize: 13, color: SNOW.inkSoft, fontFamily: FONT.body, lineHeight: 1.55 }}>{at.effect}</div> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Legalite + lore */}
+          {d?.legal || d?.description ? (
+            <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+              {d?.legal ? (
+                <div>
+                  <Label>Légalité en tournoi</Label>
+                  <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                    {(["standard", "expanded"] as const).map(fmt => (
+                      <span key={fmt} style={{ fontSize: 11.5, fontWeight: 600, fontFamily: FONT.display, padding: "4px 10px", borderRadius: 8, textTransform: "capitalize", background: d.legal?.[fmt] ? "#E7F5EC" : SNOW.surface, color: d.legal?.[fmt] ? "#1D9E75" : SNOW.mutedLight, border: `1px solid ${d.legal?.[fmt] ? "#1D9E7540" : SNOW.border}` }}>
+                        {fmt} {d.legal?.[fmt] ? "✓" : "✕"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {d?.description ? (
+                <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+                  <Label>Description</Label>
+                  <p style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body, fontStyle: "italic", lineHeight: 1.6, margin: "2px 0 0" }}>« {d.description} »</p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {siblings.length > 0 ? (
+        <div>
+          <BlockTitle>Cette carte existe aussi en</BlockTitle>
+          <div style={{ borderRadius: 14, border: `1px solid ${SNOW.border}`, overflow: "hidden" }}>
+            {siblings.map((sib, i) => {
+              const sFlag = FLAG[sib.lang] || ""
+              const sLabel = LANG_LABEL[sib.lang] || sib.lang
+              return (
+                <Link key={sib.id} href={`/cartes/${encodeURIComponent(sib.id)}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "14px 18px", textDecoration: "none", borderTop: i > 0 ? `1px solid ${SNOW.borderSoft}` : "none", transition: "background .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = SNOW.surfaceSoft }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 22 }}>{sFlag}</span>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{sLabel}</div>
+                      <div style={{ fontSize: 12, color: SNOW.mutedLight, fontFamily: FONT.display }}>{card.set_name} · #{card.local_id}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {sib.priceEur != null ? (
+                      <span style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(sib.priceEur)}</span>
+                    ) : (
+                      <span style={{ fontSize: 13, color: SNOW.mutedLight, fontStyle: "italic", fontFamily: FONT.body }}>voir le prix</span>
+                    )}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {!hasAbout && siblings.length === 0 ? (
+        <p style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body }}>Pas de détails supplémentaires pour cette carte.</p>
+      ) : null}
+    </div>
+  )
+
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: "prix", label: "Prix" },
+    { key: "histo", label: "Historique" },
+    { key: "grade", label: "Gradation" },
+    { key: "infos", label: "Détails" },
+  ]
+  const renderTab = (k: TabKey) => {
+    if (k === "prix") return <TabPrix />
+    if (k === "histo") return <TabHisto />
+    if (k === "grade") return <TabGrade />
+    return <TabInfos />
+  }
+
+  return (
+    <div style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 24px 72px" }}>
+      <nav className="kc-rise" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, fontSize: 12.5, fontFamily: FONT.display, color: SNOW.mutedLight, flexWrap: "wrap" }}>
+        <Link href="/cartes" style={{ color: SNOW.muted, textDecoration: "none" }}>Pokédesk</Link>
+        <span>›</span>
+        <span style={{ color: SNOW.muted }}>{card.set_name}</span>
+        <span>›</span>
+        <span style={{ color: SNOW.ink, fontWeight: 600 }}>{card.name}</span>
+      </nav>
+
+      <div className="kc-grid" style={{ display: "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 36, alignItems: "start" }}>
+
+        {/* Carte sticky + tilt */}
+        <div className="kc-left" style={{ position: "sticky", top: 72 }}>
+          <div className="kc-rise">
+            <div ref={tiltRef} onMouseMove={onCardMove} onMouseLeave={onCardLeave} style={{ position: "relative", transition: `transform .16s ${EASE.apple}`, transformStyle: "preserve-3d", willChange: "transform", cursor: "pointer" }}>
+              {img ? (
+                <img src={img} alt={card.name} style={{ width: "100%", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.10)", display: "block" }} draggable={false} />
+              ) : (
+                <div style={{ width: "100%", aspectRatio: "63/88", borderRadius: 16, background: SNOW.surface, display: "flex", alignItems: "center", justifyContent: "center", color: SNOW.mutedLight, fontSize: 13, fontFamily: FONT.body }}>Image indisponible</div>
+              )}
+              <div ref={glareRef} style={{ position: "absolute", inset: 0, borderRadius: 16, pointerEvents: "none", opacity: 0, transition: "opacity .25s ease", mixBlendMode: "overlay" }} />
+            </div>
+          </div>
+          <div className="kc-rise" style={{ animationDelay: ".08s", display: "flex", flexWrap: "wrap", gap: 7, marginTop: 14 }}>
+            {era ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 20, background: era.color + "14", border: `1px solid ${era.color}33` }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: era.color }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".03em", color: era.color, fontFamily: FONT.display, textTransform: "uppercase" }}>{era.era}</span>
+              </span>
+            ) : null}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 20, background: SNOW.surface, border: `1px solid ${SNOW.border}`, fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display }}>{flag} {LANG_LABEL[card.lang] || card.lang}</span>
+            <VariantBadge setId={card.set_id} />
+          </div>
         </div>
 
-        {/* FAUT-IL LA GRADER (Graded.ev) */}
-        <section>
-          <GradedEvPanel printId={card.id} lang={card.lang} />
-        </section>
+        {/* Donnees */}
+        <div className="kc-right" style={{ minWidth: 0 }}>
 
-        {/* ═══ A PROPOS DE LA CARTE ═══ */}
-        {hasAbout ? (
-          <section>
-            <SectionTitle>À propos de la carte</SectionTitle>
-            <Card>
-              {/* Caracteristiques */}
-              <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-start", paddingBottom: 18, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
-                {d?.hp != null ? (
-                  <div>
-                    <Label>Points de vie</Label>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{d.hp}<span style={{ fontSize: 13, color: SNOW.mutedLight, fontWeight: 500 }}> PV</span></div>
-                  </div>
-                ) : null}
-                {typeMain && tStyle ? (
-                  <div>
-                    <Label>Type</Label>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99, background: tStyle.bg, border: `1px solid ${tStyle.c}40` }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: tStyle.c }} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: tStyle.c, fontFamily: FONT.display }}>{typeMain}</span>
-                    </span>
-                  </div>
-                ) : null}
-                {d?.stage ? (
-                  <div>
-                    <Label>Stade</Label>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>
-                      {STAGE_LABEL[d.stage] || d.stage}
-                      {d.evolveFrom ? <span style={{ fontWeight: 400, color: SNOW.muted }}> · évolue de {d.evolveFrom}</span> : null}
-                    </div>
-                  </div>
-                ) : null}
-                {d?.retreat != null ? (
-                  <div>
-                    <Label>Coût de retraite</Label>
-                    <span style={{ display: "inline-flex", gap: 3 }}>
-                      {Array.from({ length: d.retreat }).map((_, i) => (
-                        <span key={i} style={{ width: 16, height: 16, borderRadius: "50%", background: SNOW.surface, border: `1.5px solid ${SNOW.mutedLight}` }} />
-                      ))}
-                    </span>
-                  </div>
-                ) : null}
+          <div className="kc-rise" style={{ animationDelay: ".06s", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 5 }}>
+                {card.set_name}{card.local_id ? ` · #${card.local_id}` : ""}
               </div>
+              <h1 style={{ fontSize: 30, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1.08, margin: "0 0 6px" }}>{card.name}</h1>
+              <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>
+                <span style={{ textTransform: "capitalize" }}>{card.rarity_normalized}</span>
+                {illustrator ? <span> · Illustré par {illustrator}</span> : null}
+              </div>
+            </div>
+            <button onClick={toggleFollow} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 20, background: isFollowed ? "rgba(224,48,32,0.08)" : "#1D1D1F", border: isFollowed ? "1px solid rgba(224,48,32,0.25)" : "1px solid #1D1D1F", color: isFollowed ? "#E03020" : "#fff", fontSize: 13.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", boxShadow: isFollowed ? "none" : "0 4px 14px rgba(0,0,0,0.16)", transition: `all .2s ${EASE.apple}` }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : "#fff"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              {isFollowed ? "Suivie" : "Suivre"}
+            </button>
+          </div>
+          {followMsg ? (
+            <div style={{ marginTop: 10, fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.body, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>{followMsg}</span>
+              {followMsg.includes("Pro") ? <a href="/abonnement" style={{ color: "#E03020", fontWeight: 600, textDecoration: "none" }}>Voir Pro</a> : null}
+            </div>
+          ) : null}
 
-              {/* Pouvoirs */}
-              {d?.abilities && d.abilities.length ? (
-                <div style={{ paddingTop: 18, paddingBottom: 18, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
-                  {d.abilities.map((ab, i) => (
-                    <div key={i} style={{ marginBottom: i < d.abilities!.length - 1 ? 14 : 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "#E0402A", background: "#FCE9E5", padding: "3px 8px", borderRadius: 6, fontFamily: FONT.display }}>{ab.type || "Pouvoir"}</span>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{ab.name}</span>
-                      </div>
-                      {ab.effect ? <div style={{ fontSize: 13.5, color: SNOW.inkSoft, fontFamily: FONT.body, lineHeight: 1.55 }}>{ab.effect}</div> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+          <div className="kc-rise" style={{ animationDelay: ".12s", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", marginTop: 20, paddingTop: 20, borderTop: `1px solid ${SNOW.borderSoft}` }}>
+            {market != null ? (
+              <div>
+                <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 3, display: "inline-flex", alignItems: "center" }}>Prix de marché<HeroTip text={TIP_MARKET} /></div>
+                <div style={{ fontSize: 34, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 14, color: SNOW.muted, fontStyle: "italic", fontFamily: FONT.body }}>Données de prix insuffisantes pour le moment.</div>
+            )}
+            {fairValue != null ? (
+              <div style={{ padding: "9px 15px", borderRadius: 12, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}` }}>
+                <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4, display: "inline-flex", alignItems: "center" }}>Valeur estimée<HeroTip text={TIP_FAIR} /></div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(fairValue)}</div>
+              </div>
+            ) : null}
+            {liquidity != null ? (
+              <div style={{ padding: "9px 15px", borderRadius: 12, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}` }}>
+                <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4, display: "inline-flex", alignItems: "center" }}>Liquidité<HeroTip text={TIP_LIQUIDITE} /></div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{Math.round(liquidity)}<span style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 500 }}>/100</span></div>
+              </div>
+            ) : null}
+          </div>
 
-              {/* Attaques */}
-              {d?.attacks && d.attacks.length ? (
-                <div style={{ paddingTop: 18, paddingBottom: 18, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
-                  {d.attacks.map((at, i) => (
-                    <div key={i} style={{ marginBottom: i < d.attacks!.length - 1 ? 16 : 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 5 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          {at.cost && at.cost.length ? <EnergyDots cost={at.cost} /> : null}
-                          <span style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{at.name}</span>
-                        </div>
-                        {at.damage != null ? <span style={{ fontSize: 18, fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display }}>{at.damage}</span> : null}
-                      </div>
-                      {at.effect ? <div style={{ fontSize: 13.5, color: SNOW.inkSoft, fontFamily: FONT.body, lineHeight: 1.55 }}>{at.effect}</div> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+          <div className="kc-rise" style={{ animationDelay: ".18s", display: "flex", gap: 4, marginTop: 24 }}>
+            {TABS.map(t => {
+              const on = activeTab === t.key
+              return (
+                <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ flex: "1 1 auto", padding: "9px 6px", borderRadius: 11, fontSize: 12.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap", transition: `all .18s ${EASE.apple}`, background: on ? "rgba(224,48,32,0.08)" : "transparent", color: on ? "#E03020" : SNOW.muted, border: on ? "1px solid rgba(224,48,32,0.22)" : `1px solid ${SNOW.border}` }}>
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
 
-              {/* Faiblesses + legalite */}
-              {(d?.weaknesses && d.weaknesses.length) || d?.legal ? (
-                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", paddingTop: 18, paddingBottom: d?.description ? 18 : 0, borderBottom: d?.description ? `1px solid ${SNOW.borderSoft}` : "none" }}>
-                  {d?.weaknesses && d.weaknesses.length ? (
-                    <div>
-                      <Label>Faiblesse</Label>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {d.weaknesses.map((w, i) => { const s = energyStyle(w.type); return (
-                          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: s.c, fontFamily: FONT.display }}>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.c }} />{w.type} {w.value}
-                          </span>
-                        )})}
-                      </div>
-                    </div>
-                  ) : null}
-                  {d?.legal ? (
-                    <div>
-                      <Label>Légalité</Label>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {(["standard", "expanded"] as const).map(fmt => (
-                          <span key={fmt} style={{ fontSize: 11.5, fontWeight: 600, fontFamily: FONT.display, padding: "3px 9px", borderRadius: 7, textTransform: "capitalize", background: d.legal?.[fmt] ? "#E7F5EC" : SNOW.surface, color: d.legal?.[fmt] ? "#1D9E75" : SNOW.mutedLight, border: `1px solid ${d.legal?.[fmt] ? "#1D9E7540" : SNOW.border}` }}>
-                            {fmt} {d.legal?.[fmt] ? "✓" : "✕"}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {/* Lore */}
-              {d?.description ? (
-                <div style={{ paddingTop: 18 }}>
-                  <p style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>« {d.description} »</p>
-                </div>
-              ) : null}
-            </Card>
-          </section>
-        ) : null}
-
-        {/* ═══ CETTE CARTE EXISTE AUSSI EN (versions soeurs) ═══ */}
-        {siblings.length > 0 ? (
-          <section>
-            <SectionTitle>Cette carte existe aussi en</SectionTitle>
-            <Card style={{ padding: 0, overflow: "hidden" }}>
-              {siblings.map((sib, i) => {
-                const sFlag = FLAG[sib.lang] || ""
-                const sLabel = LANG_LABEL[sib.lang] || sib.lang
-                return (
-                  <Link key={sib.id} href={`/cartes/${encodeURIComponent(sib.id)}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 22px", textDecoration: "none", borderTop: i > 0 ? `1px solid ${SNOW.borderSoft}` : "none", transition: "background .15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = SNOW.surfaceSoft }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "transparent" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: 22 }}>{sFlag}</span>
-                      <div>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{sLabel}</div>
-                        <div style={{ fontSize: 12, color: SNOW.mutedLight, fontFamily: FONT.display }}>{card.set_name} · #{card.local_id}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      {sib.priceEur != null ? (
-                        <span style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(sib.priceEur)}</span>
-                      ) : (
-                        <span style={{ fontSize: 13, color: SNOW.mutedLight, fontStyle: "italic", fontFamily: FONT.body }}>voir le prix</span>
-                      )}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={SNOW.mutedLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                    </div>
-                  </Link>
-                )
-              })}
-            </Card>
-          </section>
-        ) : null}
+          <div className="kc-rise" style={{ ...GLASS.card, animationDelay: ".24s", marginTop: 14, padding: "24px 26px", borderRadius: RADIUS.lg, minHeight: 300 }}>
+            <div key={activeTab} className="kc-tab-anim">{renderTab(activeTab)}</div>
+          </div>
+        </div>
       </div>
 
-      {/* ═══ SEPARATION FORTE + MA COLLECTION (zone perso) ═══ */}
-      <div style={{ marginTop: 52, padding: "32px 28px", borderRadius: 22, background: "linear-gradient(180deg, #FBFAF8 0%, #F7F6FA 100%)", border: `1px solid ${SNOW.border}` }}>
-        <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: "0 0 18px" }}>Dans ma collection</h2>
+      {/* SEPARATEUR FRANC */}
+      <div style={{ display: "flex", alignItems: "center", gap: 18, margin: "60px 0 0" }}>
+        <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${SNOW.border})` }} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: ".14em", color: SNOW.mutedLight, fontFamily: FONT.display, textTransform: "uppercase" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Ton espace
+        </span>
+        <div style={{ flex: 1, height: 1, background: `linear-gradient(270deg, transparent, ${SNOW.border})` }} />
+      </div>
+
+      {/* ZONE PERSO enrichie */}
+      <div style={{ marginTop: 22, padding: "30px 30px", borderRadius: 22, background: "linear-gradient(180deg, #FBFAF7 0%, #F5F4FA 100%)", border: `1px solid ${SNOW.border}`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7), 0 1px 3px rgba(0,0,0,0.02)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".08em", margin: 0 }}>Dans ma collection</h2>
+          {owned.length > 0 ? (
+            <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display, marginRight: 7 }}>{ownedUnits > 1 ? `${ownedUnits} exemplaires` : "1 exemplaire"}{ownedHasValue ? " · valeur" : ""}</span>
+                {ownedHasValue ? <span style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(ownedValue)}</span> : null}
+              </div>
+              {show.pnl && ownedPnl != null ? (
+                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT.display, color: ownedPnl >= 0 ? "#1D9E75" : "#E03020" }}>
+                  {ownedPnl >= 0 ? "+" : ""}{fmtEur(ownedPnl)}{ownedPnlPct != null ? ` (${ownedPnl >= 0 ? "+" : ""}${ownedPnlPct}%)` : ""}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {owned.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -642,13 +862,13 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               const pv = (cur != null && buy != null && buy > 0) ? cur - buy : null
               const pct = (pv != null && buy && buy > 0) ? Math.round((pv / buy) * 100) : null
               const up = pv != null && pv >= 0
-              const isRawNoState = !c.graded && cond === "Raw"
               return (
-                <div key={c.id || i} style={{ background: SNOW.bg, borderRadius: 14, border: `1px solid ${SNOW.border}`, padding: "16px 18px" }}>
+                <div key={c.id || i} style={{ background: SNOW.bg, borderRadius: 14, border: `1px solid ${SNOW.border}`, padding: "16px 18px", transition: `box-shadow .2s ${EASE.apple}, transform .2s ${EASE.apple}` }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(-1px)" }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", padding: "4px 11px", borderRadius: 8, background: c.graded ? "rgba(224,48,32,0.08)" : SNOW.surface, border: `1px solid ${c.graded ? "rgba(224,48,32,0.2)" : SNOW.border}`, fontSize: 11, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", color: c.graded ? "#E03020" : SNOW.muted, fontFamily: FONT.display }}>{gradeLabel}</span>
-                      {isRawNoState ? <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.display, fontStyle: "italic" }}>état non précisé</span> : null}
                       {c.qty > 1 ? <span style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.display, fontWeight: 600 }}>{"\u00D7"}{c.qty}</span> : null}
                     </div>
                     {cote.locked ? (
@@ -691,12 +911,13 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
       </div>
 
       <style>{`
-        @media (max-width: 720px) {
-          .kcard-hero img { width: 100% !important; max-width: 340px; margin: 0 auto; }
-          .kcard-hero { gap: 28px !important; }
-        }
-        @media (max-width: 900px) {
-          .kcard-2col { grid-template-columns: 1fr !important; }
+        @keyframes kcRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .kc-rise { animation: kcRise .55s cubic-bezier(.16,1,.3,1) both; }
+        @keyframes kcTabIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .kc-tab-anim { animation: kcTabIn .28s ${EASE.smoothOut}; }
+        @media (max-width: 920px) {
+          .kc-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .kc-left { position: static !important; max-width: 320px; margin: 0 auto; }
         }
       `}</style>
     </div>

@@ -105,5 +105,29 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
     ON CONFLICT DO NOTHING RETURNING print_id`
   console.log('rows history:', r5.length)
+
+  // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
+  // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
+  //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).
+  // Garde-fous: prix dans ]0, 100000] (rejette les annonces sentinelles type 999999),
+  // dedoublonnage par (print,tier) en gardant le prix median pondere par saleCount.
+  // ACCUMULE jour par jour -> densite future pour afficher les grades FR honnetement.
+  const r6 = await sql`
+    INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
+    SELECT print_id, CURRENT_DATE, tier, 'cardmarket_fr', 'FR', price, sale_count, 'EUR'
+    FROM (
+      SELECT pm.print_id, pm.tier,
+             ROUND(AVG((country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric), 2) AS price,
+             SUM((country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int) AS sale_count
+      FROM price_matrix pm
+      WHERE pm.print_id IS NOT NULL
+        AND pm.market = 'EU'
+        AND pm.country_breakdown->'FR'->'language'->'FR'->>'avg' IS NOT NULL
+        AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric > 0
+        AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric <= 100000
+      GROUP BY pm.print_id, pm.tier
+    ) t
+    ON CONFLICT DO NOTHING RETURNING print_id`
+  console.log('rows history FR pur (country.FR.language.FR, source=cardmarket_fr):', r6.length)
   console.log('Signaux + history a jour.')
 })().catch(e => { console.error('ERR:', e.message); process.exit(1) })

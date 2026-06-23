@@ -57,8 +57,15 @@ export async function GET(req: NextRequest) {
     // psa_card_ref is already in 'jp-XXX-NNN' format
     shortRef = mapping[0].psa_card_ref
   } else {
-    // EN/FR : strip lang prefix
-    shortRef = cardId.replace(/^(en|fr|jp|aopkm)-/i, '')
+    // EN/FR : d'abord psa_card_mappings (card_ref exact lie), sinon strip prefixe.
+    const mapping = await sql`
+      SELECT psa_card_ref FROM psa_card_mappings
+      WHERE tcg_card_id = ${cardId} AND confidence IN ('verified', 'auto')
+      LIMIT 1
+    ` as Array<{ psa_card_ref: string }>
+    shortRef = mapping.length > 0
+      ? mapping[0].psa_card_ref
+      : cardId.replace(/^(en|fr|jp|aopkm)-/i, '')
   }
 
   try {

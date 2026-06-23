@@ -430,6 +430,7 @@ export async function GET(req: NextRequest) {
         primaryCurrency: 'EUR',
         history,
         frByCondition,
+        fxUsdEur: USD_EUR,
       },
       resolved_id: cardId,
     }, {

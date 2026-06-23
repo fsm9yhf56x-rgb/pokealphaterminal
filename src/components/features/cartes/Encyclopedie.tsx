@@ -68,6 +68,17 @@ const TC: Record<string,string> = {
 }
 
 const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Autre']
+// Code serie japonais affiche a cote du nom international (vue JP uniquement)
+const ERA_JP_CODE: Record<string,string> = {
+  'Original (WotC)': 'BASE',
+  'EX': 'ADV',
+  'DP / Platinum': 'DPt',
+  'Black & White': 'BW',
+  'XY': 'XY',
+  'Sun & Moon': 'SM',
+  'Sword & Shield': 'S',
+  'Scarlet & Violet': 'SV',
+}
 
 const ERA_PREFIX: [string, string][] = [
   ['base','Original (WotC)'],['jungle','Original (WotC)'],['fossil','Original (WotC)'],
@@ -1382,7 +1393,10 @@ export function Encyclopedie() {
                     })}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{b.name}</div>
+                    <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'baseline', gap:'7px' }}>
+                      <span style={{ overflow:'hidden', textOverflow:'ellipsis' }}>{b.name}</span>
+                      {lang==='JP' && ERA_JP_CODE[b.name] ? <span style={{ fontSize:'10.5px', fontWeight:600, color:'#86868B', fontFamily:'var(--font-mono, monospace)', letterSpacing:'0.04em', flexShrink:0 }}>{ERA_JP_CODE[b.name]}</span> : null}
+                    </div>
                     <div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-mono, monospace)' }}>{b.total.toLocaleString()} cartes <span style={{ color:'#C7C7CC' }}>·</span> {b.sets.length} série{b.sets.length>1?'s':''}</div>
                   </div>
                   <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style={{ flexShrink:0, opacity:0.3 }}><path d="M4.5 3L7.5 6L4.5 9" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1396,7 +1410,10 @@ export function Encyclopedie() {
               <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
                 <button onClick={()=>{setSelBloc(null);setFilEra('all');setFilSet('all');setPage(0)}} style={{ background:'rgba(255,255,255,0.55)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:9, padding:'7px 12px', cursor:'pointer', fontSize:12, fontWeight:500, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', display:'flex', alignItems:'center', gap:5, transition:'all .15s cubic-bezier(.2,.85,.3,1)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>{String.fromCharCode(8249)} Blocs</button>
                 {(()=>{ const logoSid = blocs.find(b=>b.name===selBloc)?.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'24px', maxWidth:'120px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
-                <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>{selBloc}</span>
+                <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', display:'inline-flex', alignItems:'baseline', gap:'8px' }}>
+                  {selBloc}
+                  {lang==='JP' && selBloc && ERA_JP_CODE[selBloc] ? <span style={{ fontSize:'11px', fontWeight:600, color:'#86868B', fontFamily:'var(--font-mono, monospace)', letterSpacing:'0.04em' }}>{ERA_JP_CODE[selBloc]}</span> : null}
+                </span>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(178px,1fr))', gap:'6px', marginBottom:'16px' }}>
                 <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'8px 12px', borderRadius:'9px', border:'0.5px solid '+(filSet==='all'?'#1D1D1F':'rgba(0,0,0,0.08)'), background:filSet==='all'?'#1D1D1F':'rgba(255,255,255,0.6)', color:filSet==='all'?'#fff':'#1D1D1F', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'6px' }}>

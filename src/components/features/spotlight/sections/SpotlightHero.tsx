@@ -228,6 +228,9 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           <div>
             <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
             <span style={{ fontSize: 18, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
+            {!isFr && !showPortfolio && heroPrice != null && (prices as any).fxUsdEur > 0 ? (
+              <span style={{ display: 'block', fontSize: 12, color: SNOW.mutedLight, fontWeight: 600, fontFamily: FONT.data, letterSpacing: '-0.01em', marginTop: 2 }}>~${(heroPrice / (prices as any).fxUsdEur).toFixed(2)}</span>
+            ) : null}
           </div>
           )}
           {showPortfolio ? (

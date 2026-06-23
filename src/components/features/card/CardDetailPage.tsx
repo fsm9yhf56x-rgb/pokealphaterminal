@@ -795,7 +795,12 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             {market != null ? (
               <div>
                 <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 3, display: "inline-flex", alignItems: "center" }}>Prix de marché<HeroTip text={TIP_MARKET} /></div>
-                <div style={{ fontSize: 34, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <div style={{ fontSize: 34, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
+                  {!isFrCard && (prices as any).fxUsdEur && (prices as any).fxUsdEur > 0 ? (
+                    <span style={{ fontSize: 15, fontWeight: 600, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: "-0.01em" }}>~${(market / (prices as any).fxUsdEur).toFixed(2)}</span>
+                  ) : null}
+                </div>
               </div>
             ) : (
               <div style={{ fontSize: 14, color: SNOW.muted, fontStyle: "italic", fontFamily: FONT.body }}>Données de prix insuffisantes pour le moment.</div>

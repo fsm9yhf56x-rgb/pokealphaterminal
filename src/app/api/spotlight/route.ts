@@ -60,6 +60,28 @@ export async function GET(req: NextRequest) {
       }
     }
   }
+  // Fallback robuste: si l'id ne resout pas directement, tenter set_id + local_id.
+  // Couvre les ids "set-numero" (ex jp-sv2a-pokemon-card-151-208) vs id reel (jp-566550).
+  {
+    const direct = await sql`SELECT 1 FROM k_cards_export WHERE id = ${cardId} LIMIT 1` as Array<any>
+    if (direct.length === 0) {
+      // separer la partie numero finale du reste (= set_id potentiel)
+      const mm = String(cardId).match(/^(.*)-([0-9]+[a-z]?)$/i)
+      if (mm) {
+        const rawSet = mm[1].replace(/^(en|fr|jp|aopkm)-/i, '')
+        const num = mm[2]
+        const langPref = (lang === 'JP' || lang === 'JA') ? 'jp' : lang === 'FR' ? 'fr' : 'en'
+        const tryOrder = [langPref, 'jp', 'en', 'fr']
+        for (const lp of tryOrder) {
+          const r = await sql`
+            SELECT id FROM k_cards_export
+            WHERE set_id = ${lp + '-' + rawSet} AND local_id = ${num} LIMIT 1
+          ` as Array<{ id: string }>
+          if (r.length > 0) { cardId = r[0].id; break }
+        }
+      }
+    }
+  }
 
   try {
     // 1. Card info

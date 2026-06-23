@@ -2,13 +2,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // GradedEvPanel — "Faut-il la grader ?"
 // Affiche le moteur Graded.ev sur la page carte.
-//   - Premium  : analyse complète (reco, gain espéré net, distribution PSA réelle)
+//   - Premium  : analyse complète (reco, gain espéré net, distribution PSA réelle,
+//                scénarios par note, proba de rentabilité, frais ajustables)
 //   - Free/Pro : teaser locké (accroche + nombre d'exemplaires, sans le calcul)
 //
-// L'honnêteté est mise en avant : le gem rate (% de PSA 10) est proéminent,
-// car c'est ce qui distingue une espérance réelle d'une fausse promesse.
+// Honnêteté : on ne promet pas le meilleur cas. Le gem rate (% de PSA 10) est mis
+// en avant, on décompose le gain PAR NOTE (PSA 9, 8, 7...), on affiche la proba
+// que grader soit rentable, et les frais PSA sont AJUSTABLES (jamais assénés comme
+// une vérité — Kodo n'est pas responsable des tarifs PSA / envoi / douane).
 // ─────────────────────────────────────────────────────────────────────────────
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { SNOW, FONT } from "@/lib/design/snow"
 
 interface GradeRow {
@@ -17,6 +20,7 @@ interface GradeRow {
   proba: number
   price: number
   contribution: number
+  net?: number
 }
 
 interface GradedEvData {
@@ -27,6 +31,7 @@ interface GradedEvData {
   gradingFee?: number
   rawPrice?: number
   gemRate?: number
+  probaGain?: number
   coverage?: number
   gradesCovered?: number
   gradesWithPop?: number
@@ -45,6 +50,12 @@ const fmtEur = (n: number) =>
 const fmtEur2 = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(n)
 const fmtInt = (n: number) => new Intl.NumberFormat("fr-FR").format(n)
+const round2 = (n: number) => Math.round(n * 100) / 100
+
+// Seuils miroir du moteur (lib/graded-ev.ts) : recalcul client quand les frais bougent.
+const STRONG_MARGIN_RATIO = 0.25
+const MIN_COVERAGE = 0.5
+const MIN_GRADES_COVERED = 3
 
 const RECO_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
   GRADER: { bg: "rgba(0,163,104,0.10)", fg: "#00A368", label: "À grader" },
@@ -56,18 +67,38 @@ const RECO_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
 export function GradedEvPanel({ printId, lang }: { printId: string; lang: string }) {
   const [data, setData] = useState<GradedEvData | null>(null)
   const [loading, setLoading] = useState(true)
+  // Frais de gradation ajustables par l'utilisateur (defaut = valeur moteur).
+  const [fee, setFee] = useState<number>(25)
 
   useEffect(() => {
     let alive = true
     setLoading(true)
     fetch(`/api/graded-ev?print_id=${encodeURIComponent(printId)}&lang=${encodeURIComponent(lang)}`)
       .then((r) => r.json())
-      .then((j) => { if (alive) { setData(j); setLoading(false) } })
+      .then((j) => {
+        if (!alive) return
+        setData(j)
+        if (j && typeof j.gradingFee === "number") setFee(j.gradingFee)
+        setLoading(false)
+      })
       .catch(() => { if (alive) { setData(null); setLoading(false) } })
     return () => { alive = false }
   }, [printId, lang])
 
-  // Rien à afficher si pas de données gradées du tout.
+  const raw = data?.rawPrice ?? 0
+  const evBrute = data?.evBrute ?? 0
+  const rows = useMemo(() => (data?.rows ?? []).slice().sort((a, b) => b.grade - a.grade), [data])
+
+  // Recalculs client en fonction des frais (le moteur reste la source du brut/proba/prix).
+  const evNette = round2(evBrute - fee - raw)
+  const breakeven = round2(evBrute - raw)            // plafond de frais pour rester rentable
+  const probaGain = rows.reduce((acc, r) => acc + (r.price - fee - raw > 0 ? r.proba : 0), 0)
+  const reco: keyof typeof RECO_STYLE =
+    (data?.coverage != null && data.coverage < MIN_COVERAGE) ||
+    (data?.gradesCovered ?? 0) < MIN_GRADES_COVERED
+      ? "INSUFFISANT"
+      : evNette > raw * STRONG_MARGIN_RATIO ? "GRADER" : evNette > 0 ? "MARGINAL" : "NE_PAS"
+
   if (loading) return null
   if (!data || !data.available) return null
 
@@ -89,9 +120,9 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
               Faut-il la grader ?
             </div>
             <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, marginBottom: 14 }}>
-              Découvre si grader cette carte est rentable : gain réellement espéré après frais,
-              distribution des notes PSA, et recommandation grader / garder — calculés sur les
-              probabilités réelles, sans promesse du meilleur cas.
+              Découvre si grader cette carte est rentable : gain espéré net selon la note,
+              distribution réelle des notes PSA, probabilité d'être rentable, et recommandation
+              grader / garder — calculés sur les probabilités réelles, sans promesse du meilleur cas.
             </div>
             {pop > 0 ? (
               <div style={{ fontSize: 12.5, color: SNOW.mutedLight, fontFamily: FONT.data }}>
@@ -109,56 +140,46 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   }
 
   // ── COMPLET (premium) ────────────────────────────────────────────────────────
-  const reco = data.reco ?? "INSUFFISANT"
   const rs = RECO_STYLE[reco]
-  const evNette = data.evNette ?? 0
   const gem = (data.gemRate ?? 0) * 100
-  const rows = data.rows ?? []
+  const isInsuff = reco === "INSUFFISANT"
 
-  // Regrouper les notes <= 5 en une seule ligne lisible (peu de valeur unitaire).
-  const high = rows.filter((r) => r.grade >= 6).sort((a, b) => b.grade - a.grade)
-  const low = rows.filter((r) => r.grade <= 5)
-  const lowProba = low.reduce((s, r) => s + r.proba, 0)
-  const lowAvgPrice = low.length ? low.reduce((s, r) => s + r.proba * r.price, 0) / (lowProba || 1) : 0
-  const maxProba = Math.max(...high.map((r) => r.proba), lowProba, 0.001)
-
-  const Bar = ({ proba, label, price }: { proba: number; label: string; price: number }) => (
-    <div style={{ display: "grid", gridTemplateColumns: "58px 1fr 78px", gap: 12, alignItems: "center", padding: "7px 0" }}>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data }}>{label}</div>
-      <div style={{ position: "relative", height: 22, background: SNOW.surfaceSoft, borderRadius: 6, overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, width: `${Math.max((proba / maxProba) * 100, 3)}%`, background: "linear-gradient(90deg, #1D1D1F, #3a3a3c)", borderRadius: 6 }} />
-        <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, display: "flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: proba / maxProba > 0.25 ? "#fff" : SNOW.muted, fontFamily: FONT.data }}>
-          {(proba * 100).toFixed(1)}%
-        </div>
-      </div>
-      <div style={{ fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>{price > 0 ? fmtEur(price) : "—"}</div>
-    </div>
-  )
+  const maxProba = Math.max(...rows.map((r) => r.proba), 0.001)
 
   return (
     <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
       {titleBlock}
 
-      {/* Reco + gain espéré */}
+      {/* Reco + chiffres cles */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
         <div style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", borderRadius: 11, background: rs.bg, color: rs.fg, fontSize: 14, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".01em" }}>
           {rs.label}
         </div>
-        {reco !== "INSUFFISANT" ? (
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, lineHeight: 1.1 }}>
-              {evNette >= 0 ? "+" : ""}{fmtEur2(evNette)}
+        {!isInsuff ? (
+          <>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, lineHeight: 1.1 }}>
+                {evNette >= 0 ? "+" : ""}{fmtEur2(evNette)}
+              </div>
+              <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body }}>
+                gain espéré net · frais {fmtEur(fee)} et prix actuel déduits
+              </div>
             </div>
-            <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body }}>
-              gain espéré net{data.gradingFee != null ? ` · après ${fmtEur(data.gradingFee)} de frais PSA et le prix actuel` : ""}
+            <div style={{ paddingLeft: 16, borderLeft: `1px solid ${SNOW.borderSoft}` }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, lineHeight: 1.1 }}>
+                {(probaGain * 100).toFixed(0)}%
+              </div>
+              <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body }}>
+                de chances d'être rentable
+              </div>
             </div>
-          </div>
+          </>
         ) : null}
       </div>
 
-      {/* Honnêteté : gem rate en avant */}
-      {data.gemRate != null && reco !== "INSUFFISANT" ? (
-        <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
+      {/* Honnetete : gem rate */}
+      {!isInsuff ? (
+        <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
           {gem < 10 ? "Seulement " : ""}<strong style={{ color: SNOW.ink }}>{gem.toFixed(1)}%</strong> des exemplaires obtiennent un <strong style={{ color: SNOW.ink }}>PSA 10</strong>.
           {" "}{data.recoReason}
         </div>
@@ -168,29 +189,85 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
         </div>
       )}
 
-      {/* Le calcul transparent (distribution detaillee dans POPULATION GRADEE) */}
-      {reco !== "INSUFFISANT" && data.evBrute != null ? (
+      {!isInsuff ? (
         <>
-          <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 10 }}>
+          {/* Scenarios par note exacte */}
+          <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 12 }}>
+            Selon la note obtenue
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "62px 1fr 84px 92px", gap: "4px 12px", alignItems: "center", marginBottom: 4 }}>
+            <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Note</div>
+            <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Probabilité</div>
+            <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em", textAlign: "right" }}>Valeur</div>
+            <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em", textAlign: "right" }}>Gain net</div>
+          </div>
+          {rows.map((r) => {
+            const net = round2(r.price - fee - raw)
+            const pos = net > 0
+            return (
+              <div key={r.grade} style={{ display: "grid", gridTemplateColumns: "62px 1fr 84px 92px", gap: "0 12px", alignItems: "center", padding: "6px 0" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.data }}>PSA {r.grade}</div>
+                <div style={{ position: "relative", height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: "hidden" }}>
+                  <div style={{ position: "absolute", inset: 0, width: `${Math.max((r.proba / maxProba) * 100, 3)}%`, background: pos ? "linear-gradient(90deg,#00A368,#1aa877)" : "linear-gradient(90deg,#c7c7cc,#d8d8dc)", borderRadius: 5 }} />
+                  <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, display: "flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: (r.proba / maxProba) > 0.28 ? "#fff" : SNOW.muted, fontFamily: FONT.data }}>
+                    {(r.proba * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div style={{ fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>{fmtEur(r.price)}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: pos ? "#00A368" : SNOW.red, fontFamily: FONT.data, textAlign: "right" }}>
+                  {pos ? "+" : "−"}{fmtEur(Math.abs(net))}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Frais ajustables + breakeven */}
+          <div style={{ marginTop: 18, padding: "14px 16px", background: SNOW.surfaceSoft, borderRadius: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <label style={{ fontSize: 13, color: SNOW.ink, fontFamily: FONT.body, fontWeight: 600 }}>
+                Tes frais de gradation
+              </label>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <input
+                  type="number" min={0} step={5} value={fee}
+                  onChange={(e) => setFee(Math.max(0, Number(e.target.value) || 0))}
+                  style={{ width: 78, padding: "6px 9px", borderRadius: 8, border: `1px solid ${SNOW.border}`, background: "#fff", fontSize: 13.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data, textAlign: "right" }}
+                />
+                <span style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.data }}>€</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: SNOW.muted, fontFamily: FONT.body, marginTop: 10, lineHeight: 1.5 }}>
+              Grader reste rentable tant que ton coût total reste sous{" "}
+              <strong style={{ color: breakeven > 0 ? "#00A368" : SNOW.red }}>{fmtEur2(breakeven)}</strong>
+              {" "}(valeur espérée − prix actuel, hors frais).
+            </div>
+            <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 8, lineHeight: 1.5 }}>
+              Frais PSA indicatifs : variables selon le tier, la valeur déclarée et le pays, hors
+              envoi et douane. Ajuste selon ta soumission réelle. Kodo n'est pas responsable des
+              tarifs PSA.
+            </div>
+          </div>
+
+          {/* Le calcul */}
+          <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, margin: "20px 0 10px" }}>
             Le calcul
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "9px 14px", alignItems: "baseline" }}>
             <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Valeur espérée <span style={{ color: SNOW.mutedLight, fontSize: 12 }}>(toutes notes pondérées par leur probabilité)</span></div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data, textAlign: "right" }}>{fmtEur2(data.evBrute)}</div>
-            <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Frais de gradation PSA</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(data.gradingFee ?? 0)}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data, textAlign: "right" }}>{fmtEur2(evBrute)}</div>
+            <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Frais de gradation</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(fee)}</div>
             <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>Valeur actuelle <span style={{ color: SNOW.mutedLight, fontSize: 12 }}>(carte non gradée)</span></div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(data.rawPrice ?? 0)}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.data, textAlign: "right" }}>− {fmtEur2(raw)}</div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "baseline", marginTop: 10, paddingTop: 12, borderTop: `1.5px solid ${SNOW.border}` }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>Gain espéré net</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: (data.evNette ?? 0) >= 0 ? "#00A368" : SNOW.red, fontFamily: FONT.data, textAlign: "right" }}>{(data.evNette ?? 0) >= 0 ? "+ " : "− "}{fmtEur2(Math.abs(data.evNette ?? 0))}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: evNette >= 0 ? "#00A368" : SNOW.red, fontFamily: FONT.data, textAlign: "right" }}>{evNette >= 0 ? "+ " : "− "}{fmtEur2(Math.abs(evNette))}</div>
           </div>
           <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${SNOW.borderSoft}` }}>
             Sur {fmtInt(data.popTotal ?? 0)} exemplaires gradés
             {data.coverage != null ? ` · ${Math.round(data.coverage * 100)}% des notes valorisées` : ""}
             {data.variety ? ` · ${data.variety}` : ""}
-            {" · distribution détaillée ci-dessus dans Population gradée"}
           </div>
         </>
       ) : null}

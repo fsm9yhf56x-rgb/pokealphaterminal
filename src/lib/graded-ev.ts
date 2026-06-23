@@ -70,6 +70,9 @@ export interface GradeRow {
   price: number
   /** proba × price = contribution à l'EV brute. */
   contribution: number
+  /** Gain net SI on obtient cette note = price − frais − rawPrice.
+   *  Negatif = grader pour finir avec cette note ferait perdre de l'argent. */
+  net: number
 }
 
 export type GradedRecommendation = 'GRADER' | 'MARGINAL' | 'NE_PAS' | 'INSUFFISANT'
@@ -87,6 +90,9 @@ export interface GradedEVResult {
   /** Taux de PSA 10 (= pop_10 / pop_total brut), en fraction [0..1].
    *  LE chiffre d'honnêteté : empêche la fausse promesse du meilleur cas. */
   gemRate: number
+  /** Probabilite que grader soit rentable = Σ proba des notes ou net > 0.
+   *  Le chiffre de risque : quelle chance d'au moins rentrer dans ses frais. */
+  probaGain: number
   /** Part de la population couverte par un prix [0..1] (transparence). */
   coverage: number
   /** Nombre de notes ayant à la fois pop>0 et un prix. */
@@ -166,8 +172,12 @@ export function computeGradedEV(input: GradedEVInput): GradedEVResult {
       proba,
       price: round2(price),
       contribution: round2(proba * price),
+      net: round2(price - gradingFee - rawPrice),
     }
   })
+
+  // Proba que grader soit rentable = somme des probas des notes a gain net positif.
+  const probaGain = rows.reduce((acc, r) => acc + (r.net > 0 ? r.proba : 0), 0)
 
   // EV brute = Σ contributions.
   const evBrute = round2(rows.reduce((s, r) => s + r.proba * r.price, 0))
@@ -199,6 +209,7 @@ export function computeGradedEV(input: GradedEVInput): GradedEVResult {
     rawPrice: round2(rawPrice),
     gradingFee: round2(gradingFee),
     gemRate,
+    probaGain,
     coverage,
     gradesCovered: covered.length,
     gradesWithPop,

@@ -237,6 +237,7 @@ export async function GET(req: NextRequest) {
       gradingFee: result.gradingFee,
       rawPrice: result.rawPrice,
       gemRate: result.gemRate,
+      probaGain: result.probaGain,
       coverage: result.coverage,
       gradesCovered: result.gradesCovered,
       gradesWithPop: result.gradesWithPop,

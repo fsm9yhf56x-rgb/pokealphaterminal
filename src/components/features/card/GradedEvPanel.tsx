@@ -5,11 +5,9 @@
 //   - Premium  : analyse complète (reco, gain espéré net, distribution PSA réelle,
 //                scénarios par note, proba de rentabilité, frais ajustables)
 //   - Free/Pro : teaser locké (accroche + nombre d'exemplaires, sans le calcul)
-//
-// Honnêteté : on ne promet pas le meilleur cas. Le gem rate (% de PSA 10) est mis
-// en avant, on décompose le gain PAR NOTE (PSA 9, 8, 7...), on affiche la proba
-// que grader soit rentable, et les frais PSA sont AJUSTABLES (jamais assénés comme
-// une vérité — Kodo n'est pas responsable des tarifs PSA / envoi / douane).
+//   - Indispo  : message explicite, jamais d'écran blanc.
+// Honnêteté : on ne promet pas le meilleur cas. Gem rate + % rentable affichés,
+// gain décomposé PAR NOTE, frais PSA AJUSTABLES (Kodo non responsable des tarifs).
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useState } from "react"
 import { SNOW, FONT } from "@/lib/design/snow"
@@ -27,7 +25,6 @@ interface GradedEvData {
   available: boolean
   locked: boolean
   variety?: string | null
-  // premium (locked:false)
   gradingFee?: number
   rawPrice?: number
   gemRate?: number
@@ -41,7 +38,6 @@ interface GradedEvData {
   recoReason?: string
   rows?: GradeRow[]
   popTotal?: number
-  // teaser (locked:true)
   gradesWithData?: number
 }
 
@@ -52,7 +48,6 @@ const fmtEur2 = (n: number) =>
 const fmtInt = (n: number) => new Intl.NumberFormat("fr-FR").format(n)
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-// Seuils miroir du moteur (lib/graded-ev.ts) : recalcul client quand les frais bougent.
 const STRONG_MARGIN_RATIO = 0.25
 const MIN_COVERAGE = 0.5
 const MIN_GRADES_COVERED = 3
@@ -67,7 +62,6 @@ const RECO_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
 export function GradedEvPanel({ printId, lang }: { printId: string; lang: string }) {
   const [data, setData] = useState<GradedEvData | null>(null)
   const [loading, setLoading] = useState(true)
-  // Frais de gradation ajustables par l'utilisateur (defaut = valeur moteur).
   const [fee, setFee] = useState<number>(25)
 
   useEffect(() => {
@@ -85,13 +79,18 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
     return () => { alive = false }
   }, [printId, lang])
 
+  const titleBlock = (
+    <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 18 }}>
+      Analyse de gradation
+    </div>
+  )
+
   const raw = data?.rawPrice ?? 0
   const evBrute = data?.evBrute ?? 0
   const rows = useMemo(() => (data?.rows ?? []).slice().sort((a, b) => b.grade - a.grade), [data])
 
-  // Recalculs client en fonction des frais (le moteur reste la source du brut/proba/prix).
   const evNette = round2(evBrute - fee - raw)
-  const breakeven = round2(evBrute - raw)            // plafond de frais pour rester rentable
+  const breakeven = round2(evBrute - raw)
   const probaGain = rows.reduce((acc, r) => acc + (r.price - fee - raw > 0 ? r.proba : 0), 0)
   const reco: keyof typeof RECO_STYLE =
     (data?.coverage != null && data.coverage < MIN_COVERAGE) ||
@@ -101,6 +100,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
 
   if (loading) return null
   if (!data) return null
+
   if (!data.available) {
     return (
       <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
@@ -115,12 +115,6 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
       </div>
     )
   }
-
-  const titleBlock = (
-    <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 18 }}>
-      Analyse de gradation
-    </div>
-  )
 
   // ── TEASER (free / pro) ──────────────────────────────────────────────────────
   if (data.locked) {
@@ -157,14 +151,12 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   const rs = RECO_STYLE[reco]
   const gem = (data.gemRate ?? 0) * 100
   const isInsuff = reco === "INSUFFISANT"
-
   const maxProba = Math.max(...rows.map((r) => r.proba), 0.001)
 
   return (
     <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
       {titleBlock}
 
-      {/* Reco + chiffres cles */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
         <div style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", borderRadius: 11, background: rs.bg, color: rs.fg, fontSize: 14, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".01em" }}>
           {rs.label}
@@ -191,7 +183,6 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
         ) : null}
       </div>
 
-      {/* Honnetete : gem rate */}
       {!isInsuff ? (
         <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${SNOW.borderSoft}` }}>
           {gem < 10 ? "Seulement " : ""}<strong style={{ color: SNOW.ink }}>{gem.toFixed(1)}%</strong> des exemplaires obtiennent un <strong style={{ color: SNOW.ink }}>PSA 10</strong>.
@@ -205,7 +196,6 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
 
       {!isInsuff ? (
         <>
-          {/* Scenarios par note exacte */}
           <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 12 }}>
             Selon la note obtenue
           </div>
@@ -235,7 +225,6 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
             )
           })}
 
-          {/* Frais ajustables + breakeven */}
           <div style={{ marginTop: 18, padding: "14px 16px", background: SNOW.surfaceSoft, borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <label style={{ fontSize: 13, color: SNOW.ink, fontFamily: FONT.body, fontWeight: 600 }}>
@@ -262,7 +251,6 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
             </div>
           </div>
 
-          {/* Le calcul */}
           <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, margin: "20px 0 10px" }}>
             Le calcul
           </div>

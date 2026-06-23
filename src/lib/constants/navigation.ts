@@ -68,10 +68,6 @@ export const NAV: NavItem[] = [
           ],
         },
       },
-      {
-        label: 'Explorer',
-        href:  '/market/explorer',
-      },
       // ── Couche SIGNAUX (ex-Alpha) — premium, toutes SOON v2.0 ──
       // PASSE 2: marquer ce groupe tier:'premium'.
       {

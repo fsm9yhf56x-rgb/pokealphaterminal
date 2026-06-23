@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
       if (!multiEdition) return true
       const x = (variant || '').toLowerCase()
       if (edition === 'first') return /1st|first/.test(x)
-      if (edition === 'shadowless') return x.includes('shadowless')
+      if (edition === 'shadowless') return x.includes('shadowless') || x.includes('unlimited')
       return x.includes('unlimited')
     }
 

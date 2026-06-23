@@ -1,0 +1,39 @@
+name: PSA pop API refresh
+# Rafraichit psa_pop_reports via l'API PSA officielle (GetPSASpecPopulation).
+# Fiable (pas de Cloudflare). Limite ~100 req/jour gratuit -> 90/run, 1 run/jour.
+# Cible en priorite les specs les plus anciens (scraped_at ASC).
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 05:00 UTC
+  workflow_dispatch:
+    inputs:
+      max_req:
+        description: 'Nombre de specs a rafraichir'
+        default: '90'
+        required: false
+      filter:
+        description: 'Filtre langue (french/german/italian/spanish) ou vide'
+        default: ''
+        required: false
+jobs:
+  refresh:
+    name: PSA pop API refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: psa-pop-api-refresh
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Refresh pop via PSA API
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PSA_BEARER_TOKEN: ${{ secrets.PSA_BEARER_TOKEN }}
+          PSA_MAX_REQ: ${{ github.event.inputs.max_req || '90' }}
+          PSA_FILTER: ${{ github.event.inputs.filter || '' }}
+        run: node scripts/psa-pop-api-refresh.mjs

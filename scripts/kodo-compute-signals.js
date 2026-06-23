@@ -13,15 +13,25 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     SELECT
       base.print_id,
       base.lang,
-      ROUND(COALESCE(
-        eu.trend,
-        us_nm.p * ${usdEur},
-        eu_nm_ask.p * 0.88
-      )::numeric, 2) AS fair_value_eur,
-      CASE WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
-           WHEN us_nm.p IS NOT NULL THEN 'us_nm_fx'
-           WHEN eu_nm_ask.p IS NOT NULL THEN 'eu_asking_decote'
-           ELSE 'insufficient_data' END,
+      -- fair_value PAR MARCHE de la langue (jamais de melange US/EU) :
+      --  EN / JP -> marche US (vente NM US x FX) en priorite ; si aucune vente US,
+      --            dernier secours = vente Cardmarket (eu.trend), JAMAIS une annonce.
+      --  FR / EU -> marche Cardmarket (vente AGGREGATED) ; secours annonce EU decotee.
+      ROUND(
+        CASE
+          WHEN base.lang IN ('en','jp') THEN COALESCE(us_nm.p * ${usdEur}, eu.trend)
+          ELSE COALESCE(eu.trend, eu_nm_ask.p * 0.88)
+        END::numeric, 2) AS fair_value_eur,
+      CASE
+        WHEN base.lang IN ('en','jp') THEN
+          CASE WHEN us_nm.p IS NOT NULL THEN 'us_nm_fx'
+               WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
+               ELSE 'insufficient_data' END
+        ELSE
+          CASE WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
+               WHEN eu_nm_ask.p IS NOT NULL THEN 'eu_asking_decote'
+               ELSE 'insufficient_data' END
+      END,
       fr_sale.p AS cote_fr_eur,
       eu_langs.j AS cote_lang,
       LEAST(100, ROUND(COALESCE(LOG(tot.sales + 1) * 28, 0)))::real AS liquidity_score,
@@ -97,7 +107,6 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   console.log('signaux calcules (par langue):', r4.length)
   const rz = await sql`UPDATE price_signals SET fair_value_eur = NULL WHERE fair_value_eur < 0.02 AND fair_value_eur IS NOT NULL RETURNING print_id`
   console.log('quasi-zeros nulles (< 0.02 EUR):', rz.length)
-
   console.log('\n=== SNAPSHOT price_history ===')
   const r5 = await sql`
     INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
@@ -105,7 +114,6 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
     ON CONFLICT DO NOTHING RETURNING print_id`
   console.log('rows history:', r5.length)
-
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
   // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
   //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).

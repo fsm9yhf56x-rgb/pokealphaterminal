@@ -36,13 +36,14 @@ function normalizeGradedVariant(pptKey: string): string {
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams
-  let cardId = params.get('card_id')
+  const cardIdParam = params.get('card_id')
   const lang = (params.get('lang') || '').toUpperCase()
   const conditionRaw = params.get('condition') || ''
 
-  if (!cardId) {
+  if (!cardIdParam) {
     return NextResponse.json({ error: 'card_id required' }, { status: 400 })
   }
+  let cardId: string = cardIdParam
 
   // Resolve short ID (e.g. "base1-4") to canonical with lang
   if (!cardId.match(/^(en|fr|jp|aopkm)-/i)) {
@@ -57,6 +58,26 @@ export async function GET(req: NextRequest) {
       for (const prefix of langOrder) {
         const match = found.find(r => r.id.startsWith(prefix + '-'))
         if (match) { cardId = match.id; break }
+      }
+    }
+  }
+  // Fallback UUID: si card_id est un UUID portfolio, resoudre via portfolio_cards.
+  if (cardId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cardId)) {
+    const pc = await sql`
+      SELECT COALESCE(k_card_id, lower(lang) || '-' || set_id || '-' || card_number) AS rid,
+             k_card_id, lang, set_id, card_number
+      FROM portfolio_cards WHERE id = ${cardId} LIMIT 1
+    ` as Array<any>
+    if (pc.length > 0) {
+      if (pc[0].k_card_id) {
+        cardId = pc[0].k_card_id
+      } else {
+        const r = await sql`
+          SELECT id FROM k_cards_export
+          WHERE set_id = ${(String(pc[0].lang).toLowerCase()) + '-' + pc[0].set_id}
+            AND local_id = ${pc[0].card_number} LIMIT 1
+        ` as Array<{ id: string }>
+        if (r.length > 0) cardId = r[0].id
       }
     }
   }

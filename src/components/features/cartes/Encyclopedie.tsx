@@ -80,6 +80,7 @@ const ERA_PREFIX: [string, string][] = [
   ['xy','XY'],['g1','XY'],['dc','XY'],
   ['sm','Sun & Moon'],['det','Sun & Moon'],['tg','Sun & Moon'],
   ['swsh','Sword & Shield'],['cel','Sword & Shield'],['pgo','Sword & Shield'],
+  ['swsh','Sword & Shield'],['sw','Sword & Shield'],['s','Sword & Shield'],
   ['sv','Scarlet & Violet'],
 ]
 
@@ -101,10 +102,10 @@ const SERIES_TO_ERA: Record<string, string> = {
   'xy':    'XY',
   'g1':    'XY',
   'dc':    'XY',
+  'swsh':  'Sword & Shield',
   'sm':    'Sun & Moon',
   'det':   'Sun & Moon',
   'tg':    'Sun & Moon',
-  'swsh':  'Sword & Shield',
   'cel':   'Sword & Shield',
   'pgo':   'Sword & Shield',
   'sv':    'Scarlet & Violet',

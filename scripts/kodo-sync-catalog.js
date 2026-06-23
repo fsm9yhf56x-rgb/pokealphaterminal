@@ -24,7 +24,20 @@ const sql = neon(process.env.DATABASE_URL)
       min(ts.source),
       (array_remove(array_agg(ts.logo_url), NULL))[1],
       (array_remove(array_agg(ts.release_date ORDER BY ts.release_date), NULL))[1],
-      (array_remove(array_agg(ts.series), NULL))[1]
+      COALESCE(
+        (array_remove(array_agg(ts.series), NULL))[1],
+        CASE
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^sv\\d|^sv-|^svm|^svn|^m\\d|^mb[dg]|^scarlet|^start|^wcs23' THEN 'sv'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^s\\d|^s[bdfhijklnag]-|^sef|^sek|^sc2?-|^sp[1-6z]|^sl[ld]' THEN 'swsh'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^sm|^cp\\d|^break|^snp' THEN 'sm'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^xy|^g1' THEN 'xy'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^bw|^bk' THEN 'bw'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^dp|^pt|^pl|^l\\d|^ll-|^cs1' THEN 'dp'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^ex|^pcg|^adv|^holon' THEN 'ex'
+          WHEN regexp_replace(c.set_id,'^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-','') ~ '^base|^gym|^neo|^expansion|^vending|^intro' THEN 'base'
+          ELSE NULL
+        END
+      )
     FROM tcg_cards c
     LEFT JOIN tcg_sets ts ON ts.id = c.set_id
     WHERE c.set_id IS NOT NULL

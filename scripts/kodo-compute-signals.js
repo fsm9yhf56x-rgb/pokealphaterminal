@@ -107,6 +107,17 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   console.log('signaux calcules (par langue):', r4.length)
   const rz = await sql`UPDATE price_signals SET fair_value_eur = NULL WHERE fair_value_eur < 0.02 AND fair_value_eur IS NOT NULL RETURNING print_id`
   console.log('quasi-zeros nulles (< 0.02 EUR):', rz.length)
+  // Nettoyage des ORPHELINS : un print peut avoir disparu de price_matrix (prix purges)
+  // tout en gardant une vieille ligne price_signals jamais reecrite (l'INSERT ... SELECT
+  // part de price_matrix, donc ON CONFLICT ne se declenche pas pour ces prints).
+  // On nulle leur fair_value pour ne pas afficher un prix fantome (ex Blastoise 1st Ed).
+  const ro = await sql`
+    UPDATE price_signals ps SET fair_value_eur = NULL, fair_value_method = 'insufficient_data', computed_at = now()
+    WHERE ps.fair_value_eur IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM price_matrix pm
+        WHERE pm.print_id = ps.print_id AND split_part(pm.kodo_card_id,'-',1) = ps.lang)
+    RETURNING print_id`
+  console.log('orphelins nulles (print absent de price_matrix):', ro.length)
   console.log('\n=== SNAPSHOT price_history ===')
   const r5 = await sql`
     INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)

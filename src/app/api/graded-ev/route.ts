@@ -90,14 +90,14 @@ export async function GET(req: NextRequest) {
     // Selection de la variete :
     //  - si le print impose une variete (1st Edition / Shadowless) → on la cherche
     //  - sinon → la ligne de plus grande population (la principale = Unlimited)
+    const want1st = !!wantedVarieties && wantedVarieties.some((w) => /1st/i.test(w))
+    const wantShadowless = !!wantedVarieties && wantedVarieties.some((w) => /shadowless/i.test(w))
+    const vOf = (r: Record<string, unknown>) => String(r.variety || '').toLowerCase()
     let popRow: Record<string, unknown> | undefined
-    if (wantedVarieties) {
-      for (const want of wantedVarieties) {
-        popRow = popRows.find(
-          (r) => String(r.variety || '').toLowerCase() === want.toLowerCase(),
-        )
-        if (popRow) break
-      }
+    if (want1st) {
+      popRow = popRows.find((r) => /1st|first/.test(vOf(r)))
+    } else if (wantShadowless) {
+      popRow = popRows.find((r) => vOf(r).includes('shadowless') && !/1st|first/.test(vOf(r)))
     }
     // Fallback : variete principale (plus grande pop). Pour l'Unlimited, on
     // fusionne aussi "Base Set 1999-2000" si c'est la principale — mais la ligne
@@ -114,13 +114,30 @@ export async function GET(req: NextRequest) {
 
     const pop = rowToPop(popRow)
     const variety = (popRow.variety as string) || null
+    const vSel = String(variety || '').toLowerCase()
+    const edition: 'first' | 'shadowless' | 'unlimited' =
+      /1st|first/.test(vSel) ? 'first' : vSel.includes('shadowless') ? 'shadowless' : 'unlimited'
+    const editionsInPop = new Set(
+      popRows.map((r) => {
+        const v = String(r.variety || '').toLowerCase()
+        return /1st|first/.test(v) ? 'first' : v.includes('shadowless') ? 'shadowless' : 'unlimited'
+      }),
+    )
+    const multiEdition = editionsInPop.size > 1
+    const variantMatches = (variant: string): boolean => {
+      if (!multiEdition) return true
+      const x = (variant || '').toLowerCase()
+      if (edition === 'first') return /1st|first/.test(x)
+      if (edition === 'shadowless') return x.includes('shadowless')
+      return x.includes('unlimited')
+    }
 
     // ─── 2. Prix par grade (price_matrix, tier PSA_X) ─────────────────────────
     // On garde, pour chaque grade, la source au plus gros volume de ventes.
     const priceRows = await sql`
-      SELECT tier, source, spot, avg30d, median30d, sale_count, currency
+      SELECT tier, source, variant, spot, avg30d, median30d, sale_count, currency
       FROM price_matrix
-      WHERE print_id = ${cardRef} AND tier LIKE 'PSA%'
+      WHERE print_id = ${cardRef} AND is_asking = false AND tier LIKE 'PSA%'
       ORDER BY tier, sale_count DESC NULLS LAST
     ` as Array<Record<string, unknown>>
 
@@ -132,6 +149,8 @@ export async function GET(req: NextRequest) {
       if (!m) continue
       const grade = Number(m[1])
       if (grade < 1 || grade > 10) continue
+        if (!variantMatches(String(r.variant || ''))) continue
+        if (Number(r.sale_count ?? 0) < 2) continue
       const saleCount = Number(r.sale_count ?? 0)
       // Garder la source au plus gros volume pour ce grade.
       if (bestByGrade[grade] && saleCount <= bestByGrade[grade].sale_count) continue
@@ -146,6 +165,23 @@ export async function GET(req: NextRequest) {
         bestByGrade[grade] = { sale_count: saleCount }
       }
     }
+
+      // Garde-fou monotonie: une note basse dont le prix depasse 1.3x la note
+      // superieure la plus proche encore retenue = agregat eBay aberrant -> retiree.
+      {
+        const MONO_TOL = 1.3
+        const kept = Object.keys(prices).map(Number).sort((a, b) => a - b)
+        for (let i = 0; i < kept.length; i++) {
+          const g = kept[i]
+          const pg = prices[g]
+          if (pg == null) continue
+          const higher = kept.slice(i + 1).find((h) => prices[h] != null)
+          if (higher != null && (pg as number) > (prices[higher] as number) * MONO_TOL) {
+            delete prices[g]
+            delete bestByGrade[g]
+          }
+        }
+      }
 
     // ─── 3. Prix raw de reference (price_signals.fair_value_eur) ───────────────
     const sigRows = await sql`

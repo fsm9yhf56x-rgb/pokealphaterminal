@@ -48,11 +48,23 @@ export const NAV: NavItem[] = [
   {
     // MARKET = une seule destination. Alpha a ete dissous ici (couche "Signaux").
     // Tendances + Movers = descriptif (tous plans). Signaux = premium (preview SOON).
-    // PASSE 2: la page /market affichera Tendances/Movers en clair + Signaux floutes
-    // avec preview => 1er point de contact du trigger Pro->Premium cote Market.
+    // MARKET top-level = SOON v2.0 (Explorer supprime, plus de page Market vivante).
+    // Le clic ouvre le SoonModal (gere par TopNav/MobileNav). Les children restent
+    // pour memoire mais ne sont pas atteignables tant que le parent est SOON.
     label: 'Market',
     href:  '/market',
     collectorHide: true,
+    soon: {
+      feature: 'Market',
+      version: 'v2.0',
+      description: 'Le terminal de marche Kodo arrive: indices en temps reel, mouvements du jour et signaux pour reperer les opportunites avant tout le monde.',
+      bullets: [
+        'Indices Vintage / Modern / Japan en direct',
+        'Cartes sous-evaluees detectees automatiquement',
+        'Flux des transactions et plus gros mouvements',
+        'Suivi des plus gros acheteurs du marche',
+      ],
+    },
     children: [
       {
         label: 'Terminal',

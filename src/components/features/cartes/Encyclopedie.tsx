@@ -172,6 +172,19 @@ function yearToEra(y:number): string {
   if (y<=2022) return 'Sword & Shield'
   return 'Scarlet & Violet'
 }
+// JP: classement 100% par date de sortie (fiable, pas de faux-positifs de prefixe).
+// Bornes calees sur les transitions d'eres japonaises.
+function jpYearToEra(y:number): string {
+  if (!y)      return 'Autre'
+  if (y<=2002) return 'Original (WotC)'   // Base 1996 -> e-Card/VS 2002
+  if (y<=2006) return 'EX'                // ADV 2003 -> PCG 2006
+  if (y<=2010) return 'DP / Platinum'     // DP 2006/07 -> L/HGSS 2010
+  if (y<=2013) return 'Black & White'
+  if (y<=2016) return 'XY'
+  if (y<=2019) return 'Sun & Moon'
+  if (y<=2022) return 'Sword & Shield'
+  return 'Scarlet & Violet'               // SV 2023+ / MEGA 2025+
+}
 
 type Lang     = 'EN'|'FR'|'JP'
 type SortKey  = 'set'|'name'
@@ -487,7 +500,9 @@ export function Encyclopedie() {
           const cleanSetId = setId.replace('jp-', '')
           const year = set?.release_date ? parseInt(set.release_date.slice(0,4)) || 0 : 0
           const _serie = (set as any)?.series ?? (set as any)?.serie ?? null
-          const era = setIdToEra(cleanSetId, _serie) !== 'Autre' ? setIdToEra(cleanSetId, _serie) : yearToEra(year)
+          const era = (year>0)
+            ? jpYearToEra(year)
+            : (setIdToEra(cleanSetId, _serie) !== 'Autre' ? setIdToEra(cleanSetId, _serie) : yearToEra(year))
           // Priority 1: use image_url from DB (artofpkm) if present
           // Priority 2: fallback to R2 hardcoded pattern (for legacy sets)
           const imageUrl = c.image_url || getCardImageUrl({ lang: 'JP', setId: cleanSetId, localId: c.local_id })
@@ -533,7 +548,9 @@ export function Encyclopedie() {
         Object.entries(staticCards).forEach(([sid, cards]) => {
           const set = setMap.get(sid)
           const year = set?.releaseDate ? parseInt(set.releaseDate.slice(0,4))||0 : 0
-          const era = setIdToEra(sid, (set as any)?.serie) !== 'Autre' ? setIdToEra(sid, (set as any)?.serie) : yearToEra(year)
+          const era = (lang==='JP' && year>0)
+            ? jpYearToEra(year)
+            : (setIdToEra(sid, (set as any)?.serie) !== 'Autre' ? setIdToEra(sid, (set as any)?.serie) : yearToEra(year))
           ;(cards as any[]).forEach(c => {
             const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
             enriched.push({

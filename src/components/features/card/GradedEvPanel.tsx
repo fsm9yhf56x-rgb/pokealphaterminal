@@ -100,7 +100,21 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
       : evNette > raw * STRONG_MARGIN_RATIO ? "GRADER" : evNette > 0 ? "MARGINAL" : "NE_PAS"
 
   if (loading) return null
-  if (!data || !data.available) return null
+  if (!data) return null
+  if (!data.available) {
+    return (
+      <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
+        {titleBlock}
+        <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display, marginBottom: 6 }}>
+          Faut-il la grader ?
+        </div>
+        <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55 }}>
+          Données de gradation indisponibles pour cette carte pour l'instant — population PSA ou prix
+          gradés insuffisants. Graded.ev préfère ne rien afficher plutôt qu'une estimation peu fiable.
+        </div>
+      </div>
+    )
+  }
 
   const titleBlock = (
     <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 18 }}>

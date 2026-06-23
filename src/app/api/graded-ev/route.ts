@@ -65,7 +65,13 @@ export async function GET(req: NextRequest) {
 
   // card_ref dans psa_pop_reports est non-prefixe (ex 'base1-1').
   // print_id peut arriver prefixe (en-base1-1) ou non. On strip le prefixe langue.
-  const cardRef = printId.replace(/^(en|fr|jp)-/i, '')
+  const printIdNoLang = printId.replace(/^(en|fr|jp|aopkm)-/i, '')
+  // card_ref pour psa_pop_reports = BASE (edition dans variety). Sans ca,
+  // les 1st Ed / Shadowless (print_id suffixe) ne matchent jamais la pop.
+  const cardRef = printIdNoLang
+    .replace(/-shadowless-ns(?=-|$)/i, '')
+    .replace(/-shadowless(?=-|$)/i, '')
+    .replace(/-1st(?=-|$)/i, '')
 
   try {
     // ─── 1. Distribution PSA (la bonne variete selon le print) ────────────────
@@ -137,7 +143,7 @@ export async function GET(req: NextRequest) {
     const priceRows = await sql`
       SELECT tier, source, variant, spot, avg30d, median30d, sale_count, currency
       FROM price_matrix
-      WHERE print_id = ${cardRef} AND is_asking = false AND tier LIKE 'PSA%'
+      WHERE print_id = ${printIdNoLang} AND is_asking = false AND tier LIKE 'PSA%'
       ORDER BY tier, sale_count DESC NULLS LAST
     ` as Array<Record<string, unknown>>
 
@@ -187,7 +193,7 @@ export async function GET(req: NextRequest) {
     const sigRows = await sql`
       SELECT fair_value_eur, cote_fr_eur, fair_value_method
       FROM price_signals
-      WHERE print_id = ${cardRef}
+      WHERE print_id = ${printIdNoLang}
       ORDER BY (lang = ${lang}) DESC, computed_at DESC NULLS LAST
       LIMIT 1
     ` as Array<Record<string, unknown>>

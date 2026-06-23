@@ -223,7 +223,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
               <div style={{ fontSize: 9.5, color: SNOW.mutedLight, fontStyle: 'italic' as const, marginTop: 4, whiteSpace: 'normal' as const, lineHeight: 1.3 }}>Ventes gradées — ton exemplaire non gradé peut valoir nettement moins</div>
             </div>
           ) : insufficient ? (
-            <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>Données insuffisantes</div>
+            <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>{isFr ? 'Données insuffisantes' : 'Pas de cote occidentale'}</div>
           ) : (
           <div>
             <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>

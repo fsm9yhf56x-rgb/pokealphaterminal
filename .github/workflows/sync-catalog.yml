@@ -73,6 +73,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-create-export-views.js
 
+      - name: Match PSA JP population
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/match-psa-jp-pop.mjs
       - name: Rebuild static JSON
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -21,7 +21,17 @@ export const NAV: NavItem[] = [
     href:  '/home',
     children: [
       { label:'Daily Hub',      href:'/home'           },
-      { label:'Missions',       href:'/home/missions'  },
+      { label:'Missions', href:'/home/missions', soon: {
+        feature: 'Missions',
+        version: 'v2.0',
+        description: "Transforme ta collection en jeu : gagne de l'XP, enchaine les series, debloque des badges et complete des quetes quotidiennes pour decrocher des recompenses.",
+        bullets: [
+          'Niveaux et XP de collectionneur',
+          'Badges a debloquer',
+          'Quetes du jour',
+          'Recompenses a la cle',
+        ],
+      } },
       { label:'Prochains Sets', href:'/releases'       },
     ],
   },

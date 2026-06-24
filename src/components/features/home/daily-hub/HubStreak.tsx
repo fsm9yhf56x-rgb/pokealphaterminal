@@ -129,7 +129,7 @@ export function HubStreak() {
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
-            left: 0,
+            right: 0,
             zIndex: 20,
             minWidth: 180,
             padding: "12px 14px",

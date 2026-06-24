@@ -4,8 +4,10 @@ import { newsSlug } from '@/lib/news-slug'
 /**
  * Actu TCG Pokémon — fil de titres 100% cartes, cohérent et en français.
  * Sources : PokeGuardian + PokeBeach (références mondiales TCG, via Google News).
- * Pour chaque article (titre anglais), le moteur Kodo produit un TITRE FR court + un RÉSUMÉ FR
- * (reformulation originale, aucune invention, aucune source citée). Généré une fois, mis en cache.
+ * Mise en français (générée une fois, puis cache news_cache) :
+ *   1) si ANTHROPIC_API_KEY présente -> Claude Haiku (titre FR court + résumé FR riche) ;
+ *   2) sinon -> traduction GRATUITE Google (sans clé) du titre + résumé éditorial générique.
+ * Reformulation/traduction = contenu légitimement nôtre. Aucune source citée, aucun lien sortant.
  * On n'utilise jamais le lien (redirection Google) : lecture sur notre page /actu.
  * Cache route 30 min.
  */
@@ -13,6 +15,9 @@ export const revalidate = 1800
 export const maxDuration = 30
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+
+// Résumé éditorial générique quand on n'a pas de moteur de résumé (mode traduction gratuite).
+const GENERIC_FR = 'Une actualité du marché des cartes Pokémon, suivie par Kodo Wire.'
 
 const FEEDS = [
   'https://news.google.com/rss/search?q=site:pokeguardian.com&hl=en-US&gl=US&ceid=US:en',
@@ -54,6 +59,8 @@ async function fetchFeed(url: string): Promise<Raw[]> {
   }
 }
 
+/* ── Moteur 1 : Claude Haiku (si clé) — titre FR + résumé FR ──────────── */
+
 function buildPrompt(title: string): string {
   return `Tu es l'éditeur de Kodo Cards, plateforme française dédiée aux cartes Pokémon (TCG). À partir du seul titre d'actualité ci-dessous (en anglais), produis :
 - "titre" : une version française courte et fidèle du titre (12 mots maximum). Garde les noms de sets, produits et cartes en anglais. N'invente rien.
@@ -94,6 +101,22 @@ async function reformulate(title: string): Promise<{ titre: string; resume: stri
   }
 }
 
+/* ── Moteur 2 : traduction GRATUITE Google (sans clé) ─────────────────── */
+
+async function translateFR(text: string): Promise<string | null> {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=${encodeURIComponent(text)}`
+    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': UA } })
+    if (!res.ok) return null
+    const data: any = await res.json()
+    const segs = Array.isArray(data?.[0]) ? data[0] : []
+    const out = segs.map((s: any) => (Array.isArray(s) ? s[0] : '')).join('').trim()
+    return out || null
+  } catch {
+    return null
+  }
+}
+
 export async function GET() {
   try {
     const all = (await Promise.all(FEEDS.map(fetchFeed))).flat()
@@ -126,24 +149,38 @@ export async function GET() {
         for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary }
       } catch {}
 
+      const insert = async (slug: string, title: string, summary: string, ts: number) => {
+        try {
+          await sql.query(
+            'INSERT INTO news_cache (slug, title, summary, image, news_date) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (slug) DO NOTHING',
+            [slug, title, summary, null, ts ? new Date(ts) : null],
+          )
+        } catch {}
+      }
+
       await Promise.all(picked.map(async p => {
         if (existing.has(p.slug)) {
           if (cTitle[p.slug]) p.title = cTitle[p.slug]
           p.summary = cSum[p.slug]
           return
         }
+        // 1) Haiku (titre + résumé riches) si une clé est dispo
         const fr = await reformulate(p.titleEn)
         if (fr) {
           p.title = fr.titre
           p.summary = fr.resume
-          try {
-            await sql.query(
-              'INSERT INTO news_cache (slug, title, summary, image, news_date) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (slug) DO NOTHING',
-              [p.slug, fr.titre, fr.resume, null, p.ts ? new Date(p.ts) : null],
-            )
-          } catch {}
+          await insert(p.slug, fr.titre, fr.resume, p.ts)
+          return
         }
-        // sinon : on garde le titre anglais, pas d'insert (réessai au prochain run)
+        // 2) sinon, traduction gratuite du titre + résumé générique
+        const t = await translateFR(p.titleEn)
+        if (t) {
+          p.title = t
+          p.summary = GENERIC_FR
+          await insert(p.slug, t, GENERIC_FR, p.ts)
+          return
+        }
+        // 3) sinon : on garde le titre anglais, pas d'insert (réessai au prochain run)
       }))
     } catch {}
 

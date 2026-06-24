@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
@@ -9,52 +9,89 @@ import { MobileNav } from './MobileNav'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 /**
- * TopNav v7 - glassmorphism premium aligne SpotDrawer.
- * Items SOON: badge inline + click ouvre SoonModal (preventDefault navigation).
+ * TopNav v12 — magnetic glass + wordmark typographique.
+ * Logo = lockup typo "Kodo" (lourd) + "CARDS" (capitales espacees rouge),
+ * sans mark. Indicateur glass qui GLISSE (suit le survol, se cale sur la
+ * route active) ; .knav-items en overflow visible -> plus d'ombre carree.
  */
 export function TopNav() {
   const NAV = useNav()
   const pathname = usePathname()
   const [soonModal, setSoonModal] = useState<SoonInfo | null>(null)
 
+  const itemRefs = useRef<Array<HTMLElement | null>>([])
+  const first = useRef(true)
+  const [ind, setInd] = useState<{ left: number; width: number; opacity: number; instant: boolean }>({ left: 0, width: 0, opacity: 0, instant: true })
+
+  const activeIndex = NAV.findIndex(item =>
+    pathname.startsWith(item.href) ||
+    item.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/'))
+  )
+
+  const moveTo = useCallback((idx: number) => {
+    const el = itemRefs.current[idx]
+    if (!el) { setInd(s => ({ ...s, opacity: 0 })); return }
+    setInd({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1, instant: first.current })
+    if (first.current) first.current = false
+  }, [])
+
+  useEffect(() => { moveTo(activeIndex) }, [activeIndex, NAV.length, moveTo])
+  useEffect(() => {
+    const onR = () => moveTo(activeIndex)
+    window.addEventListener('resize', onR)
+    return () => window.removeEventListener('resize', onR)
+  }, [activeIndex, moveTo])
+
   return (
     <>
       <style>{`
-        .knav-link {
-          font-size: 13px;
-          font-weight: 500;
-          color: #6E6E73;
-          text-decoration: none;
-          padding: 8px 16px;
+        .knav-items {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex: 1;
+          min-width: 0;
+          position: relative;
+          overflow: visible;
+        }
+
+        .knav-ind {
+          position: absolute;
+          top: 0; bottom: 0; left: 0;
           border-radius: 999px;
-          border: 0.5px solid transparent;
-          font-family: var(--font-sora, \'Sora\', sans-serif);
-          letter-spacing: -0.01em;
-          transition: all .2s cubic-bezier(.2,.8,.2,1);
+          background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.82) 100%);
+          backdrop-filter: blur(22px) saturate(200%);
+          -webkit-backdrop-filter: blur(22px) saturate(200%);
+          border: 0.5px solid rgba(255,255,255,0.95);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1);
+          pointer-events: none;
+          z-index: 0;
+          will-change: transform, width;
+        }
+
+        .knav-link {
+          font-size: 14.5px;
+          font-weight: 600;
+          color: #5A5A5E;
+          text-decoration: none;
+          padding: 9px 18px;
+          font-family: var(--font-sora, 'Sora', sans-serif);
+          letter-spacing: -0.018em;
+          transition: color .22s ease;
           display: inline-flex;
           align-items: center;
           gap: 6px;
           position: relative;
+          z-index: 1;
+          background: none;
+          border: none;
+          cursor: pointer;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
-        .knav-link:hover {
-          background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 100%);
-          backdrop-filter: blur(20px) saturate(190%);
-          -webkit-backdrop-filter: blur(20px) saturate(190%);
-          border-color: rgba(255,255,255,0.6);
-          color: #1D1D1F;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
-        }
-        .knav-link.act {
-          background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%);
-          color: #1D1D1F;
-          font-weight: 600;
-          border-color: rgba(255,255,255,0.6);
-          backdrop-filter: blur(20px) saturate(190%);
-          -webkit-backdrop-filter: blur(20px) saturate(190%);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
-        }
-        
+        .knav-link:hover { color: #1D1D1F; }
+        .knav-link.act { color: #1D1D1F; font-weight: 700; }
+
         .knav-pro {
           font-size: 8.5px;
           font-weight: 700;
@@ -64,36 +101,27 @@ export function TopNav() {
           padding: 2px 6px;
           border-radius: 5px;
           letter-spacing: 0.04em;
-          font-family: var(--font-sora, \'Sora\', sans-serif);
+          font-family: var(--font-sora, 'Sora', sans-serif);
         }
         .knav-pro--premium {
           background: rgba(224,48,32,0.08);
           color: #E03020;
           border-color: rgba(224,48,32,0.20);
         }
-        @keyframes knavPulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.7); }
+
+        /* Wordmark "KodoCards" — Teko 700 italique, plus presente. */
+        .knav-word { display: inline-flex; align-items: baseline; }
+        .knav-word-kodo {
+          font-family: var(--font-shonen, 'Sora', sans-serif);
+          font-weight: 700; font-style: italic; font-size: 31px; color: #1D1D1F;
+          letter-spacing: 0; line-height: 1;
         }
-        @keyframes blink {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
+        .knav-word-cards {
+          font-family: var(--font-shonen, 'Sora', sans-serif);
+          font-weight: 700; font-style: italic; font-size: 31px; color: #E03020;
+          letter-spacing: 0; line-height: 1;
         }
 
-        /* Responsive — nav items scrollables horizontalement < 1024 */
-        .knav-items {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          flex: 1;
-          min-width: 0;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
-        }
-        .knav-items::-webkit-scrollbar { display: none; }
-        .knav-link { white-space: nowrap; flex-shrink: 0; }
         @media (max-width: 1023px) {
           .knav-bar { padding-inline: 14px !important; }
           .knav-items { display: none !important; }
@@ -105,16 +133,15 @@ export function TopNav() {
             margin: 0 !important;
           }
           .knav-usermenu { margin-left: auto !important; flex-shrink: 0; }
-          .knav-tile { display: none !important; }
         }
-        /* < 768 : wordmark compacte */
+        /* < 768 : on garde "Kodo" seul */
         @media (max-width: 767px) {
-          .knav-wordmark-cards { display: none !important; }
+          .knav-word-cards { display: none !important; }
         }
       `}</style>
 
       <nav className="knav-bar" style={{
-        height: 56,
+        height: 58,
         display: 'flex',
         alignItems: 'center',
         paddingInline: 24,
@@ -123,74 +150,66 @@ export function TopNav() {
         flexShrink: 0,
       }}>
         <MobileNav />
-        {/* Logo */}
+
+        {/* Logo — wordmark typographique */}
         <Link href="/home" className="knav-logo" style={{
-          display: 'flex', alignItems: 'center', gap: 9,
-          textDecoration: 'none', marginRight: 18, flexShrink: 0,
-          padding: '5px 10px 5px 5px',
+          display: 'flex', alignItems: 'center',
+          textDecoration: 'none', marginRight: 28, flexShrink: 0,
+          padding: '6px 10px',
           borderRadius: 12,
           transition: 'background .2s',
         }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.4)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.035)' }}
           onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
-          <div className="knav-tile" style={{
-            width: 30, height: 30, borderRadius: 9,
-            background: '#1D1D1F',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 800, fontSize: 13.5,
-            boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.14)',
-            position: 'relative' as const,
-            letterSpacing: '-0.02em',
-          }}>K
-            <span aria-hidden style={{
-              position: 'absolute', top: -2, right: -2,
-              width: 6, height: 6, borderRadius: '50%',
-              background: '#2E9E6A',
-              boxShadow: '0 0 6px rgba(46,158,106,0.7)',
-              animation: 'knavPulse 2.4s ease-in-out infinite',
-            }} />
-          </div>
-          <span style={{
-            fontSize: 15, fontWeight: 700,
-            color: '#1D1D1F',
-            fontFamily: 'var(--font-sora, Sora, sans-serif)',
-            letterSpacing: '-0.025em',
-          }}>Kodo<span className="knav-wordmark-cards" style={{ color: '#C42E1F' }}> Cards</span></span>
+          <span className="knav-word">
+            <span className="knav-word-kodo">Kodo</span>
+            <span className="knav-word-cards">Cards</span>
+          </span>
         </Link>
 
-        {/* Nav items */}
-        <div className="knav-items">
-        {NAV.map(item => {
-          const isActive = pathname.startsWith(item.href) ||
-            item.children?.some(c => pathname === c.href || pathname.startsWith(c.href + '/'))
+        {/* Nav items + indicateur glissant */}
+        <div className="knav-items" onMouseLeave={() => moveTo(activeIndex)}>
+          <div className="knav-ind" aria-hidden style={{
+            transform: `translateX(${ind.left}px)`,
+            width: ind.width,
+            opacity: ind.opacity,
+            transition: ind.instant ? 'none' : 'transform .36s cubic-bezier(.34,1.4,.4,1), width .36s cubic-bezier(.34,1.4,.4,1), opacity .25s ease',
+          }} />
 
-          // SOON item: click ouvre modal (preventDefault)
-          if (item.soon) {
+          {NAV.map((item, i) => {
+            const isActive = i === activeIndex
+
+            // SOON item: click ouvre modal (preventDefault)
+            if (item.soon) {
+              return (
+                <a
+                  key={item.href}
+                  ref={el => { itemRefs.current[i] = el }}
+                  href="#"
+                  onMouseEnter={() => moveTo(i)}
+                  onClick={(e) => { e.preventDefault(); setSoonModal(item.soon!) }}
+                  className="knav-link"
+                >
+                  {item.label}
+                  <SoonBadge version={item.soon.version} variant="inline" />
+                </a>
+              )
+            }
+
             return (
-              <a
+              <Link
                 key={item.href}
-                href="#"
-                onClick={(e) => { e.preventDefault(); setSoonModal(item.soon!) }}
-                className="knav-link"
+                ref={el => { itemRefs.current[i] = el }}
+                href={item.href ?? item.children?.[0]?.href ?? '#'}
+                onMouseEnter={() => moveTo(i)}
+                className={`knav-link${isActive ? ' act' : ''}`}
               >
                 {item.label}
-                <SoonBadge version={item.soon.version} variant="inline" />
-              </a>
+                {item.tier && !item.soon && <span className={`knav-pro${item.tier === 'premium' ? ' knav-pro--premium' : ''}`}>{item.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
+              </Link>
             )
-          }
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href ?? item.children?.[0]?.href ?? '#'}
-              className={`knav-link${isActive ? ' act' : ''}`}
-            >
-              {item.label}
-              {item.tier && !item.soon && <span className={`knav-pro${item.tier === 'premium' ? ' knav-pro--premium' : ''}`}>{item.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
-            </Link>
-          )
-        })}
+          })}
         </div>
 
         <span className="knav-usermenu"><UserMenu /></span>

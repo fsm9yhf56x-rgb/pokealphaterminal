@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
@@ -9,11 +8,12 @@ import type { SoonInfo } from '@/lib/constants/navigation'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 
 /**
- * MobileNav — drawer de navigation principale < 1024px.
+ * MobileNav v2 — drawer de navigation principale < 1024px, Snow+ epure.
  *
- * Twist signature : la section active porte le point vert "live" du logo
- * (meme pulse), comme un terminal allume. Icone morph hamburger -> X avec
- * barre centrale rouge accent. Items en cascade a l'ouverture.
+ * Logo = wordmark + point "live" vert (plus de tuile K). Item actif = fond
+ * teinte accent + barre rouge a gauche (fini la pill blanche flottante).
+ * Icone morph hamburger -> X avec barre centrale rouge accent. Items en
+ * cascade a l'ouverture.
  *
  * Rendu via portal sur <body> : le header parent a un backdrop-filter qui
  * piegerait un position:fixed (containing block).
@@ -58,8 +58,8 @@ export function MobileNav() {
         aria-label="Navigation principale"
       >
         <div className="kmnav-brand">
-          <span className="kmnav-tile">K<span className="kmnav-tile-dot" /></span>
-          <span className="kmnav-brand-name">Kodo<span style={{ color: '#C42E1F' }}> Cards</span></span>
+          <span className="kmnav-brand-name">Kodo<span style={{ color: '#E03020' }}> Cards</span></span>
+          <span aria-hidden className="kmnav-live" />
         </div>
 
         <div className="kmnav-eyebrow">Navigation</div>
@@ -78,7 +78,6 @@ export function MobileNav() {
                   style={{ ['--i' as any]: i }}
                   onClick={(e) => { e.preventDefault(); openSoon(item.soon!) }}
                 >
-                  <span className="kmnav-dot" />
                   <span>{item.label}</span>
                   <SoonBadge version={item.soon.version} variant="inline" style={{ marginLeft: 'auto' }} />
                 </a>
@@ -92,7 +91,6 @@ export function MobileNav() {
                 className={`kmnav-item${active ? ' act' : ''}`}
                 style={{ ['--i' as any]: i }}
               >
-                <span className="kmnav-dot" />
                 <span>{item.label}</span>
                 {item.tier && !item.soon && <span className={`kmnav-pro${item.tier === 'premium' ? ' kmnav-pro--premium' : ''}`}>{item.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>}
               </Link>
@@ -102,17 +100,18 @@ export function MobileNav() {
       </nav>
     </>
   )
+
   return (
     <>
       <style>{`
         .kmnav-trigger {
           display: none;
           width: 38px; height: 38px; border-radius: 11px;
-          border: 0.5px solid rgba(255,255,255,0.6);
-          background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.5));
-          backdrop-filter: blur(20px) saturate(190%);
-          -webkit-backdrop-filter: blur(20px) saturate(190%);
-          box-shadow: 0 4px 14px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
+          border: 0.5px solid rgba(0,0,0,0.06);
+          background: rgba(255,255,255,0.6);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
           cursor: pointer; padding: 0; flex-shrink: 0; margin-right: 10px;
           align-items: center; justify-content: center;
           transition: transform .2s cubic-bezier(.2,.85,.3,1);
@@ -143,54 +142,51 @@ export function MobileNav() {
 
         .kmnav-panel {
           position: fixed; top: 0; left: 0; bottom: 0; z-index: 1001;
-          width: min(82vw, 318px); padding: 20px 14px 26px;
+          width: min(82vw, 318px); padding: 22px 14px 26px;
           display: flex; flex-direction: column;
-          background: linear-gradient(180deg, rgba(255,255,255,0.93), rgba(255,255,255,0.87));
+          background: rgba(255,255,255,0.92);
           backdrop-filter: blur(38px) saturate(180%);
           -webkit-backdrop-filter: blur(38px) saturate(180%);
-          border-right: 0.5px solid rgba(255,255,255,0.6);
-          box-shadow: 0 24px 70px rgba(0,0,0,0.20), inset -1px 0 0 rgba(255,255,255,0.5);
+          border-right: 0.5px solid rgba(0,0,0,0.06);
+          box-shadow: 0 24px 70px rgba(0,0,0,0.18);
           transform: translateX(-101%);
           transition: transform .38s cubic-bezier(.2,.9,.25,1);
           overflow-y: auto;
         }
         .kmnav-panel.on { transform: translateX(0); }
 
-        .kmnav-brand { display: flex; align-items: center; gap: 9px; padding: 4px 10px; }
-        .kmnav-tile {
-          position: relative; width: 30px; height: 30px; border-radius: 9px;
-          background: #1D1D1F; color: #fff; font-weight: 800; font-size: 13.5px;
-          display: flex; align-items: center; justify-content: center; letter-spacing: -0.02em;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.14);
-          font-family: var(--font-sora, Sora, sans-serif);
-        }
-        .kmnav-tile-dot {
-          position: absolute; top: -2px; right: -2px; width: 6px; height: 6px;
-          border-radius: 50%; background: #2E9E6A;
-          box-shadow: 0 0 6px rgba(46,158,106,0.7);
-          animation: kmnavPulse 2.4s ease-in-out infinite;
-        }
+        .kmnav-brand { display: flex; align-items: center; gap: 8px; padding: 4px 10px; }
         .kmnav-brand-name {
-          font-size: 15px; font-weight: 700; color: #1D1D1F;
-          letter-spacing: -0.025em; font-family: var(--font-sora, Sora, sans-serif);
+          font-size: 17px; font-weight: 700; color: #1D1D1F;
+          letter-spacing: -0.03em; font-family: var(--font-sora, Sora, sans-serif);
+        }
+        .kmnav-live {
+          width: 5px; height: 5px; border-radius: 50%; background: #2E9E6A;
+          box-shadow: 0 0 7px rgba(46,158,106,0.65);
+          animation: kmnavPulse 2.4s ease-in-out infinite;
         }
 
         .kmnav-eyebrow {
           font-size: 10px; font-weight: 700; color: #AEAEB2;
           text-transform: uppercase; letter-spacing: 0.16em;
-          padding: 18px 12px 8px; font-family: var(--font-sora, Sora, sans-serif);
+          padding: 20px 12px 8px; font-family: var(--font-sora, Sora, sans-serif);
         }
 
-        .kmnav-list { display: flex; flex-direction: column; gap: 3px; }
+        .kmnav-list { display: flex; flex-direction: column; gap: 2px; }
         .kmnav-item {
-          display: flex; align-items: center; gap: 11px;
-          padding: 13px 14px; border-radius: 13px;
+          display: flex; align-items: center; gap: 10px;
+          padding: 13px 14px; border-radius: 12px;
           font-size: 15px; font-weight: 500; color: #1D1D1F;
           letter-spacing: -0.01em; text-decoration: none;
-          border: 0.5px solid transparent;
+          position: relative; border: none;
           font-family: var(--font-sora, Sora, sans-serif);
           opacity: 0; transform: translateX(-9px);
-          transition: background .2s, border-color .2s, box-shadow .2s;
+          transition: background .2s, color .2s;
+        }
+        .kmnav-item::before {
+          content: ''; position: absolute; left: 0; top: 9px; bottom: 9px;
+          width: 3px; border-radius: 0 3px 3px 0; background: #E03020;
+          opacity: 0; transition: opacity .2s;
         }
         .kmnav-panel.on .kmnav-item {
           animation: kmnavIn .42s cubic-bezier(.2,.85,.3,1) forwards;
@@ -198,21 +194,8 @@ export function MobileNav() {
         }
         @keyframes kmnavIn { to { opacity: 1; transform: translateX(0); } }
         .kmnav-item:active { background: rgba(0,0,0,0.04); }
-        .kmnav-item.act {
-          background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
-          border-color: rgba(0,0,0,0.05); font-weight: 600;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.95);
-        }
-
-        .kmnav-dot {
-          width: 7px; height: 7px; border-radius: 50%;
-          background: transparent; flex-shrink: 0; transition: background .3s;
-        }
-        .kmnav-item.act .kmnav-dot {
-          background: #2E9E6A;
-          box-shadow: 0 0 7px rgba(46,158,106,0.75);
-          animation: kmnavPulse 2.4s ease-in-out infinite;
-        }
+        .kmnav-item.act { background: rgba(224,48,32,0.06); font-weight: 600; }
+        .kmnav-item.act::before { opacity: 1; }
 
         .kmnav-pro {
           margin-left: auto; font-size: 8.5px; font-weight: 700;

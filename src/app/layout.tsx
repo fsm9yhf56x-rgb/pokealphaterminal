@@ -1,7 +1,14 @@
 import type { Metadata, Viewport } from 'next'
-import { Sora, DM_Sans, Space_Mono } from 'next/font/google'
+import { Sora, DM_Sans, Space_Mono, Teko } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth/AuthProvider'
+const delaGothic = Teko({
+  weight: '700',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-shonen',
+})
+
 const sora = Sora({
   subsets: ['latin'],
   variable: '--font-sora',
@@ -47,7 +54,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="fr"
-      className={`${sora.variable} ${dmSans.variable} ${spaceMono.variable}`}
+      className={`${sora.variable} ${dmSans.variable} ${spaceMono.variable} ${delaGothic.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg font-sans">

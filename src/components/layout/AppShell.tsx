@@ -3,15 +3,14 @@ import { TopNav }    from './TopNav'
 import { SubMenu }   from './SubMenu'
 import { Footer }    from './Footer'
 
-const HEADER_H = '56px'
+const HEADER_H = '58px'
 
 /**
- * AppShell Snow+ v3.
+ * AppShell Snow+ v4.
  *
- * - Fond dégradé subtil rose pâle → blanc → bleu pâle (30% intensité Login)
- *   pour faire ressortir la translucidité du verre des composants enfants.
- * - 2 blobs colorés flous absolus pour profondeur.
- * - Header fixe en glass v3 cohérent (refraction + blur fort).
+ * - Fond clair + nappes bokeh floutees (profondeur, fait ressortir le verre).
+ * - Header fixe glass : hairline sombre + ombre douce = vraie assise (ne flotte plus).
+ * - Contenu : max-width 1320 centre + padding genereux -> gouttieres et air sur grand ecran.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -20,20 +19,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       flexDirection: 'column',
       minHeight: '100vh',
       width: '100%',
-      // Fond dégradé subtil (30% intensité du Login)
       background: '#FAFAFB',
       position: 'relative',
       overflowX: 'clip' as any,
     }}>
-      
 
       <style>{`
         /* Responsive shell — bascule sidebar/colonne au seuil 1024 (= seuil zoom) */
         @media (max-width: 1023px) {
           .kshell-content {
             flex-direction: column !important;
-            margin-top: 56px !important;
-            min-height: calc(100vh - 56px) !important;
+            margin-top: 58px !important;
+            min-height: calc(100vh - 58px) !important;
           }
           .kshell-main { padding: 16px !important; }
         }
@@ -79,14 +76,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }} />
       </div>
 
-      {/* Header fixe glass v3 */}
+      {/* Header fixe glass — hairline sombre + ombre douce = assise */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.58) 100%)',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.66) 100%)',
         backdropFilter: 'saturate(180%) blur(24px)',
         WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-        borderBottom: '0.5px solid rgba(255,255,255,0.5)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 0 rgba(0,0,0,0.03)',
+        borderBottom: '0.5px solid rgba(0,0,0,0.07)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), 0 4px 18px rgba(0,0,0,0.05)',
       }}>
         <TopNav />
       </div>
@@ -114,8 +111,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main className="kshell-main" style={{
             flex: 1,
             minWidth: 0,
-            padding: '32px 36px',
             width: '100%',
+            maxWidth: 1480,
+            padding: '40px 40px 56px',
             position: 'relative',
             zIndex: 1,
           }}>

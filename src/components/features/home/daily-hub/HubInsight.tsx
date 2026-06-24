@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 import { usePersona } from '@/lib/usePersona'
 
@@ -11,6 +11,7 @@ interface PortfolioCard {
   name?: string | null
   set_name?: string | null
   set_slug?: string | null
+  image_url?: string | null
 }
 
 interface InsightData {
@@ -18,6 +19,7 @@ interface InsightData {
   title: string
   detail: string
   accent: 'green' | 'red' | 'gold' | 'blue' | 'neutral'
+  image?: string | null   // vignette de carte (cas "joyau")
 }
 
 /**
@@ -34,11 +36,13 @@ export function HubInsight({
 }) {
   const { isCollector } = usePersona()
   const insight = useMemo(() => generateV1Insight(cards, isCollector), [cards, isCollector])
+  const [imgErr, setImgErr] = useState(false)
 
   if (loading) return <SkeletonInsight />
   if (!insight) return null
 
   const accent = ACCENT[insight.accent]
+  const showThumb = !!insight.image && !imgErr
 
   return (
     <div style={{
@@ -70,22 +74,42 @@ export function HubInsight({
         pointerEvents: 'none',
       }} />
 
-      {/* Icon container - glass soft tinted */}
-      <div style={{
-        width: 40, height: 40,
-        background: accent.iconBg,
-        border: `1px solid ${accent.iconBorder}`,
-        borderRadius: RADIUS.md,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: accent.iconColor,
-        flexShrink: 0,
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        <InsightIcon name={insight.icon} />
-      </div>
+      {/* Visuel : vignette de la carte (joyau) OU icône */}
+      {showThumb ? (
+        <div style={{ width: 42, flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          <img
+            src={insight.image as string}
+            alt=""
+            loading="lazy"
+            onError={() => setImgErr(true)}
+            style={{
+              width: '100%',
+              aspectRatio: '5 / 7',
+              objectFit: 'cover',
+              borderRadius: RADIUS.md,
+              display: 'block',
+              border: '0.5px solid rgba(0,0,0,0.08)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.16)',
+            }}
+          />
+        </div>
+      ) : (
+        <div style={{
+          width: 40, height: 40,
+          background: accent.iconBg,
+          border: `1px solid ${accent.iconBorder}`,
+          borderRadius: RADIUS.md,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: accent.iconColor,
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 1,
+        }}>
+          <InsightIcon name={insight.icon} />
+        </div>
+      )}
 
       {/* Title + detail */}
       <div style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
@@ -174,7 +198,7 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
     })
   }
 
-  // 3. Top carte valeur (info "carte phare")
+  // 3. Top carte valeur (info "carte phare") - avec vignette
   if (topCard && topCardValue >= 50 && topCard.name) {
     candidates.push({
       icon: 'trophy',
@@ -183,6 +207,7 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
         ? `Une piece phare de ton musee${topCard.set_name ? ` — issue du set ${topCard.set_name}` : ''}. Le genre de carte qui fait toute la fierte d'une collection.`
         : `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
       accent: 'gold',
+      image: topCard.image_url ?? null,
       priority: 75,
     })
   }

@@ -3,18 +3,28 @@
 import { useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { PerfAggregates, AllocationBucket } from './Performance'
+import { usePlan } from '@/lib/usePlan'
+import { GateOverlay } from '@/components/upgrade/GateOverlay'
 
 /**
- * 3 mini-donuts Recharts : répartition par langue, set, rareté
+ * 3 mini-donuts Recharts : répartition par langue, set, rareté.
+ * Gating Free : Langue libre ; Set / Rareté -> donut flouté + panneau Pro.
  */
 export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
   const [tab, setTab] = useState<'lang'|'set'|'rarity'>('lang')
+  const { isPro } = usePlan()
   const TABS = [
     { key: 'lang'   as const, label: 'Langue',  buckets: agg.byLang,   title: 'Par langue' },
     { key: 'set'    as const, label: 'Set',     buckets: agg.bySet,    title: 'Par set'    },
     { key: 'rarity' as const, label: 'Rareté',  buckets: agg.byRarity, title: 'Par rareté' },
   ]
   const active = TABS.find(t => t.key === tab)!
+
+  const lockedTab = !isPro && (tab === 'set' || tab === 'rarity')
+  const lockMeta = tab === 'rarity'
+    ? { title: 'Ta répartition par rareté', desc: 'Vois la part de chaque rareté dans ta collection.' }
+    : { title: 'Ta répartition par set', desc: 'Vois où ton capital est concentré, set par set.' }
+
   return (
     <div>
       <style>{`
@@ -38,6 +48,7 @@ export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
       }}>
         {TABS.map(t => {
           const isActive = t.key === tab
+          const isLocked = !isPro && (t.key === 'set' || t.key === 'rarity')
           return (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               flex: 1,
@@ -52,11 +63,31 @@ export function PerfAllocation({ agg }: { agg: PerfAggregates }) {
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
               boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
               transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
-            }}>{t.label}</button>
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            }}>
+              {t.label}
+              {isLocked && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              )}
+            </button>
           )
         })}
       </div>
-      <DonutCard title={active.title} buckets={active.buckets} />
+
+      {lockedTab ? (
+        <GateOverlay
+          locked
+          tier="pro"
+          minHeight={240}
+          title={lockMeta.title}
+          desc={lockMeta.desc}
+          feature={{ title: lockMeta.title, subtitle: lockMeta.desc }}
+        >
+          <DonutCard title={active.title} buckets={active.buckets} />
+        </GateOverlay>
+      ) : (
+        <DonutCard title={active.title} buckets={active.buckets} />
+      )}
     </div>
   )
 }

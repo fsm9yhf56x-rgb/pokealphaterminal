@@ -21,6 +21,7 @@ import { HubMarketPulse } from './HubMarketPulse'
 import { HubFooterQuote } from './HubFooterQuote'
 import { HubQuickActions } from './HubQuickActions'
 import { HubNews } from './HubNews'
+import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 
 /* ── Palette locale (Snow+) ─────────────────────────────────────── */
 const ACCENT = { collector: '#E03020', investor: '#185FA5' } as const
@@ -42,6 +43,12 @@ function eur(n: number) {
   return Math.round(n) + ' €'
 }
 
+/* ── Contexte d'upgrade (passé à la modale) ─────────────────────── */
+type Tier = 'pro' | 'premium'
+type UpgradeCtx = { tier: Tier; title?: string; sub?: string; previewHref?: string }
+type LockInfo = { title: string; sub: string }
+type OnLock = (tier: Tier, href: string, lock?: LockInfo) => void
+
 
 /**
  * Daily Hub v7 — "KODO DAILY". Une de journal hiérarchisée et vivante.
@@ -53,9 +60,14 @@ export function DailyHub() {
   const { isCollector, persona } = usePersona()
   const market = useMarketData(!isCollector)
   const spreads = useSpreads(!isCollector)
-  const { isPremium } = usePlan()
+  const { isPro, isPremium } = usePlan()
   const accent = ACCENT[persona] ?? ACCENT.collector
   const cards = (portfolio.cards || []) as PortfolioCard[]
+
+  // Modale de conversion (déclenchée par les rubriques / lignes verrouillées)
+  const [upgrade, setUpgrade] = useState<UpgradeCtx | null>(null)
+  const openUpgrade: OnLock = (tier, href, lock) =>
+    setUpgrade({ tier, title: lock?.title, sub: lock?.sub, previewHref: href })
 
   const recent = cards.slice(0, 12)
   const graded = cards.filter(c => c?.graded).slice(0, 12)
@@ -169,7 +181,7 @@ export function DailyHub() {
           {/* ░░ TON BRIEF — actionnable (perso important) */}
           {cards.length > 0 && <>
             <GrandeRubrique label="Ton brief du jour" accent={accent} sub="Ce qui mérite ton attention" />
-            <BriefCard cards={cards} accent={accent} />
+            <BriefCard cards={cards} accent={accent} isPro={isPro} isPremium={isPremium} onLock={openUpgrade} />
           </>}
 
           {/* ░░ TES POSITIONS — vignettes + cote (visuel) */}
@@ -181,7 +193,7 @@ export function DailyHub() {
         {/* ▒ EXPLORER — navigation (secondaire) — investisseur */}
         {!isCollector && <>
           <Rubrique label="Explorer" accent={accent} />
-          <RubriqueGrid accent={accent} isPremium={isPremium} />
+          <RubriqueGrid accent={accent} isPro={isPro} isPremium={isPremium} onLock={openUpgrade} />
 
           {/* ▒ LE MARCHÉ — vitrine (secondaire, SOON) */}
           <Rubrique label="Le marché" accent={accent} soon />
@@ -201,6 +213,14 @@ export function DailyHub() {
         {!isPremium && <Conversion isCollector={isCollector} accent={accent} />}
         <HubFooterQuote />
       </div>
+
+      {/* ── MODALE DE CONVERSION (pro / premium) ─────────────────── */}
+      <UpgradeModal
+        open={!!upgrade}
+        onClose={() => setUpgrade(null)}
+        tier={upgrade?.tier ?? 'pro'}
+        feature={upgrade ? { title: upgrade.title, subtitle: upgrade.sub, previewHref: upgrade.previewHref } : undefined}
+      />
     </div>
   )
 }
@@ -350,8 +370,26 @@ function PrideStats({ cards }: { cards: PortfolioCard[] }) {
   )
 }
 
+/* ── TierTag (pastille PRO / PREMIUM, affichée si non éligible) ──── */
+function TierTag({ tier, accent }: { tier: Tier; accent: string }) {
+  return (
+    <span style={{
+      fontFamily: MONO, fontSize: 8.5, fontWeight: 700, letterSpacing: '0.06em',
+      color: accent, background: `${accent}14`, padding: '2px 6px', borderRadius: 5,
+      whiteSpace: 'nowrap', flexShrink: 0,
+    }}>
+      {tier === 'premium' ? 'PREMIUM' : 'PRO'}
+    </span>
+  )
+}
+
 /* ── BriefCard (investisseur — lignes actionnables sur ta data) ──── */
-function BriefCard({ cards, accent }: { cards: PortfolioCard[]; accent: string }) {
+const GRADED_LOCK: LockInfo = {
+  title: 'Faut-il grader tes cartes ?',
+  sub: 'L\u2019EV nette réelle, carte par carte, frais inclus — pour ne grader que ce qui rapporte.',
+}
+
+function BriefCard({ cards, accent, isPro, isPremium, onLock }: { cards: PortfolioCard[]; accent: string; isPro: boolean; isPremium: boolean; onLock: OnLock }) {
   const nCards = cards.length
   const nNoBuy = cards.filter(c => !c?.buy_price).length
   const sum = cards.reduce((a, c) => a + (Number(c?.current_price) || 0), 0)
@@ -359,49 +397,88 @@ function BriefCard({ cards, accent }: { cards: PortfolioCard[]; accent: string }
   const conc = sum > 0 ? Math.round(((Number(top?.current_price) || 0) / sum) * 100) : 0
   const nGraded = cards.filter(c => c?.graded).length
 
-  const lines: { text: string; cta: string; href: string }[] = []
+  // Allocation = Free (pas de tier) · Graded.ev = Premium · prix d'achat = saisie perso (free)
+  const lines: { text: string; cta: string; href: string; tier?: Tier; lock?: LockInfo }[] = []
   if (nNoBuy > 0) lines.push({ text: nNoBuy === nCards ? 'Aucun prix d\u2019achat renseigné — ton ROI n\u2019est pas encore calculé.' : `${nNoBuy} cartes sans prix d\u2019achat — ton ROI est partiel.`, cta: 'Renseigner', href: '/portfolio' })
   if (top && conc > 0) lines.push({ text: `Ta plus grosse position pèse ${conc} % du portefeuille — ${top.name}.`, cta: 'Voir l\u2019allocation', href: '/portfolio/allocation' })
   lines.push(nGraded > 0
-    ? { text: `${nGraded} ${nGraded > 1 ? 'cartes gradées' : 'carte gradée'} — vaut-il le coup de grader le reste ?`, cta: 'Faut-il grader ?', href: '/portfolio/graded-ev' }
-    : { text: 'Aucune carte gradée — repère celles qui valent le coup.', cta: 'Faut-il grader ?', href: '/portfolio/graded-ev' })
+    ? { text: `${nGraded} ${nGraded > 1 ? 'cartes gradées' : 'carte gradée'} — vaut-il le coup de grader le reste ?`, cta: 'Faut-il grader ?', href: '/portfolio/graded-ev', tier: 'premium', lock: GRADED_LOCK }
+    : { text: 'Aucune carte gradée — repère celles qui valent le coup.', cta: 'Faut-il grader ?', href: '/portfolio/graded-ev', tier: 'premium', lock: GRADED_LOCK })
+
+  const rowBase: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 12px', borderRadius: 10 }
 
   return (
     <div style={{ ...glassCard, padding: '6px 8px' }}>
-      {lines.slice(0, 3).map((l, i) => (
-        <Link key={i} href={l.href} className="kd-brief" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 12px', borderRadius: 10, textDecoration: 'none', borderTop: i === 0 ? 'none' : `1px solid ${LINE}` }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, fontFamily: DISPLAY, fontSize: 14, color: INK, lineHeight: 1.4 }}>{l.text}</span>
-          <span className="kd-arrow" style={{ fontFamily: DISPLAY, fontSize: 12.5, fontWeight: 700, color: accent, whiteSpace: 'nowrap' }}>{l.cta} →</span>
-        </Link>
-      ))}
+      {lines.slice(0, 3).map((l, i) => {
+        const locked = !!l.tier && (l.tier === 'premium' ? !isPremium : !isPro)
+        const inner = (
+          <>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0, fontFamily: DISPLAY, fontSize: 14, color: INK, lineHeight: 1.4 }}>{l.text}</span>
+            {locked && <TierTag tier={l.tier as Tier} accent={accent} />}
+            <span className="kd-arrow" style={{ fontFamily: DISPLAY, fontSize: 12.5, fontWeight: 700, color: accent, whiteSpace: 'nowrap', flexShrink: 0 }}>{l.cta} →</span>
+          </>
+        )
+        if (locked) {
+          return (
+            <button key={i} type="button" onClick={() => onLock(l.tier as Tier, l.href, l.lock)} className="kd-brief"
+              style={{ ...rowBase, width: '100%', background: 'transparent', border: 'none', borderTop: i === 0 ? 'none' : `1px solid ${LINE}`, cursor: 'pointer', textAlign: 'left' }}>
+              {inner}
+            </button>
+          )
+        }
+        return (
+          <Link key={i} href={l.href} className="kd-brief" style={{ ...rowBase, textDecoration: 'none', borderTop: i === 0 ? 'none' : `1px solid ${LINE}` }}>
+            {inner}
+          </Link>
+        )
+      })}
     </div>
   )
 }
 
 
 /* ── Grille de rubriques (investisseur — data + gating) ─────────── */
-type Rub = { kicker: string; title: string; desc: string; href: string; premium?: boolean }
+type Rub = { kicker: string; title: string; desc: string; href: string; tier?: Tier; lock?: LockInfo }
 const INVESTOR_RUBRIQUES: Rub[] = [
-  { kicker: 'Performance', title: 'Courbe & ROI', desc: 'La valeur de tes actifs dans le temps.', href: '/portfolio/performance' },
+  { kicker: 'Performance', title: 'Courbe & ROI', desc: 'La valeur de tes actifs dans le temps.', href: '/portfolio/performance', tier: 'pro', lock: { title: 'Suis l\u2019évolution de ta valeur', sub: 'La courbe complète de ton portefeuille et ton ROI réel, mois après mois.' } },
   { kicker: 'Allocation', title: 'Répartition', desc: 'Où est concentré ton capital.', href: '/portfolio/allocation' },
-  { kicker: 'Gradation', title: 'Faut-il grader ?', desc: 'L\u2019EV nette réelle, carte par carte.', href: '/portfolio/graded-ev', premium: true },
+  { kicker: 'Gradation', title: 'Faut-il grader ?', desc: 'L\u2019EV nette réelle, carte par carte.', href: '/portfolio/graded-ev', tier: 'premium', lock: GRADED_LOCK },
 ]
 
-function RubriqueGrid({ accent, isPremium }: { accent: string; isPremium: boolean }) {
+function RubriqueGrid({ accent, isPro, isPremium, onLock }: { accent: string; isPro: boolean; isPremium: boolean; onLock: OnLock }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
-      {INVESTOR_RUBRIQUES.map(it => (
-        <Link key={it.href} href={it.href} className="kd-rubrique" style={{ ...glassCard, position: 'relative', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 7, padding: '18px 18px 16px' }}>
-          {it.premium && !isPremium && (
-            <span style={{ position: 'absolute', top: 14, right: 14, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: accent, background: `${accent}14`, padding: '3px 7px', borderRadius: 6 }}>PREMIUM</span>
-          )}
-          <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: accent }}>{it.kicker}</span>
-          <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 16.5, color: INK, letterSpacing: '-0.02em' }}>{it.title}</span>
-          <span style={{ fontFamily: DISPLAY, fontSize: 13, color: MUTED, lineHeight: 1.45 }}>{it.desc}</span>
-          <span style={{ marginTop: 4, fontFamily: DISPLAY, fontSize: 12.5, fontWeight: 600, color: INK, display: 'inline-flex', alignItems: 'center', gap: 5 }}>Ouvrir <span style={{ color: accent }}>→</span></span>
-        </Link>
-      ))}
+      {INVESTOR_RUBRIQUES.map(it => {
+        const locked = it.tier === 'premium' ? !isPremium : it.tier === 'pro' ? !isPro : false
+        const badge = locked && it.tier ? (
+          <span style={{ position: 'absolute', top: 14, right: 14, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: accent, background: `${accent}14`, padding: '3px 7px', borderRadius: 6 }}>{it.tier === 'premium' ? 'PREMIUM' : 'PRO'}</span>
+        ) : null
+        const inner = (
+          <>
+            {badge}
+            <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: accent }}>{it.kicker}</span>
+            <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 16.5, color: INK, letterSpacing: '-0.02em' }}>{it.title}</span>
+            <span style={{ fontFamily: DISPLAY, fontSize: 13, color: MUTED, lineHeight: 1.45 }}>{it.desc}</span>
+            <span style={{ marginTop: 4, fontFamily: DISPLAY, fontSize: 12.5, fontWeight: 600, color: INK, display: 'inline-flex', alignItems: 'center', gap: 5 }}>{locked && it.tier ? 'Découvrir' : 'Ouvrir'} <span style={{ color: accent }}>→</span></span>
+          </>
+        )
+        const boxBase: React.CSSProperties = { ...glassCard, position: 'relative', display: 'flex', flexDirection: 'column', gap: 7, padding: '18px 18px 16px' }
+
+        if (locked && it.tier) {
+          return (
+            <button key={it.href} type="button" onClick={() => onLock(it.tier as Tier, it.href, it.lock)} className="kd-rubrique"
+              style={{ ...boxBase, width: '100%', textAlign: 'left', cursor: 'pointer', appearance: 'none' }}>
+              {inner}
+            </button>
+          )
+        }
+        return (
+          <Link key={it.href} href={it.href} className="kd-rubrique" style={{ ...boxBase, textDecoration: 'none' }}>
+            {inner}
+          </Link>
+        )
+      })}
     </div>
   )
 }

@@ -2,9 +2,13 @@
 
 import { useState, useMemo } from 'react'
 import type { PerfAggregates, EnrichedHolding } from './Performance'
+import { usePlan } from '@/lib/usePlan'
+import { GateOverlay } from '@/components/upgrade/GateOverlay'
 
 type SortKey = 'name' | 'set' | 'qty' | 'cost' | 'value' | 'gain' | 'roi'
 type SortDir = 'asc' | 'desc'
+
+const FREE_VISIBLE = 4
 
 const COLS: { key: SortKey; label: string; align: 'left' | 'right'; width: string }[] = [
   { key: 'name',  label: 'Carte',     align: 'left',  width: '2.2fr' },
@@ -17,6 +21,7 @@ const COLS: { key: SortKey; label: string; align: 'left' | 'right'; width: strin
 ]
 
 export function PerfTable({ agg }: { agg: PerfAggregates }) {
+  const { isPro } = usePlan()
   const [sortKey, setSortKey] = useState<SortKey>('roi')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [filter, setFilter] = useState('')
@@ -53,6 +58,11 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
   }
 
   const gridCols = COLS.map(c => c.width).join(' ')
+
+  // Free : 4 lignes en clair, reste flouté
+  const freeVisible = sorted.slice(0, FREE_VISIBLE)
+  const freeBlurred = sorted.slice(FREE_VISIBLE, FREE_VISIBLE + 6)
+  const remaining = Math.max(0, sorted.length - FREE_VISIBLE)
 
   return (
     <div>
@@ -96,29 +106,31 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
       }}>
         <SectionTitle>Performance par carte ({sorted.length})</SectionTitle>
 
-        <input
-          type="text"
-          placeholder="Filtrer..."
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          style={{
-            padding: '8px 14px',
-            fontSize: 12.5,
-            fontFamily: 'var(--font-sora, Sora, sans-serif)',
-            border: '1px solid rgba(0,0,0,0.06)',
-            borderRadius: 8,
-            background: 'rgba(255,255,255,0.55)',
-            backdropFilter: 'blur(12px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-            color: '#1D1D1F',
-            width: 220,
-            outline: 'none',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
-            transition: 'all .2s',
-          }}
-          onFocus={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.75)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
-          onBlur={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.55)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
-        />
+        {isPro && (
+          <input
+            type="text"
+            placeholder="Filtrer..."
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            style={{
+              padding: '8px 14px',
+              fontSize: 12.5,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              border: '1px solid rgba(0,0,0,0.06)',
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(12px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+              color: '#1D1D1F',
+              width: 220,
+              outline: 'none',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
+              transition: 'all .2s',
+            }}
+            onFocus={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.75)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
+            onBlur={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.55)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
+          />
+        )}
       </div>
 
       <div style={{
@@ -183,17 +195,41 @@ export function PerfTable({ agg }: { agg: PerfAggregates }) {
             color: '#AEAEB2',
             fontFamily: 'var(--font-sora, Sora, sans-serif)',
           }}>Aucune carte trouvée</div>
-        ) : (
+        ) : isPro ? (
           <div className="perf-rows-scroll" style={{ maxHeight: '480px', overflowY: 'auto' }}>
             {sorted.map((h, i) => (
-              <Row
-                key={h.id}
-                h={h}
-                gridCols={gridCols}
-                isLast={i === sorted.length - 1}
-              />
+              <Row key={h.id} h={h} gridCols={gridCols} isLast={i === sorted.length - 1} />
             ))}
           </div>
+        ) : (
+          <>
+            {/* 4 vraies lignes en clair (le goût) */}
+            <div>
+              {freeVisible.map(h => (
+                <Row key={h.id} h={h} gridCols={gridCols} isLast={false} />
+              ))}
+            </div>
+            {/* Reste flouté + panneau Pro */}
+            {remaining > 0 && (
+              <GateOverlay
+                locked
+                tier="pro"
+                maxHeight={220}
+                title="Le détail de toute ta collection"
+                desc={`Encore ${remaining} carte${remaining > 1 ? 's' : ''} — coût, valeur, gain et ROI ligne par ligne, plus le tri et la recherche.`}
+                feature={{
+                  title: 'Le détail de toute ta collection',
+                  subtitle: 'Coût, valeur, gain et ROI pour chacune de tes cartes — tri et recherche inclus.',
+                }}
+              >
+                <div>
+                  {freeBlurred.map(h => (
+                    <Row key={h.id} h={h} gridCols={gridCols} isLast={false} />
+                  ))}
+                </div>
+              </GateOverlay>
+            )}
+          </>
         )}
       </div>
     </div>

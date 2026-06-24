@@ -7,7 +7,8 @@ import {
 } from 'recharts'
 import type { PerfAggregates } from './Performance'
 
-import { useAuth } from '@/lib/useAuth'
+import { usePlan } from '@/lib/usePlan'
+import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 
 const PERIODS = ['7J', '1M', '3M', '6M', '1A', 'Tout'] as const
 // Plan Free: historique plafonne a 30j (verrou serveur dans /api/portfolio/history).
@@ -20,11 +21,13 @@ type HistPoint = { day: string; value: number; cost: number }
  * Line chart Recharts : valeur reelle du portfolio dans le temps.
  * Source : /api/portfolio/history (snapshots quotidiens).
  * Si < 2 points : ligne plate au niveau de la valeur actuelle (historique en construction).
+ *
+ * Gating Free : 7J / 1M libres ; 3M / 6M / 1A / Tout -> modale de conversion Pro.
  */
 export function PerfChart({ agg }: { agg: PerfAggregates }) {
-  const { isPro } = useAuth() as any
+  const { isPro } = usePlan()
   const [period, setPeriod] = useState<Period>('1M')
-  const [upsell, setUpsell] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [points, setPoints] = useState<HistPoint[]>([])
   const [enough, setEnough] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -76,34 +79,14 @@ export function PerfChart({ agg }: { agg: PerfAggregates }) {
             <LegendItem color={!enough ? '#AEAEB2' : (isUp ? '#1D9E75' : '#E03020')} label="Mon portfolio" />
             <LegendItem color="#AEAEB2" label="Coût d'acquisition" dashed />
           </div>
-          <div style={{ position: 'relative' }}>
-            <PeriodSelector
-              value={period}
-              locked={isPro ? [] : PERIODS.filter(p => !FREE_PERIODS.includes(p))}
-              onChange={(p) => {
-                if (!isPro && !FREE_PERIODS.includes(p)) { setUpsell(true); return }
-                setUpsell(false); setPeriod(p)
-              }}
-            />
-            {upsell && (
-              <a href="/abonnement" style={{
-                position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 20,
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 14px', borderRadius: 12,
-                background: 'rgba(29,29,31,0.92)',
-                backdropFilter: 'blur(16px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                color: 'rgba(255,255,255,0.95)', fontSize: 12, fontWeight: 600,
-                fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                textDecoration: 'none', whiteSpace: 'nowrap' as const,
-                boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
-              }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFD60A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Historique complet avec Pro
-                <span style={{ color: '#FF7A6E', fontWeight: 700 }}>→</span>
-              </a>
-            )}
-          </div>
+          <PeriodSelector
+            value={period}
+            locked={isPro ? [] : PERIODS.filter(p => !FREE_PERIODS.includes(p))}
+            onChange={(p) => {
+              if (!isPro && !FREE_PERIODS.includes(p)) { setModalOpen(true); return }
+              setPeriod(p)
+            }}
+          />
         </div>
 
         <div style={{ width: '100%', height: '240px', opacity: loading ? 0.6 : 1, transition: 'opacity .2s' }}>
@@ -153,6 +136,16 @@ export function PerfChart({ agg }: { agg: PerfAggregates }) {
           </div>
         )}
       </div>
+
+      <UpgradeModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        tier="pro"
+        feature={{
+          title: 'Suis l\u2019évolution de ta valeur',
+          subtitle: 'L\u2019historique complet de ton portefeuille — 3 mois, 6 mois, 1 an et au-delà.',
+        }}
+      />
     </div>
   )
 }

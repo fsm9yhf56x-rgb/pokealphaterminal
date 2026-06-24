@@ -4,6 +4,8 @@ import { useMemo } from 'react'
 import { GlassButton } from '@/components/ui/GlassButton'
 import { usePortfolio } from '@/lib/usePortfolio'
 import { usePersona } from '@/lib/usePersona'
+import { usePlan } from '@/lib/usePlan'
+import { GateOverlay } from '@/components/upgrade/GateOverlay'
 import { AllocConcentration } from './AllocConcentration'
 import { AllocTreemap } from './AllocTreemap'
 import { AllocBreakdowns } from './AllocBreakdowns'
@@ -81,6 +83,7 @@ export interface TreemapNode {
 export function Allocation() {
   const { cards, loading } = usePortfolio()
   const { isCollector } = usePersona()
+  const { isPro } = usePlan()
 
   const agg = useMemo<AllocAggregates>(() => {
     return computeAggregates(cards || [])
@@ -115,8 +118,17 @@ export function Allocation() {
       {!isCollector && <AllocConcentration agg={agg} />}
       {!isCollector && <AllocAlerts agg={agg} />}
       <AllocTreemap agg={agg} />
-      <AllocBreakdowns agg={agg} collector={isCollector} />
-      <AllocTopHoldings agg={agg} />
+      <AllocBreakdowns agg={agg} collector={isCollector} isPro={isPro} />
+      <GateOverlay
+        locked={!isPro}
+        tier="pro"
+        maxHeight={320}
+        title="Tes plus grosses pièces"
+        desc="Le classement de ta collection par valeur — ce qui pèse le plus dans ton portefeuille."
+        feature={{ title: 'Tes plus grosses pièces', subtitle: 'Le classement complet de ta collection par valeur, pièce par pièce.' }}
+      >
+        <AllocTopHoldings agg={agg} />
+      </GateOverlay>
     </div>
   )
 }

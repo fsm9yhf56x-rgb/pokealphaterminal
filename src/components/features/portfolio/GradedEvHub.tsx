@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { SNOW, FONT } from "@/lib/design/snow"
+import { UpgradeModal } from "@/components/upgrade/UpgradeModal"
 
 type Item = {
   id: string; cardId: string; name: string; setName: string; image: string | null
@@ -40,6 +41,7 @@ export function GradedEvHub() {
   const [setFilter, setSetFilter] = useState("all")
   const [sortBy, setSortBy] = useState<SortKey>("gain")
   const [showSkip, setShowSkip] = useState(false)
+  const [gradedUpsellOpen, setGradedUpsellOpen] = useState(true)
 
   useEffect(() => {
     let alive = true
@@ -86,19 +88,29 @@ export function GradedEvHub() {
     return (
       <div style={wrap}>
         {Header}
-        <div style={{ ...card, padding: "26px 28px" }}>
-          <div style={{ display: "inline-block", padding: "5px 12px", borderRadius: 20, background: RECO.GRADER.bg, color: GREEN, fontSize: 12, fontWeight: 700, fontFamily: FONT.display, marginBottom: 16 }}>
-            Réservé au plan Premium
+        <div style={{ position: "relative", minHeight: 360, borderRadius: 16, overflow: "hidden" }}>
+          {/* Fond fantôme flouté (placeholders, aucun chiffre) — pas de panneau ici */}
+          <div aria-hidden style={{ maxHeight: 320, overflow: "hidden", filter: "blur(6px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", WebkitMaskImage: "linear-gradient(180deg, #000 52%, transparent 100%)", maskImage: "linear-gradient(180deg, #000 52%, transparent 100%)" }}>
+            <GhostHub />
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, marginBottom: 8 }}>Le tableau de bord Graded.ev</div>
-          <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, marginBottom: 18, maxWidth: 560 }}>
-            Analyse toutes tes cartes non gradées d'un coup et classe-les par gain espéré net — pour
-            repérer en un regard celles qui méritent l'envoi en gradation.
-          </div>
-          <a href="/abonnement" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 20px", borderRadius: 12, background: "#1D1D1F", color: "#fff", fontSize: 13.5, fontWeight: 700, fontFamily: FONT.display, textDecoration: "none" }}>
-            Débloquer Graded.ev avec Premium →
-          </a>
+          {/* Quand la modale est fermée : une seule porte de ré-ouverture */}
+          {!gradedUpsellOpen && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+              <button onClick={() => setGradedUpsellOpen(true)} style={{ border: "none", cursor: "pointer", padding: "13px 24px", borderRadius: 999, background: "#6E56CF", color: "#fff", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 8px 22px rgba(110,86,207,0.45), inset 0 1px 0 rgba(255,255,255,0.22)" }}>
+                Débloquer Graded.ev avec Premium →
+              </button>
+            </div>
+          )}
         </div>
+        <UpgradeModal
+          open={gradedUpsellOpen}
+          onClose={() => setGradedUpsellOpen(false)}
+          tier="premium"
+          feature={{
+            title: "Faut-il grader tes cartes ?",
+            subtitle: "L\u2019EV nette réelle, carte par carte, frais inclus — pour ne grader que ce qui rapporte.",
+          }}
+        />
       </div>
     )
   }
@@ -302,6 +314,30 @@ function Stat({ n, l, accent, muted, onClick }: { n: string; l: string; accent?:
     <div onClick={onClick} style={{ cursor: onClick ? "pointer" : "default" }}>
       <div style={{ fontSize: 22, fontWeight: 800, color: accent || (muted ? SNOW.mutedLight : SNOW.ink), fontFamily: FONT.display, lineHeight: 1 }}>{n}</div>
       <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 3, textDecoration: onClick ? "underline dotted" : "none", textUnderlineOffset: 3 }}>{l}{onClick ? " ⓘ" : ""}</div>
+    </div>
+  )
+}
+
+/* Silhouette fantôme (placeholders gris, AUCUN chiffre) — sert de fond flouté
+   sous le panneau Premium quand l'utilisateur n'a pas accès au tableau. */
+function GhostHub() {
+  const bar = (w: string, h = 12) => <div style={{ width: w, height: h, borderRadius: 6, background: SNOW.surfaceSoft }} />
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ height: 96, borderRadius: 16, background: "linear-gradient(135deg, rgba(0,163,104,0.08), rgba(0,163,104,0.02))", border: `1px solid rgba(0,163,104,0.18)` }} />
+      <div style={{ ...card, display: "flex", flexDirection: "column", gap: 16, paddingTop: 16 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 38, height: 53, borderRadius: 5, background: SNOW.surfaceSoft, flexShrink: 0 }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7, minWidth: 0 }}>
+              {bar("58%")}
+              {bar("36%", 10)}
+            </div>
+            <div style={{ width: 64, height: 22, borderRadius: 7, background: SNOW.surfaceSoft, flexShrink: 0 }} />
+            <div style={{ width: 78, height: 22, borderRadius: 7, background: SNOW.surfaceSoft, flexShrink: 0 }} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

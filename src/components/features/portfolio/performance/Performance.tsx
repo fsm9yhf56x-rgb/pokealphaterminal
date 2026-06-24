@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react'
 import { usePortfolio } from '@/lib/usePortfolio'
+import { usePlan } from '@/lib/usePlan'
+import { GateOverlay } from '@/components/upgrade/GateOverlay'
 import { PerfKPIs } from './PerfKPIs'
 import { PerfChart } from './PerfChart'
 import { PerfMovers } from './PerfMovers'
@@ -58,6 +60,7 @@ export interface AllocationBucket {
 
 export function Performance() {
   const { cards, loading } = usePortfolio()
+  const { isPro } = usePlan()
 
   const agg = useMemo<PerfAggregates>(() => {
     const enriched: EnrichedHolding[] = (cards || []).map(c => {
@@ -129,11 +132,27 @@ export function Performance() {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <Header />
+      {/* Libres (hook) : valeur actuelle, gain, ROI, top performer */}
       <PerfKPIs agg={agg} />
+      {/* Courbe : 7J/1M libres, historique long -> modale Pro (géré dans PerfChart) */}
       <PerfChart agg={agg} />
+      {/* Highlight libre : meilleurs / pires mouvements */}
       <PerfMovers agg={agg} />
+      {/* Libre (décision actée) : répartition du portefeuille */}
       <PerfAllocation agg={agg} />
-      <PerfTable agg={agg} />
+      {/* Profondeur Pro : détail carte par carte -> teaser partiel */}
+      <GateOverlay
+        locked={!isPro}
+        tier="pro"
+        title="Le détail carte par carte"
+        desc={`Coût, valeur, gain et ROI pour chacune de tes ${agg.cardsCount} cartes.`}
+        feature={{
+          title: 'Le détail de toute ta collection',
+          subtitle: 'Coût, valeur, gain et ROI pour chacune de tes cartes — et ton historique complet.',
+        }}
+      >
+        <PerfTable agg={agg} />
+      </GateOverlay>
     </div>
   )
 }

@@ -1,12 +1,14 @@
 'use client'
 
 import type { AllocAggregates, AllocBucket } from './Allocation'
+import { GateOverlay } from '@/components/upgrade/GateOverlay'
 
 /**
  * 4 stacked bars : langue / ère / rareté / condition.
  * Vue analytique : où est l'argent par dimension.
+ * Gating Free : PAR LANGUE libre ; ère / rareté / état -> floutés + panneau Pro.
  */
-export function AllocBreakdowns({ agg, collector }: { agg: AllocAggregates; collector?: boolean }) {
+export function AllocBreakdowns({ agg, collector, isPro }: { agg: AllocAggregates; collector?: boolean; isPro?: boolean }) {
   return (
     <div>
       <style>{`
@@ -17,16 +19,39 @@ export function AllocBreakdowns({ agg, collector }: { agg: AllocAggregates; coll
       `}</style>
       <SectionTitle>{collector ? 'Composition de ma collection' : 'Répartition par dimension'}</SectionTitle>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '14px',
-      }}>
-        <BreakdownCard title="Par langue"    buckets={agg.byLang}      collector={collector} />
-        <BreakdownCard title="Par ère"       buckets={agg.byEra}       collector={collector} />
-        <BreakdownCard title="Par rareté"    buckets={agg.byRarity}    collector={collector} />
-        <BreakdownCard title="Par état"      buckets={agg.byCondition} collector={collector} />
-      </div>
+      {isPro ? (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '14px',
+        }}>
+          <BreakdownCard title="Par langue"    buckets={agg.byLang}      collector={collector} />
+          <BreakdownCard title="Par ère"       buckets={agg.byEra}       collector={collector} />
+          <BreakdownCard title="Par rareté"    buckets={agg.byRarity}    collector={collector} />
+          <BreakdownCard title="Par état"      buckets={agg.byCondition} collector={collector} />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Par langue : libre (le hook) */}
+          <BreakdownCard title="Par langue" buckets={agg.byLang} collector={collector} />
+          {/* Ère / Rareté / État : Pro */}
+          <GateOverlay
+            locked
+            tier="pro"
+            maxHeight={300}
+            minHeight={300}
+            title="Ta répartition complète"
+            desc="Par ère, par rareté et par état — la concentration de ton capital sous tous les angles."
+            feature={{ title: 'Ta répartition complète', subtitle: 'Par ère, rareté et état — vois la concentration de ton capital sous tous les angles.' }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+              <BreakdownCard title="Par ère"    buckets={agg.byEra}       collector={collector} />
+              <BreakdownCard title="Par rareté" buckets={agg.byRarity}    collector={collector} />
+              <BreakdownCard title="Par état"   buckets={agg.byCondition} collector={collector} />
+            </div>
+          </GateOverlay>
+        </div>
+      )}
     </div>
   )
 }

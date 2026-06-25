@@ -9,6 +9,8 @@ import { getSessionCookie } from 'better-auth/cookies'
 
 const PROTECTED_PATHS = [
   '/admin',
+  '/parametres',
+  '/dev-ui',
 ]
 
 export async function proxy(request: NextRequest) {

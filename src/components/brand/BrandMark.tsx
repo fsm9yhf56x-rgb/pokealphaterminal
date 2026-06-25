@@ -3,9 +3,10 @@ import React from 'react'
 /**
  * BrandMark — le logo Kodo Cards, reconstruit en code (net à toutes les tailles).
  *
- *   <BrandMark size={28} inline signature />      → header : KODO CARDS justifié sur la largeur de la signature
- *   <BrandMark size={72} signature sigStacked />  → hero / landing : KODO sur CARDS, 鼓動 sur sa ligne
- *   <BrandMark size={40} />                        → losange + KODO/CARDS seuls
+ *   <BrandMark size={28} inline signature mark={false} /> → header (sans losange, en test)
+ *   <BrandMark size={28} inline signature />               → header avec losange
+ *   <BrandMark size={72} signature sigStacked />           → hero / landing (KODO sur CARDS + 鼓動)
+ *   <BrandMark size={40} />                                 → losange + KODO/CARDS seuls
  *
  * Tout est proportionnel à `size` (= hauteur des capitales KODO en px).
  */
@@ -13,6 +14,8 @@ import React from 'react'
 export type BrandMarkProps = {
   /** Hauteur des capitales KODO en px (défaut 28). Tout le reste suit. */
   size?: number
+  /** Affiche le losange rouge à gauche (défaut true). */
+  mark?: boolean
   /** KODO CARDS sur une seule ligne (header). Sinon KODO empilé sur CARDS (hero). */
   inline?: boolean
   /** Affiche « THE HEARTBEAT OF TCG · 鼓動 ». */
@@ -35,6 +38,7 @@ const WORD = ['K', 'O', 'D', 'O', 'C', 'A', 'R', 'D', 'S'] as const // 0-3 = KOD
 
 export function BrandMark({
   size = 28,
+  mark = true,
   inline = false,
   signature = false,
   sigStacked = false,
@@ -172,20 +176,22 @@ export function BrandMark({
       className={className}
       role="img"
       aria-label={title}
-      style={{ display: 'inline-flex', alignItems: 'center', gap, lineHeight: 1, ...style }}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: mark ? gap : 0, lineHeight: 1, ...style }}
     >
-      {/* losange — bords droits par défaut */}
-      <span
-        aria-hidden
-        style={{
-          width: markW,
-          height: markH,
-          background: accent,
-          transform: 'skewX(-12deg)',
-          borderRadius: radius,
-          flexShrink: 0,
-        }}
-      />
+      {/* losange — optionnel, bords droits par défaut */}
+      {mark && (
+        <span
+          aria-hidden
+          style={{
+            width: markW,
+            height: markH,
+            background: accent,
+            transform: 'skewX(-12deg)',
+            borderRadius: radius,
+            flexShrink: 0,
+          }}
+        />
+      )}
       {/* texte : la signature fixe la largeur, KODOCARDS se justifie dessus */}
       <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         {Wordmark}

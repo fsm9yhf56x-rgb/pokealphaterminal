@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { BrandMark } from '@/components/brand/BrandMark'
 
 /**
  * Footer v7.1 — glass premium discret en bas de page.
@@ -132,44 +133,14 @@ export function Footer() {
           <Link
             href="/home"
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: 9,
               textDecoration: 'none',
               marginBottom: 13,
               width: 'fit-content',
             }}
           >
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: '#1D1D1F',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: 13,
-                boxShadow:
-                  '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.14)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              K
-            </div>
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: '#1D1D1F',
-                fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                letterSpacing: '-0.025em',
-              }}
-            >
-              Kodo<span style={{ color: '#E03020' }}> Cards</span>
-            </span>
+            <BrandMark size={30} inline signature mark={false} />
           </Link>
           <p
             style={{

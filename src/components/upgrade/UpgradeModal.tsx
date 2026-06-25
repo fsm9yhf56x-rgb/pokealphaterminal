@@ -160,9 +160,13 @@ export function UpgradeModal({
             <span style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 26, color: INK, letterSpacing: '-0.03em' }}>{t.price}</span>
             <span style={{ fontFamily: DISPLAY, fontSize: 13, color: MUTED }}>/ mois</span>
             {t.regularPrice && <span style={{ fontFamily: DISPLAY, fontSize: 15, color: '#AEAEB2', textDecoration: 'line-through', fontWeight: 600 }}>{t.regularPrice}</span>}
-            {t.early && <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10.5, fontWeight: 700, color: t.color, background: `${t.color}14`, padding: '4px 8px', borderRadius: 7, letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>{t.early}</span>}
           </div>
 
+          {t.early && (
+            <div style={{ marginTop: 10 }}>
+              <span style={{ display: 'inline-block', fontFamily: MONO, fontSize: 10.5, fontWeight: 700, color: t.color, background: `${t.color}14`, padding: '5px 10px', borderRadius: 7, letterSpacing: '0.03em' }}>{t.early}</span>
+            </div>
+          )}
           {/* CTAs */}
           <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Link

@@ -1,12 +1,13 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useState } from 'react'
 
 /**
  * BrandMark — le logo Kodo Cards, reconstruit en code (net à toutes les tailles).
  *
- *   <BrandMark size={28} inline signature mark={false} /> → header (sans losange, en test)
- *   <BrandMark size={28} inline signature />               → header avec losange
- *   <BrandMark size={72} signature sigStacked />           → hero / landing (KODO sur CARDS + 鼓動)
- *   <BrandMark size={40} />                                 → losange + KODO/CARDS seuls
+ *   <BrandMark size={28} inline signature mark={false} responsive /> → header (compact sur mobile)
+ *   <BrandMark size={72} signature sigStacked />                     → hero / landing (KODO sur CARDS + 鼓動)
+ *   <BrandMark size={22} inline mark={false} />                      → wordmark seul (burger menu)
  *
  * Tout est proportionnel à `size` (= hauteur des capitales KODO en px).
  */
@@ -22,6 +23,8 @@ export type BrandMarkProps = {
   signature?: boolean
   /** Met 鼓動 sur une 2e ligne centrée sous la tagline (look hero). Sinon tout sur 1 ligne. */
   sigStacked?: boolean
+  /** Réduit la taille + masque la signature sur petit écran (header). */
+  responsive?: boolean
   /** Couleur du mot KODO (défaut encre #1D1D1F). */
   ink?: string
   /** Couleur du losange / CARDS / 鼓動 (défaut accent #E03020). */
@@ -42,6 +45,7 @@ export function BrandMark({
   inline = false,
   signature = false,
   sigStacked = false,
+  responsive = false,
   ink = '#1D1D1F',
   accent = '#E03020',
   radius = 0,
@@ -53,14 +57,39 @@ export function BrandMark({
   const sora = "var(--font-sora, 'Sora', system-ui, sans-serif)"
   const cjk = "'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif"
 
-  // Quand on est en mode header avec signature, on justifie KODOCARDS sur la largeur de la signature.
-  const justified = inline && signature
+  // --- responsive : on mesure la largeur du viewport (client only) ---
+  const [vw, setVw] = useState<number | null>(null)
+  useEffect(() => {
+    if (!responsive) return
+    const onResize = () => setVw(window.innerWidth)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [responsive])
+
+  // tailles effectives (desktop = valeurs d'origine ; flash initial = desktop, pas de mismatch SSR)
+  let size_ = size
+  let signature_ = signature
+  if (responsive && vw !== null) {
+    if (vw < 380) {
+      size_ = Math.round(size * 0.7)
+      signature_ = false
+    } else if (vw < 500) {
+      size_ = Math.round(size * 0.8)
+      signature_ = false
+    } else if (vw < 700) {
+      size_ = Math.round(size * 0.9)
+    }
+  }
+
+  // Header avec signature : on justifie KODOCARDS sur la largeur de la signature.
+  const justified = inline && signature_
 
   // Proportions
-  const markH = Math.round(size * (inline ? 1.42 : 1.26))
+  const markH = Math.round(size_ * (inline ? 1.42 : 1.26))
   const markW = Math.max(8, Math.round(markH * 0.5))
-  const gap = Math.round(size * 0.32)
-  const sigFont = Math.max(8, Math.round(size * 0.27))
+  const gap = Math.round(size_ * 0.32)
+  const sigFont = Math.max(8, Math.round(size_ * 0.27))
   const jpFont = Math.round(sigFont * 1.18)
   const sigGap = Math.max(3, Math.round(sigFont * 0.7))
 
@@ -76,42 +105,39 @@ export function BrandMark({
   // ---- Wordmark ----
   let Wordmark: React.ReactNode
   if (justified) {
-    // lettres réparties sur toute la largeur (= largeur de la signature)
     Wordmark = (
       <span
         aria-hidden
         style={{ display: 'flex', width: '100%', justifyContent: 'space-between', whiteSpace: 'nowrap' }}
       >
         {WORD.map((ch, i) => (
-          <span key={i} style={{ ...kodoBase, fontSize: size, color: i < 4 ? ink : accent }}>
+          <span key={i} style={{ ...kodoBase, fontSize: size_, color: i < 4 ? ink : accent }}>
             {ch}
           </span>
         ))}
       </span>
     )
   } else if (inline) {
-    // une ligne, largeur naturelle
     Wordmark = (
       <span aria-hidden style={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' }}>
-        <span style={{ ...kodoBase, fontSize: size }}>KODO</span>
-        <span style={{ ...kodoBase, fontSize: size, color: accent, marginLeft: '0.06em', letterSpacing: '0.02em' }}>
+        <span style={{ ...kodoBase, fontSize: size_ }}>KODO</span>
+        <span style={{ ...kodoBase, fontSize: size_, color: accent, marginLeft: '0.06em', letterSpacing: '0.02em' }}>
           CARDS
         </span>
       </span>
     )
   } else {
-    // empilé
     Wordmark = (
       <span aria-hidden style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        <span style={{ ...kodoBase, fontSize: size }}>KODO</span>
+        <span style={{ ...kodoBase, fontSize: size_ }}>KODO</span>
         <span
           style={{
             ...kodoBase,
-            fontSize: Math.round(size * 0.42),
+            fontSize: Math.round(size_ * 0.42),
             color: accent,
             lineHeight: 0.9,
             letterSpacing: '0.34em',
-            marginTop: Math.round(size * 0.06),
+            marginTop: Math.round(size_ * 0.06),
             marginLeft: '0.02em',
           }}
         >
@@ -122,15 +148,15 @@ export function BrandMark({
   }
 
   // ---- Signature ----
-  const Sig = signature ? (
+  const Sig = signature_ ? (
     sigStacked ? (
       <span
         style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginTop: Math.round(size * 0.2),
-          gap: Math.round(size * 0.1),
+          marginTop: Math.round(size_ * 0.2),
+          gap: Math.round(size_ * 0.1),
         }}
       >
         <span
@@ -154,7 +180,7 @@ export function BrandMark({
           display: 'flex',
           alignItems: 'center',
           gap: sigGap,
-          marginTop: Math.round(size * 0.16),
+          marginTop: Math.round(size_ * 0.16),
           fontFamily: sora,
           fontSize: sigFont,
           fontWeight: 600,

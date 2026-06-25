@@ -76,7 +76,8 @@ export function SoonModal({
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        paddingTop: 100,
+        paddingTop: 'clamp(20px, 7vh, 100px)',
+          overflowY: 'auto',
         paddingLeft: 24,
         paddingRight: 24,
         paddingBottom: 24,
@@ -99,7 +100,7 @@ export function SoonModal({
         style={{
           width: '100%',
           maxWidth: 480,
-          maxHeight: 'calc(100vh - 130px)',
+          maxHeight: 'calc(100dvh - 40px)',
           overflowY: 'auto' as const,
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(40px) saturate(180%)',

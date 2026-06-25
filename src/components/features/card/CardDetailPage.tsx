@@ -144,7 +144,7 @@ function HeroTip({ text }: { text: string }) {
 }
 const TIP_MARKET = "Dernier prix de référence observé sur le marché, en état Near Mint."
 const TIP_FAIR = "Notre estimation de la valeur de la carte à partir des ventes récentes, toutes sources confondues. Peut différer du dernier prix affiché."
-const TIP_LIQUIDITE = "Facilité à acheter ou revendre cette carte rapidement, selon le volume de ventes récentes. 100 = très facile à échanger."
+
 
 type TabKey = "prix" | "histo" | "grade" | "infos"
 
@@ -204,7 +204,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         const r = await fetch(`/api/spotlight?card_id=${encodeURIComponent(id)}&lang=${l}`)
         const j = await r.json()
         if (j.error || !j.card) return null
-        const price = j.prices?.marketEst ?? j.kodo?.fairValueEur ?? j.kodo?.coteFrEur ?? null
+        const price = j.prices?.marketEst ?? j.kodo?.coteFrEur ?? null
         return { lang: l, id, priceEur: price as number | null }
       } catch { return null }
     })).then(res => {
@@ -381,11 +381,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const fmtEur = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
 
   const fairValue = kodo?.fairValueEur ?? null
-  const liquidity = kodo?.liquidityScore ?? null
   // Carte FR : si pas de marketEst (sources EU absentes), on montre la cote FR
   // consolidee par l'Engine (cote_fr_eur). Jamais de prix US sur une carte FR.
   const market = resolveDisplayPrice(card.lang, prices, kodo).price
   const isFrCard = String(card.lang || '').toUpperCase() === 'FR'
+  const showFair = !isFrCard && fairValue != null && market != null && market > 0 && Math.abs(fairValue - market) / market > 0.02
   const history = prices.history || []
   const hasEngine = kodo != null && (kodo.liquidityScore != null || kodo.gradeEvPsa10Eur != null || kodo.coteFrEur != null)
   const illustrator = detail?.illustrator || null
@@ -461,7 +461,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const TabPrix = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
       {hasEngine ? (
-        <div><SpotlightEngine kodo={kodo} /></div>
+        <div><SpotlightEngine kodo={kodo} onEvDetail={() => setActiveTab("grade")} /></div>
       ) : null}
       <div>
         {isFrCard ? (
@@ -730,7 +730,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   }
 
   return (
-    <div style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 24px 72px" }}>
+    <div className="kc-card-page" style={{ maxWidth: 1160, margin: "0 auto", padding: "24px 24px 72px" }}>
       <nav className="kc-rise" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, fontSize: 12.5, fontFamily: FONT.display, color: SNOW.mutedLight, flexWrap: "wrap" }}>
         <Link href="/cartes" style={{ color: SNOW.muted, textDecoration: "none" }}>Pokédesk</Link>
         <span>›</span>
@@ -739,10 +739,10 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         <span style={{ color: SNOW.ink, fontWeight: 600 }}>{card.name}</span>
       </nav>
 
-      <div className="kc-grid" style={{ display: "grid", gridTemplateColumns: "300px minmax(0,1fr)", gap: 36, alignItems: "start" }}>
+      <div className="kc-grid">
 
         {/* Carte sticky + tilt */}
-        <div className="kc-left" style={{ position: "sticky", top: 72 }}>
+        <div className="kc-media">
           <div className="kc-rise">
             <div ref={tiltRef} onMouseMove={onCardMove} onMouseLeave={onCardLeave} style={{ position: "relative", transition: `transform .16s ${EASE.apple}`, transformStyle: "preserve-3d", willChange: "transform", cursor: "pointer" }}>
               {img ? (
@@ -753,33 +753,22 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               <div ref={glareRef} style={{ position: "absolute", inset: 0, borderRadius: 16, pointerEvents: "none", opacity: 0, transition: "opacity .25s ease", mixBlendMode: "overlay" }} />
             </div>
           </div>
-          <div className="kc-rise" style={{ animationDelay: ".08s", display: "flex", flexWrap: "wrap", gap: 7, marginTop: 14 }}>
-            {era ? (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 20, background: era.color + "14", border: `1px solid ${era.color}33` }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: era.color }} />
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".03em", color: era.color, fontFamily: FONT.display, textTransform: "uppercase" }}>{era.era}</span>
-              </span>
-            ) : null}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 20, background: SNOW.surface, border: `1px solid ${SNOW.border}`, fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display }}>{flag} {LANG_LABEL[card.lang] || card.lang}</span>
-            <VariantBadge setId={card.set_id} />
-          </div>
         </div>
 
         {/* Donnees */}
-        <div className="kc-right" style={{ minWidth: 0 }}>
-
-          <div className="kc-rise" style={{ animationDelay: ".06s", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+        <div className="kc-head kc-rise" style={{ animationDelay: ".06s" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.display, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 5 }}>
                 {card.set_name}{card.local_id ? ` · #${card.local_id}` : ""}
               </div>
-              <h1 style={{ fontSize: 30, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1.08, margin: "0 0 6px" }}>{card.name}</h1>
+              <h1 style={{ fontSize: "clamp(23px, 6.4vw, 30px)", fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1.08, margin: "0 0 6px" }}>{card.name}</h1>
               <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>
                 <span style={{ textTransform: "capitalize" }}>{card.rarity_normalized}</span>
                 {illustrator ? <span> · Illustré par {illustrator}</span> : null}
               </div>
             </div>
-            <button onClick={toggleFollow} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 20, background: isFollowed ? "rgba(224,48,32,0.08)" : "#1D1D1F", border: isFollowed ? "1px solid rgba(224,48,32,0.25)" : "1px solid #1D1D1F", color: isFollowed ? "#E03020" : "#fff", fontSize: 13.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", boxShadow: isFollowed ? "none" : "0 4px 14px rgba(0,0,0,0.16)", transition: `all .2s ${EASE.apple}` }}>
+            <button className="kc-head-follow" onClick={toggleFollow} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 20, background: isFollowed ? "rgba(224,48,32,0.08)" : "#1D1D1F", border: isFollowed ? "1px solid rgba(224,48,32,0.25)" : "1px solid #1D1D1F", color: isFollowed ? "#E03020" : "#fff", fontSize: 13.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", boxShadow: isFollowed ? "none" : "0 4px 14px rgba(0,0,0,0.16)", transition: `all .2s ${EASE.apple}` }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : "#fff"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               {isFollowed ? "Suivie" : "Suivre"}
             </button>
@@ -791,12 +780,25 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             </div>
           ) : null}
 
-          <div className="kc-rise" style={{ animationDelay: ".12s", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", marginTop: 20, paddingTop: 20, borderTop: `1px solid ${SNOW.borderSoft}` }}>
+          <div className="kc-chips" style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 14 }}>
+            {era ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 20, background: era.color + "14", border: `1px solid ${era.color}33` }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: era.color }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".03em", color: era.color, fontFamily: FONT.display, textTransform: "uppercase" }}>{era.era}</span>
+              </span>
+            ) : null}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 20, background: SNOW.surface, border: `1px solid ${SNOW.border}`, fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display }}>{flag} {LANG_LABEL[card.lang] || card.lang}</span>
+            <VariantBadge setId={card.set_id} />
+          </div>
+        </div>
+
+        <div className="kc-body">
+          <div className="kc-price kc-rise" style={{ animationDelay: ".12s", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", marginTop: 20, paddingTop: 20, borderTop: `1px solid ${SNOW.borderSoft}` }}>
             {market != null ? (
               <div>
                 <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 3, display: "inline-flex", alignItems: "center" }}>Prix de marché<HeroTip text={TIP_MARKET} /></div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <div style={{ fontSize: 34, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
+                  <div style={{ fontSize: "clamp(27px, 7.6vw, 34px)", fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1 }}>{fmtEur(market)}</div>
                   {!isFrCard && (prices as any).fxUsdEur && (prices as any).fxUsdEur > 0 ? (
                     <span style={{ fontSize: 15, fontWeight: 600, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: "-0.01em" }}>~${(market / (prices as any).fxUsdEur).toFixed(2)}</span>
                   ) : null}
@@ -805,16 +807,10 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             ) : (
               <div style={{ fontSize: 14, color: SNOW.muted, fontStyle: "italic", fontFamily: FONT.body }}>Données de prix insuffisantes pour le moment.</div>
             )}
-            {fairValue != null ? (
+            {showFair ? (
               <div style={{ padding: "9px 15px", borderRadius: 12, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}` }}>
                 <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4, display: "inline-flex", alignItems: "center" }}>Valeur estimée<HeroTip text={TIP_FAIR} /></div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(fairValue)}</div>
-              </div>
-            ) : null}
-            {liquidity != null ? (
-              <div style={{ padding: "9px 15px", borderRadius: 12, background: SNOW.surfaceSoft, border: `1px solid ${SNOW.border}` }}>
-                <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 4, display: "inline-flex", alignItems: "center" }}>Liquidité<HeroTip text={TIP_LIQUIDITE} /></div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{Math.round(liquidity)}<span style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 500 }}>/100</span></div>
               </div>
             ) : null}
           </div>
@@ -924,14 +920,49 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         )}
       </div>
 
+      {/* Barre d'action sticky (mobile) */}
+      <div className="kc-sticky-cta">
+        <button onClick={toggleFollow} aria-label={isFollowed ? "Ne plus suivre" : "Suivre cette carte"} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, height: 48, padding: "0 17px", borderRadius: 13, background: isFollowed ? "rgba(224,48,32,0.08)" : SNOW.surface, border: isFollowed ? "1px solid rgba(224,48,32,0.28)" : `1px solid ${SNOW.border}`, color: isFollowed ? "#E03020" : SNOW.ink, fontSize: 14, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : SNOW.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          {isFollowed ? "Suivie" : "Suivre"}
+        </button>
+        <Link href="/portfolio" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          {owned.length > 0 ? "Gérer ma collection" : "Ajouter à ma collection"}
+        </Link>
+      </div>
+
       <style>{`
         @keyframes kcRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         .kc-rise { animation: kcRise .55s cubic-bezier(.16,1,.3,1) both; }
         @keyframes kcTabIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .kc-tab-anim { animation: kcTabIn .28s ${EASE.smoothOut}; }
+        .kc-sticky-cta { display: none; }
+        .kc-grid { display: grid; grid-template-columns: 300px minmax(0,1fr); grid-template-areas: "media head" "media body"; column-gap: 36px; row-gap: 0; align-items: start; }
+        .kc-head { grid-area: head; }
+        .kc-media { grid-area: media; position: sticky; top: 72px; align-self: start; }
+        .kc-body { grid-area: body; min-width: 0; }
         @media (max-width: 920px) {
-          .kc-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          .kc-left { position: static !important; max-width: 320px; margin: 0 auto; }
+          .kc-grid { grid-template-columns: 1fr !important; grid-template-areas: "head" "media" "body" !important; column-gap: 0 !important; row-gap: 16px !important; }
+          .kc-media { position: static !important; top: auto !important; max-width: 220px; margin: 4px auto 0; }
+          .kc-head-follow { display: none !important; }
+          .kc-price { margin-top: 14px !important; padding-top: 16px !important; }
+          .kc-card-page { padding-bottom: 104px !important; }
+          .nori-fab { bottom: calc(84px + env(safe-area-inset-bottom)) !important; }
+          .kc-sticky-cta {
+            display: flex;
+            position: fixed; left: 0; right: 0; bottom: 0;
+            gap: 10px;
+            padding: 11px 16px calc(11px + env(safe-area-inset-bottom));
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: saturate(180%) blur(18px);
+            -webkit-backdrop-filter: saturate(180%) blur(18px);
+            border-top: 1px solid ${SNOW.border};
+            z-index: 900;
+          }
+        }
+        @media (max-width: 480px) {
+          .kc-media { max-width: 190px; }
         }
       `}</style>
     </div>

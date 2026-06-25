@@ -2263,6 +2263,7 @@ export function Holdings() {
 
         {/* HEADER */}
         <div style={{ position:'relative', zIndex:1, padding:'8px 0 12px' }}>
+          <style>{`@media (max-width: 768px){.kc-hide-sparkline-sm{display:none !important}}`}</style>
           <div style={{
             // Glass v5 card pour le hero du portfolio
             background: 'rgba(255,255,255,0.62)',
@@ -2274,19 +2275,16 @@ export function Holdings() {
             padding: '20px 26px 18px',
             marginBottom: 14,
           }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'14px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'14px', flexWrap:'wrap' }}>
             <div>
               <div style={{ fontSize:'10px', fontWeight:600, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px', display:'flex', alignItems:'center', gap:6 }} className='section-reveal'>
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
                 {labels.portfolio}
               </div>
               {show.pnl ? (
-                <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
+                <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'clamp(26px, 7.5vw, 38px)', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                   {portfolio.length>0 ? (
-                    <>
-                      <span style={{ fontSize:'22px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>EUR</span>
-                      <AnimatedTotal target={totalCur} ready={!pricesLoading} />
-                    </>
+                    <AnimatedTotal target={totalCur} ready={!pricesLoading} />
                   ) : <span style={{ color:'#C7C7CC' }}>---</span>}
                 </div>
               ) : (
@@ -2343,7 +2341,7 @@ export function Holdings() {
               })()}
             </div>
             {show.pnl&&portfolio.length>0&&(
-              <div className='header-sparkline' style={{ flex:1, minWidth:200, maxWidth:580, display:'flex', flexDirection:'column' as const, justifyContent:'center', padding:'0 8px' }}>
+              <div className='header-sparkline kc-hide-sparkline-sm' style={{ flex:1, minWidth:0, maxWidth:580, display:'flex', flexDirection:'column' as const, justifyContent:'center', padding:'0 8px', overflow:'hidden' }}>
                 <HeaderSparkline totalValue={totalCur} />
               </div>
             )}

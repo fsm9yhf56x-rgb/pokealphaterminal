@@ -8,6 +8,7 @@ import { NORI_TOUR, NORI_LINKS } from '@/lib/nori/script'
 // Mets ici l'URL R2 de l'avatar de Nori si tu en as une ; sinon emblème ✦.
 const NORI_AVATAR = ''
 const SEEN_KEY = 'nori_tour_seen_v1'
+let noriAutoOpened = false
 const GAP = 64           // distance centre-orbe -> bord bulle
 const BUBBLE_EST = 270   // hauteur estimée pour éviter tout débordement vertical
 const M = 16
@@ -44,6 +45,7 @@ function detectInvestor() {
 export function NoriGuide() {
   const router = useRouter()
   const pathname = usePathname()
+  const navStepRef = useRef<number | null>(null)
   const rulerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   const [isInvestor, setIsInvestor] = useState(false)
@@ -94,9 +96,11 @@ export function NoriGuide() {
     try { s = !!localStorage.getItem(SEEN_KEY) } catch {}
     setSeen(s)
     const idt = setTimeout(() => setIsInvestor(detectInvestor()), 60)
-    if (!s) {
+    if (!s && !noriAutoOpened) {
+      noriAutoOpened = true
+      try { localStorage.setItem(SEEN_KEY, '1') } catch {}
       const t1 = setTimeout(() => setPulse(true), 700)
-      const t2 = setTimeout(() => { setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false) }, 1500)
+      const t2 = setTimeout(() => { setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false); markSeen() }, 1500)
       return () => { clearTimeout(idt); clearTimeout(t1); clearTimeout(t2) }
     }
     return () => clearTimeout(idt)
@@ -125,9 +129,14 @@ export function NoriGuide() {
   // Navigation : Nori se rend sur la page de l'étape courante
   useEffect(() => {
     if (!open || mode !== 'tour') return
+    if (navStepRef.current === i) return
+    const firstRun = navStepRef.current === null
+    navStepRef.current = i
+    if (firstRun) return
     const p = step?.page
     if (p && pathname !== p) router.push(p)
-  }, [open, mode, i, step?.page, pathname, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode, i, step?.page, router])
 
   function markSeen() { setSeen(true); try { localStorage.setItem(SEEN_KEY, '1') } catch {} }
   function openFromFab() { setPulse(false); setIsInvestor(detectInvestor()); setMode(seen ? 'hub' : 'tour'); if (!seen) setI(0); setOpen(true) }

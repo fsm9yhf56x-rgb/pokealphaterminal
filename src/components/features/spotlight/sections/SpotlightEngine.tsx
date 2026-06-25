@@ -48,7 +48,7 @@ function InfoTip({ text }: { text: string }) {
 const TIP_LIQUIDITE = 'Facilité à acheter ou revendre cette carte rapidement, selon le volume de ventes récentes. 100 = très facile à échanger.'
 const TIP_ECART_PSA = "Différence entre le prix d'un exemplaire noté PSA 10 et un exemplaire brut. Indicatif : ne tient pas compte des frais de gradation ni de la probabilité d'obtenir un 10."
 
-export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
+export function SpotlightEngine({ kodo, onEvDetail }: { kodo: KodoSignals | null; onEvDetail?: () => void }) {
   if (!kodo) return null
   const { liquidityScore, gradeEvPsa10Eur, coteFrEur, coteLang } = kodo
 
@@ -80,7 +80,7 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
       label: 'Écart PSA 10',
       value: `${positive ? '+' : '−'}${fmtPrice(Math.abs(gradeEvPsa10Eur), 'EUR')}`,
       sub: 'hors frais et probabilité de note',
-      color: positive ? '#00A368' : SNOW.red,
+      color: SNOW.ink,
       tip: TIP_ECART_PSA,
     })
   }
@@ -120,7 +120,14 @@ export function SpotlightEngine({ kodo }: { kodo: KodoSignals | null }) {
         </div>
       ) : null}
 
-      {coteEntries.length > 0 ? (
+      {onEvDetail && gradeEvPsa10Eur != null ? (
+          <button onClick={onEvDetail} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, padding: 0, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display }}>
+            Faut-il la grader ? Voir le calcul complet
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        ) : null}
+
+        {coteEntries.length > 0 ? (
         <div style={{ marginTop: tiles.length > 0 ? 12 : 0, paddingTop: tiles.length > 0 ? 12 : 0, borderTop: tiles.length > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
           <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 8 }}>Cote par langue</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

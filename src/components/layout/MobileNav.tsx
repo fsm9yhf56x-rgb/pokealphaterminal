@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
+import { BrandMark } from '@/components/brand/BrandMark'
 
 /**
  * MobileNav v2 — drawer de navigation principale < 1024px, Snow+ epure.
@@ -58,8 +59,7 @@ export function MobileNav() {
         aria-label="Navigation principale"
       >
         <div className="kmnav-brand">
-          <span className="kmnav-brand-name">Kodo<span style={{ color: '#E03020' }}> Cards</span></span>
-          <span aria-hidden className="kmnav-live" />
+          <BrandMark size={22} inline signature mark={false} />
         </div>
 
         <div className="kmnav-eyebrow">Navigation</div>

@@ -69,7 +69,7 @@ export function GradedEvHub() {
 
   const Header = (
     <>
-      <h1 style={{ fontSize: 34, fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
+      <h1 style={{ fontSize: "clamp(24px, 6.5vw, 34px)", fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
         Faut-il grader tes cartes ?
       </h1>
       <p style={{ fontSize: 15, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.6, maxWidth: 700, margin: "0 0 26px" }}>
@@ -157,7 +157,7 @@ export function GradedEvHub() {
           <div style={{ fontSize: 11, color: GREEN, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 6 }}>
             Gain espéré cumulé
           </div>
-          <div style={{ fontSize: 34, fontWeight: 800, color: GREEN, fontFamily: FONT.display, lineHeight: 1, letterSpacing: "-0.01em" }}>
+          <div style={{ fontSize: "clamp(26px, 7vw, 34px)", fontWeight: 800, color: GREEN, fontFamily: FONT.display, lineHeight: 1, letterSpacing: "-0.01em" }}>
             +{fmtEur(totalUpside)}
           </div>
           <div style={{ fontSize: 12, color: SNOW.muted, fontFamily: FONT.body, marginTop: 8 }}>
@@ -210,6 +210,8 @@ export function GradedEvHub() {
 
       {/* Tableau */}
       <div style={card}>
+          <div style={{ overflowX: "auto" }}>
+          <div style={{ minWidth: 600 }}>
         <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 14, color: SNOW.mutedLight, fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, fontFamily: FONT.data, padding: "8px 12px", borderBottom: `1px solid ${SNOW.border}` }}>
           <div>Carte</div>
           <div style={{ textAlign: "right" }}>Gem PSA 10</div>
@@ -258,6 +260,8 @@ export function GradedEvHub() {
           </div>
         )}
       </div>
+          </div>
+          </div>
 
       <div style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 14, lineHeight: 1.5, maxWidth: 760 }}>
         Gain espéré net après ~{fmtEur(25)} de frais de gradation estimés et le prix actuel de la carte.

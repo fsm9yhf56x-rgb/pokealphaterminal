@@ -104,10 +104,9 @@ function LangFilter({ sets, value, onChange }: {
       .map(l => ({ key: l, label: `${LANG_META[l].flag} ${LANG_META[l].label}` })),
   ]
   return (
-    <div style={{
-      display: 'flex', justifyContent: 'center', gap: 8,
-      marginBottom: 36, flexWrap: 'wrap' as const,
-    }}>
+    <div className="kc-langfilter" style={{ overflowX: 'auto', marginBottom: 36 }}>
+      <style>{`.kc-langfilter::-webkit-scrollbar{display:none}.kc-langfilter{scrollbar-width:none}`}</style>
+      <div style={{ display: 'flex', gap: 8, width: 'max-content', margin: '0 auto', padding: '0 2px' }}>
       {options.map(o => {
         const active = value === o.key
         return (
@@ -134,6 +133,7 @@ function LangFilter({ sets, value, onChange }: {
           </button>
         )
       })}
+    </div>
     </div>
   )
 }

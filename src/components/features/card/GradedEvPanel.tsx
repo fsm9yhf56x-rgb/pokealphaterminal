@@ -103,7 +103,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
 
   if (!data.available) {
     return (
-      <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
+      <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
         {titleBlock}
         <div style={{ fontSize: 15, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display, marginBottom: 6 }}>
           Faut-il la grader ?
@@ -120,7 +120,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   if (data.locked) {
     const pop = data.popTotal ?? 0
     return (
-      <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
+      <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
         {titleBlock}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 20, flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 320px" }}>
@@ -154,10 +154,11 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   const maxProba = Math.max(...rows.map((r) => r.proba), 0.001)
 
   return (
-    <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "26px 28px" }}>
+    <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
       {titleBlock}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
+      <style>{`.gev-grade-grid{grid-template-columns:62px 1fr 84px 92px}@media (max-width:480px){.gev-grade-grid{grid-template-columns:42px 1fr 58px 66px}}`}</style>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
         <div style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", borderRadius: 11, background: rs.bg, color: rs.fg, fontSize: 14, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".01em" }}>
           {rs.label}
         </div>
@@ -199,7 +200,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
           <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 12 }}>
             Selon la note obtenue
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "62px 1fr 84px 92px", gap: "4px 12px", alignItems: "center", marginBottom: 4 }}>
+          <div className="gev-grade-grid" style={{ display: "grid", gap: "4px 12px", alignItems: "center", marginBottom: 4 }}>
             <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Note</div>
             <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Probabilité</div>
             <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em", textAlign: "right" }}>Valeur</div>
@@ -209,7 +210,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
             const net = round2(r.price - fee - raw)
             const pos = net > 0
             return (
-              <div key={r.grade} style={{ display: "grid", gridTemplateColumns: "62px 1fr 84px 92px", gap: "0 12px", alignItems: "center", padding: "6px 0" }}>
+              <div key={r.grade} className="gev-grade-grid" style={{ display: "grid", gap: "0 12px", alignItems: "center", padding: "6px 0" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.data }}>PSA {r.grade}</div>
                 <div style={{ position: "relative", height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: "hidden" }}>
                   <div style={{ position: "absolute", inset: 0, width: `${Math.max((r.proba / maxProba) * 100, 3)}%`, background: pos ? "linear-gradient(90deg,#00A368,#1aa877)" : "linear-gradient(90deg,#c7c7cc,#d8d8dc)", borderRadius: 5 }} />

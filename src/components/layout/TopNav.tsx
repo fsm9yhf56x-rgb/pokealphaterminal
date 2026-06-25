@@ -177,7 +177,7 @@ export function TopNav() {
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.035)' }}
           onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
-          <BrandMark size={28} inline signature mark={false} />
+          <BrandMark size={28} inline signature mark={false} responsive />
         </Link>
 
         {/* Nav items + indicateur glissant */}

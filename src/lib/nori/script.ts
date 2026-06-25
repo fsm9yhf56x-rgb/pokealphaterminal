@@ -33,7 +33,7 @@ export const NORI_TOUR: NoriStep[] = [
     title: "Salut, c'est Nori",
     lines: [
       'Ton experte cartes — je connais ce terminal par cœur.',
-      "Je te fais le tour ? Promis, c'est indolore.",
+      "Je te fais le tour ? Promis, c'est rapide.",
     ],
     page: P.home,
   },
@@ -127,7 +127,7 @@ export const NORI_TOUR: NoriStep[] = [
     id: 'plans',
     title: 'Free, Pro, Premium',
     lines: [
-      "Free t'emmène déjà loin. Pro débloque tout, Premium ajoute le marché gradé.",
+      "Free t'emmène déjà loin. Pro débloque ta collection, et Premium pousse tout plus loin : gradation, marché gradé et signaux à venir.",
       "Et l'Early à -40 % à vie, tant qu'il reste des places. Je dis ça…",
     ],
     cta: 'premium',

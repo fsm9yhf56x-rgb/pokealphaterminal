@@ -24,6 +24,8 @@ import { useAuth } from "@/lib/useAuth"
 import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
 import { SNOW, FONT, GLASS, RADIUS, EASE } from "@/lib/design/snow"
+import AuthModal from "@/components/layout/AuthModal"
+import { GuestGate } from "@/components/upgrade/GuestGate"
 
 type CardDetailExtra = TCGCardFull & {
   description?: string
@@ -162,6 +164,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [gradedCompany, setGradedCompany] = useState<string>("PSA")
   const [activeTab, setActiveTab] = useState<TabKey>("prix")
+  const [authOpen, setAuthOpen] = useState(false)
 
   // Tilt 3D + reflet (DOM direct = zero re-render)
   const tiltRef = useRef<HTMLDivElement>(null)
@@ -280,7 +283,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const isFollowed = !!followed
   const toggleFollow = async () => {
     setFollowMsg(null)
-    if (!user) { setFollowMsg("Connecte-toi pour suivre cette carte."); return }
+    if (!user) { setAuthOpen(true); return }
     if (isFollowed && followed) { await deleteWishItem(followed.id); return }
     const res = await addWishItem({
       card_name: card.name,
@@ -722,11 +725,16 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     { key: "grade", label: "Gradation" },
     { key: "infos", label: "Détails" },
   ]
+  const GUEST_TAB: Partial<Record<TabKey, { title: string; desc: string; minHeight?: number }>> = {
+    prix: { title: "Sa valeur dans chaque état", desc: "Near Mint, Lightly Played, gradée… découvre la cote complète de cette carte. C'est gratuit.", minHeight: 300 },
+    histo: { title: "L'évolution de sa cote", desc: "Le graphe complet de son prix dans le temps, pour repérer le bon moment. Crée ton compte gratuit.", minHeight: 260 },
+    grade: { title: "Faut-il la faire grader ?", desc: "Le calcul complet : valeur gradée, population PSA, espérance de gain. Gratuit dès l'inscription.", minHeight: 300 },
+  }
   const renderTab = (k: TabKey) => {
-    if (k === "prix") return <TabPrix />
-    if (k === "histo") return <TabHisto />
-    if (k === "grade") return <TabGrade />
-    return <TabInfos />
+    const content = k === "prix" ? <TabPrix /> : k === "histo" ? <TabHisto /> : k === "grade" ? <TabGrade /> : <TabInfos />
+    const g = !user ? GUEST_TAB[k] : undefined
+    if (g) return <GuestGate locked title={g.title} desc={g.desc} minHeight={g.minHeight}>{content}</GuestGate>
+    return content
   }
 
   return (
@@ -909,6 +917,14 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </Link>
           </div>
+        ) : !user ? (
+          <div style={{ textAlign: "center", padding: "20px 0 8px" }}>
+            <div style={{ fontSize: 14.5, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16 }}>Crée ton compte gratuit pour ajouter cette carte et suivre sa valeur.</div>
+            <button onClick={() => setAuthOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 24px", borderRadius: 13, background: "#E03020", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 6px 18px rgba(224,48,32,0.28)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Créer mon compte — gratuit
+            </button>
+          </div>
         ) : (
           <div style={{ textAlign: "center", padding: "20px 0 8px" }}>
             <div style={{ fontSize: 14.5, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16 }}>Tu ne possèdes pas encore cette carte.</div>
@@ -922,15 +938,26 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
 
       {/* Barre d'action sticky (mobile) */}
       <div className="kc-sticky-cta">
-        <button onClick={toggleFollow} aria-label={isFollowed ? "Ne plus suivre" : "Suivre cette carte"} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, height: 48, padding: "0 17px", borderRadius: 13, background: isFollowed ? "rgba(224,48,32,0.08)" : SNOW.surface, border: isFollowed ? "1px solid rgba(224,48,32,0.28)" : `1px solid ${SNOW.border}`, color: isFollowed ? "#E03020" : SNOW.ink, fontSize: 14, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : SNOW.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          {isFollowed ? "Suivie" : "Suivre"}
-        </button>
-        <Link href="/portfolio" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          {owned.length > 0 ? "Gérer ma collection" : "Ajouter à ma collection"}
-        </Link>
+        {!user ? (
+          <button onClick={() => setAuthOpen(true)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#E03020", color: "#fff", border: "none", cursor: "pointer", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 16px rgba(224,48,32,0.3)" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Créer mon compte — gratuit
+          </button>
+        ) : (
+          <>
+            <button onClick={toggleFollow} aria-label={isFollowed ? "Ne plus suivre" : "Suivre cette carte"} style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, height: 48, padding: "0 17px", borderRadius: 13, background: isFollowed ? "rgba(224,48,32,0.08)" : SNOW.surface, border: isFollowed ? "1px solid rgba(224,48,32,0.28)" : `1px solid ${SNOW.border}`, color: isFollowed ? "#E03020" : SNOW.ink, fontSize: 14, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : SNOW.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              {isFollowed ? "Suivie" : "Suivre"}
+            </button>
+            <Link href="/portfolio" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              {owned.length > 0 ? "Gérer ma collection" : "Ajouter à ma collection"}
+            </Link>
+          </>
+        )}
       </div>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode="signup" />
 
       <style>{`
         @keyframes kcRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }

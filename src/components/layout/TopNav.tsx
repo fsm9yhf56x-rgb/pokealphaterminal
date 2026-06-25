@@ -7,6 +7,7 @@ import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
 import { MobileNav } from './MobileNav'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
+import { BrandMark } from '@/components/brand/BrandMark'
 
 /**
  * TopNav v12 — magnetic glass + wordmark typographique.
@@ -122,6 +123,20 @@ export function TopNav() {
           letter-spacing: 0; line-height: 1;
         }
 
+        /* Signature sous le wordmark */
+        .knav-lockup { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+        .knav-sig {
+          display: flex; align-items: center; gap: 6px;
+          font-family: var(--font-sora, 'Sora', sans-serif);
+          font-size: 8px; font-weight: 600; letter-spacing: 0.24em;
+          text-transform: uppercase; color: #86868B; line-height: 1; white-space: nowrap;
+          padding-left: 2px;
+        }
+        .knav-sig-dot { color: #C7C7CC; font-weight: 700; }
+        .knav-sig-jp { font-family: 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif; color: #E03020; font-size: 10px; letter-spacing: 0.06em; }
+        @media (max-width: 1023px) { .knav-sig { display: none !important; } }
+
+
         @media (max-width: 1023px) {
           .knav-bar { padding-inline: 14px !important; }
           .knav-items { display: none !important; }
@@ -162,10 +177,7 @@ export function TopNav() {
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.035)' }}
           onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
-          <span className="knav-word">
-            <span className="knav-word-kodo">Kodo</span>
-            <span className="knav-word-cards">Cards</span>
-          </span>
+          <BrandMark size={28} inline signature />
         </Link>
 
         {/* Nav items + indicateur glissant */}

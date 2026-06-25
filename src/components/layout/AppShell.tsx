@@ -2,6 +2,7 @@
 import { TopNav }    from './TopNav'
 import { SubMenu }   from './SubMenu'
 import { Footer }    from './Footer'
+import { NoriGuide } from '@/components/nori/NoriGuide'
 
 const HEADER_H = '58px'
 
@@ -122,6 +123,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Footer />
         </div>
       </div>
+
+      {/* Guide interactif Nori (bouton flottant + tour) */}
+      <NoriGuide />
     </div>
   )
 }

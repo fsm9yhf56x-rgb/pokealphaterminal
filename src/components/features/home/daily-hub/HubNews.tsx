@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { newsSlug } from '@/lib/news-slug'
 
-type Item = { title: string; date: string; slug?: string; summary?: string | null }
+type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null }
 
 const clamp = (n: number) =>
   ({ display: '-webkit-box', WebkitLineClamp: String(n), WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' })
@@ -89,14 +89,29 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
             <Link
               key={i}
               href={`/actu/${it.slug || newsSlug(it.title)}`}
-              className="knews-card relative flex h-[74px] w-[300px] shrink-0 flex-col justify-center overflow-hidden rounded-xl border border-[#E5E5EA] bg-white py-2 pl-4 pr-3.5 no-underline"
+              className="knews-card relative flex h-[74px] w-[320px] shrink-0 items-stretch overflow-hidden rounded-xl border border-[#E5E5EA] bg-white no-underline"
             >
-              <span aria-hidden className="absolute left-0 top-0 h-full w-[3px]" style={{ background: accent }} />
-              <span className="text-[13px] font-semibold leading-snug text-[#1D1D1F]" style={clamp(2)}>
-                {it.title}
-              </span>
-              <span className="mt-1 text-[10.5px] font-medium text-[#86868B]" style={{ fontFamily: 'var(--font-mono)' }}>
-                il y a {rel(it.date)}
+              <span aria-hidden className="absolute left-0 top-0 z-10 h-full w-[3px]" style={{ background: accent }} />
+              {it.image ? (
+                <span className="relative h-full w-[58px] shrink-0 overflow-hidden bg-[#F5F5F7]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={it.image}
+                    alt=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover"
+                    onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+                  />
+                </span>
+              ) : null}
+              <span className="flex min-w-0 flex-1 flex-col justify-center py-2 pl-3.5 pr-3">
+                <span className="text-[13px] font-semibold leading-snug text-[#1D1D1F]" style={clamp(2)}>
+                  {it.title}
+                </span>
+                <span className="mt-1 text-[10.5px] font-medium text-[#86868B]" style={{ fontFamily: 'var(--font-mono)' }}>
+                  il y a {rel(it.date)}
+                </span>
               </span>
             </Link>
           ))}

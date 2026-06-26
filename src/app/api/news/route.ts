@@ -2,13 +2,17 @@ import { NextResponse } from 'next/server'
 import { newsSlug } from '@/lib/news-slug'
 
 /**
- * Actu TCG Pokémon — fil de titres 100% cartes, cohérent et en français.
- * Sources : PokeGuardian + PokeBeach (références mondiales TCG, via Google News).
- * Mise en français (générée une fois, puis cache news_cache) :
- *   1) si ANTHROPIC_API_KEY présente -> Claude Haiku (titre FR court + résumé FR riche) ;
- *   2) sinon -> traduction GRATUITE Google (sans clé) du titre + résumé éditorial générique.
- * Reformulation/traduction = contenu légitimement nôtre. Aucune source citée, aucun lien sortant.
- * On n'utilise jamais le lien (redirection Google) : lecture sur notre page /actu.
+ * Actu TCG Pokémon — fil de titres 100% cartes, en français, AVEC vignette.
+ * Sources : flux RSS NATIFS (titre + image) :
+ *   - PrimeTimePokemon (EN, TCG-pur, media:thumbnail Blogger)
+ *   - PokeBeach front-page (EN, TCG-pur, <img> dans description)
+ *   - Pokelite (FR, collection/marché, featured image WordPress)
+ *   - Pokemon-France (FR, généraliste -> filtré JCC, featured image WordPress)
+ * Mise en français (générée 1x puis cache news_cache) :
+ *   1) si ANTHROPIC_API_KEY -> Claude Haiku (titre FR + résumé FR) ;
+ *   2) sinon -> traduction GRATUITE Google du titre + résumé éditorial générique.
+ * Reformulation/traduction = contenu légitimement nôtre. Aucune source, aucun lien sortant.
+ * L'image vient du flux source (vignette éditoriale), affichée sur notre fil + page /actu.
  * Cache route 30 min.
  */
 export const revalidate = 1800
@@ -16,12 +20,23 @@ export const maxDuration = 30
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
-// Résumé éditorial générique quand on n'a pas de moteur de résumé (mode traduction gratuite).
 const GENERIC_FR = 'Une actualité du marché des cartes Pokémon, suivie par Kodo Wire.'
 
-const FEEDS = [
-  'https://news.google.com/rss/search?q=site:pokeguardian.com&hl=en-US&gl=US&ceid=US:en',
-  'https://news.google.com/rss/search?q=site:pokebeach.com&hl=en-US&gl=US&ceid=US:en',
+// Mots-clés TCG génériques (sources généralistes Pokémon : on garde le volet cartes).
+const TCG_KEYS = /\b(tcg|jcc|carte|cartes|card|cards|booster|boosters|extension|set|coffret|etb|elite trainer|scellé|scelle|sealed|psa|gradation|graded|illustration rare|secret rare|alt art|chase|pull|display|ev\d|sv\d{2,}|mega[- ]?évolution|mega[- ]?evolution)\b/i
+// Garde-fou POKÉMON : sources multi-TCG (Pokelite couvre aussi Riftbound/LoL, One Piece...).
+// Doit mentionner Pokémon OU un terme exclusivement Pokémon. Exclut les autres licences TCG.
+const POKEMON_KEYS = /\b(pok[ée]mon|pok[ée]|jcc|tcg pok|dracaufeu|charizard|pikachu|mewtwo|rayquaza|évoli|eevee|ex |[- ]ex\b|méga[- ]|mega[- ]ex|scarlet|violet|écarlate|paldea|sv\d|me\d|nintendo)\b/i
+const NOT_POKEMON = /\b(league of legends|riftbound|one piece|yu-?gi-?oh|magic the gathering|mtg|lorcana|disney lorcana|digimon|flesh and blood|star wars unlimited|gundam|weiss schwarz|dragon ball)\b/i
+
+type Feed = { url: string; tcgOnly: boolean }
+
+// tcgOnly:false = source déjà 100% TCG -> on prend tout ; true = généraliste -> on filtre.
+const FEEDS: Feed[] = [
+  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false },
+  { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false },
+  { url: 'https://www.pokelite.fr/feed/', tcgOnly: true },
+  { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true },
 ]
 
 function decode(s: string): string {
@@ -38,20 +53,50 @@ function tag(block: string, name: string): string {
   return (m ? m[1] : '').replace(/<!\[CDATA\[|\]\]>/g, '')
 }
 
-type Raw = { titleEn: string; date: string; ts: number }
+/* ── Extraction d'image, par ordre de fiabilité ───────────────────────── */
+function extractImage(block: string): string | null {
+  // 1) media:thumbnail / media:content (Blogger=PrimeTime, certains WP)
+  let m = block.match(/<media:(?:thumbnail|content)[^>]*\burl="([^"]+)"/i)
+  if (m) {
+    let u = m[1]
+    // Blogger sert du /s72-c/ (72px carré) -> on élargit à /s1600/ (pleine def)
+    u = u.replace(/\/s\d+(?:-c)?\//, '/s1600/')
+    return u
+  }
+  // 2) <enclosure url="..." type="image/...">
+  m = block.match(/<enclosure[^>]*\burl="([^"]+)"[^>]*type="image\//i)
+  if (m) return m[1]
+  // 3) 1er <img src> dans content:encoded ou description (WordPress=Pokelite/PF, PokeBeach)
+  const html = decode(tag(block, 'content:encoded') || tag(block, 'description') || '')
+  m = html.match(/<img[^>]*\bsrc="([^"]+)"/i)
+  if (m) return m[1]
+  return null
+}
 
-async function fetchFeed(url: string): Promise<Raw[]> {
+type Raw = { titleEn: string; date: string; ts: number; image: string | null }
+
+async function fetchFeed(feed: Feed): Promise<Raw[]> {
   try {
-    const res = await fetch(url, { next: { revalidate }, headers: { 'User-Agent': UA, 'Accept': 'application/rss+xml, application/xml, text/xml' }, redirect: 'follow' })
+    const res = await fetch(feed.url, { next: { revalidate }, headers: { 'User-Agent': UA, 'Accept': 'application/rss+xml, application/xml, text/xml' }, redirect: 'follow' })
     if (!res.ok) return []
     const xml = await res.text()
     const out: Raw[] = []
     for (const block of xml.split('<item>').slice(1)) {
       const titleEn = clean(tag(block, 'title')).replace(/\s+[-–—]\s+[^-–—]+$/, '').trim()
       if (!titleEn || titleEn.length < 8) continue
+      // Filtre sur les sources généralistes / multi-TCG (titre + catégories).
+      if (feed.tcgOnly) {
+        const cats = decode((block.match(/<category[^>]*>([\s\S]*?)<\/category>/gi) || []).join(' '))
+        const hay = titleEn + ' ' + cats
+        // Exclut explicitement les autres licences TCG (LoL Riftbound, One Piece, MTG...)
+        if (NOT_POKEMON.test(hay)) continue
+        // Doit être identifiable Pokémon ET toucher au volet cartes/TCG
+        if (!POKEMON_KEYS.test(hay)) continue
+        if (!TCG_KEYS.test(hay)) continue
+      }
       const dateStr = (tag(block, 'pubDate') || tag(block, 'dc:date') || tag(block, 'published')).trim()
       const ts = new Date(dateStr).getTime() || 0
-      out.push({ titleEn, date: dateStr, ts })
+      out.push({ titleEn, date: dateStr, ts, image: extractImage(block) })
     }
     return out
   } catch {
@@ -60,7 +105,6 @@ async function fetchFeed(url: string): Promise<Raw[]> {
 }
 
 /* ── Moteur 1 : Claude Haiku (si clé) — titre FR + résumé FR ──────────── */
-
 function buildPrompt(title: string): string {
   return `Tu es l'éditeur de Kodo Cards, plateforme française dédiée aux cartes Pokémon (TCG). À partir du seul titre d'actualité ci-dessous (en anglais), produis :
 - "titre" : une version française courte et fidèle du titre (12 mots maximum). Garde les noms de sets, produits et cartes en anglais. N'invente rien.
@@ -102,7 +146,6 @@ async function reformulate(title: string): Promise<{ titre: string; resume: stri
 }
 
 /* ── Moteur 2 : traduction GRATUITE Google (sans clé) ─────────────────── */
-
 async function translateFR(text: string): Promise<string | null> {
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=${encodeURIComponent(text)}`
@@ -136,6 +179,7 @@ export async function GET() {
       slug: newsSlug(r.titleEn),
       title: r.titleEn as string,
       summary: null as string | null,
+      image: r.image as string | null,
     }))
 
     try {
@@ -144,16 +188,17 @@ export async function GET() {
       const existing = new Set<string>()
       const cTitle: Record<string, string> = {}
       const cSum: Record<string, string | null> = {}
+      const cImg: Record<string, string | null> = {}
       try {
-        const rows: any[] = await sql.query('SELECT slug, title, summary FROM news_cache WHERE slug = ANY($1)', [slugs])
-        for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary }
+        const rows: any[] = await sql.query('SELECT slug, title, summary, image FROM news_cache WHERE slug = ANY($1)', [slugs])
+        for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary; cImg[r.slug] = r.image }
       } catch {}
 
-      const insert = async (slug: string, title: string, summary: string, ts: number) => {
+      const insert = async (slug: string, title: string, summary: string, image: string | null, ts: number) => {
         try {
           await sql.query(
             'INSERT INTO news_cache (slug, title, summary, image, news_date) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (slug) DO NOTHING',
-            [slug, title, summary, null, ts ? new Date(ts) : null],
+            [slug, title, summary, image, ts ? new Date(ts) : null],
           )
         } catch {}
       }
@@ -162,6 +207,8 @@ export async function GET() {
         if (existing.has(p.slug)) {
           if (cTitle[p.slug]) p.title = cTitle[p.slug]
           p.summary = cSum[p.slug]
+          // image cachée prioritaire ; sinon on garde celle du flux courant
+          if (cImg[p.slug]) p.image = cImg[p.slug]
           return
         }
         // 1) Haiku (titre + résumé riches) si une clé est dispo
@@ -169,7 +216,7 @@ export async function GET() {
         if (fr) {
           p.title = fr.titre
           p.summary = fr.resume
-          await insert(p.slug, fr.titre, fr.resume, p.ts)
+          await insert(p.slug, fr.titre, fr.resume, p.image, p.ts)
           return
         }
         // 2) sinon, traduction gratuite du titre + résumé générique
@@ -177,15 +224,15 @@ export async function GET() {
         if (t) {
           p.title = t
           p.summary = GENERIC_FR
-          await insert(p.slug, t, GENERIC_FR, p.ts)
+          await insert(p.slug, t, GENERIC_FR, p.image, p.ts)
           return
         }
-        // 3) sinon : on garde le titre anglais, pas d'insert (réessai au prochain run)
+        // 3) sinon : titre anglais, pas d'insert (réessai au prochain run)
       }))
     } catch {}
 
     return NextResponse.json({
-      items: picked.map(({ title, date, slug, summary }) => ({ title, date, slug, summary })),
+      items: picked.map(({ title, date, slug, summary, image }) => ({ title, date, slug, summary, image })),
       count: uniq.length,
     })
   } catch (e: any) {

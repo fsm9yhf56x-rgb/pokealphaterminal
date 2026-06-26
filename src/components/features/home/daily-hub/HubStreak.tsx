@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useStreak } from "@/lib/useStreak";
 
 /**
@@ -33,6 +34,16 @@ function nextMilestone(streak: number): number | null {
 export function HubStreak() {
   const { data, loading } = useStreak();
   const [hover, setHover] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  // Position fixed du tooltip (calculee depuis le badge) -> rendu en portal sur
+  // document.body pour echapper au stacking context du header (backdrop-filter des
+  // cartes glass) qui faisait passer le tooltip DERRIERE la carte news.
+  const [tipPos, setTipPos] = useState<{ top: number; right: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!hover || !wrapRef.current) { setTipPos(null); return; }
+    const r = wrapRef.current.getBoundingClientRect();
+    setTipPos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) });
+  }, [hover]);
 
   // Masque si deconnecte ou pas encore charge
   if (loading || !data || data.current < 1) return null;
@@ -44,6 +55,7 @@ export function HubStreak() {
 
   return (
     <div
+      ref={wrapRef}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{ position: "relative", display: "inline-block" }}
@@ -123,14 +135,17 @@ export function HubStreak() {
         )}
       </div>
 
-      {/* Tooltip glass au survol : record + progression */}
-      {hover && (
+      {/* Tooltip glass au survol : record + progression.
+          Rendu en PORTAL sur document.body (position fixed depuis le badge) pour
+          passer AU-DESSUS de la carte news (stacking context du header sinon). */}
+      {hover && tipPos && createPortal(
         <div
           style={{
-            position: "absolute",
-            top: "calc(100% + 8px)",
-            right: 0,
-            zIndex: 20,
+            position: "fixed",
+            top: tipPos.top,
+            right: tipPos.right,
+            zIndex: 2147483000,
+            pointerEvents: "none",
             minWidth: 180,
             padding: "12px 14px",
             background: "rgba(255,255,255,0.88)",
@@ -178,7 +193,8 @@ export function HubStreak() {
               </span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

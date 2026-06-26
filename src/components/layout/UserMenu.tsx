@@ -23,14 +23,33 @@ export default function UserMenu() {
   const { persona } = usePersona()
   const isMobile = useIsMobile()
   const [switching, setSwitching] = useState<null | 'collector' | 'investor'>(null)
+  // Une route n'est valide pour le nouveau mode que si elle n'est pas gatee :
+  //  - /culture/* = collectorOnly -> interdit en investor
+  //  - /market/* + /portfolio/performance = collectorHide -> interdit en collector
+  // Sinon (Home, Portfolio, Cartes...) la page existe pour les deux -> on reste sur
+  // place, le re-render reactif (usePersona) suffit : zero nav, zero flash.
+  function routeAllowedFor(path: string, mode: 'collector' | 'investor'): boolean {
+    const collectorOnly = path === '/culture' || path.startsWith('/culture/')
+    const collectorHide =
+      path === '/market' || path.startsWith('/market/') || path === '/portfolio/performance'
+    if (mode === 'investor' && collectorOnly) return false
+    if (mode === 'collector' && collectorHide) return false
+    return true
+  }
   async function toggleMode() {
     const next = persona === 'investor' ? 'collector' : 'investor'
     setSwitching(next)               // fait glisser le curseur visuellement
+    // updateProfile = update OPTIMISTE local instantane (setProfileLocal) ->
+    // usePersona() propage tout de suite, les libelles/visibilite changent sans
+    // reload. On NE navigue PAS si la page courante reste valide pour le nouveau
+    // mode (rester sur place = pas de remount = pas de clignotement). On redirige
+    // uniquement si la route devient interdite (Culture<->Market/Performance).
     try {
       await updateProfile({ persona: next, persona_onboarded: true } as never)
-      window.location.href = '/home' // reload + Daily Hub du nouveau mode
+      const path = window.location.pathname
+      if (!routeAllowedFor(path, next)) router.push('/portfolio')
     } catch {
-      setSwitching(null)
+      setSwitching(next === 'investor' ? 'collector' : 'investor') // revert curseur
     }
   }
   const [modeOpen, setModeOpen] = useState(false)
@@ -151,9 +170,7 @@ export default function UserMenu() {
                 display: 'inline-flex', alignItems: 'center', gap: isMobile ? 0 : 9,
                 height: 36, padding: isMobile ? '0 6px' : '0 13px 0 7px', borderRadius: 999,
                 cursor: 'pointer',
-                background: 'rgba(255,255,255,0.62)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                background: 'transparent',
                 border: 'none',
                 boxShadow: 'none',
                 transition: 'transform .2s cubic-bezier(.2,.85,.3,1)',

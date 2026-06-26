@@ -4,22 +4,25 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { newsSlug } from '@/lib/news-slug'
 
-type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null }
+type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null; lang?: 'fr' | 'en' }
 
 const clamp = (n: number) =>
   ({ display: '-webkit-box', WebkitLineClamp: String(n), WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' })
 
+// Renvoie le libellé prêt à afficher (avec ou sans "il y a" selon le cas).
 function rel(d: string): string {
   const t = new Date(d).getTime()
   if (!t) return ''
   const diff = Date.now() - t
   const day = 864e5
-  if (diff < 36e5) return `${Math.max(1, Math.round(diff / 6e4))} min`
-  if (diff < day) return `${Math.round(diff / 36e5)} h`
+  if (diff < 0) return "à l'instant"
+  if (diff < 36e5) return `il y a ${Math.max(1, Math.round(diff / 6e4))} min`
+  if (diff < day) return `il y a ${Math.round(diff / 36e5)} h`
   const dd = Math.round(diff / day)
   if (dd === 1) return 'hier'
-  if (dd < 7) return `${dd} j`
-  return new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  if (dd < 7) return `il y a ${dd} j`
+  // au-delà d'une semaine : date absolue, SANS "il y a"
+  return `le ${new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
 }
 
 /**
@@ -30,10 +33,11 @@ function rel(d: string): string {
 export function HubNews({ accent = '#E03020' }: { accent?: string }) {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [lang, setLang] = useState<'all' | 'fr' | 'en'>('all')
 
   useEffect(() => {
     let on = true
-    fetch('/api/news')
+    fetch('/api/news', { cache: 'no-store' })
       .then(r => r.json())
       .then(d => { if (on) setItems(Array.isArray(d.items) ? d.items : []) })
       .catch(() => {})
@@ -50,8 +54,13 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
   }
   if (!items.length) return null
 
-  const loop = [...items, ...items]
-  const dur = Math.max(36, items.length * 5)
+  const shown = lang === 'all' ? items : items.filter(i => (i.lang || 'en') === lang)
+  const list = shown.length ? shown : items
+  const loop = [...list, ...list]
+  const dur = Math.max(36, list.length * 5)
+  const hasFr = items.some(i => i.lang === 'fr')
+  const hasEn = items.some(i => i.lang === 'en')
+  const showFilter = hasFr && hasEn
 
   return (
     <div>
@@ -75,6 +84,25 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
         </span>
         <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1D1D1F]">Actu TCG</span>
         <span className="text-[11px] font-medium text-[#86868B]">en direct</span>
+        {showFilter && (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#F5F5F7] p-0.5">
+            {(['all', 'fr', 'en'] as const).map(l => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide transition-colors"
+                style={{
+                  background: lang === l ? '#fff' : 'transparent',
+                  color: lang === l ? '#1D1D1F' : '#86868B',
+                  boxShadow: lang === l ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                }}
+              >
+                {l === 'all' ? 'Tout' : l}
+              </button>
+            ))}
+          </span>
+        )}
       </div>
 
       <div
@@ -110,7 +138,7 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
                   {it.title}
                 </span>
                 <span className="mt-1 text-[10.5px] font-medium text-[#86868B]" style={{ fontFamily: 'var(--font-mono)' }}>
-                  il y a {rel(it.date)}
+                  {rel(it.date)}
                 </span>
               </span>
             </Link>

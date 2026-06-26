@@ -29,14 +29,14 @@ const TCG_KEYS = /\b(tcg|jcc|carte|cartes|card|cards|booster|boosters|extension|
 const POKEMON_KEYS = /\b(pok[ée]mon|pok[ée]|jcc|tcg pok|dracaufeu|charizard|pikachu|mewtwo|rayquaza|évoli|eevee|ex |[- ]ex\b|méga[- ]|mega[- ]ex|scarlet|violet|écarlate|paldea|sv\d|me\d|nintendo)\b/i
 const NOT_POKEMON = /\b(league of legends|riftbound|one piece|yu-?gi-?oh|magic the gathering|mtg|lorcana|disney lorcana|digimon|flesh and blood|star wars unlimited|gundam|weiss schwarz|dragon ball)\b/i
 
-type Feed = { url: string; tcgOnly: boolean }
+type Feed = { url: string; tcgOnly: boolean; lang: 'fr' | 'en' }
 
 // tcgOnly:false = source déjà 100% TCG -> on prend tout ; true = généraliste -> on filtre.
 const FEEDS: Feed[] = [
-  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false },
-  { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false },
-  { url: 'https://www.pokelite.fr/feed/', tcgOnly: true },
-  { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true },
+  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false, lang: 'en' },
+  { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false, lang: 'en' },
+  { url: 'https://www.pokelite.fr/feed/', tcgOnly: true, lang: 'fr' },
+  { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true, lang: 'fr' },
 ]
 
 function decode(s: string): string {
@@ -73,7 +73,7 @@ function extractImage(block: string): string | null {
   return null
 }
 
-type Raw = { titleEn: string; date: string; ts: number; image: string | null }
+type Raw = { titleEn: string; date: string; ts: number; image: string | null; lang: 'fr' | 'en' }
 
 async function fetchFeed(feed: Feed): Promise<Raw[]> {
   try {
@@ -96,7 +96,7 @@ async function fetchFeed(feed: Feed): Promise<Raw[]> {
       }
       const dateStr = (tag(block, 'pubDate') || tag(block, 'dc:date') || tag(block, 'published')).trim()
       const ts = new Date(dateStr).getTime() || 0
-      out.push({ titleEn, date: dateStr, ts, image: extractImage(block) })
+      out.push({ titleEn, date: dateStr, ts, image: extractImage(block), lang: feed.lang })
     }
     return out
   } catch {
@@ -180,6 +180,7 @@ export async function GET() {
       title: r.titleEn as string,
       summary: null as string | null,
       image: r.image as string | null,
+      lang: r.lang as 'fr' | 'en',
     }))
 
     try {
@@ -232,7 +233,7 @@ export async function GET() {
     } catch {}
 
     return NextResponse.json({
-      items: picked.map(({ title, date, slug, summary, image }) => ({ title, date, slug, summary, image })),
+      items: picked.map(({ title, date, slug, summary, image, lang }) => ({ title, date, slug, summary, image, lang })),
       count: uniq.length,
     })
   } catch (e: any) {

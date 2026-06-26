@@ -549,3 +549,7 @@ body.kc-modal-open .ticker-track {
   filter: blur(2px);
   transition: opacity 0.3s, filter 0.3s;
 }
+
+/* scrolltop-fab : empile au-dessus du FAB Nori (qui descend a bottom:84px en mobile,
+   sommet ~144px). On remonte le bouton 'haut de page' pour eviter le chevauchement. */
+@media (max-width:600px){ .scrolltop-fab{ bottom:152px !important; right:16px !important; } }

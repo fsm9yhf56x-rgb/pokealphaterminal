@@ -755,6 +755,10 @@ export function Holdings() {
       // For edition sets, use parent set logo
       const parentSid = sid.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
       const lang = sc[0]?.lang === 'JP' ? 'ja' : sc[0]?.lang === 'EN' ? 'en' : 'fr'
+      // TCGdex ne connait pas les ids JP du catalogue PPT (jp-*, ou slugs type
+      // bw1-white-collection / xy5-bg-gaia-volcano) -> 404 sur le logo. On skip :
+      // logo de set = cosmetique, aucun impact fonctionnel.
+      if (lang === 'ja' || parentSid.startsWith('jp-')) return
       try {
         // Check if parent logo already cached
         if (parentSid !== sid) {

@@ -24,7 +24,7 @@ export function HubHeader() {
   const dateStr = formatLongDate(now)
   const timeStr = formatTime(now)
   const { isCollector } = usePersona()
-  const marketStatus = getMarketStatus(now)
+  void getMarketStatus // marketStatus pill retiree, helper conserve pour reactivation eventuelle
 
   return (
     <div className="hub-header-root" style={{
@@ -85,36 +85,7 @@ export function HubHeader() {
 
       {/* Right : market status pill glass + clock */}
       <div className="hub-header-right" style={{ textAlign: 'right' }}>
-        {/* Market status pill - glass v5 — investisseur uniquement */}
-        {!isCollector && <div style={{
-          ...GLASS.cardSoft,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 7,
-          padding: '5px 12px',
-          borderRadius: 999,
-          marginBottom: 10,
-          // Surchage légère - tinted vers la couleur du statut
-          background: `linear-gradient(180deg, ${withAlpha(marketStatus.color, 0.18)} 0%, ${withAlpha(marketStatus.color, 0.10)} 100%)`,
-          border: `1px solid ${withAlpha(marketStatus.color, 0.3)}`,
-        }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: marketStatus.color,
-            animation: marketStatus.live ? 'pulse-dot 2s ease-in-out infinite' : 'none',
-            boxShadow: marketStatus.live ? `0 0 0 0 ${marketStatus.color}` : 'none',
-          }} />
-          <span style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: marketStatus.color,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            fontFamily: FONT.data,
-          }}>
-            {marketStatus.label}
-          </span>
-        </div>}
+        {/* Market status pill retiree (demande Alon 26/06) ; HubStreak reste sous l'heure. */}
 
         {/* Clock */}
         <div className="hub-clock">

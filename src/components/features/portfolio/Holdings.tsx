@@ -671,13 +671,23 @@ export function Holdings() {
           const match = setCards.find((c: any) => c.lid === card.number || c.id === card.setId + '-' + card.number)
           if (match?.r) { updates[card.id] = match.r; continue }
         }
-        // Fallback API pour les cartes pas dans le dump.
-        // Le setId local "base3-1st" (1st edition) n'existe pas chez TCGdex : strip le suffixe -1st.
-        try {
-          const cleanSetId = String(card.setId).replace(/-1st$/i, '')
-          const detail = await fetchCardDetail(lang, cleanSetId + '-' + card.number)
-          if (detail?.rarity) updates[card.id] = detail.rarity
-        } catch {}
+        // Fallback API (rarete uniquement) pour les cartes pas dans le dump.
+        // TCGdex ne connait QUE les ids canoniques (base1-9). Nos ids Kodo a suffixe
+        // d'edition vintage WotC (base1-shadowless-ns-* = 1st Ed, base1-shadowless-* =
+        // Shadowless) et le catalogue JP (jp-*, migre sur PPT) n'existent pas chez TCGdex
+        // -> 404 garanti. On normalise l'id (strip suffixes edition) et on skip ce que
+        // TCGdex ne resoudra jamais. Prix + images viennent de Kodo/R2, ce fetch ne
+        // touche QUE la rarete cosmetique.
+        const sid = String(card.setId)
+        const isJp = lang === 'JP' || sid.startsWith('jp-')
+        const isVintageSuffixed = /-shadowless(-ns)?$|-1st$/i.test(sid)
+        if (!isJp && !isVintageSuffixed) {
+          try {
+            const cleanSetId = sid.replace(/-shadowless(-ns)?$|-1st$/i, '')
+            const detail = await fetchCardDetail(lang, cleanSetId + '-' + card.number)
+            if (detail?.rarity) updates[card.id] = detail.rarity
+          } catch {}
+        }
       }
       if (Object.keys(updates).length > 0) {
         setPortfolio(prev => prev.map(c => updates[c.id] ? { ...c, rarity: updates[c.id] } : c))
@@ -2733,7 +2743,7 @@ export function Holdings() {
                               if(item.type==='ghost'){
                                 const gi=item
                                 return(
-                                  <div key={'sg-'+gi.number} className="shelf-card"
+                                  <div key={'sg-'+gi.number+'-'+ci} className="shelf-card"
                                     style={{ flexShrink:0, width:'149px', borderRadius:'12px', overflow:'hidden', opacity:.4, transition:'opacity .2s', cursor:'pointer' }}
                                     onMouseEnter={e=>{e.currentTarget.style.opacity='0.6'}}
                                     onMouseLeave={e=>{e.currentTarget.style.opacity='0.4'}}

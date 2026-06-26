@@ -153,9 +153,13 @@ export function useCardPrices(
           }
         }
 
-        const res = await fetch(url)
-        const json = await res.json().catch(() => ({ data: null }))
-        const data: any[] = json.data || []
+        // -- Kodo Engine : route /api/prices (legacy PokeTrace) supprimee a la
+        // migration. Pricing portfolio = cron Kodo (curPrice serveur) + Spotlight
+        // (price_matrix / price_signals). Fetch neutralise (route 404) ; data vide
+        // -> maps vides = etat deja effectif (recompute client desactive Holdings).
+        // Hook a retirer au nettoyage post-launch.
+        void url
+        const data: any[] = []
         if (cancelled) return
 
         const details: Record<string, PriceDetail> = {}

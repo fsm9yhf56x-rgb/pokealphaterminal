@@ -221,6 +221,56 @@ export async function resolveByNumber(input: ResolveByNumberInput): Promise<Reso
   return { status: 'ambiguous', query, candidates: cands }
 }
 
+export interface ResolveByTokensInput {
+  nameRaw?: string | null   // nom OCR brut, possiblement bruite
+  number?: string | null
+  lang?: string | null
+}
+
+/**
+ * Resolution par MOTS du nom (sous-chaine). Pour les cas ou l'OCR ne lit qu'un
+ * fragment du nom ("obscur" au lieu de "Dracaufeu obscur") ou ajoute du bruit
+ * ("obscur Placez"). On extrait les mots de 4+ lettres et on cherche les cartes
+ * dont le nom CONTIENT l'un d'eux (ILIKE), croise avec le numero. Le total est
+ * applique cote route. Beaucoup plus tolerant que le match flou global.
+ */
+export async function resolveByNameTokens(input: ResolveByTokensInput): Promise<ResolveResult> {
+  const number = cleanNumber(input.number || '')
+  const lang = normLang(input.lang)
+  const raw = (input.nameRaw || '').trim()
+  const query = { name: raw || null, number: number || null, lang, total: null }
+
+  if (!number) return { status: 'not_found', query, candidates: [] }
+
+  // mots significatifs : 4+ lettres, sans accents pour le ILIKE unaccent
+  const tokens = (normalizeAccents(raw).toLowerCase().match(/[a-z]{4,}/g) || [])
+    .filter((w) => !['placez', 'place', 'carte', 'niveau', 'evolution', 'pokemon', 'stage', 'basic'].includes(w))
+  if (tokens.length === 0) {
+    // pas de mot exploitable : on retombe sur numero seul (la route filtrera par total)
+    return resolveByNumber({ number, lang })
+  }
+
+  // Construit un OR de ILIKE sur unaccent(name)
+  const likeClauses = tokens.map((_, i) => `lower(unaccent(kc.name_localized)) LIKE $${i + 2}`).join(' OR ')
+  const params: any[] = [number, ...tokens.map((t) => `%${t}%`)]
+  let langClause = ''
+  if (lang) { params.push(lang); langClause = `AND lower(kc.lang) = $${params.length}` }
+
+  const rows = (await sql.query(
+    `${SELECT}, NULL::float AS sim
+     FROM k_cards kc
+     JOIN k_prints kp ON kp.id = kc.print_id
+     LEFT JOIN k_sets ks ON ks.id = kp.set_id
+     WHERE kp.number = $1 AND (${likeClauses}) ${langClause}`,
+    params,
+  )) as Row[]
+
+  if (rows.length === 0) return { status: 'not_found', query, candidates: [] }
+  const cands = sortCandidates(rows.map((r) => toCandidate(r, 'exact')))
+  if (cands.length === 1) return { status: 'match', query, card: cands[0], candidates: cands }
+  return { status: 'ambiguous', query, candidates: cands }
+}
+
 export async function resolveScan(input: ResolveInput): Promise<ResolveResult> {
   const name = (input.name || '').trim()
   const number = cleanNumber(input.number || '')

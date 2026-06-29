@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
-import { resolveScan, resolveByNumber, type ScanCandidate } from '@/lib/scan/resolve-query'
+import { resolveScan, resolveByNumber, resolveByNameTokens, type ScanCandidate } from '@/lib/scan/resolve-query'
 import setIndexRaw from '@/lib/scan/set-index.json'
 
 export const dynamic = 'force-dynamic'
@@ -160,7 +160,12 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Mode A : pivot nom ──
-    const result = await resolveScan({ name, number, lang, total: Number.isFinite(total as any) ? total : null })
+    // 1) tokens sous-chaine (robuste : "obscur Placez" -> token "obscur" matche
+    //    "Dracaufeu obscur"). 2) repli flou global si aucun token n'a matche.
+    let result = await resolveByNameTokens({ nameRaw: name, number, lang })
+    if (result.status === 'not_found' || result.candidates.length === 0) {
+      result = await resolveScan({ name, number, lang, total: Number.isFinite(total as any) ? total : null })
+    }
 
     // Filtre total imprimé : si fourni et discriminant, on restreint aux sets
     // dont le total correspond — SANS jamais vider la liste (best-effort).

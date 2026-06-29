@@ -1,0 +1,26 @@
+name: kodo-ingest-sealed
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: kodo-ingest-sealed
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Ingest sealed (EN + JP)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKEMON_PRICE_TRACKER_API_KEY: ${{ secrets.POKEMON_PRICE_TRACKER_API_KEY }}
+        run: node scripts/kodo-ingest-sealed.mjs

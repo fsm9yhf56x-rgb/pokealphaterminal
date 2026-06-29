@@ -2,16 +2,12 @@
  * /api/graded-ev?print_id=xxx&lang=EN
  *
  * Moteur Graded.ev — "Faut-il grader cette carte ?"
- * Calcule l'esperance de valeur honnête d'une gradation PSA :
- *   - distribution reelle des notes (psa_pop_reports, la bonne variete)
- *   - prix par grade (price_matrix, tier PSA_X, meilleure source par volume)
- *   - prix raw de reference (price_signals.fair_value_eur)
- *   - EV nette = Σ(proba × prix) − frais − raw
+ * PSA (moteur historique, graded-ev.ts) = inchangé : reco + EV complète.
+ * CCC (additif, graded-ev-multi.ts) = pop FR réelle + gem rate, EV seulement
+ * quand la couverture prix le permet. Sociétés FR que PSA ne couvre pas.
  *
- * Gating : Premium = resultat complet. Free/Pro = teaser locke (gemRate +
- * evNette masquee, juste l'accroche), comme /api/pop-report.
- *
- * Aucun fallback synthetique. Si donnees trop partielles → reco INSUFFISANT.
+ * Gating : Premium = résultat complet. Free/Pro = teaser locké.
+ * Aucun fallback synthétique. Données partielles → INSUFFISANT, jamais d'invention.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
@@ -24,6 +20,11 @@ import {
   type PopByGrade,
   type PriceByGrade,
 } from '@/lib/graded-ev'
+import {
+  computeGradedEVByCompany,
+  type GradeBucket,
+  type GradingCompany,
+} from '@/lib/graded-ev-multi'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,8 +53,6 @@ function rowToPop(r: Record<string, unknown>): PopByGrade {
 }
 
 export async function GET(req: NextRequest) {
-  // On NE bloque PAS : on lit le plan pour decider resultat complet (premium)
-  // ou teaser locke (free/pro).
   const user = await getCurrentUserWithProfile()
   const isPremium = !!user && (PLAN_LEVEL[user.plan] ?? 0) >= PLAN_LEVEL['premium']
 
@@ -63,18 +62,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'print_id required' }, { status: 400 })
   }
 
-  // card_ref dans psa_pop_reports est non-prefixe (ex 'base1-1').
-  // print_id peut arriver prefixe (en-base1-1) ou non. On strip le prefixe langue.
   const printIdNoLang = printId.replace(/^(en|fr|jp|aopkm)-/i, '')
-  // card_ref pour psa_pop_reports = BASE (edition dans variety). Sans ca,
-  // les 1st Ed / Shadowless (print_id suffixe) ne matchent jamais la pop.
   const cardRef = printIdNoLang
     .replace(/-shadowless-ns(?=-|$)/i, '')
     .replace(/-shadowless(?=-|$)/i, '')
     .replace(/-1st(?=-|$)/i, '')
 
   try {
-    // ─── 1. Distribution PSA (la bonne variete selon le print) ────────────────
+    // ═══════════════════════════════════════════════════════════════════════
+    // PSA — moteur historique, INCHANGÉ
+    // ═══════════════════════════════════════════════════════════════════════
     const wantedVarieties = varietyCandidatesForPrint(printId)
 
     const popRows = await sql`
@@ -85,95 +82,84 @@ export async function GET(req: NextRequest) {
       ORDER BY pop_total DESC NULLS LAST
     ` as Array<Record<string, unknown>>
 
-    if (popRows.length === 0) {
-      return NextResponse.json({
-        available: false,
-        reason: 'no_pop_data',
-        message: 'Aucune donnée de population PSA pour cette carte.',
-      })
-    }
-
-    // Selection de la variete :
-    //  - si le print impose une variete (1st Edition / Shadowless) → on la cherche
-    //  - sinon → la ligne de plus grande population (la principale = Unlimited)
+    // Édition demandée par le print (sert PSA ET CCC).
     const want1st = !!wantedVarieties && wantedVarieties.some((w) => /1st/i.test(w))
     const wantShadowless = !!wantedVarieties && wantedVarieties.some((w) => /shadowless/i.test(w))
-    const vOf = (r: Record<string, unknown>) => String(r.variety || '').toLowerCase()
-    let popRow: Record<string, unknown> | undefined
-    if (want1st) {
-      popRow = popRows.find((r) => /1st|first/.test(vOf(r)))
-    } else if (wantShadowless) {
-      popRow = popRows.find((r) => vOf(r).includes('shadowless') && !/1st|first/.test(vOf(r)))
-    }
-    // Fallback : variete principale (plus grande pop). Pour l'Unlimited, on
-    // fusionne aussi "Base Set 1999-2000" si c'est la principale — mais la ligne
-    // de plus gros pop_total fait deja le bon choix dans la quasi-totalite des cas.
-    if (!popRow) {
-      // Pour les prints "standard" (sans variete imposee), on ecarte les lignes
-      // explicitement Shadowless / 1st Edition pour ne pas melanger les gem rates.
-      const principal = popRows.find((r) => {
-        const v = String(r.variety || '').toLowerCase()
-        return !v.includes('shadowless') && !v.includes('1st')
-      })
-      popRow = principal ?? popRows[0]
-    }
 
-    const pop = rowToPop(popRow)
-    const variety = (popRow.variety as string) || null
-    const vSel = String(variety || '').toLowerCase()
-    const edition: 'first' | 'shadowless' | 'unlimited' =
-      /1st|first/.test(vSel) ? 'first' : vSel.includes('shadowless') ? 'shadowless' : 'unlimited'
-    const editionsInPop = new Set(
-      popRows.map((r) => {
-        const v = String(r.variety || '').toLowerCase()
-        return /1st|first/.test(v) ? 'first' : v.includes('shadowless') ? 'shadowless' : 'unlimited'
-      }),
-    )
-    const multiEdition = editionsInPop.size > 1
-    const variantMatches = (variant: string): boolean => {
-      if (!multiEdition) return true
-      const x = (variant || '').toLowerCase()
-      if (edition === 'first') return /1st|first/.test(x)
-      if (edition === 'shadowless') return x.includes('shadowless') || x.includes('unlimited')
-      return x.includes('unlimited')
-    }
+    // CCC se calcule même si PSA n'a pas de pop : on ne court-circuite plus ici.
+    let psaResult: Record<string, unknown> | null = null
+    let psaPopTotal = 0
+    let psaVariety: string | null = null
 
-    // ─── 2. Prix par grade (price_matrix, tier PSA_X) ─────────────────────────
-    // On garde, pour chaque grade, la source au plus gros volume de ventes.
-    const priceRows = await sql`
-      SELECT tier, source, variant, spot, avg30d, median30d, sale_count, currency
-      FROM price_matrix
-      WHERE print_id = ${printIdNoLang} AND is_asking = false AND tier LIKE 'PSA%'
-      ORDER BY tier, sale_count DESC NULLS LAST
-    ` as Array<Record<string, unknown>>
+    if (popRows.length > 0) {
+      const vOf = (r: Record<string, unknown>) => String(r.variety || '').toLowerCase()
+      let popRow: Record<string, unknown> | undefined
+      if (want1st) {
+        popRow = popRows.find((r) => /1st|first/.test(vOf(r)))
+      } else if (wantShadowless) {
+        popRow = popRows.find((r) => vOf(r).includes('shadowless') && !/1st|first/.test(vOf(r)))
+      }
+      if (!popRow) {
+        const principal = popRows.find((r) => {
+          const v = String(r.variety || '').toLowerCase()
+          return !v.includes('shadowless') && !v.includes('1st')
+        })
+        popRow = principal ?? popRows[0]
+      }
 
-    const prices: PriceByGrade = {}
-    const bestByGrade: Record<number, { sale_count: number }> = {}
-    for (const r of priceRows) {
-      const tier = String(r.tier || '')
-      const m = tier.match(/^PSA_(\d+)$/) // on ignore les demi-grades (PSA_8_5)
-      if (!m) continue
-      const grade = Number(m[1])
-      if (grade < 1 || grade > 10) continue
+      const pop = rowToPop(popRow)
+      psaPopTotal = pop.total
+      const variety = (popRow.variety as string) || null
+      psaVariety = variety
+      const vSel = String(variety || '').toLowerCase()
+      const edition: 'first' | 'shadowless' | 'unlimited' =
+        /1st|first/.test(vSel) ? 'first' : vSel.includes('shadowless') ? 'shadowless' : 'unlimited'
+      const editionsInPop = new Set(
+        popRows.map((r) => {
+          const v = String(r.variety || '').toLowerCase()
+          return /1st|first/.test(v) ? 'first' : v.includes('shadowless') ? 'shadowless' : 'unlimited'
+        }),
+      )
+      const multiEdition = editionsInPop.size > 1
+      const variantMatches = (variant: string): boolean => {
+        if (!multiEdition) return true
+        const x = (variant || '').toLowerCase()
+        if (edition === 'first') return /1st|first/.test(x)
+        if (edition === 'shadowless') return x.includes('shadowless') || x.includes('unlimited')
+        return x.includes('unlimited')
+      }
+
+      const priceRows = await sql`
+        SELECT tier, source, variant, spot, avg30d, median30d, sale_count, currency
+        FROM price_matrix
+        WHERE print_id = ${printIdNoLang} AND is_asking = false AND tier LIKE 'PSA%'
+        ORDER BY tier, sale_count DESC NULLS LAST
+      ` as Array<Record<string, unknown>>
+
+      const prices: PriceByGrade = {}
+      const bestByGrade: Record<number, { sale_count: number }> = {}
+      for (const r of priceRows) {
+        const tier = String(r.tier || '')
+        const m = tier.match(/^PSA_(\d+)$/)
+        if (!m) continue
+        const grade = Number(m[1])
+        if (grade < 1 || grade > 10) continue
         if (!variantMatches(String(r.variant || ''))) continue
         if (Number(r.sale_count ?? 0) < 2) continue
-      const saleCount = Number(r.sale_count ?? 0)
-      // Garder la source au plus gros volume pour ce grade.
-      if (bestByGrade[grade] && saleCount <= bestByGrade[grade].sale_count) continue
-      const price = pickGradePrice({
-        median30d: r.median30d as number | null,
-        avg30d: r.avg30d as number | null,
-        spot: r.spot as number | null,
-        currency: r.currency as string | null,
-      })
-      if (price != null && price > 0) {
-        prices[grade] = price
-        bestByGrade[grade] = { sale_count: saleCount }
+        const saleCount = Number(r.sale_count ?? 0)
+        if (bestByGrade[grade] && saleCount <= bestByGrade[grade].sale_count) continue
+        const price = pickGradePrice({
+          median30d: r.median30d as number | null,
+          avg30d: r.avg30d as number | null,
+          spot: r.spot as number | null,
+          currency: r.currency as string | null,
+        })
+        if (price != null && price > 0) {
+          prices[grade] = price
+          bestByGrade[grade] = { sale_count: saleCount }
+        }
       }
-    }
 
-      // Garde-fou monotonie: une note basse dont le prix depasse 1.3x la note
-      // superieure la plus proche encore retenue = agregat eBay aberrant -> retiree.
       {
         const MONO_TOL = 1.3
         const kept = Object.keys(prices).map(Number).sort((a, b) => a - b)
@@ -189,76 +175,175 @@ export async function GET(req: NextRequest) {
         }
       }
 
-    // ─── 3. Prix raw de reference (price_signals.fair_value_eur) ───────────────
-    const sigRows = await sql`
-      SELECT fair_value_eur, cote_fr_eur, fair_value_method
-      FROM price_signals
-      WHERE print_id = ${printIdNoLang}
-      ORDER BY (lang = ${lang}) DESC, computed_at DESC NULLS LAST
-      LIMIT 1
+      const sigRows = await sql`
+        SELECT fair_value_eur, cote_fr_eur, fair_value_method
+        FROM price_signals
+        WHERE print_id = ${printIdNoLang}
+        ORDER BY (lang = ${lang}) DESC, computed_at DESC NULLS LAST
+        LIMIT 1
+      ` as Array<Record<string, unknown>>
+
+      const rawEur = sigRows.length
+        ? Number(
+            (lang === 'FR' && sigRows[0].cote_fr_eur != null
+              ? sigRows[0].cote_fr_eur
+              : sigRows[0].fair_value_eur) ?? 0,
+          )
+        : 0
+
+      if (rawEur > 0) {
+        const result = computeGradedEV({
+          pop,
+          prices,
+          rawPrice: rawEur,
+          gradingFee: DEFAULT_GRADING_FEE_EUR,
+        })
+        psaResult = {
+          variety,
+          gradingFee: result.gradingFee,
+          rawPrice: result.rawPrice,
+          gemRate: result.gemRate,
+          probaGain: result.probaGain,
+          coverage: result.coverage,
+          gradesCovered: result.gradesCovered,
+          gradesWithPop: result.gradesWithPop,
+          evBrute: result.evBrute,
+          evNette: result.evNette,
+          reco: result.reco,
+          recoReason: result.recoReason,
+          rows: result.rows,
+          popTotal: pop.total,
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CCC — additif : pop FR réelle + gem rate, EV si couverture suffisante
+    // ═══════════════════════════════════════════════════════════════════════
+    // Édition pour CCC : '1st Edition' si le print l'impose, sinon Unlimited ('').
+    const cccVariety = want1st ? '1st Edition' : ''
+    const cccRows = await sql`
+      SELECT gp.tier, gp.grade_num, gp.label, gp.count, gp.pop_total,
+             pm.spot AS price, pm.is_asking
+      FROM grading_pop gp
+      LEFT JOIN price_matrix pm
+        ON pm.kodo_card_id = ${'fr-' + cardRef}
+       AND pm.source = 'ebay_fr'
+       AND pm.tier = gp.tier
+      WHERE gp.company = 'CCC'
+        AND gp.card_ref = ${cardRef}
+        AND gp.lang = 'fr'
+        AND gp.variety = ${cccVariety}
+        AND gp.grade_num IS NOT NULL
+      ORDER BY gp.grade_num DESC NULLS LAST
     ` as Array<Record<string, unknown>>
 
-    const rawEur = sigRows.length
-      ? Number(
-          (lang === 'FR' && sigRows[0].cote_fr_eur != null
-            ? sigRows[0].cote_fr_eur
-            : sigRows[0].fair_value_eur) ?? 0,
-        )
-      : 0
+    let cccPayload: Record<string, unknown> | null = null
+    if (cccRows.length > 0) {
+      const cccPopTotal = cccRows.reduce((s, r) => s + Number(r.count ?? 0), 0)
+      const buckets: GradeBucket[] = cccRows.map((r) => ({
+        tier: String(r.tier),
+        gradeNum: Number(r.grade_num),
+        label: (r.label as string) || null,
+        count: Number(r.count ?? 0),
+        price: r.price != null ? Number(r.price) : null,
+        basis: r.is_asking === false ? 'sale' : 'ask',
+      }))
 
-    if (!rawEur || rawEur <= 0) {
+      // Raw FR pour l'EV (même source que PSA).
+      const cccSig = await sql`
+        SELECT fair_value_eur, cote_fr_eur
+        FROM price_signals
+        WHERE print_id = ${printIdNoLang}
+        ORDER BY (lang = 'FR') DESC, computed_at DESC NULLS LAST
+        LIMIT 1
+      ` as Array<Record<string, unknown>>
+      const cccRaw = cccSig.length
+        ? Number((cccSig[0].cote_fr_eur ?? cccSig[0].fair_value_eur) ?? 0)
+        : 0
+
+      const { chosen } = computeGradedEVByCompany(buckets, cccRaw, 'fr', DEFAULT_GRADING_FEE_EUR)
+      const pricedGrades = buckets.filter((b) => b.price != null && b.price > 0).length
+
+      // Distribution toujours renvoyée (le réel qu'on a). EV seulement si exploitable.
+      cccPayload = {
+        company: 'CCC' as GradingCompany,
+        variety: cccVariety || null,
+        popTotal: cccPopTotal,
+        gemRate: chosen?.gemRate ?? (cccPopTotal > 0
+          ? buckets.filter((b) => b.gradeNum >= 10).reduce((s, b) => s + b.count, 0) / cccPopTotal
+          : 0),
+        pricedGrades,
+        // Distribution brute par note (rareté FR — la vraie valeur CCC aujourd'hui).
+        distribution: buckets.map((b) => ({
+          tier: b.tier,
+          grade: b.gradeNum,
+          label: b.label,
+          count: b.count,
+          price: b.price,
+          basis: b.basis,
+        })),
+        // EV uniquement si le moteur a pu calculer (couverture >= 50%, >= 3 notes).
+        ev: chosen && chosen.reco !== 'INSUFFISANT'
+          ? {
+              reco: chosen.reco,
+              recoReason: chosen.recoReason,
+              evNette: chosen.evNette,
+              evBrute: chosen.evBrute,
+              rawPrice: chosen.rawPrice,
+              gradingFee: chosen.gradingFee,
+              probaGain: chosen.probaGain,
+              coverage: chosen.coverage,
+              hasAskBasis: chosen.hasAskBasis,
+              rows: chosen.rows,
+            }
+          : null,
+        // Raison de l'absence d'EV (transparence, pas un écran vide).
+        evUnavailableReason: !chosen || chosen.reco === 'INSUFFISANT'
+          ? (pricedGrades === 0
+              ? 'Population CCC disponible, prix gradés CCC pas encore collectés pour cette carte.'
+              : 'Prix CCC encore partiels (trop peu de notes valorisées pour une espérance fiable).')
+          : null,
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Réponse + gating
+    // ═══════════════════════════════════════════════════════════════════════
+    const hasPsa = psaResult != null
+    const hasCcc = cccPayload != null
+
+    if (!hasPsa && !hasCcc) {
       return NextResponse.json({
         available: false,
-        reason: 'no_raw_price',
-        message: 'Prix de référence (carte non gradée) indisponible.',
+        reason: 'no_data',
+        message: 'Aucune donnée de gradation (PSA ou CCC) pour cette carte.',
       })
     }
 
-    // ─── 4. Calcul ────────────────────────────────────────────────────────────
-    const result = computeGradedEV({
-      pop,
-      prices,
-      rawPrice: rawEur,
-      gradingFee: DEFAULT_GRADING_FEE_EUR,
-    })
-
-    // ─── 5. Gating : Premium = complet, free/pro = teaser ─────────────────────
     if (!isPremium) {
+      // Teaser : on annonce ce qui existe sans dévoiler le calcul.
       return NextResponse.json({
         available: true,
         locked: true,
-        // Accroche honnête sans devoiler le calcul : on dit qu'il existe et
-        // combien d'exemplaires PSA, mais pas l'EV ni la reco.
-        gradesWithData: result.gradesCovered,
-        popTotal: pop.total,
-        variety,
+        gradesWithData: (psaResult?.gradesCovered as number) ?? 0,
+        popTotal: psaPopTotal || ((cccPayload?.popTotal as number) ?? 0),
+        variety: psaVariety ?? (cccPayload?.variety as string | null),
+        companies: [...(hasPsa ? ['PSA'] : []), ...(hasCcc ? ['CCC'] : [])],
         plan: user?.plan ?? 'free',
       })
     }
 
+    // Premium : PSA à plat (compat panel existant) + bloc ccc additif.
     return NextResponse.json({
       available: true,
       locked: false,
-      variety,
-      gradingFee: result.gradingFee,
-      rawPrice: result.rawPrice,
-      gemRate: result.gemRate,
-      probaGain: result.probaGain,
-      coverage: result.coverage,
-      gradesCovered: result.gradesCovered,
-      gradesWithPop: result.gradesWithPop,
-      evBrute: result.evBrute,
-      evNette: result.evNette,
-      reco: result.reco,
-      recoReason: result.recoReason,
-      rows: result.rows,
-      popTotal: pop.total,
+      ...(psaResult ?? {}),
+      // Bloc société additif : le panel l'affiche en complément, PSA reste défaut.
+      ccc: cccPayload,
     })
   } catch (err) {
     console.error('[graded-ev] error', err)
-    return NextResponse.json(
-      { error: 'internal_error' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'internal_error' }, { status: 500 })
   }
 }

@@ -2,12 +2,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // GradedEvPanel — "Faut-il la grader ?"
 // Affiche le moteur Graded.ev sur la page carte.
-//   - Premium  : analyse complète (reco, gain espéré net, distribution PSA réelle,
+//   - Premium  : analyse complète PSA (reco, gain espéré net, distribution réelle,
 //                scénarios par note, proba de rentabilité, frais ajustables)
+//                + bloc CCC additif (distribution FR réelle + gem rate, EV si
+//                couverture suffisante, sinon mention de transparence).
 //   - Free/Pro : teaser locké (accroche + nombre d'exemplaires, sans le calcul)
 //   - Indispo  : message explicite, jamais d'écran blanc.
 // Honnêteté : on ne promet pas le meilleur cas. Gem rate + % rentable affichés,
 // gain décomposé PAR NOTE, frais PSA AJUSTABLES (Kodo non responsable des tarifs).
+// CCC = annonces eBay FR (décotées) ; on l'affiche labellisé, jamais comme une vente.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useState } from "react"
 import { SNOW, FONT } from "@/lib/design/snow"
@@ -19,6 +22,39 @@ interface GradeRow {
   price: number
   contribution: number
   net?: number
+}
+
+interface CccDistRow {
+  tier: string
+  grade: number
+  label?: string | null
+  count: number
+  price: number | null
+  basis: "sale" | "ask"
+}
+
+interface CccEv {
+  reco: "GRADER" | "MARGINAL" | "NE_PAS" | "INSUFFISANT"
+  recoReason: string
+  evNette: number
+  evBrute: number
+  rawPrice: number
+  gradingFee: number
+  probaGain: number
+  coverage: number
+  hasAskBasis: boolean
+  rows: GradeRow[]
+}
+
+interface CccBlock {
+  company: "CCC"
+  variety?: string | null
+  popTotal: number
+  gemRate: number
+  pricedGrades: number
+  distribution: CccDistRow[]
+  ev: CccEv | null
+  evUnavailableReason: string | null
 }
 
 interface GradedEvData {
@@ -39,6 +75,7 @@ interface GradedEvData {
   rows?: GradeRow[]
   popTotal?: number
   gradesWithData?: number
+  ccc?: CccBlock | null
 }
 
 const fmtEur = (n: number) =>
@@ -57,6 +94,14 @@ const RECO_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
   MARGINAL: { bg: "rgba(214,138,0,0.10)", fg: "#C77700", label: "Marginal" },
   NE_PAS: { bg: "rgba(224,48,32,0.08)", fg: "#E03020", label: "À garder en l'état" },
   INSUFFISANT: { bg: SNOW.surfaceSoft, fg: SNOW.muted, label: "Données partielles" },
+}
+
+// Libellé d'affichage d'un tier CCC (CCC_10_GOLD -> "10 Gold", CCC_9_5 -> "9.5").
+function cccGradeLabel(row: CccDistRow): string {
+  if (row.label === "GOLD") return `${row.grade} Gold`
+  if (row.label === "BLACK") return `${row.grade} Black`
+  if (row.label === "AUTHENTIC") return "Auth"
+  return `${row.grade}`
 }
 
 export function GradedEvPanel({ printId, lang }: { printId: string; lang: string }) {
@@ -152,12 +197,18 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   const gem = (data.gemRate ?? 0) * 100
   const isInsuff = reco === "INSUFFISANT"
   const maxProba = Math.max(...rows.map((r) => r.proba), 0.001)
+  const hasPsa = (data.popTotal ?? 0) > 0 && rows.length > 0
+  const ccc = data.ccc ?? null
 
   return (
     <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
       {titleBlock}
 
-      <style>{`.gev-grade-grid{grid-template-columns:62px 1fr 84px 92px}@media (max-width:480px){.gev-grade-grid{grid-template-columns:42px 1fr 58px 66px}}`}</style>
+      <style>{`.gev-grade-grid{grid-template-columns:62px 1fr 84px 92px}@media (max-width:480px){.gev-grade-grid{grid-template-columns:42px 1fr 58px 66px}}.ccc-dist-grid{grid-template-columns:74px 1fr 78px}@media (max-width:480px){.ccc-dist-grid{grid-template-columns:60px 1fr 64px}}`}</style>
+
+      {/* ═══ PSA — bloc historique, inchangé ═══ */}
+      {hasPsa ? (
+        <>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
         <div style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", borderRadius: 11, background: rs.bg, color: rs.fg, fontSize: 14, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".01em" }}>
           {rs.label}
@@ -274,6 +325,96 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
           </div>
         </>
       ) : null}
+      </>
+      ) : null}
+
+      {/* ═══ CCC — bloc additif (France), affiché seulement si donnée présente ═══ */}
+      {ccc ? <CccSection ccc={ccc} fee={fee} dividerAbove={hasPsa} /> : null}
+    </div>
+  )
+}
+
+// ── Sous-composant CCC ───────────────────────────────────────────────────────
+function CccSection({ ccc, fee, dividerAbove }: { ccc: CccBlock; fee: number; dividerAbove: boolean }) {
+  const gem = (ccc.gemRate ?? 0) * 100
+  const dist = ccc.distribution.slice().sort((a, b) => b.grade - a.grade || (a.label === "GOLD" ? -1 : 1))
+  const maxCount = Math.max(...dist.map((d) => d.count), 1)
+  const ev = ccc.ev
+
+  return (
+    <div style={{ marginTop: dividerAbove ? 26 : 0, paddingTop: dividerAbove ? 22 : 0, borderTop: dividerAbove ? `1px solid ${SNOW.border}` : "none" }}>
+      {/* En-tête société */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", padding: "5px 12px", borderRadius: 8, background: "#1D1D1F", color: "#fff", fontSize: 12.5, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".02em" }}>
+          CCC
+        </div>
+        <span style={{ fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.body }}>
+          Société de gradation française
+        </span>
+        <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, marginLeft: "auto" }}>
+          {fmtInt(ccc.popTotal)} exemplaires{ccc.variety ? ` · ${ccc.variety}` : ""}
+        </span>
+      </div>
+
+      {/* Gem rate CCC */}
+      <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16 }}>
+        {gem < 10 ? "Seulement " : ""}<strong style={{ color: SNOW.ink }}>{gem.toFixed(1)}%</strong> des exemplaires atteignent un <strong style={{ color: SNOW.ink }}>CCC 10</strong> (Gem, Gold et Black confondus).
+      </div>
+
+      {/* EV CCC si exploitable, sinon mention de transparence */}
+      {ev ? (
+        <div style={{ marginBottom: 16, padding: "12px 14px", background: SNOW.surfaceSoft, borderRadius: 11 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", padding: "6px 13px", borderRadius: 9, background: RECO_STYLE[ev.reco].bg, color: RECO_STYLE[ev.reco].fg, fontSize: 13, fontWeight: 800, fontFamily: FONT.display }}>
+              {RECO_STYLE[ev.reco].label}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>
+              {ev.evNette >= 0 ? "+" : ""}{fmtEur2(ev.evNette)}
+            </div>
+            <span style={{ fontSize: 11.5, color: SNOW.mutedLight, fontFamily: FONT.body }}>gain espéré net (CCC)</span>
+          </div>
+          <div style={{ fontSize: 12, color: SNOW.muted, fontFamily: FONT.body, marginTop: 8, lineHeight: 1.5 }}>
+            {ev.recoReason}
+            {ev.hasAskBasis ? " Prix estimés à partir d'annonces eBay FR (décotées), pas de ventes confirmées." : ""}
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginBottom: 16, padding: "11px 14px", background: SNOW.surfaceSoft, borderRadius: 11, fontSize: 12.5, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5 }}>
+          {ccc.evUnavailableReason ?? "Espérance CCC indisponible (données partielles)."}
+          {" "}La rareté ci-dessous reste réelle.
+        </div>
+      )}
+
+      {/* Distribution CCC par note (le réel qu'on a, toujours affiché) */}
+      <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 12 }}>
+        Population par note
+      </div>
+      <div className="ccc-dist-grid" style={{ display: "grid", gap: "4px 12px", alignItems: "center", marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Note</div>
+        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em" }}>Population</div>
+        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase", letterSpacing: ".04em", textAlign: "right" }}>Annonce</div>
+      </div>
+      {dist.map((d) => (
+        <div key={d.tier} className="ccc-dist-grid" style={{ display: "grid", gap: "0 12px", alignItems: "center", padding: "6px 0" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: d.label === "GOLD" ? "#C77700" : d.label === "BLACK" ? "#1D1D1F" : SNOW.ink, fontFamily: FONT.data }}>
+            CCC {cccGradeLabel(d)}
+          </div>
+          <div style={{ position: "relative", height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, width: `${Math.max((d.count / maxCount) * 100, 3)}%`, background: "linear-gradient(90deg,#185FA5,#2774c4)", borderRadius: 5 }} />
+            <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, display: "flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: (d.count / maxCount) > 0.28 ? "#fff" : SNOW.muted, fontFamily: FONT.data }}>
+              {fmtInt(d.count)}
+            </div>
+          </div>
+          <div style={{ fontSize: 12.5, color: d.price != null ? SNOW.muted : SNOW.mutedLight, fontFamily: FONT.data, textAlign: "right" }}>
+            {d.price != null ? fmtEur(d.price) : "—"}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 14, lineHeight: 1.5 }}>
+        Population CCC officielle. Prix issus d'annonces eBay FR actives (décotées), affichés
+        uniquement quand au moins deux annonces concordent — sinon non renseignés.
+      </div>
     </div>
   )
 }

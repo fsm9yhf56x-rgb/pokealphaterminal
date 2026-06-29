@@ -16,6 +16,15 @@ const METHOD_LABEL: Record<string,string> = {
   cardmarket_trend:'Ventes Cardmarket', us_nm_fx:'Marché US · NM', eu_asking_decote:'Annonces EU',
 }
 
+
+// Transparence vente/annonce : un ask ne doit JAMAIS s'afficher comme un vendu.
+function basisSub(g: any): string | null {
+  const isAsk = g?.basis === 'ask' || g?.is_asking === true
+  const noun = isAsk ? 'annonce' : 'vente'
+  if (g?.sale_count) return g.sale_count + ' ' + noun + (g.sale_count > 1 ? 's' : '')
+  return isAsk ? 'annonce' : null
+}
+
 export default function KodoPricePanel({ cardId, locked = false, onUpgrade }: Props) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -102,7 +111,7 @@ export default function KodoPricePanel({ cardId, locked = false, onUpgrade }: Pr
         <Section title="Prix gradés">
           {locked ? (
             <div style={{ border: '0.5px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', background: '#FFF' }}>
-              {teaser ? <Row left={teaser.company + ' ' + teaser.grade} sub={teaser.sale_count ? teaser.sale_count + ' ventes' : null} right={fmt(teaser.spot, teaser.currency)} /> : null}
+              {teaser ? <Row left={teaser.company + ' ' + teaser.grade} sub={basisSub(teaser)} right={fmt(teaser.spot, teaser.currency)} /> : null}
               <button onClick={onUpgrade} style={{ width: '100%', padding: '10px', background: INK, color: '#FFF', border: 'none', fontSize: 12, fontFamily: DISP, fontWeight: 600, cursor: 'pointer' }}>
                 Débloquer toutes les notes ({gradeRows.length} cotations) · Premium
               </button>
@@ -112,7 +121,7 @@ export default function KodoPricePanel({ cardId, locked = false, onUpgrade }: Pr
               <div key={co} style={{ border: '0.5px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', background: '#FFF', marginBottom: 8 }}>
                 <div style={{ padding: '6px 10px', background: SURF, fontSize: 10, fontWeight: 700, color: INK, fontFamily: DISP, letterSpacing: '0.06em' }}>{co}</div>
                 {gradeRows.filter(g => g.company === co).sort(byGradeDesc).map(g => (
-                  <Row key={g.company + g.grade} left={'Note ' + g.grade} sub={g.sale_count ? g.sale_count + ' ventes' : null} right={fmt(g.spot, g.currency)} />
+                  <Row key={g.company + g.grade} left={'Note ' + g.grade} sub={basisSub(g)} right={fmt(g.spot, g.currency)} />
                 ))}
               </div>
             ))

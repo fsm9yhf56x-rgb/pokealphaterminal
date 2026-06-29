@@ -5,6 +5,7 @@ import type { PortfolioContext } from '../SpotlightV2'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
 import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import { resolveCardImage } from '@/lib/images'
+import { CardImg } from '@/components/ui/CardImg'
 import { useState } from 'react'
 
 const FLAG: Record<string, string> = { EN: '🇺🇸', FR: '🇫🇷', JP: '🇯🇵' }
@@ -170,12 +171,15 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
           background: 'rgba(0,0,0,0.03)',
         }}>
-          <img
-            src={heroImg}
-            alt={card.name}
-            loading="lazy"
-            onError={() => setImgError(true)}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
+          <CardImg
+            setId={card.set_id}
+            localId={card.local_id ?? undefined}
+            lang={card.lang}
+            image={card.image_url}
+            name={card.name}
+            number={card.local_id ?? undefined}
+            variant="full"
+            imgStyle={{ height: 'auto' }}
           />
         </div>
       ) : null}

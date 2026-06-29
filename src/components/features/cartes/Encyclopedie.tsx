@@ -624,26 +624,51 @@ export function Encyclopedie() {
   }, [lang])
 
   const blocs = useMemo(() => {
-    const map = new Map<string, {name:string; sets: {id:string;name:string;count:number}[]; total:number}>()
+    const map = new Map<string, {name:string; sets: {id:string;name:string;count:number;year:number}[]; total:number}>()
     allCards.forEach(c => {
       if (!map.has(c.era)) map.set(c.era, { name:c.era, sets:[], total:0 })
       const b = map.get(c.era)!
       b.total++
-      if (!b.sets.find(st=>st.id===c.setId)) b.sets.push({ id:c.setId, name:c.setName, count:0 })
-      b.sets.find(st=>st.id===c.setId)!.count++
+      let st = b.sets.find(st=>st.id===c.setId)
+      if (!st) { st = { id:c.setId, name:c.setName, count:0, year:(c as any).year||0 }; b.sets.push(st) }
+      st.count++
+      if ((c as any).year && (!st.year || (c as any).year < st.year)) st.year = (c as any).year
     })
     return [...map.entries()].sort((a,b)=>ERA_ORDER.indexOf(a[0])-ERA_ORDER.indexOf(b[0])).map(([,v])=>{
-      // Sort sets within each bloc: originals first, then editions (-1st, -shadowless)
+      // SET FONDATEUR du bloc en tete (-> logo coherent). Dates souvent absentes,
+      // donc on identifie le PREFIXE PRINCIPAL du bloc = le prefixe le plus frequent
+      // (la serie mere : 'sm' dans Soleil&Lune, 'dp' dans DPP), et on le prioritise.
+      // Les sets annexes (det, col, g1, tg...) passent apres. Numero pour l'ordre interne.
+      const parseId = (id:string) => {
+        const clean = id.replace(/^(en|fr|jp)-/i,'').replace(/-1st$|-shadowless$|-shadowless-ns$/,'')
+        const m = clean.match(/^([a-z]+)(\d+(?:\.\d+)?)?/i)
+        const prefix = (m?.[1] || clean).toLowerCase()
+        const num = m?.[2] ? parseFloat(m[2]) : 9999
+        return { prefix, num }
+      }
+      // prefixe le plus frequent du bloc = serie mere
+      const freq: Record<string, number> = {}
+      for (const st of v.sets) { const pre = parseId(st.id).prefix; freq[pre] = (freq[pre]||0) + 1 }
+      let mainPrefix = ''; let best = -1
+      for (const [pre, n] of Object.entries(freq)) if (n > best) { best = n; mainPrefix = pre }
       v.sets.sort((a,b) => {
         const aBase = a.id.replace(/-1st$|-shadowless$|-shadowless-ns$/,'')
         const bBase = b.id.replace(/-1st$|-shadowless$|-shadowless-ns$/,'')
-        // Group by base set
-        if (aBase !== bBase) return aBase.localeCompare(bBase)
-        // Within same base: original first, then editions
-        const aEdition = a.id.includes('-') ? 1 : 0
-        const bEdition = b.id.includes('-') ? 1 : 0
-        if (aEdition !== bEdition) return aEdition - bEdition
-        // Shadowless before 1st ed
+        if (aBase !== bBase) {
+          const pa = parseId(a.id), pb = parseId(b.id)
+          // 1) le set de la serie mere passe avant les annexes
+          const aMain = pa.prefix === mainPrefix ? 0 : 1
+          const bMain = pb.prefix === mainPrefix ? 0 : 1
+          if (aMain !== bMain) return aMain - bMain
+          // 2) meme groupe : par numero (sm1 avant sm2)
+          if (pa.prefix === pb.prefix) return pa.num - pb.num
+          // 3) date si dispo, sinon alpha
+          if ((a.year||0) && (b.year||0) && a.year !== b.year) return a.year - b.year
+          return aBase.localeCompare(bBase)
+        }
+        const aEd = a.id.includes('-') ? 1 : 0
+        const bEd = b.id.includes('-') ? 1 : 0
+        if (aEd !== bEd) return aEd - bEd
         if (a.id.includes('-shadowless-ns')) return -1
         if (b.id.includes('-shadowless-ns')) return 1
         if (a.id.includes('-shadowless')) return -1

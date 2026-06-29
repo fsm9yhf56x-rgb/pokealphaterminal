@@ -23,6 +23,8 @@ import { useGoals } from "@/lib/useGoals"
 import { useAuth } from "@/lib/useAuth"
 import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
+import { CardImg } from "@/components/ui/CardImg"
+import { seriesToBloc } from "@/lib/blocs"
 import { SNOW, FONT, GLASS, RADIUS, EASE } from "@/lib/design/snow"
 import AuthModal from "@/components/layout/AuthModal"
 import { GuestGate } from "@/components/upgrade/GuestGate"
@@ -379,7 +381,8 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     return { value: nmPrice }
   }
   const img = resolveCardImage({ lang: card.lang, setId: card.set_id, localId: card.local_id, fallbackUrl: card.image_url ?? undefined })
-  const era = card.era ? { era: card.era, color: "#8A8A8E" } : eraOf(card.id)
+  const blocInfo = seriesToBloc(card.era, card.id)
+  const era = blocInfo ? { era: blocInfo.label, color: blocInfo.color } : eraOf(card.id)
   const flag = FLAG[card.lang] || ""
   const fmtEur = (n: number) => n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"
 
@@ -753,11 +756,9 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         <div className="kc-media">
           <div className="kc-rise">
             <div ref={tiltRef} onMouseMove={onCardMove} onMouseLeave={onCardLeave} style={{ position: "relative", transition: `transform .16s ${EASE.apple}`, transformStyle: "preserve-3d", willChange: "transform", cursor: "pointer" }}>
-              {img ? (
-                <img src={img} alt={card.name} style={{ width: "100%", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.10)", display: "block" }} draggable={false} />
-              ) : (
-                <div style={{ width: "100%", aspectRatio: "63/88", borderRadius: 16, background: SNOW.surface, display: "flex", alignItems: "center", justifyContent: "center", color: SNOW.mutedLight, fontSize: 13, fontFamily: FONT.body }}>Image indisponible</div>
-              )}
+              <div style={{ width: "100%", aspectRatio: "63/88", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.10)" }}>
+                <CardImg setId={card.set_id} localId={card.local_id ?? undefined} lang={card.lang} image={card.image_url} name={card.name} number={card.local_id ?? undefined} variant="full" rounded={16} imgStyle={{ objectFit: "contain" }} />
+              </div>
               <div ref={glareRef} style={{ position: "absolute", inset: 0, borderRadius: 16, pointerEvents: "none", opacity: 0, transition: "opacity .25s ease", mixBlendMode: "overlay" }} />
             </div>
           </div>

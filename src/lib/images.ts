@@ -214,3 +214,23 @@ export function getTcgdexFallbackUrl(params: CardImageParams): string {
 
 /** @deprecated Use {@link cleanLegacyUrl} instead. */
 export const cleanImageUrl = cleanLegacyUrl;
+
+// ---------------------------------------------------------------------------
+// Language-fallback candidates (best-first): requested lang -> EN -> JP.
+// A card missing its localized scan falls back to another language's image
+// (same artwork, only the text differs). Pure; reuses getCardImageUrl so the
+// URL convention stays in one place (no regression on existing tests).
+// ---------------------------------------------------------------------------
+export function cardImageCandidates(params: CardImageParams): string[] {
+  const { setId, localId } = params;
+  if (!setId || !localId) return [];
+  const want = (langToPath(params.lang).toUpperCase() as Lang);
+  const order: Lang[] = [];
+  for (const l of [want, 'EN', 'JP'] as Lang[]) if (!order.includes(l)) order.push(l);
+  const urls: string[] = [];
+  for (const l of order) {
+    const u = getCardImageUrl({ lang: l, setId, localId });
+    if (u && !urls.includes(u)) urls.push(u);
+  }
+  return urls;
+}

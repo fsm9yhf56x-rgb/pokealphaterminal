@@ -105,21 +105,64 @@ async function exportLang(lang) {
     if (processed % 50 === 0) console.log(`    ${processed}/${tcgdexSets.length}`)
   }
   
+  // --- Repli cross-langue (FR/JP sans image -> EN puis JP) : via la base, pas de HEAD reseau ---
+  const R2_BASE = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
+  const normSet = (id) => (id||'').replace(/^(en|fr|jp)-/i,'').replace(/-shadowless(-ns)?$/i,'').replace(/-1st(-ed|-edition)?$/i,'').replace(/-unlimited$/i,'')
+  const printKey = (c) => c.print_id ? normSet(c.print_id) : normSet((normSet(c.set_id) + '-' + (c.local_id||'')))
+
+  // Carte cross-langue : quelles langues ont une image pour chaque carte ?
+  // k_cards_export n'expose pas print_id -> on requete k_cards (qui l'a) et on
+  // construit la MEME cle que printKey() : normSet(set_id depuis le print) + '-' + local_id.
+  // k_cards: id, print_id, lang, has_image ; le print_id encode deja set+numero.
+  const imgRows = await sql`select print_id, lang from k_cards where has_image = true`
+  const imgByPrint = new Map()
+  for (const r of imgRows) {
+    const k = normSet(r.print_id)            // print_id ex: base1-4 / jp-569634 -> cle stable
+    if (!k) continue
+    if (!imgByPrint.has(k)) imgByPrint.set(k, new Set())
+    imgByPrint.get(k).add(String(r.lang||'').toLowerCase())
+  }
+
+  // Patterns TCGdex des langues de repli (EN, JP) pour reconstruire leurs URLs depuis ce build
+  const fbLangs = lang === 'EN' ? ['jp'] : lang === 'FR' ? ['en','jp'] : ['en']
+  for (const L of fbLangs) {
+    const LU = L.toUpperCase()
+    for (let i = 0; i < tcgdexSets.length; i += 6) {
+      await Promise.all(tcgdexSets.slice(i, i+6).map(st => getTcgdexPattern(LU, st.id)))
+    }
+  }
+
+  function resolveCrossLang(c) {
+    const k = printKey(c)
+    const have = imgByPrint.get(k)
+    if (!have) return null
+    for (const L of fbLangs) {
+      if (!have.has(L)) continue
+      const pat = TCGDEX_PATTERN_CACHE.get(`${L.toUpperCase()}:${c.set_id}`)
+                || TCGDEX_PATTERN_CACHE.get(`${L.toUpperCase()}:${normSet(c.set_id)}`)
+      if (pat) return { url: `${pat.base}/${c.local_id}/high.webp`, lang: L }
+      const ext = L === 'jp' ? 'jpg' : 'webp'
+      return { url: `${R2_BASE}/${L}/${normSet(c.set_id)}/${c.local_id}.${ext}`, lang: L }
+    }
+    return null
+  }
+
   // Build cardsBySet
   const cardsBySet = {}
-  let imgFromUrl = 0, imgFromPattern = 0, imgMissing = 0
+  let imgFromUrl = 0, imgFromPattern = 0, imgFromFallback = 0, imgMissing = 0
   
   for (const c of cards) {
     const setKey = (c.set_id || '').replace(/^(fr-|en-|jp-)/, '')
     if (!cardsBySet[setKey]) cardsBySet[setKey] = []
     
     let img = ''
+    let imgLang = c.image_url ? lang.toLowerCase() : ''
     
     // JP PPT: laisser img vide -> l'app reconstruit l'URL R2 via getCardImageUrl
     // (jp/{slug}/{localId}.jpg). NE PAS mettre l'image_url TCGPlayer CDN (souvent 403).
     if (lang === 'JP' && c.source === 'ppt') {
       img = ''  // has_image gere cote client par le fallback getCardImageUrl
-      if (c.has_image) imgFromUrl++; else imgMissing++
+      if (c.has_image) { imgFromUrl++; imgLang = 'jp' } else { const fb = resolveCrossLang(c); if (fb) { img = fb.url; imgLang = fb.lang; imgFromFallback++ } else imgMissing++ }
     }
     // Priority 1: explicit image_url (EN/FR ou autres sources)
     else if (c.image_url) {
@@ -131,12 +174,17 @@ async function exportLang(lang) {
       const pattern = TCGDEX_PATTERN_CACHE.get(`${lang}:${c.set_id}`)
       if (pattern) {
         img = `${pattern.base}/${c.local_id}/high.webp`
+        imgLang = lang.toLowerCase()
         imgFromPattern++
       } else {
-        imgMissing++
+        const fb = resolveCrossLang(c)
+        if (fb) { img = fb.url; imgLang = fb.lang; imgFromFallback++ } else imgMissing++
       }
-    } else {
-      imgMissing++
+    }
+    // Priority 2.5: pas d'image native -> repli langue (EN puis JP)
+    else {
+      const fb = resolveCrossLang(c)
+      if (fb) { img = fb.url; imgLang = fb.lang; imgFromFallback++ } else imgMissing++
     }
     
     cardsBySet[setKey].push({
@@ -144,6 +192,7 @@ async function exportLang(lang) {
       lid: c.local_id || '',
       n: c.name || '',
       img,
+      imgLang: imgLang || undefined,
       r: c.rarity || '',
     })
   }
@@ -170,8 +219,8 @@ async function exportLang(lang) {
   writeFileSync(`public/data/cards-${lang}.json`, JSON.stringify(cardsBySet))
   writeFileSync(`public/data/sets-${lang}.json`, JSON.stringify(setsArr))
   
-  console.log(`  Image sources: image_url=${imgFromUrl} | tcgdex_pattern=${imgFromPattern} | missing=${imgMissing}`)
-  console.log(`  Total: ${imgFromUrl + imgFromPattern}/${cards.length} cards with image (${((imgFromUrl + imgFromPattern) / cards.length * 100).toFixed(1)}%)`)
+  console.log(`  Image sources: image_url=${imgFromUrl} | tcgdex=${imgFromPattern} | fallback_lang=${imgFromFallback} | missing=${imgMissing}`)
+  console.log(`  Total: ${imgFromUrl + imgFromPattern + imgFromFallback}/${cards.length} cards with image (${((imgFromUrl + imgFromPattern + imgFromFallback) / cards.length * 100).toFixed(1)}%)`)
   console.log(`  ✅ Saved`)
 }
 

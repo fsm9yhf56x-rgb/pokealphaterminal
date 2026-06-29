@@ -1,6 +1,7 @@
 'use client'
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
+import { CardImg } from '@/components/ui/CardImg'
 import AuthModal from '@/components/layout/AuthModal'
 import { CollectionGate } from './CollectionGate'
 import { SetPicker } from './SetPicker'
@@ -38,9 +39,10 @@ const pkaDbSet = async (key: string, value: unknown) => {
 }
 
 const ERA_COLORS: Record<string,string> = {
-  'Original (WotC)':'#854F0B', 'EX':'#993C1D', 'DP / Platinum':'#0F6E56',
-  'Black & White':'#444441', 'XY':'#185FA5', 'Sun & Moon':'#BA7517',
-  'Sword & Shield':'#534AB7', 'Scarlet & Violet':'#A32D2D', 'Autre':'#5F5E5A',
+  'Original (WotC)':'#854F0B', 'EX':'#993C1D', 'Diamant & Perle / Platine':'#0F6E56',
+  'Noir & Blanc':'#444441', 'XY':'#185FA5', 'Soleil & Lune':'#BA7517',
+  'Épée & Bouclier':'#534AB7', 'Écarlate & Violet':'#A32D2D',
+  'Méga-Évolution':'#C2410C', 'Pokémon Pocket':'#7C3AED', 'Promos & Coffrets':'#5F5E5A',
 }
 const RARITY_COLORS: Record<string,{bg:string;fg:string}> = {
   'Commune':       {bg:'#F1EFE8',fg:'#5F5E5A'},
@@ -67,17 +69,19 @@ const TC: Record<string,string> = {
   Metal:'#8090A8', Dragon:'#9060A0', Fairy:'#FF88AA',
 }
 
-const ERA_ORDER = ['Original (WotC)','EX','DP / Platinum','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Autre']
+const ERA_ORDER = ['Original (WotC)','EX','Diamant & Perle / Platine','Noir & Blanc','XY','Soleil & Lune','Épée & Bouclier','Écarlate & Violet','Méga-Évolution','Pokémon Pocket','Promos & Coffrets']
 // Code serie japonais affiche a cote du nom international (vue JP uniquement)
 const ERA_JP_CODE: Record<string,string> = {
   'Original (WotC)': 'BASE',
   'EX': 'ADV',
-  'DP / Platinum': 'DPt',
-  'Black & White': 'BW',
+  'Diamant & Perle / Platine': 'DPt',
+  'Noir & Blanc': 'BW',
   'XY': 'XY',
-  'Sun & Moon': 'SM',
-  'Sword & Shield': 'S',
-  'Scarlet & Violet': 'SV',
+  'Soleil & Lune': 'SM',
+  'Épée & Bouclier': 'S',
+  'Écarlate & Violet': 'SV',
+  'Méga-Évolution': 'M',
+  'Pokémon Pocket': 'A',
 }
 
 const ERA_PREFIX: [string, string][] = [
@@ -86,13 +90,16 @@ const ERA_PREFIX: [string, string][] = [
   ['si1','Original (WotC)'],['lc','Original (WotC)'],['ecard','Original (WotC)'],
   ['expedition','Original (WotC)'],['aquapolis','Original (WotC)'],['skyridge','Original (WotC)'],
   ['ex','EX'],['pop','EX'],
-  ['dp','DP / Platinum'],['pl','DP / Platinum'],['pt','DP / Platinum'],['hgss','DP / Platinum'],
-  ['bw','Black & White'],['dv','Black & White'],
+  ['dp','Diamant & Perle / Platine'],['pl','Diamant & Perle / Platine'],['pt','Diamant & Perle / Platine'],['hgss','Diamant & Perle / Platine'],
+  ['bw','Noir & Blanc'],['dv','Noir & Blanc'],
   ['xy','XY'],['g1','XY'],['dc','XY'],
-  ['sm','Sun & Moon'],['det','Sun & Moon'],['tg','Sun & Moon'],
-  ['swsh','Sword & Shield'],['cel','Sword & Shield'],['pgo','Sword & Shield'],
-  ['swsh','Sword & Shield'],['sw','Sword & Shield'],['s','Sword & Shield'],
-  ['sv','Scarlet & Violet'],
+  ['sm','Soleil & Lune'],['det','Soleil & Lune'],['tg','Soleil & Lune'],
+  ['swsh','Épée & Bouclier'],['cel','Épée & Bouclier'],['pgo','Épée & Bouclier'],
+  ['sv','Écarlate & Violet'],
+  ['me','Méga-Évolution'],['mee','Méga-Évolution'],
+  ['a','Pokémon Pocket'],['b','Pokémon Pocket'],['p-a','Pokémon Pocket'],
+  ['tk-','Promos & Coffrets'],
+  ['sw','Épée & Bouclier'],['s','Épée & Bouclier'],
 ]
 
 // Maps the `serie` field from sets-{LANG}.json (DB column tcg_sets.series)
@@ -103,24 +110,26 @@ const SERIES_TO_ERA: Record<string, string> = {
   'ecard': 'Original (WotC)',
   'ex':    'EX',
   'pop':   'EX',
-  'dp':    'DP / Platinum',
-  'pl':    'DP / Platinum',
-  'pt':    'DP / Platinum',
-  'hgss':  'DP / Platinum',
-  'col':   'DP / Platinum',
-  'bw':    'Black & White',
-  'dv':    'Black & White',
+  'dp':    'Diamant & Perle / Platine',
+  'pl':    'Diamant & Perle / Platine',
+  'pt':    'Diamant & Perle / Platine',
+  'hgss':  'Diamant & Perle / Platine',
+  'col':   'Diamant & Perle / Platine',
+  'bw':    'Noir & Blanc',
+  'dv':    'Noir & Blanc',
   'xy':    'XY',
   'g1':    'XY',
   'dc':    'XY',
-  'swsh':  'Sword & Shield',
-  'sm':    'Sun & Moon',
-  'det':   'Sun & Moon',
-  'tg':    'Sun & Moon',
-  'cel':   'Sword & Shield',
-  'pgo':   'Sword & Shield',
-  'sv':    'Scarlet & Violet',
-  'mega':  'Scarlet & Violet',  // MEGA era 2025-2026 grouped with SV for now
+  'swsh':  'Épée & Bouclier',
+  'sm':    'Soleil & Lune',
+  'det':   'Soleil & Lune',
+  'tg':    'Soleil & Lune',
+  'cel':   'Épée & Bouclier',
+  'pgo':   'Épée & Bouclier',
+  'sv':    'Écarlate & Violet',
+  'me':    'Méga-Évolution',
+  'pocket':'Pokémon Pocket',
+  'promo': 'Promos & Coffrets',
 }
 
 function setIdToEra(setId:string, serie?:string|null): string {
@@ -133,15 +142,15 @@ function setIdToEra(setId:string, serie?:string|null): string {
   // Special-case JP-only sets that don't follow EN naming conventions
   if (setId.toLowerCase().startsWith('jp-')) {
     // Pokemon Japanese specific sets
-    if (low === 'si') return 'Sword & Shield'         // Special Illustration 2022
-    if (low === 'mc') return 'Scarlet & Violet'       // Mega Collection 2025
-    if (low.startsWith('m1') || low.startsWith('m2') || low.startsWith('m3') || low.startsWith('m4')) return 'Scarlet & Violet'  // Mega series
-    if (low === 'm-p' || low === 'mp1') return 'Scarlet & Violet'
-    if (low.startsWith('mb') || low === 'ma') return 'Scarlet & Violet'
-    if (low === 'wcs23') return 'Sword & Shield'
-    if (low === '20th') return 'Sun & Moon'           // 20th Anniversary 2016
+    if (low === 'si') return 'Épée & Bouclier'         // Special Illustration 2022
+    if (low === 'mc') return 'Écarlate & Violet'       // Mega Collection 2025
+    if (low.startsWith('m1') || low.startsWith('m2') || low.startsWith('m3') || low.startsWith('m4')) return 'Écarlate & Violet'  // Mega series
+    if (low === 'm-p' || low === 'mp1') return 'Écarlate & Violet'
+    if (low.startsWith('mb') || low === 'ma') return 'Écarlate & Violet'
+    if (low === 'wcs23') return 'Épée & Bouclier'
+    if (low === '20th') return 'Soleil & Lune'           // 20th Anniversary 2016
     if (low === 'pcg') return 'EX'                    // Pokemon Card Game era 2003
-    if (low === 'l1' || low === 'l1a' || low === 'l1b' || low === 'l2' || low === 'l3') return 'DP / Platinum'  // Legend era HGSS JP
+    if (low === 'l1' || low === 'l1a' || low === 'l1b' || low === 'l2' || low === 'l3') return 'Diamant & Perle / Platine'  // Legend era HGSS JP
     if (low === 'adv1' || low === 'adv2' || low === 'adv3' || low === 'adv4' || low === 'adv5') return 'EX'  // Advance era
     if (low === 'e1' || low === 'e2' || low === 'e3' || low === 'e4' || low === 'e5' || low === 'e6' || low === 'e7' || low === 'e8' || low === 'e9') return 'Original (WotC)'  // E-Card 2002-2003
     // Vintage exclusives (toyota, corocoro, ana, meiji, etc.)
@@ -149,9 +158,9 @@ function setIdToEra(setId:string, serie?:string|null): string {
       return 'Original (WotC)'
     }
     // BW Promo sets
-    if (low === 'bwp' || low === 'bw' || low.startsWith('bk')) return 'Black & White'
-    if (low === 'br' || low === 'bb' || low === 'bd' || low === 'bk' || low === 'bgst' || low === 'bgsv') return 'Black & White'
-    if (low === 'btv') return 'Black & White'
+    if (low === 'bwp' || low === 'bw' || low.startsWith('bk')) return 'Noir & Blanc'
+    if (low === 'br' || low === 'bb' || low === 'bd' || low === 'bk' || low === 'bgst' || low === 'bgsv') return 'Noir & Blanc'
+    if (low === 'btv') return 'Noir & Blanc'
   }
 
   // Standard EN/FR matching with stripped prefix
@@ -165,12 +174,12 @@ function yearToEra(y:number): string {
   if (!y)      return 'Autre'
   if (y<=2003) return 'Original (WotC)'
   if (y<=2006) return 'EX'
-  if (y<=2010) return 'DP / Platinum'
-  if (y<=2013) return 'Black & White'
+  if (y<=2010) return 'Diamant & Perle / Platine'
+  if (y<=2013) return 'Noir & Blanc'
   if (y<=2016) return 'XY'
-  if (y<=2019) return 'Sun & Moon'
-  if (y<=2022) return 'Sword & Shield'
-  return 'Scarlet & Violet'
+  if (y<=2019) return 'Soleil & Lune'
+  if (y<=2022) return 'Épée & Bouclier'
+  return 'Écarlate & Violet'
 }
 // JP: classement 100% par date de sortie (fiable, pas de faux-positifs de prefixe).
 // Bornes calees sur les transitions d'eres japonaises.
@@ -178,12 +187,12 @@ function jpYearToEra(y:number): string {
   if (!y)      return 'Autre'
   if (y<=2002) return 'Original (WotC)'   // Base 1996 -> e-Card/VS 2002
   if (y<=2006) return 'EX'                // ADV 2003 -> PCG 2006
-  if (y<=2010) return 'DP / Platinum'     // DP 2006/07 -> L/HGSS 2010
-  if (y<=2013) return 'Black & White'
+  if (y<=2010) return 'Diamant & Perle / Platine'  // DP 2006/07 -> L/HGSS 2010
+  if (y<=2013) return 'Noir & Blanc'
   if (y<=2016) return 'XY'
-  if (y<=2019) return 'Sun & Moon'
-  if (y<=2022) return 'Sword & Shield'
-  return 'Scarlet & Violet'               // SV 2023+ / MEGA 2025+
+  if (y<=2019) return 'Soleil & Lune'
+  if (y<=2022) return 'Épée & Bouclier'
+  return 'Écarlate & Violet'              // SV 2023+ / MEGA 2025+
 }
 
 type Lang     = 'EN'|'FR'|'JP'
@@ -1268,7 +1277,6 @@ export function Encyclopedie() {
                 <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid #1D1D1F', borderTop:'1px solid #EBEBEB', borderRadius:'0 0 9px 9px', boxShadow:'0 8px 24px rgba(0,0,0,.08)', maxHeight:'340px', overflowY:'auto' as const }}>
                   {searchSuggs.map(card => {
                     const owned = isOwned(card)
-                    const cimg = cleanLegacyUrl(card.image) || (card.setId && card.localId ? getCardImageUrl({ lang: lang, setId: card.setId, localId: card.localId }) : null)
                     return (
                       <div key={card.id}
                         onMouseDown={e=>{e.preventDefault();handleCardClick(card.id);setSearchFocus(false)}}
@@ -1276,7 +1284,7 @@ export function Encyclopedie() {
                         onMouseEnter={e=>{e.currentTarget.style.background='#F5F5F7'}}
                         onMouseLeave={e=>{e.currentTarget.style.background=''}}>
                         <div style={{ width:'32px', height:'44px', borderRadius:'4px', overflow:'hidden', background:'#F5F5F5', flexShrink:0 }}>
-                          {cimg && <img src={cimg} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
+                          <CardImg setId={card.setId} localId={card.localId} lang={lang} image={card.image} enImage={card.enImage} name={card.name} number={card.localId} variant="thumb" />
                         </div>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:'13px', fontWeight:500, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{card.name}</div>
@@ -1326,14 +1334,14 @@ export function Encyclopedie() {
 
           {/* Filters */}
           <div className={`kfilters-row${filtersOpen?' open':''}`} style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
-            <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>setFilEra(e.target.value)}>
+            <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>{ const v=e.target.value; setFilEra(v); setFilSet('all'); setPage(0); if(browseMode==='bloc') setSelBloc(v==='all'?null:v) }}>
               <option value="all">Tous les blocs</option>
               {eras.map(e=><option key={e} value={e}>{e}</option>)}
             </select>
 
             <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} disabled={loading}
               style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
-              <option value="all">Toutes les séries{sets.length>0?` (${sets.length})`:''}</option>
+              <option value="all">Tous les sets{sets.length>0?` (${sets.length})`:''}</option>
               {(() => {
                 // Build TCGSet[] from filtered sets (with count metadata preserved)
                 const tcgSets: TCGSet[] = sets.map(s => ({ id: s.id, name: s.name, lang: 'EN' as any, total: (s as any).count } as TCGSet))
@@ -1404,10 +1412,13 @@ export function Encyclopedie() {
                   onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.07), inset 0 1px 0 rgba(255,255,255,0.95)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.05)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
                   <div style={{ display:'flex', alignItems:'center', width:'58px', height:'52px', flexShrink:0, position:'relative' }}>
                     {preview.map((c,i)=>{
-                      const imgUrl = cardImageUrl(c, lang)
                       const rot = [-7,0,7][i] ?? 0
                       const left = [0,14,28][i] ?? 0
-                      return imgUrl ? <img key={c.id} src={imgUrl.includes('.')?imgUrl:imgUrl+'/low.webp'} alt="" style={{ position:'absolute', left:`${left}px`, height:'48px', width:'34px', objectFit:'cover', borderRadius:'4px', border:'1.5px solid #fff', boxShadow:'0 1px 4px rgba(0,0,0,0.12)', transform:`rotate(${rot}deg)`, zIndex:i }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null
+                      return (
+                        <div key={c.id} style={{ position:'absolute', left:`${left}px`, height:'48px', width:'34px', borderRadius:'4px', overflow:'hidden', border:'1.5px solid #fff', boxShadow:'0 1px 4px rgba(0,0,0,0.12)', transform:`rotate(${rot}deg)`, zIndex:i }}>
+                          <CardImg setId={c.setId} localId={c.localId} lang={lang} image={c.image} enImage={c.enImage} variant="thumb" fallback="hide" imgStyle={{ objectFit:'cover' }} />
+                        </div>
+                      )
                     })}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
@@ -1441,8 +1452,7 @@ export function Encyclopedie() {
                   const sel = filSet===st.id
                   const ow = allCards.filter(c=>c.setId===st.id&&isOwned(c)).length
                   const enSet = lang==='JP' ? allCards.find(c=>c.setId===st.id)?.enSetName : null
-                  const thumb = allCards.find(c=>c.setId===st.id&&c.image)
-                  const thumbUrl = thumb ? cardImageUrl(thumb, lang) : null
+                  const thumb = allCards.find(c=>c.setId===st.id)
                   return (
                   <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}}
                     className='enc-serie-tile-v3 rh'
@@ -1450,7 +1460,7 @@ export function Encyclopedie() {
                     onMouseEnter={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.92)';e.currentTarget.style.boxShadow='0 3px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1.08)'}}}
                     onMouseLeave={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.7)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1)'}}}>
                     <div style={{ width:'30px', height:'42px', borderRadius:'5px', overflow:'hidden', flexShrink:0, background:sel?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.04)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      {thumbUrl ? <img src={thumbUrl.includes('.')?thumbUrl:thumbUrl+'/low.webp'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .25s cubic-bezier(.2,.85,.3,1)' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null}
+                      <CardImg setId={st.id} localId={thumb?.localId} lang={lang} image={thumb?.image} enImage={thumb?.enImage} variant="thumb" fallback="hide" imgStyle={{ objectFit:'cover', transition:'transform .25s cubic-bezier(.2,.85,.3,1)' }} />
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:'12px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.25 }}>
@@ -1572,18 +1582,7 @@ export function Encyclopedie() {
                           )
                         })()}
                         {img ? (
-                          <img src={img} alt={card.name}
-                            className="card-img"
-                            style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', padding: cardSize==='L'?'6px':'3px', boxSizing:'border-box' as const }}
-                            onLoad={e=>{ (e.target as HTMLImageElement).classList.add('card-img-loaded') }}
-                            onError={e=>{
-                            const t=e.target as HTMLImageElement
-                            const src=t.src
-                            if(src.includes('high.webp')) t.src=src.replace('high.webp','high.png')
-                            else if(src.includes('high.png')) t.src=src.replace('/high.','/low.')
-                            else if(src.includes('/fr/')) t.src=src.replace('/fr/','/en/')
-                            else t.style.opacity='0'
-                          }}/>
+                          <CardImg setId={card.setId} localId={card.localId} lang={lang} image={card.image} enImage={card.enImage} name={card.name} number={card.localId} variant="full" imgClassName="card-img" imgStyle={{ padding: cardSize==='L'?'6px':'3px', boxSizing:'border-box' }} />
                         ) : (
                           <div style={{
                             position: 'absolute' as const, inset: 0,
@@ -1705,7 +1704,6 @@ export function Encyclopedie() {
               </div>
               {pageCards.map((card,i) => {
                 const isSel = selId===card.id
-                const img = cleanLegacyUrl(card.image) || (card.setId && card.localId ? getCardImageUrl({ lang: lang, setId: card.setId, localId: card.localId }) : null)
                 const rc = card.rarity ? getRarityColor(card.rarity) : null
                 const owned = isOwned(card)
                 return (
@@ -1713,13 +1711,7 @@ export function Encyclopedie() {
                     onClick={()=>handleCardClick(card.id)}
                     style={{ display:'grid', gridTemplateColumns:'40px minmax(0,2.5fr) minmax(0,1.2fr) 90px 55px 50px', padding:'8px 16px', borderBottom:i<pageCards.length-1?'1px solid #F8F8F8':'none', alignItems:'center', background:isSel?'#F5F5F7':owned?'#FAFEF5':'transparent', borderLeft:isSel?'3px solid #111':'3px solid transparent', transition:'all .1s', gap:'8px', cursor:'pointer' }}>
                     <div style={{ width:'32px', height:'44px', flexShrink:0, borderRadius:'5px', overflow:'hidden', background:'#F5F5F5', border:'1px solid #EBEBEB' }}>
-                      {img && <img src={img} alt={card.name} loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'contain' }} onError={e=>{
-                        const t=e.target as HTMLImageElement; const src=t.src
-                        if(src.includes('high.webp')) t.src=src.replace('high.webp','high.png')
-                        else if(src.includes('high.png')) t.src=src.replace('/high.','/low.')
-                        else if(src.includes('/fr/')) t.src=src.replace('/fr/','/en/')
-                        else t.style.opacity='0'
-                      }}/>}
+                      <CardImg setId={card.setId} localId={card.localId} lang={lang} image={card.image} enImage={card.enImage} name={card.name} number={card.localId} variant="thumb" />
                     </div>
                     <div style={{ minWidth:0 }}>
                       <div style={{ fontSize:'13px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'6px' }}>

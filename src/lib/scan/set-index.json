@@ -1,0 +1,5301 @@
+[
+  {
+    "id": "2019sm",
+    "printedTotal": 12,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2019,
+    "nameEn": "McDonald's Collection 2019",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "base1-shadowless",
+    "printedTotal": 102,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 1999,
+    "nameEn": "Base Set Shadowless",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 102
+  },
+  {
+    "id": "bw11",
+    "printedTotal": 115,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2013,
+    "nameEn": "Legendary Treasures",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/bw/bw11/logo.webp",
+    "dbTotalCards": 140
+  },
+  {
+    "id": "adv-expansion-pack",
+    "printedTotal": 55,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2003,
+    "nameEn": "ADV Expansion Pack",
+    "nameFr": null,
+    "nameJp": "ADV Expansion Pack",
+    "logo": null,
+    "dbTotalCards": 84
+  },
+  {
+    "id": "arceus-lvx-deck-lightning-psychic",
+    "printedTotal": 17,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "Arceus LV.X Deck: Lightning & Psychic",
+    "nameFr": null,
+    "nameJp": "Arceus LV.X Deck: Lightning & Psychic",
+    "logo": null,
+    "dbTotalCards": 10
+  },
+  {
+    "id": "base-expansion-pack",
+    "printedTotal": 128,
+    "langs": [
+      "jp"
+    ],
+    "series": "base",
+    "year": 2001,
+    "nameEn": "Base Expansion Pack",
+    "nameFr": null,
+    "nameJp": "Base Expansion Pack",
+    "logo": null,
+    "dbTotalCards": 207
+  },
+  {
+    "id": "bw1-black-collection",
+    "printedTotal": 56,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2010,
+    "nameEn": "BW1: Black Collection",
+    "nameFr": null,
+    "nameJp": "BW1: Black Collection",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "bw1-white-collection",
+    "printedTotal": 55,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2010,
+    "nameEn": "BW1: White Collection",
+    "nameFr": null,
+    "nameJp": "BW1: White Collection",
+    "logo": null,
+    "dbTotalCards": 54
+  },
+  {
+    "id": "bw2-red-collection",
+    "printedTotal": 72,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2011,
+    "nameEn": "BW2: Red Collection",
+    "nameFr": null,
+    "nameJp": "BW2: Red Collection",
+    "logo": null,
+    "dbTotalCards": 77
+  },
+  {
+    "id": "bw3-psycho-drive",
+    "printedTotal": 57,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2011,
+    "nameEn": "BW3: Psycho Drive",
+    "nameFr": null,
+    "nameJp": "BW3: Psycho Drive",
+    "logo": null,
+    "dbTotalCards": 46
+  },
+  {
+    "id": "bw4-dark-rush",
+    "printedTotal": 76,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2011,
+    "nameEn": "BW4: Dark Rush",
+    "nameFr": null,
+    "nameJp": "BW4: Dark Rush",
+    "logo": null,
+    "dbTotalCards": 78
+  },
+  {
+    "id": "bw5-dragon-blade",
+    "printedTotal": 55,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW5: Dragon Blade",
+    "nameFr": null,
+    "nameJp": "BW5: Dragon Blade",
+    "logo": null,
+    "dbTotalCards": 55
+  },
+  {
+    "id": "bw5-dragon-blast",
+    "printedTotal": 55,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW5: Dragon Blast",
+    "nameFr": null,
+    "nameJp": "BW5: Dragon Blast",
+    "logo": null,
+    "dbTotalCards": 29
+  },
+  {
+    "id": "bw6-cold-flare",
+    "printedTotal": 65,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW6: Cold Flare",
+    "nameFr": null,
+    "nameJp": "BW6: Cold Flare",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "bw6-freeze-bolt",
+    "printedTotal": 65,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW6: Freeze Bolt",
+    "nameFr": null,
+    "nameJp": "BW6: Freeze Bolt",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "bw7-plasma-gale",
+    "printedTotal": 79,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW7: Plasma Gale",
+    "nameFr": null,
+    "nameJp": "BW7: Plasma Gale",
+    "logo": null,
+    "dbTotalCards": 66
+  },
+  {
+    "id": "bw9-megalo-cannon",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2013,
+    "nameEn": "BW9: Megalo Cannon",
+    "nameFr": null,
+    "nameJp": "BW9: Megalo Cannon",
+    "logo": null,
+    "dbTotalCards": 45
+  },
+  {
+    "id": "cp2-legendary-shine-collection",
+    "printedTotal": 27,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2015,
+    "nameEn": "CP2: Legendary Shine Collection",
+    "nameFr": null,
+    "nameJp": "CP2: Legendary Shine Collection",
+    "logo": null,
+    "dbTotalCards": 60
+  },
+  {
+    "id": "cp4-premium-champion-pack",
+    "printedTotal": 131,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "CP4: Premium Champion Pack",
+    "nameFr": null,
+    "nameJp": "CP4: Premium Champion Pack",
+    "logo": null,
+    "dbTotalCards": 101
+  },
+  {
+    "id": "cp5-mythical-legendary-dream-shine-collection",
+    "printedTotal": 38,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "CP5: Mythical & Legendary Dream Shine Collection",
+    "nameFr": null,
+    "nameJp": "CP5: Mythical & Legendary Dream Shine Collection",
+    "logo": null,
+    "dbTotalCards": 79
+  },
+  {
+    "id": "base3-1st",
+    "printedTotal": 62,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 1999,
+    "nameEn": "Fossil 1st Edition",
+    "nameFr": "Fossile (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/base/base3/logo.webp",
+    "dbTotalCards": 62
+  },
+  {
+    "id": "base5-1st",
+    "printedTotal": 83,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 2000,
+    "nameEn": "Team Rocket 1st Edition",
+    "nameFr": "Team Rocket (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/base/base5/logo.webp",
+    "dbTotalCards": 83
+  },
+  {
+    "id": "ecard3",
+    "printedTotal": 150,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2003,
+    "nameEn": "Skyridge",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ecard/ecard3/logo.webp",
+    "dbTotalCards": 182
+  },
+  {
+    "id": "ex5.5",
+    "printedTotal": 5,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2004,
+    "nameEn": "Poké Card Creator Pack",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 5
+  },
+  {
+    "id": "ex7",
+    "printedTotal": 111,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2004,
+    "nameEn": "Team Rocket Returns",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex7/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "fut2020",
+    "printedTotal": 5,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2020,
+    "nameEn": "Pokémon Futsal 2020",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/fut2020/logo.webp",
+    "dbTotalCards": 5
+  },
+  {
+    "id": "gym1",
+    "printedTotal": 132,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2000,
+    "nameEn": "Gym Heroes",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/gym/gym1/logo.webp",
+    "dbTotalCards": 132
+  },
+  {
+    "id": "gym1-1st",
+    "printedTotal": 132,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2000,
+    "nameEn": "Gym Heroes 1st Edition",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 132
+  },
+  {
+    "id": "gym2",
+    "printedTotal": 132,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2000,
+    "nameEn": "Gym Challenge",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/gym/gym2/logo.webp",
+    "dbTotalCards": 132
+  },
+  {
+    "id": "gym2-1st",
+    "printedTotal": 132,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2000,
+    "nameEn": "Gym Challenge 1st Edition",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 132
+  },
+  {
+    "id": "everyones-exciting-battle",
+    "printedTotal": 47,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "Everyone's Exciting Battle",
+    "nameFr": null,
+    "nameJp": "Everyone's Exciting Battle",
+    "logo": null,
+    "dbTotalCards": 5
+  },
+  {
+    "id": "golden-sky-silvery-ocean",
+    "printedTotal": 106,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2005,
+    "nameEn": "Golden Sky, Silvery Ocean",
+    "nameFr": null,
+    "nameJp": "Golden Sky, Silvery Ocean",
+    "logo": null,
+    "dbTotalCards": 73
+  },
+  {
+    "id": "holon-phantom",
+    "printedTotal": 52,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2006,
+    "nameEn": "Holon Phantom",
+    "nameFr": null,
+    "nameJp": "Holon Phantom",
+    "logo": null,
+    "dbTotalCards": 70
+  },
+  {
+    "id": "holon-research-tower",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2005,
+    "nameEn": "Holon Research Tower",
+    "nameFr": null,
+    "nameJp": "Holon Research Tower",
+    "logo": null,
+    "dbTotalCards": 74
+  },
+  {
+    "id": "l-p-legends-promos",
+    "printedTotal": 79,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "L-P: Legends Promos",
+    "nameFr": null,
+    "nameJp": "L-P: Legends Promos",
+    "logo": null,
+    "dbTotalCards": 29
+  },
+  {
+    "id": "l1-heartgold-collection",
+    "printedTotal": 45,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "L1: HeartGold Collection",
+    "nameFr": null,
+    "nameJp": "L1: HeartGold Collection",
+    "logo": null,
+    "dbTotalCards": 40
+  },
+  {
+    "id": "l1-soulsilver-collection",
+    "printedTotal": 70,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "L1: SoulSilver Collection",
+    "nameFr": null,
+    "nameJp": "L1: SoulSilver Collection",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "l2-revival-legends",
+    "printedTotal": 81,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2010,
+    "nameEn": "L2: Revival Legends",
+    "nameFr": null,
+    "nameJp": "L2: Revival Legends",
+    "logo": null,
+    "dbTotalCards": 52
+  },
+  {
+    "id": "l3-clash-at-the-summit",
+    "printedTotal": 81,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2010,
+    "nameEn": "L3: Clash at the Summit",
+    "nameFr": null,
+    "nameJp": "L3: Clash at the Summit",
+    "logo": null,
+    "dbTotalCards": 60
+  },
+  {
+    "id": "m1l-mega-brave",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "m1L: Mega Brave",
+    "nameFr": null,
+    "nameJp": "m1L: Mega Brave",
+    "logo": null,
+    "dbTotalCards": 149
+  },
+  {
+    "id": "m2a-high-class-pack-mega-dream-ex",
+    "printedTotal": 250,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "M2a: High Class Pack: MEGA Dream ex",
+    "nameFr": null,
+    "nameJp": "M2a: High Class Pack: MEGA Dream ex",
+    "logo": null,
+    "dbTotalCards": 790
+  },
+  {
+    "id": "magma-vs-aqua-two-ambitions",
+    "printedTotal": 80,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2003,
+    "nameEn": "Magma VS Aqua: Two Ambitions",
+    "nameFr": null,
+    "nameJp": "Magma VS Aqua: Two Ambitions",
+    "logo": null,
+    "dbTotalCards": 79
+  },
+  {
+    "id": "miracle-of-the-desert",
+    "printedTotal": 53,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2003,
+    "nameEn": "Miracle of the Desert",
+    "nameFr": null,
+    "nameJp": "Miracle of the Desert",
+    "logo": null,
+    "dbTotalCards": 70
+  },
+  {
+    "id": "mirage-forest",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2005,
+    "nameEn": "Mirage Forest",
+    "nameFr": null,
+    "nameJp": "Mirage Forest",
+    "logo": null,
+    "dbTotalCards": 60
+  },
+  {
+    "id": "intense-fight-in-the-destroyed-sky",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2008,
+    "nameEn": "Intense Fight in the Destroyed Sky",
+    "nameFr": null,
+    "nameJp": "Intense Fight in the Destroyed Sky",
+    "logo": null,
+    "dbTotalCards": 162
+  },
+  {
+    "id": "mysterious-mountains",
+    "printedTotal": 91,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2002,
+    "nameEn": "Mysterious Mountains",
+    "nameFr": null,
+    "nameJp": "Mysterious Mountains",
+    "logo": null,
+    "dbTotalCards": 60
+  },
+  {
+    "id": "pl4",
+    "printedTotal": 99,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2009,
+    "nameEn": "Arceus",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pl/pl4/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "pop5",
+    "printedTotal": 17,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2007,
+    "nameEn": "POP Series 5",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop5/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "pop6",
+    "printedTotal": 17,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2007,
+    "nameEn": "POP Series 6",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop6/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "pop8",
+    "printedTotal": 17,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2008,
+    "nameEn": "POP Series 8",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop8/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "bw8-spiral-force",
+    "printedTotal": 58,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW8: Spiral Force",
+    "nameFr": null,
+    "nameJp": "BW8: Spiral Force",
+    "logo": null,
+    "dbTotalCards": 39
+  },
+  {
+    "id": "offense-and-defense-of-the-furthest-ends",
+    "printedTotal": 68,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2006,
+    "nameEn": "Offense and Defense of the Furthest Ends",
+    "nameFr": null,
+    "nameJp": "Offense and Defense of the Furthest Ends",
+    "logo": null,
+    "dbTotalCards": 96
+  },
+  {
+    "id": "pokepark-forest",
+    "printedTotal": 9,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2005,
+    "nameEn": "PokePark Forest",
+    "nameFr": null,
+    "nameJp": "PokePark Forest",
+    "logo": null,
+    "dbTotalCards": 7
+  },
+  {
+    "id": "pt1-galactics-conquest",
+    "printedTotal": 96,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2008,
+    "nameEn": "Pt1: Galactic's Conquest",
+    "nameFr": null,
+    "nameJp": "Pt1: Galactic's Conquest",
+    "logo": null,
+    "dbTotalCards": 136
+  },
+  {
+    "id": "pt3-beat-of-the-frontier",
+    "printedTotal": 100,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "Pt3: Beat of the Frontier",
+    "nameFr": null,
+    "nameJp": "Pt3: Beat of the Frontier",
+    "logo": null,
+    "dbTotalCards": 90
+  },
+  {
+    "id": "pt4-advent-of-arceus",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "Pt4: Advent of Arceus",
+    "nameFr": null,
+    "nameJp": "Pt4: Advent of Arceus",
+    "logo": null,
+    "dbTotalCards": 91
+  },
+  {
+    "id": "rocket-gang-strikes-back",
+    "printedTotal": 85,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2004,
+    "nameEn": "Rocket Gang Strikes Back",
+    "nameFr": null,
+    "nameJp": "Rocket Gang Strikes Back",
+    "logo": null,
+    "dbTotalCards": 51
+  },
+  {
+    "id": "rulers-of-the-heavens",
+    "printedTotal": 54,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2003,
+    "nameEn": "Rulers of the Heavens",
+    "nameFr": null,
+    "nameJp": "Rulers of the Heavens",
+    "logo": null,
+    "dbTotalCards": 103
+  },
+  {
+    "id": "s-p-sword-shield-promos",
+    "printedTotal": 133,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2019,
+    "nameEn": "S-P: Sword & Shield Promos",
+    "nameFr": null,
+    "nameJp": "S-P: Sword & Shield Promos",
+    "logo": null,
+    "dbTotalCards": 224
+  },
+  {
+    "id": "s10a-dark-phantasma",
+    "printedTotal": 99,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S10a: Dark Phantasma",
+    "nameFr": null,
+    "nameJp": "S10a: Dark Phantasma",
+    "logo": null,
+    "dbTotalCards": 214
+  },
+  {
+    "id": "s10b-pokemon-go",
+    "printedTotal": 93,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S10b: Pokemon GO",
+    "nameFr": null,
+    "nameJp": "S10b: Pokemon GO",
+    "logo": null,
+    "dbTotalCards": 179
+  },
+  {
+    "id": "neo1-1st",
+    "printedTotal": 111,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 2000,
+    "nameEn": "Neo Genesis 1st Edition",
+    "nameFr": "Neo Genesis (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo1/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "neo2-1st",
+    "printedTotal": 75,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 2001,
+    "nameEn": "Neo Discovery 1st Edition",
+    "nameFr": "Neo Discovery (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo2/logo.webp",
+    "dbTotalCards": 75
+  },
+  {
+    "id": "neo3-1st",
+    "printedTotal": 66,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 2001,
+    "nameEn": "Neo Revelation 1st Edition",
+    "nameFr": "Neo Revelation (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo3/logo.webp",
+    "dbTotalCards": 66
+  },
+  {
+    "id": "neo4-1st",
+    "printedTotal": 113,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 2002,
+    "nameEn": "Neo Destiny 1st Edition",
+    "nameFr": "Neo Destiny (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo4/logo.webp",
+    "dbTotalCards": 113
+  },
+  {
+    "id": "s10d-time-gazer",
+    "printedTotal": 88,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S10D: Time Gazer",
+    "nameFr": null,
+    "nameJp": "S10D: Time Gazer",
+    "logo": null,
+    "dbTotalCards": 99
+  },
+  {
+    "id": "s10p-space-juggler",
+    "printedTotal": 88,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S10P: Space Juggler",
+    "nameFr": null,
+    "nameJp": "S10P: Space Juggler",
+    "logo": null,
+    "dbTotalCards": 108
+  },
+  {
+    "id": "s11-lost-abyss",
+    "printedTotal": 127,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S11: Lost Abyss",
+    "nameFr": null,
+    "nameJp": "S11: Lost Abyss",
+    "logo": null,
+    "dbTotalCards": 174
+  },
+  {
+    "id": "s1a-vmax-rising",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S1a: VMAX Rising",
+    "nameFr": null,
+    "nameJp": "S1a: VMAX Rising",
+    "logo": null,
+    "dbTotalCards": 109
+  },
+  {
+    "id": "s1w-sword",
+    "printedTotal": 75,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2019,
+    "nameEn": "S1W: Sword",
+    "nameFr": null,
+    "nameJp": "S1W: Sword",
+    "logo": null,
+    "dbTotalCards": 97
+  },
+  {
+    "id": "s2a-explosive-walker",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S2a: Explosive Walker",
+    "nameFr": null,
+    "nameJp": "S2a: Explosive Walker",
+    "logo": null,
+    "dbTotalCards": 94
+  },
+  {
+    "id": "s3-infinity-zone",
+    "printedTotal": 119,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S3: Infinity Zone",
+    "nameFr": null,
+    "nameJp": "S3: Infinity Zone",
+    "logo": null,
+    "dbTotalCards": 109
+  },
+  {
+    "id": "s3a-legendary-heartbeat",
+    "printedTotal": 94,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S3a: Legendary Heartbeat",
+    "nameFr": null,
+    "nameJp": "S3a: Legendary Heartbeat",
+    "logo": null,
+    "dbTotalCards": 117
+  },
+  {
+    "id": "s4-amazing-volt-tackle",
+    "printedTotal": 121,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S4: Amazing Volt Tackle",
+    "nameFr": null,
+    "nameJp": "S4: Amazing Volt Tackle",
+    "logo": null,
+    "dbTotalCards": 143
+  },
+  {
+    "id": "s4a-shiny-star-v",
+    "printedTotal": 330,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S4a: Shiny Star V",
+    "nameFr": null,
+    "nameJp": "S4a: Shiny Star V",
+    "logo": null,
+    "dbTotalCards": 610
+  },
+  {
+    "id": "s5a-peerless-fighters",
+    "printedTotal": 96,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S5a: Peerless Fighters",
+    "nameFr": null,
+    "nameJp": "S5a: Peerless Fighters",
+    "logo": null,
+    "dbTotalCards": 103
+  },
+  {
+    "id": "s5i-single-strike-master",
+    "printedTotal": 91,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S5I: Single Strike Master",
+    "nameFr": null,
+    "nameJp": "S5I: Single Strike Master",
+    "logo": null,
+    "dbTotalCards": 104
+  },
+  {
+    "id": "s5r-rapid-strike-master",
+    "printedTotal": 91,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S5R: Rapid Strike Master",
+    "nameFr": null,
+    "nameJp": "S5R: Rapid Strike Master",
+    "logo": null,
+    "dbTotalCards": 89
+  },
+  {
+    "id": "s6a-eevee-heroes",
+    "printedTotal": 101,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S6a: Eevee Heroes",
+    "nameFr": null,
+    "nameJp": "S6a: Eevee Heroes",
+    "logo": null,
+    "dbTotalCards": 138
+  },
+  {
+    "id": "s6h-silver-lance",
+    "printedTotal": 95,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S6H: Silver Lance",
+    "nameFr": null,
+    "nameJp": "S6H: Silver Lance",
+    "logo": null,
+    "dbTotalCards": 119
+  },
+  {
+    "id": "s6k-jet-black-spirit",
+    "printedTotal": 95,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S6K: Jet-Black Spirit",
+    "nameFr": null,
+    "nameJp": "S6K: Jet-Black Spirit",
+    "logo": null,
+    "dbTotalCards": 112
+  },
+  {
+    "id": "s7d-skyscraping-perfection",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S7D: Skyscraping Perfection",
+    "nameFr": null,
+    "nameJp": "S7D: Skyscraping Perfection",
+    "logo": null,
+    "dbTotalCards": 107
+  },
+  {
+    "id": "s7r-blue-sky-stream",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S7R: Blue Sky Stream",
+    "nameFr": null,
+    "nameJp": "S7R: Blue Sky Stream",
+    "logo": null,
+    "dbTotalCards": 115
+  },
+  {
+    "id": "s8-fusion-arts",
+    "printedTotal": 129,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S8: Fusion Arts",
+    "nameFr": null,
+    "nameJp": "S8: Fusion Arts",
+    "logo": null,
+    "dbTotalCards": 159
+  },
+  {
+    "id": "s8a-g-25th-anniversary-golden-box",
+    "printedTotal": 15,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "s8a-G: 25th Anniversary Golden Box",
+    "nameFr": null,
+    "nameJp": "s8a-G: 25th Anniversary Golden Box",
+    "logo": null,
+    "dbTotalCards": 8
+  },
+  {
+    "id": "s8b-vmax-climax",
+    "printedTotal": 285,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S8b: VMAX Climax",
+    "nameFr": null,
+    "nameJp": "S8b: VMAX Climax",
+    "logo": null,
+    "dbTotalCards": 600
+  },
+  {
+    "id": "s9-star-birth",
+    "printedTotal": 127,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S9: Star Birth",
+    "nameFr": null,
+    "nameJp": "S9: Star Birth",
+    "logo": null,
+    "dbTotalCards": 157
+  },
+  {
+    "id": "sm-p-sun-moon-promos",
+    "printedTotal": 1,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "SM-P: Sun & Moon Promos",
+    "nameFr": null,
+    "nameJp": "SM-P: Sun & Moon Promos",
+    "logo": null,
+    "dbTotalCards": 184
+  },
+  {
+    "id": "sm-the-best-of-xy",
+    "printedTotal": 37,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM: The Best of XY",
+    "nameFr": null,
+    "nameJp": "SM: The Best of XY",
+    "logo": null,
+    "dbTotalCards": 132
+  },
+  {
+    "id": "sm0-pikachus-new-friends",
+    "printedTotal": 4,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "SM0: Pikachu's New Friends",
+    "nameFr": null,
+    "nameJp": "SM0: Pikachu's New Friends",
+    "logo": null,
+    "dbTotalCards": 2
+  },
+  {
+    "id": "sm1-enhanced-expansion-pack-sun-moon",
+    "printedTotal": 68,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "sm1+: Enhanced Expansion Pack Sun & Moon",
+    "nameFr": null,
+    "nameJp": "sm1+: Enhanced Expansion Pack Sun & Moon",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "shiny-collection",
+    "printedTotal": 25,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2013,
+    "nameEn": "Shiny Collection",
+    "nameFr": null,
+    "nameJp": "Shiny Collection",
+    "logo": null,
+    "dbTotalCards": 88
+  },
+  {
+    "id": "sm10a-gg-end",
+    "printedTotal": 69,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM10a: GG End",
+    "nameFr": null,
+    "nameJp": "SM10a: GG End",
+    "logo": null,
+    "dbTotalCards": 87
+  },
+  {
+    "id": "sm10b-sky-legend",
+    "printedTotal": 69,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM10b: Sky Legend",
+    "nameFr": null,
+    "nameJp": "SM10b: Sky Legend",
+    "logo": null,
+    "dbTotalCards": 94
+  },
+  {
+    "id": "sm11-miracle-twin",
+    "printedTotal": 115,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM11: Miracle Twin",
+    "nameFr": null,
+    "nameJp": "SM11: Miracle Twin",
+    "logo": null,
+    "dbTotalCards": 178
+  },
+  {
+    "id": "sm11a-remix-bout",
+    "printedTotal": 80,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM11a: Remix Bout",
+    "nameFr": null,
+    "nameJp": "SM11a: Remix Bout",
+    "logo": null,
+    "dbTotalCards": 105
+  },
+  {
+    "id": "sm11b-dream-league",
+    "printedTotal": 75,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM11b: Dream League",
+    "nameFr": null,
+    "nameJp": "SM11b: Dream League",
+    "logo": null,
+    "dbTotalCards": 107
+  },
+  {
+    "id": "sm1m-collection-moon",
+    "printedTotal": 73,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "SM1M: Collection Moon",
+    "nameFr": null,
+    "nameJp": "SM1M: Collection Moon",
+    "logo": null,
+    "dbTotalCards": 28
+  },
+  {
+    "id": "sm1s-collection-sun",
+    "printedTotal": 73,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "SM1S: Collection Sun",
+    "nameFr": null,
+    "nameJp": "SM1S: Collection Sun",
+    "logo": null,
+    "dbTotalCards": 48
+  },
+  {
+    "id": "sm2-facing-a-new-trial",
+    "printedTotal": 66,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM2+: Facing a New Trial",
+    "nameFr": null,
+    "nameJp": "SM2+: Facing a New Trial",
+    "logo": null,
+    "dbTotalCards": 39
+  },
+  {
+    "id": "sm2k-islands-await-you",
+    "printedTotal": 62,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM2K: Islands Await You",
+    "nameFr": null,
+    "nameJp": "SM2K: Islands Await You",
+    "logo": null,
+    "dbTotalCards": 17
+  },
+  {
+    "id": "sm2l-alolan-moonlight",
+    "printedTotal": 11,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM2L: Alolan Moonlight",
+    "nameFr": null,
+    "nameJp": "SM2L: Alolan Moonlight",
+    "logo": null,
+    "dbTotalCards": 39
+  },
+  {
+    "id": "sm3-shining-legends",
+    "printedTotal": 82,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM3+: Shining Legends",
+    "nameFr": null,
+    "nameJp": "SM3+: Shining Legends",
+    "logo": null,
+    "dbTotalCards": 43
+  },
+  {
+    "id": "sm3h-to-have-seen-the-battle-rainbow",
+    "printedTotal": 64,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM3H: To Have Seen the Battle Rainbow",
+    "nameFr": null,
+    "nameJp": "SM3H: To Have Seen the Battle Rainbow",
+    "logo": null,
+    "dbTotalCards": 27
+  },
+  {
+    "id": "sm3n-darkness-that-consumes-light",
+    "printedTotal": 64,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM3N: Darkness that Consumes Light",
+    "nameFr": null,
+    "nameJp": "SM3N: Darkness that Consumes Light",
+    "logo": null,
+    "dbTotalCards": 23
+  },
+  {
+    "id": "sm4-gx-battle-boost",
+    "printedTotal": 125,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM4+: GX Battle Boost",
+    "nameFr": null,
+    "nameJp": "SM4+: GX Battle Boost",
+    "logo": null,
+    "dbTotalCards": 76
+  },
+  {
+    "id": "sm4a-ultradimensional-beasts",
+    "printedTotal": 62,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM4A: Ultradimensional Beasts",
+    "nameFr": null,
+    "nameJp": "SM4A: Ultradimensional Beasts",
+    "logo": null,
+    "dbTotalCards": 25
+  },
+  {
+    "id": "sm4s-awakened-heroes",
+    "printedTotal": 62,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM4S: Awakened Heroes",
+    "nameFr": null,
+    "nameJp": "SM4S: Awakened Heroes",
+    "logo": null,
+    "dbTotalCards": 15
+  },
+  {
+    "id": "sm5-ultra-force",
+    "printedTotal": 63,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM5+: Ultra Force",
+    "nameFr": null,
+    "nameJp": "SM5+: Ultra Force",
+    "logo": null,
+    "dbTotalCards": 47
+  },
+  {
+    "id": "sm5s-ultra-sun",
+    "printedTotal": 78,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM5S: Ultra Sun",
+    "nameFr": null,
+    "nameJp": "SM5S: Ultra Sun",
+    "logo": null,
+    "dbTotalCards": 61
+  },
+  {
+    "id": "sm6-forbidden-light",
+    "printedTotal": 110,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM6: Forbidden Light",
+    "nameFr": null,
+    "nameJp": "SM6: Forbidden Light",
+    "logo": null,
+    "dbTotalCards": 58
+  },
+  {
+    "id": "sm6a-dragon-storm",
+    "printedTotal": 66,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM6a: Dragon Storm",
+    "nameFr": null,
+    "nameJp": "SM6a: Dragon Storm",
+    "logo": null,
+    "dbTotalCards": 59
+  },
+  {
+    "id": "sm6b-champion-road",
+    "printedTotal": 86,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM6b: Champion Road",
+    "nameFr": null,
+    "nameJp": "SM6b: Champion Road",
+    "logo": null,
+    "dbTotalCards": 62
+  },
+  {
+    "id": "sm7-sky-splitting-charisma",
+    "printedTotal": 112,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM7: Sky-Splitting Charisma",
+    "nameFr": null,
+    "nameJp": "SM7: Sky-Splitting Charisma",
+    "logo": null,
+    "dbTotalCards": 74
+  },
+  {
+    "id": "sm7a-thunderclap-spark",
+    "printedTotal": 73,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM7a: Thunderclap Spark",
+    "nameFr": null,
+    "nameJp": "SM7a: Thunderclap Spark",
+    "logo": null,
+    "dbTotalCards": 67
+  },
+  {
+    "id": "sm8a-dark-order",
+    "printedTotal": 65,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM8a: Dark Order",
+    "nameFr": null,
+    "nameJp": "SM8a: Dark Order",
+    "logo": null,
+    "dbTotalCards": 48
+  },
+  {
+    "id": "sm9-tag-bolt",
+    "printedTotal": 118,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM9: Tag Bolt",
+    "nameFr": null,
+    "nameJp": "SM9: Tag Bolt",
+    "logo": null,
+    "dbTotalCards": 152
+  },
+  {
+    "id": "sm9b-full-metal-wall",
+    "printedTotal": 69,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM9b: Full Metal Wall",
+    "nameFr": null,
+    "nameJp": "SM9b: Full Metal Wall",
+    "logo": null,
+    "dbTotalCards": 79
+  },
+  {
+    "id": "smk-trainer-battle-decks",
+    "printedTotal": 31,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "smK: Trainer Battle Decks",
+    "nameFr": null,
+    "nameJp": "smK: Trainer Battle Decks",
+    "logo": null,
+    "dbTotalCards": 1
+  },
+  {
+    "id": "split-earth",
+    "printedTotal": 91,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2002,
+    "nameEn": "Split Earth",
+    "nameFr": null,
+    "nameJp": "Split Earth",
+    "logo": null,
+    "dbTotalCards": 111
+  },
+  {
+    "id": "sv-ex-start-decks",
+    "printedTotal": 139,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV: ex Start Decks",
+    "nameFr": null,
+    "nameJp": "SV: ex Start Decks",
+    "logo": null,
+    "dbTotalCards": 64
+  },
+  {
+    "id": "sv10-the-glory-of-team-rocket",
+    "printedTotal": 132,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "SV10: The Glory of Team Rocket",
+    "nameFr": null,
+    "nameJp": "SV10: The Glory of Team Rocket",
+    "logo": null,
+    "dbTotalCards": 200
+  },
+  {
+    "id": "sv11w-white-flare",
+    "printedTotal": 174,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "SV11W: White Flare",
+    "nameFr": null,
+    "nameJp": "SV11W: White Flare",
+    "logo": null,
+    "dbTotalCards": 565
+  },
+  {
+    "id": "sv1a-triplet-beat",
+    "printedTotal": 103,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV1a: Triplet Beat",
+    "nameFr": null,
+    "nameJp": "SV1a: Triplet Beat",
+    "logo": null,
+    "dbTotalCards": 155
+  },
+  {
+    "id": "sv1s-scarlet-ex",
+    "printedTotal": 108,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV1S: Scarlet ex",
+    "nameFr": null,
+    "nameJp": "SV1S: Scarlet ex",
+    "logo": null,
+    "dbTotalCards": 177
+  },
+  {
+    "id": "sv1v-violet-ex",
+    "printedTotal": 108,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV1V: Violet ex",
+    "nameFr": null,
+    "nameJp": "SV1V: Violet ex",
+    "logo": null,
+    "dbTotalCards": 187
+  },
+  {
+    "id": "sv2d-clay-burst",
+    "printedTotal": 99,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV2D: Clay Burst",
+    "nameFr": null,
+    "nameJp": "SV2D: Clay Burst",
+    "logo": null,
+    "dbTotalCards": 154
+  },
+  {
+    "id": "sv2p-snow-hazard",
+    "printedTotal": 99,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV2P: Snow Hazard",
+    "nameFr": null,
+    "nameJp": "SV2P: Snow Hazard",
+    "logo": null,
+    "dbTotalCards": 159
+  },
+  {
+    "id": "sv3-ruler-of-the-black-flame",
+    "printedTotal": 141,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV3: Ruler of the Black Flame",
+    "nameFr": null,
+    "nameJp": "SV3: Ruler of the Black Flame",
+    "logo": null,
+    "dbTotalCards": 254
+  },
+  {
+    "id": "sv3a-raging-surf",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV3a: Raging Surf",
+    "nameFr": null,
+    "nameJp": "SV3a: Raging Surf",
+    "logo": null,
+    "dbTotalCards": 143
+  },
+  {
+    "id": "sv4a-shiny-treasure-ex",
+    "printedTotal": 360,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV4a: Shiny Treasure ex",
+    "nameFr": null,
+    "nameJp": "SV4a: Shiny Treasure ex",
+    "logo": null,
+    "dbTotalCards": 840
+  },
+  {
+    "id": "sv4k-ancient-roar",
+    "printedTotal": 95,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV4K: Ancient Roar",
+    "nameFr": null,
+    "nameJp": "SV4K: Ancient Roar",
+    "logo": null,
+    "dbTotalCards": 149
+  },
+  {
+    "id": "sv5a-crimson-haze",
+    "printedTotal": 96,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV5a: Crimson Haze",
+    "nameFr": null,
+    "nameJp": "SV5a: Crimson Haze",
+    "logo": null,
+    "dbTotalCards": 176
+  },
+  {
+    "id": "sv5k-wild-force",
+    "printedTotal": 100,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV5K: Wild Force",
+    "nameFr": null,
+    "nameJp": "SV5K: Wild Force",
+    "logo": null,
+    "dbTotalCards": 167
+  },
+  {
+    "id": "sv5m-cyber-judge",
+    "printedTotal": 100,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV5M: Cyber Judge",
+    "nameFr": null,
+    "nameJp": "SV5M: Cyber Judge",
+    "logo": null,
+    "dbTotalCards": 167
+  },
+  {
+    "id": "sv6a-night-wanderer",
+    "printedTotal": 94,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV6a: Night Wanderer",
+    "nameFr": null,
+    "nameJp": "SV6a: Night Wanderer",
+    "logo": null,
+    "dbTotalCards": 168
+  },
+  {
+    "id": "sv7-stellar-miracle",
+    "printedTotal": 135,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV7: Stellar Miracle",
+    "nameFr": null,
+    "nameJp": "SV7: Stellar Miracle",
+    "logo": null,
+    "dbTotalCards": 268
+  },
+  {
+    "id": "sv7a-paradise-dragona",
+    "printedTotal": 94,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV7a: Paradise Dragona",
+    "nameFr": null,
+    "nameJp": "SV7a: Paradise Dragona",
+    "logo": null,
+    "dbTotalCards": 152
+  },
+  {
+    "id": "sv8-super-electric-breaker",
+    "printedTotal": 138,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV8: Super Electric Breaker",
+    "nameFr": null,
+    "nameJp": "SV8: Super Electric Breaker",
+    "logo": null,
+    "dbTotalCards": 230
+  },
+  {
+    "id": "sv8a-terastal-fest-ex",
+    "printedTotal": 237,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV8a: Terastal Fest ex",
+    "nameFr": null,
+    "nameJp": "SV8a: Terastal Fest ex",
+    "logo": null,
+    "dbTotalCards": 875
+  },
+  {
+    "id": "sv9-battle-partners",
+    "printedTotal": 132,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "SV9: Battle Partners",
+    "nameFr": null,
+    "nameJp": "SV9: Battle Partners",
+    "logo": null,
+    "dbTotalCards": 222
+  },
+  {
+    "id": "ss-gengar-vmax-high-class-deck",
+    "printedTotal": 20,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "SS: Gengar VMAX High-Class Deck",
+    "nameFr": null,
+    "nameJp": "SS: Gengar VMAX High-Class Deck",
+    "logo": null,
+    "dbTotalCards": 16
+  },
+  {
+    "id": "cp6-expansion-pack-20th-anniversary",
+    "printedTotal": 103,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "CP6: Expansion Pack 20th Anniversary",
+    "nameFr": null,
+    "nameJp": "CP6: Expansion Pack 20th Anniversary",
+    "logo": null,
+    "dbTotalCards": 121
+  },
+  {
+    "id": "s2-rebellion-crash",
+    "printedTotal": 115,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2020,
+    "nameEn": "S2: Rebellion Crash",
+    "nameFr": null,
+    "nameJp": "S2: Rebellion Crash",
+    "logo": null,
+    "dbTotalCards": 122
+  },
+  {
+    "id": "s8a-25th-anniversary-collection",
+    "printedTotal": 30,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "S8a: 25th Anniversary Collection",
+    "nameFr": null,
+    "nameJp": "S8a: 25th Anniversary Collection",
+    "logo": null,
+    "dbTotalCards": 99
+  },
+  {
+    "id": "sm10-double-blaze",
+    "printedTotal": 26,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM10: Double Blaze",
+    "nameFr": null,
+    "nameJp": "SM10: Double Blaze",
+    "logo": null,
+    "dbTotalCards": 175
+  },
+  {
+    "id": "sm12a-tag-team-gx-tag-all-stars",
+    "printedTotal": 226,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM12a: TAG TEAM GX: Tag All Stars",
+    "nameFr": null,
+    "nameJp": "SM12a: TAG TEAM GX: Tag All Stars",
+    "logo": null,
+    "dbTotalCards": 407
+  },
+  {
+    "id": "sv6-transformation-mask",
+    "printedTotal": 133,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SV6: Transformation Mask",
+    "nameFr": null,
+    "nameJp": "SV6: Transformation Mask",
+    "logo": null,
+    "dbTotalCards": 219
+  },
+  {
+    "id": "sv9a-heat-wave-arena",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "SV9a: Heat Wave Arena",
+    "nameFr": null,
+    "nameJp": "SV9a: Heat Wave Arena",
+    "logo": null,
+    "dbTotalCards": 180
+  },
+  {
+    "id": "svm-generations-start-decks",
+    "printedTotal": 175,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2024,
+    "nameEn": "SVM: Generations Start Decks",
+    "nameFr": null,
+    "nameJp": "SVM: Generations Start Decks",
+    "logo": null,
+    "dbTotalCards": 30
+  },
+  {
+    "id": "undone-seal",
+    "printedTotal": 83,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2004,
+    "nameEn": "Undone Seal",
+    "nameFr": null,
+    "nameJp": "Undone Seal",
+    "logo": null,
+    "dbTotalCards": 88
+  },
+  {
+    "id": "wind-from-the-sea",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2002,
+    "nameEn": "Wind from the Sea",
+    "nameFr": null,
+    "nameJp": "Wind from the Sea",
+    "logo": null,
+    "dbTotalCards": 112
+  },
+  {
+    "id": "xy-beginning-set",
+    "printedTotal": 39,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2013,
+    "nameEn": "XY Beginning Set",
+    "nameFr": null,
+    "nameJp": "XY Beginning Set",
+    "logo": null,
+    "dbTotalCards": 6
+  },
+  {
+    "id": "xy-bx-collection-x",
+    "printedTotal": 63,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2013,
+    "nameEn": "XY-Bx: Collection X",
+    "nameFr": null,
+    "nameJp": "XY-Bx: Collection X",
+    "logo": null,
+    "dbTotalCards": 58
+  },
+  {
+    "id": "xy-by-collection-y",
+    "printedTotal": 63,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2013,
+    "nameEn": "XY-By: Collection Y",
+    "nameFr": null,
+    "nameJp": "XY-By: Collection Y",
+    "logo": null,
+    "dbTotalCards": 56
+  },
+  {
+    "id": "xy-p-xy-promos",
+    "printedTotal": 106,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2013,
+    "nameEn": "XY-P: XY Promos",
+    "nameFr": null,
+    "nameJp": "XY-P: XY Promos",
+    "logo": null,
+    "dbTotalCards": 157
+  },
+  {
+    "id": "xy10-awakening-psychic-king",
+    "printedTotal": 88,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2016,
+    "nameEn": "XY10: Awakening Psychic King",
+    "nameFr": null,
+    "nameJp": "XY10: Awakening Psychic King",
+    "logo": null,
+    "dbTotalCards": 37
+  },
+  {
+    "id": "xy11-bb-fever-burst-fighter",
+    "printedTotal": 59,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2016,
+    "nameEn": "XY11-Bb: Fever-Burst Fighter",
+    "nameFr": null,
+    "nameJp": "XY11-Bb: Fever-Burst Fighter",
+    "logo": null,
+    "dbTotalCards": 31
+  },
+  {
+    "id": "xy11-br-cruel-traitor",
+    "printedTotal": 59,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2016,
+    "nameEn": "XY11-Br: Cruel Traitor",
+    "nameFr": null,
+    "nameJp": "XY11-Br: Cruel Traitor",
+    "logo": null,
+    "dbTotalCards": 35
+  },
+  {
+    "id": "xy2-wild-blaze",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XY2: Wild Blaze",
+    "nameFr": null,
+    "nameJp": "XY2: Wild Blaze",
+    "logo": null,
+    "dbTotalCards": 38
+  },
+  {
+    "id": "xy3-rising-fist",
+    "printedTotal": 105,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XY3: Rising Fist",
+    "nameFr": null,
+    "nameJp": "XY3: Rising Fist",
+    "logo": null,
+    "dbTotalCards": 49
+  },
+  {
+    "id": "the-town-on-no-map",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "base",
+    "year": 2002,
+    "nameEn": "The Town on No Map",
+    "nameFr": null,
+    "nameJp": "The Town on No Map",
+    "logo": null,
+    "dbTotalCards": 172
+  },
+  {
+    "id": "base2-1st",
+    "printedTotal": 64,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": 1999,
+    "nameEn": "Jungle 1st Edition",
+    "nameFr": "Jungle (Édition 1)",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/base/base2/logo.webp",
+    "dbTotalCards": 64
+  },
+  {
+    "id": "sv09",
+    "printedTotal": 190,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Journey Together",
+    "nameFr": "Aventures Ensemble",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv09/logo.webp",
+    "dbTotalCards": 190
+  },
+  {
+    "id": "xy1",
+    "printedTotal": 146,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "XY",
+    "nameFr": "XY",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy1/logo.webp",
+    "dbTotalCards": 146
+  },
+  {
+    "id": "miracle-crystal",
+    "printedTotal": 75,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2006,
+    "nameEn": "Miracle Crystal",
+    "nameFr": null,
+    "nameJp": "Miracle Crystal",
+    "logo": null,
+    "dbTotalCards": 40
+  },
+  {
+    "id": "flight-of-legends",
+    "printedTotal": 82,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2004,
+    "nameEn": "Flight of Legends",
+    "nameFr": null,
+    "nameJp": "Flight of Legends",
+    "logo": null,
+    "dbTotalCards": 129
+  },
+  {
+    "id": "pokemon-vs",
+    "printedTotal": 142,
+    "langs": [
+      "jp"
+    ],
+    "series": "base",
+    "year": 2001,
+    "nameEn": "Pokemon VS",
+    "nameFr": null,
+    "nameJp": "Pokemon VS",
+    "logo": null,
+    "dbTotalCards": 449
+  },
+  {
+    "id": "s12a-vstar-universe",
+    "printedTotal": 262,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S12a: VSTAR Universe",
+    "nameFr": null,
+    "nameJp": "S12a: VSTAR Universe",
+    "logo": null,
+    "dbTotalCards": 626
+  },
+  {
+    "id": "lc",
+    "printedTotal": 110,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2002,
+    "nameEn": "Legendary Collection",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/lc/lc/logo.webp",
+    "dbTotalCards": 110
+  },
+  {
+    "id": "me02.5",
+    "printedTotal": 295,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Ascended Heroes",
+    "nameFr": "Héros Transcendants",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/me/me02.5/logo.webp",
+    "dbTotalCards": 295
+  },
+  {
+    "id": "m1s-mega-symphonia",
+    "printedTotal": 92,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "m1S: Mega Symphonia",
+    "nameFr": null,
+    "nameJp": "m1S: Mega Symphonia",
+    "logo": null,
+    "dbTotalCards": 154
+  },
+  {
+    "id": "s9a-battle-region",
+    "printedTotal": 93,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S9a: Battle Region",
+    "nameFr": null,
+    "nameJp": "S9a: Battle Region",
+    "logo": null,
+    "dbTotalCards": 221
+  },
+  {
+    "id": "sm5m-ultra-moon",
+    "printedTotal": 78,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2017,
+    "nameEn": "SM5M: Ultra Moon",
+    "nameFr": null,
+    "nameJp": "SM5M: Ultra Moon",
+    "logo": null,
+    "dbTotalCards": 37
+  },
+  {
+    "id": "sm7b-fairy-rise",
+    "printedTotal": 63,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM7b: Fairy Rise",
+    "nameFr": null,
+    "nameJp": "SM7b: Fairy Rise",
+    "logo": null,
+    "dbTotalCards": 60
+  },
+  {
+    "id": "base5",
+    "printedTotal": 83,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Team Rocket",
+    "nameFr": "Team Rocket",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/base/base5/logo.webp",
+    "dbTotalCards": 83
+  },
+  {
+    "id": "swsh10.5",
+    "printedTotal": 88,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Pokémon GO",
+    "nameFr": "Pokémon GO",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh10.5/logo.webp",
+    "dbTotalCards": 88
+  },
+  {
+    "id": "pop7",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "POP Series 7",
+    "nameFr": "POP Série 7",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop7/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "mfb",
+    "printedTotal": 34,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": null,
+    "nameEn": "My First Battle",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 48
+  },
+  {
+    "id": "sm3",
+    "printedTotal": 169,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Burning Shadows",
+    "nameFr": "Ombres Ardentes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm3/logo.webp",
+    "dbTotalCards": 169
+  },
+  {
+    "id": "me01",
+    "printedTotal": 188,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Mega Evolution",
+    "nameFr": "Méga-Évolution",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/me/me01/logo.webp",
+    "dbTotalCards": 188
+  },
+  {
+    "id": "sv2a-pokemon-card-151",
+    "printedTotal": 210,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV2a: Pokemon Card 151",
+    "nameFr": null,
+    "nameJp": "SV2a: Pokemon Card 151",
+    "logo": null,
+    "dbTotalCards": 1023
+  },
+  {
+    "id": "ecard1",
+    "printedTotal": 165,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Expedition Base Set",
+    "nameFr": "Expedition",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ecard/ecard1/logo.webp",
+    "dbTotalCards": 165
+  },
+  {
+    "id": "xy11",
+    "printedTotal": 116,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Steam Siege",
+    "nameFr": "Offensive Vapeur",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy11/logo.webp",
+    "dbTotalCards": 116
+  },
+  {
+    "id": "m2-inferno-x",
+    "printedTotal": 116,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "M2: Inferno X",
+    "nameFr": null,
+    "nameJp": "M2: Inferno X",
+    "logo": null,
+    "dbTotalCards": 201
+  },
+  {
+    "id": "ss-inteleon-vmax-high-class-deck",
+    "printedTotal": 23,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2021,
+    "nameEn": "SS: Inteleon VMAX High-Class Deck",
+    "nameFr": null,
+    "nameJp": "SS: Inteleon VMAX High-Class Deck",
+    "logo": null,
+    "dbTotalCards": 16
+  },
+  {
+    "id": "xy7",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Ancient Origins",
+    "nameFr": "Origines Antiques",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy7/logo.webp",
+    "dbTotalCards": 101
+  },
+  {
+    "id": "xy8",
+    "printedTotal": 164,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "BREAKthrough",
+    "nameFr": "Impulsion Turbo",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy8/logo.webp",
+    "dbTotalCards": 165
+  },
+  {
+    "id": "xy4-phantom-gate",
+    "printedTotal": 97,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XY4: Phantom Gate",
+    "nameFr": null,
+    "nameJp": "XY4: Phantom Gate",
+    "logo": null,
+    "dbTotalCards": 21
+  },
+  {
+    "id": "xy5-bg-gaia-volcano",
+    "printedTotal": 80,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XY5-Bg: Gaia Volcano",
+    "nameFr": null,
+    "nameJp": "XY5-Bg: Gaia Volcano",
+    "logo": null,
+    "dbTotalCards": 34
+  },
+  {
+    "id": "xy5-bt-tidal-storm",
+    "printedTotal": 80,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XY5-Bt: Tidal Storm",
+    "nameFr": null,
+    "nameJp": "XY5-Bt: Tidal Storm",
+    "logo": null,
+    "dbTotalCards": 37
+  },
+  {
+    "id": "xy6-emerald-break",
+    "printedTotal": 91,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2015,
+    "nameEn": "XY6: Emerald Break",
+    "nameFr": null,
+    "nameJp": "XY6: Emerald Break",
+    "logo": null,
+    "dbTotalCards": 54
+  },
+  {
+    "id": "xy7-bandit-ring",
+    "printedTotal": 97,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2015,
+    "nameEn": "XY7: Bandit Ring",
+    "nameFr": null,
+    "nameJp": "XY7: Bandit Ring",
+    "logo": null,
+    "dbTotalCards": 81
+  },
+  {
+    "id": "xy8-bb-blue-shock",
+    "printedTotal": 65,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2015,
+    "nameEn": "XY8-Bb: Blue Shock",
+    "nameFr": null,
+    "nameJp": "XY8-Bb: Blue Shock",
+    "logo": null,
+    "dbTotalCards": 27
+  },
+  {
+    "id": "xy8-br-red-flash",
+    "printedTotal": 65,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2015,
+    "nameEn": "XY8-Br: Red Flash",
+    "nameFr": null,
+    "nameJp": "XY8-Br: Red Flash",
+    "logo": null,
+    "dbTotalCards": 33
+  },
+  {
+    "id": "xy9-rage-of-the-broken-heavens",
+    "printedTotal": 89,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2015,
+    "nameEn": "XY9: Rage of the Broken Heavens",
+    "nameFr": null,
+    "nameJp": "XY9: Rage of the Broken Heavens",
+    "logo": null,
+    "dbTotalCards": 30
+  },
+  {
+    "id": "xyb-dialga-ex-aegislash-ex-hyper-metal-chain-deck",
+    "printedTotal": 19,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XYB: Dialga-EX + Aegislash-EX Hyper Metal Chain Deck",
+    "nameFr": null,
+    "nameJp": "XYB: Dialga-EX + Aegislash-EX Hyper Metal Chain Deck",
+    "logo": null,
+    "dbTotalCards": 8
+  },
+  {
+    "id": "xyc-super-legend-set-xerneas-ex-yveltal-ex",
+    "printedTotal": 23,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2014,
+    "nameEn": "XYC: Super Legend Set: Xerneas-EX & Yveltal-EX",
+    "nameFr": null,
+    "nameJp": "XYC: Super Legend Set: Xerneas-EX & Yveltal-EX",
+    "logo": null,
+    "dbTotalCards": 11
+  },
+  {
+    "id": "obsidian-flames",
+    "printedTotal": 230,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": null,
+    "nameEn": "Obsidian Flames",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 238
+  },
+  {
+    "id": "xyg-zygarde-ex-perfect-battle-deck",
+    "printedTotal": 19,
+    "langs": [
+      "jp"
+    ],
+    "series": "xy",
+    "year": 2016,
+    "nameEn": "XYG: Zygarde-EX Perfect Battle Deck",
+    "nameFr": null,
+    "nameJp": "XYG: Zygarde-EX Perfect Battle Deck",
+    "logo": null,
+    "dbTotalCards": 5
+  },
+  {
+    "id": "xy4",
+    "printedTotal": 122,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Phantom Forces",
+    "nameFr": "Vigueur Spectrale",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy4/logo.webp",
+    "dbTotalCards": 124
+  },
+  {
+    "id": "xy5",
+    "printedTotal": 164,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Primal Clash",
+    "nameFr": "Primo-Choc",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy5/logo.webp",
+    "dbTotalCards": 164
+  },
+  {
+    "id": "xy6",
+    "printedTotal": 110,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Roaring Skies",
+    "nameFr": "Ciel Rugissant",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy6/logo.webp",
+    "dbTotalCards": 112
+  },
+  {
+    "id": "ex-battle-boost",
+    "printedTotal": 99,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2013,
+    "nameEn": "EX Battle Boost",
+    "nameFr": null,
+    "nameJp": "EX Battle Boost",
+    "logo": null,
+    "dbTotalCards": 118
+  },
+  {
+    "id": "bog",
+    "printedTotal": 9,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2002,
+    "nameEn": "Best of game",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 9
+  },
+  {
+    "id": "base4",
+    "printedTotal": 130,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2000,
+    "nameEn": "Base Set 2",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/base/base4/logo.webp",
+    "dbTotalCards": 130
+  },
+  {
+    "id": "xy0",
+    "printedTotal": 39,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Kalos Starter Set",
+    "nameFr": "Bienvenue à Kalos",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy0/logo.webp",
+    "dbTotalCards": 39
+  },
+  {
+    "id": "sm3.5",
+    "printedTotal": 78,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Shining Legends",
+    "nameFr": "Légendes Brillantes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm3.5/logo.webp",
+    "dbTotalCards": 78
+  },
+  {
+    "id": "ex9",
+    "printedTotal": 107,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Emerald",
+    "nameFr": "EX Émeraude",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex9/logo.webp",
+    "dbTotalCards": 107
+  },
+  {
+    "id": "bw3-hail-blizzard",
+    "printedTotal": 57,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2011,
+    "nameEn": "BW3: Hail Blizzard",
+    "nameFr": null,
+    "nameJp": "BW3: Hail Blizzard",
+    "logo": null,
+    "dbTotalCards": 51
+  },
+  {
+    "id": "bw8-thunder-knuckle",
+    "printedTotal": 58,
+    "langs": [
+      "jp"
+    ],
+    "series": "bw",
+    "year": 2012,
+    "nameEn": "BW8: Thunder Knuckle",
+    "nameFr": null,
+    "nameJp": "BW8: Thunder Knuckle",
+    "logo": null,
+    "dbTotalCards": 41
+  },
+  {
+    "id": "clash-of-the-blue-sky",
+    "printedTotal": 82,
+    "langs": [
+      "jp"
+    ],
+    "series": "ex",
+    "year": 2004,
+    "nameEn": "Clash of the Blue Sky",
+    "nameFr": null,
+    "nameJp": "Clash of the Blue Sky",
+    "logo": null,
+    "dbTotalCards": 82
+  },
+  {
+    "id": "cp3-pokekyun-collection",
+    "printedTotal": 32,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2016,
+    "nameEn": "CP3: PokeKyun Collection",
+    "nameFr": null,
+    "nameJp": "CP3: PokeKyun Collection",
+    "logo": null,
+    "dbTotalCards": 74
+  },
+  {
+    "id": "s11a-incandescent-arcana",
+    "printedTotal": 94,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2022,
+    "nameEn": "S11a: Incandescent Arcana",
+    "nameFr": null,
+    "nameJp": "S11a: Incandescent Arcana",
+    "logo": null,
+    "dbTotalCards": 192
+  },
+  {
+    "id": "sm8-super-burst-impact",
+    "printedTotal": 111,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2018,
+    "nameEn": "SM8: Super-Burst Impact",
+    "nameFr": null,
+    "nameJp": "SM8: Super-Burst Impact",
+    "logo": null,
+    "dbTotalCards": 124
+  },
+  {
+    "id": "bw1",
+    "printedTotal": 115,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Black & White",
+    "nameFr": "Noir & Blanc",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw1/logo.webp",
+    "dbTotalCards": 115
+  },
+  {
+    "id": "pl1",
+    "printedTotal": 130,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Platinum",
+    "nameFr": "Platine",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/pl/pl1/logo.webp",
+    "dbTotalCards": 133
+  },
+  {
+    "id": "pop9",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "POP Series 9",
+    "nameFr": "POP Série 9",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop9/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "base3",
+    "printedTotal": 62,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Fossil",
+    "nameFr": "Fossile",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/base/base3/logo.webp",
+    "dbTotalCards": 62
+  },
+  {
+    "id": "bw2",
+    "printedTotal": 98,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Emerging Powers",
+    "nameFr": "Pouvoirs Émergents",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw2/logo.webp",
+    "dbTotalCards": 98
+  },
+  {
+    "id": "hgss4",
+    "printedTotal": 102,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Triumphant",
+    "nameFr": "Triomphant",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/hgss/hgss4/logo.webp",
+    "dbTotalCards": 103
+  },
+  {
+    "id": "g1",
+    "printedTotal": 83,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Generations",
+    "nameFr": "Générations",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/g1/logo.webp",
+    "dbTotalCards": 117
+  },
+  {
+    "id": "xy12",
+    "printedTotal": 113,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Evolutions",
+    "nameFr": "Évolutions",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy12/logo.webp",
+    "dbTotalCards": 113
+  },
+  {
+    "id": "det1",
+    "printedTotal": 18,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Detective Pikachu",
+    "nameFr": "Détective Pikachu",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/det1/logo.webp",
+    "dbTotalCards": 18
+  },
+  {
+    "id": "sm115",
+    "printedTotal": 69,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Hidden Fates",
+    "nameFr": "Destinées Occultes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sm/sm115/logo.webp",
+    "dbTotalCards": 69
+  },
+  {
+    "id": "sm7",
+    "printedTotal": 183,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Celestial Storm",
+    "nameFr": "Tempête Céleste",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm7/logo.webp",
+    "dbTotalCards": 183
+  },
+  {
+    "id": "ex3",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Dragon",
+    "nameFr": "EX Dragon",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/ex/ex3/logo.webp",
+    "dbTotalCards": 100
+  },
+  {
+    "id": "sv06",
+    "printedTotal": 226,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Twilight Masquerade",
+    "nameFr": "Mascarade Crépusculaire",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv06/logo.webp",
+    "dbTotalCards": 226
+  },
+  {
+    "id": "dv1",
+    "printedTotal": 21,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Dragon Vault",
+    "nameFr": "Coffre des Dragons",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/dv1/logo.webp",
+    "dbTotalCards": 21
+  },
+  {
+    "id": "swsh12",
+    "printedTotal": 215,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Silver Tempest",
+    "nameFr": "Tempête Argentée",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh12/logo.webp",
+    "dbTotalCards": 245
+  },
+  {
+    "id": "dp3",
+    "printedTotal": 132,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Secret Wonders",
+    "nameFr": "Merveilles Secrètes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/dp/dp3/logo.webp",
+    "dbTotalCards": 132
+  },
+  {
+    "id": "pl3",
+    "printedTotal": 150,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Supreme Victors",
+    "nameFr": "Vainqueurs Suprêmes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/pl/pl3/logo.webp",
+    "dbTotalCards": 153
+  },
+  {
+    "id": "sm6",
+    "printedTotal": 146,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Forbidden Light",
+    "nameFr": "Lumière Interdite",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm6/logo.webp",
+    "dbTotalCards": 146
+  },
+  {
+    "id": "pop2",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "POP Series 2",
+    "nameFr": "POP Série 2",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop2/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "sv03.5",
+    "printedTotal": 207,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "151",
+    "nameFr": "151",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv03.5/logo.webp",
+    "dbTotalCards": 207
+  },
+  {
+    "id": "sv04.5",
+    "printedTotal": 245,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Paldean Fates",
+    "nameFr": "Destinées de Paldea",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv04.5/logo.webp",
+    "dbTotalCards": 245
+  },
+  {
+    "id": "sve",
+    "printedTotal": 24,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Scarlet & Violet Energy",
+    "nameFr": "Écarlate et Violet Énergie",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 24
+  },
+  {
+    "id": "sm5",
+    "printedTotal": 173,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Ultra Prism",
+    "nameFr": "Ultra-Prisme",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sm/sm5/logo.webp",
+    "dbTotalCards": 173
+  },
+  {
+    "id": "mep",
+    "printedTotal": 45,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "MEP Black Star Promos",
+    "nameFr": "MEP Black Star Promos",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 52
+  },
+  {
+    "id": "bw8",
+    "printedTotal": 138,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Plasma Storm",
+    "nameFr": "Tempète Plasma",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw8/logo.webp",
+    "dbTotalCards": 138
+  },
+  {
+    "id": "swsh2",
+    "printedTotal": 209,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Rebel Clash",
+    "nameFr": "Clash des Rebelles",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh2/logo.webp",
+    "dbTotalCards": 209
+  },
+  {
+    "id": "swsh4",
+    "printedTotal": 203,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Vivid Voltage",
+    "nameFr": "Voltage Éclatant",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh4/logo.webp",
+    "dbTotalCards": 203
+  },
+  {
+    "id": "xy3",
+    "printedTotal": 113,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Furious Fists",
+    "nameFr": "Poings Furieux",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy3/logo.webp",
+    "dbTotalCards": 114
+  },
+  {
+    "id": "ex12",
+    "printedTotal": 93,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Legend Maker",
+    "nameFr": "EX Créateurs de légendes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/ex/ex12/logo.webp",
+    "dbTotalCards": 93
+  },
+  {
+    "id": "pop3",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "POP Series 3",
+    "nameFr": "POP Série 3",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop3/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "me02",
+    "printedTotal": 130,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Phantasmal Flames",
+    "nameFr": "Flammes Fantasmagoriques",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/me/me02/logo.webp",
+    "dbTotalCards": 130
+  },
+  {
+    "id": "sm8",
+    "printedTotal": 236,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Lost Thunder",
+    "nameFr": "Tonnerre Perdu",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sm/sm8/logo.webp",
+    "dbTotalCards": 236
+  },
+  {
+    "id": "ex6",
+    "printedTotal": 116,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "FireRed & LeafGreen",
+    "nameFr": "EX Rouge Feu & Vert Feuille",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex6/logo.webp",
+    "dbTotalCards": 116
+  },
+  {
+    "id": "bw9",
+    "printedTotal": 122,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Plasma Freeze",
+    "nameFr": "Glaciation Plasma",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw9/logo.webp",
+    "dbTotalCards": 122
+  },
+  {
+    "id": "swsh1",
+    "printedTotal": 216,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Sword & Shield",
+    "nameFr": "Épée et Bouclier",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh1/logo.webp",
+    "dbTotalCards": 216
+  },
+  {
+    "id": "dp5",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Majestic Dawn",
+    "nameFr": "Aube Majestueuse",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/dp/dp5/logo.webp",
+    "dbTotalCards": 100
+  },
+  {
+    "id": "dc1",
+    "printedTotal": 34,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Double Crisis",
+    "nameFr": "Double Danger",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/dc1/logo.webp",
+    "dbTotalCards": 34
+  },
+  {
+    "id": "me03",
+    "printedTotal": 124,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Perfect Order",
+    "nameFr": "Équilibre Parfait",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/me/me03/logo.webp",
+    "dbTotalCards": 124
+  },
+  {
+    "id": "sv10",
+    "printedTotal": 244,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Destined Rivals",
+    "nameFr": "Rivalités Destinées",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv10/logo.webp",
+    "dbTotalCards": 244
+  },
+  {
+    "id": "B2",
+    "printedTotal": 234,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": null,
+    "nameEn": "Fantastical Parade",
+    "nameFr": "Parade Onirique",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/B2/logo.webp",
+    "dbTotalCards": 234
+  },
+  {
+    "id": "2024sv",
+    "printedTotal": 15,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2024",
+    "nameFr": "Collection McDonald's 2024",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 15
+  },
+  {
+    "id": "bw4",
+    "printedTotal": 103,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Next Destinies",
+    "nameFr": "Destinées Futures",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/bw/bw4/logo.webp",
+    "dbTotalCards": 103
+  },
+  {
+    "id": "swsh10",
+    "printedTotal": 216,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Astral Radiance",
+    "nameFr": "Astres Radieux",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/swsh/swsh10/logo.webp",
+    "dbTotalCards": 246
+  },
+  {
+    "id": "swsh11",
+    "printedTotal": 217,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Lost Origin",
+    "nameFr": "Origine Perdue",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/swsh/swsh11/logo.webp",
+    "dbTotalCards": 247
+  },
+  {
+    "id": "swsh3.5",
+    "printedTotal": 80,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Champion's Path",
+    "nameFr": "La Voie du Maître",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh3.5/logo.webp",
+    "dbTotalCards": 80
+  },
+  {
+    "id": "sm7.5",
+    "printedTotal": 78,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Dragon Majesty",
+    "nameFr": "Majesté Des Dragons",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm7.5/logo.webp",
+    "dbTotalCards": 78
+  },
+  {
+    "id": "ex11",
+    "printedTotal": 114,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Delta Species",
+    "nameFr": "EX Espèces Delta",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex11/logo.webp",
+    "dbTotalCards": 114
+  },
+  {
+    "id": "ex13",
+    "printedTotal": 111,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Holon Phantoms",
+    "nameFr": "EX Fantômes Holon",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex13/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "ex15",
+    "printedTotal": 101,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Dragon Frontiers",
+    "nameFr": "EX Île des Dragons",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/ex/ex15/logo.webp",
+    "dbTotalCards": 101
+  },
+  {
+    "id": "sv05",
+    "printedTotal": 218,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Temporal Forces",
+    "nameFr": "Forces Temporelles",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv05/logo.webp",
+    "dbTotalCards": 218
+  },
+  {
+    "id": "sv06.5",
+    "printedTotal": 99,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Shrouded Fable",
+    "nameFr": "Fable Nébuleuse",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv06.5/logo.webp",
+    "dbTotalCards": 99
+  },
+  {
+    "id": "sv07",
+    "printedTotal": 175,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Stellar Crown",
+    "nameFr": "Couronne Stellaire",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv07/logo.webp",
+    "dbTotalCards": 175
+  },
+  {
+    "id": "2015xy",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2015",
+    "nameFr": "Collection McDonald's 2015",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "ecard2",
+    "printedTotal": 49,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Aquapolis",
+    "nameFr": "Aquapolis",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ecard/ecard2/logo.webp",
+    "dbTotalCards": 186
+  },
+  {
+    "id": "bw10",
+    "printedTotal": 105,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Plasma Blast",
+    "nameFr": "Explosion Plasma",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw10/logo.webp",
+    "dbTotalCards": 105
+  },
+  {
+    "id": "dp2",
+    "printedTotal": 124,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Mysterious Treasures",
+    "nameFr": "Trésors Mystérieux",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/dp/dp2/logo.webp",
+    "dbTotalCards": 124
+  },
+  {
+    "id": "dp4",
+    "printedTotal": 106,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Great Encounters",
+    "nameFr": "Duels au Sommets",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/dp/dp4/logo.webp",
+    "dbTotalCards": 106
+  },
+  {
+    "id": "hgss3",
+    "printedTotal": 90,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Undaunted",
+    "nameFr": "Indomptable",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/hgss/hgss3/logo.webp",
+    "dbTotalCards": 91
+  },
+  {
+    "id": "xy10",
+    "printedTotal": 125,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Fates Collide",
+    "nameFr": "Impact des Destins",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy10/logo.webp",
+    "dbTotalCards": 129
+  },
+  {
+    "id": "sm1",
+    "printedTotal": 172,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Sun & Moon",
+    "nameFr": "Soleil et Lune",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm1/logo.webp",
+    "dbTotalCards": 172
+  },
+  {
+    "id": "ex4",
+    "printedTotal": 97,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Team Magma vs Team Aqua",
+    "nameFr": "EX Team Magma vs Team Aqua",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex4/logo.webp",
+    "dbTotalCards": 97
+  },
+  {
+    "id": "ex8",
+    "printedTotal": 108,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Deoxys",
+    "nameFr": "EX Deoxys",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex8/logo.webp",
+    "dbTotalCards": 108
+  },
+  {
+    "id": "pop1",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "POP Series 1",
+    "nameFr": "POP Série 1",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop1/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "sv10.5w",
+    "printedTotal": 173,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "White Flare",
+    "nameFr": "Flamme Blanche",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv10.5w/logo.webp",
+    "dbTotalCards": 173
+  },
+  {
+    "id": "2017sm",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2017",
+    "nameFr": "Collection McDonald's 2017",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "neo1",
+    "printedTotal": 111,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Neo Genesis",
+    "nameFr": "Neo Genesis",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo1/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "neo3",
+    "printedTotal": 66,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Neo Revelation",
+    "nameFr": "Neo Revelation",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo3/logo.webp",
+    "dbTotalCards": 66
+  },
+  {
+    "id": "swsh12.5",
+    "printedTotal": 160,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Crown Zenith",
+    "nameFr": "Zénith Suprême",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh12.5/logo.webp",
+    "dbTotalCards": 230
+  },
+  {
+    "id": "hgss1",
+    "printedTotal": 123,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "HeartGold SoulSilver",
+    "nameFr": "HeartGold SoulSilver",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/hgss/hgss1/logo.webp",
+    "dbTotalCards": 124
+  },
+  {
+    "id": "sv01",
+    "printedTotal": 258,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Scarlet & Violet",
+    "nameFr": "Écarlate et Violet",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv01/logo.webp",
+    "dbTotalCards": 258
+  },
+  {
+    "id": "sv10.5b",
+    "printedTotal": 172,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Black Bolt",
+    "nameFr": "Foudre Noire",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv10.5b/logo.webp",
+    "dbTotalCards": 172
+  },
+  {
+    "id": "sm2",
+    "printedTotal": 169,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Guardians Rising",
+    "nameFr": "Gardiens Ascendants",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sm/sm2/logo.webp",
+    "dbTotalCards": 169
+  },
+  {
+    "id": "2021swsh",
+    "printedTotal": 25,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2021",
+    "nameFr": "Collection McDonald's 2021",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 25
+  },
+  {
+    "id": "np",
+    "printedTotal": 40,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "Nintendo Black Star Promos",
+    "nameFr": "Promo Nintendo",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/np/logo.webp",
+    "dbTotalCards": 40
+  },
+  {
+    "id": "bw7",
+    "printedTotal": 153,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Boundaries Crossed",
+    "nameFr": "Frontières Franchies",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/bw/bw7/logo.webp",
+    "dbTotalCards": 153
+  },
+  {
+    "id": "swsh4.5",
+    "printedTotal": 73,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Shining Fates",
+    "nameFr": "Destinées Radieuses",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh4.5/logo.webp",
+    "dbTotalCards": 195
+  },
+  {
+    "id": "dp6",
+    "printedTotal": 146,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Legends Awakened",
+    "nameFr": "Éveil des Légendes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/dp/dp6/logo.webp",
+    "dbTotalCards": 146
+  },
+  {
+    "id": "hgss2",
+    "printedTotal": 95,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Unleashed",
+    "nameFr": "Déchaînement",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/hgss/hgss2/logo.webp",
+    "dbTotalCards": 96
+  },
+  {
+    "id": "ex14",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Crystal Guardians",
+    "nameFr": "EX Gardiens de Cristal",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex14/logo.webp",
+    "dbTotalCards": 100
+  },
+  {
+    "id": "ex2",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Sandstorm",
+    "nameFr": "EX Tempête de sable",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex2/logo.webp",
+    "dbTotalCards": 100
+  },
+  {
+    "id": "pop4",
+    "printedTotal": 17,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "POP Series 4",
+    "nameFr": "POP Série 4",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pop/pop4/logo.webp",
+    "dbTotalCards": 17
+  },
+  {
+    "id": "sv04",
+    "printedTotal": 266,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Paradox Rift",
+    "nameFr": "Faille Paradoxe",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv04/logo.webp",
+    "dbTotalCards": 266
+  },
+  {
+    "id": "sm11",
+    "printedTotal": 258,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Unified Minds",
+    "nameFr": "Harmonie des Esprits",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm11/logo.webp",
+    "dbTotalCards": 258
+  },
+  {
+    "id": "basep",
+    "printedTotal": 53,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "Wizards Black Star Promos",
+    "nameFr": "Wizards Black Star Promos",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/base/basep/logo.webp",
+    "dbTotalCards": 53
+  },
+  {
+    "id": "swsh3",
+    "printedTotal": 201,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Darkness Ablaze",
+    "nameFr": "Ténèbres Embrasées",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/swsh/swsh3/logo.webp",
+    "dbTotalCards": 201
+  },
+  {
+    "id": "swsh5",
+    "printedTotal": 183,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Battle Styles",
+    "nameFr": "Styles de combat",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh5/logo.webp",
+    "dbTotalCards": 183
+  },
+  {
+    "id": "swsh6",
+    "printedTotal": 233,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Chilling Reign",
+    "nameFr": "Règne de Glace",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh6/logo.webp",
+    "dbTotalCards": 233
+  },
+  {
+    "id": "swsh8",
+    "printedTotal": 284,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Fusion Strike",
+    "nameFr": "Poing de Fusion",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/swsh/swsh8/logo.webp",
+    "dbTotalCards": 284
+  },
+  {
+    "id": "col1",
+    "printedTotal": 95,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Call of Legends",
+    "nameFr": "L'appel des Légendes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/col/col1/logo.webp",
+    "dbTotalCards": 106
+  },
+  {
+    "id": "dp1",
+    "printedTotal": 130,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Diamond & Pearl",
+    "nameFr": "Diamant & Perle",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/dp/dp1/logo.webp",
+    "dbTotalCards": 130
+  },
+  {
+    "id": "xy9",
+    "printedTotal": 123,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "BREAKpoint",
+    "nameFr": "Rupture Turbo",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/xy/xy9/logo.webp",
+    "dbTotalCards": 126
+  },
+  {
+    "id": "sm4",
+    "printedTotal": 124,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Crimson Invasion",
+    "nameFr": "Invasion Carmin",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sm/sm4/logo.webp",
+    "dbTotalCards": 125
+  },
+  {
+    "id": "ex10",
+    "printedTotal": 117,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Unseen Forces",
+    "nameFr": "EX Forces Cachées",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex10/logo.webp",
+    "dbTotalCards": 117
+  },
+  {
+    "id": "ex16",
+    "printedTotal": 108,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Power Keepers",
+    "nameFr": "EX Gardiens du Pouvoir",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/ex/ex16/logo.webp",
+    "dbTotalCards": 108
+  },
+  {
+    "id": "me04",
+    "printedTotal": 122,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Chaos Rising",
+    "nameFr": "Chaos Ascendant",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/me/me04/logo.webp",
+    "dbTotalCards": 122
+  },
+  {
+    "id": "sv02",
+    "printedTotal": 279,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Paldea Evolved",
+    "nameFr": "Évolutions à Paldea",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv02/logo.webp",
+    "dbTotalCards": 279
+  },
+  {
+    "id": "2011bw",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2011",
+    "nameFr": "Collection McDonald's 2011",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "B1",
+    "printedTotal": 331,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": null,
+    "nameEn": "Mega Rising",
+    "nameFr": "Méga-Ascension",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/B1/logo.webp",
+    "dbTotalCards": 331
+  },
+  {
+    "id": "2012bw",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2012",
+    "nameFr": "Collection McDonald's 2012",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "2013bw",
+    "printedTotal": 12,
+    "langs": [
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "Collection McDonald's 2013",
+    "nameFr": "Collection McDonald's 2013",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "2014xy",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2014",
+    "nameFr": "Collection McDonald's 2014",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "2016xy",
+    "printedTotal": 12,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2016",
+    "nameFr": "Collection McDonald's 2016",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "svp",
+    "printedTotal": 225,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "SVP Black Star Promos",
+    "nameFr": "SVP Black Star Promos",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 226
+  },
+  {
+    "id": "A1a",
+    "printedTotal": 86,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Mythical Island",
+    "nameFr": "L’Île Fabuleuse",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A1a/logo.webp",
+    "dbTotalCards": 86
+  },
+  {
+    "id": "A4a",
+    "printedTotal": 105,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Secluded Springs",
+    "nameFr": "Source Secrète",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A4a/logo.webp",
+    "dbTotalCards": 105
+  },
+  {
+    "id": "bw5",
+    "printedTotal": 111,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Dark Explorers",
+    "nameFr": "Explorateurs Obscurs",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/bw/bw5/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "bw6",
+    "printedTotal": 128,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Dragons Exalted",
+    "nameFr": "Dragons Éxaltés",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/bw/bw6/logo.webp",
+    "dbTotalCards": 128
+  },
+  {
+    "id": "swsh7",
+    "printedTotal": 237,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Evolving Skies",
+    "nameFr": "Évolution Céleste",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh7/logo.webp",
+    "dbTotalCards": 237
+  },
+  {
+    "id": "swsh9",
+    "printedTotal": 186,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Brilliant Stars",
+    "nameFr": "Stars Étincelantes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/swsh9/logo.webp",
+    "dbTotalCards": 216
+  },
+  {
+    "id": "sm10",
+    "printedTotal": 234,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Unbroken Bonds",
+    "nameFr": "Alliance Infaillible",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm10/logo.webp",
+    "dbTotalCards": 234
+  },
+  {
+    "id": "sv08.5",
+    "printedTotal": 180,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Prismatic Evolutions",
+    "nameFr": "Évolutions Prismatiques",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv08.5/logo.webp",
+    "dbTotalCards": 180
+  },
+  {
+    "id": "2018sm-fr",
+    "printedTotal": 40,
+    "langs": [
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "Collection McDonald's 2018",
+    "nameFr": "Collection McDonald's 2018",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 40
+  },
+  {
+    "id": "2022swsh",
+    "printedTotal": 15,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2022",
+    "nameFr": "Collection McDonald's 2022",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 15
+  },
+  {
+    "id": "B1a",
+    "printedTotal": 103,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": null,
+    "nameEn": "Crimson Blaze",
+    "nameFr": "Embrasement Écarlate",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 103
+  },
+  {
+    "id": "A2",
+    "printedTotal": 207,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Space-Time Smackdown",
+    "nameFr": "Choc Spatio-Temporel",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A2/logo.webp",
+    "dbTotalCards": 207
+  },
+  {
+    "id": "A3",
+    "printedTotal": 239,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Celestial Guardians",
+    "nameFr": "Gardiens Astraux",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A3/logo.webp",
+    "dbTotalCards": 239
+  },
+  {
+    "id": "A3b",
+    "printedTotal": 107,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Eevee Grove",
+    "nameFr": "La Clairière d'Évoli",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 107
+  },
+  {
+    "id": "P-A",
+    "printedTotal": 100,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Promos-A",
+    "nameFr": "Promo-A",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/P-A/logo.webp",
+    "dbTotalCards": 100
+  },
+  {
+    "id": "base1",
+    "printedTotal": 102,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Base Set",
+    "nameFr": "Set de Base",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/base/base1/logo.webp",
+    "dbTotalCards": 102
+  },
+  {
+    "id": "base1-1st",
+    "printedTotal": 102,
+    "langs": [
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Set de Base (Édition 1)",
+    "nameFr": "Set de Base (Édition 1)",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 102
+  },
+  {
+    "id": "neo2",
+    "printedTotal": 75,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Neo Discovery",
+    "nameFr": "Neo Discovery",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/neo/neo2/logo.webp",
+    "dbTotalCards": 75
+  },
+  {
+    "id": "neo4",
+    "printedTotal": 113,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Neo Destiny",
+    "nameFr": "Neo Destiny",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/neo/neo4/logo.webp",
+    "dbTotalCards": 113
+  },
+  {
+    "id": "bw3",
+    "printedTotal": 102,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "bw",
+    "year": null,
+    "nameEn": "Noble Victories",
+    "nameFr": "Nobles Victoires",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/bw/bw3/logo.webp",
+    "dbTotalCards": 102
+  },
+  {
+    "id": "cel25",
+    "printedTotal": 25,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "swsh",
+    "year": null,
+    "nameEn": "Celebrations",
+    "nameFr": "Célébrations",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/swsh/cel25/logo.webp",
+    "dbTotalCards": 50
+  },
+  {
+    "id": "dp7",
+    "printedTotal": 103,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Stormfront",
+    "nameFr": "Tempête",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/dp/dp7/logo.webp",
+    "dbTotalCards": 106
+  },
+  {
+    "id": "pl2",
+    "printedTotal": 114,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "dp",
+    "year": null,
+    "nameEn": "Rising Rivals",
+    "nameFr": "Rivaux Émergeants",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/pl/pl2/logo.webp",
+    "dbTotalCards": 120
+  },
+  {
+    "id": "xy2",
+    "printedTotal": 109,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "xy",
+    "year": null,
+    "nameEn": "Flashfire",
+    "nameFr": "Étincelles",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/xy/xy2/logo.webp",
+    "dbTotalCards": 110
+  },
+  {
+    "id": "sm9",
+    "printedTotal": 196,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Team Up",
+    "nameFr": "Duo de Choc",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm9/logo.webp",
+    "dbTotalCards": 196
+  },
+  {
+    "id": "ex1",
+    "printedTotal": 109,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Ruby & Sapphire",
+    "nameFr": "EX Rubis & Saphir",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/ex/ex1/logo.webp",
+    "dbTotalCards": 109
+  },
+  {
+    "id": "mee",
+    "printedTotal": 8,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "me",
+    "year": null,
+    "nameEn": "Mega Evolution Energy",
+    "nameFr": "Méga-Évolution Énergie",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 8
+  },
+  {
+    "id": "sv03",
+    "printedTotal": 230,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Obsidian Flames",
+    "nameFr": "Flammes Obsidiennes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sv/sv03/logo.webp",
+    "dbTotalCards": 230
+  },
+  {
+    "id": "sv08",
+    "printedTotal": 252,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sv",
+    "year": null,
+    "nameEn": "Surging Sparks",
+    "nameFr": "Étincelles Déferlantes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/sv/sv08/logo.webp",
+    "dbTotalCards": 252
+  },
+  {
+    "id": "2018sm",
+    "printedTotal": 12,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2018,
+    "nameEn": "McDonald's Collection 2018",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 12
+  },
+  {
+    "id": "2023sv",
+    "printedTotal": 15,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "McDonald's Collection 2023",
+    "nameFr": "Collection McDonald's 2023",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 15
+  },
+  {
+    "id": "base1-shadowless-ns",
+    "printedTotal": 102,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 1999,
+    "nameEn": "Base Set 1st Edition Shadowless",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 102
+  },
+  {
+    "id": "A1",
+    "printedTotal": 286,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Genetic Apex",
+    "nameFr": "Puissance Génétique",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A1/logo.webp",
+    "dbTotalCards": 286
+  },
+  {
+    "id": "A2a",
+    "printedTotal": 96,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Triumphant Light",
+    "nameFr": "Lumière Triomphale",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A2a/logo.webp",
+    "dbTotalCards": 96
+  },
+  {
+    "id": "A2b",
+    "printedTotal": 111,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Shining Revelry",
+    "nameFr": "Réjouissances Rayonnantes",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A2b/logo.webp",
+    "dbTotalCards": 111
+  },
+  {
+    "id": "A3a",
+    "printedTotal": 103,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Extradimensional Crisis",
+    "nameFr": "Crise Interdimensionnelle",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 103
+  },
+  {
+    "id": "A4",
+    "printedTotal": 241,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Wisdom of Sea and Sky",
+    "nameFr": "Sagesse Entre Ciel et Mer",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/tcgp/A4/logo.webp",
+    "dbTotalCards": 241
+  },
+  {
+    "id": "ru1",
+    "printedTotal": 16,
+    "langs": [
+      "en"
+    ],
+    "series": null,
+    "year": 2009,
+    "nameEn": "Pokémon Rumble",
+    "nameFr": null,
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/en/pl/ru1/logo.webp",
+    "dbTotalCards": 16
+  },
+  {
+    "id": "B2a",
+    "printedTotal": 131,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "pocket",
+    "year": null,
+    "nameEn": "Paldean Wonders",
+    "nameFr": "Merveilles de Paldea",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 131
+  },
+  {
+    "id": "base2",
+    "printedTotal": 64,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "base",
+    "year": null,
+    "nameEn": "Jungle",
+    "nameFr": "Jungle",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/base/base2/logo.webp",
+    "dbTotalCards": 64
+  },
+  {
+    "id": "sm12",
+    "printedTotal": 271,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "sm",
+    "year": null,
+    "nameEn": "Cosmic Eclipse",
+    "nameFr": "Éclipse Cosmique",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/sm/sm12/logo.webp",
+    "dbTotalCards": 271
+  },
+  {
+    "id": "ex5",
+    "printedTotal": 102,
+    "langs": [
+      "en",
+      "fr"
+    ],
+    "series": "ex",
+    "year": null,
+    "nameEn": "Hidden Legends",
+    "nameFr": "EX Légendes Oubliées",
+    "nameJp": null,
+    "logo": "https://assets.tcgdex.net/fr/ex/ex5/logo.webp",
+    "dbTotalCards": 102
+  },
+  {
+    "id": "arceus-lvx-deck-grass-fire",
+    "printedTotal": 17,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2009,
+    "nameEn": "Arceus LV.X Deck: Grass & Fire",
+    "nameFr": null,
+    "nameJp": "Arceus LV.X Deck: Grass & Fire",
+    "logo": null,
+    "dbTotalCards": 20
+  },
+  {
+    "id": "pt2-bonds-to-the-end-of-time",
+    "printedTotal": 90,
+    "langs": [
+      "jp"
+    ],
+    "series": "dp",
+    "year": 2008,
+    "nameEn": "Pt2: Bonds to the End of Time",
+    "nameFr": null,
+    "nameJp": "Pt2: Bonds to the End of Time",
+    "logo": null,
+    "dbTotalCards": 126
+  },
+  {
+    "id": "s1h-shield",
+    "printedTotal": 75,
+    "langs": [
+      "jp"
+    ],
+    "series": "swsh",
+    "year": 2019,
+    "nameEn": "S1H: Shield",
+    "nameFr": null,
+    "nameJp": "S1H: Shield",
+    "logo": null,
+    "dbTotalCards": 93
+  },
+  {
+    "id": "sm9a-night-unison",
+    "printedTotal": 70,
+    "langs": [
+      "jp"
+    ],
+    "series": "sm",
+    "year": 2019,
+    "nameEn": "SM9a: Night Unison",
+    "nameFr": null,
+    "nameJp": "SM9a: Night Unison",
+    "logo": null,
+    "dbTotalCards": 78
+  },
+  {
+    "id": "sv11b-black-bolt",
+    "printedTotal": 174,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2025,
+    "nameEn": "SV11B: Black Bolt",
+    "nameFr": null,
+    "nameJp": "SV11B: Black Bolt",
+    "logo": null,
+    "dbTotalCards": 515
+  },
+  {
+    "id": "sv4m-future-flash",
+    "printedTotal": 95,
+    "langs": [
+      "jp"
+    ],
+    "series": "sv",
+    "year": 2023,
+    "nameEn": "SV4M: Future Flash",
+    "nameFr": null,
+    "nameJp": "SV4M: Future Flash",
+    "logo": null,
+    "dbTotalCards": 156
+  },
+  {
+    "id": "2019sm-fr",
+    "printedTotal": 40,
+    "langs": [
+      "fr"
+    ],
+    "series": "promo",
+    "year": null,
+    "nameEn": "Collection McDonald's 2019",
+    "nameFr": "Collection McDonald's 2019",
+    "nameJp": null,
+    "logo": null,
+    "dbTotalCards": 41
+  }
+]

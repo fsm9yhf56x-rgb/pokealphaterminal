@@ -154,8 +154,9 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
           Faut-il la grader ?
         </div>
         <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55 }}>
-          Données de gradation indisponibles pour cette carte pour l'instant — population PSA ou prix
-          gradés insuffisants. Graded.ev préfère ne rien afficher plutôt qu'une estimation peu fiable.
+          {String(lang).toUpperCase() === 'FR'
+            ? "Cote gradée française à venir. Nous construisons la population et les prix de gradation spécifiques aux cartes françaises (PSA FR, CCC). En attendant, Graded.ev préfère ne rien afficher plutôt qu'une estimation basée sur des données non françaises."
+            : "Données de gradation indisponibles pour cette carte pour l'instant — population PSA ou prix gradés insuffisants. Graded.ev préfère ne rien afficher plutôt qu'une estimation peu fiable."}
         </div>
       </div>
     )

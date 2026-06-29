@@ -74,13 +74,25 @@ export async function GET(req: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     const wantedVarieties = varietyCandidatesForPrint(printId)
 
-    const popRows = await sql`
+    const popRowsAll = await sql`
       SELECT variety, pop_1, pop_2, pop_3, pop_4, pop_5, pop_6,
              pop_7, pop_8, pop_9, pop_10, pop_total
       FROM psa_pop_reports
       WHERE card_ref = ${cardRef}
       ORDER BY pop_total DESC NULLS LAST
     ` as Array<Record<string, unknown>>
+    // RÈGLE LANGUE (stricte) : une fiche n'affiche QUE le gradé de SA langue.
+    // PSA encode la langue dans `variety` ("French"/"German"/"Spanish"/"Italian"),
+    // le JP est porté par un card_ref prefixe "jp-" (ou variety japonaise).
+    // FR -> variety "french" uniquement ; JP -> cartes japonaises ; EN -> tout sauf langues etrangeres + JP.
+    const isJpRef = String(cardRef || '').toLowerCase().startsWith('jp-')
+    const FOREIGN = /(french|german|spanish|italian|portuguese|korean|chinese)/i
+    const popRows = popRowsAll.filter((r) => {
+      const v = String(r.variety || '').toLowerCase()
+      if (lang === 'FR') return /french/i.test(v)
+      if (lang === 'JP') return isJpRef || /japanese/i.test(v)
+      return !FOREIGN.test(v) && !isJpRef && !/japanese/i.test(v)
+    })
 
     // Édition demandée par le print (sert PSA ET CCC).
     const want1st = !!wantedVarieties && wantedVarieties.some((w) => /1st/i.test(w))
@@ -129,12 +141,17 @@ export async function GET(req: NextRequest) {
         return x.includes('unlimited')
       }
 
-      const priceRows = await sql`
+      // RÈGLE LANGUE (prix) : price_matrix n'encode PAS la langue du slab vendu
+      // (variant = edition seulement). Sur une fiche FR on ne peut donc PAS garantir
+      // que ces ventes PSA sont des cartes FR (sources US/EU toutes langues confondues)
+      // -> on n'affiche AUCUN prix PSA en FR. La pop PSA-French reste (rareté FR info),
+      // l'EV PSA ne se calcule pas, et CCC (explicitement FR) prend le relais plus bas.
+      const priceRows = (lang === 'FR' ? [] : await sql`
         SELECT tier, source, variant, spot, avg30d, median30d, sale_count, currency
         FROM price_matrix
         WHERE print_id = ${printIdNoLang} AND is_asking = false AND tier LIKE 'PSA%'
         ORDER BY tier, sale_count DESC NULLS LAST
-      ` as Array<Record<string, unknown>>
+      `) as Array<Record<string, unknown>>
 
       const prices: PriceByGrade = {}
       const bestByGrade: Record<number, { sale_count: number }> = {}

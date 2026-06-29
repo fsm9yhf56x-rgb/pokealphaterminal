@@ -124,7 +124,19 @@ export async function GET(_req: NextRequest) {
     let skipped = 0
 
     for (const it of items) {
-      const pops = popByRef.get(it.baseRef) || []
+      const isFrCard = String(it.card.lang || '').toUpperCase() === 'FR'
+      const isJpCard = String(it.card.lang || '').toUpperCase() === 'JP'
+      const FOREIGN = /(french|german|spanish|italian|portuguese|korean|chinese)/i
+      // RÈGLE LANGUE (stricte) : la fiche/le portfolio n'affiche QUE le gradé de SA langue.
+      // PSA encode la langue dans variety. FR -> "french" only ; JP -> japanese/jp-ref ;
+      // EN -> exclut langues etrangeres. Pas de pop conforme -> on skip (pas de faux EV).
+      const popsRaw = popByRef.get(it.baseRef) || []
+      const pops = popsRaw.filter((r) => {
+        const v = String(r.variety || '').toLowerCase()
+        if (isFrCard) return /french/i.test(v)
+        if (isJpCard) return /japanese/i.test(v) || String(it.baseRef || '').toLowerCase().startsWith('jp-')
+        return !FOREIGN.test(v) && !/japanese/i.test(v) && !String(it.baseRef || '').toLowerCase().startsWith('jp-')
+      })
       if (!pops.length) { skipped++; continue }
 
       // Variete = edition de la carte (par inclusion), sinon principale (plus gros pop).
@@ -148,7 +160,9 @@ export async function GET(_req: NextRequest) {
         return x.includes('unlimited')
       }
 
-      const mx = mxByPrint.get(it.printId) || []
+      // Carte FR : price_matrix n'encode pas la langue du slab vendu (variant=edition).
+      // Impossible de garantir "carte FR" -> aucun prix PSA en FR (sera enrichi plus tard).
+      const mx = isFrCard ? [] : (mxByPrint.get(it.printId) || [])
       const prices: PriceByGrade = {}
       const best: Record<number, { n: number }> = {}
       for (const r of mx) {

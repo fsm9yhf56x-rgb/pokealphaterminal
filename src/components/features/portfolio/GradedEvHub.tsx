@@ -128,8 +128,9 @@ export function GradedEvHub() {
           </div>
           <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.5 }}>
             Ajoute des cartes non gradées à ton portfolio — Graded.ev calculera le gain espéré d'une
-            gradation pour chacune.
-            {data.skipped ? ` (${data.skipped} carte${data.skipped > 1 ? "s" : ""} sans données PSA suffisantes pour l'instant.)` : ""}
+            gradation pour chacune. La cote gradée française (PSA FR, CCC) arrive prochainement ;
+            d'ici là l'analyse couvre surtout les cartes EN/JP.
+            {data.skipped ? ` (${data.skipped} carte${data.skipped > 1 ? "s" : ""} en attente de données gradées.)` : ""}
           </div>
         </div>
       </div>
@@ -282,7 +283,7 @@ export function GradedEvHub() {
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 ["Cartes japonaises", "la population PSA occidentale n'existe pas pour la plupart des cartes JP."],
-                ["Cartes françaises peu gradées", "trop peu d'exemplaires PSA recensés pour une distribution fiable."],
+                ["Cartes françaises — cote FR à venir", "la population et les prix gradés spécifiques aux cartes FR (PSA FR, CCC) arrivent prochainement."],
                 ["Prix gradés manquants", "pas assez de ventes réelles par note (on exige ≥ 2 ventes)."],
                 ["Pas de prix de référence", "la valeur de la carte non gradée n'est pas disponible."],
               ].map(([t, d]) => (

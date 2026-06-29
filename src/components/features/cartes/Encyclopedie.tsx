@@ -14,7 +14,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
-import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
+import { formatJPSetName } from '@/lib/setGroups'
 import { formatEUR } from '@/lib/formatPrice'
 import { CardSidePanel } from '@/components/features/card/CardSidePanel'
 import type { TCGSet } from '@/lib/tcgApi'
@@ -1368,20 +1368,28 @@ export function Encyclopedie() {
               style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
               <option value="all">Tous les sets{sets.length>0?` (${sets.length})`:''}</option>
               {(() => {
-                // Build TCGSet[] from filtered sets (with count metadata preserved)
-                const tcgSets: TCGSet[] = sets.map(s => ({ id: s.id, name: s.name, lang: 'EN' as any, total: (s as any).count } as TCGSet))
-                const groups = groupSetsByEra(filterCoreSets(tcgSets))
-                return groups.map(g => (
-                  <optgroup key={g.label} label={g.label}>
-                    {g.sets.map(set => {
-                      const orig = sets.find(o => o.id === set.id)
-                      if (!orig) return null
+                // Groupement par BLOC FR (meme source de verite que la vue "Par blocs").
+                // On utilise l'era deja calculee sur chaque carte (via series) -> 0 systeme parallele.
+                // setEra: map setId -> libelle de bloc, derive de allCards (qui porte c.era).
+                const setEra = new Map<string,string>()
+                allCards.forEach(c => { if (!setEra.has(c.setId)) setEra.set(c.setId, c.era) })
+                const byBloc = new Map<string, typeof sets>()
+                for (const st of sets) {
+                  const bloc = setEra.get(st.id) || 'Autre'
+                  if (!byBloc.has(bloc)) byBloc.set(bloc, [])
+                  byBloc.get(bloc)!.push(st)
+                }
+                const orderedBlocs = [...byBloc.keys()].sort((a,b)=>{
+                  const ia = ERA_ORDER.indexOf(a), ib = ERA_ORDER.indexOf(b)
+                  return (ia<0?999:ia) - (ib<0?999:ib)
+                })
+                return orderedBlocs.map(bloc => (
+                  <optgroup key={bloc} label={bloc}>
+                    {byBloc.get(bloc)!.map(orig => {
                       const displayName = lang === 'JP'
-                        ? formatJPSetName({ id: orig.id, name: orig.name, lang: 'JP' as any } as any, tcgSets)
+                        ? formatJPSetName({ id: orig.id, name: orig.name, lang: 'JP' as any } as any, sets.map(s=>({id:s.id,name:s.name,lang:'JP' as any,total:(s as any).count} as TCGSet)))
                         : orig.name
-                      return (
-                        <option key={orig.id} value={orig.id}>{displayName} ({orig.count})</option>
-                      )
+                      return (<option key={orig.id} value={orig.id}>{displayName} ({orig.count})</option>)
                     })}
                   </optgroup>
                 ))

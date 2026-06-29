@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
-import { resolveScan, type ScanCandidate } from '@/lib/scan/resolve-query'
+import { resolveScan, resolveByNumber, type ScanCandidate } from '@/lib/scan/resolve-query'
 import setIndexRaw from '@/lib/scan/set-index.json'
 
 export const dynamic = 'force-dynamic'
@@ -122,13 +122,44 @@ export async function GET(req: NextRequest) {
       return await resolveBySet(set, number, lang)
     }
 
-    // ── Mode A : pivot nom ──
+    // ── Mode C : numero seul (scan progressif v1) ──
+    //    Pas de name, pas de set : l'OCR a lu "4/102", l'utilisateur a tape la
+    //    langue. number+lang seul = ~44 candidats -> on EXIGE un total (lu dans
+    //    la chaine "/102") pour resserrer. Sans total et trop de candidats, on
+    //    renvoie need_total (le scan demande l'info, il ne devine pas).
     if (!name) {
-      return NextResponse.json(
-        { status: 'error', error: 'missing_params', message: 'name ou set requis (+ number)' },
-        { status: 400 })
+      const NEED_TOTAL_THRESHOLD = 15
+      const byNum = await resolveByNumber({ number, lang })
+      let cands = byNum.candidates
+
+      if (total && Number.isFinite(total)) {
+        const matching = cands.filter((c) => TOTAL_BY_SET[c.setId] === total)
+        if (matching.length >= 1) cands = matching
+      } else if (cands.length > NEED_TOTAL_THRESHOLD) {
+        return NextResponse.json({
+          status: 'need_total',
+          query: { name: null, number, lang: (lang as any) || null, total: null },
+          message: 'Rapproche-toi pour lire le numero complet (ex : 4/102).',
+          candidateCount: cands.length,
+          candidates: [],
+        })
+      }
+
+      cands = cands.map((c) => {
+        const e = SET_INDEX.find((x) => x.id === c.setId)
+        const setName =
+          c.lang === 'FR' ? (e?.nameFr || e?.nameEn) :
+          c.lang === 'JP' ? (e?.nameJp || e?.nameEn) : (e?.nameEn)
+        return { ...c, setName: setName || c.setId, setLogo: e?.logo || null } as any
+      })
+
+      const qC = { name: null, number, lang: (lang as any) || null, total: total ?? null }
+      if (cands.length === 0) return NextResponse.json({ status: 'not_found', query: qC, candidates: [] })
+      if (cands.length === 1) return NextResponse.json({ status: 'match', query: qC, card: cands[0], candidates: cands })
+      return NextResponse.json({ status: 'ambiguous', query: qC, candidates: cands })
     }
 
+    // ── Mode A : pivot nom ──
     const result = await resolveScan({ name, number, lang, total: Number.isFinite(total as any) ? total : null })
 
     // Filtre total imprimé : si fourni et discriminant, on restreint aux sets

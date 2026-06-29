@@ -177,6 +177,50 @@ async function runFuzzy(name: string, number: string, lang: ScanLang | null, thr
   return rows as Row[]
 }
 
+export interface ResolveByNumberInput {
+  number?: string | null
+  lang?: string | null
+  /** totaux imprimes candidats (l'OCR lit "/102" -> [102]). Filtre fort. */
+  totals?: number[] | null
+}
+
+/**
+ * Resolution SANS nom : numero (+ langue + total imprime). Mode scan progressif
+ * v1 — l'OCR lit la chaine "4/102", l'utilisateur tape la langue. Le total est
+ * indispensable (numero+langue seul = ~44 candidats ; +total = poignee).
+ *
+ * Le filtrage par total se fait via l'index statique cote ROUTE (qui a le JSON).
+ * Ici on retourne TOUS les candidats (number, lang) ; la route applique le
+ * filtre total et le tri. Sans total fourni, c'est volontairement large
+ * (la route refusera ou demandera le total).
+ */
+export async function resolveByNumber(input: ResolveByNumberInput): Promise<ResolveResult> {
+  const number = cleanNumber(input.number || '')
+  const lang = normLang(input.lang)
+  const query = { name: null, number: number || null, lang, total: null }
+
+  if (!number) return { status: 'not_found', query, candidates: [] }
+
+  const params: any[] = [number]
+  let langClause = ''
+  if (lang) { params.push(lang); langClause = 'AND lower(kc.lang) = $2' }
+
+  const rows = (await sql.query(
+    `${SELECT}, NULL::float AS sim
+     FROM k_cards kc
+     JOIN k_prints kp ON kp.id = kc.print_id
+     LEFT JOIN k_sets ks ON ks.id = kp.set_id
+     WHERE kp.number = $1 ${langClause}`,
+    params,
+  )) as Row[]
+
+  if (rows.length === 0) return { status: 'not_found', query, candidates: [] }
+
+  const cands = sortCandidates(rows.map((r) => toCandidate(r, 'exact')))
+  if (cands.length === 1) return { status: 'match', query, card: cands[0], candidates: cands }
+  return { status: 'ambiguous', query, candidates: cands }
+}
+
 export async function resolveScan(input: ResolveInput): Promise<ResolveResult> {
   const name = (input.name || '').trim()
   const number = cleanNumber(input.number || '')

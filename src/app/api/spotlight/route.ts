@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
   try {
     // 1. Card info
     const cardRows = await sql`
-      SELECT c.id, c.name, c.local_id, c.lang, c.rarity_normalized, c.image_url,
+      SELECT c.id, c.name, c.local_id, c.lang, c.rarity, c.rarity_normalized, c.image_url,
              c.set_id, s.name AS set_name, s.release_date, s.series AS era
       FROM k_cards_export c
       LEFT JOIN k_sets_export s ON s.id = c.set_id
@@ -153,9 +153,9 @@ export async function GET(req: NextRequest) {
     }
     const toEur = (v: any, cur: string) => v == null ? null : (cur === 'USD' ? Math.round(Number(v) * USD_EUR * 100) / 100 : Number(v))
     const latestPrices = matrixRows
-      .filter((r: any) => !r.is_asking || r.source === 'cardmarket')
+      .filter((r: any) => !r.is_asking || r.source === 'cardmarket' || r.source === 'ebay_fr')
       .map((r: any) => {
-        const isGrade = /^(PSA|BGS|CGC|SGC|ACE|TAG)_/.test(r.tier)
+        const isGrade = /^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)_/.test(r.tier)
         const src = r.source === 'ppt_tcgplayer' ? 'tcgplayer' : (r.source === 'ppt_ebay' ? 'ebay' : r.source)
         return {
           source: src,
@@ -464,6 +464,63 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── FILTRE MARCHE FR : une carte FR ne montre QUE le grade FR (CCC/PCA) ──────
+    // Les tiers gradés US (PSA/CGC/BGS/eBay US) sont collectés dans bySource mais
+    // n'ont aucun sens sur une fiche FR (PSA ne grade quasi pas de FR). On les retire
+    // ici, a la source, pour que TOUTES les fiches (CardDetailPage + SpotlightV2)
+    // soient coherentes avec l'onglet Gradation (qui lit deja grading_pop CCC/PCA).
+    // Marche non-FR (EN/JP) : comportement inchange, tout le grade reste visible.
+    {
+      const isFrCard = String((card as any)?.lang || '').toUpperCase() === 'FR'
+      if (isFrCard) {
+        const FR_COMPANIES = ['ccc_', 'pca_']  // societes ancrees marche FR
+        const GRADE_PREFIXES = ['psa_', 'bgs_', 'cgc_', 'sgc_', 'ace_', 'tag_', 'cca_', 'pca_', 'ccc_']
+        const isGradedVar = (v: any) => GRADE_PREFIXES.some(p => String(v ?? '').toLowerCase().startsWith(p))
+        const isFrGradedVar = (v: any) => FR_COMPANIES.some(p => String(v ?? '').toLowerCase().startsWith(p))
+        let removedNonFr = 0
+        for (const src of Object.keys(bySource)) {
+          if (src.startsWith('__')) continue
+          const before = (bySource[src] as any[]).length
+          bySource[src] = (bySource[src] as any[]).filter(
+            e => !isGradedVar(e?.variant) || isFrGradedVar(e?.variant)
+          )
+          removedNonFr += before - (bySource[src] as any[]).length
+        }
+        // ppt_graded = uniquement US (EN/JP) -> vide sur une carte FR
+        if (Array.isArray(bySource.ppt_graded)) {
+          bySource.ppt_graded = (bySource.ppt_graded as any[]).filter(e => isFrGradedVar(e?.variant))
+          if ((bySource.ppt_graded as any[]).length === 0) delete bySource.ppt_graded
+        }
+        ;(bySource as any).__frGradeOnly = true
+        ;(bySource as any).__nonFrGradeRemoved = removedNonFr
+      }
+    }
+
+    // ── frGraded : prix gradés FR (CCC/PCA) pour l'onglet Prix, par note.
+    //    La donnee est deja dans bySource (filtree FR ci-dessus). On la reformate
+    //    en liste triee par prix decroissant. Onglet Prix = "combien ca vaut grade",
+    //    distinct de l'onglet Gradation = "faut-il grader" (Graded.ev + population).
+    const frGraded: Array<{ variant: string; price: number; saleCount: number }> = []
+    {
+      const isFrCard = String((card as any)?.lang || '').toUpperCase() === 'FR'
+      if (isFrCard) {
+        const FR_COMPANIES = ['ccc_', 'pca_']
+        const seen = new Set<string>()
+        for (const src of Object.keys(bySource)) {
+          if (src.startsWith('__')) continue
+          for (const e of (bySource[src] as any[])) {
+            const v = String(e?.variant ?? '').toLowerCase()
+            if (!FR_COMPANIES.some(p => v.startsWith(p))) continue
+            const price = Number(e?.price_avg ?? 0)
+            if (!(price > 0)) continue
+            if (seen.has(v)) continue
+            seen.add(v)
+            frGraded.push({ variant: e.variant, price: Math.round(price * 100) / 100, saleCount: Number(e?.nb_sales ?? 0) })
+          }
+        }
+        frGraded.sort((a, b) => b.price - a.price)
+      }
+    }
     return NextResponse.json({
       card,
       kodo,
@@ -473,6 +530,9 @@ export async function GET(req: NextRequest) {
         primaryCurrency: 'EUR',
         history,
         frByCondition,
+        frGraded,
+        frGradedLocked: (bySource as any).__gradedLocked === true,
+        frGradedHiddenCount: Number((bySource as any).__gradedHiddenCount || 0),
         fxUsdEur: USD_EUR,
       },
       resolved_id: cardId,

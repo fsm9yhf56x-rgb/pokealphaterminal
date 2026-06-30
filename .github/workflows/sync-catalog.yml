@@ -1,5 +1,4 @@
 name: Sync Catalog (TCGdex → R2 + DB)
-
 on:
   schedule:
     - cron: '0 4 * * 1'   # tous les lundis 04h UTC (hebdo, sync nouveaux sets)
@@ -20,15 +19,12 @@ on:
         required: false
         default: false
         type: boolean
-
 permissions:
   contents: write
-
 # Empeche deux runs concurrents (cron + dispatch) de se pousser dessus
 concurrency:
   group: sync-catalog
   cancel-in-progress: false
-
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -38,16 +34,13 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
-
       - name: Install deps
         run: npm ci
-
       - name: Run sync-catalog
         run: |
           ARGS="--trigger=cron"
@@ -62,17 +55,14 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: pokealphaterminal-images
-
       - name: Propagate to Kodo Engine (tcg_* -> k_*)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-sync-catalog.js
-
       - name: Refresh Kodo export views
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-create-export-views.js
-
       - name: Match PSA JP population
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -81,7 +71,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/rebuild-static-data.mjs
-
       - name: Auto-commit JSON updates
         run: |
           git config user.name "github-actions[bot]"
@@ -92,15 +81,27 @@ jobs:
             exit 0
           fi
           git commit -m "chore(data): auto-rebuild catalog $(date +%Y-%m-%d)"
-          # Push robuste au push concurrent : rebase sur le remote puis retry
+          # Nos JSON sont generes depuis la DB = source de verite.
+          # En cas de push concurrent : on ne merge JAMAIS (conflits garantis sur
+          # fichiers generes). On se recale dur sur origin/main et on rejoue nos JSON.
+          OURS=$(git rev-parse HEAD)
           for i in 1 2 3 4 5; do
             if git push; then
               echo "Push OK (tentative $i)."
               exit 0
             fi
-            echo "Push rejete (tentative $i), rebase sur origin/main..."
-            git pull --rebase --autostash origin main || true
-            sleep 5
+            echo "Push rejete (tentative $i), recalage dur sur origin/main..."
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git reset --hard origin/main
+            git checkout "$OURS" -- 'public/data/*.json'
+            git add public/data/*.json
+            if git diff --staged --quiet; then
+              echo "Nos JSON sont deja a jour sur le remote, rien a pousser."
+              exit 0
+            fi
+            git commit -m "chore(data): auto-rebuild catalog $(date +%Y-%m-%d)"
+            sleep 3
           done
           echo "::error::Push echoue apres 5 tentatives."
           exit 1

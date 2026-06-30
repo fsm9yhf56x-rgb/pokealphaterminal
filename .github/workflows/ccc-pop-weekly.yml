@@ -1,0 +1,35 @@
+name: Kodo Engine - CCC Pop Weekly (balayage population complet)
+# Balayage COMPLET de la population CCC FR (~1983 racines, ~25min), puis mapping
+# vers grading_pop et re-matching des prix. LOURD : hebdo uniquement (dimanche).
+# Garde-fou rate-limit integre au script (arret propre apres 8x 429 consecutifs).
+on:
+  schedule:
+    - cron: '0 3 * * 0'    # Dimanche 03:00 UTC (hors des crons lundi du catalogue)
+  workflow_dispatch:
+jobs:
+  ccc-pop:
+    name: CCC pop full + map + match
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    concurrency:
+      group: ccc-pop-weekly
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Balayage population CCC complet
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ccc-ingest-pop-full.mjs
+      - name: Mapping pop -> grading_pop
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ccc-map-pop.mjs --commit
+      - name: Re-match prix sur la nouvelle pop
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ccc-match-prices.mjs --commit

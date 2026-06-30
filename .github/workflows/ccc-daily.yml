@@ -1,0 +1,33 @@
+name: Kodo Engine - CCC Daily (annonces eBay FR + match prix)
+# Capture quotidienne des annonces CCC sur eBay FR, puis matching vers price_matrix.
+# LEGER (quelques minutes). Decouple de la pop (hebdo). Tourne sur la pop existante :
+# si la pop hebdo n'a pas encore tourne, ce job match sur la derniere pop connue (sain).
+on:
+  schedule:
+    - cron: '30 1 * * *'   # 01:30 UTC, apres les ingests prix (00:10/00:15) et la consolidation (01:00)
+  workflow_dispatch:
+jobs:
+  ccc-daily:
+    name: CCC annonces + match
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: ccc-daily
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Capture annonces CCC (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ccc-ingest-prices.mjs
+      - name: Match prix CCC -> price_matrix
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ccc-match-prices.mjs --commit

@@ -9,6 +9,18 @@ const q = async (t, p) => { const r = await sql.query(t, p); return Array.isArra
 const COMMIT = process.argv.includes('--commit');
 const MIN_N = 2; // plancher de robustesse : pas de prix sur une annonce unique
 
+await sql.query(`CREATE TABLE IF NOT EXISTS ccc_ask_history (
+  card_ref text NOT NULL,
+  variety text NOT NULL DEFAULT '',
+  tier text NOT NULL,
+  as_of_date date NOT NULL DEFAULT CURRENT_DATE,
+  median_ask numeric,
+  n_annonces integer,
+  source text NOT NULL DEFAULT 'ebay_fr',
+  fetched_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (card_ref, variety, tier, as_of_date)
+)`)
+
 const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const gradeRank = (tier) => { const m = tier.match(/^CCC_(\d+)(?:_(\d+))?(?:_(BLACK|GOLD))?$/); if (!m) return 0; let v = parseFloat(m[2] ? `${m[1]}.${m[2]}` : m[1]); if (m[3]) v += 0.4; return v; };
@@ -104,9 +116,17 @@ if (COMMIT) {
         spot=EXCLUDED.spot, avg30d=EXCLUDED.avg30d, median30d=EXCLUDED.median30d,
         sale_count=EXCLUDED.sale_count, is_asking=true, as_of=now()`,
       [kodoCardId, o.tier, o.variant, o.med, o.n, printId]);
+    await sql.query(`INSERT INTO ccc_ask_history
+      (card_ref, variety, tier, as_of_date, median_ask, n_annonces, source, fetched_at)
+      VALUES ($1,$2,$3,CURRENT_DATE,$4,$5,'ebay_fr', now())
+      ON CONFLICT (card_ref, variety, tier, as_of_date) DO UPDATE SET
+        median_ask=EXCLUDED.median_ask, n_annonces=EXCLUDED.n_annonces, fetched_at=now()`,
+      [o.cardRef, o.variety, o.tier, o.med, o.n]);
     done++;
   }
   console.log(`\\nprice_matrix : ${done} lignes CCC upsertees (source ebay_fr, market EU, is_asking=true).`);
+  const hist = await q(`SELECT COUNT(*)::int n, COUNT(DISTINCT as_of_date)::int jours FROM ccc_ask_history`);
+  console.log(`ccc_ask_history : snapshot du jour archive. ${hist[0].n} lignes sur ${hist[0].jours} jour(s).`);
 } else {
   console.log(`\n(DRY-RUN — rien ecrit. Verifie, puis --commit.)`);
 }

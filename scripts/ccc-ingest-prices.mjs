@@ -27,6 +27,13 @@ await sql.query(`CREATE TABLE IF NOT EXISTS ccc_price_raw (
   variant_hint text, edition_hint text,
   is_lot boolean DEFAULT false, excluded boolean DEFAULT false, exclude_reason text,
   url text, fetched_at timestamptz NOT NULL DEFAULT now())`);
+// Colonnes de cycle de vie d'annonce (pour la fenetre glissante future) :
+// first_seen = gravee a la 1ere capture (jamais modifiee) ; last_seen = MAJ a chaque vue.
+await sql.query(`ALTER TABLE ccc_price_raw ADD COLUMN IF NOT EXISTS first_seen timestamptz`);
+await sql.query(`ALTER TABLE ccc_price_raw ADD COLUMN IF NOT EXISTS last_seen timestamptz`);
+// Backfill unique : les lignes pre-existantes prennent fetched_at comme reference de depart.
+await sql.query(`UPDATE ccc_price_raw SET first_seen=fetched_at WHERE first_seen IS NULL`);
+await sql.query(`UPDATE ccc_price_raw SET last_seen=fetched_at WHERE last_seen IS NULL`);
 
 // ── Parseurs ──────────────────────────────────────────────────────────────────
 const norm = (t) => t.replace(/(\d),(\d)/g, '$1.$2');               // 9,5 -> 9.5
@@ -97,14 +104,14 @@ for(const off of [0,200,400,600,800,1000]){
     if(!it.itemId) continue;
     const row = parseListing(it);
     await sql.query(`INSERT INTO ccc_price_raw
-      (item_id,title,price,currency,grade_num,grade_label,tier,card_number,set_total,lang,variant_hint,edition_hint,is_lot,excluded,exclude_reason,url,fetched_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,now())
+      (item_id,title,price,currency,grade_num,grade_label,tier,card_number,set_total,lang,variant_hint,edition_hint,is_lot,excluded,exclude_reason,url,fetched_at,first_seen,last_seen)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,now(),now(),now())
       ON CONFLICT (item_id) DO UPDATE SET
         price=EXCLUDED.price, currency=EXCLUDED.currency, grade_num=EXCLUDED.grade_num,
         grade_label=EXCLUDED.grade_label, tier=EXCLUDED.tier, card_number=EXCLUDED.card_number,
         set_total=EXCLUDED.set_total, lang=EXCLUDED.lang, variant_hint=EXCLUDED.variant_hint,
         edition_hint=EXCLUDED.edition_hint, is_lot=EXCLUDED.is_lot, excluded=EXCLUDED.excluded,
-        exclude_reason=EXCLUDED.exclude_reason, url=EXCLUDED.url, fetched_at=now()`,
+        exclude_reason=EXCLUDED.exclude_reason, url=EXCLUDED.url, fetched_at=now(), last_seen=now()`,
       [row.item_id,row.title,row.price,row.currency,row.grade_num,row.grade_label,row.tier,
        row.card_number,row.set_total,row.lang,row.variant_hint,row.edition_hint,
        row.is_lot,row.excluded,row.exclude_reason,row.url]);

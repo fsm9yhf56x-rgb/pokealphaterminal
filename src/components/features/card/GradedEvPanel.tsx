@@ -155,7 +155,7 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
         </div>
         <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55 }}>
           {String(lang).toUpperCase() === 'FR'
-            ? "Cote gradée française à venir. Nous construisons la population et les prix de gradation spécifiques aux cartes françaises (PSA FR, CCC). En attendant, Graded.ev préfère ne rien afficher plutôt qu'une estimation basée sur des données non françaises."
+            ? "Cote gradée française à venir. Nous construisons la population et les prix de gradation des sociétés actives sur le marché français (CCC, PCA). En attendant, Graded.ev préfère ne rien afficher plutôt qu'une estimation basée sur des données non françaises."
             : "Données de gradation indisponibles pour cette carte pour l'instant — population PSA ou prix gradés insuffisants. Graded.ev préfère ne rien afficher plutôt qu'une estimation peu fiable."}
         </div>
       </div>
@@ -175,12 +175,12 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
             </div>
             <div style={{ fontSize: 14, color: SNOW.muted, fontFamily: FONT.body, lineHeight: 1.55, marginBottom: 14 }}>
               Découvre si grader cette carte est rentable : gain espéré net selon la note,
-              distribution réelle des notes PSA, probabilité d'être rentable, et recommandation
+              distribution réelle des notes, probabilité d'être rentable, et recommandation
               grader / garder — calculés sur les probabilités réelles, sans promesse du meilleur cas.
             </div>
             {pop > 0 ? (
               <div style={{ fontSize: 12.5, color: SNOW.mutedLight, fontFamily: FONT.data }}>
-                Basé sur {fmtInt(pop)} exemplaires PSA recensés
+                Basé sur {fmtInt(pop)} exemplaires {String(lang).toUpperCase() === 'FR' ? 'gradés recensés' : 'PSA recensés'}
               </div>
             ) : null}
           </div>

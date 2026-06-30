@@ -28,6 +28,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    if (String(lang || '').toUpperCase() === 'FR') { setLoading(false); return }
     setLangFallback(false)
     const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : ''
     fetch(`/api/pop-report?card_id=${encodeURIComponent(cardId)}${langParam}`)
@@ -48,6 +49,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
     return () => { cancelled = true }
   }, [cardId, lang])
 
+  if (String(lang || '').toUpperCase() === 'FR') return null
   if (loading) return null
 
   // Apercu locke (free/pro) : teaser avec total recense, distribution en Premium.

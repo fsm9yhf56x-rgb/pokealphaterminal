@@ -34,10 +34,10 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       END,
       fr_sale.p AS cote_fr_eur,
       eu_langs.j AS cote_lang,
-      LEAST(100, ROUND(COALESCE(LOG(tot.sales + 1) * 28, 0)))::real AS liquidity_score,
+      CASE WHEN tot.sales > 0 THEN LEAST(100, ROUND(LOG(tot.sales + 1) * 28))::real ELSE NULL END AS liquidity_score,
       CASE WHEN eu.trend IS NOT NULL AND us_nm.p IS NOT NULL AND eu.trend > 0
         THEN ROUND(((us_nm.p * ${usdEur} - eu.trend) / eu.trend * 100)::numeric, 1)::real END,
-      CASE WHEN psa10.p IS NOT NULL AND us_nm.p IS NOT NULL
+      CASE WHEN base.lang IN ('en','jp') AND psa10.p IS NOT NULL AND us_nm.p IS NOT NULL
         THEN ROUND(((psa10.p - us_nm.p) * ${usdEur})::numeric, 2) END,
       false, now()
     FROM (
@@ -78,10 +78,16 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       WHERE print_id = base.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'
         AND split_part(kodo_card_id,'-',1) = base.lang
         AND spot * (CASE WHEN currency='USD' THEN ${usdEur}::numeric ELSE 1::numeric END) <= 20000 LIMIT 1) eu_nm_ask ON true
-    -- Cote FR = VENTES (cardmarket trend) du marche FR, PAS les annonces
-    LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
-      WHERE print_id = base.print_id AND source='cardmarket' AND tier='AGGREGATED'
-        AND kodo_card_id LIKE 'fr-%' LIMIT 1) fr_sale ON true
+    -- Cote FR = ventes FR reelles (country_breakdown.FR.language.FR.avg), PAS l'AGGREGATED global
+    LEFT JOIN LATERAL (
+      SELECT (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric AS p
+      FROM price_matrix
+      WHERE print_id = base.print_id AND source='cardmarket_unsold'
+        AND split_part(kodo_card_id,'-',1) = base.lang
+        AND country_breakdown->'FR'->'language'->'FR'->>'avg' IS NOT NULL
+        AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric > 0
+      ORDER BY (country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int DESC NULLS LAST
+      LIMIT 1) fr_sale ON true
     -- Repartition par pays (depuis country_breakdown, cette langue)
     LEFT JOIN LATERAL (SELECT jsonb_object_agg(k, v->'language') AS j FROM (
       SELECT key AS k, value AS v FROM price_matrix,

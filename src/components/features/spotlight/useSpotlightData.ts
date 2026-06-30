@@ -7,6 +7,7 @@ export interface CardInfo {
   name: string
   local_id: string
   lang: 'EN' | 'FR' | 'JP' | string
+  rarity?: string | null
   rarity_normalized: string
   image_url: string | null
   set_id: string

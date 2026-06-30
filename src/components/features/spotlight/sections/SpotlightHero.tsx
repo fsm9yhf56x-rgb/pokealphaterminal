@@ -193,7 +193,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
             <span>{card.set_name}{year ? ` ${year}` : ''}</span>
             <span style={{ color: '#D8D8DD' }}>·</span>
             <span style={{ fontFamily: FONT.data }}>#{card.local_id}</span>
-            {card.rarity_normalized ? (<><span style={{ color: '#D8D8DD' }}>·</span><span>{String(card.rarity_normalized).split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')}</span></>) : null}
+            {(card.rarity || card.rarity_normalized) ? (<><span style={{ color: '#D8D8DD' }}>·</span><span>{card.rarity || String(card.rarity_normalized).split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')}</span></>) : null}
           </div>
           <h1 style={{ fontFamily: FONT.display, fontSize: 25, fontWeight: 600, letterSpacing: '-0.022em', lineHeight: 1.15, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.name}</h1>
         </>

@@ -50,19 +50,11 @@ const TIP_ECART_PSA = "Différence entre le prix d'un exemplaire noté PSA 10 et
 
 export function SpotlightEngine({ kodo, onEvDetail }: { kodo: KodoSignals | null; onEvDetail?: () => void }) {
   if (!kodo) return null
-  const { liquidityScore, gradeEvPsa10Eur, coteFrEur, coteLang } = kodo
+  const { liquidityScore, gradeEvPsa10Eur } = kodo
 
-  const coteEntries: { lang: string; avg: number }[] = []
-  const seenLang = new Set<string>()
-  if (coteFrEur != null) { coteEntries.push({ lang: 'FR', avg: coteFrEur }); seenLang.add('FR') }
-  if (coteLang && typeof coteLang === 'object') {
-    for (const lg of Object.keys(coteLang)) {
-      const code = LANG_NAME[lg] || lg
-      if (seenLang.has(code)) continue
-      const node = coteLang[lg]?.ALL
-      if (node && node.avg != null) { coteEntries.push({ lang: code, avg: Number(node.avg) }); seenLang.add(code) }
-    }
-  }
+  // Cote FR = deja portee par le headline "Prix de marche". On ne duplique pas ici.
+  // Le bloc "cote par langue" historique melangeait des PAYS (BE, DE...) a des
+  // niveaux .ALL incoherents -> retire. Une fiche FR montre la cote FR, une fois.
 
   const tiles: { label: string; value: React.ReactNode; sub: string; color?: string; tip?: string }[] = []
   if (liquidityScore != null) {
@@ -85,7 +77,7 @@ export function SpotlightEngine({ kodo, onEvDetail }: { kodo: KodoSignals | null
     })
   }
 
-  if (tiles.length === 0 && coteEntries.length === 0) return null
+  if (tiles.length === 0) return null
 
   const CARD: React.CSSProperties = {
     background: 'transparent',
@@ -127,19 +119,6 @@ export function SpotlightEngine({ kodo, onEvDetail }: { kodo: KodoSignals | null
           </button>
         ) : null}
 
-        {coteEntries.length > 0 ? (
-        <div style={{ marginTop: tiles.length > 0 ? 12 : 0, paddingTop: tiles.length > 0 ? 12 : 0, borderTop: tiles.length > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-          <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 8 }}>Cote par langue</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {coteEntries.map((c, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'baseline', gap: 5, background: 'rgba(255,255,255,0.5)', borderRadius: 9, padding: '5px 10px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9)' }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.data, letterSpacing: '0.04em' }}>{c.lang}</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.data }}>{fmtPrice(c.avg, 'EUR')}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

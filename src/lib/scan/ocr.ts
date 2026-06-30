@@ -119,12 +119,19 @@ export function parseCardNumber(raw: string): { number: string | null; total: nu
       const cand = parseInt(totRaw.slice(0, len), 10)
       if (cand >= 1 && cand <= 999) { total = cand; break }
     }
-    return { number: stripLeadingZeros(numStr), total }
+    const num = stripLeadingZeros(numStr)
+    // un numero "0" est forcement du bruit OCR -> on l'ignore
+    return { number: num && num !== '0' ? num : null, total }
   }
 
   // Pas de slash lu -> on tente un nombre isole comme numero, total inconnu.
-  const m2 = cleaned.match(/\b(\d{1,4})\b/)
-  if (m2) return { number: stripLeadingZeros(m2[1]), total: null }
+  // On parcourt TOUS les nombres et on garde le 1er non-nul (evite le "0"
+  // parasite du bas de carte quand le vrai numero est ailleurs).
+  const all = cleaned.match(/\d{1,4}/g) || []
+  for (const cand of all) {
+    const num = stripLeadingZeros(cand)
+    if (num && num !== '0') return { number: num, total: null }
+  }
 
   return { number: null, total: null }
 }

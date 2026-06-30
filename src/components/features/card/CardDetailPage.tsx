@@ -25,7 +25,8 @@ import { normalizeCondition } from "@/lib/conditions"
 import { resolveCardImage } from "@/lib/images"
 import { CardImg } from "@/components/ui/CardImg"
 import { seriesToBloc } from "@/lib/blocs"
-import { SNOW, FONT, GLASS, RADIUS, EASE } from "@/lib/design/snow"
+import { SNOW, FONT, GLASS, RADIUS, EASE, HOVER_LIFT_STYLE, HOVER_TRANSITION } from "@/lib/design/snow"
+import { AddToCollectionModal, type AddCardSeed } from "./AddToCollectionModal"
 import AuthModal from "@/components/layout/AuthModal"
 import { GuestGate } from "@/components/upgrade/GuestGate"
 
@@ -155,7 +156,7 @@ type TabKey = "prix" | "histo" | "grade" | "infos"
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
-  const { cards } = usePortfolio()
+  const { cards, addCard } = usePortfolio()
   const { show, isInvestor } = usePersona()
   const { isFree } = usePlan()
   const { wishlist, addWishItem, deleteWishItem } = useGoals()
@@ -167,6 +168,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const [gradedCompany, setGradedCompany] = useState<string>("PSA")
   const [activeTab, setActiveTab] = useState<TabKey>("prix")
   const [authOpen, setAuthOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
 
   // Tilt 3D + reflet (DOM direct = zero re-render)
   const tiltRef = useRef<HTMLDivElement>(null)
@@ -293,7 +295,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
       set_name: card.set_name,
       card_number: String(card.local_id ?? ""),
       lang: card.lang,
-      rarity: (card as any).rarity_normalized ?? null,
+      rarity: (card as any).rarity ?? (card as any).rarity_normalized ?? null,
       priority: 2,
     })
     if (res && typeof res === "object" && "error" in res && res.error === "wishlist_limit") {
@@ -773,7 +775,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               </div>
               <h1 style={{ fontSize: "clamp(23px, 6.4vw, 30px)", fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.02em", lineHeight: 1.08, margin: "0 0 6px" }}>{card.name}</h1>
               <div style={{ fontSize: 13.5, color: SNOW.muted, fontFamily: FONT.body }}>
-                <span style={{ textTransform: "capitalize" }}>{card.rarity_normalized}</span>
+                <span>{(card as any).rarity || String(card.rarity_normalized || "").split("_").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")}</span>
                 {illustrator ? <span> · Illustré par {illustrator}</span> : null}
               </div>
             </div>
@@ -913,10 +915,18 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                 </div>
               )
             })}
-            <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: 13, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
-              Gérer dans mon portfolio
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
+              <button onClick={() => setAddOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 16px", borderRadius: RADIUS.md, ...GLASS.button, color: SNOW.ink, fontSize: 13, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", transition: HOVER_TRANSITION }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = HOVER_LIFT_STYLE.transform; e.currentTarget.style.boxShadow = HOVER_LIFT_STYLE.boxShadow }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = GLASS.button.boxShadow as string }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Ajouter un exemplaire
+              </button>
+              <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: SNOW.muted, fontFamily: FONT.display, textDecoration: "none" }}>
+                Gérer dans mon portfolio
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </Link>
+            </div>
           </div>
         ) : !user ? (
           <div style={{ textAlign: "center", padding: "20px 0 8px" }}>
@@ -929,10 +939,10 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         ) : (
           <div style={{ textAlign: "center", padding: "20px 0 8px" }}>
             <div style={{ fontSize: 14.5, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16 }}>Tu ne possèdes pas encore cette carte.</div>
-            <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 22px", borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.16)" }}>
+            <button onClick={() => setAddOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 22px", borderRadius: 13, background: "#1D1D1F", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.16)" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Ajouter à ma collection
-            </Link>
+            </button>
           </div>
         )}
       </div>
@@ -950,15 +960,38 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowed ? "#E03020" : "none"} stroke={isFollowed ? "#E03020" : SNOW.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               {isFollowed ? "Suivie" : "Suivre"}
             </button>
-            <Link href="/portfolio" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              {owned.length > 0 ? "Gérer ma collection" : "Ajouter à ma collection"}
-            </Link>
+            {owned.length > 0 ? (
+              <Link href="/portfolio" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", textDecoration: "none", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Gérer ma collection
+              </Link>
+            ) : (
+              <button onClick={() => setAddOpen(true)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 13, background: "#1D1D1F", color: "#fff", border: "none", cursor: "pointer", fontSize: 14.5, fontWeight: 700, fontFamily: FONT.display, boxShadow: "0 4px 14px rgba(0,0,0,0.18)" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Ajouter à ma collection
+              </button>
+            )}
           </>
         )}
       </div>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode="signup" />
+      <AddToCollectionModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        card={{
+          name: card.name,
+          set_name: card.set_name ?? null,
+          set_id: card.set_id ?? null,
+          card_number: card.local_id ?? null,
+          lang: card.lang,
+          rarity: ((card as any).rarity ?? card.rarity_normalized) ?? null,
+          card_type: (card as any).card_type ?? null,
+          image_url: card.image_url ?? null,
+          k_card_id: (card as any).k_card_id ?? null,
+        } as AddCardSeed}
+        onAdd={addCard}
+      />
 
       <style>{`
         @keyframes kcRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }

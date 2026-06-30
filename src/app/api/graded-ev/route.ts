@@ -239,7 +239,10 @@ export async function GET(req: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     // Édition pour CCC : '1st Edition' si le print l'impose, sinon Unlimited ('').
     const cccVariety = want1st ? '1st Edition' : ''
-    const cccRows = await sql`
+    // CCC = certificateur FRANCAIS : ne rien chercher hors d'une carte FR.
+    // Empeche la collision de card_ref (me01-134 existe en EN et en FR) de
+    // faire fuiter la pop CCC francaise sur les cartes anglaises/japonaises.
+    const cccRows = (lang === 'FR') ? await sql`
       SELECT gp.tier, gp.grade_num, gp.label, gp.count, gp.pop_total,
              pm.spot AS price, pm.is_asking
       FROM grading_pop gp
@@ -253,7 +256,7 @@ export async function GET(req: NextRequest) {
         AND gp.variety = ${cccVariety}
         AND gp.grade_num IS NOT NULL
       ORDER BY gp.grade_num DESC NULLS LAST
-    ` as Array<Record<string, unknown>>
+    ` as Array<Record<string, unknown>> : []
 
     let cccPayload: Record<string, unknown> | null = null
     if (cccRows.length > 0) {

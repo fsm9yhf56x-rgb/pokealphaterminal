@@ -84,10 +84,11 @@ export async function GET(req: NextRequest) {
   // Fallback robuste: si l'id ne resout pas directement, tenter set_id + local_id.
   // Couvre les ids "set-numero" (ex jp-sv2a-pokemon-card-151-208) vs id reel (jp-566550).
   {
-    const direct = await sql`SELECT 1 FROM k_cards_export WHERE id = ${cardId} LIMIT 1` as Array<any>
+    const direct = await sql`SELECT id FROM k_cards_export WHERE lower(id) = lower(${cardId}) LIMIT 1` as Array<{id:string}>
+    if (direct.length > 0) cardId = direct[0].id
     if (direct.length === 0) {
       // separer la partie numero finale du reste (= set_id potentiel)
-      const mm = String(cardId).match(/^(.*)-([0-9]+[a-z]?)$/i)
+      const mm = String(cardId).match(/^(.*)-([A-Za-z]*[0-9]+[a-z]?)$/i)
       if (mm) {
         const rawSet = mm[1].replace(/^(en|fr|jp|aopkm)-/i, '')
         const num = mm[2]

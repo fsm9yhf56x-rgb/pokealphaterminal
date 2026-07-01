@@ -35,7 +35,7 @@ type CardItem = {
   rarity: string; type: string; lang: 'EN'|'JP'|'FR'
   condition: string; graded: boolean
   buyPrice: number; curPrice: number; qty: number
-  psa?: number; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean; priceBasis?: string
+  psa?: number; gradeCompany?: string; gradeValue?: string; signal?: 'S'|'A'|'B'; hot?: boolean; favorite?: boolean; showcasePos?: number; serverPriced?: boolean; priceBasis?: string
   image?: string; setTotal?: number; setId?: string; edition?: string; variant?: string; createdAt?: string
 }
 
@@ -183,6 +183,7 @@ export function Holdings() {
             number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
             lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
             condition: c.condition || 'Raw', graded: c.graded || false,
+            gradeCompany: c.grade_company || undefined, gradeValue: c.grade_value != null ? String(c.grade_value) : undefined,
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
             serverPriced: Number(c.current_price) > 0, priceBasis: c.price_basis || undefined,
             qty: c.qty || 1,
@@ -1727,7 +1728,7 @@ export function Holdings() {
                       {/* Badge condition / grading */}
                       <div style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 9px', borderRadius:7, marginBottom:10, background: spotCard.graded ? 'rgba(224,48,32,0.08)' : 'rgba(0,0,0,0.05)', border: `1px solid ${spotCard.graded ? 'rgba(224,48,32,0.2)' : 'var(--border)'}` }}>
                         <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color: spotCard.graded ? '#E03020' : '#6E6E73', fontFamily:'var(--font-display)', textTransform:'uppercase' }}>
-                          {spotCard.graded ? `PSA ${spotCard.psa || '?'}` : normalizeCondition(spotCard.condition)}
+                          {spotCard.graded ? `${spotCard.gradeCompany || 'PSA'} ${spotCard.gradeValue || ''}`.trim() : normalizeCondition(spotCard.condition)}
                         </span>
                       </div>
                       {hasPrice ? (
@@ -2817,11 +2818,11 @@ export function Holdings() {
                                   </div>
                                 )}
                                 {inFullSet&&card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
+                                {inFullSet&&card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'rgba(0,0,0,.6)';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', boxShadow:'0 1px 4px rgba(0,0,0,.2)', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', overflow:'hidden' }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   
                                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
-                                    {inFullSet&&card.graded&&<span style={{ fontSize:'8px', fontWeight:700, padding:'2px 5px', borderRadius:'4px', background:gradeBg, color:gradeFg, fontFamily:'var(--font-data)', letterSpacing:'.02em', flexShrink:0, backgroundSize:gn>=5?'300% 300%':'auto', animation:gn>=5?'metalShift 8s ease-in-out infinite':'none', position:'relative', overflow:'hidden' }}>{gn>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'4px', background:gn>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn>=8?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{card.condition}</span></span>}
                                   </div>
                                   {card.curPrice > 0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', marginTop:'1px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
                                   {card.curPrice <= 0 && (card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote') && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', marginTop:'1px', fontStyle:'italic' }}>Données insuffisantes</div>}
@@ -2829,7 +2830,7 @@ export function Holdings() {
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
-                                    {!inFullSet&&!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
+                                    {binderSet==='__all__'&&!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
                                   </div>
                                   {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                                     <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
@@ -3018,7 +3019,6 @@ export function Holdings() {
                           </div>
                           {/* Étiquette bas — propre et sobre */}
                           <div style={{ padding:'6px 4px 8px', position:'relative' }}>
-                            <span style={{ position:'absolute', bottom:'6px', right:'4px', fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)' }}>×{card.qty}</span>
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
@@ -3028,9 +3028,7 @@ export function Holdings() {
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
-                              {card.rarity&&card.rarity!==''&&<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', marginLeft:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, maxWidth:binderCols>=7?'60px':'none' }}>{card.rarity}</span>}
-
-                              
+                              {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ marginLeft:'auto', flexShrink:0, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
                             </div>
                             {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                               <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
@@ -3038,18 +3036,11 @@ export function Holdings() {
                                 {card.setId?.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}
                               </div>
                             )}
-                          </div>
-                          {card.graded&&(()=>{
-                            const gn3=parseInt(card.condition.replace(/[^0-9]/g,''))
-                            const bg3=gn3>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gn3>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gn3>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73'
-                            const fg3=gn3>=10?'#1a1200':gn3>=9?'#222':gn3>=5?'#2a1800':'#fff'
-                            const sh3=gn3>=10?'0 1px 3px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,240,.4)':gn3>=9?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.4)':gn3>=5?'0 1px 3px rgba(0,0,0,.12),inset 0 1px 0 rgba(224,191,160,.3)':'0 1px 4px rgba(0,0,0,.15)'
-                            return <div style={{ position:'absolute', bottom:'28px', right:'4px', zIndex:3, background:bg3, color:fg3, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', boxShadow:sh3, letterSpacing:'.03em', overflow:'visible', border:gn3>=10?'1px solid rgba(212,175,55,.4)':gn3>=9?'1px solid rgba(168,168,168,.4)':gn3>=5?'1px solid rgba(160,114,74,.3)':'none', backgroundSize:gn3>=5?'300% 300%':'auto', animation:gn3>=5?'metalShift 8s ease-in-out infinite':'none' }}>
-                              {gn3>=5&&<div style={{ position:'absolute', inset:0, borderRadius:'5px', background:gn3>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gn3>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}
-                              {gn3>=10&&<div className='badge-glitter-container' style={{ position:'absolute', inset:'-1px 0', pointerEvents:'none' }}/>}
-                              <span style={{ position:'relative', zIndex:1 }}>{card.condition}</span>
+                            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'4px', marginTop:'4px' }}>
+                              {card.rarity&&card.rarity!==''?<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, flex:1 }}>{card.rarity}</span>:<span style={{ flex:1 }}/>}
+                              <span style={{ fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>×{card.qty}</span>
                             </div>
-                          })()}
+                          </div>
                           <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}
                             onMouseEnter={e=>{const p=e.currentTarget.parentElement;if(p){p.style.transform='translateY(-8px)';p.style.transition='none'}}}
                             onClick={e=>{e.stopPropagation();removeCard(card,e)}}

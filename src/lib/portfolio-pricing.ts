@@ -55,7 +55,13 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
       LEFT JOIN LATERAL (SELECT rarity AS r FROM k_prints WHERE id = kc.print_id) kc_rarity ON true
       CROSS JOIN LATERAL (
         SELECT CASE
-          WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG)[ _]'
+          -- Gradee avec societe + note -> tier exact {COMPANY}_{GRADE} (ex CCC_9_5)
+          WHEN pc.graded = true AND pc.grade_company IS NOT NULL AND pc.grade_value IS NOT NULL
+            THEN upper(pc.grade_company) || '_' || replace(replace(trim(pc.grade_value::text), ' ', '_'), '.', '_')
+          -- Gradee SANS note exploitable -> tier fantome : forcera graded_no_data (jamais le raw)
+          WHEN pc.graded = true THEN 'GRADED_UNKNOWN'
+          -- Condition prefixee societe (ancien format "PSA 10" dans condition)
+          WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)[ _]'
             THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
           WHEN upper(coalesce(pc.condition,'')) IN ('NM','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'
           WHEN upper(coalesce(pc.condition,'')) IN ('LP','LIGHTLY PLAYED','LIGHTLY_PLAYED') THEN 'LIGHTLY_PLAYED'

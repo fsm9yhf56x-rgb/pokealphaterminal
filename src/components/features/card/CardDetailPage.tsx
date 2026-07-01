@@ -370,7 +370,9 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
     if (c.graded) {
       const gl = `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim()
-      return { value: null, locked: true, gradeLabel: gl }
+      // Prix grade par exemplaire non branche dans ce bloc : pas de valeur,
+      // et surtout pas de lock (l'utilisateur possede la carte).
+      return { value: null, locked: false, gradeLabel: gl }
     }
     const raw = normalizeCondition(c.condition)
     if (raw === "Raw") return { value: nmPrice }
@@ -899,6 +901,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>{isInvestor ? "Valeur" : "Cote actuelle"}</div>
                         <div style={{ fontSize: 17, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(cur)}</div>
+                      </div>
+                    ) : c.graded ? (
+                      <div style={{ textAlign: "right", maxWidth: 300 }}>
+                        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>Cote {gradeLabel}</div>
+                        <div style={{ fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display, marginTop: 3, lineHeight: 1.45 }}>Pas encore de prix collecte pour cette note. La cote s'affichera automatiquement des qu'une vente sera detectee.</div>
                       </div>
                     ) : null}
                   </div>

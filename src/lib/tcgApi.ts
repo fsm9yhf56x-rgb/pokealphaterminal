@@ -86,10 +86,13 @@ export async function fetchAllCards(lang:Lang): Promise<TCGCard[]> {
 }
 
 export async function fetchCardDetail(lang:Lang, cardId:string): Promise<TCGCardFull|null> {
-  const l=LC[lang], key=`tcg_detail_${l}_${cardId}`
+  const l=LC[lang]
+  // TCGdex attend son propre format sans prefixe langue (bw11-RC7), pas le notre (en-bw11-RC7)
+  const tcgId = cardId.replace(/^(en|fr|jp|aopkm)-/i, '')
+  const key=`tcg_detail_${l}_${tcgId}`
   const hit=getCache<TCGCardFull>(key); if (hit) return hit
   try {
-    const res=await fetch(`${BASE}/${l}/cards/${cardId}`)
+    const res=await fetch(`${BASE}/${l}/cards/${tcgId}`)
     if (!res.ok) return null
     const data:TCGCardFull=await res.json()
     setCache(key,data); return data

@@ -116,18 +116,27 @@ export async function getCards(lang: 'FR' | 'EN' | 'JP'): Promise<Record<string,
 }
 
 export async function getCardsForSet(lang: 'FR' | 'EN' | 'JP', setId: string): Promise<StaticCard[]> {
+  // Le static indexe les sets par id BRUT (ex. "me02"), mais un set_id de
+  // portfolio peut etre prefixe par la langue (ex. "fr-me02"). On tente les
+  // deux formes pour rester tolerant au format de set_id.
+  const bareId = setId.replace(/^(fr|en|jp)-/i, '')
+  const candidates = bareId !== setId ? [setId, bareId] : [setId]
   const all = await getCards(lang)
-  if (all[setId]) return all[setId]
+  for (const key of candidates) {
+    if (all[key]) return all[key]
+  }
   for (const fallbackLang of ['EN', 'FR', 'JP'] as const) {
     if (fallbackLang === lang) continue
     try {
       const fallback = await getCards(fallbackLang)
-      if (fallback[setId]) return fallback[setId]
+      for (const key of candidates) {
+        if (fallback[key]) return fallback[key]
+      }
     } catch {}
   }
   const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
   try {
-    const res = await fetch(`https://api.tcgdex.net/v2/${apiLang}/sets/${setId}`)
+    const res = await fetch(`https://api.tcgdex.net/v2/${apiLang}/sets/${bareId}`)
     const data = await res.json()
     return (data.cards || []).map((c: any) => ({ id: c.id, lid: c.localId, n: c.name, img: c.image ? c.image + '/high.webp' : null, r: c.rarity || null }))
   } catch { return [] }

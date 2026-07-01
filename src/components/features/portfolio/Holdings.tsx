@@ -96,7 +96,7 @@ const GRADE_COMPANIES = [
   {label:'CCC', grades:['CCC 8','CCC 9','CCC 10']},
 ]
 
-type GridItem = { type:'owned'; card:CardItem } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
+type GridItem = { type:'owned'; card:CardItem; count?:number } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
 export function Holdings() {
   const { labels, show, isInvestor } = usePersona()
@@ -2604,19 +2604,32 @@ export function Holdings() {
                         ? (()=>{
                             const normN = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
                             const ownedMap = new Map<string,CardItem>()
-                            setCards.forEach(c => ownedMap.set(normN(c.number), c))
+                            const countMap = new Map<string,number>()
+                            setCards.forEach(c => { const k=normN(c.number); if(!ownedMap.has(k)) ownedMap.set(k, c); countMap.set(k, (countMap.get(k)||0)+(c.qty||1)) })
                             return shelfGhosts.map(fc => {
-                              const owned = ownedMap.get(normN(fc.localId||''))
-                              if(owned) return { type:'owned' as const, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '' } }
+                              const k = normN(fc.localId||'')
+                              const owned = ownedMap.get(k)
+                              if(owned) return { type:'owned' as const, count: countMap.get(k)||1, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '' } }
                               return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:cleanImageUrl(fc.image)||'', rarity:fc.rarity||'' }
                             })
                           })()
-                        : filteredSetCards.sort((a,b)=>{
-                            if(binderSort==='number') return (parseInt(a.number)||999)-(parseInt(b.number)||999)
-                            if(binderSort==='name') return a.name.localeCompare(b.name)
-                            if(binderSort==='price') return b.curPrice-a.curPrice
-                            return 0
-                          }).map(c=>({ type:'owned' as const, card:c }))
+                        : (()=>{
+                            const normN2 = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
+                            // Grouper par carte (kCardId sinon numero) : une case par carte, count = nb d'exemplaires.
+                            const grouped = new Map<string,{ card:CardItem; count:number }>()
+                            filteredSetCards.forEach(c=>{
+                              const key = c.kCardId || normN2(c.number) || c.id
+                              const prev = grouped.get(key)
+                              if(prev){ prev.count += (c.qty||1) }
+                              else grouped.set(key, { card:c, count:(c.qty||1) })
+                            })
+                            return Array.from(grouped.values()).sort((a,b)=>{
+                              if(binderSort==='number') return (parseInt(a.card.number)||999)-(parseInt(b.card.number)||999)
+                              if(binderSort==='name') return a.card.name.localeCompare(b.card.name)
+                              if(binderSort==='price') return b.card.curPrice-a.card.curPrice
+                              return 0
+                            }).map(g=>({ type:'owned' as const, count:g.count, card:g.card }))
+                          })()
                       return (
                         <div key={setName} className="set-block" style={{ marginBottom:'24px', animation:`slotIn .2s ${si*.05}s ease-out both` }}>
                           {/* Header du set — XP Bar gamifiée exact artifact */}
@@ -2816,7 +2829,7 @@ export function Holdings() {
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
-                                    {!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
+                                    {!inFullSet&&!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
                                   </div>
                                   {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                                     <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>

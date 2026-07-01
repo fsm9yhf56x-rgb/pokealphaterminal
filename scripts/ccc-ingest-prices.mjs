@@ -7,7 +7,7 @@ import { neon } from '@neondatabase/serverless';
 
 function envFromFile(p){const o={};try{for(const l of fs.readFileSync(p,'utf8').split('\n')){const m=l.match(/^([A-Z0-9_]+)=(.*)$/);if(m)o[m[1]]=m[2].replace(/^"/,'').replace(/"$/,'');}}catch{}return o;}
 const env = envFromFile('.env.production.local');
-const ID = env.EBAY_APP_ID, SEC = env.EBAY_CERT_ID;
+const ID = env.EBAY_APP_ID || process.env.EBAY_APP_ID, SEC = env.EBAY_CERT_ID || process.env.EBAY_CERT_ID;
 const sql = neon(env.DATABASE_URL || process.env.DATABASE_URL);
 
 if(!ID || !SEC){ console.log('EBAY_APP_ID / EBAY_CERT_ID introuvables.'); process.exit(1); }

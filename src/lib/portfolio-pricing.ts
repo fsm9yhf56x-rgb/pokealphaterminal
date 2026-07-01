@@ -55,12 +55,15 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
       LEFT JOIN LATERAL (SELECT rarity AS r FROM k_prints WHERE id = kc.print_id) kc_rarity ON true
       CROSS JOIN LATERAL (
         SELECT CASE
-          -- Gradee avec societe + note -> tier exact {COMPANY}_{GRADE} (ex CCC_9_5)
+          -- Gradee avec societe + note explicites -> tier exact {COMPANY}_{GRADE} (ex CCC_9_5)
           WHEN pc.graded = true AND pc.grade_company IS NOT NULL AND pc.grade_value IS NOT NULL
             THEN upper(pc.grade_company) || '_' || replace(replace(trim(pc.grade_value::text), ' ', '_'), '.', '_')
-          -- Gradee SANS note exploitable -> tier fantome : forcera graded_no_data (jamais le raw)
+          -- Gradee dont la note est dans condition (ancien format "PSA 8", "CCC 9.5")
+          WHEN pc.graded = true AND pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA|AOG|GSG|PGS)[ _]?[0-9]'
+            THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
+          -- Gradee avec societe connue mais note absente partout -> tier fantome (graded_no_data)
           WHEN pc.graded = true THEN 'GRADED_UNKNOWN'
-          -- Condition prefixee societe (ancien format "PSA 10" dans condition)
+          -- Condition prefixee societe (carte non marquee graded mais condition "PSA 10")
           WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)[ _]'
             THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
           WHEN upper(coalesce(pc.condition,'')) IN ('NM','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'

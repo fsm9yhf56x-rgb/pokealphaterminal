@@ -1,16 +1,21 @@
 "use client"
 // ─────────────────────────────────────────────────────────────────────────────
-// GradedEvPanel — "Faut-il la grader ?"
-// Affiche le moteur Graded.ev sur la page carte.
-//   - Premium  : analyse complète PSA (reco, gain espéré net, distribution réelle,
-//                scénarios par note, proba de rentabilité, frais ajustables)
-//                + bloc CCC additif (distribution FR réelle + gem rate, EV si
-//                couverture suffisante, sinon mention de transparence).
-//   - Free/Pro : teaser locké (accroche + nombre d'exemplaires, sans le calcul)
-//   - Indispo  : message explicite, jamais d'écran blanc.
-// Honnêteté : on ne promet pas le meilleur cas. Gem rate + % rentable affichés,
-// gain décomposé PAR NOTE, frais PSA AJUSTABLES (Kodo non responsable des tarifs).
-// CCC = annonces eBay FR (décotées) ; on l'affiche labellisé, jamais comme une vente.
+// GradedEvPanel — "Analyse de gradation" (bloc unique multi-sociétés).
+//
+// Un seul bloc, un sélecteur PSA | CCC (PSA d'abord). Pour la société choisie :
+//   - EV disponible (prix gradés présents)  → analyse complète : reco, gain
+//     espéré net, scénarios par note, proba de rentabilité, frais ajustables.
+//     (cas PSA EN aujourd'hui ; cas FR quand on aura les prix gradés)
+//   - EV indisponible mais population connue → distribution par note (barres)
+//     + gem rate, avec mention "prix gradés à venir". (cas PSA FR, CCC sans prix)
+//
+// Deux sources :
+//   - /api/graded-ev  → l'EV (reco, gain net, scénarios) quand les prix existent.
+//   - /api/graded-pop → les populations normalisées PSA + CCC (distribution par
+//     note), fournisseur unique des distributions pour toutes les sociétés.
+//
+// Honnêteté : jamais de promesse du meilleur cas ; frais PSA ajustables (Kodo non
+// responsable des tarifs) ; CCC = annonces eBay FR décotées, jamais une vente.
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useState } from "react"
 import { SNOW, FONT } from "@/lib/design/snow"
@@ -23,7 +28,6 @@ interface GradeRow {
   contribution: number
   net?: number
 }
-
 interface CccDistRow {
   tier: string
   grade: number
@@ -32,7 +36,6 @@ interface CccDistRow {
   price: number | null
   basis: "sale" | "ask"
 }
-
 interface CccEv {
   reco: "GRADER" | "MARGINAL" | "NE_PAS" | "INSUFFISANT"
   recoReason: string
@@ -45,7 +48,6 @@ interface CccEv {
   hasAskBasis: boolean
   rows: GradeRow[]
 }
-
 interface CccBlock {
   company: "CCC"
   variety?: string | null
@@ -56,7 +58,6 @@ interface CccBlock {
   ev: CccEv | null
   evUnavailableReason: string | null
 }
-
 interface GradedEvData {
   available: boolean
   locked: boolean
@@ -78,6 +79,15 @@ interface GradedEvData {
   ccc?: CccBlock | null
 }
 
+// Population normalisée (source /api/graded-pop).
+interface PopDistRow { grade: number; count: number; label: string | null }
+interface CompanyPop {
+  company: "PSA" | "CCC"
+  popTotal: number
+  gemRate: number
+  distribution: PopDistRow[]
+}
+
 const fmtEur = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n)
 const fmtEur2 = (n: number) =>
@@ -96,6 +106,11 @@ const RECO_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
   INSUFFISANT: { bg: SNOW.surfaceSoft, fg: SNOW.muted, label: "Données partielles" },
 }
 
+const COMPANY_SUB: Record<string, string> = {
+  PSA: "Société de gradation américaine",
+  CCC: "Société de gradation française",
+}
+
 // Libellé d'affichage d'un tier CCC (CCC_10_GOLD -> "10 Gold", CCC_9_5 -> "9.5").
 function cccGradeLabel(row: CccDistRow): string {
   if (row.label === "GOLD") return `${row.grade} Gold`
@@ -103,24 +118,126 @@ function cccGradeLabel(row: CccDistRow): string {
   if (row.label === "AUTHENTIC") return "Auth"
   return `${row.grade}`
 }
+// Libellé d'une note de population (gère Gold/Black CCC).
+function popGradeLabel(company: string, d: PopDistRow): string {
+  if (company === "CCC") {
+    if (d.label === "GOLD") return `${d.grade} Gold`
+    if (d.label === "BLACK") return `${d.grade} Black`
+    if (d.label === "AUTHENTIC") return "Auth"
+  }
+  return `${d.grade}`
+}
+
+// ── Sélecteur de société (segmented control Snow+) ───────────────────────────
+function GraderSelector({
+  companies, selected, onSelect,
+}: {
+  companies: string[]
+  selected: string
+  onSelect: (c: string) => void
+}) {
+  if (companies.length < 2) return null
+  return (
+    <div style={{ display: "inline-flex", background: SNOW.surfaceSoft, borderRadius: 10, padding: 3, gap: 2, marginBottom: 18, border: `1px solid ${SNOW.border}` }}>
+      {companies.map((c) => {
+        const on = c === selected
+        return (
+          <button
+            key={c}
+            onClick={() => onSelect(c)}
+            style={{
+              padding: "7px 18px", fontSize: 12.5, fontFamily: FONT.display, fontWeight: 700,
+              color: on ? "#fff" : SNOW.muted,
+              background: on ? "#1D1D1F" : "transparent",
+              border: "none", borderRadius: 8, cursor: "pointer",
+              letterSpacing: ".02em",
+              boxShadow: on ? "0 1px 3px rgba(0,0,0,.14)" : "none",
+              transition: "all .15s ease",
+            }}
+          >
+            {c}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Bloc population (barres par note + gem rate) — pour une société sans EV ───
+function PopulationBlock({ company, pop }: { company: string; pop: CompanyPop }) {
+  const gem = (pop.gemRate ?? 0) * 100
+  const barFrom = company === "PSA" ? "#00A368" : "#185FA5"
+  const barTo = company === "PSA" ? "#1aa877" : "#2774c4"
+  const dist = pop.distribution.slice().sort((a, b) => b.grade - a.grade || (a.label === "GOLD" ? -1 : 1))
+  const maxCount = Math.max(...dist.map((d) => d.count), 1)
+  const pop10 = dist.filter((d) => d.grade === 10).reduce((s, d) => s + d.count, 0)
+
+  return (
+    <>
+      {/* Gem rate (synthèse) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 16, background: SNOW.surfaceSoft, borderRadius: 12, marginBottom: 16 }}>
+        <svg viewBox="0 0 44 44" style={{ width: 44, height: 44, flexShrink: 0 }}>
+          <circle cx="22" cy="22" r="18" stroke={SNOW.borderSoft} strokeWidth="6" fill="none" />
+          <circle cx="22" cy="22" r="18" stroke={barFrom} strokeWidth="6" fill="none" strokeDasharray={113.1} strokeDashoffset={113.1 - (gem / 100) * 113.1} transform="rotate(-90 22 22)" strokeLinecap="round" />
+          <text x="22" y="26" textAnchor="middle" fontFamily="Sora, sans-serif" fontSize="10" fontWeight="500" fill={SNOW.ink}>{gem.toFixed(1).replace(".", ",")}%</text>
+        </svg>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: SNOW.mutedLight, marginBottom: 3, fontFamily: FONT.body }}>Gem rate (notes 10)</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: SNOW.ink, fontFamily: FONT.display, letterSpacing: "-0.01em" }}>{pop10.toLocaleString("fr-FR")} {company} 10 / {pop.popTotal.toLocaleString("fr-FR")}</div>
+          <div style={{ fontSize: 11, color: "#48484A", marginTop: 4, lineHeight: 1.45, fontFamily: FONT.body }}>
+            {gem < 10 ? "Seules " : ""}<strong style={{ color: SNOW.ink, fontWeight: 500 }}>{gem.toFixed(1).replace(".", ",")} %</strong> des cartes gradées atteignent la note maximale.
+          </div>
+        </div>
+      </div>
+
+      {/* Barres par note (détail) */}
+      <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase" as const, fontFamily: FONT.display, marginBottom: 12 }}>
+        Population par note
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "74px 1fr", gap: "4px 12px", alignItems: "center", marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase" as const, letterSpacing: ".04em" }}>Note</div>
+        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: "uppercase" as const, letterSpacing: ".04em" }}>Population</div>
+      </div>
+      {dist.map((d, i) => {
+        const isGem = d.grade === 10
+        return (
+          <div key={`${d.grade}-${d.label}-${i}`} style={{ display: "grid", gridTemplateColumns: "74px 1fr", gap: "0 12px", alignItems: "center", padding: "6px 0" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: d.label === "GOLD" ? "#C77700" : d.label === "BLACK" ? "#1D1D1F" : SNOW.ink, fontFamily: FONT.data }}>
+              {company} {popGradeLabel(company, d)}
+            </div>
+            <div style={{ position: "relative", height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: "hidden" }}>
+              <div style={{ position: "absolute", inset: 0, width: `${Math.max((d.count / maxCount) * 100, 3)}%`, background: `linear-gradient(90deg,${barFrom},${barTo})`, borderRadius: 5, opacity: isGem ? 1 : 0.82 }} />
+              <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, display: "flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: (d.count / maxCount) > 0.28 ? "#fff" : SNOW.muted, fontFamily: FONT.data }}>
+                {d.count.toLocaleString("fr-FR")}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
 
 export function GradedEvPanel({ printId, lang }: { printId: string; lang: string }) {
   const [data, setData] = useState<GradedEvData | null>(null)
+  const [pops, setPops] = useState<CompanyPop[]>([])
   const [loading, setLoading] = useState(true)
   const [fee, setFee] = useState<number>(25)
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
     setLoading(true)
-    fetch(`/api/graded-ev?print_id=${encodeURIComponent(printId)}&lang=${encodeURIComponent(lang)}`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (!alive) return
-        setData(j)
-        if (j && typeof j.gradingFee === "number") setFee(j.gradingFee)
-        setLoading(false)
-      })
-      .catch(() => { if (alive) { setData(null); setLoading(false) } })
+    Promise.all([
+      fetch(`/api/graded-ev?print_id=${encodeURIComponent(printId)}&lang=${encodeURIComponent(lang)}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/graded-pop?card_id=${encodeURIComponent(printId)}&lang=${encodeURIComponent(lang)}`).then(r => r.json()).catch(() => null),
+    ]).then(([ev, pop]) => {
+      if (!alive) return
+      setData(ev)
+      if (ev && typeof ev.gradingFee === "number") setFee(ev.gradingFee)
+      setPops(pop?.companies ?? [])
+      setLoading(false)
+    }).catch(() => { if (alive) { setData(null); setLoading(false) } })
     return () => { alive = false }
   }, [printId, lang])
 
@@ -143,10 +260,28 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
       ? "INSUFFISANT"
       : evNette > raw * STRONG_MARGIN_RATIO ? "GRADER" : evNette > 0 ? "MARGINAL" : "NE_PAS"
 
+  // Sociétés disponibles = union {EV, population}. PSA toujours en premier.
+  const psaHasEv = (data?.rows?.length ?? 0) > 0
+  const cccHasData = !!data?.ccc && ((data.ccc.popTotal ?? 0) > 0 || (data.ccc.distribution?.length ?? 0) > 0)
+  const psaPop = pops.find(p => p.company === "PSA") ?? null
+  const cccPop = pops.find(p => p.company === "CCC") ?? null
+  const psaHasData = psaHasEv || (psaPop?.distribution?.length ?? 0) > 0
+  const hasCcc = cccHasData || (cccPop?.distribution?.length ?? 0) > 0
+
+  const companies = useMemo(() => {
+    const list: string[] = []
+    if (psaHasData) list.push("PSA")   // PSA toujours en premier
+    if (hasCcc) list.push("CCC")
+    return list
+  }, [psaHasData, hasCcc])
+
+  const activeCompany = selectedCompany && companies.includes(selectedCompany) ? selectedCompany : (companies[0] ?? null)
+
   if (loading) return null
   if (!data) return null
 
-  if (!data.available) {
+  // Indispo total : ni EV ni population, aucune société.
+  if (!data.available && companies.length === 0) {
     return (
       <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
         {titleBlock}
@@ -198,17 +333,40 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
   const gem = (data.gemRate ?? 0) * 100
   const isInsuff = reco === "INSUFFISANT"
   const maxProba = Math.max(...rows.map((r) => r.proba), 0.001)
-  const hasPsa = (data.popTotal ?? 0) > 0 && rows.length > 0
   const ccc = data.ccc ?? null
+
+  // Quoi montrer pour la société active ?
+  const showPsaEv = activeCompany === "PSA" && psaHasEv
+  const showPsaPop = activeCompany === "PSA" && !psaHasEv && (psaPop?.distribution?.length ?? 0) > 0
+  const showCccFull = activeCompany === "CCC" && cccHasData          // CccSection (EV si prix + distribution)
+  const showCccPopOnly = activeCompany === "CCC" && !cccHasData && (cccPop?.distribution?.length ?? 0) > 0
 
   return (
     <div style={{ borderRadius: 18, background: SNOW.surface, border: `1px solid ${SNOW.border}`, padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 28px)" }}>
       {titleBlock}
 
+      {/* Sélecteur de société (si >= 2 sociétés) */}
+      <GraderSelector companies={companies} selected={activeCompany ?? ""} onSelect={setSelectedCompany} />
+
       <style>{`.gev-grade-grid{grid-template-columns:62px 1fr 84px 92px}@media (max-width:480px){.gev-grade-grid{grid-template-columns:42px 1fr 58px 66px}}.ccc-dist-grid{grid-template-columns:74px 1fr 78px}@media (max-width:480px){.ccc-dist-grid{grid-template-columns:60px 1fr 64px}}`}</style>
 
-      {/* ═══ PSA — bloc historique, inchangé ═══ */}
-      {hasPsa ? (
+      {/* En-tête société (badge + libellé) quand on affiche PSA */}
+      {(showPsaEv || showPsaPop) ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", padding: "5px 12px", borderRadius: 8, background: "#1D1D1F", color: "#fff", fontSize: 12.5, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".02em" }}>
+            PSA
+          </div>
+          <span style={{ fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.body }}>{COMPANY_SUB.PSA}</span>
+          {psaPop ? (
+            <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, marginLeft: "auto" }}>
+              {fmtInt(psaPop.popTotal)} exemplaires
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* ═══ PSA — analyse EV (si prix dispo) ═══ */}
+      {showPsaEv ? (
         <>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
         <div style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", borderRadius: 11, background: rs.bg, color: rs.fg, fontSize: 14, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".01em" }}>
@@ -329,8 +487,37 @@ export function GradedEvPanel({ printId, lang }: { printId: string; lang: string
       </>
       ) : null}
 
-      {/* ═══ CCC — bloc additif (France), affiché seulement si donnée présente ═══ */}
-      {ccc ? <CccSection ccc={ccc} fee={fee} dividerAbove={hasPsa} /> : null}
+      {/* ═══ PSA — population seule (pas de prix → pas d'EV, ex. FR) ═══ */}
+      {showPsaPop && psaPop ? (
+        <>
+          <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16, lineHeight: 1.5 }}>
+            Population PSA disponible. Prix gradés PSA <strong style={{ color: SNOW.ink }}>{String(lang).toUpperCase() === "FR" ? "français" : ""}</strong> pas encore collectés pour un calcul de rentabilité — la rareté ci-dessous reste réelle.
+          </div>
+          <PopulationBlock company="PSA" pop={psaPop} />
+        </>
+      ) : null}
+
+      {/* ═══ CCC — bloc complet (EV si prix + distribution), inchangé ═══ */}
+      {showCccFull && ccc ? <CccSection ccc={ccc} fee={fee} dividerAbove={false} /> : null}
+
+      {/* ═══ CCC — population seule (si graded-ev n'a pas de bloc ccc mais graded-pop oui) ═══ */}
+      {showCccPopOnly && cccPop ? (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", padding: "5px 12px", borderRadius: 8, background: "#1D1D1F", color: "#fff", fontSize: 12.5, fontWeight: 800, fontFamily: FONT.display, letterSpacing: ".02em" }}>
+              CCC
+            </div>
+            <span style={{ fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.body }}>{COMPANY_SUB.CCC}</span>
+            <span style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, marginLeft: "auto" }}>
+              {fmtInt(cccPop.popTotal)} exemplaires
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: SNOW.muted, fontFamily: FONT.body, marginBottom: 16, lineHeight: 1.5 }}>
+            Population CCC disponible. Prix gradés CCC pas encore collectés pour cette carte — la rareté ci-dessous reste réelle.
+          </div>
+          <PopulationBlock company="CCC" pop={cccPop} />
+        </>
+      ) : null}
     </div>
   )
 }

@@ -12,7 +12,6 @@ import { SpotlightEngine } from "@/components/features/spotlight/sections/Spotli
 import { SpotlightChart } from "@/components/features/spotlight/sections/SpotlightChart"
 import { SpotlightStates } from "@/components/features/spotlight/sections/SpotlightStates"
 import { PriceByConditionFR } from "@/components/features/spotlight/sections/PriceByConditionFR"
-import { SpotlightPopExpandable } from "@/components/features/spotlight/sections/SpotlightPopExpandable"
 import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
@@ -563,10 +562,6 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         </div>
       ) : null}
 
-      {/* Population : chiffre gratuit + (interne) ligne discrète Premium */}
-      <div>
-        <SpotlightPopExpandable cardId={card.id} lang={card.lang} />
-      </div>
     </div>
   )
 

@@ -4,9 +4,20 @@
  * Valorise chaque ligne de portfolio_cards selon SON exemplaire :
  *  - Gradee ("PSA 10", "BGS 8.5"...) -> tier exact {COMPANY}_{GRADE} de price_matrix
  *  - Raw -> tier d'etat (NEAR_MINT par defaut)
- *  - Carte FR raw -> cote FR (price_signals) prioritaire
- *  - Fallback -> fair value (price_basis le trace)
+ *  - Carte FR raw NEAR_MINT -> hierarchie : cote FR -> Cardmarket EU (AGGREGATED) -> fair value
+ *  - Fallback ultime -> fair value (price_basis le trace)
  *  - Garde-fous: NM aberrant (insufficient_data) et gradee sans son tier (graded_no_data) -> NULL
+ *
+ * PRINCIPE OBJET/MARCHE (critique) :
+ *  Une carte FR et une carte EN sont DEUX OBJETS distincts (fr-bw6-19 vs en-bw6-19),
+ *  donc DEUX marches. On joint price_matrix par kodo_card_id (= kc.id), JAMAIS par
+ *  print_id : print_id est partage entre langues -> une carte FR attraperait le prix
+ *  US de la carte EN. price_signals est filtre par langue (clé print_id + lang).
+ *
+ * ETAGE CARDMARKET EU (raw FR) :
+ *  Cardmarket agrege son prix sous tier='AGGREGATED' (pas 'NEAR_MINT'). Pour une
+ *  carte raw FR en NEAR_MINT, on accepte AGGREGATED comme prix de marche EU reel,
+ *  APRES la cote FR et AVANT le fair value. Basis dedie 'cardmarket_eu' (transparent).
  *
  * Appele par:
  *  - cron/portfolio-prices (scope vide = tout le portfolio, nuit)
@@ -46,12 +57,17 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
     resolved AS (
       SELECT pc.id AS pc_id,
              t.tier AS wanted_tier,
-             COALESCE(best.spot, best_ask.spot * 0.88) AS spot, COALESCE(best.currency, best_ask.currency) AS currency,
+             COALESCE(best.spot, best_ask.spot * 0.88) AS spot,
+             COALESCE(best.currency, best_ask.currency) AS currency,
+             -- Trace la provenance du spot retenu (pour un basis honnete).
+             CASE WHEN best.spot IS NOT NULL THEN best.best_tier ELSE 'EBAY_FR_ASK' END AS spot_tier,
              kc.lang,
              ps.cote_fr_eur, ps.fair_value_eur, ps.fair_value_method
       FROM portfolio_cards pc
       JOIN k_cards kc ON kc.id = pc.k_card_id
-      LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
+      -- price_signals est clé par (print_id, lang) : on filtre la langue de l'objet
+      -- pour ne jamais mélanger le fair_value FR avec celui d'une autre langue.
+      LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
       LEFT JOIN LATERAL (SELECT rarity AS r FROM k_prints WHERE id = kc.print_id) kc_rarity ON true
       CROSS JOIN LATERAL (
         SELECT CASE
@@ -82,13 +98,22 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         END AS vmatch
       ) t
       LEFT JOIN LATERAL (
-        SELECT pm.spot, pm.currency
+        -- SOLD prioritaire. Jointure par kodo_card_id (= l'objet FR/EN/JP), JAMAIS
+        -- par print_id (partagé entre langues -> fuite d'un prix US sur une carte FR).
+        -- Etage Cardmarket EU : pour une carte raw FR en NEAR_MINT, on accepte aussi
+        -- le tier AGGREGATED (prix agrégé Cardmarket, is_asking=false) comme prix EU.
+        SELECT pm.spot, pm.currency, pm.tier AS best_tier, pm.source AS best_source
         FROM price_matrix pm
-        WHERE pm.print_id = kc.print_id
-          AND pm.tier = t.tier
+        WHERE pm.kodo_card_id = kc.id
+          AND (
+            pm.tier = t.tier
+            OR (kc.lang = 'fr' AND t.tier = 'NEAR_MINT' AND pm.tier = 'AGGREGATED')
+          )
           AND pm.is_asking = false
           AND pm.spot IS NOT NULL
         ORDER BY
+          -- Le tier exact demandé prime sur l'agrégat Cardmarket.
+          CASE WHEN pm.tier = t.tier THEN 0 ELSE 1 END,
           CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
           CASE
             WHEN kc.lang = 'jp' THEN
@@ -107,9 +132,10 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         -- Phase 1 : eBay FR SEULEMENT (matcher-valide : n>=2, monotone, propre).
         -- Cardmarket_unsold ajoute en Phase 2, apres nettoyage des asks aberrants a l'ingestion.
         -- Decote x0.88 (ask -> approx prix de transaction) appliquee dans le SELECT resolved ci-dessus.
+        -- Jointure par kodo_card_id (objet), coherente avec best.
         SELECT pm.spot, pm.currency
         FROM price_matrix pm
-        WHERE pm.print_id = kc.print_id
+        WHERE pm.kodo_card_id = kc.id
           AND pm.tier = t.tier
           AND pm.is_asking = true
           AND pm.source = 'ebay_fr'
@@ -147,6 +173,8 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           WHEN r.wanted_tier NOT IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.spot IS NULL THEN 'graded_no_data'
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL THEN 'cote_fr'
+          -- Prix issu de l'agrégat Cardmarket EU (carte raw FR) : basis dédié, honnête.
+          WHEN r.spot IS NOT NULL AND r.spot_tier = 'AGGREGATED' THEN 'cardmarket_eu'
           WHEN r.spot IS NOT NULL THEN 'tier:' || r.wanted_tier
           WHEN r.fair_value_eur IS NOT NULL THEN 'fair_value_fallback'
           ELSE NULL

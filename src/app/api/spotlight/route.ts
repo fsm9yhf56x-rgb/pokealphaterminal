@@ -144,9 +144,8 @@ export async function GET(req: NextRequest) {
     const matrixRows = await sql`
       SELECT pm.market, pm.tier, pm.source, pm.spot, pm.low, pm.high,
              pm.sale_count, pm.is_asking, pm.currency, pm.as_of, pm.country_breakdown
-      FROM k_cards kc
-      JOIN price_matrix pm ON pm.print_id = kc.print_id
-      WHERE kc.id = ${cardId} AND pm.spot IS NOT NULL AND pm.spot > 0
+      FROM price_matrix pm
+      WHERE pm.kodo_card_id = ${cardId} AND pm.spot IS NOT NULL AND pm.spot > 0
     ` as Array<any>
     const RAW_TIERS: Record<string, string> = {
       NEAR_MINT: 'NEAR_MINT', LIGHTLY_PLAYED: 'LIGHTLY_PLAYED', MODERATELY_PLAYED: 'MODERATELY_PLAYED',
@@ -316,7 +315,48 @@ export async function GET(req: NextRequest) {
         fetched_at: r.fetched_at,
       })
     }
-    if (pptGradedEntries.length > 0) {
+    // Gradé FR : asks nettoyés (cardmarket_fr + ebay_fr, is_asking=true) décotés x0.88.
+    // Chaque marché sur sa carte -> les ventes US (ppt_graded) ne servent QU'AUX cartes non-FR.
+    const isFrCard = String(card.lang || '').toUpperCase() === 'FR'
+    const ASK_DISCOUNT = 0.88
+    const frGradedEntries: any[] = []
+    for (const r of matrixRows) {
+      if (r.market !== 'EU') continue
+      if (!(r.source === 'cardmarket_fr' || r.source === 'ebay_fr')) continue
+      if (!/^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)_/.test(r.tier)) continue
+      const base = Number(r.spot)
+      if (!(base > 0)) continue
+      const isAsk = r.is_asking !== false
+      frGradedEntries.push({
+        variant: r.tier.toLowerCase(),
+        condition: null,
+        price_avg: Math.round(base * (isAsk ? ASK_DISCOUNT : 1) * 100) / 100,
+        price_low: null,
+        price_high: null,
+        currency: 'EUR',
+        nb_sales: r.sale_count ?? null,
+        fetched_at: r.as_of,
+        is_ask: isAsk,
+        src_kind: r.source === 'ebay_fr' ? 'ebay_fr' : 'cardmarket_fr',
+      })
+    }
+    if (frGradedEntries.length > 0) {
+      const byNote = new Map<string, any>()
+      for (const e of frGradedEntries) {
+        const cur = byNote.get(e.variant)
+        const better = !cur
+          || (e.src_kind === 'ebay_fr' && cur.src_kind !== 'ebay_fr')
+          || (e.src_kind === cur.src_kind && e.price_avg > cur.price_avg)
+        if (better) byNote.set(e.variant, e)
+      }
+      const deduped = Array.from(byNote.values()).sort((a, b) => {
+        const aPsa = String(a.variant).startsWith('psa_') ? 1 : 0
+        const bPsa = String(b.variant).startsWith('psa_') ? 1 : 0
+        if (aPsa !== bPsa) return bPsa - aPsa
+        return (b.nb_sales ?? 0) - (a.nb_sales ?? 0)
+      })
+      bySource.ppt_graded = deduped
+    } else if (pptGradedEntries.length > 0 && !isFrCard) {
       pptGradedEntries.sort((a, b) => {
         const aPsa = String(a.variant).startsWith('psa_') ? 1 : 0
         const bPsa = String(b.variant).startsWith('psa_') ? 1 : 0

@@ -343,8 +343,11 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   Object.entries((prices?.bySource || {}) as Record<string, unknown>).forEach(([src, v]) => {
     if (src.startsWith("__") || !Array.isArray(v)) return
     ;(v as Array<any>).forEach(r => {
-      const variant = String(r?.variant ?? "")
-      const m = variant.match(/^([a-z]+)_(\d+)(?:_(\d))?$/i)
+      // La note gradee ({COMPANY}_{GRADE}) est portee par le champ `tier`
+      // (ex "PSA_8", "CCC_9_5"). Fallback sur `variant` pour les anciennes lignes.
+      const label = String(r?.tier ?? "")
+      const src2 = /^([a-z]+)_(\d+)(?:_(\d))?$/i.test(label) ? label : String(r?.variant ?? "")
+      const m = src2.match(/^([a-z]+)_(\d+)(?:_(\d))?$/i)
       if (!m) return
       const slab = (SLAB_FR[m[1].toLowerCase()] || m[1].toUpperCase())
       const grade = Number(m[2]) + (m[3] ? Number(m[3]) / 10 : 0)
@@ -369,9 +372,18 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const gradedHiddenCount = Number((prices?.bySource as any)?.__gradedHiddenCount || 0)
   const coteFor = (c: typeof owned[number]): { value: number | null; locked?: boolean; gradeLabel?: string } => {
     if (c.graded) {
-      const gl = `${c.grade_company || "PSA"} ${c.grade_value || ""}`.trim()
-      // Prix grade par exemplaire non branche dans ce bloc : pas de valeur,
-      // et surtout pas de lock (l'utilisateur possede la carte).
+      const company = (c.grade_company || "PSA").toUpperCase()
+      const gval = c.grade_value != null ? Number(c.grade_value) : null
+      const gl = `${company} ${c.grade_value ?? ""}`.trim()
+      // Exemplaire possede -> prix DEJA calcule par le portfolio (source de verite,
+      // coherent, JAMAIS tronque par le verrou Premium de la fiche).
+      const own = (c as any).current_price ?? (c as any).curPrice ?? (c as any).priceEur ?? (c as any).price ?? null
+      if (own != null && Number(own) > 0) return { value: Number(own), locked: false, gradeLabel: gl }
+      // Fallback : note exacte dans gradedDedup (route spotlight, si non verrouille).
+      if (gval != null) {
+        const hit = gradedDedup.find(n => n.slab === company && Math.abs(n.grade - gval) < 0.001)
+        if (hit && hit.price > 0) return { value: hit.price, locked: false, gradeLabel: hit.gradeLabel }
+      }
       return { value: null, locked: false, gradeLabel: gl }
     }
     const raw = normalizeCondition(c.condition)

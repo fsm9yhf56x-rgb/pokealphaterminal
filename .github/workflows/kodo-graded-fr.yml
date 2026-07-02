@@ -1,0 +1,64 @@
+name: Kodo Engine - Graded FR (eBay FR asks + Cardmarket cleaned)
+# Chaine gradee FR AUTONOME, une fois par nuit. Ordre :
+#   1. Ingest annonces eBay FR (CCC + PSA)
+#   2. Match eBay FR -> price_matrix (source ebay_fr, annonces reelles mediane n>=2)
+#   3. Nettoie Cardmarket gradé -> price_matrix (source cardmarket_fr, plafond
+#      valeur-dependant + apprentissage iteratif + monotonie par societe)
+#   4. Recompute portfolio (prix gradés a jour)
+# Cale a 01:35 UTC : apres ingests prix (00:10/00:15) et consolidation (01:00).
+# Remplace ccc-daily.yml (qui utilisait l'ancien matcher ccc-match-prices).
+on:
+  schedule:
+    - cron: '35 1 * * *'   # 01:35 UTC, apres consolidation (01:00)
+  workflow_dispatch:
+jobs:
+  graded-fr:
+    name: Graded FR (eBay FR + Cardmarket)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: kodo-graded-fr
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --no-audit --no-fund --prefer-offline
+
+      # 1. Annonces eBay FR (CCC + PSA)
+      - name: Ingest annonces CCC (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ccc-ingest-prices.mjs
+      - name: Ingest annonces PSA (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/psa-ingest-prices.mjs
+
+      # 2. Match eBay FR -> price_matrix (source ebay_fr)
+      - name: Match CCC -> price_matrix (ebay_fr)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ebay-fr-match-graded.mjs --company=CCC --commit
+      - name: Match PSA -> price_matrix (ebay_fr)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ebay-fr-match-graded.mjs --company=PSA --commit
+
+      # 3. Nettoie Cardmarket gradé -> price_matrix (source cardmarket_fr)
+      - name: Clean Cardmarket gradé FR -> cardmarket_fr
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/clean-cardmarket-graded-fr.mjs --commit
+
+      # 4. Recompute portfolio (prix gradés a jour)
+      - name: Recompute portfolio prices
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/recompute-portfolio-prices.mjs

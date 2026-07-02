@@ -123,12 +123,17 @@ export async function GET(req: NextRequest) {
         ? Number((sig[0].cote_fr_eur ?? sig[0].fair_value_eur) ?? 0)
         : 0
 
-      // Gradés FR : annonces Cardmarket FR + CCC ebay_fr. EU seulement.
+      // Gradés FR : sources PROPRES uniquement. EU seulement.
+      // ebay_fr = annonces réelles (médiane n>=2). cardmarket_fr = asks Cardmarket
+      // NETTOYÉS (plafond valeur-dépendant + monotonie par société, via
+      // clean-cardmarket-graded-fr.mjs). On EXCLUT cardmarket_unsold (asks bruts
+      // pollués par des prix de blocage, ex 1M EUR).
       const gradeRows = await sql`
         SELECT tier, source, spot, median30d, avg30d, low, high, sale_count, is_asking, as_of
         FROM price_matrix
         WHERE kodo_card_id = ${kodoCardId}
           AND market = 'EU'
+          AND source IN ('ebay_fr', 'cardmarket_fr')
           AND tier ~ '^(PSA|CGC|BGS|SGC|TAG|ACE|PCA|CCC)_'
         ORDER BY tier
       ` as Array<{

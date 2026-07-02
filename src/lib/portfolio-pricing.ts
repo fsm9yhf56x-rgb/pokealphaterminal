@@ -5,6 +5,7 @@
  *  - Gradee ("PSA 10", "BGS 8.5"...) -> tier exact {COMPANY}_{GRADE} de price_matrix
  *  - Raw -> tier d'etat (NEAR_MINT par defaut)
  *  - Carte FR raw NEAR_MINT -> hierarchie : cote FR -> Cardmarket EU (AGGREGATED) -> fair value
+ *  - Gradee FR sans sold -> ASK decote x0.88 : eBay FR (annonces réelles) puis Cardmarket FR (nettoyé)
  *  - Fallback ultime -> fair value (price_basis le trace)
  *  - Garde-fous: NM aberrant (insufficient_data) et gradee sans son tier (graded_no_data) -> NULL
  *
@@ -15,9 +16,15 @@
  *  US de la carte EN. price_signals est filtre par langue (clé print_id + lang).
  *
  * ETAGE CARDMARKET EU (raw FR) :
- *  Cardmarket agrege son prix sous tier='AGGREGATED' (pas 'NEAR_MINT'). Pour une
- *  carte raw FR en NEAR_MINT, on accepte AGGREGATED comme prix de marche EU reel,
- *  APRES la cote FR et AVANT le fair value. Basis dedie 'cardmarket_eu' (transparent).
+ *  Cardmarket agrege son prix raw sous tier='AGGREGATED'. Pour une carte raw FR en
+ *  NEAR_MINT, on l'accepte comme prix EU reel, APRES la cote FR et AVANT le fair value.
+ *  Basis dedie 'cardmarket_eu'.
+ *
+ * GRADÉ FR (asks, aucun sold FR n'existe) :
+ *  best_ask lit les ASKS gradés x0.88, source prioritaire eBay FR (annonces réelles,
+ *  médiane n>=2) puis Cardmarket FR (source 'cardmarket_fr' = asks NETTOYÉS par
+ *  clean-cardmarket-graded-fr.mjs : plafond valeur-dépendant + monotonie). Les asks
+ *  Cardmarket bruts (cardmarket_unsold) ne sont JAMAIS lus ici (pollués par prix de blocage).
  *
  * Appele par:
  *  - cron/portfolio-prices (scope vide = tout le portfolio, nuit)
@@ -112,7 +119,6 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           AND pm.is_asking = false
           AND pm.spot IS NOT NULL
         ORDER BY
-          -- Le tier exact demandé prime sur l'agrégat Cardmarket.
           CASE WHEN pm.tier = t.tier THEN 0 ELSE 1 END,
           CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
           CASE
@@ -128,20 +134,21 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         LIMIT 1
       ) best ON true
       LEFT JOIN LATERAL (
-        -- FALLBACK ASK : aucun sold grade FR n'existe (Cardmarket/eBay FR = 100% asks).
-        -- Phase 1 : eBay FR SEULEMENT (matcher-valide : n>=2, monotone, propre).
-        -- Cardmarket_unsold ajoute en Phase 2, apres nettoyage des asks aberrants a l'ingestion.
-        -- Decote x0.88 (ask -> approx prix de transaction) appliquee dans le SELECT resolved ci-dessus.
-        -- Jointure par kodo_card_id (objet), coherente avec best.
+        -- FALLBACK ASK (gradé FR) : aucun sold gradé FR n'existe. Asks x0.88.
+        -- Priorité 1 : eBay FR (annonces réelles individuelles, médiane n>=2).
+        -- Priorité 2 : Cardmarket FR (source 'cardmarket_fr' = asks NETTOYÉS :
+        --   plafond valeur-dépendant + monotonie via clean-cardmarket-graded-fr.mjs).
+        -- Les asks bruts 'cardmarket_unsold' ne sont JAMAIS lus ici (prix de blocage).
         SELECT pm.spot, pm.currency
         FROM price_matrix pm
         WHERE pm.kodo_card_id = kc.id
           AND pm.tier = t.tier
           AND pm.is_asking = true
-          AND pm.source = 'ebay_fr'
+          AND pm.source IN ('ebay_fr','cardmarket_fr')
           AND pm.spot IS NOT NULL
           AND pm.spot > 0
         ORDER BY
+          CASE pm.source WHEN 'ebay_fr' THEN 0 ELSE 1 END,  -- eBay FR (réel) avant Cardmarket
           CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
           pm.sale_count DESC NULLS LAST,
           pm.as_of DESC

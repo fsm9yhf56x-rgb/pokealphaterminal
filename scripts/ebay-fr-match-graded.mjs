@@ -13,7 +13,7 @@ const q = async (t, p) => { const r = await sql.query(t, p); return Array.isArra
 const COMMIT = process.argv.includes('--commit');
 const companyArg = (process.argv.find(a => a.startsWith('--company=')) || '--company=CCC').split('=')[1].toUpperCase();
 const COMPANY = ['CCC','PSA','CGC','PCA'].includes(companyArg) ? companyArg : 'CCC';
-const RAW_TABLE = `${COMPANY.toLowerCase()}_price_raw`;
+const RAW_TABLE = `ebay_fr_price_raw`;  // table unifiee CCC+PSA (filtree par company)
 const MIN_N = 2;                                   // plancher de robustesse : jamais un prix sur une annonce unique
 const RATIO_MAX = Number(process.env.RATIO_MAX || 100); // garde-fou : prix gradé / raw > RATIO_MAX = aberration ecartee
 
@@ -57,7 +57,7 @@ if (COMPANY === 'CCC') {
 }
 
 // -- Annonces matchables ------------------------------------------------------
-const rows = await q(`SELECT * FROM ${RAW_TABLE} WHERE NOT excluded AND NOT is_lot AND lang='FR' AND grade_num IS NOT NULL`);
+const rows = await q(`SELECT * FROM ${RAW_TABLE} WHERE company='${COMPANY}' AND NOT excluded AND NOT is_lot AND lang='FR' AND grade_num IS NOT NULL`);
 const skip = { noNumber: 0, noCardMatch: 0, ambiguous: 0 };
 const buckets = new Map();
 

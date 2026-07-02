@@ -41,6 +41,12 @@ jobs:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
         run: node scripts/psa-ingest-prices.mjs
 
+      # Sync tables raw -> ebay_fr_price_raw (unifiee) avant le match
+      - name: Sync raw -> ebay_fr_price_raw
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/sync-ebay-fr-raw.mjs
+
       # 2. Match eBay FR -> price_matrix (source ebay_fr)
       - name: Match CCC -> price_matrix (ebay_fr)
         env:

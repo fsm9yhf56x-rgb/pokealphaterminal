@@ -46,7 +46,7 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
     resolved AS (
       SELECT pc.id AS pc_id,
              t.tier AS wanted_tier,
-             best.spot, best.currency,
+             COALESCE(best.spot, best_ask.spot * 0.88) AS spot, COALESCE(best.currency, best_ask.currency) AS currency,
              kc.lang,
              ps.cote_fr_eur, ps.fair_value_eur, ps.fair_value_method
       FROM portfolio_cards pc
@@ -102,6 +102,25 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           pm.as_of DESC
         LIMIT 1
       ) best ON true
+      LEFT JOIN LATERAL (
+        -- FALLBACK ASK : aucun sold grade FR n'existe (Cardmarket/eBay FR = 100% asks).
+        -- Phase 1 : eBay FR SEULEMENT (matcher-valide : n>=2, monotone, propre).
+        -- Cardmarket_unsold ajoute en Phase 2, apres nettoyage des asks aberrants a l'ingestion.
+        -- Decote x0.88 (ask -> approx prix de transaction) appliquee dans le SELECT resolved ci-dessus.
+        SELECT pm.spot, pm.currency
+        FROM price_matrix pm
+        WHERE pm.print_id = kc.print_id
+          AND pm.tier = t.tier
+          AND pm.is_asking = true
+          AND pm.source = 'ebay_fr'
+          AND pm.spot IS NOT NULL
+          AND pm.spot > 0
+        ORDER BY
+          CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
+          pm.sale_count DESC NULLS LAST,
+          pm.as_of DESC
+        LIMIT 1
+      ) best_ask ON true
       WHERE (${scopeAll} OR pc.id = ANY(${ids as any}))
     )
     UPDATE portfolio_cards pc

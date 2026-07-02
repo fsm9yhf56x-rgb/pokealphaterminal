@@ -286,8 +286,8 @@ export function Holdings() {
   const [nameValidated, setNameValidated] = useState(false)
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
-    condition:string; graded:boolean; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string; edition:string; variant:string;
-  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
+    condition:string; graded:boolean; gradeCompany?:string; gradeValue?:string; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string; edition:string; variant:string;
+  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
@@ -1163,9 +1163,22 @@ export function Holdings() {
     if (cond === '__graded__') {
       const current = addForm.condition
       const keep = (current !== 'Raw' && current !== 'Scelle' && current !== '') ? current : 'PSA 10'
-      setAddForm(p=>({...p, graded:true, condition:keep}))
+      // Splitte "PSA 10" -> gradeCompany='PSA', gradeValue='10' (colonnes dediees).
+      const m = keep.match(/^\s*(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA|AOG|GSG|PGS)\s*[_ ]?\s*([0-9]{1,2}(?:\.5)?)/i)
+      setAddForm(p=>({...p, graded:true, condition:keep,
+        gradeCompany: m ? m[1].toUpperCase() : p.gradeCompany,
+        gradeValue: m ? m[2] : p.gradeValue}))
+    } else if (cond === 'Raw' || cond === 'Scelle') {
+      setAddForm(p=>({...p, condition:cond, graded:false, gradeValue:''}))
     } else {
-      setAddForm(p=>({...p, condition:cond, graded:cond!=='Raw'&&cond!=='Scelle'}))
+      // Grade choisi explicitement (ex "PSA 10", "CCC 9.5") -> splitte company + note.
+      const m = cond.match(/^\s*(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA|AOG|GSG|PGS)\s*[_ ]?\s*([0-9]{1,2}(?:\.5)?)/i)
+      if (m) {
+        setAddForm(p=>({...p, condition:cond, graded:true,
+          gradeCompany: m[1].toUpperCase(), gradeValue: m[2]}))
+      } else {
+        setAddForm(p=>({...p, condition:cond, graded:false, gradeValue:''}))
+      }
     }
   }
   // ── Persistance serveur : Neon = source de vérité (cross-device) ──
@@ -1181,6 +1194,8 @@ export function Holdings() {
     card_type: c.type || null,
     condition: normalizeCondition(c.condition),
     graded: c.graded || false,
+    grade_company: c.graded ? (c.gradeCompany || null) : null,
+    grade_value: c.graded && c.gradeValue ? c.gradeValue : null,
     qty: c.qty || 1,
     buy_price: c.buyPrice || null,
     current_price: c.curPrice || null,
@@ -1247,6 +1262,8 @@ export function Holdings() {
       rarity:resolvedRarity,
       type:addForm.type, lang:addForm.lang,
       condition:addForm.condition, graded:addForm.graded,
+      gradeCompany:addForm.graded?addForm.gradeCompany:undefined,
+      gradeValue:addForm.graded&&addForm.gradeValue?addForm.gradeValue:undefined,
       buyPrice:bp, curPrice:extra.curPrice??bp, qty:addForm.qty,
       psa:extra.psa, signal:extra.signal,
       image:resolvedImage||undefined,
@@ -1259,7 +1276,7 @@ export function Holdings() {
     setPortfolio(prev=>[...prev,newCard])
     persistCards([newCard])
     setAddOpen(false); setAddSuggs([]); setNameValidated(false)
-    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
+    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {

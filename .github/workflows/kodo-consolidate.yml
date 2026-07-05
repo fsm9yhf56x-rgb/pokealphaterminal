@@ -10,7 +10,7 @@ jobs:
   consolidate:
     name: Merge + signals
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     concurrency:
       group: kodo-consolidate
       cancel-in-progress: false
@@ -29,6 +29,18 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-merge-ppt.js
+      # Édition 1 / Unlimited FR (eBay FR) : capture + match AVANT le compute,
+      # pour que les signals prennent les prix Éd1/Unl (méthode ebay_fr_edition).
+      - name: Ingest Éd1 + Unlimited (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-fr-ingest-ed1.mjs --commit
+      - name: Match Éd1/Unlimited -> price_matrix
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ebay-fr-match-ed1.mjs --commit
       - name: Compute signals + history snapshot
         if: always()
         env:

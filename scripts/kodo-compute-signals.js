@@ -20,7 +20,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       ROUND(
         CASE
           WHEN base.lang IN ('en','jp') THEN COALESCE(us_nm.p * ${usdEur}, eu.trend)
-          ELSE COALESCE(eu.trend, eu_nm_ask.p * 0.88)
+          ELSE COALESCE(ed_ebay.p, eu.trend, eu_nm_ask.p * 0.88)
         END::numeric, 2) AS fair_value_eur,
       CASE
         WHEN base.lang IN ('en','jp') THEN
@@ -28,11 +28,12 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
                WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
                ELSE 'insufficient_data' END
         ELSE
-          CASE WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
+          CASE WHEN ed_ebay.p IS NOT NULL THEN 'ebay_fr_edition'
+               WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
                WHEN eu_nm_ask.p IS NOT NULL THEN 'eu_asking_decote'
                ELSE 'insufficient_data' END
       END,
-      fr_sale.p AS cote_fr_eur,
+      COALESCE(ed_ebay.p, fr_sale.p) AS cote_fr_eur,
       eu_langs.j AS cote_lang,
       CASE WHEN tot.sales > 0 THEN LEAST(100, ROUND(LOG(tot.sales + 1) * 28))::real ELSE NULL END AS liquidity_score,
       CASE WHEN eu.trend IS NOT NULL AND us_nm.p IS NOT NULL AND eu.trend > 0
@@ -48,11 +49,19 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       FROM price_matrix pm0
       LEFT JOIN k_prints kp ON kp.id = pm0.print_id
       WHERE pm0.print_id IS NOT NULL
+        AND EXISTS (SELECT 1 FROM k_prints k2 WHERE k2.id = pm0.print_id)
     ) base
     -- Cardmarket trend DE CETTE LANGUE (cle: filtre kodo_card_id prefixe lang)
     LEFT JOIN LATERAL (SELECT spot AS trend FROM price_matrix
       WHERE print_id = base.print_id AND source='cardmarket' AND tier='AGGREGATED'
         AND split_part(kodo_card_id,'-',1) = base.lang LIMIT 1) eu ON true
+    -- Prix edition-specifique eBay FR (Ed1/Unl, tri chirurgical) : PRIORITAIRE sur
+    -- l'AGGREGATED Cardmarket pollue (qui melange les editions). Ed1 sur print -1st-,
+    -- Unlimited sur print normal.
+    LEFT JOIN LATERAL (SELECT spot AS p FROM price_matrix
+      WHERE print_id = base.print_id AND source='ebay_fr'
+        AND variant = CASE WHEN base.print_id LIKE '%-1st-%' THEN 'ed1_raw' ELSE 'unl_raw' END
+      LIMIT 1) ed_ebay ON true
     -- US Near Mint (sold) de cette langue
     -- Garde-fou coherence v2: on ecarte le NM si l'echelle raw est multi-incoherente.
     -- L'etat est declare par le vendeur, donc le raw NM est parfois pollue sur les cartes rares.

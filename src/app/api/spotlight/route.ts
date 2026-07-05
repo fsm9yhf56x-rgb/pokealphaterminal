@@ -454,6 +454,17 @@ export async function GET(req: NextRequest) {
     if (cmNm && cmNm.price_avg > 0) raw.push(mkCand(cmNm, 'cardmarket', isEuMarket ? 3 : 2))
     if (!isEuMarket && tcgNm && tcgNm.price_avg > 0) raw.push(mkCand(tcgNm, 'tcgplayer', 3))
     if (!isEuMarket && ebayNm && ebayNm.price_avg > 0) raw.push(mkCand(ebayNm, 'ebay', 1))
+    // Prix Édition 1 / Unlimited FR maison (eBay FR, tri chirurgical). PRIORITAIRE :
+    // ces prix séparent les éditions et remplacent le prix Cardmarket pollué (qui
+    // mélange Éd1/Éd2). Éd1 sur id -1st- (variant ed1_raw), Unlimited sur id normal
+    // (variant unl_raw). Le prix édition-spécifique fait autorité -> on repart from scratch.
+    const isEd1Card = /-1st-\d+$/.test(cardId)
+    const wantEdVariant = isEd1Card ? 'ed1_raw' : 'unl_raw'
+    const edCand = (bySource.ebay_fr || []).find((p: any) => p.variant === wantEdVariant)
+    if (edCand && edCand.price_avg > 0) {
+      raw.length = 0
+      raw.push(mkCand(edCand, 'ebay_fr_edition', 10))
+    }
 
     // Filtre volume: on n'ecarte QUE les sources avec volume connu ET faible.
     // Les sources sans volume connu (reference) sont conservees.

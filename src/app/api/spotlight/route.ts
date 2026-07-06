@@ -327,10 +327,13 @@ export async function GET(req: NextRequest) {
       const base = Number(r.spot)
       if (!(base > 0)) continue
       const isAsk = r.is_asking !== false
+      // ebay_fr gradé (nos matchers Éd1/Unl + CCC/PSA) = déjà des médianes de marché
+      // réelles -> PAS de décote. Seul cardmarket_fr (asks) subit le x0.88.
+      const discount = r.source === 'ebay_fr' ? 1 : (isAsk ? ASK_DISCOUNT : 1)
       frGradedEntries.push({
         variant: r.tier.toLowerCase(),
         condition: null,
-        price_avg: Math.round(base * (isAsk ? ASK_DISCOUNT : 1) * 100) / 100,
+        price_avg: Math.round(base * discount * 100) / 100,
         price_low: null,
         price_high: null,
         currency: 'EUR',
@@ -525,7 +528,7 @@ export async function GET(req: NextRequest) {
     {
       const isFrCard = String((card as any)?.lang || '').toUpperCase() === 'FR'
       if (isFrCard) {
-        const FR_COMPANIES = ['ccc_', 'pca_']  // societes ancrees marche FR
+        const FR_COMPANIES = ['ccc_', 'pca_', 'psa_', 'cgc_', 'bgs_', 'sgc_', 'ace_', 'tag_', 'cca_']  // toutes sociétés : le prix FR est garanti par la SOURCE (ebay_fr/cardmarket_fr), pas par le grader
         const GRADE_PREFIXES = ['psa_', 'bgs_', 'cgc_', 'sgc_', 'ace_', 'tag_', 'cca_', 'pca_', 'ccc_']
         const isGradedVar = (v: any) => GRADE_PREFIXES.some(p => String(v ?? '').toLowerCase().startsWith(p))
         const isFrGradedVar = (v: any) => FR_COMPANIES.some(p => String(v ?? '').toLowerCase().startsWith(p))
@@ -556,7 +559,7 @@ export async function GET(req: NextRequest) {
     {
       const isFrCard = String((card as any)?.lang || '').toUpperCase() === 'FR'
       if (isFrCard) {
-        const FR_COMPANIES = ['ccc_', 'pca_']
+        const FR_COMPANIES = ['ccc_', 'pca_', 'psa_', 'cgc_', 'bgs_', 'sgc_', 'ace_', 'tag_', 'cca_']
         const seen = new Set<string>()
         for (const src of Object.keys(bySource)) {
           if (src.startsWith('__')) continue

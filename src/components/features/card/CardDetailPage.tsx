@@ -451,29 +451,27 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     }
     // Pro+ : pills société + grille 3 colonnes
     if (!hasGradedPrices) return null
-    const activeCo = gradedCompanies.includes(gradedCompany) ? gradedCompany : gradedCompanies[0]
-    const notes = gradedDedup.filter(n => n.slab === activeCo).sort((a, b) => b.grade - a.grade)
+    // Liste unifiee : toutes les notes de toutes les societes, visibles d'un coup.
+    // Badge societe colore (PSA rouge, PCA gris, CGC bleu...). Tri: societe puis note desc.
+    const sortedNotes = [...gradedDedup].sort((a, b) =>
+      a.slab === b.slab ? b.grade - a.grade : a.slab.localeCompare(b.slab)
+    )
     return (
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-          <BlockTitle>Prix gradés</BlockTitle>
-          <div style={{ display: "inline-flex", gap: 3 }}>
-            {gradedCompanies.map(co => {
-              const on = activeCo === co
-              const col = SLAB_COMPANY_COLOR[co] || SNOW.muted
-              return (
-                <button key={co} onClick={() => setGradedCompany(co)} style={{ padding: "3px 9px", borderRadius: 7, fontSize: 11, fontWeight: 700, fontFamily: FONT.data, letterSpacing: ".02em", cursor: "pointer", border: "none", background: on ? col : "rgba(0,0,0,0.04)", color: on ? "#fff" : SNOW.muted, transition: "all .15s" }}>{co}</button>
-              )
-            })}
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-          {notes.map(n => (
-            <div key={n.gradeLabel} style={{ background: SNOW.surfaceSoft, borderRadius: 10, border: `1px solid ${SNOW.border}`, padding: "10px 12px" }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: ".02em", marginBottom: 3 }}>{n.gradeLabel}</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(n.price)}</div>
-            </div>
-          ))}
+        <BlockTitle>Prix gradés</BlockTitle>
+        <p style={{ fontSize: 11.5, color: SNOW.mutedLight, margin: "0 0 12px", lineHeight: 1.45 }}>Le prix actuel par note, toutes sociétés de gradation confondues.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {sortedNotes.map(n => {
+            const col = SLAB_COMPANY_COLOR[n.slab] || SNOW.muted
+            const gradeOnly = n.gradeLabel.replace(n.slab + " ", "")
+            return (
+              <div key={n.gradeLabel} style={{ display: "flex", alignItems: "center", gap: 11, background: SNOW.surfaceSoft, borderRadius: 10, border: `1px solid ${SNOW.border}`, padding: "9px 13px" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 40, padding: "3px 8px", borderRadius: 6, background: col, color: "#fff", fontSize: 10, fontWeight: 700, fontFamily: FONT.data, letterSpacing: ".04em" }}>{n.slab}</span>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.data, letterSpacing: ".02em" }}>{gradeOnly}</span>
+                <span style={{ marginLeft: "auto", fontSize: 15, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(n.price)}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
     )

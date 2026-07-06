@@ -51,6 +51,8 @@ const isJunk = t => /(booster|display|coffret|scell[ée]|sealed|empty|vide|wrapp
 const isJP = t => /\b(jp|jpn|japon|japanese|japonais)\b/i.test(t);
 const isHolo = t => /(holo|brillant|reverse)/i.test(t);
 const hasNum = (t, num, total) => new RegExp(`\\b0*${num}\\s*/\\s*0*${total}\\b`).test(t);
+// Version souple : le bon numero (avec un / suivi de chiffres, total quelconque).
+const hasNumLoose = (t, num) => new RegExp(`\\b0*${num}\\s*/\\s*\\d`).test(t);
 
 const median = a => { if(!a.length) return null; const s=[...a].sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; };
 const clean = arr => {
@@ -95,7 +97,7 @@ for (const c of cards) {
   const ed1=[], unl=[];
   const seen = new Set();
 
-  // Requête 1 : Édition 1 explicite
+  // Requête 1 : Édition 1 explicite avec numéro/total exact (haute précision)
   const itemsEd1 = await ebayFetch(`${searchName(c.nom)} ${setLabel} edition 1 ${num}/${total}`);
   if (itemsEd1 === null) { console.log(`  ! ${c.id_1st} fetch err (ed1)`); continue; }
   for (const it of itemsEd1) {
@@ -105,6 +107,19 @@ for (const c of cards) {
     if (isEd1(t) && !isEd2(t)) { ed1.push({it,p}); seen.add(it.itemId); }
   }
   await new Promise(r=>setTimeout(r,250));
+
+  // Requête 1bis : Édition 1 SANS total (élargit) -> beaucoup de vendeurs ne mettent
+  // pas le total. hasNumLoose accepte le bon numéro avec total quelconque.
+  const itemsEd1b = await ebayFetch(`${searchName(c.nom)} ${setLabel} edition 1`);
+  if (itemsEd1b !== null) {
+    for (const it of itemsEd1b) {
+      const t = it.title||'', p = it.price ? Number(it.price.value) : 0;
+      if (!p || seen.has(it.itemId)) continue;
+      if (isGraded(t) || isJunk(t) || isJP(t) || !hasNumLoose(t, num)) continue;
+      if (isEd1(t) && !isEd2(t)) { ed1.push({it,p}); seen.add(it.itemId); }
+    }
+    await new Promise(r=>setTimeout(r,250));
+  }
 
   // Requête 2 : Unlimited — recherche sans "edition 1", on garde Éd2 OU sans mention (rejet Éd1)
   const itemsUnl = await ebayFetch(`${searchName(c.nom)} ${setLabel} ${num}/${total}`);

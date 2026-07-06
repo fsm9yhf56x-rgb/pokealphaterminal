@@ -1,0 +1,93 @@
+// scripts/kodo-price-by-state.mjs
+// Écrit les prix PAR ÉTAT dans price_matrix, pour valoriser le portfolio selon
+// l'état réel déclaré par l'utilisateur (NM/EX/LP/MP/HP/DMG).
+//
+// NIVEAU 2 (cartes avec distribution eBay riche, >=MIN_ANNONCES) : percentiles réels
+//   de la distribution des annonces (nettoyée MAD). Chaque état = un percentile observé.
+// NIVEAU 1 (autres cartes) : prix d'ancrage (AGGREGATED/cote) × ratios de décote FR
+//   calibrés sur 742 cartes vintage réelles (base EXCELLENT=1.0).
+//
+// Écrit tier NEAR_MINT/EXCELLENT/LIGHTLY_PLAYED/MODERATELY_PLAYED/HEAVILY_PLAYED/DAMAGED
+// source 'kodo_state', is_asking=false -> portfolio-pricing.ts les trouve via pm.tier=t.tier.
+// DRY-RUN par défaut, --commit.
+import { neon } from '@neondatabase/serverless';
+const sql = neon(process.env.DATABASE_URL);
+const COMMIT = process.argv.includes('--commit');
+const MIN_ANNONCES = 8;   // seuil Niveau 2 (distribution fiable)
+
+// Ratios de décote FR réels (calibrés sur 742 cartes vintage, base EXCELLENT=1.0)
+const DECAY = { MINT:1.38, NEAR_MINT:1.38, EXCELLENT:1.00, LIGHTLY_PLAYED:0.79, MODERATELY_PLAYED:0.65, HEAVILY_PLAYED:0.53, DAMAGED:0.42 };
+// Mapping état -> percentile (Niveau 2). MINT=NM (même haut de gamme observable).
+const STATE_PCT = { MINT:0.85, NEAR_MINT:0.85, EXCELLENT:0.65, LIGHTLY_PLAYED:0.45, MODERATELY_PLAYED:0.30, HEAVILY_PLAYED:0.18, DAMAGED:0.08 };
+const STATES = ['NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED'];
+
+const pct=(a,p)=>{const s=[...a].sort((x,y)=>x-y);const i=(s.length-1)*p;const lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(i-lo);};
+const median=a=>{const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+const clean=a=>{if(a.length<4)return a;const md=median(a);let k=a.filter(p=>p>=0.30*md);const lg=k.map(Math.log),lm=median(lg);const mad=median(lg.map(l=>Math.abs(l-lm)))||1e-4;return k.filter((p,i)=>Math.abs(lg[i]-lm)<=3*1.4826*mad);};
+
+const upsert = async (kid, printId, tier, price) => {
+  if (!COMMIT) return;
+  await sql.query(`INSERT INTO price_matrix
+    (kodo_card_id, market, tier, source, variant, spot, avg30d, median30d, currency, is_asking, as_of, print_id)
+    VALUES ($1,'EU',$2,'kodo_state','state',$3,$3,$3,'EUR',false,now(),$4)
+    ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
+      spot=EXCLUDED.spot, avg30d=EXCLUDED.avg30d, median30d=EXCLUDED.median30d, is_asking=false, as_of=now()`,
+    [kid, tier, Math.round(price*100)/100, printId]);
+};
+
+// ── NIVEAU 2 : cartes avec distribution eBay (staging ed1_raw) ──
+const distribCards = await sql`
+  SELECT s.kodo_card_id, s.edition, kc.print_id
+  FROM (SELECT DISTINCT kodo_card_id, edition FROM ebay_fr_ed1_raw) s
+  JOIN k_cards kc ON kc.id = s.kodo_card_id`;
+
+let n2=0, n2states=0;
+const n2done = new Set();
+for (const c of distribCards) {
+  const rows = await sql`SELECT price FROM ebay_fr_ed1_raw WHERE kodo_card_id=${c.kodo_card_id} AND edition=${c.edition} AND price>0`;
+  let prices = clean(rows.map(r=>Number(r.price)));
+  if (prices.length < MIN_ANNONCES) continue;
+  const printId = c.kodo_card_id.replace(/^fr-/,'');
+  for (const st of STATES) {
+    const price = pct(prices, STATE_PCT[st]);
+    if (price > 0) { await upsert(c.kodo_card_id, printId, st, price); n2states++; }
+  }
+  n2++; n2done.add(c.kodo_card_id);
+}
+
+// ── NIVEAU 1 : cartes FR avec un prix d'ancrage mais PAS de distribution ──
+// Ancre = AGGREGATED (cardmarket) ou ed1_raw/unl_raw (ebay_fr). L'ancre ≈ état EXCELLENT.
+const anchorCards = await sql`
+  SELECT DISTINCT pm.kodo_card_id, pm.print_id, pm.spot AS anchor
+  FROM price_matrix pm
+  WHERE pm.kodo_card_id LIKE 'fr-%' AND pm.market='EU' AND pm.spot > 0
+    AND (
+      (pm.source='cardmarket' AND pm.tier='AGGREGATED')
+      OR (pm.source='ebay_fr' AND pm.variant IN ('ed1_raw','unl_raw'))
+    )`;
+
+let n1=0, n1states=0;
+for (const c of anchorCards) {
+  if (n2done.has(c.kodo_card_id)) continue;   // déjà en Niveau 2 (plus précis)
+  const printId = c.print_id || c.kodo_card_id.replace(/^fr-/,'');
+  const anchor = Number(c.anchor);
+  if (!(anchor > 0)) continue;
+  for (const st of STATES) {
+    const price = anchor * DECAY[st];   // ancre = EXCELLENT (×1.0)
+    if (price > 0) { await upsert(c.kodo_card_id, printId, st, price); n1states++; }
+  }
+  n1++;
+}
+
+console.log(`=== prix par état -> price_matrix (${COMMIT?'COMMIT':'DRY-RUN'}) ===`);
+console.log(`Niveau 2 (percentiles réels) : ${n2} cartes, ${n2states} lignes état`);
+console.log(`Niveau 1 (ratios décote FR)  : ${n1} cartes, ${n1states} lignes état`);
+console.log(`Total : ${n2+n1} cartes valorisées par état`);
+if(!COMMIT) console.log('(DRY-RUN — rien écrit)');
+
+// Aperçu Dracaufeu Éd1
+if(COMMIT){
+  const p = await sql`SELECT tier, ROUND(spot) spot FROM price_matrix WHERE kodo_card_id='fr-base1-1st-4' AND source='kodo_state' ORDER BY spot DESC`;
+  console.log('\nDracaufeu Éd1 par état :');
+  p.forEach(x=>console.log(`  ${x.tier.padEnd(18)} ${x.spot}€`));
+}

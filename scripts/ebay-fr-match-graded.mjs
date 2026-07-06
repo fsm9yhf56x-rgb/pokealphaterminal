@@ -44,7 +44,7 @@ const gradeRank = (tier) => {
 
 // -- Catalogue FR -------------------------------------------------------------
 const cards = await q(`SELECT id, name_localized FROM k_cards WHERE lang='fr'`);
-const parsed = cards.map((c) => { const m = c.id.match(/^fr-(.+?)(-1st)?-(\d+)$/); return m ? { setcode: m[1], is1st: !!m[2], num: String(parseInt(m[3], 10)), root: norm(c.name_localized).split(' ')[0], name: c.name_localized } : null; }).filter(Boolean);
+const parsed = cards.map((c) => { const m = c.id.match(/^fr-(.+?)(-1st)?-(\d+)$/); return m ? { setcode: m[1], is1st: !!m[2], num: String(parseInt(m[3], 10)), cardRef: c.id.replace(/^fr-/, ''), root: norm(c.name_localized).split(' ')[0], name: c.name_localized } : null; }).filter(Boolean);
 
 // -- Pop (indice de tie-break UNIQUEMENT, jamais un filtre de prix) ------------
 // CCC -> grading_pop ; PSA -> psa_pop_reports. Departage un numero partage entre
@@ -76,7 +76,7 @@ for (const r of rows) {
     : (cands.find((c) => popRefs.has(`${c.setcode}-${c.num}|${variety}`) || popRefs.has(`${c.setcode}-${c.num}|`)) || cands[0]);
   if (!chosen) { skip.ambiguous++; continue; }
 
-  const cardRef = `${chosen.setcode}-${chosen.num}`;
+  const cardRef = chosen.cardRef;  // id catalogue original (zero-padding préservé)
   const key = `${cardRef}|${variety}|${r.tier}`;
   if (!buckets.has(key)) buckets.set(key, { prices: [], name: chosen.name });
   buckets.get(key).prices.push(Number(r.price));

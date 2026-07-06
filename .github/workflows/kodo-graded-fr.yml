@@ -15,7 +15,7 @@ jobs:
   graded-fr:
     name: Graded FR (eBay FR + Cardmarket)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     concurrency:
       group: kodo-graded-fr
       cancel-in-progress: false
@@ -64,6 +64,16 @@ jobs:
         run: node scripts/clean-cardmarket-graded-fr.mjs --commit
 
       # 4. Recompute portfolio (prix gradés a jour)
+      - name: Ingest gradé Éd1 + Unlimited (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-fr-ingest-ed1-graded.mjs --commit
+      - name: Match gradé Éd1/Unlimited -> price_matrix
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ebay-fr-match-ed1-graded.mjs --commit
       - name: Recompute portfolio prices
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

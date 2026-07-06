@@ -44,6 +44,10 @@ async function ingestOne(kodoCardId, printId, ptId) {
     const isAsking = source === 'cardmarket_unsold'
     for (const [tier, d] of Object.entries(tiers || {})) {
       if (!d || typeof d !== 'object') continue
+      // Garde-fou : rejeter les asks gradés aberrants (prix de blocage Cardmarket
+      // type 1M€/62500€). Les vrais prix gradés éventuellement >20k€ viennent de
+      // ebay_fr (pipeline propre), jamais de cardmarket_unsold -> aucune perte.
+      if (isAsking && /^(PSA|CGC|BGS|SGC|CCC|PCA|ACE|TAG|CCA|AOG|GSG|PGS)_/.test(tier) && Number(d.avg) > 20000) continue
       const variant = /holo/i.test(card.variant || '') ? 'Holofoil' : 'Normal'
       const currency = d.currency || 'EUR'
       await sql`INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,

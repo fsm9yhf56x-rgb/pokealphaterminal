@@ -10,7 +10,14 @@ const LIMIT = Number((process.argv.find(a=>a.startsWith('--limit='))||'').split(
 const SET = (process.argv.find(a=>a.startsWith('--set='))||'').split('=')[1] || null;
 
 // Totaux réels par set (lus du catalogue, num max)
-const SET_TOTAL = { base1:'102', base2:'64', base3:'62', base5:'83', neo1:'111', neo2:'75', neo3:'66', neo4:'113' };
+const SET_TOTAL = { base1:'102', base2:'64', base3:'62', base5:'82', neo1:'111', neo2:'75', neo3:'64', neo4:'105' };
+// Nom commercial du set tel que les vendeurs eBay FR le titrent (le code base2/neo1
+// ne veut rien dire pour eux -> il faut "jungle", "neo genesis"...).
+const SET_NAME = {
+  base1: 'set de base', base2: 'jungle', base3: 'fossile',
+  base5: 'team rocket', neo1: 'neo genesis', neo2: 'neo discovery',
+  neo3: 'neo revelation', neo4: 'neo destiny',
+};
 
 // ── OAuth eBay ──
 const tok = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
@@ -75,7 +82,7 @@ for (const c of cards) {
   const num = c.num;
   if (!num || !total) continue;
   const idUnl = c.id_1st.replace('-1st-', '-');
-  const setLabel = set.startsWith('base') ? 'set de base' : set;
+  const setLabel = SET_NAME[set] || set;
   const ebayFetch = async (q) => {
     const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&limit=100&filter=deliveryCountry:FR`;
     try {

@@ -8,7 +8,7 @@
 import { SNOW, FONT } from '@/lib/design/snow'
 import { SnowPill } from '@/components/ui/snow/SnowPill'
 
-type FrCond = { price: number; saleCount: number; isAsking: boolean }
+type FrCond = { price: number; saleCount: number; isAsking: boolean; derived?: boolean }
 type FrGradedRow = { variant: string; price: number; saleCount: number }
 
 // Decode un variant CCC/PCA en libelle lisible : "ccc_9_5" -> "CCC 9.5", "ccc_10_gold" -> "CCC 10 Gold".
@@ -92,21 +92,27 @@ export function PriceByConditionFR({
 
   return (
     <div>
-      {/* Brut : offres Cardmarket FR par etat (asking) */}
+      {/* Prix par etat FR : offres Cardmarket reelles (dès X€) OU prix derives (~X€) */}
       {hasBrut ? (
         <div style={{ marginBottom: hasGraded ? 24 : 0 }}>
-          <SectionTitle label="Offres · Cardmarket FR" hint />
+          <SectionTitle label={rows.every(r => r.derived) ? "Prix par état" : "Offres · Cardmarket FR"} hint={!rows.every(r => r.derived)} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {rows.map((r, gi) => (
               <div key={r.cond} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center', padding: '12px 0', borderBottom: gi < rows.length - 1 ? `1px solid ${SNOW.borderSoft}` : 'none' }}>
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: SNOW.ink, fontFamily: FONT.display }}>{r.label}</div>
-                  <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: '0.02em', marginTop: 3 }}>
-                    {r.saleCount} annonce{r.saleCount > 1 ? 's' : ''}
-                  </div>
+                  {!r.derived ? (
+                    <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.data, letterSpacing: '0.02em', marginTop: 3 }}>
+                      {r.saleCount} annonce{r.saleCount > 1 ? 's' : ''}
+                    </div>
+                  ) : null}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: SNOW.mutedLight, fontFamily: FONT.body }}>dès</span>
+                  {r.derived ? (
+                    <span style={{ fontSize: 15, fontWeight: 500, color: SNOW.mutedLight, fontFamily: FONT.display }}>~</span>
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 500, color: SNOW.mutedLight, fontFamily: FONT.body }}>dès</span>
+                  )}
                   <span style={{ fontSize: 16, fontWeight: 700, color: SNOW.muted, fontFamily: FONT.display }}>{fmtEur(r.price)}</span>
                 </div>
               </div>

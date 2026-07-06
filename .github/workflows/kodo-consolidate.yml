@@ -41,6 +41,10 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/ebay-fr-match-ed1.mjs --commit
+      - name: Prix par état FR (percentiles + ratios)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-price-by-state.mjs --commit
       - name: Compute signals + history snapshot
         if: always()
         env:

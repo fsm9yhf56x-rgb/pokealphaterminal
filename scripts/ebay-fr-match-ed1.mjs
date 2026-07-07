@@ -62,9 +62,12 @@ const upsert = async (kid, variant, med, n) => {
 
 for (const [baseKid, R] of results) {
   const id1st = R.id1st || baseKid.replace(/^(fr-[a-z0-9]+)-/, '$1-1st-');
-  // Sanity : si on a les deux, l'Éd1 doit être >= Unl (sinon Éd1 douteux -> on garde Unl seul)
+  // Sanity Éd1 >= Unl : appliqué SEULEMENT aux faibles échantillons (n<4).
+  // Avec n>=4, le MAD a déjà nettoyé les outliers -> un Éd1 < Unl est une réalité
+  // de marché (certaines cartes Fossile/communes : Unlimited plus demandé que l'Éd1),
+  // pas un mismatch. Tolérance 15% même à faible n (les prix se croisent souvent).
   let ed1ok = R.ed1 != null;
-  if (R.ed1 != null && R.unl != null && R.ed1 < R.unl) { ed1ok = false; rejSanity++; }
+  if (R.ed1 != null && R.unl != null && R.nEd1 < 4 && R.ed1 < R.unl * 0.85) { ed1ok = false; rejSanity++; }
 
   if (ed1ok && R.ed1 != null) { await upsert(id1st, 'ed1_raw', R.ed1, R.nEd1); wEd1++; }
   if (R.unl != null)          { await upsert(baseKid, 'unl_raw', R.unl, R.nUnl); wUnl++; }

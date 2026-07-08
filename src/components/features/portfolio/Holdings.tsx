@@ -282,6 +282,7 @@ export function Holdings() {
   const [refCopied,   setRefCopied]   = useState(false)
   const [selectedFmt, setSelectedFmt] = useState<string|null>(null)
   const [addOpen,     setAddOpen]     = useState(false)
+  const [addedInSession, setAddedInSession] = useState(0)  // mode A : compteur d'ajouts sans fermer
   const [addSuggs,    setAddSuggs]    = useState<string[]>([])
   const [nameValidated, setNameValidated] = useState(false)
   const [addForm,     setAddForm]     = useState<{
@@ -1275,8 +1276,11 @@ export function Holdings() {
     if (guardLimit(1)) { setAddOpen(false); setAddSuggs([]); setNameValidated(false); return }
     setPortfolio(prev=>[...prev,newCard])
     persistCards([newCard])
-    setAddOpen(false); setAddSuggs([]); setNameValidated(false)
-    setAddForm({name:'',set:'',setId:'',type:'fire',lang:'EN',condition:'Raw',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
+    // Mode A : on garde la modale ouverte et on reset SEULEMENT etat/grade/prix/qte
+    // (name/set/carte conserves) -> permet d'enchainer plusieurs exemplaires de la
+    // meme carte en etats/grades differents (ex 1 Near Mint + 1 PSA 9).
+    setAddedInSession(n=>n+1)
+    setAddForm(p=>({...p, condition:'Raw', graded:false, gradeValue:'', buyPrice:'', qty:1}))
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
@@ -1982,14 +1986,14 @@ export function Holdings() {
 
                 {/* ADD CARD MODAL */}
         {addOpen&&(
-          <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.5)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}>
+          <div style={{ position:'fixed', inset:0, background:'rgba(20,15,10,0.5)', zIndex:50, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }} onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false); setAddedInSession(0) }}>
             <div className='add-modal' style={{ background:'rgba(255,255,255,0.62)', backdropFilter:'blur(32px) saturate(180%)', WebkitBackdropFilter:'blur(32px) saturate(180%)', borderRadius:26, padding:26, maxWidth:540, width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const, boxShadow:'0 30px 80px rgba(0,0,0,0.22), 0 10px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.05)', border:'none' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
                   <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
                   <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
                 </div>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }} style={{
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false); setAddedInSession(0) }} style={{
                   width:30, height:30, borderRadius:'50%',
                   background:'rgba(255,255,255,0.6)',
                   backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
@@ -2136,8 +2140,8 @@ export function Holdings() {
                 <div className="opt-label">Etat</div>
                 {/* Segmented control iOS-style */}
                 <div style={{ display:'flex', background:'rgba(0,0,0,0.04)', borderRadius:12, padding:3, marginBottom: addForm.graded ? 12 : 0, boxShadow:'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
-                  {([{k:'Raw',l:'Raw (neuf)'},{k:'__graded__',l:'Grade'}] as const).map(opt=>{
-                    const active = opt.k==='__graded__' ? addForm.graded : (!addForm.graded && addForm.condition===opt.k)
+                  {([{k:'Raw',l:'Raw'},{k:'__graded__',l:'Grade'}] as const).map(opt=>{
+                    const active = opt.k==='__graded__' ? addForm.graded : !addForm.graded
                     return (
                       <button key={opt.k} onClick={()=>handleConditionChange(opt.k)}
                         style={{ flex:1, padding:'10px', borderRadius:10, border:'none', background: active ? 'rgba(255,255,255,0.95)' : 'transparent', backdropFilter: active ? 'blur(12px) saturate(180%)' : 'none', WebkitBackdropFilter: active ? 'blur(12px) saturate(180%)' : 'none', color: active ? '#1D1D1F' : '#86868B', fontSize:12, fontWeight: active ? 700 : 500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', boxShadow: active ? '0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)' : 'none' }}
@@ -2148,6 +2152,22 @@ export function Holdings() {
                     )
                   })}
                 </div>
+                {/* Etat de conservation (raw uniquement) — alimente la valo par etat kodo_state */}
+                {!addForm.graded && addForm.condition !== 'Scelle' && (
+                  <div style={{ display:'flex', gap:'5px', flexWrap:'wrap', marginBottom:'4px' }}>
+                    {['Near Mint','Excellent','Lightly Played','Moderately Played','Heavily Played','Damaged'].map(st=>{
+                      const sel = addForm.condition === st || (st === 'Near Mint' && addForm.condition === 'Raw')
+                      return (
+                        <button key={st} onClick={()=>handleConditionChange(st)}
+                          style={{ padding:'6px 11px', borderRadius:'8px', border:`1px solid ${sel?'#1D1D1F':'#E5E5EA'}`, background:sel?'#1D1D1F':'#fff', color:sel?'#fff':'#48484A', fontSize:'11px', fontWeight:sel?700:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .1s' }}
+                          onMouseEnter={e=>{if(!sel){e.currentTarget.style.borderColor='#C7C7CC';e.currentTarget.style.background='#F5F5F7'}}}
+                          onMouseLeave={e=>{if(!sel){e.currentTarget.style.borderColor='#E5E5EA';e.currentTarget.style.background='#fff'}}}>
+                          {st}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
                 {/* Grade selector */}
                 {addForm.graded&&(
                   <div style={{ background:'#F5F5F7', borderRadius:'12px', padding:'12px' }}>
@@ -2269,24 +2289,25 @@ export function Holdings() {
                   onMouseLeave={e=>{ if(canAdd){ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' } }}>
                   Ajouter {addForm.qty>1?addForm.qty+' exemplaires':'au portfolio'}
                 </button>
-                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false) }}
+                <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false); setAddedInSession(0) }}
                   style={{
                     padding:'14px 22px',
                     borderRadius:12,
-                    background:'rgba(255,255,255,0.7)',
+                    background: addedInSession>0 ? '#1D1D1F' : 'rgba(255,255,255,0.7)',
                     backdropFilter:'blur(12px) saturate(180%)',
                     WebkitBackdropFilter:'blur(12px) saturate(180%)',
-                    color:'#48484A',
-                    border:'1px solid rgba(229,229,234,0.7)',
+                    color: addedInSession>0 ? '#fff' : '#48484A',
+                    border: addedInSession>0 ? 'none' : '1px solid rgba(229,229,234,0.7)',
                     fontSize:14, fontWeight:600,
                     cursor:'pointer',
                     fontFamily:'var(--font-display)',
                     transition:'all .2s cubic-bezier(.2,.85,.3,1)',
                     boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    whiteSpace:'nowrap',
                   }}
-                  onMouseEnter={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.95)'; e.currentTarget.style.color='#1D1D1F' }}
-                  onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.7)'; e.currentTarget.style.color='#48484A' }}>
-                  Annuler
+                  onMouseEnter={e=>{ if(addedInSession===0){ e.currentTarget.style.background='rgba(255,255,255,0.95)'; e.currentTarget.style.color='#1D1D1F' } }}
+                  onMouseLeave={e=>{ if(addedInSession===0){ e.currentTarget.style.background='rgba(255,255,255,0.7)'; e.currentTarget.style.color='#48484A' } }}>
+                  {addedInSession>0 ? `Terminer (${addedInSession})` : 'Annuler'}
                 </button>
               </div>
             </div>

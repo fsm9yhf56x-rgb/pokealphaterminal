@@ -1120,15 +1120,19 @@ export function Holdings() {
       }
     }
   }
+  // Noms des cartes de la serie chargee, tries par numero croissant (dedupe).
+  const sortedLiveNames = () => {
+    const num = (c:TCGCard) => { const m=String(c.localId??'').match(/[0-9]+/); return m?parseInt(m[0],10):99999 }
+    return [...new Set([...liveCards].sort((a,b)=>num(a)-num(b)||String(a.localId??'').localeCompare(String(b.localId??''))).map(c=>c.name))]
+  }
   const handleNameInput = (val:string) => {
     setAddForm(p=>({...p,name:val}))
     setNameValidated(false)
-    if(val.length<1){setAddSuggs([]);return}
+    if(val.length<1){ setAddSuggs(liveCards.length>0 ? sortedLiveNames() : []); return }
     if (liveCards.length > 0) {
-      const matches = liveCards
-        .filter(c=>c.name.toLowerCase().includes(val.toLowerCase()))
-        .map(c=>c.name)
-      setAddSuggs([...new Set(matches)].slice(0,10))
+      const norm=(x:string)=>x.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'')
+      const q=norm(val)
+      setAddSuggs(sortedLiveNames().filter(n=>norm(n).startsWith(q)))
     } else if (!addForm.setId) {
       // Fallback ENCYCLOPEDIA seulement si aucun set sélectionné
       const pool = addForm.set?ENCYCLOPEDIA.filter(cc=>cc.set===addForm.set):ENCYCLOPEDIA
@@ -2095,7 +2099,7 @@ export function Holdings() {
                 </div>
                 <div style={{ position:'relative' }}>
                   {nameValidated&&<div style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', zIndex:2, pointerEvents:'none' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
-                  <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
+                  <input value={addForm.name} onChange={e=>handleNameInput(e.target.value)} onFocus={()=>{ if(liveCards.length>0) setAddSuggs(sortedLiveNames()) }} onBlur={()=>setTimeout(()=>setAddSuggs([]),150)}
                     placeholder={cardsLoading?'Chargement des cartes…':addForm.set?'Chercher dans '+addForm.set+' ('+liveCards.length+' cartes)…':'Nom de la carte…'}
                     className={addForm.name?'req-field-ok':'req-field'}
                     style={{
@@ -2115,13 +2119,14 @@ export function Holdings() {
                       transition:'all .2s',
                     }}/>
                   {addSuggs.length>0&&(
-                    <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'rgba(255,255,255,0.92)', backdropFilter:'blur(24px) saturate(180%)', WebkitBackdropFilter:'blur(24px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', borderRadius:14, overflow:'hidden', zIndex:99, boxShadow:'0 12px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
+                    <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0, background:'rgba(255,255,255,0.92)', backdropFilter:'blur(24px) saturate(180%)', WebkitBackdropFilter:'blur(24px) saturate(180%)', border:'1px solid rgba(229,229,234,0.7)', borderRadius:14, overflow:'hidden', overflowY:'auto', maxHeight:'300px', zIndex:99, boxShadow:'0 12px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.95)' }}>
                       {addSuggs.map((s,i)=>(
                         <div key={i} onMouseDown={()=>handleSuggSelect(s)}
                           style={{ padding:'9px 14px', fontSize:'13px', color:'#3A3A3C', fontFamily:'var(--font-display)', cursor:'pointer', borderBottom:i<addSuggs.length-1?'1px solid rgba(29,29,31,.05)':'none', display:'flex', alignItems:'center', gap:'8px' }}
                           onMouseEnter={e=>(e.currentTarget.style.background='#F0F0F5')}
                           onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
                           <span>{s}</span>
+                          {(()=>{ const lc=liveCards.find(c=>c.name===s); return lc?.localId?<span style={{ marginLeft:'auto', fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-mono, monospace)' }}>#{lc.localId}</span>:null })()}
                           {addForm.lang==='JP'&&(()=>{
                             const lc=liveCards.find(c=>c.name===s)
                             const frName=lc?.localId?frCardsMap['__id__'+lc.localId]:null
@@ -2215,7 +2220,7 @@ export function Holdings() {
 
               {/* Prix + Quantité */}
 
-              <div style={{ display:'flex', gap:'10px', marginBottom:'14px', alignItems:'flex-end' }}>
+              <div style={{ display:'flex', gap:'10px', marginBottom:'14px', alignItems:'flex-start' }}>
                 {/* Prix */}
                 <div style={{ flex:1 }}>
                   <div className="opt-label">Prix d'achat</div>
@@ -2258,6 +2263,7 @@ export function Holdings() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
                   </div>
+                  <div style={{ height:'13px' }} aria-hidden="true" />
                 </div>
               </div>
 

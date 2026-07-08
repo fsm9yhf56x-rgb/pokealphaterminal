@@ -5,6 +5,7 @@ import { SNOW, FONT } from '@/lib/design/snow'
 import { SnowButton } from '@/components/ui/snow'
 import { useAuth } from '@/lib/useAuth'
 import { supabase } from '@/lib/supabase'
+import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
 
 type Lang = 'EN'|'FR'|'JP'
 type ProductType = 'booster'|'display'|'etb'|'bundle'
@@ -90,6 +91,7 @@ export function Scelles() {
   const [scFiltersOpen, setScFiltersOpen] = useState(false)
   const [visible, setVisible] = useState(CHUNK)
   const [selId, setSelId] = useState<string|null>(null)
+  const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
   const [portfolio, setPortfolio] = useState<PortfolioCard[]>([])
   const { user } = useAuth()
 
@@ -165,6 +167,66 @@ export function Scelles() {
   const pageItems=filtered.slice(0,visible)
   const hasMore=visible<filtered.length
   const selProduct=selId?products.find(p=>p.id===selId):null
+  // Ouvre le mini-modal scelle (quantite + prix) pour le produit selectionne.
+  const openSealedModal = () => {
+    if (!selProduct) return
+    setSealedSeed({
+      name: selProduct.name,
+      set_name: selProduct.setName || null,
+      set_id: selProduct.setId || null,
+      card_type: selProduct.type,
+      year: selProduct.year,
+      image_url: selProduct.logo || null,
+    })
+  }
+  // onAdd du modal : ecrit le scelle avec sa quantite et son prix. Meme insert
+  // qu'avant (condition Sealed), etendu au buy_price et a la qte du modal. Guest
+  // -> localStorage. Renvoie une valeur non-null pour le compteur multi-boites.
+  const handleSealedAdd = async (payload: Record<string, unknown>) => {
+    const id = crypto.randomUUID()
+    const name = String(payload.name ?? 'Produit')
+    const set_name = payload.set_name ? String(payload.set_name) : ''
+    const set_id = payload.set_id ? String(payload.set_id) : undefined
+    const card_type = String(payload.card_type ?? '')
+    const year = Number(payload.year ?? 0) || 0
+    const image_url = payload.image_url ? String(payload.image_url) : undefined
+    const qty = Number(payload.qty ?? 1) || 1
+    const buy_price = payload.buy_price != null ? (Number(payload.buy_price) || 0) : null
+    const card: PortfolioCard = {
+      id, name, set: set_name, setId: set_id, number: 'SEALED', rarity: 'Sealed',
+      type: card_type, lang: 'FR', condition: 'Sealed', graded: false,
+      buyPrice: buy_price ?? 0, curPrice: 0, qty, year, image: image_url,
+    }
+    setPortfolio(p => [...p, card])
+    if (user) {
+      const { data, error } = await supabase.from('portfolio_cards').insert({
+        id, user_id: user.id, name,
+        set_name: set_name || null, set_id: set_id || null,
+        card_number: 'SEALED', lang: 'FR',
+        rarity: 'Sealed', card_type,
+        condition: 'Sealed', graded: false,
+        qty, buy_price, current_price: null,
+        image_url: image_url || null,
+      }).select()
+      if (error) {
+        console.error('[KC SEALED] insert failed:', error)
+        setPortfolio(p => p.filter(c => c.id !== id))
+        return null
+      }
+      const row: any = data && data[0] ? data[0] : null
+      if (row && row.current_price != null) {
+        setPortfolio(p => p.map(c => c.id === id ? { ...c, curPrice: Number(row.current_price) || 0 } : c))
+      }
+      return row ?? { id }
+    } else {
+      try {
+        const prev = JSON.parse(localStorage.getItem('portfolio') || '[]')
+        prev.push(card)
+        localStorage.setItem('portfolio', JSON.stringify(prev))
+      } catch {}
+      return card
+    }
+  }
 
   useEffect(()=>{setVisible(CHUNK)},[filType,filEra,filSet,search,sort])
 
@@ -546,38 +608,7 @@ export function Scelles() {
                     </div>
                   )
                 })()}
-                <SnowButton fullWidth variant="primary" onClick={()=>{
-                    const card: PortfolioCard = {
-                      id:crypto.randomUUID(), name:selProduct.name, set:selProduct.setName,
-                      setId:selProduct.setId, number:'SEALED', rarity:'Sealed',
-                      type:selProduct.type, lang:'FR', condition:'Sealed', graded:false,
-                      buyPrice:0, curPrice:0, qty:1, year:selProduct.year,
-                      image:selProduct.logo||undefined
-                    }
-                    setPortfolio(p=>[...p, card])
-                    if (user) {
-                      supabase.from('portfolio_cards').insert({
-                        id: card.id, user_id: user.id, name: card.name,
-                        set_name: card.set || null, set_id: card.setId || null,
-                        card_number: card.number, lang: card.lang,
-                        rarity: card.rarity, card_type: card.type,
-                        condition: card.condition, graded: false,
-                        qty: 1, buy_price: null, current_price: null,
-                        image_url: card.image || null,
-                      }).then(({ error }: any) => {
-                        if (error) {
-                          console.error('[KC SEALED] insert failed:', error)
-                          setPortfolio(p=>p.filter(c=>c.id!==card.id))
-                        }
-                      })
-                    } else {
-                      try {
-                        const prev = JSON.parse(localStorage.getItem('portfolio')||'[]')
-                        prev.push(card)
-                        localStorage.setItem('portfolio', JSON.stringify(prev))
-                      } catch {}
-                    }
-                  }}>
+                <SnowButton fullWidth variant="primary" onClick={()=>openSealedModal()}>
                   + Ajouter au portfolio
                 </SnowButton>
               </div>
@@ -585,6 +616,7 @@ export function Scelles() {
           </div>
         )}
       </div>
+          <AddSealedModal open={!!sealedSeed} onClose={() => setSealedSeed(null)} product={sealedSeed} onAdd={handleSealedAdd} />
     </>
   )
 }

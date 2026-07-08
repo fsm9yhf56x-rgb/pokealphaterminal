@@ -38,7 +38,7 @@ for (const r of rows) {
 const results = new Map(); // kid -> { ed1:med|null, unl:med|null, nEd1, nUnl }
 for (const g of groups.values()) {
   const kept = clean(g.prices);
-  const med = kept.length >= MIN_N ? median(kept) : null;
+  const med = kept.length >= 1 ? median(kept) : null;  // médiane dès n=1 ; n=1 filtré à l'écriture (ratio Éd1/Unl)
   const baseKid = g.edition === 'ed1' ? g.kid.replace('-1st-','-') : g.kid; // clé commune pour apparier
   if (!results.has(baseKid)) results.set(baseKid, { ed1:null, unl:null, nEd1:0, nUnl:0, id1st:null });
   const R = results.get(baseKid);
@@ -67,7 +67,17 @@ for (const [baseKid, R] of results) {
   // de marché (certaines cartes Fossile/communes : Unlimited plus demandé que l'Éd1),
   // pas un mismatch. Tolérance 15% même à faible n (les prix se croisent souvent).
   let ed1ok = R.ed1 != null;
-  if (R.ed1 != null && R.unl != null && R.nEd1 < 4 && R.ed1 < R.unl * 0.85) { ed1ok = false; rejSanity++; }
+  if (R.ed1 != null) {
+    if (R.nEd1 === 1) {
+      // n=1 : accepté seulement si prix cohérent vs Unl (1x a 15x). Sur les cartes
+      // 1st rares, une annonce fiable vaut mieux que pas de prix. Ratio hors bornes
+      // = mismatch probable -> rejeté.
+      if (R.unl == null || R.ed1 < R.unl || R.ed1 > R.unl * 15) { ed1ok = false; rejSanity++; }
+    } else if (R.unl != null && R.nEd1 < 4 && R.ed1 < R.unl * 0.85) {
+      // n=2-3 : sanity assoupli (tolérance 15%).
+      ed1ok = false; rejSanity++;
+    }
+  }
 
   if (ed1ok && R.ed1 != null) { await upsert(id1st, 'ed1_raw', R.ed1, R.nEd1); wEd1++; }
   if (R.unl != null)          { await upsert(baseKid, 'unl_raw', R.unl, R.nUnl); wUnl++; }

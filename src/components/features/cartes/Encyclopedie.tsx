@@ -658,6 +658,7 @@ export function Encyclopedie() {
   const blocs = useMemo(() => {
     const map = new Map<string, {name:string; sets: {id:string;name:string;count:number;year:number}[]; total:number}>()
     allCards.forEach(c => {
+      if (c.era==='Promos & Coffrets') return
       if (!map.has(c.era)) map.set(c.era, { name:c.era, sets:[], total:0 })
       const b = map.get(c.era)!
       b.total++
@@ -716,7 +717,7 @@ export function Encyclopedie() {
   , [allCards])
 
   const eras = useMemo(() =>
-    [...new Set(allCards.map(c=>c.era))].sort((a,b)=>ERA_ORDER.indexOf(a)-ERA_ORDER.indexOf(b))
+    [...new Set(allCards.map(c=>c.era))].filter(e=>e!=='Promos & Coffrets').sort((a,b)=>ERA_ORDER.indexOf(a)-ERA_ORDER.indexOf(b))
   , [allCards])
 
   const sets = useMemo(() => {
@@ -747,7 +748,7 @@ export function Encyclopedie() {
   }, [allCards, jpEnDict, lang])
 
   const filtered = useMemo(() => {
-    let r = allCards
+    let r = allCards.filter(c=>c.era!=='Promos & Coffrets')
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
     if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
     if (filRarity!=='all') r = r.filter(c=>c.rarity===filRarity)

@@ -19,6 +19,7 @@ import { formatEUR } from '@/lib/formatPrice'
 import { CardSidePanel } from '@/components/features/card/CardSidePanel'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
+import { AddToCollectionModal, type AddCardSeed } from '@/components/features/card/AddToCollectionModal'
 
 interface PortfolioCard {
   id:string; name:string; set:string; setId?:string; number:string; rarity:string;
@@ -238,6 +239,7 @@ export function Encyclopedie() {
 
   const [lang,       setLang]        = useState<Lang>('FR')
   const [drawerMounted, setDrawerMounted] = useState(false)
+  const [addSeed, setAddSeed] = useState<AddCardSeed | null>(null)
   useEffect(() => { setDrawerMounted(true) }, [])
   const [allCards,   setAllCards]    = useState<EnrichedCard[]>([])
   const [loading,    setLoading]     = useState(false)
@@ -280,67 +282,97 @@ export function Encyclopedie() {
 
   const isOwned = (card: EnrichedCard) => ownedKeys.has(card.setId+'-'+card.localId) || ownedKeys.has(card.name+'|'+card.setName)
 
-  const addToPortfolio = async (card: EnrichedCard) => {
+  // Ouvre le modal d'ajout (etat / grade / quantite / prix) pre-rempli depuis la
+  // carte cliquee. Gate logged-out conserve : pas de modal si non connecte.
+  const openAddModal = (card: EnrichedCard) => {
     if (!user) {
       setGateCard({ name: card.name, lang: lang as string, setId: card.setId, localId: card.localId, image: card.image || card.enImage || '' })
       return
     }
-    const newCard: PortfolioCard = {
-      id: crypto.randomUUID(),
-      name: card.name || 'Carte', set: card.setName || '', setId: card.setId || '',
-      number: card.localId || '', rarity: card.rarity||'',
-      type: 'fire', lang: lang, condition: 'Raw', graded: false,
-      buyPrice: 0, curPrice: 0, qty: 1, year: card.year,
-      image: card.image || card.enImage || '',
-      setTotal: allCards.filter(c=>c.setId===card.setId).length,
-    }
-    const updated = [...portfolio, newCard]
-    setPortfolioLocal(updated)
-    // Si connecté → Supabase uniquement (pas de local pour éviter les fantômes)
-    if (!user) {
-      await pkaDbSet('portfolio', updated)
-      try { const slim = updated.map(c => c.image&&c.image.startsWith('data:')?{...c,image:''}:c); localStorage.setItem('pka_portfolio', JSON.stringify(slim)) } catch {}
-    }
-    // Si connecté, sauvegarder dans Supabase
-    if (user) {
-      console.log('[KC ADD] user.id =', user.id, '| card =', newCard.name)
-      const { data: insData, error } = await supabase.from('portfolio_cards').insert({
-        id: newCard.id,
-        user_id: user.id,
-        name: newCard.name,
-        set_name: newCard.set || '',
-        set_id: newCard.setId,
-        card_number: newCard.number,
-        rarity: newCard.rarity,
-        lang: newCard.lang,
-        condition: newCard.condition || 'Raw',
-        qty: newCard.qty || 1,
-        buy_price: newCard.buyPrice || 0,
-        image_url: getCardImageUrl({ lang: newCard.lang as string, setId: newCard.setId, localId: newCard.number }) || newCard.image || '',
-      }).select()
-      if (error) {
-        // Rollback : le state ne doit pas mentir si la base a refuse
-        setPortfolioLocal(prev => prev.filter(c => c.id !== newCard.id))
-        const code = (error as any).code
-        if (code === 'free_limit') {
-          setToast('Limite de ' + ((error as any).limit ?? 800) + ' cartes atteinte (plan gratuit)')
-        } else {
-          console.error('[KC ADD] INSERT ECHOUE:', JSON.stringify(error))
-          setToast('Erreur de sauvegarde')
-        }
-        setTimeout(() => setToast(''), 2500)
-        return
+    setAddSeed({
+      name: card.name || 'Carte',
+      set_name: card.setName || null,
+      set_id: card.setId || null,
+      card_number: card.localId || null,
+      lang: lang,
+      rarity: card.rarity || null,
+      card_type: null,
+      image_url: card.image || card.enImage || getCardImageUrl({ lang: lang as string, setId: card.setId, localId: card.localId }) || null,
+      k_card_id: kodoIdOf(card) ?? null,
+    })
+  }
+  // onAdd du modal : ecrit la carte avec ses vrais etat/grade/quantite/prix.
+  // Meme insert Supabase que l'ancienne voie, etendu aux colonnes gradation
+  // (graded / grade_company / grade_value). Renvoie la ligne (non-null) pour que
+  // le modal compte l'ajout et reste ouvert en mode multi-exemplaires.
+  const handleModalAdd = async (payload: Record<string, unknown>) => {
+    if (!user) return null
+    const id = crypto.randomUUID()
+    const name = String(payload.name ?? 'Carte')
+    const set_name = String(payload.set_name ?? '')
+    const set_id = payload.set_id ? String(payload.set_id) : null
+    const card_number = String(payload.card_number ?? '')
+    const cardLang = String(payload.lang ?? lang)
+    const rarity = String(payload.rarity ?? '')
+    const condition = String(payload.condition ?? 'Raw')
+    const graded = Boolean(payload.graded)
+    const grade_company = graded ? ((payload.grade_company as string | null) ?? null) : null
+    const grade_value = graded ? ((payload.grade_value as string | null) ?? null) : null
+    const qty = Number(payload.qty ?? 1) || 1
+    const buy_price = payload.buy_price != null ? (Number(payload.buy_price) || 0) : 0
+    const image_url = String(payload.image_url ?? '') || getCardImageUrl({ lang: cardLang, setId: set_id ?? undefined, localId: card_number }) || ''
+    console.log('[KC ADD] user.id =', user.id, '| card =', name)
+    const { data: insData, error } = await supabase.from('portfolio_cards').insert({
+      id,
+      user_id: user.id,
+      name,
+      set_name,
+      set_id,
+      card_number,
+      rarity,
+      lang: cardLang,
+      condition,
+      graded,
+      grade_company,
+      grade_value,
+      qty,
+      buy_price,
+      image_url,
+    }).select()
+    if (error) {
+      const code = (error as any).code
+      if (code === 'free_limit') {
+        setToast('Limite de ' + ((error as any).limit ?? 800) + ' cartes atteinte (plan gratuit)')
+      } else {
+        console.error('[KC ADD] INSERT ECHOUE:', JSON.stringify(error))
+        setToast('Erreur de sauvegarde')
       }
-      // Prix calcule a l'insert (meme regle que le cron) -> affichage immediat
-      const px = insData && insData[0] ? (insData[0] as any) : null
-      if (px && px.current_price != null) {
-        setPortfolioLocal(prev => prev.map(c => c.id === newCard.id
-          ? { ...c, curPrice: Number(px.current_price) || 0 }
-          : c))
-      }
+      setTimeout(() => setToast(''), 2500)
+      return null
     }
-    setToast(card.name + ' ajouté')
+    const row: any = insData && insData[0] ? insData[0] : null
+    const mirror: PortfolioCard = {
+      id,
+      name,
+      set: set_name,
+      setId: set_id ?? '',
+      number: card_number,
+      rarity,
+      type: 'fire',
+      lang: cardLang,
+      condition,
+      graded,
+      buyPrice: buy_price,
+      curPrice: Number(row?.current_price ?? 0) || 0,
+      qty,
+      year: new Date().getFullYear(),
+      image: image_url,
+      setTotal: allCards.filter(c => c.setId === set_id).length,
+    }
+    setPortfolioLocal(prev => [...prev, mirror])
+    setToast(name + ' ajouté')
     setTimeout(() => setToast(''), 2000)
+    return row ?? { id }
   }
 
   const [cardSize,   setCardSize]    = useState<'S'|'M'|'L'>('M')
@@ -1806,6 +1838,12 @@ export function Encyclopedie() {
         </div>
 
         {/* ── DETAIL PANEL : CardSidePanel unifie (SpotlightV2) ── */}
+        <AddToCollectionModal
+          open={!!addSeed}
+          onClose={() => setAddSeed(null)}
+          card={addSeed}
+          onAdd={handleModalAdd}
+        />
         {drawerMounted && selId && selCard && createPortal(
           <CardSidePanel
             cardId={kodoIdOf(selCard)}
@@ -1818,7 +1856,7 @@ export function Encyclopedie() {
                   Dans ma collection
                 </div>
               ) : (
-                <button onClick={() => { if(selCard) addToPortfolio(selCard) }} style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px 18px', borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:14, fontWeight:700, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }} onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)' }} onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none' }}>
+                <button onClick={() => { if(selCard) openAddModal(selCard) }} style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px 18px', borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:14, fontWeight:700, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }} onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)' }} onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                   Ajouter au portfolio
                 </button>
@@ -1900,7 +1938,7 @@ export function Encyclopedie() {
               </div>
               <div style={{ display:'flex', gap:'8px', marginTop:'4px' }}>
                 {!isOwned(lightbox) && (
-                  <button onClick={()=>{addToPortfolio(lightbox)}}
+                  <button onClick={()=>{openAddModal(lightbox)}}
                     style={{ padding:'8px 16px', borderRadius:'8px', background:'#fff', color:'#1D1D1F', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                     + Ajouter au portfolio
                   </button>

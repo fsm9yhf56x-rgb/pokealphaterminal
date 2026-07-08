@@ -72,6 +72,21 @@ const TIER_BG: Record<string,string> = {
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
+// Badge d'etat pour cartes raw (non gradees) : label court + code couleur, pour
+// comprendre d'un coup d'oeil pourquoi deux exemplaires d'une meme carte ont des
+// prix differents (NM vs LP vs MP...). Pendant du badge de grade pour les gradees.
+function rawStateLabel(condition?: string): string {
+  const c = (condition || '').toLowerCase()
+  if (c.includes('sealed') || c.includes('scell')) return 'SEALED'
+  if (c.includes('near') || c === 'nm' || c === 'mint')       return 'NM'
+  if (c.includes('excellent') || c === 'ex')                  return 'EX'
+  if (c.includes('lightly') || c === 'lp')                    return 'LP'
+  if (c.includes('moderately') || c === 'mp')                 return 'MP'
+  if (c.includes('heavily') || c === 'hp')                    return 'HP'
+  if (c.includes('damaged') || c === 'dmg' || c === 'dm')     return 'DMG'
+  return 'RAW'
+}
+
 const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
   const el=e.currentTarget, r=el.getBoundingClientRect()
   const x=((e.clientX-r.left)/r.width-.5)*16, y=((e.clientY-r.top)/r.height-.5)*-16
@@ -2863,18 +2878,21 @@ export function Holdings() {
                                 )}
                                 {inFullSet&&card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
                                 {inFullSet&&card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'rgba(0,0,0,.6)';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', boxShadow:'0 1px 4px rgba(0,0,0,.2)', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', overflow:'hidden' }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
+                                {inFullSet&&!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:'rgba(255,255,255,0.9)', color:'#6E6E73', border:'0.5px solid rgba(0,0,0,0.06)', fontSize:'9px', fontWeight:700, padding:'2px 7px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', boxShadow:'0 1px 3px rgba(0,0,0,.12)', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   
                                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   </div>
-                                  {card.curPrice > 0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)', marginTop:'1px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                                  {card.curPrice <= 0 && (card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote') && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', marginTop:'1px', fontStyle:'italic' }}>Données insuffisantes</div>}
+                                  <div style={{ minHeight:'14px', marginTop:'1px' }}>
+                                    {card.curPrice > 0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
+                                    {card.curPrice <= 0 && (card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote') && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                                  </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
                                     {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
-                                    {binderSet==='__all__'&&!card.graded&&card.condition&&card.condition!=='Raw'&&<span style={{ fontSize:'8px', color:'#86868B', background:'#F0F0F5', padding:'1px 4px', borderRadius:'3px' }}>{card.condition}</span>}
+
                                   </div>
                                   {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                                     <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
@@ -3067,12 +3085,15 @@ export function Holdings() {
                               <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
-                            {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:'2px', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                            {card.curPrice<=0&&(card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote')&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', marginTop:'2px', fontStyle:'italic' }}>Données insuffisantes</div>}
+                            <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
+                              {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
+                              {card.curPrice<=0&&(card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote')&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                            </div>
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                               {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ marginLeft:'auto', flexShrink:0, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
+                              {!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ marginLeft:'auto', flexShrink:0, background:'transparent', color:'#8A8A8E', border:'0.5px solid rgba(0,0,0,0.16)', fontSize:'9px', fontWeight:700, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                             </div>
                             {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
                               <div style={{ display:'flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>

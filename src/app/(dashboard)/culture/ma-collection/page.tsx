@@ -152,7 +152,7 @@ export default function MaCollectionCulturePage() {
                 </div>
               </div>
               <div style={{ position: 'relative', display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 26, paddingTop: 22, borderTop: `1px solid ${domColor}26` }}>
-                {[{ label: 'Cartes', value: stats.totalCards }, { label: 'Sets différents', value: stats.setCount }, { label: 'Période', value: stats.periodLabel }, { label: 'Ère dominante', value: stats.dominant ?? '-' }].map(k => (
+                {[{ label: 'Cartes', value: stats.totalCards }, { label: 'Séries différentes', value: stats.setCount }, { label: 'Période', value: stats.periodLabel }, { label: 'Ère dominante', value: stats.dominant ?? '-' }].map(k => (
                   <div key={k.label}>
                     <div style={{ fontFamily: FONT.display, fontSize: 21, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{k.value}</div>
                     <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: SNOW.muted, marginTop: 1 }}>{k.label}</div>

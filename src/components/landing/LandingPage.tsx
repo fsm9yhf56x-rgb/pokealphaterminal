@@ -307,7 +307,7 @@ const FAQ = [
     a: 'Un portfolio vous permet de savoir exactement quelles cartes vous possédez, dans quelles séries, et comment votre collection évolue. C’est bien plus clair qu’un tableur ou des captures d’écran dispersées.',
   },
   {
-    q: 'Peut-on suivre ses sets et master sets ?',
+    q: 'Peut-on suivre ses séries et master sets ?',
     a: 'Oui, Kodo Cards est pensé pour suivre votre progression set par set. Vous voyez les cartes déjà ajoutées et repérez celles qu’il vous manque — utile pour compléter un master set ou organiser vos priorités.',
   },
   {
@@ -541,7 +541,7 @@ export default function LandingPage() {
             <div className="kc-stat-num">
               <CountUp to={100} suffix=" %" />
             </div>
-            <div className="kc-stat-label">De tes sets, suivis carte par carte</div>
+            <div className="kc-stat-label">De tes séries, suivis carte par carte</div>
           </div>
           <div className="kc-stat">
             <div className="kc-stat-num">

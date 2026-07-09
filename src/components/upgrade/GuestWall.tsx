@@ -21,7 +21,7 @@ const PRESETS: Record<Preset, { title: string; subtitle: string; bullets: string
   },
   portfolio: {
     title: "Ta collection, valorisée en temps réel",
-    subtitle: "Suis la cote de chaque carte, complète tes sets et ne rate jamais le bon moment.",
+    subtitle: "Suis la cote de chaque carte, complète tes séries et ne rate jamais le bon moment.",
     bullets: [
       "La valeur réelle de chaque carte que tu possèdes",
       "Ta progression, set par set",

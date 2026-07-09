@@ -83,7 +83,7 @@ export default function DownloadPage() {
               <div className="kc-ph-hero">
                 <span>Ma collection</span>
                 <div className="kc-ph-val">4 280 €</div>
-                <div className="kc-ph-up">128 cartes · 6 sets</div>
+                <div className="kc-ph-up">128 cartes · 6 séries</div>
               </div>
               <div className="kc-ph-row"><span>Dracaufeu · PSA 9</span><b>3 381 €</b></div>
               <div className="kc-ph-row"><span>Mewtwo · holo</span><b>188 €</b></div>

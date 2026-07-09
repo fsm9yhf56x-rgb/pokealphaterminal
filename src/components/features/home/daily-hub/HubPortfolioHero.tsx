@@ -302,7 +302,7 @@ export function HubPortfolioHero({
                 accent={stats.gradedCount > 0}
               />
               <MiniStat
-                label="Sets"
+                label="Séries"
                 value={stats.setsCount.toLocaleString('fr-FR')}
               />
               <MiniStat

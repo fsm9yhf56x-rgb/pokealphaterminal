@@ -198,7 +198,7 @@ export function GradedEvHub() {
         <div style={{ flex: 1 }} />
 
         <select value={setFilter} onChange={(e) => setSetFilter(e.target.value)} style={selectStyle}>
-          <option value="all">Tous les sets</option>
+          <option value="all">Toutes les séries</option>
           {sets.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} style={selectStyle}>

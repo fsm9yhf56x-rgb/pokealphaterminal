@@ -11,7 +11,7 @@ const ERAS = [
   { name: 'Vintage WOTC',     color: '#D4AF37', years: '1999 – 2003', tag: 'Les origines',                   card: 'https://assets.tcgdex.net/fr/base/base1/4',
     desc: 'L\'âge d\'or. Set de Base, Jungle, Fossile, Neo, Team Rocket — édités par Wizards of the Coast. Le berceau des cartes les plus convoitées, dont le Dracaufeu holographique.' },
   { name: 'EX',               color: '#2A82DD', years: '2003 – 2007', tag: 'Reprise par Nintendo',           card: 'https://assets.tcgdex.net/fr/ex/ex3/100',
-    desc: 'Nintendo reprend la licence. Apparition des cartes EX, des holos pleines et des sets Delta Species. Une ère de transition graphique et de mécaniques nouvelles.' },
+    desc: 'Nintendo reprend la licence. Apparition des cartes EX, des holos pleines et des séries Delta Species. Une ère de transition graphique et de mécaniques nouvelles.' },
   { name: 'DPP / HGSS',       color: '#0E9E8E', years: '2007 – 2011', tag: 'Diamant, Perle & Or HeartGold',  card: 'https://assets.tcgdex.net/fr/pl/pl1/5',
     desc: 'Diamond & Pearl, Platinum, puis HeartGold SoulSilver. Les cartes LV.X et les Prime marquent l\'époque. Un style plus détaillé et mature.' },
   { name: 'Black & White',    color: '#5C6270', years: '2011 – 2013', tag: 'Génération Unys',       card: 'https://assets.tcgdex.net/fr/bw/bw9/39',

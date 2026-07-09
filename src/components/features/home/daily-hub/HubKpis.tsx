@@ -113,7 +113,7 @@ export function HubKpis({
         sub={loading ? 'Chargement…'
           : cardsCount === 0 ? 'Démarrer ma collection'
           : kpis.gradedCount > 0 ? `dont ${kpis.gradedCount} gradée${kpis.gradedCount > 1 ? 's' : ''}`
-          : kpis.setsCount > 1 ? `${kpis.setsCount} sets différents`
+          : kpis.setsCount > 1 ? `${kpis.setsCount} séries différentes`
           : 'Carte dans le portfolio'}
         onClick={() => router.push('/portfolio')}
         clickable

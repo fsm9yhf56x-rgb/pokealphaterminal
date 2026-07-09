@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://kodocards.com'),
   title: 'Kodo Cards — Intelligence de marché Pokémon TCG',
   description:
-    "Toutes tes cartes Pokémon réunies, avec leur vraie cote du jour — FR, EN et JP. Suis ta collection et termine tes sets.",
+    "Toutes tes cartes Pokémon réunies, avec leur vraie cote du jour — FR, EN et JP. Suis ta collection et termine tes séries.",
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',

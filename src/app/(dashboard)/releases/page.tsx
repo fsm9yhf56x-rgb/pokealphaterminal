@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export const metadata = {
-  title: 'Prochains Sets · Kodo Cards',
+  title: 'Prochaines Séries · Kodo Cards',
   description: 'Les nouvelles sorties Pokémon TCG, anticipées pour toi. Calendrier des drops, dates de release, notification email à la sortie.',
 }
 

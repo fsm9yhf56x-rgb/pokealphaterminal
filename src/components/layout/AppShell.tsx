@@ -120,9 +120,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}>
             {children}
           </main>
-          <Footer />
         </div>
       </div>
+
+      {/* Footer pleine largeur (bande edge-to-edge sous la sidebar + le contenu) */}
+      <Footer />
 
       {/* Guide interactif Nori (bouton flottant + tour) */}
       <NoriGuide />

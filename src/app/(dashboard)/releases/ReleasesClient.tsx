@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * /releases · Prochains Sets
+ * /releases · Prochaines Séries
  *
  * Reference glassmorphism v7: SpotDrawer.
  * Filtres langue (FR/EN/JP) + sections "A venir" (cartes countdown)
@@ -219,7 +219,7 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
           boxShadow: '0 0 8px rgba(46,158,106,0.6)',
           animation: 'pulseDot 2s ease-in-out infinite',
         }} />
-        {count} {count > 1 ? 'sets à venir' : 'set à venir'}
+        {count} {count > 1 ? 'séries à venir' : 'série à venir'}
       </div>
 
       <h1 style={{
@@ -227,7 +227,7 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
         fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display,
         letterSpacing: '-0.04em', lineHeight: 1.05, margin: '0 0 14px',
       }}>
-        Prochains Sets
+        Prochaines Séries
       </h1>
 
       <p style={{

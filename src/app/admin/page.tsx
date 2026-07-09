@@ -41,7 +41,7 @@ export default async function AdminPage() {
           value={`${stats.cardsWithImage.toLocaleString('fr')}`}
           sub={`${((stats.cardsWithImage / stats.totalCards) * 100).toFixed(1)}%`}
         />
-        <Kpi label="Sets" value={stats.totalSets.toLocaleString('fr')} />
+        <Kpi label="Séries" value={stats.totalSets.toLocaleString('fr')} />
         <Kpi label="Prix trackés" value={stats.totalPrices.toLocaleString('fr')} />
         <Kpi label="Users" value={stats.totalUsers.toLocaleString('fr')} />
         <Kpi label="Cartes en portfolio" value={stats.totalPortfolioCards.toLocaleString('fr')} />
@@ -73,7 +73,7 @@ export default async function AdminPage() {
 
       {/* Sets avec trous */}
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Sets avec images manquantes (top 10)</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Séries avec images manquantes (top 10)</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr style={{ textAlign: 'left', color: '#6e6e73' }}>

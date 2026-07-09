@@ -227,7 +227,7 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
   if (setCardsMap.size >= 3) {
     candidates.push({
       icon: 'compass',
-      title: `Tu collectionnes ${setCardsMap.size} sets différents`,
+      title: `Tu collectionnes ${setCardsMap.size} séries différentes`,
       detail: 'Beau collectionneur — pense aux Master Sets pour structurer ta progression et débloquer des badges.',
       accent: 'blue',
       priority: 60,

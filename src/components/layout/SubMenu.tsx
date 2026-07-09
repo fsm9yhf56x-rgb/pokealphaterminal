@@ -138,11 +138,18 @@ export function SubMenu() {
             box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
           }
         }
+
+        /* Desktop : la sidebar remplit au moins la hauteur de la zone contenu
+           (viewport - header), pour descendre jusqu'au footer meme quand la page est courte. */
+        @media (min-width: 1024px) {
+          .ksub-aside { min-height: calc(100vh - 58px); }
+        }
       `}</style>
 
       <aside className="ksub-aside" style={{
         width: open ? 236 : 0,
         minWidth: open ? 236 : 0,
+        alignSelf: 'stretch' as const,
         padding: open ? '30px 14px' : 0,
         overflow: 'visible',
         transition: 'all .3s cubic-bezier(.2,.8,.2,1)',

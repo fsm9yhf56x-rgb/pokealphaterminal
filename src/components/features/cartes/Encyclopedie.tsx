@@ -1399,7 +1399,7 @@ export function Encyclopedie() {
 
             <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} disabled={loading}
               style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
-              <option value="all">Tous les sets{sets.length>0?` (${sets.length})`:''}</option>
+              <option value="all">Toutes les séries{sets.length>0?` (${sets.length})`:''}</option>
               {(() => {
                 // Groupement par BLOC FR (meme source de verite que la vue "Par blocs").
                 // On utilise l'era deja calculee sur chaque carte (via series) -> 0 systeme parallele.

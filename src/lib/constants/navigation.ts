@@ -32,7 +32,7 @@ export const NAV: NavItem[] = [
           'Recompenses a la cle',
         ],
       } },
-      { label:'Prochains Sets', href:'/releases'       },
+      { label:'Prochaines Séries', href:'/releases'       },
     ],
   },
   {

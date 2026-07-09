@@ -50,7 +50,7 @@ export const NORI_TOUR: NoriStep[] = [
     id: 'pokedesk',
     title: 'Le Pokedesk',
     lines: [
-      'Le catalogue complet : tous les sets, en FR, EN et JP.',
+      'Le catalogue complet : toutes les séries, en FR, EN et JP.',
       'Idéal pour traquer la carte qui te résiste depuis… un certain temps.',
     ],
     page: P.pokedesk,

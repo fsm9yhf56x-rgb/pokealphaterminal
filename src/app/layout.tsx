@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     default: 'Kodo Cards',
     template: '%s | Kodo Cards',
   },
-  description: 'Réunis toute ta collection Pokémon, suis sa valeur au jour le jour et termine tes sets. FR, EN et JP.',
+  description: 'Réunis toute ta collection Pokémon, suis sa valeur au jour le jour et termine tes séries. FR, EN et JP.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   openGraph: {
     type: 'website',

@@ -205,53 +205,70 @@ function Glyph({ d, size = 22 }: { d: keyof typeof Icon; size?: number }) {
 const FEATURES = [
   {
     icon: 'book' as const,
-    title: 'Toutes les cartes',
-    desc: 'Chaque carte, en français, anglais et japonais, avec sa vraie cote du jour. Historique, états, versions gradées — au même endroit.',
+    title: 'Encyclopédie',
+    desc: 'Retrouvez les cartes Pokémon, leurs séries, leurs versions et les informations essentielles pour mieux suivre votre collection.',
     badge: 'Disponible',
     live: true,
   },
   {
     icon: 'chart' as const,
-    title: 'Ta collection',
-    desc: 'Ajoute tes cartes, vois ce qu’elles valent et suis ta progression set par set. Toute ta collection, réunie et estimée.',
+    title: 'Portfolio',
+    desc: 'Ajoutez vos cartes en quelques clics, suivez votre collection et créez vos classeurs personnalisés.',
     badge: 'Disponible',
     live: true,
   },
   {
-    icon: 'spark' as const,
-    title: 'Nori, ton experte cartes',
-    desc: 'Une question sur une carte, un illustrateur, une rareté, un set à compléter ? Nori répond, en clair, à toute heure.',
-    badge: 'Bientôt',
-    live: false,
-  },
-  {
-    icon: 'bolt' as const,
-    title: 'Bonnes affaires',
-    desc: 'On surveille eBay et Cardmarket pour toi et on fait remonter les cartes sous leur cote. Les occasions viennent à toi.',
-    badge: 'Bientôt',
-    live: false,
-  },
-  {
     icon: 'target' as const,
-    title: 'Faut-il la grader ?',
-    desc: 'Avant d’envoyer une carte en gradation, vois ce qu’elle pourrait valoir selon la note. De quoi décider sans se tromper.',
-    badge: 'Bientôt',
-    live: false,
+    title: 'Séries et progression',
+    desc: 'Complétez vos séries plus facilement, suivez votre progression et identifiez les cartes qu’il vous manque pour avancer vers vos master sets.',
+    badge: 'Disponible',
+    live: true,
   },
   {
-    icon: 'whale' as const,
-    title: 'Le marché en direct',
-    desc: 'Les tendances, les cartes qui montent, ce qui bouge. Garde une longueur d’avance sur le marché.',
-    badge: 'Bientôt',
-    live: false,
+    icon: 'shield' as const,
+    title: 'Valeur globale',
+    desc: 'Suivez sérieusement l’évolution du prix de votre collection avec notre index maison, regroupant les principales sources du marché.',
+    badge: 'Disponible',
+    live: true,
   },
 ]
 
+// Fonctionnalités à venir (section « La suite ») — clairement étiquetées, jamais présentées comme actives ailleurs.
+const SOON = [
+  { icon: 'bolt' as const, title: 'Alertes en temps réel', desc: 'Recevez des notifications sur les cartes et séries que vous souhaitez suivre.' },
+  { icon: 'whale' as const, title: 'Marché & tendances', desc: 'Suivez les tendances, les historiques de prix et les mouvements importants du marché.' },
+  { icon: 'spark' as const, title: 'Nori, votre assistant', desc: 'L’assistant pensé pour vous aider à analyser une carte, une série et bien plus encore.' },
+]
+
+// Tuiles du visuel « master set » du hero : vraies cartes du Set de Base FR
+// (tcgdex, ordre du set #1→#18). 'state' raconte l'avancement d'un master set en
+// cours : possédée / chase (Dracaufeu #4, liseré or) / manquante (emplacement vide).
+const MASTERSET_CARDS = [
+  { n: 'Alakazam',   img: 'https://assets.tcgdex.net/fr/base/base1/1/low.webp',  state: 'own' as const },
+  { n: 'Tortank',    img: 'https://assets.tcgdex.net/fr/base/base1/2/low.webp',  state: 'own' as const },
+  { n: 'Leveinard',  img: 'https://assets.tcgdex.net/fr/base/base1/3/low.webp',  state: 'own' as const },
+  { n: 'Dracaufeu',  img: 'https://assets.tcgdex.net/fr/base/base1/4/low.webp',  state: 'chase' as const },
+  { n: 'Mélofée',    img: 'https://assets.tcgdex.net/fr/base/base1/5/low.webp',  state: 'own' as const },
+  { n: 'Léviator',   img: 'https://assets.tcgdex.net/fr/base/base1/6/low.webp',  state: 'own' as const },
+  { n: 'Tygnon',     img: 'https://assets.tcgdex.net/fr/base/base1/7/low.webp',  state: 'own' as const },
+  { n: 'Mackogneur', img: 'https://assets.tcgdex.net/fr/base/base1/8/low.webp',  state: 'own' as const },
+  { n: 'Magneton',   img: 'https://assets.tcgdex.net/fr/base/base1/9/low.webp',  state: 'miss' as const },
+  { n: 'Mewtwo',     img: 'https://assets.tcgdex.net/fr/base/base1/10/low.webp', state: 'own' as const },
+  { n: 'Nidoking',   img: 'https://assets.tcgdex.net/fr/base/base1/11/low.webp', state: 'own' as const },
+  { n: 'Feunard',    img: 'https://assets.tcgdex.net/fr/base/base1/12/low.webp', state: 'own' as const },
+  { n: 'Tartard',    img: 'https://assets.tcgdex.net/fr/base/base1/13/low.webp', state: 'own' as const },
+  { n: 'Raichu',     img: 'https://assets.tcgdex.net/fr/base/base1/14/low.webp', state: 'own' as const },
+  { n: 'Florizarre', img: 'https://assets.tcgdex.net/fr/base/base1/15/low.webp', state: 'own' as const },
+  { n: 'Électhor',   img: 'https://assets.tcgdex.net/fr/base/base1/16/low.webp', state: 'miss' as const },
+  { n: 'Dardargnan', img: 'https://assets.tcgdex.net/fr/base/base1/17/low.webp', state: 'own' as const },
+  { n: 'Draco',      img: 'https://assets.tcgdex.net/fr/base/base1/18/low.webp', state: 'own' as const },
+]
+
 const PERSONAS = [
-  { tag: 'Tu complètes tes sets', icon: 'book' as const, line: 'Vois où tu en es, set par set, et repère les cartes qui te manquent encore.' },
-  { tag: 'Tu y tiens', icon: 'shield' as const, line: 'Garde toute ta collection au même endroit et suis sa valeur au fil du temps.' },
-  { tag: 'Tu achètes & revends', icon: 'chart' as const, line: 'Les vrais prix du marché, pour acheter et céder une carte au juste prix.' },
-  { tag: 'Tu fais grader', icon: 'target' as const, line: 'Sache si une carte vaut le coup d’être gradée avant de l’envoyer.' },
+  { tag: 'Vous complétez des séries ?', icon: 'book' as const, line: 'Suivez votre progression et repérez les cartes manquantes pour avancer plus facilement.' },
+  { tag: 'Vous gardez sur le long terme ?', icon: 'shield' as const, line: 'Centralisez votre collection et gardez une vue globale sur son évolution.' },
+  { tag: 'Vous achetez et revendez ?', icon: 'chart' as const, line: 'Comparez les prix du marché avant d’acheter, vendre ou garder une carte.' },
+  { tag: 'Vous pensez à faire grader ?', icon: 'target' as const, line: 'Consultez les données utiles pour comprendre l’écart entre une carte raw et une carte gradée.' },
 ]
 
 const COLLECTION_PREVIEW = [
@@ -274,20 +291,40 @@ const TICKER = [
 
 const FAQ = [
   {
-    q: 'C’est vraiment gratuit ?',
-    a: 'Oui. Suivre tes cartes, voir leur cote et gérer ta collection, c’est gratuit et sans carte bancaire. Les formules payantes débloquent les outils avancés.',
+    q: 'Est-ce vraiment gratuit ?',
+    a: 'Oui. Vous pouvez commencer gratuitement, sans carte bancaire, et découvrir les fonctionnalités essentielles. Les offres payantes débloquent des fonctions avancées qui améliorent l’expérience de collection.',
   },
   {
-    q: 'D’où viennent les prix ?',
-    a: 'Agrégation des sources de référence du marché — eBay, Cardmarket, PSA et PokeTrace — consolidées et mises à jour chaque jour.',
+    q: 'Comment suivre la valeur de ma collection Pokémon ?',
+    a: 'Ajoutez vos cartes à un portfolio et suivez leur valeur estimée dans le temps. L’objectif n’est pas de donner un prix magique, mais de vous offrir un repère clair sur l’évolution de votre collection, set par set.',
   },
   {
-    q: 'Quels jeux et quelles langues ?',
-    a: 'Pokémon pour commencer, en français, anglais et japonais. D’autres jeux suivront. Les cartes françaises ont leur vraie cote, pas une conversion du prix américain.',
+    q: 'Comment connaître le prix d’une carte française ?',
+    a: 'Le prix d’une carte française peut différer de celui d’une carte anglaise ou japonaise. Kodo Cards distingue les langues pour éviter les estimations approximatives et vous aider à comprendre la valeur réelle selon la version, l’état et le marché.',
   },
   {
-    q: 'Et les nouveautés à venir ?',
-    a: 'On ajoute régulièrement de nouvelles fonctionnalités. Crée ton compte pour en profiter dès qu’elles arrivent.',
+    q: 'Pourquoi utiliser un portfolio pour ses cartes ?',
+    a: 'Un portfolio vous permet de savoir exactement quelles cartes vous possédez, dans quelles séries, et comment votre collection évolue. C’est bien plus clair qu’un tableur ou des captures d’écran dispersées.',
+  },
+  {
+    q: 'Peut-on suivre ses sets et master sets ?',
+    a: 'Oui, Kodo Cards est pensé pour suivre votre progression set par set. Vous voyez les cartes déjà ajoutées et repérez celles qu’il vous manque — utile pour compléter un master set ou organiser vos priorités.',
+  },
+  {
+    q: 'Est-ce que Kodo Cards remplace Cardmarket ou eBay ?',
+    a: 'Non. Kodo Cards ne remplace pas les plateformes d’achat et de vente. L’app vous aide à centraliser votre collection, suivre vos cartes et consulter des repères de marché, avant d’acheter, vendre ou comparer.',
+  },
+  {
+    q: 'Les estimations de prix sont-elles garanties ?',
+    a: 'Non, une estimation reste un repère, pas une garantie de vente. Le prix réel dépend de la langue, de l’état, de l’édition, de la demande et du moment. Kodo Cards vous aide à prendre du recul ; la décision finale vous appartient.',
+  },
+  {
+    q: 'Peut-on suivre des cartes gradées ?',
+    a: 'Oui. La valeur d’une carte peut fortement changer selon sa note, son état et l’organisme de gradation. L’objectif est de vous aider à mieux comprendre l’écart entre une carte raw et une carte gradée.',
+  },
+  {
+    q: 'Quels jeux et quelles langues seront disponibles ?',
+    a: 'Pokémon d’abord, en français, anglais et japonais, pour proposer une expérience fiable et complète. L’ambition est ensuite d’étendre à d’autres TCG comme One Piece ou Lorcana — la qualité des données et l’expérience avant tout.',
   },
 ]
 
@@ -319,9 +356,9 @@ function Nav() {
         </a>
 
         <nav className="kc-nav-links">
-          <a href="#features">Produit</a>
+          <a href="#product">Produit</a>
+          <a href="#features">Fonctionnalités</a>
           <a href="#pricing">Tarifs</a>
-          <a href="#personas">Pour qui</a>
           <a href="#faq">FAQ</a>
         </nav>
 
@@ -345,9 +382,9 @@ function Nav() {
 
       {open && (
         <div className="kc-mobile-menu" style={GLASS}>
-          <a href="#features" onClick={() => setOpen(false)}>Produit</a>
+          <a href="#product" onClick={() => setOpen(false)}>Produit</a>
+          <a href="#features" onClick={() => setOpen(false)}>Fonctionnalités</a>
           <a href="#pricing" onClick={() => setOpen(false)}>Tarifs</a>
-          <a href="#personas" onClick={() => setOpen(false)}>Pour qui</a>
           <a href="#faq" onClick={() => setOpen(false)}>FAQ</a>
           <a href="/login" onClick={() => setOpen(false)}>Se connecter</a>
           <a
@@ -363,42 +400,48 @@ function Nav() {
   )
 }
 
-function TerminalPreview() {
+function MasterSetPreview() {
   return (
-    <div className="kc-terminal" style={GLASS}>
-      <div className="kc-terminal-bar">
+    <div className="kc-ms" style={GLASS}>
+      <div className="kc-ms-head">
         <span className="kc-dot" />
         <span className="kc-dot" />
         <span className="kc-dot" />
-        <span className="kc-terminal-title">MA COLLECTION</span>
-        <span className="kc-live">
-          <i /> À JOUR
-        </span>
+        <div className="kc-ms-title">
+          <span className="kc-ms-name">Set de Base</span>
+          <span className="kc-ms-lang">FR</span>
+        </div>
+        <span className="kc-live"><i /> À JOUR</span>
       </div>
 
-      <div className="kc-terminal-rows">
-        {COLLECTION_PREVIEW.map((r) => (
-          <div key={r.n} className="kc-trow">
-            <div className="kc-trow-l">
-              <div className="kc-trow-name">{r.n}</div>
-              <div className="kc-trow-set">{r.s}</div>
-            </div>
-            <div className="kc-trow-r">
-              <div className="kc-trow-price">{r.p}</div>
-            </div>
-          </div>
+      <div className="kc-ms-grid">
+        {MASTERSET_CARDS.map((c, i) => (
+          <span
+            key={i}
+            className={`kc-ms-tile kc-ms-${c.state}`}
+            style={{ animationDelay: `${i * 55}ms` }}
+            title={c.state === 'miss' ? 'Manquante' : c.n}
+          >
+            {c.state === 'miss'
+              ? <em>+</em>
+              : <img src={c.img} alt={c.n} loading="lazy" draggable={false} onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }} />}
+          </span>
         ))}
       </div>
 
-      <div className="kc-alpha">
-        <div className="kc-alpha-head">
-          <span className="kc-alpha-title">SET DE BASE · FR</span>
-          <span className="kc-alpha-conf">93 / 102</span>
+      <div className="kc-ms-foot">
+        <div className="kc-ms-foot-head">
+          <span className="kc-ms-foot-label">Progression du master set</span>
+          <span className="kc-ms-count">93 / 102</span>
         </div>
-        <div className="kc-alpha-body">
-          <div className="kc-prog"><div className="kc-prog-bar" style={{ width: '91%' }} /></div>
-          <span>Plus que <strong style={{ color: SNOW.accent }}>9 cartes</strong> pour compléter</span>
-        </div>
+        <div className="kc-prog"><div className="kc-prog-bar" style={{ width: '91%' }} /></div>
+        <span className="kc-ms-left">Plus que <strong>9 cartes</strong> pour compléter</span>
+      </div>
+
+      <div className="kc-ms-star">
+        <span className="kc-ms-star-dot" />
+        <span className="kc-ms-star-name">Dracaufeu · Set de Base FR</span>
+        <span className="kc-ms-star-price">3 381 €</span>
       </div>
     </div>
   )
@@ -412,7 +455,7 @@ export default function LandingPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
 
   // — Tarifs : Pro aligné Pokéitem (hors offre à vie) · Premium = le total
-  const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly')
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
 
   // — Offre Early Supporter (-40% a vie Premium, places limitees)
   const [early, setEarly] = useState<{ seatsLeft: number; seatsTotal: number; isOpen: boolean } | null>(null)
@@ -464,38 +507,39 @@ export default function LandingPage() {
             </Reveal>
             <Reveal delay={80}>
               <h1 className="kc-h1">
-                Toute ta collection Pokémon.{' '}
-                <span className="kc-grad">Sa valeur, jour après jour.</span>
+                Collectionner des cartes Pokémon{' '}
+                <span className="kc-grad">n’a jamais été aussi simple.</span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
               <p className="kc-sub">
-                Ajoute tes cartes, suis leur cote au jour le jour et termine
-                tes sets. FR, EN et JP — chaque carte à sa juste valeur.
+                Ajoutez vos cartes, suivez vos séries et gardez un œil sur leur
+                valeur au fil du temps. Kodo Cards vous aide à mieux organiser
+                votre collection.
               </p>
             </Reveal>
             <Reveal delay={240}>
               <div className="kc-hero-cta">
                 <a href="/signup" className="kc-btn kc-btn-primary kc-cta-shimmer">
-                  Créer mon compte gratuit
+                  Créer mon compte gratuitement
                   <Glyph d="arrow" size={18} />
                 </a>
-                <a href="#features" className="kc-btn kc-btn-ghost">
-                  Voir le produit
+                <a href="#product" className="kc-btn kc-btn-ghost">
+                  Voir comment ça marche
                 </a>
               </div>
             </Reveal>
             <Reveal delay={320}>
               <p className="kc-trust">
                 <Glyph d="shield" size={15} />
-                Gratuit jusqu’à 800 cartes · sans carte bancaire · mis à jour chaque jour.
+                Commencez gratuitement, sans carte bancaire.
               </p>
             </Reveal>
           </div>
 
           <Reveal delay={200} className="kc-hero-visual">
             <div className="kc-float">
-              <TerminalPreview />
+              <MasterSetPreview />
             </div>
           </Reveal>
         </div>
@@ -512,7 +556,7 @@ export default function LandingPage() {
           </div>
           <div className="kc-stat">
             <div className="kc-stat-num">
-              <CountUp to={20} suffix=" k+" />
+              <CountUp to={70} suffix=" k+" />
             </div>
             <div className="kc-stat-label">Cartes au catalogue</div>
           </div>
@@ -531,43 +575,68 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── PROBLÈME → SOLUTION ────────────────────────────────── */}
+      {/* ── REMETTEZ DE L'ORDRE (3 blocs) ──────────────────────── */}
+      <section className="kc-section" id="product">
+        <Reveal>
+          <span className="kc-section-tag">Organiser</span>
+          <h2 className="kc-h2">Remettez de l’ordre dans votre collection.</h2>
+        </Reveal>
+        <div className="kc-grid-3">
+          <Reveal className="kc-feature" style={GLASS}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
+            <div className="kc-feature-head"><h3>Ajoutez vos cartes</h3></div>
+            <p>Retrouvez vos cartes Pokémon et ajoutez-les à votre collection en quelques clics.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={80}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="target" /></div>
+            <div className="kc-feature-head"><h3>Suivez vos séries préférées</h3></div>
+            <p>Voyez où vous en êtes pour chaque série et repérez les cartes qu’il vous manque.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={160}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
+            <div className="kc-feature-head"><h3>Gardez un œil sur la valeur</h3></div>
+            <p>Une mise à jour quotidienne de vos cartes pour ne rien louper de leur évolution.</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── SUIVRE, SANS COMPLICATION (2 colonnes) ──────────────── */}
       <section className="kc-ps">
         <Reveal>
           <span className="kc-section-tag">Le constat</span>
           <h2 className="kc-h2">
-            Aujourd’hui, on collectionne à l’aveugle.
+            Suivre sa collection ne devrait pas être aussi compliqué.
           </h2>
         </Reveal>
         <div className="kc-ps-grid">
           <Reveal className="kc-ps-col kc-ps-problem" style={GLASS} delay={60}>
-            <h3>Le problème</h3>
+            <h3>Aujourd’hui</h3>
             <ul>
-              <li>Les prix sont éparpillés sur eBay, Cardmarket, TCGplayer — aucune source fiable.</li>
-              <li>Tu ne sais pas vraiment ce que vaut ta collection.</li>
-              <li>Suivre l’avancement de tes sets, c’est un casse-tête.</li>
-              <li>Une carte française ne vaut pas son équivalent US — et personne ne le dit clairement.</li>
+              <li>Vos cartes sont réparties entre classeurs, ETB, boîtes, notes ou fichiers Excel.</li>
+              <li>Les prix varient selon les plateformes : eBay, Cardmarket, Vinted ou ventes privées.</li>
+              <li>Les cartes gradées, les langues et les produits scellés rendent le suivi encore plus complexe.</li>
+              <li>Difficile de savoir ce que vous possédez vraiment, ce qu’il vous manque, et ce que vaut votre collection.</li>
             </ul>
           </Reveal>
           <Reveal className="kc-ps-col kc-ps-solution" style={GLASS} delay={140}>
             <h3>Avec Kodo Cards</h3>
             <ul>
-              <li>Toutes tes cartes au même endroit, avec leur vraie cote du jour.</li>
-              <li>La valeur de ta collection, claire et à jour.</li>
-              <li>Ta progression set par set, d’un coup d’œil.</li>
-              <li>Les cartes FR, EN et JP — chacune à sa juste valeur.</li>
+              <li>Votre collection est centralisée au même endroit.</li>
+              <li>Vos cartes, séries et classeurs sont organisés clairement.</li>
+              <li>Les langues, les versions et les états sont mieux distingués.</li>
+              <li>Vous suivez l’évolution de votre collection avec des repères de marché plus lisibles.</li>
             </ul>
           </Reveal>
         </div>
       </section>
 
-      {/* ── FEATURES ───────────────────────────────────────────── */}
+      {/* ── FEATURES (section 5) ───────────────────────────────── */}
       <section className="kc-section" id="features">
         <Reveal>
-          <span className="kc-section-tag">Le produit</span>
-          <h2 className="kc-h2">Tout ce qu’il te faut, au même endroit.</h2>
+          <span className="kc-section-tag">Fonctionnalités</span>
+          <h2 className="kc-h2">Tout ce qu’il faut pour suivre sa collection Pokémon.</h2>
         </Reveal>
-        <div className="kc-grid-3">
+        <div className="kc-grid-4">
           {FEATURES.map((f, i) => (
             <Reveal key={f.title} delay={i * 60} className="kc-feature" style={GLASS}>
               <div className="kc-feature-icon" data-live={f.live}>
@@ -590,7 +659,8 @@ export default function LandingPage() {
       <section className="kc-section" id="france">
         <Reveal>
           <span className="kc-section-tag">Toutes les langues</span>
-          <h2 className="kc-h2">Chaque langue a sa vraie valeur.</h2>
+          <h2 className="kc-h2">Ne vous arrêtez pas aux cartes françaises.</h2>
+          <p className="kc-lead">Kodo Cards distingue les cartes françaises, anglaises et japonaises pour une raison simple : tout le monde ne collectionne pas les cartes françaises. Suivez les cartes dans la langue de votre choix et comprenez mieux les différences de prix.</p>
         </Reveal>
         <div className="kc-grid-3">
           <Reveal className="kc-feature" style={GLASS}>
@@ -600,8 +670,8 @@ export default function LandingPage() {
           </Reveal>
           <Reveal className="kc-feature" style={GLASS} delay={80}>
             <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
-            <div className="kc-feature-head"><h3>PSA, PCA, CCC réunis</h3></div>
-            <p>Vois la valeur d’une carte selon chaque certificateur, et lequel a le plus de demande. De quoi choisir en connaissance de cause.</p>
+            <div className="kc-feature-head"><h3>Toutes les sociétés de gradation</h3></div>
+            <p>PSA, PCA, CCC, CGC, BGS, SGC : voyez la valeur d’une carte selon chaque certificateur, et lequel a le plus de demande. De quoi choisir en connaissance de cause.</p>
           </Reveal>
           <Reveal className="kc-feature" style={GLASS} delay={160}>
             <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
@@ -609,12 +679,62 @@ export default function LandingPage() {
             <p>L’anglais et le japonais suivis comme le français, chacun à sa juste cote. Et d’autres jeux que Pokémon arrivent.</p>
           </Reveal>
         </div>
+
+        <Reveal className="kc-langcompare" style={GLASS} delay={120}>
+          <div className="kc-lc-header">
+            <h3 className="kc-lc-headline">Même carte, trois marchés.</h3>
+            <span className="kc-lc-caption">Alakazam · Set de Base</span>
+          </div>
+          <div className="kc-lc-row">
+            <div className="kc-lc-card" style={{ animationDelay: '0ms' }}>
+              <div className="kc-lc-img"><img src="https://assets.tcgdex.net/fr/base/base1/1/high.webp" alt="Alakazam — carte française" loading="lazy" draggable={false} /></div>
+              <span className="kc-lc-chip"><span className="kc-lc-flag">🇫🇷</span>Français</span>
+            </div>
+            <span className="kc-lc-sep" aria-hidden="true">=</span>
+            <div className="kc-lc-card" style={{ animationDelay: '130ms' }}>
+              <div className="kc-lc-img"><img src="https://assets.tcgdex.net/en/base/base1/1/high.webp" alt="Alakazam — carte anglaise" loading="lazy" draggable={false} /></div>
+              <span className="kc-lc-chip"><span className="kc-lc-flag">🇺🇸</span>Anglais</span>
+            </div>
+            <span className="kc-lc-sep" aria-hidden="true">=</span>
+            <div className="kc-lc-card" style={{ animationDelay: '260ms' }}>
+              <div className="kc-lc-img"><img src="https://pub-1aade8805ea544358d85a303c1feef41.r2.dev/jp/expansion-pack/575601.jpg" alt="Alakazam — carte japonaise" loading="lazy" draggable={false} /></div>
+              <span className="kc-lc-chip"><span className="kc-lc-flag">🇯🇵</span>Japonais</span>
+            </div>
+          </div>
+        </Reveal>
       </section>
 
+      {/* ── VALEUR (section 7) ─────────────────────────────────── */}
+      <section className="kc-section" id="value">
+        <Reveal>
+          <span className="kc-section-tag">La valeur, en douceur</span>
+          <h2 className="kc-h2">Comprendre la valeur, sans perdre le plaisir de la collection.</h2>
+          <p className="kc-lead">Certaines cartes comptent pour l’histoire qu’elles racontent. D’autres par leur rareté, leur état ou leur demande sur le marché. Kodo Cards vous aide à suivre les deux : la collection que vous construisez, et la valeur qu’elle peut prendre avec le temps.</p>
+        </Reveal>
+        <div className="kc-grid-3">
+          <Reveal className="kc-feature" style={GLASS}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
+            <div className="kc-feature-head"><h3>Valeur globale</h3></div>
+            <p>Une vision claire de ce que représente votre collection, à jour chaque jour.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={80}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
+            <div className="kc-feature-head"><h3>Évolution</h3></div>
+            <p>Suivez les évolutions importantes de vos cartes et de vos séries au fil du temps.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={160}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="target" /></div>
+            <div className="kc-feature-head"><h3>Cartes à surveiller</h3></div>
+            <p>Repérez les cartes qui méritent votre attention dans votre collection.</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── PROFILS (section 8) ─────────────────────────────────── */}
       <section className="kc-section" id="personas">
         <Reveal>
           <span className="kc-section-tag">Pour qui</span>
-          <h2 className="kc-h2">Pensé pour ta façon de collectionner.</h2>
+          <h2 className="kc-h2">Un outil pensé pour chaque façon de collectionner.</h2>
         </Reveal>
         <div className="kc-grid-3 kc-personas">
           {PERSONAS.map((p, i) => (
@@ -629,11 +749,32 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── LA SUITE (section 9) ───────────────────────────────── */}
+      <section className="kc-section" id="soon">
+        <Reveal>
+          <span className="kc-section-tag">La suite</span>
+          <h2 className="kc-h2">Ce que Kodo Cards vous prépare.</h2>
+          <p className="kc-lead">Nous voulons d’abord proposer un suivi de collection fiable, clair et agréable. Ensuite, Kodo Cards ajoutera progressivement des outils plus avancés pour mieux comprendre le marché et prendre de meilleures décisions.</p>
+        </Reveal>
+        <div className="kc-grid-3">
+          {SOON.map((f, i) => (
+            <Reveal key={f.title} delay={i * 60} className="kc-feature kc-feature-soon" style={GLASS}>
+              <div className="kc-feature-icon"><Glyph d={f.icon} /></div>
+              <div className="kc-feature-head">
+                <h3>{f.title}</h3>
+                <span className="kc-badge">Bientôt</span>
+              </div>
+              <p>{f.desc}</p>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
       {/* ── PRICING ────────────────────────────────────────────── */}
       <section className="kc-section" id="pricing">
         <Reveal>
           <span className="kc-section-tag">Tarifs</span>
-          <h2 className="kc-h2">Commence gratuitement, évolue à ton rythme.</h2>
+          <h2 className="kc-h2">Commencez gratuitement. Passez à la vitesse supérieure quand vous en avez besoin.</h2>
         </Reveal>
         <Reveal className="kc-billing-wrap">
           <div className="kc-billing" role="tablist">
@@ -653,7 +794,8 @@ export default function LandingPage() {
             <div className="kc-price">0 €<span>toujours</span></div>
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Portefeuille + prix — jusqu’à 800 cartes</li>
-              <li><Glyph d="check" size={16} /> Prix consolidés eBay · Cardmarket · PSA</li>
+              <li><Glyph d="check" size={16} /> Prix consolidés eBay · Cardmarket</li>
+              <li><Glyph d="check" size={16} /> Cote FR native · EN · JP</li>
               <li><Glyph d="check" size={16} /> Encyclopédie & recherche</li>
               <li><Glyph d="check" size={16} /> Valeur totale de la collection</li>
               <li><Glyph d="check" size={16} /> Wishlist & alertes (3 max)</li>
@@ -673,8 +815,9 @@ export default function LandingPage() {
               <li><Glyph d="check" size={16} /> Tout le plan Gratuit</li>
               <li><Glyph d="check" size={16} /> Cartes <strong>illimitées</strong></li>
               <li><Glyph d="check" size={16} /> Cartes gradées valorisées dans ton portefeuille</li>
-              <li><Glyph d="check" size={16} /> Aperçu « Faut-il la grader ? » (note PSA 10)</li>
-              <li><Glyph d="check" size={16} /> PSA Pop Reports</li>
+              <li><Glyph d="check" size={16} /> Prix par état — Near Mint à Damaged</li>
+              <li><Glyph d="check" size={16} /> Aperçu « Faut-il la grader ? » (note maximale)</li>
+              <li><Glyph d="check" size={16} /> Pop reports — PSA, PCA, CCC, CGC, BGS</li>
               <li><Glyph d="check" size={16} /> Graphique d’évolution du portefeuille</li>
               <li><Glyph d="check" size={16} /> Statistiques avancées & P&amp;L</li>
               <li><Glyph d="check" size={16} /> Export du portefeuille</li>
@@ -713,7 +856,7 @@ export default function LandingPage() {
             <div className="kc-plan-sublabel">Disponible maintenant</div>
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Pro</li>
-              <li><Glyph d="check" size={16} /> Prix gradés détaillés — toutes cartes, toutes notes</li>
+              <li><Glyph d="check" size={16} /> Prix gradés détaillés — toutes notes, toutes sociétés (PSA, PCA, CCC, CGC, BGS)</li>
               <li><Glyph d="check" size={16} /> Faut-il la grader ? — le calcul complet (note probable, gain net)</li>
             </ul>
             <div className="kc-plan-sublabel">Inclus à leur sortie — sans surcoût</div>
@@ -802,7 +945,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         <span>{q}</span>
         <span className={`kc-faq-chev${open ? ' kc-open' : ''}`}>+</span>
       </button>
-      <div className="kc-faq-a" style={{ maxHeight: open ? 200 : 0 }}>
+      <div className="kc-faq-a" style={{ maxHeight: open ? 360 : 0 }}>
         <p>{a}</p>
       </div>
     </div>
@@ -941,7 +1084,7 @@ const CSS = `
 /* SECTION generic */
 .kc-section{padding:72px 24px;}
 .kc-section-tag{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
-.kc-h2{font-size:clamp(28px,3.6vw,42px);font-weight:700;line-height:1.1;max-width:18ch;}
+.kc-h2{font-size:clamp(28px,3.6vw,42px);font-weight:700;line-height:1.1;max-width:none;}
 .kc-h2-center{margin:0 auto;text-align:center;max-width:22ch;}
 
 /* PROBLÈME/SOLUTION */
@@ -1020,6 +1163,114 @@ const CSS = `
 .kc-faq-chev.kc-open{transform:rotate(45deg);}
 .kc-faq-a{overflow:hidden;transition:max-height .35s var(--ease);}
 .kc-faq-a p{padding:0 24px 22px;margin:0;font-size:14.5px;line-height:1.6;color:var(--muted);}
+
+/* LEAD (accroche sous les titres de section) */
+.kc-lead{font-size:16px;line-height:1.6;color:var(--muted);margin:16px 0 0;max-width:58ch;}
+
+/* GRID 4 (features & la suite) */
+.kc-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:36px;}
+@media(max-width:920px){.kc-grid-4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.kc-grid-4{grid-template-columns:1fr;}}
+.kc-feature-soon .kc-feature-icon{background:var(--surface);color:var(--faint);}
+.kc-feature-soon h3{color:var(--muted);}
+
+/* MASTER SET preview (hero) */
+.kc-ms{border-radius:22px;padding:18px;width:100%;}
+.kc-ms-head{display:flex;align-items:center;gap:7px;padding:2px 4px 14px;}
+.kc-ms-title{display:flex;align-items:center;gap:8px;margin-left:6px;}
+.kc-ms-name{font-family:var(--display);font-weight:700;font-size:15px;}
+.kc-ms-lang{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--faint);background:var(--surface);padding:3px 7px;border-radius:6px;}
+.kc-ms-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;}
+.kc-ms-tile{aspect-ratio:.72;border-radius:7px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.05);opacity:0;transform:translateY(6px);animation:msIn .5s var(--ease) forwards;}
+@keyframes msIn{to{opacity:1;transform:none;}}
+.kc-ms-tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s var(--ease);}
+.kc-ms-tile:hover img{transform:scale(1.08);}
+.kc-ms-own{background:#eef0f3;}
+.kc-ms-chase{background:#f3ead0;box-shadow:inset 0 0 0 1.5px rgba(212,175,55,.85),0 3px 14px rgba(212,175,55,.5);z-index:1;}
+.kc-ms-own::after,.kc-ms-chase::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(150deg,transparent 44%,rgba(255,255,255,.4) 50%,transparent 56%);}
+.kc-ms-chase::after{background:linear-gradient(150deg,transparent 35%,rgba(255,240,190,.55) 50%,transparent 65%);background-size:250% 250%;animation:msHolo 4.5s ease-in-out infinite;}
+@keyframes msHolo{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.kc-ms-miss{background:repeating-linear-gradient(45deg,#f6f6f8,#f6f6f8 6px,#f1f1f4 6px,#f1f1f4 12px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;}
+.kc-ms-miss em{font-style:normal;font-family:var(--display);font-weight:700;font-size:16px;color:#c7c7cc;}
+.kc-ms-foot{margin-top:15px;display:flex;flex-direction:column;gap:7px;}
+.kc-ms-foot-head{display:flex;align-items:center;gap:10px;}
+.kc-ms-foot-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+.kc-ms-count{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);}
+.kc-prog{height:7px;border-radius:999px;background:var(--surface);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04);}
+.kc-prog-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,${SNOW.accent},${SNOW.accent2});}
+.kc-ms-left{font-size:13px;color:var(--muted);}
+.kc-ms-left strong{color:var(--accent);}
+.kc-ms-star{margin-top:12px;display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:13px;background:linear-gradient(135deg,rgba(212,175,55,.1),rgba(212,175,55,.03));box-shadow:inset 0 0 0 1px rgba(212,175,55,.2);}
+.kc-ms-star-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#f5d76e,#c9a227);flex:none;box-shadow:0 0 8px rgba(212,175,55,.6);}
+.kc-ms-star-name{font-size:13px;font-weight:600;color:var(--ink);}
+.kc-ms-star-price{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:13.5px;}
+@media(prefers-reduced-motion:reduce){.kc-ms-tile{animation:none!important;opacity:1;transform:none;}}
+
+/* ─── HOOKS VISUELS : hover · mouvement · glow (aucun wording touché) ── */
+/* Cartes : lift + ombre au survol */
+.kc-feature,.kc-persona,.kc-plan,.kc-faq-item,.kc-stat{transition:transform .35s var(--ease),box-shadow .35s var(--ease);will-change:transform;}
+.kc-feature:hover,.kc-persona:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,.09),0 6px 14px rgba(0,0,0,.05);}
+.kc-plan:hover{transform:translateY(-6px);}
+.kc-stat:hover{transform:translateY(-4px);}
+/* Icônes : micro-animation quand la carte est survolée */
+.kc-feature-icon,.kc-persona-icon{transition:transform .35s var(--ease),background .3s,color .3s,box-shadow .3s;}
+.kc-feature:hover .kc-feature-icon,.kc-persona:hover .kc-persona-icon{transform:scale(1.09) rotate(-4deg);}
+.kc-feature:hover .kc-feature-icon[data-live="true"]{box-shadow:0 8px 20px rgba(224,48,32,.24);}
+/* Titre hero : dégradé animé */
+.kc-grad{background-size:220% auto;animation:gradShift 6s ease-in-out infinite;}
+@keyframes gradShift{0%,100%{background-position:0% center;}50%{background-position:100% center;}}
+/* Barre de progression : remplissage à l'apparition */
+.kc-prog-bar{animation:progFill 1.5s var(--ease) .35s both;}
+@keyframes progFill{from{width:0;}}
+/* Puce accent pulsée devant chaque tag de section */
+.kc-section-tag{position:relative;padding-left:16px;}
+.kc-section-tag::before{content:'';position:absolute;left:0;top:50%;width:7px;height:7px;border-radius:50%;transform:translateY(-50%);background:linear-gradient(135deg,${SNOW.accent},${SNOW.accent2});animation:tagPulse 2.4s ease-in-out infinite;}
+@keyframes tagPulse{0%{box-shadow:0 0 0 0 rgba(224,48,32,.45);}70%{box-shadow:0 0 0 6px rgba(224,48,32,0);}100%{box-shadow:0 0 0 0 rgba(224,48,32,0);}}
+/* Badge Disponible : shimmer discret */
+.kc-badge-live{position:relative;overflow:hidden;}
+.kc-badge-live::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%);transform:translateX(-140%);animation:badgeShine 5s ease-in-out infinite;}
+@keyframes badgeShine{0%,60%{transform:translateX(-140%);}85%,100%{transform:translateX(140%);}}
+/* Premium : halo qui respire */
+.kc-plan-pro{animation:planGlow 4.5s ease-in-out infinite;}
+@keyframes planGlow{0%,100%{box-shadow:inset 0 0 0 2px rgba(224,48,32,.35),0 16px 44px rgba(224,48,32,.14);}50%{box-shadow:inset 0 0 0 2px rgba(224,48,32,.55),0 22px 54px rgba(224,48,32,.24);}}
+/* Visuel hero : léger tilt au survol */
+.kc-float{transition:transform .4s var(--ease);}
+.kc-hero-visual:hover .kc-float{transform:translateY(-6px) scale(1.015);}
+/* Liens nav : souligné animé */
+.kc-nav-links a{position:relative;}
+.kc-nav-links a::after{content:'';position:absolute;left:0;bottom:-4px;height:2px;width:0;border-radius:2px;background:linear-gradient(90deg,${SNOW.accent},${SNOW.accent2});transition:width .25s var(--ease);}
+.kc-nav-links a:hover::after{width:100%;}
+/* FAQ : accent latéral au survol */
+.kc-faq-item:hover{transform:translateX(3px);box-shadow:inset 3px 0 0 ${SNOW.accent},0 6px 22px rgba(0,0,0,.05);}
+/* CTA hero : glow pulsé pour attirer le clic */
+.kc-cta-shimmer{animation:ctaGlow 3.2s ease-in-out infinite;}
+@keyframes ctaGlow{0%,100%{box-shadow:0 6px 20px rgba(224,48,32,.28);}50%{box-shadow:0 10px 30px rgba(224,48,32,.45);}}
+/* Reveal : ajoute un léger scale à l'apparition */
+.kc-reveal{transform:translateY(26px) scale(.985);}
+.kc-reveal.kc-in{transform:none;}
+@media(prefers-reduced-motion:reduce){
+  .kc-grad,.kc-prog-bar,.kc-section-tag::before,.kc-badge-live::after,.kc-plan-pro,.kc-cta-shimmer{animation:none!important;}
+}
+
+/* COMPARATIF 3 LANGUES (section langues) */
+.kc-langcompare{margin-top:28px;border-radius:24px;padding:30px 30px 34px;text-align:center;position:relative;overflow:hidden;}
+.kc-langcompare::before{content:'';position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:80%;height:70%;background:radial-gradient(ellipse at center,rgba(224,48,32,.07),transparent 70%);pointer-events:none;}
+.kc-lc-header{margin-bottom:26px;position:relative;}
+.kc-lc-headline{font-family:var(--display);font-weight:600;font-size:clamp(15px,1.6vw,18px);letter-spacing:.01em;line-height:1.2;color:var(--muted);}
+.kc-lc-caption{display:block;margin-top:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+.kc-lc-row{display:flex;align-items:flex-start;justify-content:center;gap:26px;position:relative;}
+.kc-lc-card{display:flex;flex-direction:column;align-items:center;gap:16px;width:250px;opacity:0;transform:translateY(18px) scale(.95);animation:lcIn .6s var(--ease) forwards;}
+@keyframes lcIn{to{opacity:1;transform:none;}}
+.kc-lc-img{width:100%;border-radius:15px;overflow:hidden;position:relative;box-shadow:0 20px 44px rgba(0,0,0,.2),0 6px 14px rgba(0,0,0,.1);transition:transform .45s var(--ease),box-shadow .45s var(--ease);}
+.kc-lc-img::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(140deg,rgba(255,255,255,.32) 0%,transparent 30%,transparent 72%,rgba(0,0,0,.06) 100%);}
+.kc-lc-img img{width:100%;display:block;aspect-ratio:.716;object-fit:cover;}
+.kc-lc-card:hover .kc-lc-img{transform:translateY(-10px) scale(1.04) rotate(-.6deg);box-shadow:0 32px 60px rgba(0,0,0,.28),0 10px 20px rgba(0,0,0,.13);}
+.kc-lc-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:transparent;box-shadow:none;font-family:var(--display);font-weight:500;font-size:12.5px;color:var(--faint);}
+.kc-lc-flag{font-size:13px;line-height:1;opacity:.85;}
+.kc-lc-sep{flex:none;align-self:flex-start;margin-top:160px;font-family:var(--display);font-weight:300;font-size:22px;color:var(--borderStrong,#C7C7CC);}
+@media(max-width:920px){.kc-lc-card{width:210px;}.kc-lc-sep{margin-top:135px;}}
+@media(max-width:560px){.kc-lc-row{flex-wrap:wrap;gap:16px;}.kc-lc-sep{display:none;}.kc-lc-card{width:44%;}}
+@media(prefers-reduced-motion:reduce){.kc-lc-card{animation:none!important;opacity:1;transform:none;}}
 
 /* RESPONSIVE */
 @media(max-width:920px){

@@ -450,10 +450,6 @@ function MasterSetPreview() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  // — Funnel : capture email → /api/waitlist (Brevo)
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
-
   // — Tarifs : Pro aligné Pokéitem (hors offre à vie) · Premium = le total
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
 
@@ -472,25 +468,6 @@ export default function LandingPage() {
   const SUFFIX = { monthly: '/mois', yearly: '/an' } as const
   const PERMONTH = { pro: '2,92 €/mois', premium: '7,33 €/mois' } as const
   const TRIAL = { monthly: '3 jours offerts', yearly: '7 jours offerts' } as const
-
-  async function submitWaitlist(source: string) {
-    if (status === 'loading') return
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setStatus('err')
-      return
-    }
-    setStatus('loading')
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source }),
-      })
-      setStatus(res.ok ? 'ok' : 'err')
-    } catch {
-      setStatus('err')
-    }
-  }
 
   return (
     <div className="kc-landing" id="top">
@@ -575,31 +552,6 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── REMETTEZ DE L'ORDRE (3 blocs) ──────────────────────── */}
-      <section className="kc-section" id="product">
-        <Reveal>
-          <span className="kc-section-tag">Organiser</span>
-          <h2 className="kc-h2">Remettez de l’ordre dans votre collection.</h2>
-        </Reveal>
-        <div className="kc-grid-3">
-          <Reveal className="kc-feature" style={GLASS}>
-            <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
-            <div className="kc-feature-head"><h3>Ajoutez vos cartes</h3></div>
-            <p>Retrouvez vos cartes Pokémon et ajoutez-les à votre collection en quelques clics.</p>
-          </Reveal>
-          <Reveal className="kc-feature" style={GLASS} delay={80}>
-            <div className="kc-feature-icon" data-live={true}><Glyph d="target" /></div>
-            <div className="kc-feature-head"><h3>Suivez vos séries préférées</h3></div>
-            <p>Voyez où vous en êtes pour chaque série et repérez les cartes qu’il vous manque.</p>
-          </Reveal>
-          <Reveal className="kc-feature" style={GLASS} delay={160}>
-            <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
-            <div className="kc-feature-head"><h3>Gardez un œil sur la valeur</h3></div>
-            <p>Une mise à jour quotidienne de vos cartes pour ne rien louper de leur évolution.</p>
-          </Reveal>
-        </div>
-      </section>
-
       {/* ── SUIVRE, SANS COMPLICATION (2 colonnes) ──────────────── */}
       <section className="kc-ps">
         <Reveal>
@@ -626,6 +578,31 @@ export default function LandingPage() {
               <li>Les langues, les versions et les états sont mieux distingués.</li>
               <li>Vous suivez l’évolution de votre collection avec des repères de marché plus lisibles.</li>
             </ul>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── REMETTEZ DE L'ORDRE (3 blocs) ──────────────────────── */}
+      <section className="kc-section" id="product">
+        <Reveal>
+          <span className="kc-section-tag">Organiser</span>
+          <h2 className="kc-h2">Remettez de l’ordre dans votre collection.</h2>
+        </Reveal>
+        <div className="kc-grid-3">
+          <Reveal className="kc-feature" style={GLASS}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="chart" /></div>
+            <div className="kc-feature-head"><h3>Ajoutez vos cartes</h3></div>
+            <p>Retrouvez vos cartes Pokémon et ajoutez-les à votre collection en quelques clics.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={80}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="target" /></div>
+            <div className="kc-feature-head"><h3>Suivez vos séries préférées</h3></div>
+            <p>Voyez où vous en êtes pour chaque série et repérez les cartes qu’il vous manque.</p>
+          </Reveal>
+          <Reveal className="kc-feature" style={GLASS} delay={160}>
+            <div className="kc-feature-icon" data-live={true}><Glyph d="shield" /></div>
+            <div className="kc-feature-head"><h3>Gardez un œil sur la valeur</h3></div>
+            <p>Une mise à jour quotidienne de vos cartes pour ne rien louper de leur évolution.</p>
           </Reveal>
         </div>
       </section>
@@ -871,48 +848,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── WAITLIST / FUNNEL ──────────────────────────────────── */}
+      {/* ── CTA FINAL (action unique) ──────────────────────────── */}
       <section className="kc-cta-band">
         <Reveal className="kc-cta-card" style={GLASS}>
-          <span className="kc-section-tag">Reste au courant</span>
+          <span className="kc-section-tag">Prêt à commencer ?</span>
           <h2 className="kc-h2 kc-h2-center">
-            De nouveaux outils arrivent.
+            Votre collection, enfin réunie au même endroit.
           </h2>
           <p className="kc-cta-sub">
-            Laisse ton email pour être prévenu des nouveautés. Ou crée ton compte
-            maintenant — c’est gratuit, et tu peux commencer ta collection tout de suite.
+            Créez votre compte gratuitement et commencez à suivre vos cartes dès maintenant — sans carte bancaire.
           </p>
-
-          {status === 'ok' ? (
-            <div className="kc-form-ok">
-              <Glyph d="check" size={18} /> C’est noté — on t’écrit très bientôt.
-            </div>
-          ) : (
-            <div className="kc-form">
-              <input
-                type="email"
-                inputMode="email"
-                placeholder="vous@email.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value)
-                  if (status === 'err') setStatus('idle')
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && submitWaitlist('landing_waitlist')}
-                aria-label="Adresse email"
-              />
-              <button
-                className="kc-btn kc-btn-primary"
-                onClick={() => submitWaitlist('landing_waitlist')}
-                disabled={status === 'loading'}
-              >
-                {status === 'loading' ? 'Envoi…' : 'Me tenir au courant'}
-              </button>
-            </div>
-          )}
-          {status === 'err' && (
-            <p className="kc-form-err">Email invalide ou envoi impossible — réessayez.</p>
-          )}
+          <div className="kc-cta-actions">
+            <a href="/signup" className="kc-btn kc-btn-primary kc-cta-shimmer">
+              Créer mon compte gratuitement
+              <Glyph d="arrow" size={18} />
+            </a>
+          </div>
         </Reveal>
       </section>
 
@@ -1032,7 +983,7 @@ const CSS = `
 .kc-hero{padding-top:148px;padding-bottom:60px;}
 .kc-hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;}
 .kc-eyebrow{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:rgba(224,48,32,.08);padding:7px 13px;border-radius:999px;margin-bottom:22px;}
-.kc-h1{font-size:clamp(38px,5.2vw,64px);font-weight:700;line-height:1.04;}
+.kc-h1{font-size:clamp(36px,4.4vw,54px);font-weight:700;line-height:1.07;text-wrap:balance;}
 .kc-grad{background:linear-gradient(120deg,${SNOW.accent},${SNOW.accent2});-webkit-background-clip:text;background-clip:text;color:transparent;}
 .kc-sub{font-size:clamp(16px,1.6vw,19px);line-height:1.6;color:var(--muted);margin:24px 0 0;max-width:34ch;}
 .kc-hero-cta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;}
@@ -1147,12 +1098,7 @@ const CSS = `
 .kc-cta-band{padding:48px 24px 24px;}
 .kc-cta-card{max-width:680px;margin:0 auto;border-radius:28px;padding:48px 40px;text-align:center;}
 .kc-cta-sub{font-size:16px;color:var(--muted);margin:16px auto 28px;max-width:46ch;line-height:1.55;}
-.kc-form{display:flex;gap:10px;max-width:440px;margin:0 auto;}
-.kc-form input{flex:1;height:50px;padding:0 18px;border-radius:13px;border:none;box-shadow:inset 0 0 0 1px var(--border);background:rgba(255,255,255,.85);font-family:var(--body);font-size:15px;color:var(--ink);outline:none;transition:box-shadow .2s;}
-.kc-form input:focus{box-shadow:inset 0 0 0 2px var(--accent);}
-.kc-form .kc-btn{height:50px;}
-.kc-form-ok{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:16px;color:var(--green);background:rgba(46,158,106,.1);padding:14px 24px;border-radius:14px;}
-.kc-form-err{color:var(--accent);font-size:13px;margin-top:12px;}
+.kc-cta-actions{display:flex;justify-content:center;}
 
 /* FAQ */
 .kc-faq{max-width:780px;}
@@ -1290,7 +1236,6 @@ const CSS = `
   .kc-burger{display:block;}
   .kc-grid-3{grid-template-columns:1fr;}
   .kc-float{max-width:330px;}
-  .kc-form{flex-direction:column;}
   .kc-cta-card{padding:38px 24px;}
 }
 @media(prefers-reduced-motion:reduce){

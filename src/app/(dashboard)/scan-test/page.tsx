@@ -88,7 +88,7 @@ export default function ScanTestPage() {
   async function resolve() {
     const n = nameRes?.name
     const number = num?.number
-    if (!number) { setErr('pas de numero lu'); return }
+    if (!number) { setErr('pas de numéro lu'); return }
     setErr(null); setResolveResult(null)
     const params = new URLSearchParams({ number, lang })
     if (n) params.set('name', n)        // pivot principal si dispo

@@ -264,7 +264,7 @@ export default function ImportPortfolioModal({isOpen,onClose,onImport}:Props) {
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:'6px',marginBottom:'14px'}}>
                 {(Object.keys(mapping) as (keyof ColumnMapping)[]).map(field=>{
-                  const meta:Record<keyof ColumnMapping,{label:string;req?:boolean}>={name:{label:'Nom de la carte',req:true},set:{label:'Set / Serie'},qty:{label:'Quantite',req:true},price:{label:'Prix',req:true},language:{label:'Langue'},condition:{label:'Etat'},grade:{label:'Grade'}}
+                  const meta:Record<keyof ColumnMapping,{label:string;req?:boolean}>={name:{label:'Nom de la carte',req:true},set:{label:'Set / Série'},qty:{label:'Quantité',req:true},price:{label:'Prix',req:true},language:{label:'Langue'},condition:{label:'État'},grade:{label:'Grade'}}
                   return (
                     <div key={field} style={{display:'grid',gridTemplateColumns:'130px 20px 1fr auto',alignItems:'center',gap:'6px'}}>
                       <div style={{fontSize:'11px',color:'#48484A',textAlign:'right',fontFamily:'var(--font-display)'}}>

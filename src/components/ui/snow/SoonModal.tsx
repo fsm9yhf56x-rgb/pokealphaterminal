@@ -54,7 +54,7 @@ export function SoonModal({
           source: `soon-modal-${feature.toLowerCase().replace(/\s/g, '-')}`,
         }),
       })
-      if (!res.ok) throw new Error('Echec de l\'inscription')
+      if (!res.ok) throw new Error('Échec de l\'inscription')
       setDone(true)
     } catch (err: any) {
       setError(err?.message || 'Une erreur est survenue')

@@ -51,16 +51,17 @@ export function CardSidePanel({
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Empeche le panneau (fixed) de recouvrir le footer : on mesure de combien le
-  // footer remonte dans le viewport et on raccourcit le bas du panneau d'autant.
-  const [footerOverlap, setFooterOverlap] = useState(0)
+  // Empeche le panneau (fixed) de recouvrir le footer : on ancre le bas du panneau
+  // juste au-dessus du footer. Modele top+bottom -> la hauteur s'ajuste seule et ne
+  // peut jamais devenir negative, contrairement a un calc(height) qui deborde.
+  const [bottomOffset, setBottomOffset] = useState(24)
   useEffect(() => {
     const footer = document.querySelector('footer') as HTMLElement | null
     if (!footer) return
     const compute = () => {
       const rect = footer.getBoundingClientRect()
-      const overlap = Math.max(0, window.innerHeight - rect.top)
-      setFooterOverlap(overlap)
+      const overlap = Math.max(0, window.innerHeight - rect.top) // px de footer visibles
+      setBottomOffset(Math.max(24, overlap + 16)) // 16px de marge au-dessus du footer
     }
     compute()
     window.addEventListener('scroll', compute, { passive: true })
@@ -77,7 +78,7 @@ export function CardSidePanel({
         position: 'fixed',
         top: '76px',
         right: '24px',
-        height: `calc(100vh - 100px - ${footerOverlap}px)`,
+        bottom: `${bottomOffset}px`,
         zIndex: 40,
         overflowY: 'auto',
         background: 'rgba(255,255,255,0.78)',

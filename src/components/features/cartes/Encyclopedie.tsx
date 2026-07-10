@@ -594,13 +594,20 @@ export function Encyclopedie() {
             : (setIdToEra(sid, (set as any)?.serie) !== 'Autre' ? setIdToEra(sid, (set as any)?.serie) : yearToEra(year))
           ;(cards as any[]).forEach(c => {
             const apiLang = lang === 'JP' ? 'ja' : lang === 'EN' ? 'en' : 'fr'
+            // Image : JP garde c.img (mapping R2 par id, non reconstructible).
+            // FR/EN reconstruisent l'URL NATIVE (comme la fiche via resolveCardImage),
+            // au lieu de gober l'URL EN stockee en dur dans le JSON. c.img devient
+            // alors le FALLBACK (enImage) si l'image native n'existe pas cote source.
+            const nativeImg = lang==='JP'
+              ? (cleanLegacyUrl(c.img) || getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }))
+              : (getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }) || cleanLegacyUrl(c.img))
             enriched.push({
               id: c.id || (sid+'-'+c.lid), localId: c.lid, name: c.n,
-              image: cleanLegacyUrl(c.img) || getCardImageUrl({ lang: lang as string, setId: sid, localId: c.lid }),
+              image: nativeImg,
               rarity: c.r||'',
               setId: sid, setName: set?.name ?? sid, year, era,
               enName: lang==='JP' ? (c.en || enMap.get(sid+'-'+c.lid)) : undefined,
-              enImage: lang==='JP' ? enImgMap.get(sid+'-'+c.lid) : undefined,
+              enImage: lang==='JP' ? enImgMap.get(sid+'-'+c.lid) : (cleanLegacyUrl(c.img) || undefined),
               enSetName: lang==='JP' ? (set as any)?.enName : undefined,
             })
           })

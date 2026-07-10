@@ -24,12 +24,12 @@ export const NAV: NavItem[] = [
       { label:'Missions', href:'/home/missions', soon: {
         feature: 'Missions',
         version: 'v2.0',
-        description: "Transforme ta collection en jeu : gagne de l'XP, enchaine les series, debloque des badges et complete des quetes quotidiennes pour decrocher des recompenses.",
+        description: "Transforme ta collection en jeu : gagne de l'XP, enchaîne les séries, débloque des badges et complète des quêtes quotidiennes pour decrocher des recompenses.",
         bullets: [
           'Niveaux et XP de collectionneur',
           'Badges a debloquer',
           'Quetes du jour',
-          'Recompenses a la cle',
+          'Récompenses à la clé',
         ],
       } },
       { label:'Prochaines Séries', href:'/releases'       },
@@ -47,7 +47,7 @@ export const NAV: NavItem[] = [
     ],
   },
   {
-    label: 'Pokedesk',
+    label: 'Pokédesk',
     href:  '/cartes',
     children: [
       { label:'Cartes',     href:'/cartes'        },
@@ -118,7 +118,7 @@ export const NAV: NavItem[] = [
           description: 'Scanne automatiquement eBay et Cardmarket pour faire remonter les cartes sous-cotees.',
           bullets: [
             'Mise a jour toutes les 5 minutes',
-            'Filtres par etat / langue / source',
+            'Filtres par état / langue / source',
             'Sauvegarde des deals favoris',
             'Click direct vers le vendeur',
           ],

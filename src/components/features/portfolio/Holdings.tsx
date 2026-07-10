@@ -1909,7 +1909,7 @@ export function Holdings() {
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#48484A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                   </div>
                   <div style={{ fontSize:15, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Vitrine complete</div>
-                  <div style={{ fontSize:12, color:'#86868B', maxWidth:280, lineHeight:1.5, fontFamily:'var(--font-body)' }}>Toutes tes cartes sont deja exposees. Retire d&apos;abord une piece pour en ajouter une autre.</div>
+                  <div style={{ fontSize:12, color:'#86868B', maxWidth:280, lineHeight:1.5, fontFamily:'var(--font-body)' }}>Toutes tes cartes sont déjà exposées. Retire d&apos;abord une pièce pour en ajouter une autre.</div>
                 </div>
               ):(
                 <>
@@ -1936,7 +1936,7 @@ export function Holdings() {
                       onBlur={e=>{ e.currentTarget.style.borderColor='rgba(229,229,234,0.7)'; e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}/>
                   </div>
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:8 }}>
-                    {[{k:'all',l:'Toutes'},{k:'top',l:'Top valeur'},{k:'rare',l:'Rares'},{k:'graded',l:'Gradees'},{k:'fr',l:'Francaises'},{k:'vintage',l:'Vintage'}].map(f=>(
+                    {[{k:'all',l:'Toutes'},{k:'top',l:'Top valeur'},{k:'rare',l:'Rares'},{k:'graded',l:'Gradées'},{k:'fr',l:'Françaises'},{k:'vintage',l:'Vintage'}].map(f=>(
                       <button key={f.k} onClick={()=>setVitrineFilter(f.k)} style={{
                         padding:'6px 13px',
                         borderRadius:99,
@@ -2285,7 +2285,7 @@ export function Holdings() {
               {!canAdd&&(
                 <div style={{ display:'flex', alignItems:'center', gap:'7px', padding:'9px 12px', borderRadius:'9px', background:'rgba(0,0,0,.012)', border:'1px solid rgba(255,107,53,.2)', marginBottom:'12px' }}>
                   <span style={{ fontSize:'11px', color:'#EA580C', fontFamily:'var(--font-display)' }}>
-                    {!addForm.set?'Selectionnez une serie':!addForm.name?'Renseignez le nom':!nameValidated?'Selectionnez une carte dans la liste':''}
+                    {!addForm.set?'Sélectionnez une série':!addForm.name?'Renseignez le nom':!nameValidated?'Sélectionnez une carte dans la liste':''}
                     {' '}pour activer le bouton
                   </span>
                 </div>
@@ -2602,7 +2602,7 @@ export function Holdings() {
                 {portfolio.length===0?(
                   <div style={{ textAlign:'center', padding:'64px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px' }}>
                     <div style={{ fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)' }}>Collection vide</div>
-                    <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre premiere carte pour commencer</div>
+                    <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre première carte pour commencer</div>
                     <GlassButton size="lg" onClick={()=>setAddOpen(true)}>
                       + Ajouter ma première carte
                     </GlassButton>
@@ -3443,7 +3443,7 @@ export function Holdings() {
             {/* Header */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22 }}>
               <div>
-                <div style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px', lineHeight:1.2 }}>Ajouter une serie complete</div>
+                <div style={{ fontSize:17, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-0.2px', lineHeight:1.2 }}>Ajouter une série complète</div>
                 <div style={{ fontSize:11, color:'#86868B', marginTop:6, fontFamily:'var(--font-display)' }}>Toutes les cartes seront ajoutees en Raw</div>
               </div>
               <button onClick={()=>setAddSetOpen(false)} style={{
@@ -3518,7 +3518,7 @@ export function Holdings() {
                 backgroundRepeat:'no-repeat',
                 backgroundPosition:'right 14px center',
               }}>
-                <option value="">Selectionner une serie...</option>
+                <option value="">Sélectionner une série...</option>
                 {(() => {
                   const filtered = filterCoreSets(addSetSets)
                   const groups = groupSetsByEra(filtered)
@@ -3576,7 +3576,7 @@ export function Holdings() {
                     </div>
                   </div>
                   <button onClick={()=>{
-                    if(toAdd===0){ showToast('Serie deja complete'); return }
+                    if(toAdd===0){ showToast('Série déjà complète'); return }
                     const newCards: CardItem[] = addSetCards
                       .filter(c=>!existingNums.has(c.localId||''))
                       .map(c=>({
@@ -3609,7 +3609,7 @@ export function Holdings() {
                   }}
                     onMouseEnter={e=>{ e.currentTarget.style.background='#000'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)' }}
                     onMouseLeave={e=>{ e.currentTarget.style.background='#1D1D1F'; e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)' }}>
-                    {toAdd>0 ? 'Ajouter les '+toAdd+' cartes manquantes' : 'Serie deja complete'}
+                    {toAdd>0 ? 'Ajouter les '+toAdd+' cartes manquantes' : 'Série déjà complète'}
                   </button>
                 </div>
               )

@@ -15,7 +15,7 @@ export interface IconicCard {
 // Cartes iconiques curees (fallback si la collection est vide).
 export const ICONIC_CARDS: IconicCard[] = [
   { name: 'Dracaufeu', setId: 'base1', localId: '4', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Mitsuhiro Arita',
-    anecdote: 'Le Dracaufeu du Set de Base est si convoite que des joueurs des annees 90 echangeaient toute leur collection contre un seul exemplaire.' },
+    anecdote: 'Le Dracaufeu du Set de Base est si convoité que des joueurs des années 90 échangeaient toute leur collection contre un seul exemplaire.' },
   { name: 'Pikachu', setId: 'base1', localId: '58', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Atsuko Nishida',
     anecdote: 'Pikachu devait initialement avoir une evolution intermediaire entre Pikachu et Raichu, appelee Gorochu. Elle n\u2019a jamais vu le jour.' },
   { name: 'Mewtwo', setId: 'base1', localId: '10', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Ken Sugimori',

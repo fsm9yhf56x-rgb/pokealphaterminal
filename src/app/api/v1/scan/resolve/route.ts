@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({
           status: 'need_total',
           query: { name: null, number, lang: (lang as any) || null, total: null },
-          message: 'Rapproche-toi pour lire le numero complet (ex : 4/102).',
+          message: 'Rapproche-toi pour lire le numéro complet (ex : 4/102).',
           candidateCount: cands.length,
           candidates: [],
         })

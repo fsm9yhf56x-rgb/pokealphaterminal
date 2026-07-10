@@ -74,6 +74,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
   const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<string | null>(null)
+  const [popOpen, setPopOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -107,7 +108,7 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
     return null
   }
 
-  const companyKeys = companies.map(c => c.company)
+  const companyKeys = companies.map(c => c.company).sort((a, b) => (a === 'PSA' ? -1 : b === 'PSA' ? 1 : 0))
   const active = (selected && companyKeys.includes(selected as 'PSA' | 'CCC')) ? selected : companyKeys[0]
   const sel = companies.find(c => c.company === active) ?? companies[0]
   const meta = COMPANY_META[sel.company]
@@ -183,31 +184,43 @@ export function SpotlightPopExpandable({ cardId, lang }: { cardId: string; lang?
         </div>
       </div>
 
-      {/* Barres par note (détail) */}
-      <div style={{ fontSize: 10.5, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' as const, fontFamily: FONT.display, marginBottom: 12 }}>
-        Population par note
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '74px 1fr', gap: '4px 12px', alignItems: 'center', marginBottom: 4 }}>
-        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: 'uppercase' as const, letterSpacing: '.04em' }}>Note</div>
-        <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: 'uppercase' as const, letterSpacing: '.04em' }}>Population</div>
-      </div>
-      {dist.map((d, i) => {
-        const isPeak = gradeLabel(sel.company, d) === peakGrade
-        const isGem = d.grade === 10
-        return (
-          <div key={`${d.grade}-${d.label}-${i}`} style={{ display: 'grid', gridTemplateColumns: '74px 1fr', gap: '0 12px', alignItems: 'center', padding: '6px 0' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: d.label === 'GOLD' ? '#C77700' : d.label === 'BLACK' ? '#1D1D1F' : SNOW.ink, fontFamily: FONT.data }}>
-              {meta.label} {gradeLabel(sel.company, d)}
-            </div>
-            <div style={{ position: 'relative', height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, width: `${Math.max((d.count / maxCount) * 100, 3)}%`, background: isGem ? `linear-gradient(90deg,${meta.barFrom},${meta.barTo})` : isPeak ? 'linear-gradient(90deg,#A32D2D,#791F1F)' : `linear-gradient(90deg,${meta.barFrom},${meta.barTo})`, borderRadius: 5, opacity: isGem || isPeak ? 1 : 0.82 }} />
-              <div style={{ position: 'absolute', left: 8, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontSize: 11, fontWeight: 700, color: (d.count / maxCount) > 0.28 ? '#fff' : SNOW.muted, fontFamily: FONT.data }}>
-                {d.count.toLocaleString('fr-FR')}
+      {/* Barres par note (détail) — accordéon repliable pour économiser l'espace */}
+      <button
+        onClick={() => setPopOpen(o => !o)}
+        aria-expanded={popOpen}
+        onMouseEnter={(e) => { e.currentTarget.style.background = SNOW.surface }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = popOpen ? SNOW.surface : 'transparent' }}
+        style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 8, background: popOpen ? SNOW.surface : 'transparent', border: `1px solid ${SNOW.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', fontSize: 10.5, color: SNOW.muted, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' as const, fontFamily: FONT.display, marginBottom: popOpen ? 12 : 0, transition: 'background .18s ease, margin .25s ease' }}
+      >
+        <span>Population par note</span>
+        <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 600, letterSpacing: '.04em', color: '#E03020' }}>
+          {popOpen ? 'Masquer' : `Voir les ${dist.length} notes`}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E03020" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ transform: popOpen ? 'rotate(180deg)' : 'none', transition: 'transform .25s ease' }}><path d="M6 9l6 6 6-6" /></svg>
+        </span>
+      </button>
+      <div style={{ maxHeight: popOpen ? 1400 : 0, overflow: 'hidden', transition: 'max-height .35s ease' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '74px 1fr', gap: '4px 12px', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: 'uppercase' as const, letterSpacing: '.04em' }}>Note</div>
+          <div style={{ fontSize: 10, color: SNOW.mutedLight, fontFamily: FONT.data, textTransform: 'uppercase' as const, letterSpacing: '.04em' }}>Population</div>
+        </div>
+        {dist.map((d, i) => {
+          const isPeak = gradeLabel(sel.company, d) === peakGrade
+          const isGem = d.grade === 10
+          return (
+            <div key={`${d.grade}-${d.label}-${i}`} style={{ display: 'grid', gridTemplateColumns: '74px 1fr', gap: '0 12px', alignItems: 'center', padding: '6px 0' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: d.label === 'GOLD' ? '#C77700' : d.label === 'BLACK' ? '#1D1D1F' : SNOW.ink, fontFamily: FONT.data }}>
+                {meta.label} {gradeLabel(sel.company, d)}
+              </div>
+              <div style={{ position: 'relative', height: 20, background: SNOW.surfaceSoft, borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0, width: `${Math.max((d.count / maxCount) * 100, 3)}%`, background: isGem ? `linear-gradient(90deg,${meta.barFrom},${meta.barTo})` : isPeak ? 'linear-gradient(90deg,#A32D2D,#791F1F)' : `linear-gradient(90deg,${meta.barFrom},${meta.barTo})`, borderRadius: 5, opacity: isGem || isPeak ? 1 : 0.82 }} />
+                <div style={{ position: 'absolute', left: 8, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontSize: 11, fontWeight: 700, color: (d.count / maxCount) > 0.28 ? '#fff' : SNOW.muted, fontFamily: FONT.data }}>
+                  {d.count.toLocaleString('fr-FR')}
+                </div>
               </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
       <div style={{ fontSize: 11, color: SNOW.mutedLight, fontFamily: FONT.body, marginTop: 14, lineHeight: 1.5 }}>
         Population {meta.label} officielle{sel.company === 'PSA' ? ', filtrée sur la langue de la carte' : ''}.

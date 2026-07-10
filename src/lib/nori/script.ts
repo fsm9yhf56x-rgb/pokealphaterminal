@@ -48,7 +48,7 @@ export const NORI_TOUR: NoriStep[] = [
   },
   {
     id: 'pokedesk',
-    title: 'Le Pokedesk',
+    title: 'Le Pokédesk',
     lines: [
       'Le catalogue complet : toutes les séries, en FR, EN et JP.',
       'Idéal pour traquer la carte qui te résiste depuis… un certain temps.',
@@ -148,6 +148,6 @@ export const NORI_TOUR: NoriStep[] = [
 // Liens rapides quand on rouvre Nori après le tour (mode "hub")
 export const NORI_LINKS: { label: string; href: string }[] = [
   { label: 'Portfolio', href: P.portfolio },
-  { label: 'Pokedesk', href: P.pokedesk },
+  { label: 'Pokédesk', href: P.pokedesk },
   { label: 'Offres', href: P.abonnement },
 ]

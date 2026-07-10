@@ -56,14 +56,42 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   const tweetText = isShowcase
     ? `Ma Vitrine Kodo Cards — ${showcaseCards.length} pieces d'exception`
     : isCard
-    ? `${card!.name} dans ma collection Kodo Cards ${card!.buyPrice > 0 ? '— ROI +' + roi + '%' : ''}`
+    ? `${card!.name} dans ma collection Pokémon 🔥 sur Kodo Cards #PokemonTCG #Pokemon`
     : context === 'wrapped'
     ? `Mon Wrapped ${wrappedYear} sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
     : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur Kodo Cards`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
 
+  // Image de partage carte : generee par la route serveur /api/share/card (next/og
+  // + sharp). Robuste (jamais de crash / illu vide), qualite max. Remplace html2canvas
+  // pour le cas carte. Les autres contextes (portfolio/wrapped) gardent html2canvas.
+  const ogCardUrl = (() => {
+    if (!isCard || !card) return null
+    const c = card as unknown as { name:string; set?:string; number?:string; setId?:string; lang?:string; rarity?:string; condition?:string; curPrice?:number; image?:string }
+    // URL R2 NATIVE reconstruite a la main (meme convention que la grille/la fiche) :
+    // {base}/{lang}/{setId sans prefixe/suffixe}/{num}.{ext}. Evite l'illu EN sur FR.
+    const R2 = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
+    const sid = String(c.setId || '').replace(/^(fr|en|jp)-/i, '').replace(/-1st$|-shadowless(-ns)?$/i, '')
+    const num = String(c.number || '')
+    const langPath = c.lang === 'JP' ? 'jp' : c.lang === 'EN' ? 'en' : 'fr'
+    const ext = langPath === 'jp' ? 'jpg' : 'webp'
+    const nativeImg = (sid && num) ? `${R2}/${langPath}/${sid}/${num}.${ext}` : String(c.image || '')
+    const p = new URLSearchParams()
+    p.set('name', c.name)
+    p.set('set', c.set || '')
+    p.set('num', num)
+    p.set('lang', c.lang || 'FR')
+    p.set('rarity', c.rarity || '')
+    p.set('cond', c.condition || '')
+    if ((c.curPrice || 0) > 0) p.set('price', String(c.curPrice))
+    p.set('img', nativeImg)
+    return `/api/share/card?${p.toString()}`
+  })()
+
   const generateImage = useCallback(async (): Promise<string|null> => {
+    // Cas carte : l'image est produite par la route serveur (robuste, qualite max).
+    if (ogCardUrl) { setImageUrl(ogCardUrl); return ogCardUrl }
     if (!previewRef.current) return null
     setGenerating(true)
     try {
@@ -76,38 +104,44 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       setGenerating(false)
       return url
     } catch { showToast('Erreur de capture'); setGenerating(false); return null }
-  }, [showToast])
+  }, [ogCardUrl, showToast])
 
-  const download = useCallback((url?: string) => {
-    const src = url || imageUrl
+  const download = useCallback(async (url?: string) => {
+    const src = url || imageUrl || ogCardUrl
     if (!src) return
-    const a = document.createElement('a')
-    a.href = src
-    a.download = `kodocards-${isCard ? card!.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio'}.png`
-    a.click()
-    showToast('Image sauvegardee')
-  }, [imageUrl, isCard, card, showToast])
+    try {
+      // fetch->blob marche pour l'URL serveur ET pour un data URL (html2canvas).
+      const blob = await (await fetch(src)).blob()
+      const obj = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = obj
+      a.download = `kodocards-${isCard ? card!.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio'}.png`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(obj), 1000)
+      showToast('Image sauvegardee')
+    } catch { showToast('Erreur de telechargement') }
+  }, [imageUrl, ogCardUrl, isCard, card, showToast])
 
   const handleShare = useCallback(async (platform: string) => {
     if (platform === 'twitter') {
-      // Generer image si pas encore fait, copier dans clipboard, ouvrir Twitter
-      let imgUrl = imageUrl
-      if (!imgUrl) {
+      const imgUrl = imageUrl || await generateImage()
+      // 1) Partage natif avec IMAGE attachee (mobile + Safari desktop) -> ideal viral.
+      if (imgUrl && navigator.share) {
         try {
-          const html2canvas = (await import('html2canvas')).default
-          if (previewRef.current) {
-            const canvas = await html2canvas(previewRef.current, { scale: 2, backgroundColor: null, useCORS: true, logging: false })
-            imgUrl = canvas.toDataURL('image/png')
-            setImageUrl(imgUrl)
+          const blob = await (await fetch(imgUrl)).blob()
+          const file = new File([blob], 'kodocards.png', { type: 'image/png' })
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ title, text: `${tweetText} ${shareUrl}`, files: [file] })
+            return
           }
-        } catch {}
+        } catch { /* annule ou indispo -> fallback intent */ }
       }
+      // 2) Fallback desktop : copie l'image au presse-papier + ouvre le compose X.
       if (imgUrl) {
         try {
-          const res = await fetch(imgUrl)
-          const blob = await res.blob()
+          const blob = await (await fetch(imgUrl)).blob()
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          showToast('Image copiee — collez (Cmd+V) dans votre tweet')
+          showToast('Image copiee — collez-la (Cmd+V) dans votre tweet')
         } catch {
           showToast('Tweet pret — ajoutez votre image')
         }
@@ -120,22 +154,19 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       setCopied(true); showToast('Lien copie'); setTimeout(() => setCopied(false), 2000)
       return
     }
-    // Story / TikTok / Plus → generate + download + native share
-    if (!imageUrl) await generateImage()
-    // Try native share
-    if (navigator.share) {
+    // Story / TikTok / Plus → image + partage natif (mobile: Insta/TikTok en cible directe)
+    const eff = imageUrl || await generateImage()
+    if (navigator.share && eff) {
       try {
-        const data: ShareData = { title, text: tweetText, url: shareUrl }
-        if (imageUrl) {
-          const blob = await (await fetch(imageUrl)).blob()
-          const file = new File([blob], 'kodocards.png', { type: 'image/png' })
-          if (navigator.canShare?.({ files: [file] })) data.files = [file]
-        }
+        const blob = await (await fetch(eff)).blob()
+        const file = new File([blob], 'kodocards.png', { type: 'image/png' })
+        const data: ShareData = { title, text: `${tweetText} ${shareUrl}` }
+        if (navigator.canShare?.({ files: [file] })) data.files = [file]
         await navigator.share(data)
         return
       } catch {}
     }
-    download()
+    await download(eff || undefined)
     showToast(platform === 'story' ? 'Image prete — ouvrez Instagram' : platform === 'tiktok' ? 'Image prete — ouvrez TikTok' : 'Image sauvegardee')
   }, [imageUrl, generateImage, download, tweetText, shareUrl, title, showToast])
 
@@ -187,8 +218,15 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
           </button>
         </div>
 
-        {/* Aperçu compact (visible) + Story 9:16 hors-écran (capture html2canvas) */}
+        {/* Aperçu : image serveur (carte) ou apercu compact (portfolio/wrapped) */}
         {(() => {
+          if (isCard && ogCardUrl) {
+            return (
+              <div style={{ padding:'4px 24px 16px', display:'flex', justifyContent:'center' }}>
+                <img src={ogCardUrl} alt={card!.name} style={{ width:'62%', maxWidth:240, borderRadius:14, boxShadow:'0 10px 30px rgba(0,0,0,0.18)' }} />
+              </div>
+            )
+          }
           const apFan = isShowcase ? showcaseCards.filter(c=>c.image).slice(0,3)
             : isCard ? (card!.image ? [card!] : [])
             : portfolio.filter(c=>c.image).slice(0,3)

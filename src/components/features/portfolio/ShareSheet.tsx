@@ -2,6 +2,7 @@
 import { formatEUR } from '@/lib/formatPrice'
 
 import { useState, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { getProfile, Ic, D } from './WrappedView'
 
 interface CardItem {
@@ -140,8 +141,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
   if (!open) return null
 
-  return (
-    <div className="kshare-overlay" style={{ position:'fixed', inset:0, background:'rgba(20,20,28,0.30)', backdropFilter:'blur(12px) saturate(120%)', WebkitBackdropFilter:'blur(12px) saturate(120%)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }} onClick={onClose}>
+  return createPortal(
+    <div className="kshare-overlay" style={{ position:'fixed', inset:0, background:'rgba(20,20,28,0.30)', backdropFilter:'blur(12px) saturate(120%)', WebkitBackdropFilter:'blur(12px) saturate(120%)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }} onClick={onClose}>
       <style>{`
         @media (max-width: 767px) {
           .kshare-overlay { align-items: center !important; padding: 16px !important; }
@@ -457,6 +458,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

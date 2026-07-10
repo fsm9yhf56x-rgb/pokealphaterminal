@@ -132,6 +132,20 @@ async function exportLang(lang) {
     }
   }
 
+  // URL NATIVE de la langue en cours de build (priorite sur c.image_url qui est
+  // souvent l'URL EN en dur). Ne renvoie une URL que si imgByPrint confirme que la
+  // langue courante a bien une image pour cette carte -> pas de 404, pas de reseau.
+  function resolveNative(c) {
+    const have = imgByPrint.get(printKey(c))
+    const L = lang.toLowerCase()
+    if (!have || !have.has(L)) return null
+    const pat = TCGDEX_PATTERN_CACHE.get(`${lang}:${c.set_id}`)
+             || TCGDEX_PATTERN_CACHE.get(`${lang}:${normSet(c.set_id)}`)
+    if (pat) return `${pat.base}/${c.local_id}/high.webp`
+    const ext = L === 'jp' ? 'jpg' : 'webp'
+    return `${R2_BASE}/${L}/${normSet(c.set_id)}/${c.local_id}.${ext}`
+  }
+
   function resolveCrossLang(c) {
     const k = printKey(c)
     const have = imgByPrint.get(k)
@@ -164,7 +178,13 @@ async function exportLang(lang) {
       img = ''  // has_image gere cote client par le fallback getCardImageUrl
       if (c.has_image) { imgFromUrl++; imgLang = 'jp' } else { const fb = resolveCrossLang(c); if (fb) { img = fb.url; imgLang = fb.lang; imgFromFallback++ } else imgMissing++ }
     }
-    // Priority 1: explicit image_url (EN/FR ou autres sources)
+    // Priority 1: image NATIVE de la langue courante si elle existe (evite de
+    // recopier une image_url EN sur une carte FR/JP). Sinon, on garde image_url.
+    else if (resolveNative(c)) {
+      img = resolveNative(c)
+      imgLang = lang.toLowerCase()
+      imgFromPattern++
+    }
     else if (c.image_url) {
       img = c.image_url
       imgFromUrl++

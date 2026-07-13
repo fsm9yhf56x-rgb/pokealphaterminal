@@ -164,13 +164,35 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   }
   const ogWrappedUrl = buildWrappedUrl('story')
 
-  // URL "active" (image serveur) selon le contexte : carte / collection / wrapped.
-  const activeStoryUrl = ogCardUrl || ogCollectionUrl || ogWrappedUrl
-  const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide') || buildWrappedUrl('post')
+  // URL de l'image VITRINE. Heros = piece la plus chere, puis les autres.
+  const buildShowcaseUrl = (format: 'story' | 'wide' | 'post'): string | null => {
+    if (!isShowcase) return null
+    const sc = showcaseCards as unknown as Array<{ set?:string; setId?:string; number?:string; lang?:string; curPrice?:number; image?:string }>
+    const R2 = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
+    const ordered = [...sc].sort((a, b) => (b.curPrice || 0) - (a.curPrice || 0)).slice(0, 9)
+    const imgsP = ordered.map(c => {
+      const sid = String(c.setId || '').replace(/^(fr|en|jp)-/i, '').replace(/-1st$|-shadowless(-ns)?$/i, '')
+      const num = String(c.number || '')
+      const lp = c.lang === 'JP' ? 'jp' : c.lang === 'EN' ? 'en' : 'fr'
+      const ext = lp === 'jp' ? 'jpg' : 'webp'
+      return (sid && num) ? `${R2}/${lp}/${sid}/${num}.${ext}` : String(c.image || '')
+    }).filter(Boolean).join('|')
+    const p = new URLSearchParams()
+    p.set('count', String(showcaseCards.length))
+    if (format !== 'story') p.set('format', format)
+    p.set('ref', REFERRAL)
+    p.set('imgs', imgsP)
+    return `/api/share/showcase?${p.toString()}`
+  }
+  const ogShowcaseUrl = buildShowcaseUrl('story')
+
+  // URL "active" (image serveur) selon le contexte.
+  const activeStoryUrl = ogCardUrl || ogCollectionUrl || ogWrappedUrl || ogShowcaseUrl
+  const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide') || buildWrappedUrl('post') || buildShowcaseUrl('wide')
 
   // Prechauffe le cache serveur des l'ouverture (carte ou collection).
   useEffect(() => {
-    if (!open || (!isCard && !isPortfolio && !isWrapped)) return
+    if (!open || (!isCard && !isPortfolio && !isWrapped && !isShowcase)) return
     const urls = [activeStoryUrl, activeWideUrl].filter(Boolean) as string[]
     urls.forEach(u => { const img = new window.Image(); img.src = u })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -330,8 +352,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
         {/* Aperçu : image serveur (carte / collection) ou apercu compact (wrapped/vitrine) */}
         {(() => {
-          if ((isCard && ogCardUrl) || (isPortfolio && ogCollectionUrl) || (isWrapped && ogWrappedUrl)) {
-            const src = (ogCardUrl || ogCollectionUrl || ogWrappedUrl)!
+          if ((isCard && ogCardUrl) || (isPortfolio && ogCollectionUrl) || (isWrapped && ogWrappedUrl) || (isShowcase && ogShowcaseUrl)) {
+            const src = (ogCardUrl || ogCollectionUrl || ogWrappedUrl || ogShowcaseUrl)!
             const wide = (isPortfolio && !!ogCollectionUrl)
             return (
               <div style={{ padding:'4px 24px 16px', display:'flex', justifyContent:'center' }}>

@@ -27,6 +27,21 @@ type AcItem = { label: string; sub?: string; value: string; meta?: string; data?
 const norm = (x: string) => x.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '')
 const cardNum = (c: StaticCard) => parseInt(String(c.lid).replace(/\D/g, ''), 10) || 0
 
+/* Sets promo/collection à repousser en bas du parcours (McDonald's, decks, starters…) */
+const PROMO_SET_RE = /mcdonald|collection|jumbo|promo|precon|trainer kit|starter|black star|league|champion|deck kit/i
+const isPromoSet = (st: { name: string; id: string }) => PROMO_SET_RE.test(st.name) || /^\d{4}/.test(st.id)
+
+/* Score de pertinence d'un set (plus bas = plus pertinent) : préfixe > début de mot > contient */
+function setScore(name: string, id: string, nq: string): number {
+  const nName = norm(name)
+  if (nName.startsWith(nq)) return 0
+  const words = name.split(/[\s\-:'.]+/).map(norm).filter(Boolean)
+  if (words.some(w => w.startsWith(nq))) return 1
+  if (nName.includes(nq)) return 2
+  if (norm(id).includes(nq)) return 3
+  return -1
+}
+
 export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
   /* Target form state */
   const [metric, setMetric] = useState<GoalMetric>('portfolio_value')
@@ -356,10 +371,23 @@ function WishForm({
           fetcher={async (q) => {
             const sets = await getSets(wishLang)
             const nq = norm(q)
-            const list = nq
-              ? sets.filter(st => norm(st.name).includes(nq) || norm(st.id).includes(nq))
-              : sets
-            return list.map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id, data: st }))
+            let ranked: typeof sets
+            if (!nq) {
+              // Parcours : sets principaux d'abord, promos/collections repoussées en bas
+              ranked = [...sets].sort((a, b) => (isPromoSet(a) ? 1 : 0) - (isPromoSet(b) ? 1 : 0))
+            } else {
+              // Recherche classée : prefixe > debut de mot > contient, promos en dernier a score egal
+              ranked = sets
+                .map(st => ({ st, s: setScore(st.name, st.id, nq) }))
+                .filter(x => x.s >= 0)
+                .sort((a, b) =>
+                  a.s - b.s ||
+                  (isPromoSet(a.st) ? 1 : 0) - (isPromoSet(b.st) ? 1 : 0) ||
+                  a.st.name.localeCompare(b.st.name, 'fr')
+                )
+                .map(x => x.st)
+            }
+            return ranked.map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id, data: st }))
           }}
           deps={[wishLang]}
           onPick={(item) => { setWishSetId(item.meta || ''); setWishName(''); setWishCard(null) }}

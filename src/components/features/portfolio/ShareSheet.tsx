@@ -61,7 +61,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     ? `${card!.name}, ajoutée à ma collection. Je référence toutes mes cartes Pokémon sur Kodo Cards — édition, état et cote.`
     : context === 'wrapped'
     ? `Mon année TCG sur Kodo Cards — ${portfolio.length} cartes, ${eurClean(totalCur)}.`
-    : `Ma collection Pokémon : ${portfolio.length} cartes suivies sur Kodo Cards, estimées à ${eurClean(totalCur)}${totalROI > 0 ? ` (+${totalROI}%)` : ''}.`
+    : `Voici ma collection Pokémon 🔥 Je référence tout sur Kodo Cards — cote, éditions, gradation. Et toi, elle vaut combien la tienne ?`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
   const xIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText + ' ' + shareUrl)}`
@@ -127,13 +127,49 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     return `/api/share/collection?${p.toString()}`
   }
   const ogCollectionUrl = buildCollectionUrl('story')
-  // URL "active" (image serveur) selon le contexte : carte OU collection.
-  const activeStoryUrl = ogCardUrl || ogCollectionUrl
+
+  // URL de l'image WRAPPED (story only). Stats reelles : valeur, cartes, series,
+  // gradees, serie favorite, ROI, carte star (piece maitresse).
+  const buildWrappedUrl = (): string | null => {
+    if (!isWrapped) return null
+    const pf = portfolio as unknown as Array<{ set?:string; setId?:string; number?:string; lang?:string; curPrice?:number; image?:string; graded?:boolean; name?:string }>
+    const totalClean = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalCur || 0)
+    const gradedCount = pf.filter(c => c.graded).length
+    const setCount: Record<string, number> = {}
+    for (const c of pf) { const s = c.set || ''; if (s) setCount[s] = (setCount[s] || 0) + 1 }
+    const topSet = Object.entries(setCount).sort((a, b) => b[1] - a[1])[0]?.[0] || ''
+    const star = wBest as unknown as { set?:string; setId?:string; number?:string; lang?:string; image?:string; name?:string } | null
+    let starImg = ''
+    if (star) {
+      const R2 = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
+      const sid = String(star.setId || '').replace(/^(fr|en|jp)-/i, '').replace(/-1st$|-shadowless(-ns)?$/i, '')
+      const num = String(star.number || '')
+      const lp = star.lang === 'JP' ? 'jp' : star.lang === 'EN' ? 'en' : 'fr'
+      const ext = lp === 'jp' ? 'jpg' : 'webp'
+      starImg = (sid && num) ? `${R2}/${lp}/${sid}/${num}.${ext}` : String(star.image || '')
+    }
+    const p = new URLSearchParams()
+    p.set('year', String(wrappedYear))
+    p.set('total', totalClean)
+    p.set('cards', String(portfolio.length))
+    p.set('sets', String(wSets))
+    p.set('graded', String(gradedCount))
+    if (topSet) p.set('topSet', topSet)
+    if (totalROI > 0) p.set('roi', `+${totalROI}%`)
+    if (star?.name) p.set('starName', star.name)
+    if (starImg) p.set('starImg', starImg)
+    p.set('ref', REFERRAL)
+    return `/api/share/wrapped?${p.toString()}`
+  }
+  const ogWrappedUrl = buildWrappedUrl()
+
+  // URL "active" (image serveur) selon le contexte : carte / collection / wrapped.
+  const activeStoryUrl = ogCardUrl || ogCollectionUrl || ogWrappedUrl
   const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide')
 
   // Prechauffe le cache serveur des l'ouverture (carte ou collection).
   useEffect(() => {
-    if (!open || (!isCard && !isPortfolio)) return
+    if (!open || (!isCard && !isPortfolio && !isWrapped)) return
     const urls = [activeStoryUrl, activeWideUrl].filter(Boolean) as string[]
     urls.forEach(u => { const img = new window.Image(); img.src = u })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -293,12 +329,12 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
         {/* Aperçu : image serveur (carte / collection) ou apercu compact (wrapped/vitrine) */}
         {(() => {
-          if ((isCard && ogCardUrl) || (isPortfolio && ogCollectionUrl)) {
-            const src = (ogCardUrl || ogCollectionUrl)!
-            const isColl = isPortfolio && !!ogCollectionUrl
+          if ((isCard && ogCardUrl) || (isPortfolio && ogCollectionUrl) || (isWrapped && ogWrappedUrl)) {
+            const src = (ogCardUrl || ogCollectionUrl || ogWrappedUrl)!
+            const wide = (isPortfolio && !!ogCollectionUrl)
             return (
               <div style={{ padding:'4px 24px 16px', display:'flex', justifyContent:'center' }}>
-                <img src={src} alt={title} style={{ width: isColl ? '78%' : '62%', maxWidth: isColl ? 300 : 240, borderRadius:14, boxShadow:'0 10px 30px rgba(0,0,0,0.18)' }} />
+                <img src={src} alt={title} style={{ width: wide ? '78%' : '62%', maxWidth: wide ? 300 : 240, borderRadius:14, boxShadow:'0 10px 30px rgba(0,0,0,0.18)' }} />
               </div>
             )
           }

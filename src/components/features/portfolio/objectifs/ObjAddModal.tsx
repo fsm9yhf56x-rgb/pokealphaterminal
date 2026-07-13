@@ -2,7 +2,7 @@
 
 import { createPortal } from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
-import { getSets, getCardsForSet } from '@/lib/cardDb'
+import { getSets, getCardsForSet, type StaticCard } from '@/lib/cardDb'
 import type { GoalTarget, WishlistItem, GoalMetric } from '@/lib/useGoals'
 import { GlassButton } from '@/components/ui/GlassButton'
 
@@ -19,6 +19,13 @@ const METRIC_OPTIONS: { value: GoalMetric; label: string; placeholder: string; u
   { value: 'roi_pct',         label: 'ROI annuel %',      placeholder: '15',     unit: '%' },
   { value: 'graded_count',    label: 'Cartes gradées',    placeholder: '10'                 },
 ]
+
+/* Item d'autocomplétion — data porte l'objet source (carte/set) pour l'enrichissement au pick */
+type AcItem = { label: string; sub?: string; value: string; meta?: string; data?: any }
+
+/* Normalisation accent-insensible (identique au modal Holdings) */
+const norm = (x: string) => x.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '')
+const cardNum = (c: StaticCard) => parseInt(String(c.lid).replace(/\D/g, ''), 10) || 0
 
 export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
   /* Target form state */
@@ -311,6 +318,13 @@ function WishForm({
   wishTargetPrice, setWishTargetPrice,
   wishNotes, setWishNotes,
 }: any) {
+  /* id du set résolu (le champ visible garde le nom) + carte pointée pour la vignette */
+  const [wishSetId, setWishSetId] = useState('')
+  const [wishCard, setWishCard] = useState<StaticCard | null>(null)
+
+  /* Changer de langue réinitialise le set résolu + la carte */
+  useEffect(() => { setWishSetId(''); setWishCard(null) }, [wishLang])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <Field label="Langue">
@@ -337,48 +351,57 @@ function WishForm({
       <Field label="Set">
         <AutocompleteInput
           value={wishSet}
-          onChange={setWishSet}
-          placeholder="Ex: 151, Évolutions Prismatiques…"
+          onChange={(v) => { setWishSet(v); setWishSetId(''); setWishName(''); setWishCard(null) }}
+          placeholder="Cherche un set — ex : 151, Prismatique…"
           fetcher={async (q) => {
             const sets = await getSets(wishLang)
-            const ql = q.toLowerCase()
-            return sets
-              .filter(st => st.name.toLowerCase().includes(ql) || st.id.toLowerCase().includes(ql))
-              .slice(0, 8)
-              .map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id }))
+            const nq = norm(q)
+            const list = nq
+              ? sets.filter(st => norm(st.name).includes(nq) || norm(st.id).includes(nq))
+              : sets
+            return list.map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id, data: st }))
           }}
           deps={[wishLang]}
-          onPick={() => setWishName('')}
+          onPick={(item) => { setWishSetId(item.meta || ''); setWishName(''); setWishCard(null) }}
         />
       </Field>
 
       <Field label="Nom de la carte *">
         <AutocompleteInput
           value={wishName}
-          onChange={setWishName}
-          placeholder="Ex: Dracaufeu, Pikachu…"
+          onChange={(v) => { setWishName(v); setWishCard(null) }}
+          placeholder={wishSet ? 'Cherche dans le set — ou parcours la liste' : 'Nom de la carte…'}
           autoFocus
           fetcher={async (q) => {
             const sets = await getSets(wishLang)
-            const match = sets.find(st => st.name === wishSet || st.id === wishSet)
+            const match = sets.find(st => st.id === wishSetId || st.name === wishSet)
             if (!match) return []
             const cards = await getCardsForSet(wishLang, match.id)
-            const ql = q.toLowerCase()
-            return cards
-              .filter(c => c.n && c.n.toLowerCase().includes(ql))
-              .slice(0, 8)
-              .map(c => ({ label: c.n, sub: c.r || ('N° ' + c.lid), value: c.n, meta: c.r || '' }))
+            const sorted = [...cards].sort((a, b) => cardNum(a) - cardNum(b) || String(a.lid).localeCompare(String(b.lid)))
+            const nq = norm(q)
+            const list = nq ? sorted.filter(c => c.n && norm(c.n).startsWith(nq)) : sorted
+            return list.map(c => ({ label: c.n, sub: 'N° ' + c.lid, value: c.n, meta: c.r || '', data: c }))
           }}
-          deps={[wishLang, wishSet]}
+          deps={[wishLang, wishSet, wishSetId]}
           disabled={!wishSet}
           disabledHint="Choisis d'abord un set"
-          onPick={(item) => { if (item.meta) setWishRarity(item.meta) }}
+          onPick={(item) => {
+            const c = item.data as StaticCard | undefined
+            if (c) { setWishCard(c); setWishRarity(c.r || '') }
+          }}
         />
       </Field>
 
-      <Field label="Rareté (optionnel)">
-        <Input value={wishRarity} onChange={setWishRarity} placeholder="Ex: Illustration Rare" />
-      </Field>
+      {/* Carte résolue → vignette (image + rareté + n°). Sinon → rareté libre en fallback. */}
+      {wishCard ? (
+        <Field label="Carte sélectionnée">
+          <SelectedCardCard card={wishCard} onClear={() => setWishCard(null)} />
+        </Field>
+      ) : (
+        <Field label="Rareté (optionnel)">
+          <Input value={wishRarity} onChange={setWishRarity} placeholder="Ex: Illustration Rare" />
+        </Field>
+      )}
 
       <Field label="Priorité">
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -415,6 +438,60 @@ function WishForm({
   )
 }
 
+/* ── Carte sélectionnée (vignette) ──────── */
+
+function SelectedCardCard({ card, onClear }: { card: StaticCard; onClear: () => void }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 12px', borderRadius: 12,
+      background: 'rgba(255,255,255,0.55)',
+      border: '0.5px solid rgba(255,255,255,0.7)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.05)',
+    }}>
+      <div style={{
+        width: 40, height: 56, borderRadius: 6, overflow: 'hidden', flexShrink: 0,
+        background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {card.img
+          ? <img
+              src={card.img}
+              alt={card.n}
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+          : <span style={{ fontSize: 10, color: '#AEAEB2', fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>—</span>}
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: '#1D1D1F',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{card.n}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+          {card.r && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: '#C42E1F',
+              background: 'rgba(224,48,32,0.08)', padding: '2px 7px', borderRadius: 6,
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            }}>{card.r}</span>
+          )}
+          <span style={{ fontSize: 11, color: '#86868B', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>N° {card.lid}</span>
+        </div>
+      </div>
+      <button
+        onClick={onClear}
+        style={{
+          flexShrink: 0, fontSize: 11, fontWeight: 600, color: '#86868B',
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)', padding: 6,
+        }}
+      >Changer</button>
+    </div>
+  )
+}
+
 /* ── Form atoms ─────────────────────────── */
 
 function AutocompleteInput({
@@ -424,34 +501,36 @@ function AutocompleteInput({
   onChange: (v: string) => void
   placeholder?: string
   autoFocus?: boolean
-  fetcher: (q: string) => Promise<{ label: string; sub?: string; value: string; meta?: string }[]>
+  fetcher: (q: string) => Promise<AcItem[]>
   deps?: any[]
-  onPick?: (item: { label: string; sub?: string; value: string; meta?: string }) => void
+  onPick?: (item: AcItem) => void
   disabled?: boolean
   disabledHint?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState<{ label: string; sub?: string; value: string; meta?: string }[]>([])
+  const [focused, setFocused] = useState(false)
+  const [items, setItems] = useState<AcItem[]>([])
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
   const tRef = useRef<any>(null)
 
   useEffect(() => {
     if (disabled) { setItems([]); setOpen(false); return }
-    const q = value.trim()
-    if (q.length < 1) { setItems([]); setOpen(false); return }
     if (tRef.current) clearTimeout(tRef.current)
-    tRef.current = setTimeout(async () => {
+    const run = async () => {
       try {
-        const res = await fetcher(q)
-        setItems(res); setActive(0); setOpen(res.length > 0)
+        const res = await fetcher(value.trim())
+        setItems(res); setActive(0)
+        setOpen(focused && res.length > 0)
       } catch { setItems([]); setOpen(false) }
-    }, 160)
+    }
+    // instantané à l'ouverture (query vide), léger debounce à la frappe
+    tRef.current = setTimeout(run, value.trim() ? 160 : 0)
     return () => { if (tRef.current) clearTimeout(tRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, disabled, ...deps])
+  }, [value, disabled, focused, ...deps])
 
-  function pick(item: { label: string; sub?: string; value: string; meta?: string }) {
+  function pick(item: AcItem) {
     onChange(item.value)
     onPick?.(item)
     setOpen(false)
@@ -467,12 +546,14 @@ function AutocompleteInput({
         placeholder={disabled ? (disabledHint || placeholder) : placeholder}
         autoFocus={autoFocus}
         onFocus={e => {
+          setFocused(true)
           e.currentTarget.style.borderColor = '#1D1D1F'
           e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
           e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(0,0,0,0.05)'
           if (items.length > 0) setOpen(true)
         }}
         onBlur={e => {
+          setFocused(false)
           e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
           e.currentTarget.style.background = 'rgba(255,255,255,0.6)'
           e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.04)'

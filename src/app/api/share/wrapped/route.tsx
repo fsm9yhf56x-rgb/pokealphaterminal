@@ -42,9 +42,18 @@ export async function GET(req: Request) {
   const starImg = searchParams.get('starImg') || ''
   const ref = S(searchParams.get('ref'), 32)
 
-  const W = 1080, H = 1920
+  const fmt = searchParams.get('format')
+  const format = fmt === 'post' ? 'post' : 'story'
+  const isPost = format === 'post'
+  const W = 1080, H = isPost ? 1350 : 1920
+  // echelles adaptatives (post = plus compact)
+  const TITLE = isPost ? 96 : 158
+  const YEARSUB = isPost ? 44 : 66
+  const HERO = isPost ? 74 : 92
+  const STAT = isPost ? 46 : 58
+  const NAME = isPost ? 34 : 44
   const shareLink = `https://kodocards.com${ref ? `?ref=${ref}` : ''}`
-  const cardW = 400, cardH = Math.round(cardW / 0.716)
+  const cardW = isPost ? 268 : 400, cardH = Math.round(cardW / 0.716)
 
   try {
     const [star, qr, dmMed, dmBold] = await Promise.all([
@@ -73,30 +82,35 @@ export async function GET(req: Request) {
           </div>
 
           {/* Titre WRAPPED */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
-            <div style={{ display: 'flex', fontSize: '158px', fontWeight: 700, color: '#fff', letterSpacing: '-6px', lineHeight: 0.9 }}>WRAPPED</div>
-            <div style={{ display: 'flex', fontSize: '66px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: '12px', marginTop: '4px' }}>{year}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: isPost ? '12px' : '20px', marginBottom: isPost ? '14px' : '0' }}>
+            <div style={{ display: 'flex', fontSize: `${TITLE}px`, fontWeight: 700, color: '#fff', letterSpacing: '-6px', lineHeight: 0.9 }}>WRAPPED</div>
+            <div style={{ display: 'flex', fontSize: `${YEARSUB}px`, fontWeight: 700, color: 'rgba(255,255,255,0.92)', letterSpacing: '12px', marginTop: '4px' }}>{year}</div>
           </div>
 
+          {/* spacer haut (centre le bloc sans deborder) */}
+          <div style={{ display: 'flex', flex: 1 }} />
+
           {/* Carte star */}
-          <div style={{ display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {star ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                <div style={{ display: 'flex', fontSize: '22px', fontWeight: 700, color: 'rgba(255,255,255,0.8)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '24px' }}>Ta pièce maîtresse</div>
-                {/* glow lumineux derriere la carte (effet waouh Spotify) */}
-                <div style={{ position: 'absolute', top: '60px', left: '50%', width: '640px', height: '640px', transform: 'translateX(-50%)', display: 'flex', background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 60%)' }} />
+                <div style={{ display: 'flex', fontSize: isPost ? '18px' : '22px', fontWeight: 700, color: 'rgba(255,255,255,0.8)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: isPost ? '16px' : '24px' }}>Ta pièce maîtresse</div>
+                <div style={{ position: 'absolute', top: '60px', left: '50%', width: isPost ? '520px' : '640px', height: isPost ? '520px' : '640px', transform: 'translateX(-50%)', display: 'flex', background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 60%)' }} />
                 <div style={{ display: 'flex', borderRadius: '26px', padding: '6px', background: 'rgba(255,255,255,0.35)', boxShadow: '0 40px 90px rgba(0,0,0,0.5)' }}>
                   <img src={star} width={cardW} height={cardH} style={{ borderRadius: '20px', objectFit: 'cover' }} />
                 </div>
-                {starName ? (<div style={{ display: 'flex', fontSize: '44px', fontWeight: 700, color: '#fff', marginTop: '26px', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>{starName}</div>) : null}
+                {starName ? (<div style={{ display: 'flex', fontSize: `${NAME}px`, fontWeight: 700, color: '#fff', marginTop: isPost ? '16px' : '26px', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>{starName}</div>) : null}
               </div>
             ) : null}
           </div>
 
+          {/* espace carte -> valeur (garanti, pas de chevauchement) */}
+          <div style={{ display: 'flex', height: isPost ? '30px' : '44px' }} />
+
           {/* Valeur héros + ROI */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '22px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: isPost ? '12px' : '22px' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ display: 'flex', fontSize: '92px', fontWeight: 700, color: '#fff', letterSpacing: '-3px', lineHeight: 1, textShadow: '0 2px 30px rgba(0,0,0,0.25)' }}>{total}</div>
+              <div style={{ display: 'flex', fontSize: `${HERO}px`, fontWeight: 700, color: '#fff', letterSpacing: '-3px', lineHeight: 1, textShadow: '0 2px 30px rgba(0,0,0,0.25)' }}>{total}</div>
               {hasRoi ? (<div style={{ display: 'flex', marginLeft: '16px', marginBottom: '14px', fontSize: '26px', fontWeight: 700, color: '#fff', background: 'rgba(61,220,109,0.9)', borderRadius: '999px', padding: '6px 16px' }}>{roi}</div>) : null}
             </div>
             <div style={{ display: 'flex', fontSize: '18px', fontWeight: 700, color: 'rgba(255,255,255,0.72)', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '8px' }}>Valeur de la collection</div>
@@ -105,17 +119,17 @@ export async function GET(req: Request) {
           {/* Ligne stats : Cartes · Séries · Gradées */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 60px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ display: 'flex', fontSize: '58px', fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{cardsN}</div>
+              <div style={{ display: 'flex', fontSize: `${STAT}px`, fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{cardsN}</div>
               <div style={{ display: 'flex', fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '8px' }}>Cartes</div>
             </div>
             <div style={{ display: 'flex', width: '1px', height: '66px', background: 'rgba(255,255,255,0.25)' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ display: 'flex', fontSize: '58px', fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{setsN}</div>
+              <div style={{ display: 'flex', fontSize: `${STAT}px`, fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{setsN}</div>
               <div style={{ display: 'flex', fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '8px' }}>Séries</div>
             </div>
             <div style={{ display: 'flex', width: '1px', height: '66px', background: 'rgba(255,255,255,0.25)' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ display: 'flex', fontSize: '58px', fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{gradedN || '0'}</div>
+              <div style={{ display: 'flex', fontSize: `${STAT}px`, fontWeight: 700, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>{gradedN || '0'}</div>
               <div style={{ display: 'flex', fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '8px' }}>Gradées</div>
             </div>
           </div>
@@ -130,8 +144,11 @@ export async function GET(req: Request) {
             </div>
           ) : null}
 
+          {/* spacer bas */}
+          <div style={{ display: 'flex', flex: 1 }} />
+
           {/* Footer */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '40px 60px 56px', marginTop: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 60px 56px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', fontSize: '30px', fontWeight: 700, color: '#fff' }}>kodocards.com</div>
               <div style={{ display: 'flex', fontSize: '22px', fontWeight: 700, color: 'rgba(255,255,255,0.85)', marginTop: '6px' }}>Fais ton Wrapped →</div>

@@ -60,7 +60,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     : isCard
     ? `${card!.name}, ajoutée à ma collection. Je référence toutes mes cartes Pokémon sur Kodo Cards — édition, état et cote.`
     : context === 'wrapped'
-    ? `Mon année TCG sur Kodo Cards — ${portfolio.length} cartes, ${eurClean(totalCur)}.`
+    ? `Mon Wrapped ${wrappedYear} est là 🔥 Une année de collection Pokémon résumée. Fais le tien sur Kodo Cards 👇`
     : `Voici ma collection Pokémon 🔥 Je référence tout sur Kodo Cards — cote, éditions, gradation. Et toi, elle vaut combien la tienne ?`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
@@ -130,7 +130,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
   // URL de l'image WRAPPED (story only). Stats reelles : valeur, cartes, series,
   // gradees, serie favorite, ROI, carte star (piece maitresse).
-  const buildWrappedUrl = (): string | null => {
+  const buildWrappedUrl = (format: 'story' | 'post'): string | null => {
     if (!isWrapped) return null
     const pf = portfolio as unknown as Array<{ set?:string; setId?:string; number?:string; lang?:string; curPrice?:number; image?:string; graded?:boolean; name?:string }>
     const totalClean = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalCur || 0)
@@ -158,14 +158,15 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     if (totalROI > 0) p.set('roi', `+${totalROI}%`)
     if (star?.name) p.set('starName', star.name)
     if (starImg) p.set('starImg', starImg)
+    if (format === 'post') p.set('format', 'post')
     p.set('ref', REFERRAL)
     return `/api/share/wrapped?${p.toString()}`
   }
-  const ogWrappedUrl = buildWrappedUrl()
+  const ogWrappedUrl = buildWrappedUrl('story')
 
   // URL "active" (image serveur) selon le contexte : carte / collection / wrapped.
   const activeStoryUrl = ogCardUrl || ogCollectionUrl || ogWrappedUrl
-  const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide')
+  const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide') || buildWrappedUrl('post')
 
   // Prechauffe le cache serveur des l'ouverture (carte ou collection).
   useEffect(() => {

@@ -1,20 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import type { ObjAggregates, EnrichedWish } from './Objectifs'
 import { SnowButton } from '@/components/ui/snow'
 import { usePersona } from '@/lib/usePersona'
+import { getCardImageUrl } from '@/lib/images'
 
 /**
  * Wishlist : cartes à acheter avec priorité (★/★★/★★★) + prix cible.
  * Alerte visuelle si prix actuel ≤ prix cible (TODO: enrichir via prices_v2).
  */
 export function ObjWishlist({
-  agg, onAdd, onDelete, onAcquire,
+  agg, onAdd, onDelete, onAcquire, onUpdate,
 }: {
   agg: ObjAggregates
   onAdd: () => void
   onDelete: (id: string) => void
   onAcquire: (id: string) => void
+  onUpdate: (id: string, patch: { target_price?: number | null; priority?: 1 | 2 | 3; acquired?: boolean }) => void
 }) {
   const { isCollector } = usePersona()
   const wishlist = agg.enrichedWishlist
@@ -125,6 +128,7 @@ export function ObjWishlist({
             isCollector={isCollector}
             onDelete={onDelete}
             onAcquire={onAcquire}
+            onUpdate={onUpdate}
           />
         ))}
 
@@ -161,18 +165,29 @@ export function ObjWishlist({
 }
 
 function WishRow({
-  wish, isLast, isCollector, onDelete, onAcquire,
+  wish, isLast, isCollector, onDelete, onAcquire, onUpdate,
 }: {
   wish: EnrichedWish
   isLast: boolean
   isCollector: boolean
   onDelete: (id: string) => void
   onAcquire: (id: string) => void
+  onUpdate: (id: string, patch: { target_price?: number | null; priority?: 1 | 2 | 3; acquired?: boolean }) => void
 }) {
-  const stars = '★'.repeat(wish.priority) + '☆'.repeat(3 - wish.priority)
   const starColor = wish.priority === 3 ? '#C42E1F'
                    : wish.priority === 2 ? '#C9A84C'
                    : '#AEAEB2'
+
+  const [editPrice, setEditPrice] = useState(false)
+  const [priceVal, setPriceVal] = useState('')
+
+  const commitPrice = () => {
+    setEditPrice(false)
+    const t = priceVal.trim()
+    const parsed = t === '' ? null : parseFloat(t)
+    const newVal = parsed != null && !isNaN(parsed) && parsed >= 0 ? parsed : null
+    if (newVal !== (wish.target_price ?? null)) onUpdate(wish.id, { target_price: newVal })
+  }
 
   return (
     <div style={{
@@ -192,38 +207,51 @@ function WishRow({
       e.currentTarget.style.background = (!isCollector && wish.alertActive) ? 'rgba(29,158,117,0.08)' : 'transparent'
     }}
     >
-      {/* Stars */}
-      <div style={{
-        textAlign: 'center' as const,
-        fontSize: 13,
-        fontFamily: 'var(--font-sora, Sora, sans-serif)',
-        color: starColor,
-        letterSpacing: '-1px',
-      }}>{stars}</div>
+      {/* Priority (editable) */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+        {[1, 2, 3].map(n => (
+          <span
+            key={n}
+            onClick={() => onUpdate(wish.id, { priority: n as 1 | 2 | 3 })}
+            title={`Priorité ${n}/3`}
+            style={{
+              cursor: 'pointer',
+              fontSize: 13,
+              lineHeight: 1,
+              color: n <= wish.priority ? starColor : '#D8D8DC',
+              fontFamily: 'var(--font-sora, Sora, sans-serif)',
+              transition: 'color .1s',
+            }}
+          >★</span>
+        ))}
+      </div>
 
-      {/* Card name + meta */}
-      <div style={{ minWidth: 0 }}>
-        <div style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: '#1D1D1F',
-          fontFamily: 'var(--font-sora, Sora, sans-serif)',
-          whiteSpace: 'nowrap' as const,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          marginBottom: 3,
-          letterSpacing: '-0.01em',
-        }}>{wish.card_name}</div>
-        <div style={{
-          fontSize: 10.5,
-          color: '#86868B',
-          fontFamily: 'var(--font-sora, Sora, sans-serif)',
-          whiteSpace: 'nowrap' as const,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
-          {[wish.set_name, wish.lang, wish.rarity].filter(Boolean).join(' · ') || '—'}
-          {wish.notes && <span style={{ fontStyle: 'italic' as const }}> · {wish.notes}</span>}
+      {/* Card thumb + name + meta */}
+      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <CardThumb lang={wish.lang} setId={wish.set_id} localId={wish.card_number} name={wish.card_name} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#1D1D1F',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            whiteSpace: 'nowrap' as const,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            marginBottom: 3,
+            letterSpacing: '-0.01em',
+          }}>{wish.card_name}</div>
+          <div style={{
+            fontSize: 10.5,
+            color: '#86868B',
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            whiteSpace: 'nowrap' as const,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {[wish.set_name, wish.lang, wish.rarity].filter(Boolean).join(' · ') || '—'}
+            {wish.notes && <span style={{ fontStyle: 'italic' as const }}> · {wish.notes}</span>}
+          </div>
         </div>
       </div>
 
@@ -243,14 +271,44 @@ function WishRow({
         </div>
       ) : (
         <>
-          {/* Target price */}
-          <div style={{
-            textAlign: 'right' as const,
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: '#1D1D1F',
-            fontFamily: 'var(--font-data, "Space Mono", monospace)',
-          }}>{wish.target_price ? formatEUR(wish.target_price) : '—'}</div>
+          {/* Target price (editable) */}
+          {editPrice ? (
+            <input
+              type="number"
+              autoFocus
+              value={priceVal}
+              onChange={e => setPriceVal(e.target.value)}
+              onBlur={commitPrice}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.currentTarget.blur() }
+                else if (e.key === 'Escape') { setPriceVal(wish.target_price != null ? String(wish.target_price) : ''); setEditPrice(false) }
+              }}
+              style={{
+                width: '100%', textAlign: 'right' as const, padding: '4px 6px',
+                fontSize: 12.5, fontFamily: 'var(--font-data, "Space Mono", monospace)',
+                border: '1px solid #C42E1F', borderRadius: 6, outline: 'none',
+                background: '#FFFFFF', color: '#1D1D1F', boxSizing: 'border-box' as const,
+              }}
+            />
+          ) : (
+            <div
+              onClick={() => { setPriceVal(wish.target_price != null ? String(wish.target_price) : ''); setEditPrice(true) }}
+              title="Modifier le prix cible"
+              style={{
+                textAlign: 'right' as const,
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: wish.target_price != null ? '#1D1D1F' : '#AEAEB2',
+                fontFamily: 'var(--font-data, "Space Mono", monospace)',
+                cursor: 'pointer',
+                borderRadius: 6,
+                padding: '2px 4px',
+                transition: 'background .1s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >{wish.target_price != null ? formatEUR(wish.target_price) : '—'}</div>
+          )}
 
           {/* Current price (cote actuelle Kodo) */}
           <div style={{
@@ -342,6 +400,31 @@ function iconBtnStyle(): React.CSSProperties {
     transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
     fontFamily: 'var(--font-sora, Sora, sans-serif)',
   }
+}
+
+function CardThumb({ lang, setId, localId, name }: {
+  lang?: string | null; setId?: string | null; localId?: string | null; name?: string
+}) {
+  const url = getCardImageUrl({ lang: lang || 'EN', setId: setId || undefined, localId: localId || undefined })
+  return (
+    <div style={{
+      width: 30, height: 42, borderRadius: 5, overflow: 'hidden', flexShrink: 0,
+      background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.05)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {url ? (
+        <img
+          src={url}
+          alt={name || ''}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={e => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }}
+        />
+      ) : (
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#C7C7CC', fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>{(name || '?').charAt(0).toUpperCase()}</span>
+      )}
+    </div>
+  )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {

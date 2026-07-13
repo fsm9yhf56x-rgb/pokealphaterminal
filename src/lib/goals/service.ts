@@ -92,20 +92,66 @@ export async function createWishItem(
     RETURNING id, card_name, set_id, set_name, card_number, lang, rarity, priority,
               target_price, notes, acquired, created_at, updated_at
   `) as any[]
-  return normalizeWish(rows[0])
+  const item = normalizeWish(rows[0])
+  // Cote calculée à l'insert aussi (pas seulement au GET) → affichage immédiat, cohérent avec le modal.
+  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number)
+  return item
 }
 
 export async function deleteWishItem(userId: string, id: string): Promise<void> {
   await sql`DELETE FROM goal_wishlist WHERE id = ${id} AND user_id = ${userId}`
 }
 
-export async function setWishAcquired(userId: string, id: string, acquired: boolean): Promise<void> {
-  await sql`UPDATE goal_wishlist
-            SET acquired = ${acquired}, updated_at = now()
-            WHERE id = ${id} AND user_id = ${userId}`
+export async function updateWishItem(
+  userId: string,
+  id: string,
+  patch: { acquired?: boolean; target_price?: number | null; priority?: 1 | 2 | 3 },
+): Promise<WishlistItem | null> {
+  // Mises à jour par champ fourni (undefined = ne pas toucher ; null = effacer). Toujours scopé user.
+  if (patch.acquired !== undefined) {
+    await sql`UPDATE goal_wishlist SET acquired = ${patch.acquired}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  if (patch.target_price !== undefined) {
+    await sql`UPDATE goal_wishlist SET target_price = ${patch.target_price}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  if (patch.priority !== undefined) {
+    await sql`UPDATE goal_wishlist SET priority = ${patch.priority}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  const rows = (await sql`
+    SELECT id, card_name, set_id, set_name, card_number, lang, rarity, priority,
+           target_price, notes, acquired, created_at, updated_at
+    FROM goal_wishlist WHERE id = ${id} AND user_id = ${userId} LIMIT 1
+  `) as any[]
+  if (!rows[0]) return null
+  const item = normalizeWish(rows[0])
+  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number)
+  return item
 }
 
 /* ── Normalisation (NUMERIC string → number) ── */
+
+/** Cote actuelle d'une carte (règle Kodo headline), depuis price_signals. Null si non résoluble. */
+async function priceForItem(
+  lang: string | null | undefined,
+  setId: string | null | undefined,
+  cardNumber: string | null | undefined,
+): Promise<number | null> {
+  if (!lang || !setId || !cardNumber) return null
+  const cardId = `${String(lang).toLowerCase()}-${setId}-${cardNumber}`
+  const rows = (await sql`
+    SELECT CASE
+             WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
+             WHEN lower(kc.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
+             ELSE ps.fair_value_eur
+           END AS current_price
+    FROM k_cards kc
+    LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
+    WHERE kc.id = ${cardId}
+    LIMIT 1
+  `) as any[]
+  const v = rows[0]?.current_price
+  return v == null ? null : Number(v)
+}
 
 function normalizeTarget(r: any): GoalTarget {
   return {

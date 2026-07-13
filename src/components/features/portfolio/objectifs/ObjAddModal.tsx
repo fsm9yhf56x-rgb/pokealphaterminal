@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
 import { getSets, getCardsForSet, type StaticCard } from '@/lib/cardDb'
 import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
+import { getCardImageUrl } from '@/lib/images'
 import type { GoalTarget, WishlistItem, GoalMetric } from '@/lib/useGoals'
 import { GlassButton } from '@/components/ui/GlassButton'
 
@@ -418,7 +419,7 @@ function WishForm({
                 )
                 .map(x => x.st)
             }
-            return ranked.map(st => ({ label: st.name, sub: st.id, value: st.name, meta: st.id, data: st }))
+            return ranked.map(st => ({ label: st.name, value: st.name, meta: st.id, data: st }))
           }}
           deps={[wishLang]}
           onPick={(item) => { setWishSetId(item.meta || ''); setWishName(''); setWishCard(null) }}
@@ -439,7 +440,7 @@ function WishForm({
             const sorted = [...cards].sort((a, b) => cardNum(a) - cardNum(b) || String(a.lid).localeCompare(String(b.lid)))
             const nq = norm(q)
             const list = nq ? sorted.filter(c => c.n && norm(c.n).startsWith(nq)) : sorted
-            return list.map(c => ({ label: c.n, sub: 'N° ' + c.lid, value: c.n, meta: c.r || '', data: { card: c, setId: match.id } }))
+            return list.map(c => ({ label: c.n, value: c.n, meta: c.r || '', data: { card: c, setId: match.id } }))
           }}
           deps={[wishLang, wishSet, wishSetId]}
           disabled={!wishSet}
@@ -454,7 +455,7 @@ function WishForm({
       {/* Carte résolue → vignette (image + rareté + n°). Sinon → rareté libre en fallback. */}
       {wishCard ? (
         <Field label="Carte sélectionnée">
-          <SelectedCardCard card={wishCard} onClear={() => setWishCard(null)} />
+          <SelectedCardCard card={wishCard} lang={wishLang} setId={wishSetId} onClear={() => setWishCard(null)} />
         </Field>
       ) : (
         <Field label="Rareté (optionnel)">
@@ -519,7 +520,7 @@ function WishForm({
 
 /* ── Carte sélectionnée (vignette) ──────── */
 
-function SelectedCardCard({ card, onClear }: { card: StaticCard; onClear: () => void }) {
+function SelectedCardCard({ card, lang, setId, onClear }: { card: StaticCard; lang: string; setId: string; onClear: () => void }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -532,15 +533,27 @@ function SelectedCardCard({ card, onClear }: { card: StaticCard; onClear: () => 
         width: 40, height: 56, borderRadius: 6, overflow: 'hidden', flexShrink: 0,
         background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {card.img
-          ? <img
-              src={card.img}
+        {(() => {
+          // R2 d'abord (gère le .jpg JP), repli TCGdex (card.img) si R2 manque l'image.
+          const primary = getCardImageUrl({ lang: lang || 'EN', setId: setId || undefined, localId: card.lid })
+          const fallback = card.img || ''
+          const initial = primary || fallback
+          return initial ? (
+            <img
+              src={initial}
               alt={card.n}
               loading="lazy"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+              onError={e => {
+                const img = e.currentTarget as HTMLImageElement
+                if (fallback && img.src !== fallback) img.src = fallback
+                else img.style.display = 'none'
+              }}
             />
-          : <span style={{ fontSize: 10, color: '#AEAEB2', fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>—</span>}
+          ) : (
+            <span style={{ fontSize: 10, color: '#AEAEB2', fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>—</span>
+          )
+        })()}
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{

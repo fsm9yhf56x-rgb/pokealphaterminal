@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth/helpers'
-import { createWishItem, deleteWishItem, setWishAcquired } from '@/lib/goals/service'
+import { createWishItem, deleteWishItem, updateWishItem } from '@/lib/goals/service'
 import type { NewWishlistItem } from '@/lib/goals/types'
 
 export const dynamic = 'force-dynamic'
@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-/** PATCH /api/v1/goals/wishlist — marque acquired (body: { id, acquired? }). */
+/** PATCH /api/v1/goals/wishlist — met à jour acquired / target_price / priority (body: { id, ... }). */
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user?.id) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -68,9 +68,18 @@ export async function PATCH(req: NextRequest) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_json' }, { status: 400 }) }
   if (!body?.id) return NextResponse.json({ error: 'missing_id' }, { status: 400 })
 
+  const patch: { acquired?: boolean; target_price?: number | null; priority?: 1 | 2 | 3 } = {}
+  if (typeof body.acquired === 'boolean') patch.acquired = body.acquired
+  if (body.target_price !== undefined) patch.target_price = body.target_price == null ? null : Number(body.target_price)
+  if (body.priority !== undefined) patch.priority = (Number(body.priority) as 1 | 2 | 3) || 2
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: 'nothing_to_update' }, { status: 400 })
+  }
+
   try {
-    await setWishAcquired(user.id, String(body.id), body.acquired !== false)
-    return NextResponse.json({ ok: true })
+    const updated = await updateWishItem(user.id, String(body.id), patch)
+    if (!updated) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+    return NextResponse.json(updated)
   } catch (e) {
     console.error('[PATCH /api/v1/goals/wishlist]', e)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })

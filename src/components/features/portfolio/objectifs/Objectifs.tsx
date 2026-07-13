@@ -99,14 +99,15 @@ export function Objectifs() {
         />
       )}
 
-      <ObjSetCompletion agg={agg} />
-
       <ObjWishlist
         agg={agg}
         onAdd={() => setModalOpen('wish')}
         onDelete={goals.deleteWishItem}
         onAcquire={goals.markAcquired}
+        onUpdate={goals.updateWishItem}
       />
+
+      <ObjSetCompletion agg={agg} />
 
       {modalOpen && (
         <ObjAddModal

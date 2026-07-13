@@ -3,6 +3,7 @@
 import { createPortal } from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
 import { getSets, getCardsForSet, type StaticCard } from '@/lib/cardDb'
+import { resolveDisplayPrice } from '@/lib/pricing/resolveDisplayPrice'
 import type { GoalTarget, WishlistItem, GoalMetric } from '@/lib/useGoals'
 import { GlassButton } from '@/components/ui/GlassButton'
 
@@ -26,6 +27,10 @@ type AcItem = { label: string; sub?: string; value: string; meta?: string; data?
 /* Normalisation accent-insensible (identique au modal Holdings) */
 const norm = (x: string) => x.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '')
 const cardNum = (c: StaticCard) => parseInt(String(c.lid).replace(/\D/g, ''), 10) || 0
+
+/* Formatage euro propre (2 décimales sous 100 €, entier au-delà) */
+const fmtEur = (n: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: n < 100 ? 2 : 0 }).format(n)
 
 /* Sets promo/collection à repousser en bas du parcours (McDonald's, decks, starters…) */
 const PROMO_SET_RE = /mcdonald|collection|jumbo|promo|precon|trainer kit|starter|black star|league|champion|deck kit/i
@@ -57,6 +62,9 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
   const [wishPriority, setWishPriority] = useState<1 | 2 | 3>(2)
   const [wishTargetPrice, setWishTargetPrice] = useState('')
   const [wishNotes, setWishNotes] = useState('')
+  /* Set résolu (le champ visible garde le nom) + carte pointée (pour vignette ET payload) */
+  const [wishSetId, setWishSetId] = useState('')
+  const [wishCard, setWishCard] = useState<StaticCard | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [limitErr, setLimitErr] = useState(false)
@@ -94,7 +102,9 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
       } else {
         const res = await onAddWish({
           card_name: wishName.trim(),
+          set_id: wishSetId || null,
           set_name: wishSet.trim() || null,
+          card_number: wishCard?.lid ?? null,
           lang: wishLang,
           rarity: wishRarity.trim() || null,
           priority: wishPriority,
@@ -237,6 +247,8 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
             wishPriority={wishPriority} setWishPriority={setWishPriority}
             wishTargetPrice={wishTargetPrice} setWishTargetPrice={setWishTargetPrice}
             wishNotes={wishNotes} setWishNotes={setWishNotes}
+            wishSetId={wishSetId} setWishSetId={setWishSetId}
+            wishCard={wishCard} setWishCard={setWishCard}
           />
         )}
 
@@ -332,13 +344,32 @@ function WishForm({
   wishPriority, setWishPriority,
   wishTargetPrice, setWishTargetPrice,
   wishNotes, setWishNotes,
+  wishSetId, setWishSetId,
+  wishCard, setWishCard,
 }: any) {
-  /* id du set résolu (le champ visible garde le nom) + carte pointée pour la vignette */
-  const [wishSetId, setWishSetId] = useState('')
-  const [wishCard, setWishCard] = useState<StaticCard | null>(null)
+  const [cardPrice, setCardPrice] = useState<number | null>(null)
+  const [priceLoading, setPriceLoading] = useState(false)
 
-  /* Changer de langue réinitialise le set résolu + la carte */
-  useEffect(() => { setWishSetId(''); setWishCard(null) }, [wishLang])
+  /* Cote actuelle de la carte pointée : route Kodo + règle headline officielle (resolveDisplayPrice) */
+  useEffect(() => {
+    if (!wishCard || !wishSetId) { setCardPrice(null); setPriceLoading(false); return }
+    const cardId = `${String(wishLang).toLowerCase()}-${wishSetId}-${wishCard.lid}`
+    let cancelled = false
+    setPriceLoading(true); setCardPrice(null)
+    fetch('/api/kodo/prices/' + encodeURIComponent(cardId))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (cancelled) return
+        if (!d) { setCardPrice(null); return }
+        const { price } = resolveDisplayPrice(wishLang, undefined, {
+          fairValueEur: d.fairValueEur, coteFrEur: d.coteFrEur, fairValueMethod: d.fairValueMethod,
+        })
+        setCardPrice(price)
+      })
+      .catch(() => { if (!cancelled) setCardPrice(null) })
+      .finally(() => { if (!cancelled) setPriceLoading(false) })
+    return () => { cancelled = true }
+  }, [wishCard, wishSetId, wishLang])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -347,7 +378,7 @@ function WishForm({
           {(['FR', 'EN', 'JP'] as const).map(l => (
             <button
               key={l}
-              onClick={() => { setWishLang(l); setWishSet(''); setWishName('') }}
+              onClick={() => { setWishLang(l); setWishSet(''); setWishName(''); setWishSetId(''); setWishCard(null) }}
               style={{
                 flex: 1, padding: '10px 0',
                 background: wishLang === l ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
@@ -408,14 +439,14 @@ function WishForm({
             const sorted = [...cards].sort((a, b) => cardNum(a) - cardNum(b) || String(a.lid).localeCompare(String(b.lid)))
             const nq = norm(q)
             const list = nq ? sorted.filter(c => c.n && norm(c.n).startsWith(nq)) : sorted
-            return list.map(c => ({ label: c.n, sub: 'N° ' + c.lid, value: c.n, meta: c.r || '', data: c }))
+            return list.map(c => ({ label: c.n, sub: 'N° ' + c.lid, value: c.n, meta: c.r || '', data: { card: c, setId: match.id } }))
           }}
           deps={[wishLang, wishSet, wishSetId]}
           disabled={!wishSet}
           disabledHint="Choisis d'abord un set"
           onPick={(item) => {
-            const c = item.data as StaticCard | undefined
-            if (c) { setWishCard(c); setWishRarity(c.r || '') }
+            const d = item.data as { card: StaticCard; setId: string } | undefined
+            if (d?.card) { setWishCard(d.card); setWishSetId(d.setId); setWishRarity(d.card.r || '') }
           }}
         />
       </Field>
@@ -457,6 +488,26 @@ function WishForm({
 
       <Field label="Prix cible (€)">
         <Input type="number" value={wishTargetPrice} onChange={setWishTargetPrice} placeholder="Ex: 80" />
+        {wishCard && (
+          <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>
+            {priceLoading ? (
+              <span style={{ color: '#AEAEB2' }}>Cote actuelle…</span>
+            ) : cardPrice != null ? (
+              <>
+                <span style={{ color: '#6E6E73' }}>
+                  Cote actuelle : <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtEur(cardPrice)}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setWishTargetPrice(String(Math.round(cardPrice)))}
+                  style={{ color: '#C42E1F', fontWeight: 700, background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'var(--font-sora, Sora, sans-serif)', fontSize: 11.5 }}
+                >Utiliser</button>
+              </>
+            ) : (
+              <span style={{ color: '#AEAEB2' }}>Cote indisponible pour cette carte</span>
+            )}
+          </div>
+        )}
       </Field>
 
       <Field label="Notes (optionnel)">

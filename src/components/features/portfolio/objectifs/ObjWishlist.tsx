@@ -252,13 +252,14 @@ function WishRow({
             fontFamily: 'var(--font-data, "Space Mono", monospace)',
           }}>{wish.target_price ? formatEUR(wish.target_price) : '—'}</div>
 
-          {/* Current price (placeholder for now) */}
+          {/* Current price (cote actuelle Kodo) */}
           <div style={{
             textAlign: 'right' as const,
             fontSize: 12.5,
-            color: '#AEAEB2',
+            fontWeight: wish.alertActive ? 700 : 400,
+            color: wish.current_price != null ? (wish.alertActive ? '#1D9E75' : '#1D1D1F') : '#AEAEB2',
             fontFamily: 'var(--font-data, "Space Mono", monospace)',
-          }}>—</div>
+          }}>{wish.current_price != null ? formatEUR(wish.current_price) : '—'}</div>
 
           {/* Alert state */}
           <div style={{ textAlign: 'right' as const }}>

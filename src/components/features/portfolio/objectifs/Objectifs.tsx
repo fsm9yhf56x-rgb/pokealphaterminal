@@ -193,7 +193,11 @@ function computeAggregates(
   /* Wishlist enriched (alerts later when prices are joined) */
   const enrichedWishlist: EnrichedWish[] = wishlist
     .filter(w => !w.acquired)
-    .map(w => ({ ...w, alertActive: false }))
+    .map(w => {
+      const cur = w.current_price ?? null
+      const alertActive = cur != null && w.target_price != null && cur <= w.target_price
+      return { ...w, alertActive }
+    })
 
   const wishlistAlerts = enrichedWishlist.filter(w => w.alertActive).length
 

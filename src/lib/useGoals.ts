@@ -1,40 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from './supabase'
 import { useAuth } from './useAuth'
+import type { GoalTarget, WishlistItem } from './goals/types'
+
+// Ré-export pour compat : d'autres modules importent ces types depuis '@/lib/useGoals'.
+export type { GoalMetric, GoalTarget, WishlistItem } from './goals/types'
 
 const LS_TARGETS  = 'pka_goal_targets'
 const LS_WISHLIST = 'pka_goal_wishlist'
-
-export type GoalMetric = 'portfolio_value' | 'cards_count' | 'roi_pct' | 'graded_count'
-
-export interface GoalTarget {
-  id: string
-  metric: GoalMetric
-  target_value: number
-  unit?: string | null
-  label?: string | null
-  deadline?: string | null
-  created_at?: string
-  updated_at?: string
-}
-
-export interface WishlistItem {
-  id: string
-  card_name: string
-  set_id?: string | null
-  set_name?: string | null
-  card_number?: string | null
-  lang?: string | null
-  rarity?: string | null
-  priority: 1 | 2 | 3
-  target_price?: number | null
-  notes?: string | null
-  acquired?: boolean
-  created_at?: string
-  updated_at?: string
-}
 
 function readLS<T>(key: string): T[] {
   try {
@@ -46,24 +20,42 @@ function writeLS<T>(key: string, items: T[]) {
   try { localStorage.setItem(key, JSON.stringify(items)) } catch {}
 }
 
+/** Fetch JSON avec cookies de session (same-origin) + erreurs typées (status + payload). */
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    credentials: 'same-origin',
+    headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
+    ...init,
+  })
+  const json = await res.json().catch(() => null)
+  if (!res.ok) {
+    const err: any = new Error((json && json.error) || 'request_failed')
+    err.status = res.status
+    err.payload = json
+    throw err
+  }
+  return json as T
+}
+
 export function useGoals() {
   const { user, loading: authLoading } = useAuth()
 
-  const [targets, setTargets]     = useState<GoalTarget[]>([])
-  const [wishlist, setWishlist]   = useState<WishlistItem[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [usingBDD, setUsingBDD]   = useState(false)
+  const [targets, setTargets]   = useState<GoalTarget[]>([])
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [usingBDD, setUsingBDD] = useState(false)
 
   /* ── Load ──────────────────────────────────── */
   useEffect(() => {
     if (authLoading) return
     loadGoals()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, authLoading])
 
   async function loadGoals() {
     setLoading(true)
 
-    // No user: localStorage only
+    // Invité : localStorage uniquement
     if (!user) {
       setTargets(readLS<GoalTarget>(LS_TARGETS))
       setWishlist(readLS<WishlistItem>(LS_WISHLIST))
@@ -72,47 +64,42 @@ export function useGoals() {
       return
     }
 
-    // Try BDD first
-    const [tRes, wRes] = await Promise.all([
-      (supabase as any).from('goal_targets').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      (supabase as any).from('goal_wishlist').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-    ])
-
-    if (tRes.error || wRes.error) {
-      // BDD unavailable (table missing or 402) → fallback localStorage
-      console.warn('Goals BDD unavailable, fallback to localStorage', tRes.error || wRes.error)
+    // Connecté : source de vérité = API v1 (Neon côté serveur)
+    try {
+      const data = await api<{ targets: GoalTarget[]; wishlist: WishlistItem[] }>('/api/v1/goals')
+      setTargets(data.targets || [])
+      setWishlist(data.wishlist || [])
+      setUsingBDD(true)
+    } catch (e) {
+      // API indisponible (réseau / 5xx) → repli localStorage, comme avant
+      console.warn('Goals API unavailable, fallback to localStorage', e)
       setTargets(readLS<GoalTarget>(LS_TARGETS))
       setWishlist(readLS<WishlistItem>(LS_WISHLIST))
       setUsingBDD(false)
-    } else {
-      setTargets((tRes.data || []) as GoalTarget[])
-      setWishlist((wRes.data || []) as WishlistItem[])
-      setUsingBDD(true)
     }
     setLoading(false)
   }
 
   /* ── Targets CRUD ──────────────────────────── */
   const addTarget = useCallback(async (target: Omit<GoalTarget, 'id'>) => {
+    if (user && usingBDD) {
+      try {
+        const created = await api<GoalTarget>('/api/v1/goals/targets', {
+          method: 'POST',
+          body: JSON.stringify(target),
+        })
+        setTargets(prev => [created, ...prev])
+        return created
+      } catch (e) {
+        console.warn('addTarget failed, fallback localStorage', e)
+      }
+    }
     const newTarget: GoalTarget = {
       id: crypto.randomUUID(),
       ...target,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
-
-    if (user && usingBDD) {
-      const { data, error } = await (supabase as any)
-        .from('goal_targets')
-        .insert({ user_id: user.id, ...target })
-        .select()
-        .single()
-      if (!error && data) {
-        setTargets(prev => [data as GoalTarget, ...prev])
-        return data as GoalTarget
-      }
-    }
-    // Fallback LS
     const updated = [newTarget, ...targets]
     setTargets(updated)
     writeLS(LS_TARGETS, updated)
@@ -121,7 +108,8 @@ export function useGoals() {
 
   const deleteTarget = useCallback(async (id: string) => {
     if (user && usingBDD) {
-      await (supabase as any).from('goal_targets').delete().eq('id', id)
+      try { await api(`/api/v1/goals/targets?id=${encodeURIComponent(id)}`, { method: 'DELETE' }) }
+      catch (e) { console.warn('deleteTarget failed', e) }
     }
     const updated = targets.filter(t => t.id !== id)
     setTargets(updated)
@@ -130,28 +118,28 @@ export function useGoals() {
 
   /* ── Wishlist CRUD ─────────────────────────── */
   const addWishItem = useCallback(async (item: Omit<WishlistItem, 'id'>) => {
+    if (user && usingBDD) {
+      try {
+        const created = await api<WishlistItem>('/api/v1/goals/wishlist', {
+          method: 'POST',
+          body: JSON.stringify(item),
+        })
+        setWishlist(prev => [created, ...prev])
+        return created
+      } catch (e: any) {
+        // Verrou serveur (plan Gratuit, 3 max) : renvoyer la sentinelle, NE PAS écrire en local
+        // (sinon l'item apparaît puis disparaît au refresh).
+        if (e?.status === 403 && e?.payload?.error === 'wishlist_limit') {
+          return { error: 'wishlist_limit' as const }
+        }
+        console.warn('addWishItem failed, fallback localStorage', e)
+      }
+    }
     const newItem: WishlistItem = {
       id: crypto.randomUUID(),
       ...item,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    }
-
-    if (user && usingBDD) {
-      const { data, error } = await (supabase as any)
-        .from('goal_wishlist')
-        .insert({ user_id: user.id, ...item })
-        .select()
-        .single()
-      if (!error && data) {
-        setWishlist(prev => [data as WishlistItem, ...prev])
-        return data as WishlistItem
-      }
-      // Verrou serveur (plan Gratuit, 3 max) : ne PAS fallback en localStorage,
-      // sinon l'item apparait localement puis disparait au refresh.
-      if (error && (error.code === 'wishlist_limit' || error.message === 'wishlist_limit')) {
-        return { error: 'wishlist_limit' as const }
-      }
     }
     const updated = [newItem, ...wishlist]
     setWishlist(updated)
@@ -161,7 +149,8 @@ export function useGoals() {
 
   const deleteWishItem = useCallback(async (id: string) => {
     if (user && usingBDD) {
-      await (supabase as any).from('goal_wishlist').delete().eq('id', id)
+      try { await api(`/api/v1/goals/wishlist?id=${encodeURIComponent(id)}`, { method: 'DELETE' }) }
+      catch (e) { console.warn('deleteWishItem failed', e) }
     }
     const updated = wishlist.filter(w => w.id !== id)
     setWishlist(updated)
@@ -170,7 +159,8 @@ export function useGoals() {
 
   const markAcquired = useCallback(async (id: string) => {
     if (user && usingBDD) {
-      await (supabase as any).from('goal_wishlist').update({ acquired: true }).eq('id', id)
+      try { await api('/api/v1/goals/wishlist', { method: 'PATCH', body: JSON.stringify({ id, acquired: true }) }) }
+      catch (e) { console.warn('markAcquired failed', e) }
     }
     const updated = wishlist.map(w => w.id === id ? { ...w, acquired: true } : w)
     setWishlist(updated)

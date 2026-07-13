@@ -1,7 +1,7 @@
 "use client"
 import { formatEUR } from '@/lib/formatPrice'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { getProfile, Ic, D } from './WrappedView'
 
@@ -32,6 +32,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   const [imageUrl, setImageUrl] = useState<string|null>(null)
   const [copied, setCopied] = useState(false)
   const [refCopied, setRefCopied] = useState(false)
+  const [xStep, setXStep] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
 
   const isCard = context === 'card' && card
@@ -56,27 +57,31 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   const tweetText = isShowcase
     ? `Ma Vitrine Kodo Cards — ${showcaseCards.length} pieces d'exception`
     : isCard
-    ? `${card!.name} dans ma collection Pokémon 🔥 sur Kodo Cards #PokemonTCG #Pokemon`
+    ? `${card!.name}, ajoutée à ma collection. Je référence toutes mes cartes Pokémon sur Kodo Cards — édition, état et cote.`
     : context === 'wrapped'
     ? `Mon Wrapped ${wrappedYear} sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
     : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur Kodo Cards`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
+  const xIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText + ' ' + shareUrl)}`
 
   // Image de partage carte : generee par la route serveur /api/share/card (next/og
   // + sharp). Robuste (jamais de crash / illu vide), qualite max. Remplace html2canvas
   // pour le cas carte. Les autres contextes (portfolio/wrapped) gardent html2canvas.
-  const ogCardUrl = (() => {
+  // Construit l'URL de la route image serveur pour le format demande (story 9:16 |
+  // post 4:5). Ajoute grade (badge), ref (QR parrainage) et image FR native.
+  const buildOgUrl = (format: 'story' | 'post' | 'wide'): string | null => {
     if (!isCard || !card) return null
-    const c = card as unknown as { name:string; set?:string; number?:string; setId?:string; lang?:string; rarity?:string; condition?:string; curPrice?:number; image?:string }
-    // URL R2 NATIVE reconstruite a la main (meme convention que la grille/la fiche) :
-    // {base}/{lang}/{setId sans prefixe/suffixe}/{num}.{ext}. Evite l'illu EN sur FR.
+    const c = card as unknown as { name:string; set?:string; number?:string; setId?:string; lang?:string; rarity?:string; condition?:string; curPrice?:number; image?:string; graded?:boolean; gradeCompany?:string; gradeValue?:string; psa?:number }
     const R2 = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
     const sid = String(c.setId || '').replace(/^(fr|en|jp)-/i, '').replace(/-1st$|-shadowless(-ns)?$/i, '')
     const num = String(c.number || '')
     const langPath = c.lang === 'JP' ? 'jp' : c.lang === 'EN' ? 'en' : 'fr'
     const ext = langPath === 'jp' ? 'jpg' : 'webp'
     const nativeImg = (sid && num) ? `${R2}/${langPath}/${sid}/${num}.${ext}` : String(c.image || '')
+    const grader = String(c.gradeCompany || (c.psa ? 'PSA' : ''))
+    const gradeVal = String(c.gradeValue || (c.psa ? c.psa : ''))
+    const grade = (c.graded && grader && gradeVal) ? `${grader} ${gradeVal}` : ''
     const p = new URLSearchParams()
     p.set('name', c.name)
     p.set('set', c.set || '')
@@ -85,9 +90,22 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     p.set('rarity', c.rarity || '')
     p.set('cond', c.condition || '')
     if ((c.curPrice || 0) > 0) p.set('price', String(c.curPrice))
+    if (grade) { p.set('grade', grade); p.set('grader', grader) }
+    p.set('ref', REFERRAL)
+    if (format !== 'story') p.set('format', format)
     p.set('img', nativeImg)
     return `/api/share/card?${p.toString()}`
-  })()
+  }
+  const ogCardUrl = buildOgUrl('story')
+
+  // Prechauffe le cache serveur (story + post) des l'ouverture, pendant que
+  // l'utilisateur regarde -> l'image est prete instantanement au clic.
+  useEffect(() => {
+    if (!open || !isCard) return
+    const urls = [buildOgUrl('story'), buildOgUrl('wide')].filter(Boolean) as string[]
+    urls.forEach(u => { const img = new window.Image(); img.src = u })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isCard, ogCardUrl])
 
   const generateImage = useCallback(async (): Promise<string|null> => {
     // Cas carte : l'image est produite par la route serveur (robuste, qualite max).
@@ -124,29 +142,37 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
 
   const handleShare = useCallback(async (platform: string) => {
     if (platform === 'twitter') {
-      const imgUrl = imageUrl || await generateImage()
-      // 1) Partage natif avec IMAGE attachee (mobile + Safari desktop) -> ideal viral.
-      if (imgUrl && navigator.share) {
+      // X/feed : format wide 1200x675 paysage (s'affiche parfaitement dans le fil X,
+      // sans recadrage, contrairement au portrait qui est rogne au centre).
+      const imgUrl = buildOgUrl('wide') || imageUrl || await generateImage()
+      const isMobile = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+      // MOBILE : partage natif avec image -> X en cible directe, zero friction.
+      if (isMobile && imgUrl && navigator.share) {
         try {
           const blob = await (await fetch(imgUrl)).blob()
           const file = new File([blob], 'kodocards.png', { type: 'image/png' })
           if (navigator.canShare?.({ files: [file] })) {
-            await navigator.share({ title, text: `${tweetText} ${shareUrl}`, files: [file] })
+            await navigator.share({ text: `${tweetText} ${shareUrl}`, files: [file] })
             return
           }
-        } catch { /* annule ou indispo -> fallback intent */ }
+        } catch { /* annule -> on ne retombe pas sur download, on ouvre X */ }
       }
-      // 2) Fallback desktop : copie l'image au presse-papier + ouvre le compose X.
+      // DESKTOP : X ne propose pas de depot d'image programmatique. On copie l'image
+      // automatiquement puis on affiche une ETAPE claire (impossible a rater) qui
+      // explique de coller l'image avant d'ouvrir X.
       if (imgUrl) {
         try {
           const blob = await (await fetch(imgUrl)).blob()
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          showToast('Image copiee — collez-la (Cmd+V) dans votre tweet')
+          setXStep(true)   // -> overlay "Image copiee, colle-la sur X"
+          return
         } catch {
-          showToast('Tweet pret — ajoutez votre image')
+          // Copie impossible -> on ouvre X directement (texte + lien, sans image)
+          window.open(xIntent, '_blank')
+          return
         }
       }
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText + ' ' + shareUrl)}`, '_blank')
+      window.open(xIntent, '_blank')
       return
     }
     if (platform === 'link') {
@@ -196,6 +222,21 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       }} onClick={e => e.stopPropagation()}>
 
         <div aria-hidden style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:120, height:1, background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent)', pointerEvents:'none' }}/>
+
+        {/* Etape X : image copiee -> explique de la coller (impossible a rater) */}
+        {xStep && (
+          <div style={{ position:'absolute', inset:0, zIndex:6, background:'rgba(255,255,255,0.97)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', borderRadius:24, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'36px 32px', textAlign:'center' }}>
+            <div style={{ fontSize:46, marginBottom:14 }}>📋</div>
+            <div style={{ fontSize:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:10 }}>Image copiée&nbsp;!</div>
+            <div style={{ fontSize:14.5, color:'#48484A', lineHeight:1.55, marginBottom:26, maxWidth:300 }}>
+              Sur X, colle-la dans ton tweet avec <b style={{ color:'#1D1D1F' }}>⌘V</b> (ou <b style={{ color:'#1D1D1F' }}>Ctrl+V</b>). Le texte et le lien sont déjà prêts.
+            </div>
+            <button onClick={()=>{ window.open(xIntent, '_blank'); setXStep(false) }} style={{ padding:'15px 30px', borderRadius:13, background:'#1D1D1F', color:'#fff', border:'none', fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'var(--font-display)', width:'100%', maxWidth:280 }}>
+              Ouvrir X&nbsp;→
+            </button>
+            <button onClick={()=>setXStep(false)} style={{ marginTop:14, background:'none', border:'none', color:'#86868B', fontSize:13, cursor:'pointer', fontFamily:'var(--font-display)' }}>Annuler</button>
+          </div>
+        )}
 
         {/* Header */}
         <div style={{ padding:'22px 24px 16px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>

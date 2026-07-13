@@ -54,13 +54,14 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     ? Math.round(((card!.curPrice - card!.buyPrice) / card!.buyPrice) * 100)
     : totalROI
 
+  const eurClean = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0)
   const tweetText = isShowcase
-    ? `Ma Vitrine Kodo Cards — ${showcaseCards.length} pieces d'exception`
+    ? `Ma Vitrine Kodo Cards — ${showcaseCards.length} pièces d'exception`
     : isCard
     ? `${card!.name}, ajoutée à ma collection. Je référence toutes mes cartes Pokémon sur Kodo Cards — édition, état et cote.`
     : context === 'wrapped'
-    ? `Mon Wrapped ${wrappedYear} sur Kodo Cards — ${portfolio.length} cartes, ${formatEUR(totalCur, 'big')}`
-    : `Mon portfolio Pokemon TCG : ${formatEUR(totalCur, 'big')}${totalBuy > 0 ? ' (+' + totalROI + '%)' : ''} sur Kodo Cards`
+    ? `Mon année TCG sur Kodo Cards — ${portfolio.length} cartes, ${eurClean(totalCur)}.`
+    : `Ma collection Pokémon : ${portfolio.length} cartes suivies sur Kodo Cards, estimées à ${eurClean(totalCur)}${totalROI > 0 ? ` (+${totalROI}%)` : ''}.`
 
   const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
   const xIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText + ' ' + shareUrl)}`
@@ -98,18 +99,49 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   }
   const ogCardUrl = buildOgUrl('story')
 
-  // Prechauffe le cache serveur (story + post) des l'ouverture, pendant que
-  // l'utilisateur regarde -> l'image est prete instantanement au clic.
+  // URL de l'image collection (contexte portfolio) : valeur totale propre, nb
+  // cartes/series, ROI, URLs natives des top cartes (mur). Meme moteur serveur.
+  const isPortfolio = context === 'portfolio'
+  const buildCollectionUrl = (format: 'story' | 'wide'): string | null => {
+    if (!isPortfolio) return null
+    const totalClean = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalCur || 0)
+    const pf = portfolio as unknown as Array<{ set?:string; setId?:string; number?:string; lang?:string; curPrice?:number; image?:string }>
+    const nSets = new Set(pf.map(c => c.set)).size
+    const R2 = 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
+    const top = [...pf].sort((a, b) => (b.curPrice || 0) - (a.curPrice || 0)).slice(0, 30)
+    const imgsP = top.map(c => {
+      const sid = String(c.setId || '').replace(/^(fr|en|jp)-/i, '').replace(/-1st$|-shadowless(-ns)?$/i, '')
+      const num = String(c.number || '')
+      const lp = c.lang === 'JP' ? 'jp' : c.lang === 'EN' ? 'en' : 'fr'
+      const ext = lp === 'jp' ? 'jpg' : 'webp'
+      return (sid && num) ? `${R2}/${lp}/${sid}/${num}.${ext}` : String(c.image || '')
+    }).filter(Boolean).join('|')
+    const p = new URLSearchParams()
+    p.set('total', totalClean)
+    p.set('cards', String(portfolio.length))
+    p.set('sets', String(nSets))
+    if (totalROI > 0) p.set('roi', `+${totalROI}%`)
+    p.set('ref', REFERRAL)
+    if (format === 'wide') p.set('format', 'wide')
+    p.set('imgs', imgsP)
+    return `/api/share/collection?${p.toString()}`
+  }
+  const ogCollectionUrl = buildCollectionUrl('story')
+  // URL "active" (image serveur) selon le contexte : carte OU collection.
+  const activeStoryUrl = ogCardUrl || ogCollectionUrl
+  const activeWideUrl = buildOgUrl('wide') || buildCollectionUrl('wide')
+
+  // Prechauffe le cache serveur des l'ouverture (carte ou collection).
   useEffect(() => {
-    if (!open || !isCard) return
-    const urls = [buildOgUrl('story'), buildOgUrl('wide')].filter(Boolean) as string[]
+    if (!open || (!isCard && !isPortfolio)) return
+    const urls = [activeStoryUrl, activeWideUrl].filter(Boolean) as string[]
     urls.forEach(u => { const img = new window.Image(); img.src = u })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isCard, ogCardUrl])
+  }, [open, isCard, isPortfolio, activeStoryUrl])
 
   const generateImage = useCallback(async (): Promise<string|null> => {
-    // Cas carte : l'image est produite par la route serveur (robuste, qualite max).
-    if (ogCardUrl) { setImageUrl(ogCardUrl); return ogCardUrl }
+    // Carte ou collection : image produite par la route serveur (robuste).
+    if (activeStoryUrl) { setImageUrl(activeStoryUrl); return activeStoryUrl }
     if (!previewRef.current) return null
     setGenerating(true)
     try {
@@ -122,10 +154,10 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       setGenerating(false)
       return url
     } catch { showToast('Erreur de capture'); setGenerating(false); return null }
-  }, [ogCardUrl, showToast])
+  }, [activeStoryUrl, showToast])
 
   const download = useCallback(async (url?: string) => {
-    const src = url || imageUrl || ogCardUrl
+    const src = url || imageUrl || activeStoryUrl
     if (!src) return
     try {
       // fetch->blob marche pour l'URL serveur ET pour un data URL (html2canvas).
@@ -138,13 +170,13 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       setTimeout(() => URL.revokeObjectURL(obj), 1000)
       showToast('Image sauvegardee')
     } catch { showToast('Erreur de telechargement') }
-  }, [imageUrl, ogCardUrl, isCard, card, showToast])
+  }, [imageUrl, activeStoryUrl, isCard, card, showToast])
 
   const handleShare = useCallback(async (platform: string) => {
     if (platform === 'twitter') {
       // X/feed : format wide 1200x675 paysage (s'affiche parfaitement dans le fil X,
       // sans recadrage, contrairement au portrait qui est rogne au centre).
-      const imgUrl = buildOgUrl('wide') || imageUrl || await generateImage()
+      const imgUrl = activeWideUrl || imageUrl || await generateImage()
       const isMobile = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
       // MOBILE : partage natif avec image -> X en cible directe, zero friction.
       if (isMobile && imgUrl && navigator.share) {
@@ -259,12 +291,14 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
           </button>
         </div>
 
-        {/* Aperçu : image serveur (carte) ou apercu compact (portfolio/wrapped) */}
+        {/* Aperçu : image serveur (carte / collection) ou apercu compact (wrapped/vitrine) */}
         {(() => {
-          if (isCard && ogCardUrl) {
+          if ((isCard && ogCardUrl) || (isPortfolio && ogCollectionUrl)) {
+            const src = (ogCardUrl || ogCollectionUrl)!
+            const isColl = isPortfolio && !!ogCollectionUrl
             return (
               <div style={{ padding:'4px 24px 16px', display:'flex', justifyContent:'center' }}>
-                <img src={ogCardUrl} alt={card!.name} style={{ width:'62%', maxWidth:240, borderRadius:14, boxShadow:'0 10px 30px rgba(0,0,0,0.18)' }} />
+                <img src={src} alt={title} style={{ width: isColl ? '78%' : '62%', maxWidth: isColl ? 300 : 240, borderRadius:14, boxShadow:'0 10px 30px rgba(0,0,0,0.18)' }} />
               </div>
             )
           }

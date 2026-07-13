@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { ObjAggregates, EnrichedTarget } from './Objectifs'
 import type { GoalMetric } from '@/lib/useGoals'
 
@@ -8,11 +9,12 @@ import type { GoalMetric } from '@/lib/useGoals'
  * 4 metrics supportés : portfolio_value, cards_count, roi_pct, graded_count.
  */
 export function ObjFinancialTargets({
-  agg, onAddTarget, onDelete,
+  agg, onAddTarget, onDelete, onEdit,
 }: {
   agg: ObjAggregates
   onAddTarget: () => void
   onDelete: (id: string) => void
+  onEdit: (target: EnrichedTarget) => void
 }) {
   return (
     <div>
@@ -30,7 +32,7 @@ export function ObjFinancialTargets({
         gap: '14px',
       }}>
         {agg.enrichedTargets.map(t => (
-          <TargetCard key={t.id} target={t} onDelete={onDelete} />
+          <TargetCard key={t.id} target={t} onDelete={onDelete} onEdit={onEdit} />
         ))}
 
         {/* Add card slot */}
@@ -41,11 +43,14 @@ export function ObjFinancialTargets({
 }
 
 function TargetCard({
-  target, onDelete,
+  target, onDelete, onEdit,
 }: {
   target: EnrichedTarget
   onDelete: (id: string) => void
+  onEdit: (target: EnrichedTarget) => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   const ringColor = target.achieved
     ? '#1D9E75'
     : target.pct >= 75 ? '#C9A84C'
@@ -73,8 +78,8 @@ function TargetCard({
       {target.achieved && (
         <div style={{
           position: 'absolute' as const,
-          top: 12,
-          right: 12,
+          top: 14,
+          right: 46,
           padding: '4px 10px',
           background: 'rgba(29,158,117,0.12)',
           color: '#1D9E75',
@@ -182,41 +187,50 @@ function TargetCard({
         </div>
       </div>
 
-      {/* Delete on hover */}
+      {/* Menu actions ··· (toujours visible, explicite) */}
       <button
-        onClick={() => {
-          if (window.confirm('Supprimer cet objectif ?')) onDelete(target.id)
-        }}
-        title="Supprimer"
+        onClick={() => setMenuOpen(v => !v)}
+        title="Actions"
         style={{
-          position: 'absolute',
-          bottom: '12px',
-          right: '12px',
-          width: '22px',
-          height: '22px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.5)',
+          position: 'absolute' as const, top: 12, right: 12,
+          width: 26, height: 26, borderRadius: '50%',
+          background: menuOpen ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.5)',
           border: '1px solid rgba(0,0,0,0.08)',
-          color: '#AEAEB2',
-          fontSize: 12,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.12s',
-          opacity: 0,
+          color: menuOpen ? '#1D1D1F' : '#86868B',
+          fontSize: 15, lineHeight: 1, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all .12s', zIndex: 3,
         }}
-        onMouseEnter={e => {
-          e.currentTarget.style.opacity = '1'
-          e.currentTarget.style.color = '#C42E1F'
-          e.currentTarget.style.borderColor = '#C42E1F'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.opacity = '0'
-          e.currentTarget.style.color = '#AEAEB2'
-          e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
-        }}
-      >×</button>
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.06)'; e.currentTarget.style.color = '#1D1D1F' }}
+        onMouseLeave={e => { if (!menuOpen) { e.currentTarget.style.background = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#86868B' } }}
+      >⋯</button>
+
+      {menuOpen && (
+        <>
+          <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed' as const, inset: 0, zIndex: 10 }} />
+          <div style={{
+            position: 'absolute' as const, top: 44, right: 12, zIndex: 11,
+            background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
+            boxShadow: '0 12px 32px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.9)',
+            overflow: 'hidden', minWidth: 150,
+          }}>
+            <button
+              onClick={() => { setMenuOpen(false); onEdit(target) }}
+              style={menuItemStyle('#1D1D1F')}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >Modifier</button>
+            <button
+              onClick={() => { setMenuOpen(false); if (window.confirm('Supprimer cet objectif ?')) onDelete(target.id) }}
+              style={{ ...menuItemStyle('#C42E1F'), borderTop: '1px solid rgba(0,0,0,0.05)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(196,46,31,0.06)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >Supprimer</button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -264,6 +278,23 @@ function ProgressRing({ pct, color }: { pct: number; color: string }) {
       }}>{pct.toFixed(0)}%</div>
     </div>
   )
+}
+
+function menuItemStyle(color: string): React.CSSProperties {
+  return {
+    display: 'block',
+    width: '100%',
+    textAlign: 'left',
+    padding: '9px 14px',
+    background: 'transparent',
+    border: 'none',
+    color,
+    fontSize: 12.5,
+    fontWeight: 500,
+    cursor: 'pointer',
+    fontFamily: 'var(--font-sora, Sora, sans-serif)',
+    transition: 'background .1s',
+  }
 }
 
 function AddCard({ onClick }: { onClick: () => void }) {

@@ -116,6 +116,30 @@ export function useGoals() {
     writeLS(LS_TARGETS, updated)
   }, [user?.id, usingBDD, targets])
 
+  const updateTarget = useCallback(async (
+    id: string,
+    patch: { target_value?: number; label?: string | null; deadline?: string | null },
+  ) => {
+    if (user && usingBDD) {
+      setTargets(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
+      try {
+        const updated = await api<GoalTarget>('/api/v1/goals/targets', {
+          method: 'PATCH',
+          body: JSON.stringify({ id, ...patch }),
+        })
+        setTargets(prev => prev.map(t => t.id === id ? updated : t))
+      } catch (e) {
+        console.warn('updateTarget failed', e)
+      }
+      return
+    }
+    setTargets(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, ...patch, updated_at: new Date().toISOString() } : t)
+      writeLS(LS_TARGETS, next)
+      return next
+    })
+  }, [user?.id, usingBDD])
+
   /* ── Wishlist CRUD ─────────────────────────── */
   const addWishItem = useCallback(async (item: Omit<WishlistItem, 'id'>) => {
     if (user && usingBDD) {
@@ -196,7 +220,7 @@ export function useGoals() {
   return {
     targets, wishlist, loading,
     isCloud: usingBDD,
-    addTarget, deleteTarget,
+    addTarget, deleteTarget, updateTarget,
     addWishItem, deleteWishItem, markAcquired, updateWishItem,
   }
 }

@@ -65,6 +65,7 @@ export function Objectifs() {
   const goals = useGoals()
   const { isCollector } = usePersona()
   const [modalOpen, setModalOpen] = useState<null | 'target' | 'wish'>(null)
+  const [editingTarget, setEditingTarget] = useState<EnrichedTarget | null>(null)
 
   const agg = useMemo<ObjAggregates>(() => {
     return computeAggregates(cards || [], goals.targets, goals.wishlist)
@@ -96,6 +97,7 @@ export function Objectifs() {
           agg={agg}
           onAddTarget={() => setModalOpen('target')}
           onDelete={goals.deleteTarget}
+          onEdit={(t) => { setModalOpen(null); setEditingTarget(t) }}
         />
       )}
 
@@ -109,12 +111,20 @@ export function Objectifs() {
 
       <ObjSetCompletion agg={agg} />
 
-      {modalOpen && (
+      {(modalOpen || editingTarget) && (
         <ObjAddModal
-          mode={modalOpen}
-          onClose={() => setModalOpen(null)}
+          mode={editingTarget ? 'target' : (modalOpen as 'target' | 'wish')}
+          editTarget={editingTarget}
+          onUpdateTarget={goals.updateTarget}
+          onClose={() => { setModalOpen(null); setEditingTarget(null) }}
           onAddTarget={goals.addTarget}
           onAddWish={goals.addWishItem}
+          currentValues={{
+            portfolio_value: agg.portfolioValue,
+            cards_count: agg.cardsCount,
+            roi_pct: agg.totalROI,
+            graded_count: agg.gradedCount,
+          }}
         />
       )}
     </div>

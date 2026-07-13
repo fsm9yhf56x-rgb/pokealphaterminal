@@ -13,6 +13,11 @@ interface Props {
   onClose: () => void
   onAddTarget: (target: Omit<GoalTarget, 'id'>) => Promise<GoalTarget>
   onAddWish: (item: Omit<WishlistItem, 'id'>) => Promise<WishlistItem | { error: 'wishlist_limit' }>
+  /** Valeurs courantes des métriques (pour ancrer la cible). Optionnel. */
+  currentValues?: Partial<Record<GoalMetric, number>>
+  /** Si fourni, le modal passe en mode édition d'objectif (formulaire pré-rempli). */
+  editTarget?: GoalTarget | null
+  onUpdateTarget?: (id: string, patch: { target_value?: number; label?: string | null; deadline?: string | null }) => Promise<any> | void
 }
 
 const METRIC_OPTIONS: { value: GoalMetric; label: string; placeholder: string; unit?: string }[] = [
@@ -48,12 +53,14 @@ function setScore(name: string, id: string, nq: string): number {
   return -1
 }
 
-export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
-  /* Target form state */
-  const [metric, setMetric] = useState<GoalMetric>('portfolio_value')
-  const [targetValue, setTargetValue] = useState('')
-  const [targetLabel, setTargetLabel] = useState('')
-  const [deadline, setDeadline] = useState('')
+export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValues, editTarget, onUpdateTarget }: Props) {
+  const isEdit = !!editTarget
+
+  /* Target form state (pré-rempli en mode édition) */
+  const [metric, setMetric] = useState<GoalMetric>(editTarget?.metric ?? 'portfolio_value')
+  const [targetValue, setTargetValue] = useState(editTarget ? String(editTarget.target_value) : '')
+  const [targetLabel, setTargetLabel] = useState(editTarget?.label ?? '')
+  const [deadline, setDeadline] = useState(editTarget?.deadline ? String(editTarget.deadline).slice(0, 10) : '')
 
   /* Wish form state */
   const [wishName, setWishName] = useState('')
@@ -92,14 +99,22 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
     setSubmitting(true)
     try {
       if (mode === 'target') {
-        const meta = METRIC_OPTIONS.find(o => o.value === metric)!
-        await onAddTarget({
-          metric,
-          target_value: parseFloat(targetValue),
-          unit: meta.unit || null,
-          label: targetLabel.trim() || null,
-          deadline: deadline || null,
-        })
+        if (isEdit && editTarget && onUpdateTarget) {
+          await onUpdateTarget(editTarget.id, {
+            target_value: parseFloat(targetValue),
+            label: targetLabel.trim() || null,
+            deadline: deadline || null,
+          })
+        } else {
+          const meta = METRIC_OPTIONS.find(o => o.value === metric)!
+          await onAddTarget({
+            metric,
+            target_value: parseFloat(targetValue),
+            unit: meta.unit || null,
+            label: targetLabel.trim() || null,
+            deadline: deadline || null,
+          })
+        }
       } else {
         const res = await onAddWish({
           card_name: wishName.trim(),
@@ -179,14 +194,14 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
               marginBottom: 5,
               fontWeight: 700,
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
-            }}>{mode === 'target' ? 'Nouvel objectif' : 'Nouvelle wishlist'}</div>
+            }}>{isEdit ? 'Objectif' : (mode === 'target' ? 'Nouvel objectif' : 'Nouvelle wishlist')}</div>
             <div style={{
               fontSize: 19,
               fontWeight: 700,
               color: '#1D1D1F',
               letterSpacing: '-0.4px',
               fontFamily: 'var(--font-sora, Sora, sans-serif)',
-            }}>{mode === 'target' ? 'Définir une cible' : 'Ajouter une carte'}</div>
+            }}>{isEdit ? 'Modifier l\'objectif' : (mode === 'target' ? 'Définir une cible' : 'Ajouter une carte')}</div>
           </div>
           {limitErr && (
             <div style={{
@@ -238,6 +253,8 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
             targetValue={targetValue} setTargetValue={setTargetValue}
             targetLabel={targetLabel} setTargetLabel={setTargetLabel}
             deadline={deadline} setDeadline={setDeadline}
+            currentValues={currentValues}
+            locked={isEdit}
           />
         ) : (
           <WishForm
@@ -257,7 +274,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish }: Props) {
         <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
           <GlassButton fullWidth onClick={onClose} style={{ flex: 1 }}>Annuler</GlassButton>
           <GlassButton fullWidth active disabled={!canSubmit} onClick={handleSubmit} style={{ flex: 1 }}>
-            {submitting ? 'En cours…' : (mode === 'target' ? 'Créer l\'objectif' : 'Ajouter à la wishlist')}
+            {submitting ? 'En cours…' : isEdit ? 'Enregistrer' : (mode === 'target' ? 'Créer l\'objectif' : 'Ajouter à la wishlist')}
           </GlassButton>
         </div>
       </div>
@@ -272,12 +289,20 @@ function TargetForm({
   targetValue, setTargetValue,
   targetLabel, setTargetLabel,
   deadline, setDeadline,
+  currentValues,
+  locked,
 }: any) {
   const meta = METRIC_OPTIONS.find(o => o.value === metric)!
+  const current: number | undefined = currentValues?.[metric]
+  const fmtVal = (v: number) => {
+    if (meta.unit === '€') return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+    if (meta.unit === '%') return `${v.toFixed(1)} %`
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <Field label="Métrique">
+      <Field label={locked ? 'Métrique (non modifiable)' : 'Métrique'}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -286,7 +311,8 @@ function TargetForm({
           {METRIC_OPTIONS.map(opt => (
             <button
               key={opt.value}
-              onClick={() => setMetric(opt.value)}
+              disabled={locked}
+              onClick={() => { if (!locked) setMetric(opt.value) }}
               style={{
                 padding: '10px 12px',
                 background: metric === opt.value ? 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%)' : 'rgba(255,255,255,0.45)',
@@ -297,7 +323,8 @@ function TargetForm({
                 fontSize: 11.5,
                 fontWeight: 600,
                 fontFamily: 'var(--font-sora, Sora, sans-serif)',
-                cursor: 'pointer',
+                cursor: locked ? 'default' : 'pointer',
+                opacity: locked && metric !== opt.value ? 0.4 : 1,
                 textAlign: 'left' as const,
                 transition: 'all .15s cubic-bezier(.2,.85,.3,1)',
               }}
@@ -314,6 +341,18 @@ function TargetForm({
           placeholder={meta.placeholder}
           autoFocus
         />
+        {current != null && (
+          <div style={{ marginTop: 7, fontSize: 11.5, fontFamily: 'var(--font-sora, Sora, sans-serif)', color: '#6E6E73' }}>
+            Actuellement : <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtVal(current)}</strong>
+            {(() => {
+              const t = parseFloat(targetValue)
+              if (!targetValue || isNaN(t)) return null
+              const gap = t - current
+              if (gap <= 0) return <span style={{ marginLeft: 8, color: '#1D9E75', fontWeight: 700 }}>✓ cible atteinte</span>
+              return <span style={{ marginLeft: 8, color: '#86868B' }}>· il reste {fmtVal(gap)}</span>
+            })()}
+          </div>
+        )}
       </Field>
 
       <Field label="Description (optionnel)">

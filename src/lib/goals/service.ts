@@ -70,6 +70,27 @@ export async function deleteTarget(userId: string, id: string): Promise<void> {
   await sql`DELETE FROM goal_targets WHERE id = ${id} AND user_id = ${userId}`
 }
 
+export async function updateTarget(
+  userId: string,
+  id: string,
+  patch: { target_value?: number; label?: string | null; deadline?: string | null },
+): Promise<GoalTarget | null> {
+  if (patch.target_value !== undefined) {
+    await sql`UPDATE goal_targets SET target_value = ${patch.target_value}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  if (patch.label !== undefined) {
+    await sql`UPDATE goal_targets SET label = ${patch.label}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  if (patch.deadline !== undefined) {
+    await sql`UPDATE goal_targets SET deadline = ${patch.deadline}, updated_at = now() WHERE id = ${id} AND user_id = ${userId}`
+  }
+  const rows = (await sql`
+    SELECT id, metric, target_value, unit, label, deadline, created_at, updated_at
+    FROM goal_targets WHERE id = ${id} AND user_id = ${userId} LIMIT 1
+  `) as any[]
+  return rows[0] ? normalizeTarget(rows[0]) : null
+}
+
 /* ── Wishlist ────────────────────────────── */
 
 export async function createWishItem(

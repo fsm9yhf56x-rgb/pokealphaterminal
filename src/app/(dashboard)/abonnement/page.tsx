@@ -61,6 +61,9 @@ export default function AbonnementPage() {
   const currentPlan: PlanId = profile?.plan || (isPro ? 'pro' : 'free')
 
   const [period, setPeriod] = useState<Period>('mensuel')
+  const [acceptCgv, setAcceptCgv] = useState(false)
+  const [acceptExec, setAcceptExec] = useState(false)
+  const [consentError, setConsentError] = useState(false)
   const [busy, setBusy] = useState<PlanId | null>(null)
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -100,6 +103,12 @@ export default function AbonnementPage() {
     if (currentPlan !== 'free') { openPortal(); return }
     // User gratuit qui souscrit un plan payant : checkout Stripe
     if (!user?.id) { setMsg({ type: 'err', text: 'Connecte-toi pour t’abonner.' }); return }
+    if (!acceptCgv || !acceptExec) {
+      setConsentError(true)
+      setMsg({ type: 'err', text: 'Veuillez cocher les deux cases obligatoires avant de continuer.' })
+      if (typeof document !== 'undefined') document.getElementById('checkout-consent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     setBusy(plan); setMsg(null)
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -203,6 +212,24 @@ export default function AbonnementPage() {
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
       </div>
 
+      {currentPlan === 'free' && (
+        <div id="checkout-consent" style={{
+          maxWidth: 720, margin: '28px auto 0', padding: '18px 20px', borderRadius: 14,
+          background: '#F5F5F7',
+          border: consentError ? '1px solid #E03020' : '1px solid #E5E5EA',
+          boxShadow: consentError ? '0 0 0 3px rgba(224,48,32,0.08)' : 'none',
+          transition: 'border-color .2s, box-shadow .2s',
+        }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontFamily: FONT.body, fontSize: 13, lineHeight: 1.5, color: '#3A3A3C', marginBottom: 13 }}>
+            <input type="checkbox" checked={acceptCgv} onChange={e => { setAcceptCgv(e.target.checked); setConsentError(false) }} style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: '#E03020', cursor: 'pointer' }} />
+            <span>J’accepte les <a href="/legal/cgv" target="_blank" rel="noopener noreferrer" style={{ color: '#E03020', textDecoration: 'underline' }}>Conditions générales de vente</a> de KodoCards.</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontFamily: FONT.body, fontSize: 13, lineHeight: 1.5, color: '#3A3A3C' }}>
+            <input type="checkbox" checked={acceptExec} onChange={e => { setAcceptExec(e.target.checked); setConsentError(false) }} style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: '#E03020', cursor: 'pointer' }} />
+            <span>Je demande expressément l’exécution immédiate du service avant la fin du délai légal de rétractation et je reconnais que cette exécution immédiate peut entraîner la perte de mon droit de rétractation pour les contenus ou services numériques accessibles immédiatement, dans les conditions prévues par la réglementation applicable.</span>
+          </label>
+        </div>
+      )}
       <p style={{
         fontFamily: FONT.body, fontSize: 12, color: SNOW.mutedLight, textAlign: 'center', marginTop: 28,
       }}>

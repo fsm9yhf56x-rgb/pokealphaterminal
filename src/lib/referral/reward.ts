@@ -41,5 +41,18 @@ export async function rewardReferralOnAnnual(referredUserId: string): Promise<bo
            updated_at = now()
      WHERE id = ${referred_id}
   `
+
+  // Notifications in-app aux deux comptes (non bloquant).
+  try {
+    await sql`INSERT INTO notifications (user_id, type, title, body, data)
+      VALUES (${referrer_id}, 'referral_reward', 'Récompense de parrainage',
+              ${"Ton filleul s'est abonné à l'année : +1 mois Premium offert."},
+              ${JSON.stringify({ url: '/parrainage' })}::jsonb)`
+    await sql`INSERT INTO notifications (user_id, type, title, body, data)
+      VALUES (${referred_id}, 'referral_reward', 'Cadeau de bienvenue',
+              ${'Grâce à ton parrain : +1 mois Premium offert.'},
+              ${JSON.stringify({ url: '/parrainage' })}::jsonb)`
+  } catch { /* notif non bloquante */ }
+
   return true
 }

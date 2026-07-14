@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
+import { rewardReferralOnAnnual } from '@/lib/referral/reward'
 import { getStripe, planFromPriceId, isEarlyPriceId } from '@/lib/stripe'
 import type Stripe from 'stripe'
 
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
           const priceId = sub.items.data[0]?.price?.id
           const plan = planFromPriceId(priceId)
           await applyPlan(userId, plan, customerId, subscriptionId, priceId)
+          if (sub.items.data[0]?.price?.recurring?.interval === 'year') { await rewardReferralOnAnnual(userId).catch(() => {}) }
           await sql`INSERT INTO analytics_events (user_id, event, props, consent) VALUES (${userId}, 'checkout_completed', ${JSON.stringify({ plan })}::jsonb, 'legitimate')`.catch(() => {})
         }
         break
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
         const plan = active ? planFromPriceId(priceId) : 'free'
         if (userId) {
           await applyPlan(userId, plan, sub.customer as string, sub.id, active ? priceId : null)
+          if (active && sub.items.data[0]?.price?.recurring?.interval === 'year') { await rewardReferralOnAnnual(userId).catch(() => {}) }
         }
         break
       }

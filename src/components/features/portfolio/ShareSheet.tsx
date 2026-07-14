@@ -25,7 +25,6 @@ interface ShareSheetProps {
   showcase?: CardItem[]
 }
 
-const REFERRAL = 'KODOCARDS-' + Math.random().toString(36).slice(2,8).toUpperCase()
 
 export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, totalBuy, totalROI, totalGain, showToast, showcase }: ShareSheetProps) {
   const [generating, setGenerating] = useState(false)
@@ -33,6 +32,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
   const [copied, setCopied] = useState(false)
   const [refCopied, setRefCopied] = useState(false)
   const [xStep, setXStep] = useState(false)
+  const [referral, setReferral] = useState('')
+  useEffect(() => { if (!open) return; fetch('/api/v1/referral', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => { if (d?.code) setReferral(d.code) }).catch(() => {}) }, [open])
   const previewRef = useRef<HTMLDivElement>(null)
 
   const isCard = context === 'card' && card
@@ -63,7 +64,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     ? `Mon Wrapped ${wrappedYear} est là 🔥 Une année de collection Pokémon résumée. Fais le tien sur Kodo Cards 👇`
     : `Voici ma collection Pokémon 🔥 Je référence tout sur Kodo Cards — cote, éditions, gradation. Et toi, elle vaut combien la tienne ?`
 
-  const shareUrl = `https://kodocards.com?ref=${REFERRAL}`
+  const shareUrl = `https://kodocards.com?ref=${referral}`
   const xIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText + ' ' + shareUrl)}`
 
   // Image de partage carte : generee par la route serveur /api/share/card (next/og
@@ -92,7 +93,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     p.set('cond', c.condition || '')
     if ((c.curPrice || 0) > 0) p.set('price', String(c.curPrice))
     if (grade) { p.set('grade', grade); p.set('grader', grader) }
-    p.set('ref', REFERRAL)
+    p.set('ref', referral)
     if (format !== 'story') p.set('format', format)
     p.set('img', nativeImg)
     return `/api/share/card?${p.toString()}`
@@ -121,7 +122,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     p.set('cards', String(portfolio.length))
     p.set('sets', String(nSets))
     if (totalROI > 0) p.set('roi', `+${totalROI}%`)
-    p.set('ref', REFERRAL)
+    p.set('ref', referral)
     if (format === 'wide') p.set('format', 'wide')
     p.set('imgs', imgsP)
     return `/api/share/collection?${p.toString()}`
@@ -159,7 +160,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     if (star?.name) p.set('starName', star.name)
     if (starImg) p.set('starImg', starImg)
     if (format === 'post') p.set('format', 'post')
-    p.set('ref', REFERRAL)
+    p.set('ref', referral)
     return `/api/share/wrapped?${p.toString()}`
   }
   const ogWrappedUrl = buildWrappedUrl('story')
@@ -180,7 +181,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     const p = new URLSearchParams()
     p.set('count', String(showcaseCards.length))
     if (format !== 'story') p.set('format', format)
-    p.set('ref', REFERRAL)
+    p.set('ref', referral)
     p.set('imgs', imgsP)
     return `/api/share/showcase?${p.toString()}`
   }
@@ -606,8 +607,8 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
               </div>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(255,255,255,0.7)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:9, padding:'8px 8px 8px 12px' }}>
-              <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:'#E03020', fontFamily:'var(--font-data)', letterSpacing:'0.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{REFERRAL}</span>
-              <button onClick={() => { navigator.clipboard.writeText(REFERRAL); setRefCopied(true); showToast('Code copie'); setTimeout(() => setRefCopied(false), 2000) }} style={{
+              <span style={{ flex:1, minWidth:0, fontSize:12, fontWeight:700, color:'#E03020', fontFamily:'var(--font-data)', letterSpacing:'0.04em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{referral}</span>
+              <button onClick={() => { navigator.clipboard.writeText(referral); setRefCopied(true); showToast('Code copie'); setTimeout(() => setRefCopied(false), 2000) }} style={{
                 padding:'7px 16px',
                 borderRadius:7,
                 background: refCopied ? '#2E9E6A' : '#1D1D1F',

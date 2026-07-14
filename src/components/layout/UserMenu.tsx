@@ -112,6 +112,7 @@ export default function UserMenu() {
 
   const items = [
     { label: 'Profil & param\u00e8tres', href: '/parametres' },
+    { label: 'Parrainage', href: '/parrainage' },
     { label: 'Abonnement', href: '/abonnement' },
     ...(isAdmin ? [{ label: 'Admin \u2699', href: '/admin' }] : []),
   ]

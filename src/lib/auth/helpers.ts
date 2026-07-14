@@ -53,11 +53,13 @@ export async function getCurrentUserWithProfile(): Promise<UserWithProfile | nul
 
   try {
     const rows = (await sql`
-      SELECT is_pro, is_admin, plan, is_early_supporter, early_rank FROM "profiles" WHERE id = ${user.id} LIMIT 1
-    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null; is_early_supporter: boolean | null; early_rank: number | null }>
+      SELECT is_pro, is_admin, plan, is_early_supporter, early_rank, premium_until FROM "profiles" WHERE id = ${user.id} LIMIT 1
+    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null; is_early_supporter: boolean | null; early_rank: number | null; premium_until: string | null }>
 
     const profile = rows[0]
-    const plan = (profile?.plan as 'free'|'pro'|'premium') || (profile?.is_pro ? 'pro' : 'free')
+    const rawPlan: 'free' | 'pro' | 'premium' = (profile?.plan as 'free' | 'pro' | 'premium') || (profile?.is_pro ? 'pro' : 'free')
+    const _pu = (profile as any)?.premium_until ? new Date((profile as any).premium_until as string) : null
+    const plan: 'free' | 'pro' | 'premium' = (_pu && _pu.getTime() > Date.now()) ? 'premium' : rawPlan
     return {
       ...user,
       plan,

@@ -73,8 +73,10 @@ export function useAuth() {
     }
   }
 
-  const plan: 'free' | 'pro' | 'premium' =
+  const _rawPlan: 'free' | 'pro' | 'premium' =
     (profile?.plan as 'free' | 'pro' | 'premium') ?? (profile?.is_pro ? 'pro' : 'free')
+  const _pu = (profile as any)?.premium_until ? new Date((profile as any).premium_until as string) : null
+  const plan: 'free' | 'pro' | 'premium' = (_pu && _pu.getTime() > Date.now()) ? 'premium' : _rawPlan
   const isPro = plan === 'pro' || plan === 'premium'
   const isPremium = plan === 'premium'
 

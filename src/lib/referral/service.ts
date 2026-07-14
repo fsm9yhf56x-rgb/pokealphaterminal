@@ -13,17 +13,17 @@ export async function getOrCreateCode(userId: string): Promise<string> {
   const existing = (await sql`SELECT code FROM referral_codes WHERE user_id = ${userId} LIMIT 1`) as any[]
   if (existing[0]?.code) return existing[0].code
 
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     const code = genCode(6)
     try {
-      const ins = (await sql`
-        INSERT INTO referral_codes (user_id, code) VALUES (${userId}, ${code})
-        ON CONFLICT (user_id) DO NOTHING RETURNING code
-      `) as any[]
-      if (ins[0]?.code) return ins[0].code
+      await sql`INSERT INTO referral_codes (user_id, code) VALUES (${userId}, ${code})`
+      return code
+    } catch (e) {
+      // Course sur user_id OU collision sur code : relire, sinon reessayer un autre code.
       const again = (await sql`SELECT code FROM referral_codes WHERE user_id = ${userId} LIMIT 1`) as any[]
       if (again[0]?.code) return again[0].code
-    } catch { /* collision code UNIQUE -> retry */ }
+      if (attempt === 11) console.error('[referral getOrCreateCode] insert failed', e)
+    }
   }
   throw new Error('code_generation_failed')
 }

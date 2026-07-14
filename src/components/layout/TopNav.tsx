@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNav } from '@/lib/useNav'
 import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
+import NotificationBell from './NotificationBell'
 import { MobileNav } from './MobileNav'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 import { BrandMark } from '@/components/brand/BrandMark'
@@ -224,6 +225,7 @@ export function TopNav() {
           })}
         </div>
 
+        <NotificationBell />
         <span className="knav-usermenu"><UserMenu /></span>
       </nav>
 

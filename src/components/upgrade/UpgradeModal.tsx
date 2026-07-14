@@ -1,4 +1,5 @@
 'use client'
+import { track } from '@/components/layout/Analytics'
 
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -79,6 +80,8 @@ export function UpgradeModal({
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
   }, [open, onClose])
 
+  useEffect(() => { if (open) track('gate_hit', { tier, feature: feature?.title }) }, [open])
+  useEffect(() => { if (open) track('gate_hit', { tier, feature: feature?.title }) }, [open])
   if (!open) return null
 
   const t = TIER[tier]

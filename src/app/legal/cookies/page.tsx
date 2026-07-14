@@ -44,7 +44,26 @@ export default function Page() {
       </table>
 
       <p><span className="ck-cat">Cookies statistiques :</span> Ils sont utilisés pour comprendre comment les visiteurs interagissent avec le site web. Ces cookies aident à fournir des informations sur le nombre de visiteurs, le taux de rebond, la source de trafic, etc.</p>
-      <p className="ck-none">À ce jour, KodoCards n’utilise aucun cookie de cette catégorie.</p>
+      <table className="ck-table">
+        <thead>
+          <tr><th>Nom</th><th>Délai de validité</th><th>Fournisseur</th><th>Finalités</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>kodo_anon (stockage local)</td>
+            <td>6 mois</td>
+            <td>KodoCards</td>
+            <td>Identifiant anonyme de mesure d’audience, déposé uniquement pour les visiteurs non connectés ayant consenti aux cookies statistiques.</td>
+          </tr>
+          <tr>
+            <td>kodo_sid (stockage de session)</td>
+            <td>Session de navigation</td>
+            <td>KodoCards</td>
+            <td>Regrouper les pages vues au sein d’une même session pour la mesure d’audience.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="ck-none">Ces identifiants ne sont déposés que si vous avez accepté les cookies statistiques. Pour les utilisateurs connectés, la mesure d’audience s’appuie sur le compte utilisateur (voir notre <a href="/legal/confidentialite">politique de confidentialité</a>).</p>
 
       <p><span className="ck-cat">Cookies marketings :</span> Ils permettent de vous proposer des publicités personnalisées.</p>
       <p className="ck-none">À ce jour, KodoCards n’utilise aucun cookie de cette catégorie.</p>

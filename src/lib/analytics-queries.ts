@@ -33,7 +33,7 @@ export async function getAnalyticsOverview() {
 
     sql`SELECT
           count(*) FILTER (WHERE event = 'signup_completed')::int AS signups,
-          count(*) FILTER (WHERE event = 'pricing_viewed')::int AS pricing_views,
+          count(*) FILTER (WHERE event = 'page_view' AND path LIKE '/abonnement%')::int AS pricing_views,
           count(*) FILTER (WHERE event = 'checkout_started')::int AS checkout_started,
           count(*) FILTER (WHERE event = 'checkout_completed')::int AS checkout_completed,
           count(*) FILTER (WHERE event = 'gate_hit')::int AS gate_hits

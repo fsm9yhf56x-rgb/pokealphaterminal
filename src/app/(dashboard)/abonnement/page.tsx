@@ -1,4 +1,5 @@
 'use client'
+import { track } from '@/components/layout/Analytics'
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
@@ -109,6 +110,7 @@ export default function AbonnementPage() {
       if (typeof document !== 'undefined') document.getElementById('checkout-consent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    track('checkout_started', { plan, cycle: periodToCycle[period] })
     setBusy(plan); setMsg(null)
     try {
       const res = await fetch('/api/stripe/checkout', {

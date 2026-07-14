@@ -1,4 +1,5 @@
 'use client'
+import { track } from '@/components/layout/Analytics'
 
 /**
  * AuthForm — refonte Snow+ Spotlight pattern.
@@ -79,6 +80,7 @@ export default function AuthForm({
         if (e2) {
           setError(translateError(e2.message))
         } else {
+          track('login')
           if (onSuccess) onSuccess()
           else router.push(redirectTo || '/home')
         }
@@ -87,6 +89,7 @@ export default function AuthForm({
         if (e2) {
           setError(translateError(e2.message))
         } else {
+          track('signup_completed')
           setSuccess(true)
         }
       }

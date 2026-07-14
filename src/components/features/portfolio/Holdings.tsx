@@ -1,4 +1,5 @@
 'use client'
+import { track } from '@/components/layout/Analytics'
 import { createPortal } from 'react-dom'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
@@ -1264,6 +1265,7 @@ export function Holdings() {
           : c
       }))
     }
+    track('card_added', { count: cards.length })
     return true
   }
 

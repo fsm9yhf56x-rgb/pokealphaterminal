@@ -39,6 +39,7 @@ export async function POST(req: Request) {
           const priceId = sub.items.data[0]?.price?.id
           const plan = planFromPriceId(priceId)
           await applyPlan(userId, plan, customerId, subscriptionId, priceId)
+          await sql`INSERT INTO analytics_events (user_id, event, props, consent) VALUES (${userId}, 'checkout_completed', ${JSON.stringify({ plan })}::jsonb, 'legitimate')`.catch(() => {})
         }
         break
       }

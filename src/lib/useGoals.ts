@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './useAuth'
 import type { GoalTarget, WishlistItem } from './goals/types'
+import { track } from '@/components/layout/Analytics'
 
 // Ré-export pour compat : d'autres modules importent ces types depuis '@/lib/useGoals'.
 export type { GoalMetric, GoalTarget, WishlistItem } from './goals/types'
@@ -82,6 +83,7 @@ export function useGoals() {
 
   /* ── Targets CRUD ──────────────────────────── */
   const addTarget = useCallback(async (target: Omit<GoalTarget, 'id'>) => {
+    track('goal_created', { metric: target.metric })
     if (user && usingBDD) {
       try {
         const created = await api<GoalTarget>('/api/v1/goals/targets', {
@@ -149,6 +151,7 @@ export function useGoals() {
           body: JSON.stringify(item),
         })
         setWishlist(prev => [created, ...prev])
+        track('wishlist_add', { lang: item.lang, set_id: item.set_id })
         return created
       } catch (e: any) {
         // Verrou serveur (plan Gratuit, 3 max) : renvoyer la sentinelle, NE PAS écrire en local
@@ -168,6 +171,7 @@ export function useGoals() {
     const updated = [newItem, ...wishlist]
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
+    track('wishlist_add', { lang: item.lang, set_id: item.set_id })
     return newItem
   }, [user?.id, usingBDD, wishlist])
 

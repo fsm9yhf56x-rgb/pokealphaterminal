@@ -208,6 +208,7 @@ export function Footer() {
           <div className="kfoot-section-label">Légal</div>
           <div className="kfoot-col">
             <Link href="/legal/cgu" className="kfoot-link">CGU</Link>
+            <Link href="/legal/cgv" className="kfoot-link">CGV</Link>
             <Link href="/legal/confidentialite" className="kfoot-link">Confidentialité</Link>
             <Link href="/legal/mentions" className="kfoot-link">Mentions légales</Link>
             <Link href="/legal/cookies" className="kfoot-link">Cookies</Link>

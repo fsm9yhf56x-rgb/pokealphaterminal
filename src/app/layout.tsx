@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Sora, DM_Sans, Space_Mono, Teko } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth/AuthProvider'
+import CookieConsent from '@/components/layout/CookieConsent'
+import Analytics from '@/components/layout/Analytics'
 const delaGothic = Teko({
   weight: '700',
   subsets: ['latin'],
@@ -58,7 +60,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <CookieConsent />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   )

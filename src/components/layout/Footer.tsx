@@ -204,8 +204,11 @@ export function Footer() {
         <div>
           <div className="kfoot-section-label">Légal</div>
           <div className="kfoot-col">
-            <Link href="/legal/cgu" className="kfoot-link">CGU</Link>
-            <Link href="/legal/cgv" className="kfoot-link">CGV</Link>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+              <Link href="/legal/cgu" className="kfoot-link">CGU</Link>
+              <span className="kfoot-link" aria-hidden="true">&amp;</span>
+              <Link href="/legal/cgv" className="kfoot-link">CGV</Link>
+            </div>
             <Link href="/legal/confidentialite" className="kfoot-link">Confidentialité</Link>
             <Link href="/legal/mentions" className="kfoot-link">Mentions légales</Link>
             <Link href="/legal/cookies" className="kfoot-link">Cookies</Link>

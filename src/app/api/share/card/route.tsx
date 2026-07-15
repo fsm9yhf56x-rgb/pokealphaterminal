@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 import sharp from 'sharp'
 import QRCode from 'qrcode'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -38,6 +39,10 @@ const CACHE = 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=60
 
 // ── Route ──────────────────────────────────────────────────────────────────
 export async function GET(req: Request) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(req, 'costly')
+  if (_rl) return _rl
+
   const { searchParams } = new URL(req.url)
   const name = S(searchParams.get('name'), 60, 'Ma carte')
   const setName = S(searchParams.get('set'), 60)

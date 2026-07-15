@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth/helpers'
 import { sql } from '@/lib/db/sql'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -17,6 +18,10 @@ export const runtime = 'nodejs'
  * Réponse 204 immédiate, jamais bloquante pour l'appelant.
  */
 export async function POST(req: NextRequest) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(req, 'write')
+  if (_rl) return _rl
+
   let body: any
   try { body = await req.json() } catch { return new NextResponse(null, { status: 204 }) }
 

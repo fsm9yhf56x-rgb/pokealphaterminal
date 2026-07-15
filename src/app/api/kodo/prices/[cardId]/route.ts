@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 const ASK_DISCOUNT = 0.88
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ cardId: string }> }) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(_req, 'data')
+  if (_rl) return _rl
+
   try {
     const { cardId } = await params
     const cards = await sql.query(

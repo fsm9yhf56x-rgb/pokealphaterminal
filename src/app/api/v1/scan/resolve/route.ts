@@ -3,6 +3,7 @@ import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
 import { resolveScan, resolveByNumber, resolveByNameTokens, type ScanCandidate } from '@/lib/scan/resolve-query'
 import setIndexRaw from '@/lib/scan/set-index.json'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +103,10 @@ async function resolveBySet(rawSet: string, rawNumber: string, rawLang: string) 
 }
 
 export async function GET(req: NextRequest) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(req, 'costly')
+  if (_rl) return _rl
+
   try {
     const u = new URL(req.url)
     const name = (u.searchParams.get('name') || '').trim()

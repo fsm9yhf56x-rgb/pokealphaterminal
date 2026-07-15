@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -39,6 +40,10 @@ async function syncToBrevo(email: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(req, 'waitlist')
+  if (_rl) return _rl
+
   let body: { email?: string; cardId?: string; source?: string }
   try {
     body = await req.json()

@@ -3,13 +3,20 @@
  *
  * Lazy-init Redis (build-safe pattern, same as auth/server.ts).
  *
- * Tiers de protection :
+ * Tiers AUTH (v0.9 Lot G) :
  *   - loginLimiter        : 5 tentatives / 15 min  (anti brute-force)
  *   - signupLimiter       : 3 créations / 1 heure  (anti spam compte)
  *   - passwordResetLimiter: 3 demandes / 1 heure   (anti spam Resend)
  *   - globalAuthLimiter   : 30 req / 1 min         (fallback DDoS)
  *
- * v0.9 Infrastructure Solide · Lot G
+ * Tiers PUBLICS (routes ouvertes, protection coût + moat) :
+ *   - costly   : 30 req / 1 min  (share/* = sharp+Satori CPU, scan = pg_trgm)
+ *   - write    : 30 req / 1 min  (écriture en base sans compte : analytics)
+ *   - data     : 60 req / 1 min  (prix Kodo = notre moat, anti-aspiration)
+ *   - waitlist : 5 req / 1 heure (anti spam email + quota Brevo)
+ *
+ * Fail-open volontaire : si Upstash est absent ou down, on laisse passer
+ * (mieux vaut un site qui marche qu'un site bloqué par sa propre protection).
  */
 
 import { NextResponse } from 'next/server'
@@ -106,6 +113,30 @@ function pickLimiter(pathname: string): Ratelimit {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Réponse 429 commune
+// ─────────────────────────────────────────────────────────────────────────
+
+function tooMany(message: string, limit: number, remaining: number, reset: number): NextResponse {
+  const retryAfterSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000))
+  return NextResponse.json(
+    { message, code: 'RATE_LIMITED', retryAfter: retryAfterSeconds },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(retryAfterSeconds),
+        'X-RateLimit-Limit': String(limit),
+        'X-RateLimit-Remaining': String(remaining),
+        'X-RateLimit-Reset': String(Math.ceil(reset / 1000)),
+      },
+    },
+  )
+}
+
+function upstashConfigured(): boolean {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // API publique : checkAuthRateLimit
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -116,7 +147,7 @@ function pickLimiter(pathname: string): Ratelimit {
  */
 export async function checkAuthRateLimit(req: Request): Promise<NextResponse | null> {
   // Skip rate limit si Upstash pas configuré (dev local sans Upstash, par exemple)
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (!upstashConfigured()) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('[rate-limit] Upstash not configured, skipping rate limit (dev only)')
     }
@@ -132,37 +163,76 @@ export async function checkAuthRateLimit(req: Request): Promise<NextResponse | n
     const { success, limit, remaining, reset } = await limiter.limit(identifier)
 
     if (!success) {
-      const retryAfterSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000))
-      console.warn('[rate-limit] BLOCKED', {
-        ip,
-        pathname: url.pathname,
-        limit,
-        remaining,
-        retryAfterSeconds,
-      })
-      return NextResponse.json(
-        {
-          message: 'Trop de tentatives. Réessaie dans quelques minutes.',
-          code: 'RATE_LIMITED',
-          retryAfter: retryAfterSeconds,
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(retryAfterSeconds),
-            'X-RateLimit-Limit': String(limit),
-            'X-RateLimit-Remaining': String(remaining),
-            'X-RateLimit-Reset': String(Math.ceil(reset / 1000)),
-          },
-        }
-      )
+      console.warn('[rate-limit] BLOCKED', { ip, pathname: url.pathname, limit, remaining })
+      return tooMany('Trop de tentatives. Réessaie dans quelques minutes.', limit, remaining, reset)
     }
 
     return null
   } catch (err) {
     // Fail-open : si Upstash est down, on laisse passer pour ne pas bloquer l'auth
-    // Bedrock note : à monitorer en prod via Sentry
     console.error('[rate-limit] Upstash error, failing open', err)
+    return null
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// API publique : checkPublicRateLimit (routes ouvertes)
+// ─────────────────────────────────────────────────────────────────────────
+
+export type PublicTier = 'costly' | 'write' | 'data' | 'waitlist'
+
+const PUBLIC_TIERS: Record<PublicTier, { requests: number; window: `${number} s` | `${number} m` | `${number} h`; message: string }> = {
+  // Génération d'images (sharp + Satori) et OCR/pg_trgm : coût CPU réel.
+  costly:   { requests: 30, window: '1 m', message: 'Trop de requêtes. Réessaie dans un instant.' },
+  // Écriture en base sans compte (analytics).
+  write:    { requests: 30, window: '1 m', message: 'Trop de requêtes.' },
+  // Prix Kodo = notre donnée propriétaire : anti-aspiration en boucle.
+  data:     { requests: 60, window: '1 m', message: 'Trop de requêtes. Réessaie dans un instant.' },
+  // Inscription waitlist : anti spam email + quota Brevo.
+  waitlist: { requests: 5,  window: '1 h', message: 'Trop de demandes. Réessaie plus tard.' },
+}
+
+const _publicLimiters: Partial<Record<PublicTier, Ratelimit>> = {}
+
+function publicLimiter(tier: PublicTier): Ratelimit {
+  const existing = _publicLimiters[tier]
+  if (existing) return existing
+  const cfg = PUBLIC_TIERS[tier]
+  const created = makeLimiter({ prefix: `pub:${tier}`, requests: cfg.requests, window: cfg.window })
+  _publicLimiters[tier] = created
+  return created
+}
+
+/**
+ * Rate limit des routes PUBLIQUES (sans compte).
+ * Protège le coût (CPU Vercel, Neon, quotas fournisseurs) et le moat data.
+ *
+ * @returns null si OK (continuer), NextResponse 429 si limite atteinte
+ */
+export async function checkPublicRateLimit(req: Request, tier: PublicTier): Promise<NextResponse | null> {
+  if (!upstashConfigured()) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[rate-limit] Upstash not configured, skipping public rate limit (dev only)')
+    }
+    return null
+  }
+
+  try {
+    const ip = getClientIp(req)
+    const url = new URL(req.url)
+    // Clé par IP + route : une route saturée n'assèche pas les autres.
+    const identifier = `${ip}:${url.pathname}`
+    const { success, limit, remaining, reset } = await publicLimiter(tier).limit(identifier)
+
+    if (!success) {
+      console.warn('[rate-limit] BLOCKED (public)', { ip, tier, pathname: url.pathname, limit })
+      return tooMany(PUBLIC_TIERS[tier].message, limit, remaining, reset)
+    }
+
+    return null
+  } catch (err) {
+    // Fail-open : Upstash down ne doit pas casser le site.
+    console.error('[rate-limit] Upstash error (public), failing open', err)
     return null
   }
 }

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
+import { checkPublicRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/kodo/prices/batch?ids=en-ex1-8,fr-ex1-8,... (max 200)
 // Reponse legere pour grilles: fairValue + cote langue + liquidite
 export async function GET(req: NextRequest) {
+  // Route publique : protection cout / abus (fail-open si Upstash down).
+  const _rl = await checkPublicRateLimit(req, 'data')
+  if (_rl) return _rl
+
   try {
     const idsParam = req.nextUrl.searchParams.get('ids') || ''
     const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean).slice(0, 200)

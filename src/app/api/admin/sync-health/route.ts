@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { requireAdmin } from '@/lib/auth-admin'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -22,6 +23,9 @@ const CURSOR_CHECKS: Array<{ jobId: string; thresholdH: number; note: string }> 
 ]
 
 export async function GET() {
+  // Etat du pipeline = information d'exploitation : reserve a l'admin.
+  await requireAdmin()
+
   const url = process.env.DATABASE_URL
   if (!url) {
     return NextResponse.json({ ok: false, error: 'DATABASE_URL absente' }, { status: 500 })

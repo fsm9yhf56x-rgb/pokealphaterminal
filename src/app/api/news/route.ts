@@ -29,14 +29,14 @@ const TCG_KEYS = /\b(tcg|jcc|carte|cartes|card|cards|booster|boosters|extension|
 const POKEMON_KEYS = /\b(pok[ée]mon|pok[ée]|jcc|tcg pok|dracaufeu|charizard|pikachu|mewtwo|rayquaza|évoli|eevee|ex |[- ]ex\b|méga[- ]|mega[- ]ex|scarlet|violet|écarlate|paldea|sv\d|me\d|nintendo)\b/i
 const NOT_POKEMON = /\b(league of legends|riftbound|one piece|yu-?gi-?oh|magic the gathering|mtg|lorcana|disney lorcana|digimon|flesh and blood|star wars unlimited|gundam|weiss schwarz|dragon ball)\b/i
 
-type Feed = { url: string; tcgOnly: boolean; lang: 'fr' | 'en' }
+type Feed = { url: string; tcgOnly: boolean; lang: 'fr' | 'en'; source: string }
 
 // tcgOnly:false = source déjà 100% TCG -> on prend tout ; true = généraliste -> on filtre.
 const FEEDS: Feed[] = [
-  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false, lang: 'en' },
-  { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false, lang: 'en' },
-  { url: 'https://www.pokelite.fr/feed/', tcgOnly: true, lang: 'fr' },
-  { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true, lang: 'fr' },
+  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false, lang: 'en', source: 'PrimeTime Pokémon' },
+  { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false, lang: 'en', source: 'PokéBeach' },
+  { url: 'https://www.pokelite.fr/feed/', tcgOnly: true, lang: 'fr', source: 'Pokelite' },
+  { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true, lang: 'fr', source: 'Pokémon France' },
 ]
 
 function decode(s: string): string {
@@ -73,7 +73,7 @@ function extractImage(block: string): string | null {
   return null
 }
 
-type Raw = { titleEn: string; date: string; ts: number; image: string | null; lang: 'fr' | 'en' }
+type Raw = { titleEn: string; date: string; ts: number; image: string | null; lang: 'fr' | 'en'; source: string }
 
 async function fetchFeed(feed: Feed): Promise<Raw[]> {
   try {
@@ -96,7 +96,7 @@ async function fetchFeed(feed: Feed): Promise<Raw[]> {
       }
       const dateStr = (tag(block, 'pubDate') || tag(block, 'dc:date') || tag(block, 'published')).trim()
       const ts = new Date(dateStr).getTime() || 0
-      out.push({ titleEn, date: dateStr, ts, image: extractImage(block), lang: feed.lang })
+      out.push({ titleEn, date: dateStr, ts, image: extractImage(block), lang: feed.lang, source: feed.source })
     }
     return out
   } catch {
@@ -181,6 +181,7 @@ export async function GET() {
       summary: null as string | null,
       image: r.image as string | null,
       lang: r.lang as 'fr' | 'en',
+      source: r.source as string,
     }))
 
     try {
@@ -195,11 +196,11 @@ export async function GET() {
         for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary; cImg[r.slug] = r.image }
       } catch {}
 
-      const insert = async (slug: string, title: string, summary: string, image: string | null, ts: number) => {
+      const insert = async (slug: string, title: string, summary: string, image: string | null, ts: number, source: string) => {
         try {
           await sql.query(
-            'INSERT INTO news_cache (slug, title, summary, image, news_date) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (slug) DO NOTHING',
-            [slug, title, summary, image, ts ? new Date(ts) : null],
+            'INSERT INTO news_cache (slug, title, summary, image, news_date, source) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (slug) DO NOTHING',
+            [slug, title, summary, image, ts ? new Date(ts) : null, source],
           )
         } catch {}
       }
@@ -217,7 +218,7 @@ export async function GET() {
         if (fr) {
           p.title = fr.titre
           p.summary = fr.resume
-          await insert(p.slug, fr.titre, fr.resume, p.image, p.ts)
+          await insert(p.slug, fr.titre, fr.resume, p.image, p.ts, p.source)
           return
         }
         // 2) sinon, traduction gratuite du titre + résumé générique
@@ -225,7 +226,7 @@ export async function GET() {
         if (t) {
           p.title = t
           p.summary = GENERIC_FR
-          await insert(p.slug, t, GENERIC_FR, p.image, p.ts)
+          await insert(p.slug, t, GENERIC_FR, p.image, p.ts, p.source)
           return
         }
         // 3) sinon : titre anglais, pas d'insert (réessai au prochain run)
@@ -233,7 +234,7 @@ export async function GET() {
     } catch {}
 
     return NextResponse.json({
-      items: picked.map(({ title, date, slug, summary, image, lang }) => ({ title, date, slug, summary, image, lang })),
+      items: picked.map(({ title, date, slug, summary, image, lang, source }) => ({ title, date, slug, summary, image, lang, source })),
       count: uniq.length,
     })
   } catch (e: any) {

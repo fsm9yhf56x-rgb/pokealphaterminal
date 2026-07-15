@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePersona } from '@/lib/usePersona'
 import { newsSlug } from '@/lib/news-slug'
 
-type Item = { title: string; date: string; image?: string; slug?: string; summary?: string | null }
+type Item = { title: string; date: string; image?: string; slug?: string; summary?: string | null; source?: string | null }
 const ACCENT = { collector: '#E03020', investor: '#185FA5' } as const
 
 function fmt(d: string): string {
@@ -94,9 +94,17 @@ export default function ActuPage() {
           )}
 
           {item.image && (
-            <div className="mt-6 flex items-center justify-center overflow-hidden rounded-2xl border border-[#E5E5EA] bg-[#F5F5F7]">
-              <img src={item.image} alt="" className="max-h-[380px] w-full object-contain" />
-            </div>
+            <figure className="mt-6">
+              <div className="flex items-center justify-center overflow-hidden rounded-2xl border border-[#E5E5EA] bg-[#F5F5F7]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.image} alt="" referrerPolicy="no-referrer" className="max-h-[380px] w-full object-contain" />
+              </div>
+              {item.source && (
+                <figcaption className="mt-2 text-center text-[12px] text-[#86868B]">
+                  Illustration via {item.source}
+                </figcaption>
+              )}
+            </figure>
           )}
 
           <div className="mt-8 border-t border-[#E5E5EA] pt-6">

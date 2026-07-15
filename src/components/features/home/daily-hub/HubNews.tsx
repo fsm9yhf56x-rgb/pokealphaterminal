@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { newsSlug } from '@/lib/news-slug'
 
-type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null; lang?: 'fr' | 'en' }
+type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null; lang?: 'fr' | 'en'; source?: string | null }
 
 const clamp = (n: number) =>
   ({ display: '-webkit-box', WebkitLineClamp: String(n), WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' })
@@ -138,7 +138,7 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
                   {it.title}
                 </span>
                 <span className="mt-1 text-[10.5px] font-medium text-[#86868B]" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {rel(it.date)}
+                  {rel(it.date)}{it.source ? ` · via ${it.source}` : ''}
                 </span>
               </span>
             </Link>

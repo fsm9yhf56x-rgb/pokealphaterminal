@@ -17,8 +17,17 @@ function readLS<T>(key: string): T[] {
     return raw ? JSON.parse(raw) : []
   } catch { return [] }
 }
+
 function writeLS<T>(key: string, items: T[]) {
   try { localStorage.setItem(key, JSON.stringify(items)) } catch {}
+}
+
+/** Purge le stock invité : une fois connecté, la base est la seule source de vérité. */
+function clearLS() {
+  try {
+    localStorage.removeItem(LS_TARGETS)
+    localStorage.removeItem(LS_WISHLIST)
+  } catch {}
 }
 
 /** Fetch JSON avec cookies de session (same-origin) + erreurs typées (status + payload). */
@@ -36,6 +45,82 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
     throw err
   }
   return json as T
+}
+
+/**
+ * Migration invité -> compte.
+ * Pousse en base les items du localStorage ABSENTS du cloud (dédup par id : les
+ * doublons legacy, créés quand le client générait l'uuid, portent le même id
+ * qu'en base -> ignorés), puis purge le localStorage dans tous les cas.
+ * Les items refusés par le verrou Gratuit (3 max) sont perdus : c'est la règle
+ * du plan, pas un bug. Retourne true si au moins un item a été créé.
+ */
+async function migrateLocalGoals(cloudTargets: GoalTarget[], cloudWishlist: WishlistItem[]): Promise<boolean> {
+  const lsT = readLS<GoalTarget>(LS_TARGETS)
+  const lsW = readLS<WishlistItem>(LS_WISHLIST)
+  if (!lsT.length && !lsW.length) return false
+
+  const cloudTIds = new Set(cloudTargets.map(t => t.id))
+  const cloudWIds = new Set(cloudWishlist.map(w => w.id))
+  let pushed = 0
+
+  // Chronologique : le verrou Gratuit garde alors les plus anciens.
+  const byDate = (a: { created_at?: string }, b: { created_at?: string }) =>
+    String(a.created_at || '').localeCompare(String(b.created_at || ''))
+
+  for (const t of [...lsT].sort(byDate)) {
+    if (cloudTIds.has(t.id)) continue
+    try {
+      await api<GoalTarget>('/api/v1/goals/targets', {
+        method: 'POST',
+        body: JSON.stringify({
+          metric: t.metric,
+          target_value: t.target_value,
+          unit: t.unit ?? null,
+          label: t.label ?? null,
+          deadline: t.deadline ?? null,
+        }),
+      })
+      pushed++
+    } catch (e) {
+      console.warn('[goals migrate] objectif ignoré', e)
+    }
+  }
+
+  for (const w of [...lsW].sort(byDate)) {
+    if (cloudWIds.has(w.id)) continue
+    try {
+      const created = await api<WishlistItem>('/api/v1/goals/wishlist', {
+        method: 'POST',
+        body: JSON.stringify({
+          card_name: w.card_name,
+          set_id: w.set_id ?? null,
+          set_name: w.set_name ?? null,
+          card_number: w.card_number ?? null,
+          lang: w.lang,
+          rarity: w.rarity ?? null,
+          priority: w.priority,
+          target_price: w.target_price ?? null,
+          notes: w.notes ?? null,
+        }),
+      })
+      pushed++
+      // Le POST crée toujours acquired=false : on reporte l'état si besoin.
+      if (w.acquired && created?.id) {
+        try {
+          await api('/api/v1/goals/wishlist', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: created.id, acquired: true }),
+          })
+        } catch { /* non bloquant */ }
+      }
+    } catch (e) {
+      console.warn('[goals migrate] carte ignorée (verrou Gratuit 3 max ?)', e)
+    }
+  }
+
+  clearLS()
+  return pushed > 0
 }
 
 export function useGoals() {
@@ -65,18 +150,20 @@ export function useGoals() {
       return
     }
 
-    // Connecté : source de vérité = API v1 (Neon côté serveur)
+    // Connecté : la base est la SEULE source de vérité.
+    setUsingBDD(true)
     try {
-      const data = await api<{ targets: GoalTarget[]; wishlist: WishlistItem[] }>('/api/v1/goals')
+      let data = await api<{ targets: GoalTarget[]; wishlist: WishlistItem[] }>('/api/v1/goals')
+      const pushed = await migrateLocalGoals(data.targets || [], data.wishlist || [])
+      if (pushed) data = await api<{ targets: GoalTarget[]; wishlist: WishlistItem[] }>('/api/v1/goals')
       setTargets(data.targets || [])
       setWishlist(data.wishlist || [])
-      setUsingBDD(true)
     } catch (e) {
-      // API indisponible (réseau / 5xx) → repli localStorage, comme avant
-      console.warn('Goals API unavailable, fallback to localStorage', e)
-      setTargets(readLS<GoalTarget>(LS_TARGETS))
-      setWishlist(readLS<WishlistItem>(LS_WISHLIST))
-      setUsingBDD(false)
+      // AUCUN repli localStorage ici : afficher des items supprimés en base
+      // (fantômes) serait un mensonge. Mieux vaut vide et honnête.
+      console.error('[goals] API indisponible', e)
+      setTargets([])
+      setWishlist([])
     }
     setLoading(false)
   }
@@ -84,7 +171,8 @@ export function useGoals() {
   /* ── Targets CRUD ──────────────────────────── */
   const addTarget = useCallback(async (target: Omit<GoalTarget, 'id'>) => {
     track('goal_created', { metric: target.metric })
-    if (user && usingBDD) {
+
+    if (user) {
       try {
         const created = await api<GoalTarget>('/api/v1/goals/targets', {
           method: 'POST',
@@ -93,9 +181,14 @@ export function useGoals() {
         setTargets(prev => [created, ...prev])
         return created
       } catch (e) {
-        console.warn('addTarget failed, fallback localStorage', e)
+        // Connecté : jamais de repli localStorage (l'item ne serait nulle part
+        // en base et reviendrait en fantôme à chaque chargement).
+        console.error('addTarget failed', e)
+        return null
       }
     }
+
+    // Invité
     const newTarget: GoalTarget = {
       id: crypto.randomUUID(),
       ...target,
@@ -106,23 +199,25 @@ export function useGoals() {
     setTargets(updated)
     writeLS(LS_TARGETS, updated)
     return newTarget
-  }, [user?.id, usingBDD, targets])
+  }, [user?.id, targets])
 
   const deleteTarget = useCallback(async (id: string) => {
-    if (user && usingBDD) {
+    if (user) {
+      setTargets(prev => prev.filter(t => t.id !== id))
       try { await api(`/api/v1/goals/targets?id=${encodeURIComponent(id)}`, { method: 'DELETE' }) }
-      catch (e) { console.warn('deleteTarget failed', e) }
+      catch (e) { console.error('deleteTarget failed', e) }
+      return
     }
     const updated = targets.filter(t => t.id !== id)
     setTargets(updated)
     writeLS(LS_TARGETS, updated)
-  }, [user?.id, usingBDD, targets])
+  }, [user?.id, targets])
 
   const updateTarget = useCallback(async (
     id: string,
     patch: { target_value?: number; label?: string | null; deadline?: string | null },
   ) => {
-    if (user && usingBDD) {
+    if (user) {
       setTargets(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
       try {
         const updated = await api<GoalTarget>('/api/v1/goals/targets', {
@@ -131,7 +226,7 @@ export function useGoals() {
         })
         setTargets(prev => prev.map(t => t.id === id ? updated : t))
       } catch (e) {
-        console.warn('updateTarget failed', e)
+        console.error('updateTarget failed', e)
       }
       return
     }
@@ -140,11 +235,11 @@ export function useGoals() {
       writeLS(LS_TARGETS, next)
       return next
     })
-  }, [user?.id, usingBDD])
+  }, [user?.id])
 
   /* ── Wishlist CRUD ─────────────────────────── */
   const addWishItem = useCallback(async (item: Omit<WishlistItem, 'id'>) => {
-    if (user && usingBDD) {
+    if (user) {
       try {
         const created = await api<WishlistItem>('/api/v1/goals/wishlist', {
           method: 'POST',
@@ -154,14 +249,16 @@ export function useGoals() {
         track('wishlist_add', { lang: item.lang, set_id: item.set_id })
         return created
       } catch (e: any) {
-        // Verrou serveur (plan Gratuit, 3 max) : renvoyer la sentinelle, NE PAS écrire en local
-        // (sinon l'item apparaît puis disparaît au refresh).
+        // Verrou serveur (plan Gratuit, 3 max) : sentinelle, NE PAS écrire en local.
         if (e?.status === 403 && e?.payload?.error === 'wishlist_limit') {
           return { error: 'wishlist_limit' as const }
         }
-        console.warn('addWishItem failed, fallback localStorage', e)
+        console.error('addWishItem failed', e)
+        return null
       }
     }
+
+    // Invité
     const newItem: WishlistItem = {
       id: crypto.randomUUID(),
       ...item,
@@ -173,33 +270,37 @@ export function useGoals() {
     writeLS(LS_WISHLIST, updated)
     track('wishlist_add', { lang: item.lang, set_id: item.set_id })
     return newItem
-  }, [user?.id, usingBDD, wishlist])
+  }, [user?.id, wishlist])
 
   const deleteWishItem = useCallback(async (id: string) => {
-    if (user && usingBDD) {
+    if (user) {
+      setWishlist(prev => prev.filter(w => w.id !== id))
       try { await api(`/api/v1/goals/wishlist?id=${encodeURIComponent(id)}`, { method: 'DELETE' }) }
-      catch (e) { console.warn('deleteWishItem failed', e) }
+      catch (e) { console.error('deleteWishItem failed', e) }
+      return
     }
     const updated = wishlist.filter(w => w.id !== id)
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
-  }, [user?.id, usingBDD, wishlist])
+  }, [user?.id, wishlist])
 
   const markAcquired = useCallback(async (id: string) => {
-    if (user && usingBDD) {
+    if (user) {
+      setWishlist(prev => prev.map(w => w.id === id ? { ...w, acquired: true } : w))
       try { await api('/api/v1/goals/wishlist', { method: 'PATCH', body: JSON.stringify({ id, acquired: true }) }) }
-      catch (e) { console.warn('markAcquired failed', e) }
+      catch (e) { console.error('markAcquired failed', e) }
+      return
     }
     const updated = wishlist.map(w => w.id === id ? { ...w, acquired: true } : w)
     setWishlist(updated)
     writeLS(LS_WISHLIST, updated)
-  }, [user?.id, usingBDD, wishlist])
+  }, [user?.id, wishlist])
 
   const updateWishItem = useCallback(async (
     id: string,
     patch: { target_price?: number | null; priority?: 1 | 2 | 3; acquired?: boolean },
   ) => {
-    if (user && usingBDD) {
+    if (user) {
       // Optimistic : refléter immédiatement
       setWishlist(prev => prev.map(w => w.id === id ? { ...w, ...patch } : w))
       try {
@@ -209,7 +310,7 @@ export function useGoals() {
         })
         setWishlist(prev => prev.map(w => w.id === id ? updated : w))
       } catch (e) {
-        console.warn('updateWishItem failed', e)
+        console.error('updateWishItem failed', e)
       }
       return
     }
@@ -219,7 +320,7 @@ export function useGoals() {
       writeLS(LS_WISHLIST, next)
       return next
     })
-  }, [user?.id, usingBDD])
+  }, [user?.id])
 
   return {
     targets, wishlist, loading,

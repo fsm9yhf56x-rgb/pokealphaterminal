@@ -11,8 +11,8 @@ import { GlassButton } from '@/components/ui/GlassButton'
 interface Props {
   mode: 'target' | 'wish'
   onClose: () => void
-  onAddTarget: (target: Omit<GoalTarget, 'id'>) => Promise<GoalTarget>
-  onAddWish: (item: Omit<WishlistItem, 'id'>) => Promise<WishlistItem | { error: 'wishlist_limit' }>
+  onAddTarget: (target: Omit<GoalTarget, 'id'>) => Promise<GoalTarget | null>
+  onAddWish: (item: Omit<WishlistItem, 'id'>) => Promise<WishlistItem | { error: 'wishlist_limit' } | null>
   /** Valeurs courantes des métriques (pour ancrer la cible). Optionnel. */
   currentValues?: Partial<Record<GoalMetric, number>>
   /** Si fourni, le modal passe en mode édition d'objectif (formulaire pré-rempli). */
@@ -107,13 +107,15 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
           })
         } else {
           const meta = METRIC_OPTIONS.find(o => o.value === metric)!
-          await onAddTarget({
+          const created = await onAddTarget({
             metric,
             target_value: parseFloat(targetValue),
             unit: meta.unit || null,
             label: targetLabel.trim() || null,
             deadline: deadline || null,
           })
+          // Echec serveur : garder le modal ouvert (jamais de faux succes).
+          if (!created) return
         }
       } else {
         const res = await onAddWish({
@@ -127,6 +129,8 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
           target_price: wishTargetPrice ? parseFloat(wishTargetPrice) : null,
           notes: wishNotes.trim() || null,
         })
+        // Echec serveur : garder le modal ouvert (jamais de faux succes).
+        if (!res) return
         if (res && typeof res === 'object' && 'error' in res) {
           setLimitErr(true)
           return

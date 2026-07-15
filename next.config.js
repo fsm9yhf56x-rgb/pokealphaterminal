@@ -31,18 +31,23 @@ const nextConfig = {
 //   - Referrer-Policy (limite fuite referer)
 //   - Permissions-Policy (désactive camera/mic/geo inutiles)
 //
-// Content-Security-Policy in REPORT-ONLY mode for v0.9 :
-//   logge les violations sans bloquer. Permet de découvrir
-//   ce qui poserait souci avant d'activer le strict mode (v1.0 Phase B).
+// Content-Security-Policy en ENFORCE :
+//   bloque reellement les ressources hors liste blanche.
+//   'unsafe-inline' reste necessaire (Next injecte scripts/styles inline,
+//   le design Snow+ style en inline) : la CSP protege donc surtout contre
+//   l'injection de ressources EXTERNES, pas contre le XSS inline.
+//   'wasm-unsafe-eval' est requis par Tesseract.js (scan de carte).
+//   Retour arriere immediat = repasser la cle en
+//   'Content-Security-Policy-Report-Only'.
 // ─────────────────────────────────────────────────────────────────────────
 
 const isDev = process.env.NODE_ENV === 'development'
 
 // CSP en report-only — relaxe pour ne rien casser, juste logger
-const cspReportOnly = [
+const csp = [
   "default-src 'self'",
   // Scripts: self + Vercel analytics + inline (Next.js needs it) + eval pour HMR dev
-  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
   // Styles: self + inline (Snow+ utilise styles inline)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   // Fonts: self + Google Fonts (Sora, DM Sans, Space Mono via next/font)
@@ -85,16 +90,19 @@ const securityHeaders = [
     key: 'Referrer-Policy',
     value: 'strict-origin-when-cross-origin',
   },
-  // Désactive APIs sensibles qu'on n'utilise pas
+  // Désactive les APIs sensibles inutiles.
+  // camera=(self) : requis par le scan de carte (getUserMedia) — camera=()
+  // le bloquerait sur TOUT le site, y compris nos propres pages.
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(self)',
+    value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=(), payment=(self)',
   },
-  // CSP en REPORT-ONLY pour v0.9 — détection sans blocage
-  // Sera passé en strict mode en v1.0 Phase B après audit logs Sentry
+  // CSP ENFORCE — bloque les ressources hors liste blanche.
+  // Aucun report-uri : les violations n'apparaissent que dans la console
+  // du navigateur (a verifier sur les parcours apres deploiement).
   {
-    key: 'Content-Security-Policy-Report-Only',
-    value: cspReportOnly,
+    key: 'Content-Security-Policy',
+    value: csp,
   },
   // X-DNS-Prefetch-Control : autorise DNS prefetch (perf)
   {

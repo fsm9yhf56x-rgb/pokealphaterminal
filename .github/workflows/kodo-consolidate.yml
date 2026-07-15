@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-      - run: npm ci --no-audit --no-fund --prefer-offline
+      - run: npm install --no-audit --no-fund --prefer-offline
       - name: Ensure price_signals schema (print_id, lang)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

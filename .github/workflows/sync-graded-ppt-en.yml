@@ -35,7 +35,7 @@ jobs:
           cache: 'npm'
 
       - name: Install deps
-        run: npm ci --no-audit --no-fund --prefer-offline
+        run: npm install --no-audit --no-fund --prefer-offline
 
       - name: Check job status before run
         env:

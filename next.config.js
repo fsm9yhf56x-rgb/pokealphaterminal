@@ -53,7 +53,11 @@ const csp = [
   // Fonts: self + Google Fonts (Sora, DM Sans, Space Mono via next/font)
   "font-src 'self' https://fonts.gstatic.com data:",
   // Images: self + R2 (catalogue cartes) + Resend tracking + Vercel
-  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://assets.tcgdex.net https://*.vercel.app https://*.kodocards.com",
+  // Images : R2 (catalogue) + TCGdex/TCGplayer (logos de sets) + Vercel.
+  // pokebeach / pokemon-france : vignettes des articles Kodo Wire (hotlink des
+  // sources RSS). ATTENTION : liste fragile par nature — une nouvelle source RSS
+  // = un domaine de plus, sinon la vignette est bloquee silencieusement.
+  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://assets.tcgdex.net https://tcgplayer-cdn.tcgplayer.com https://www.pokebeach.com https://cdn.pokemon-france.com https://*.vercel.app https://*.kodocards.com",
   // Connect: self + Better Auth + Neon + Resend + R2
   "connect-src 'self' https://*.neon.tech https://api.resend.com https://api.tcgdex.net https://*.r2.dev https://va.vercel-scripts.com",
   // Frames: deny (anti-clickjacking)

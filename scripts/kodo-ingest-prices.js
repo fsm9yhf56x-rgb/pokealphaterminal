@@ -30,7 +30,28 @@ async function get(path) {
   return r.json()
 }
 
-async function ingestOne(kodoCardId, ptId) {
+/**
+ * Precharge print_id + tcgShared pour un LOT de cartes (1 requete au lieu de 2
+ * par carte). tcgShared : les variants (Shadowless/1st Ed) partagent le meme
+ * tcgplayer_id, TCGplayer ne les distingue pas -> on ecarte ses sources pour
+ * ces prints (eBay/Cardmarket, eux, distinguent).
+ */
+async function preloadMeta(cardIds) {
+  if (!cardIds.length) return {}
+  const rows = await sql`
+    SELECT kc.id, kc.print_id,
+           EXISTS (
+             SELECT 1 FROM k_prints a
+             JOIN k_prints b ON b.tcgplayer_id = a.tcgplayer_id AND b.id <> a.id
+             WHERE a.id = kc.print_id AND a.tcgplayer_id IS NOT NULL
+           ) AS tcg_shared
+    FROM k_cards kc WHERE kc.id = ANY(${cardIds})`
+  const out = {}
+  for (const r of rows) out[r.id] = { printId: r.print_id, tcgShared: r.tcg_shared }
+  return out
+}
+
+async function ingestOne(kodoCardId, ptId, meta) {
   const body = await get('/cards/' + ptId)
   await sleep(200)
   const card = body && body.data
@@ -39,41 +60,63 @@ async function ingestOne(kodoCardId, ptId) {
   const currency = card.currency || (market === 'EU' ? 'EUR' : 'USD')
   const variant = card.variant || null
   const asOf = card.lastUpdated || new Date().toISOString()
-  const kcRow = await sql`SELECT print_id FROM k_cards WHERE id = ${kodoCardId}`
-  const printId = kcRow[0] ? kcRow[0].print_id : null
-  // Variants (Shadowless/1st Ed...) partagent le meme tcgplayer_id: TCGplayer ne les distingue pas.
-  // On ecarte les sources tcgplayer pour ces prints (eBay/Cardmarket distinguent, eux).
-  let tcgShared = false
-  if (printId) {
-    const sh = await sql`SELECT 1 FROM k_prints a JOIN k_prints b ON b.tcgplayer_id = a.tcgplayer_id AND b.id <> a.id WHERE a.id = ${printId} AND a.tcgplayer_id IS NOT NULL LIMIT 1`
-    tcgShared = sh.length > 0
-  }
-  let rows = 0
 
+  // meta precharge par lot ; repli sur les SELECT unitaires si l'appelant n'en
+  // fournit pas (le mode fill n'est pas touche).
+  let printId = null, tcgShared = false
+  if (meta) {
+    printId = meta.printId
+    tcgShared = meta.tcgShared
+  } else {
+    const kcRow = await sql`SELECT print_id FROM k_cards WHERE id = ${kodoCardId}`
+    printId = kcRow[0] ? kcRow[0].print_id : null
+    if (printId) {
+      const sh = await sql`SELECT 1 FROM k_prints a JOIN k_prints b ON b.tcgplayer_id = a.tcgplayer_id AND b.id <> a.id WHERE a.id = ${printId} AND a.tcgplayer_id IS NOT NULL LIMIT 1`
+      tcgShared = sh.length > 0
+    }
+  }
+
+  // Collecte en memoire, puis UN SEUL INSERT GROUPE. Avant : ~16 INSERT par
+  // carte, chacun un aller-retour HTTP vers Neon Frankfurt depuis un runner US
+  // (~150 ms) = le vrai goulot (428 cartes en 22 min, 3,1 s/carte).
+  const c = { id: [], print: [], mkt: [], tier: [], src: [], vari: [], spot: [], low: [], high: [],
+              a7: [], a30: [], m7: [], m30: [], sc: [], ask: [], cur: [], cb: [], as_of: [] }
   for (const [source, tiers] of Object.entries(card.prices)) {
     if (tcgShared && (source === 'tcgplayer' || source === 'ppt_tcgplayer')) continue
     const isAsking = source === 'cardmarket_unsold'
     for (const [tier, d] of Object.entries(tiers || {})) {
       if (!d || typeof d !== 'object') continue
-      await sql`INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,
-          spot, low, high, avg7d, avg30d, median7d, median30d, sale_count, is_asking,
-          currency, country_breakdown, as_of)
-        VALUES (${kodoCardId}, ${printId}, ${market}, ${tier}, ${source}, ${variant},
-          ${d.avg ?? null}, ${d.low ?? null}, ${d.high ?? null},
-          ${d.avg7d ?? null}, ${d.avg30d ?? null}, ${d.median7d ?? null}, ${d.median30d ?? null},
-          ${d.saleCount ?? null}, ${isAsking}, ${currency},
-          ${d.country ? JSON.stringify(d.country) : null}, ${asOf})
-        ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
-          variant=EXCLUDED.variant, spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
-          avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
-          median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,
-          is_asking=EXCLUDED.is_asking, currency=EXCLUDED.currency,
-          country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of,
-          print_id=COALESCE(EXCLUDED.print_id, price_matrix.print_id)`
-      rows++
+      c.id.push(kodoCardId); c.print.push(printId); c.mkt.push(market); c.tier.push(tier)
+      c.src.push(source); c.vari.push(variant)
+      c.spot.push(d.avg ?? null); c.low.push(d.low ?? null); c.high.push(d.high ?? null)
+      c.a7.push(d.avg7d ?? null); c.a30.push(d.avg30d ?? null)
+      c.m7.push(d.median7d ?? null); c.m30.push(d.median30d ?? null)
+      c.sc.push(d.saleCount ?? null); c.ask.push(isAsking); c.cur.push(currency)
+      c.cb.push(d.country ? JSON.stringify(d.country) : null); c.as_of.push(asOf)
     }
   }
-  return rows
+  if (!c.id.length) return 0
+
+  await sql.query(
+    `INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,
+       spot, low, high, avg7d, avg30d, median7d, median30d, sale_count, is_asking,
+       currency, country_breakdown, as_of)
+     SELECT * FROM unnest(
+       $1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[],
+       $7::numeric[], $8::numeric[], $9::numeric[], $10::numeric[], $11::numeric[],
+       $12::numeric[], $13::numeric[], $14::int[], $15::boolean[], $16::text[],
+       $17::jsonb[], $18::timestamptz[])
+     ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
+       variant=EXCLUDED.variant, spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
+       avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
+       median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,
+       is_asking=EXCLUDED.is_asking, currency=EXCLUDED.currency,
+       country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of,
+       print_id=COALESCE(EXCLUDED.print_id, price_matrix.print_id)`,
+    [c.id, c.print, c.mkt, c.tier, c.src, c.vari, c.spot, c.low, c.high,
+     c.a7, c.a30, c.m7, c.m30, c.sc, c.ask, c.cur, c.cb, c.as_of],
+  )
+  return c.id.length
 }
 
 ;(async () => {
@@ -120,6 +163,7 @@ async function ingestOne(kodoCardId, ptId) {
       const refs = await sql`SELECT kodo_card_id, poketrace_us_id, poketrace_us_holo_id,
         poketrace_eu_id, poketrace_eu_holo_id FROM source_refs WHERE kodo_card_id = ANY(${batch})`
       const byId = Object.fromEntries(refs.map(r => [r.kodo_card_id, r]))
+      const metaById = await preloadMeta(batch)
       const attempts = []
       for (const cardId of batch) {
         if (!budget()) break
@@ -129,12 +173,13 @@ async function ingestOne(kodoCardId, ptId) {
         const usId = r.poketrace_us_holo_id || r.poketrace_us_id
         const euId = r.poketrace_eu_holo_id || r.poketrace_eu_id
         let got = 0
-        if (usId) got += await ingestOne(cardId, usId)
+        const meta = metaById[cardId]
+        if (usId) got += await ingestOne(cardId, usId, meta)
         // Appel EU CONDITIONNEL : uniquement si le marche US n'a rien donne.
         // Avant, chaque carte consommait 2 requetes systematiquement ; 14 374
         // cartes ont une donnee US et s'arretent donc au 1er appel (~35% de
         // requetes economisees, ce qui fait tenir le Tier 1 dans le run).
-        if (got === 0 && euId && budget()) got += await ingestOne(cardId, euId)
+        if (got === 0 && euId && budget()) got += await ingestOne(cardId, euId, meta)
         mRows += got
         attempts.push({ id: cardId, ok: got > 0 })
         mDone++

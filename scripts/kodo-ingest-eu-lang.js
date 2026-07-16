@@ -40,36 +40,58 @@ async function ingestOne(kodoCardId, printId, ptId) {
   const card = body && body.data
   if (!card || !card.prices) return 0
   const asOf = card.lastUpdated || new Date().toISOString()
-  let rows = 0
+  const variant = /holo/i.test(card.variant || '') ? 'Holofoil' : 'Normal'
+
+  // Collecte en memoire, puis UN SEUL INSERT GROUPE. Avant : ~5 INSERT par carte
+  // (6616 lignes / 1273 cartes), chacun un aller-retour HTTP vers Neon Frankfurt
+  // depuis un runner US -> 1,04 s/carte, run coupe a 22 min sur 1273 cartes
+  // (57% du Tier 1 seulement). Le FR n'a aucun sleep : sa lenteur etait 100% de
+  // la latence base.
+  const c = { id: [], print: [], tier: [], src: [], vari: [], spot: [], low: [], high: [],
+              a7: [], a30: [], m7: [], m30: [], sc: [], ask: [], cur: [], cb: [], as_of: [] }
+
   for (const [source, tiers] of Object.entries(card.prices)) {
     const isAsking = source === 'cardmarket_unsold'
     for (const [tier, d] of Object.entries(tiers || {})) {
       if (!d || typeof d !== 'object') continue
-      // Garde-fou : rejeter les asks gradés aberrants (prix de blocage Cardmarket
-      // type 1M€/62500€). Les vrais prix gradés éventuellement >20k€ viennent de
-      // ebay_fr (pipeline propre), jamais de cardmarket_unsold -> aucune perte.
+      // Garde-fou : rejeter les asks grades aberrants (prix de blocage Cardmarket
+      // type 1M EUR/62500 EUR). Les vrais prix grades eventuellement >20k EUR
+      // viennent de ebay_fr (pipeline propre), jamais de cardmarket_unsold.
       if (isAsking && /^(PSA|CGC|BGS|SGC|CCC|PCA|ACE|TAG|CCA|AOG|GSG|PGS)_/.test(tier) && Number(d.avg) > 20000) continue
-      const variant = /holo/i.test(card.variant || '') ? 'Holofoil' : 'Normal'
-      const currency = d.currency || 'EUR'
-      await sql`INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,
-          spot, low, high, avg7d, avg30d, median7d, median30d, sale_count, is_asking,
-          currency, country_breakdown, as_of)
-        VALUES (${kodoCardId}, ${printId}, 'EU', ${tier}, ${source}, ${variant},
-          ${d.avg ?? null}, ${d.low ?? null}, ${d.high ?? null},
-          ${d.avg7d ?? null}, ${d.avg30d ?? null}, ${d.median7d ?? null}, ${d.median30d ?? null},
-          ${d.saleCount ?? null}, ${isAsking}, ${currency},
-          ${d.country ? JSON.stringify(d.country) : null}, ${asOf})
-        ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
-          spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
-          avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
-          median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,
-          is_asking=EXCLUDED.is_asking, currency=EXCLUDED.currency,
-          country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of,
-          print_id=COALESCE(EXCLUDED.print_id, price_matrix.print_id)`
-      rows++
+      c.id.push(kodoCardId); c.print.push(printId); c.tier.push(tier)
+      c.src.push(source); c.vari.push(variant)
+      c.spot.push(d.avg ?? null); c.low.push(d.low ?? null); c.high.push(d.high ?? null)
+      c.a7.push(d.avg7d ?? null); c.a30.push(d.avg30d ?? null)
+      c.m7.push(d.median7d ?? null); c.m30.push(d.median30d ?? null)
+      c.sc.push(d.saleCount ?? null); c.ask.push(isAsking); c.cur.push(d.currency || 'EUR')
+      c.cb.push(d.country ? JSON.stringify(d.country) : null); c.as_of.push(asOf)
     }
   }
-  return rows
+  if (!c.id.length) return 0
+
+  await sql.query(
+    `INSERT INTO price_matrix (kodo_card_id, print_id, market, tier, source, variant,
+       spot, low, high, avg7d, avg30d, median7d, median30d, sale_count, is_asking,
+       currency, country_breakdown, as_of)
+     SELECT x.id, x.print, 'EU', x.tier, x.src, x.vari, x.spot, x.low, x.high,
+            x.a7, x.a30, x.m7, x.m30, x.sc, x.ask, x.cur, x.cb, x.as_of
+     FROM unnest(
+       $1::text[], $2::text[], $3::text[], $4::text[], $5::text[],
+       $6::numeric[], $7::numeric[], $8::numeric[], $9::numeric[], $10::numeric[],
+       $11::numeric[], $12::numeric[], $13::int[], $14::boolean[], $15::text[],
+       $16::jsonb[], $17::timestamptz[])
+       AS x(id, print, tier, src, vari, spot, low, high, a7, a30, m7, m30, sc, ask, cur, cb, as_of)
+     ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
+       spot=EXCLUDED.spot, low=EXCLUDED.low, high=EXCLUDED.high,
+       avg7d=EXCLUDED.avg7d, avg30d=EXCLUDED.avg30d, median7d=EXCLUDED.median7d,
+       median30d=EXCLUDED.median30d, sale_count=EXCLUDED.sale_count,
+       is_asking=EXCLUDED.is_asking, currency=EXCLUDED.currency,
+       country_breakdown=EXCLUDED.country_breakdown, as_of=EXCLUDED.as_of,
+       print_id=COALESCE(EXCLUDED.print_id, price_matrix.print_id)`,
+    [c.id, c.print, c.tier, c.src, c.vari, c.spot, c.low, c.high,
+     c.a7, c.a30, c.m7, c.m30, c.sc, c.ask, c.cur, c.cb, c.as_of],
+  )
+  return c.id.length
 }
 
 ;(async () => {

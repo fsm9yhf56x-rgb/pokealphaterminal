@@ -53,7 +53,7 @@ async function preloadMeta(cardIds) {
 
 async function ingestOne(kodoCardId, ptId, meta) {
   const body = await get('/cards/' + ptId)
-  await sleep(200)
+  await sleep(120)
   const card = body && body.data
   if (!card || !card.prices) return 0
   const market = card.market || 'US'

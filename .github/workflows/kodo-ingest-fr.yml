@@ -26,5 +26,5 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
           KODO_MAX_REQ: '5500'
-          KODO_MAINT_REQ: '2000'
+          KODO_MAINT_REQ: '2500'   # Tier 1 FR = 2225 cartes -> couvert chaque nuit
         run: node scripts/kodo-ingest-eu-lang.js fr

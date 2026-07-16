@@ -4,13 +4,14 @@
 require(process.cwd() + '/node_modules/dotenv').config({ path: '.env.local', quiet: true })
 const { neon } = require(process.cwd() + '/node_modules/@neondatabase/serverless')
 const sql = neon(process.env.DATABASE_URL)
+const { selectRefreshBatch, markAttempts, tierSummary } = require(process.cwd() + '/scripts/lib/kodo-refresh-tiers.js')
 const KEY = process.env.POKETRACE_API_KEY
 const BASE = 'https://api.poketrace.com/v1'
 
 const LANG = (process.argv[2] || 'fr').toLowerCase()
 const JOB = 'kodo_ingest_eu_' + LANG
 const START = Date.now()
-const MAX_MS = 18 * 60 * 1000
+const MAX_MS = 22 * 60 * 1000  // le job coupe a 25 min (timeout-minutes)
 const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 5500
 let reqCount = 0
 const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
@@ -93,28 +94,41 @@ async function ingestOne(kodoCardId, printId, ptId) {
     // MODE MAINTENANCE: job FR rempli -> rafraichir les cartes au as_of le plus vieux
     console.log('Job', JOB, 'COMPLETED -> mode MAINTENANCE (refresh FR plus vieux)')
     const maintBudget = Number(process.env.KODO_MAINT_REQ) || Math.floor(MAX_REQ / 2)
-    const oldestCards = await sql`
-      SELECT t.kodo_card_id, kc.print_id,
-        COALESCE(r.poketrace_eu_holo_id, r.poketrace_eu_id) AS eu_id
-      FROM (
-        SELECT kodo_card_id, MAX(as_of) AS last_seen
-        FROM price_matrix
-        WHERE kodo_card_id LIKE ${LANG + '-%'}
-        GROUP BY kodo_card_id
-      ) t
-      JOIN source_refs r ON r.kodo_card_id = t.kodo_card_id
-      JOIN k_cards kc ON kc.id = t.kodo_card_id
-      WHERE (r.poketrace_eu_id IS NOT NULL OR r.poketrace_eu_holo_id IS NOT NULL)
-      ORDER BY t.last_seen ASC LIMIT ${maintBudget}`
-    let mPending = oldestCards.map(r => ({ id: r.kodo_card_id, print: r.print_id, eu: r.eu_id }))
+    // Selection PRIORISEE (module partage Kodo Engine) : memes tiers que EN/JP.
+    // T1 = detenues + wishlist + >=20 EUR ; T2 = rotation ; T3 = communes 1x/an.
+    // Rotation sur la TENTATIVE (kodo_refresh_state), pas sur le succes.
+    const selection = await selectRefreshBatch(sql, {
+      prefixes: [LANG + '-%'],
+      budget: maintBudget,
+      idScope: 'eu',
+    })
+    const selIds = selection.map(r => r.kodo_card_id)
+    const refRows = await sql`
+      SELECT r.kodo_card_id, kc.print_id,
+             COALESCE(r.poketrace_eu_holo_id, r.poketrace_eu_id) AS eu_id
+      FROM source_refs r
+      JOIN k_cards kc ON kc.id = r.kodo_card_id
+      WHERE r.kodo_card_id = ANY(${selIds})`
+    const refById = Object.fromEntries(refRows.map(r => [r.kodo_card_id, r]))
+    // On repasse par selIds : l'ordre du module EST la priorite.
+    let mPending = selIds
+      .map(id => refById[id])
+      .filter(Boolean)
+      .map(r => ({ id: r.kodo_card_id, print: r.print_id, eu: r.eu_id }))
     let mDone = 0, mRows = 0
-    console.log('Maintenance FR: ' + mPending.length + ' cartes a rafraichir (plus vieilles)')
+    console.log('Maintenance ' + LANG.toUpperCase() + ':', mPending.length, 'cartes |', tierSummary(selection))
+    let attempts = []
     while (mPending.length && budget()) {
       const item = mPending[0]
-      if (item.eu) mRows += await ingestOne(item.id, item.print, item.eu)
+      let got = 0
+      if (item.eu) got = await ingestOne(item.id, item.print, item.eu)
+      mRows += got
+      attempts.push({ id: item.id, ok: got > 0 })
       mPending = mPending.slice(1)
       mDone++
+      if (attempts.length >= 50) { await markAttempts(sql, attempts); attempts = [] }
     }
+    if (attempts.length) await markAttempts(sql, attempts)
     await sql`UPDATE kodo_sync_state SET last_run_at = now(),
       notes = ${'maintenance ' + LANG + ': ' + new Date().toISOString()} WHERE job_id = ${JOB}`
     console.log('=== FIN MAINTENANCE ' + LANG.toUpperCase() + ' === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)

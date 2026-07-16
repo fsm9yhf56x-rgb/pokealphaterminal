@@ -1,12 +1,13 @@
 require(process.cwd() + '/node_modules/dotenv').config({ path: '.env.local', quiet: true })
 const { neon } = require(process.cwd() + '/node_modules/@neondatabase/serverless')
 const sql = neon(process.env.DATABASE_URL)
+const { selectRefreshBatch, markAttempts, tierSummary } = require(process.cwd() + '/scripts/lib/kodo-refresh-tiers.js')
 const KEY = process.env.POKETRACE_API_KEY
 const BASE = 'https://api.poketrace.com/v1'
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
 const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 6000
-const MAX_MS = 18 * 60 * 1000
+const MAX_MS = 22 * 60 * 1000  // le job coupe a 25 min (timeout-minutes)
 const START = Date.now()
 let reqCount = 0
 const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
@@ -31,7 +32,7 @@ async function get(path) {
 
 async function ingestOne(kodoCardId, ptId) {
   const body = await get('/cards/' + ptId)
-  await sleep(380)
+  await sleep(200)
   const card = body && body.data
   if (!card || !card.prices) return 0
   const market = card.market || 'US'
@@ -101,21 +102,25 @@ async function ingestOne(kodoCardId, ptId) {
     // MODE MAINTENANCE: job rempli 100% -> rafraichir les cartes au as_of le plus vieux
     console.log('Job COMPLETED -> mode MAINTENANCE (refresh des plus vieux prix)')
     const maintBudget = Number(process.env.KODO_MAINT_REQ) || Math.floor(MAX_REQ / 2)
-    const oldestCards = await sql`
-      SELECT kodo_card_id FROM (
-        SELECT kodo_card_id, MAX(as_of) AS last_seen
-        FROM price_matrix
-        WHERE (kodo_card_id LIKE 'en-%' OR kodo_card_id LIKE 'jp-%' OR kodo_card_id LIKE 'ja-%')
-        GROUP BY kodo_card_id
-      ) t ORDER BY last_seen ASC LIMIT ${maintBudget}`
-    let mPending = oldestCards.map(r => r.kodo_card_id)
+    // Selection PRIORISEE (module partage Kodo Engine) : univers = cartes
+    // reellement interrogeables, tiers (detenues/wishlist/>=20 EUR d'abord,
+    // communes 1x/an), rotation sur la TENTATIVE et non sur le succes.
+    // Avant : selection sur price_matrix -> 1499/1500 cartes sans source_ref,
+    // aucun appel emis, 1 seule carte rafraichie par nuit.
+    const selection = await selectRefreshBatch(sql, {
+      prefixes: ['en-%', 'jp-%', 'ja-%'],
+      budget: maintBudget,
+      idScope: 'any',
+    })
+    let mPending = selection.map(r => r.kodo_card_id)
     let mDone = 0, mRows = 0
-    console.log('Maintenance: ' + mPending.length + ' cartes EN/JP a rafraichir (plus vieilles)')
+    console.log('Maintenance EN/JP:', mPending.length, 'cartes |', tierSummary(selection))
     while (mPending.length && budget()) {
       const batch = mPending.slice(0, 50)
       const refs = await sql`SELECT kodo_card_id, poketrace_us_id, poketrace_us_holo_id,
         poketrace_eu_id, poketrace_eu_holo_id FROM source_refs WHERE kodo_card_id = ANY(${batch})`
       const byId = Object.fromEntries(refs.map(r => [r.kodo_card_id, r]))
+      const attempts = []
       for (const cardId of batch) {
         if (!budget()) break
         mPending = mPending.filter(x => x !== cardId)
@@ -123,10 +128,20 @@ async function ingestOne(kodoCardId, ptId) {
         if (!r) { mDone++; continue }
         const usId = r.poketrace_us_holo_id || r.poketrace_us_id
         const euId = r.poketrace_eu_holo_id || r.poketrace_eu_id
-        if (usId) mRows += await ingestOne(cardId, usId)
-        if (euId && budget()) mRows += await ingestOne(cardId, euId)
+        let got = 0
+        if (usId) got += await ingestOne(cardId, usId)
+        // Appel EU CONDITIONNEL : uniquement si le marche US n'a rien donne.
+        // Avant, chaque carte consommait 2 requetes systematiquement ; 14 374
+        // cartes ont une donnee US et s'arretent donc au 1er appel (~35% de
+        // requetes economisees, ce qui fait tenir le Tier 1 dans le run).
+        if (got === 0 && euId && budget()) got += await ingestOne(cardId, euId)
+        mRows += got
+        attempts.push({ id: cardId, ok: got > 0 })
         mDone++
       }
+      // Journal : la rotation suit la tentative -> aucune carte muette ne peut
+      // squatter la file indefiniment.
+      if (attempts.length) await markAttempts(sql, attempts)
     }
     await sql`UPDATE kodo_sync_state SET requests_used = requests_used + ${reqCount},
       last_run_at = now(), notes = ${'maintenance: ' + new Date().toISOString()}

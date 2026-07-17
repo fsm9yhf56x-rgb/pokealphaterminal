@@ -3,10 +3,20 @@
  * useAuth — lecteur du AuthContext (le fetch profil vit dans AuthProvider).
  * API publique inchangee 1:1 : user, profile, session, loading, profileReady,
  * signUp, signIn, signInWithGoogle, signOut, updateProfile, isPro, isPremium, plan, logout.
+ * + planSource, betaUntil, paidPlan (nouveaux, additifs).
+ *
+ * PLAN : la derivation locale (rawPlan + premium_until) a ete RETIREE.
+ * /api/profile renvoie desormais plan / planSource / betaUntil / paidPlan deja
+ * resolus par le serveur (resolvePlan). Une seule regle, un seul endroit.
+ * Le client ne fait plus que lire — il ne peut plus se desaligner du serveur,
+ * et il n'a pas besoin de savoir que la beta existe.
  */
 import { authClient } from './auth/client'
 import { useAuthContext } from './auth/AuthProvider'
 import type { Profile } from './database.types'
+
+type Plan = 'free' | 'pro' | 'premium'
+type PlanSource = 'free' | 'stripe' | 'referral' | 'beta'
 
 export function useAuth() {
   const { user, session, profile, loading, profileReady, refetchProfile, setProfileLocal } =
@@ -73,10 +83,22 @@ export function useAuth() {
     }
   }
 
-  const _rawPlan: 'free' | 'pro' | 'premium' =
-    (profile?.plan as 'free' | 'pro' | 'premium') ?? (profile?.is_pro ? 'pro' : 'free')
-  const _pu = (profile as any)?.premium_until ? new Date((profile as any).premium_until as string) : null
-  const plan: 'free' | 'pro' | 'premium' = (_pu && _pu.getTime() > Date.now()) ? 'premium' : _rawPlan
+  // Lecture seule de ce que le serveur a resolu. Le fallback legacy is_pro vit
+  // desormais serveur (planFromRow). Profil absent = 'free' : si /api/profile
+  // tombe, on n'invente pas un plan — meme regle que les objectifs.
+  const p = profile as unknown as
+    | { plan?: Plan; planSource?: PlanSource; betaUntil?: string | null; paidPlan?: Plan }
+    | null
+    | undefined
+
+  const plan: Plan = p?.plan ?? 'free'
+  const planSource: PlanSource = p?.planSource ?? 'free'
+  /** Non-null uniquement si planSource === 'beta'. Pour le badge honnete. */
+  const betaUntil: string | null = p?.betaUntil ?? null
+  /** Ce qu'il A PAYE. Peut etre < plan pendant la beta (Pro paye + Premium
+   *  prete). Afficher paidPlan comme « ton abonnement », plan comme « ton
+   *  acces » — sinon il decouvre son vrai plan le jour du BETA_MODE=off. */
+  const paidPlan: Plan = p?.paidPlan ?? 'free'
   const isPro = plan === 'pro' || plan === 'premium'
   const isPremium = plan === 'premium'
 
@@ -94,6 +116,9 @@ export function useAuth() {
     isPro,
     isPremium,
     plan,
+    planSource,
+    betaUntil,
+    paidPlan,
     logout: signOut,
   }
 }

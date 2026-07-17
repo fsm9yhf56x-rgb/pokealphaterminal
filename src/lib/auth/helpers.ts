@@ -8,12 +8,19 @@
  *
  * Profile-derived data (is_pro, is_admin, theme, etc.) is fetched from the
  * `profiles` table joined on user.id.
+ *
+ * PLAN : la derivation locale a ete retiree au profit de planFromRow ->
+ * resolvePlan (src/lib/plan/). Une seule regle, un seul endroit, serveur ET
+ * client. requirePlan() lit toujours `user.plan` : il n'a pas bouge et n'a
+ * pas besoin de savoir que la beta existe.
  */
 import 'server-only'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from './server'
 import { sql } from '../db/sql'
+import { planFromRow } from '../plan/from-profile'
+import type { PlanSource } from '../plan/resolve'
 
 export type BetterAuthUser = {
   id: string
@@ -29,6 +36,12 @@ export type UserWithProfile = BetterAuthUser & {
   isEarlySupporter: boolean
   earlyRank: number | null
   plan: 'free' | 'pro' | 'premium'
+  /** D'ou vient le plan effectif : 'stripe' | 'referral' | 'beta' | 'free'. */
+  planSource: PlanSource
+  /** Non-null uniquement si planSource === 'beta'. */
+  betaUntil: string | null
+  /** Le plan reellement PAYE. Peut etre < plan pendant la beta. */
+  paidPlan: 'free' | 'pro' | 'premium'
   isAdmin: boolean
 }
 
@@ -52,25 +65,58 @@ export async function getCurrentUserWithProfile(): Promise<UserWithProfile | nul
   if (!user) return null
 
   try {
+    // BETA : le LEFT JOIN n'ajoute AUCUN aller-retour vers Neon, et l'email
+    // vient de la session (aucun JOIN sur "user"). Retirer ces 2 lignes suffit
+    // a demanteler la beta cote lecture (cf. beta.ts, etape 4).
     const rows = (await sql`
-      SELECT is_pro, is_admin, plan, is_early_supporter, early_rank, premium_until FROM "profiles" WHERE id = ${user.id} LIMIT 1
-    `) as Array<{ is_pro: boolean | null; is_admin: boolean | null; plan: string | null; is_early_supporter: boolean | null; early_rank: number | null; premium_until: string | null }>
+      SELECT p.is_pro, p.is_admin, p.plan, p.is_early_supporter, p.early_rank, p.premium_until,
+             bi.tier AS beta_tier
+      FROM "profiles" p
+      LEFT JOIN beta_invites bi ON bi.email = lower(${user.email})
+      WHERE p.id = ${user.id}
+      LIMIT 1
+    `) as Array<{
+      is_pro: boolean | null
+      is_admin: boolean | null
+      plan: string | null
+      is_early_supporter: boolean | null
+      early_rank: number | null
+      premium_until: string | null
+      beta_tier: string | null
+    }>
 
     const profile = rows[0]
-    const rawPlan: 'free' | 'pro' | 'premium' = (profile?.plan as 'free' | 'pro' | 'premium') || (profile?.is_pro ? 'pro' : 'free')
-    const _pu = (profile as any)?.premium_until ? new Date((profile as any).premium_until as string) : null
-    const plan: 'free' | 'pro' | 'premium' = (_pu && _pu.getTime() > Date.now()) ? 'premium' : rawPlan
+    const resolved = planFromRow(profile)
+
     return {
       ...user,
-      plan,
-      isPro: plan === 'pro' || plan === 'premium',
-      isPremium: plan === 'premium',
+      plan: resolved.plan,
+      planSource: resolved.source,
+      betaUntil: resolved.betaUntil,
+      paidPlan: resolved.paidPlan,
+      isPro: resolved.plan === 'pro' || resolved.plan === 'premium',
+      isPremium: resolved.plan === 'premium',
       isEarlySupporter: !!profile?.is_early_supporter,
       earlyRank: profile?.early_rank ?? null,
       isAdmin: profile?.is_admin === true,
     }
-  } catch {
-    return { ...user, plan: 'free' as const, isPro: false, isPremium: false, isEarlySupporter: false, earlyRank: null, isAdmin: false }
+  } catch (e) {
+    // Ce catch degrade en 'free' — y compris un abonne payant si Neon hoquette
+    // ou si beta_invites a ete droppee avant le retrait du JOIN. Il etait muet :
+    // il loggue desormais, sinon la panne est invisible dans les logs Vercel.
+    console.error('[getCurrentUserWithProfile] fallback free —', e)
+    return {
+      ...user,
+      plan: 'free' as const,
+      planSource: 'free' as const,
+      betaUntil: null,
+      paidPlan: 'free' as const,
+      isPro: false,
+      isPremium: false,
+      isEarlySupporter: false,
+      earlyRank: null,
+      isAdmin: false,
+    }
   }
 }
 

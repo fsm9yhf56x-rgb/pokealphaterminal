@@ -40,6 +40,8 @@ jobs:
         if: always()
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BETA_MODE: 'on'
+          BETA_ENDS_AT: '2026-09-30T22:00:00Z'
         run: node scripts/generate-notifications.mjs
       # RGPD : la politique de confidentialite annonce 25 mois (CNIL).
       - name: Purge analytics > 25 mois

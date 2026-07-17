@@ -36,9 +36,21 @@ async function wishlistPriceAlerts() {
              ELSE ps.fair_value_eur
            END AS current_price
     FROM goal_wishlist gw
-    LEFT JOIN k_cards kc
-      ON gw.set_id IS NOT NULL AND gw.card_number IS NOT NULL
-     AND kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number
+    -- Resolution 2 chemins (fix JP 17/07, MIROIR de goals/service.ts listGoals) :
+    -- id construit (EN/FR) OU (lang, print_id) (JP, id = jp-{tcgPlayerId}),
+    -- collisions departagees par trigram sur le nom. Sans ce fix, une carte
+    -- JP en wishlist n'avait jamais de cote ici -> son alerte ne partait JAMAIS.
+    LEFT JOIN LATERAL (
+      SELECT kc.print_id, kc.lang
+      FROM k_cards kc
+      WHERE gw.set_id IS NOT NULL AND gw.card_number IS NOT NULL
+        AND kc.lang = lower(gw.lang)
+        AND (kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number
+             OR kc.print_id = gw.set_id || '-' || gw.card_number)
+      ORDER BY (kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number) DESC,
+               similarity(lower(kc.name_localized), lower(gw.card_name)) DESC
+      LIMIT 1
+    ) kc ON true
     LEFT JOIN price_signals ps
       ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
     WHERE gw.acquired = false AND gw.target_price IS NOT NULL
@@ -136,10 +148,48 @@ async function goalProgress() {
   return { reached, almost, rearmed, targets: targets.length }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Générateur : fin de bêta J-7 (Lot 3 — le contrat visible)
+// Fenetre [J-7, J] avant BETA_ENDS_AT : chaque invite INSCRIT recoit une
+// notif, une seule fois (dedup par echeance : si la beta est prolongee,
+// la nouvelle date re-declenche — c'est voulu, c'est un nouveau contrat).
+// No-op propre si la beta est inactive ou sans echeance. Les deux vars
+// doivent etre presentes dans kodo-consolidate.yml (env du job).
+// ─────────────────────────────────────────────────────────────
+async function betaEnding() {
+  if (process.env.BETA_MODE !== 'on') return { skipped: 'beta_off' }
+  const endsAt = process.env.BETA_ENDS_AT
+  const end = endsAt ? Date.parse(endsAt) : NaN
+  if (!Number.isFinite(end)) return { skipped: 'no_end_date' }
+  const daysLeft = Math.ceil((end - Date.now()) / 86400000)
+  if (daysLeft > 7 || daysLeft < 0) return { skipped: 'outside_window', daysLeft }
+
+  const users = await sql`
+    SELECT u.id AS user_id, bi.tier
+    FROM beta_invites bi
+    JOIN "user" u ON lower(u.email) = bi.email`
+  const dateFr = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(new Date(end))
+  let created = 0
+  for (const u of users) {
+    const dedup = `beta_ending:${endsAt}`
+    const ins = await sql`
+      INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
+      VALUES (${u.user_id}, 'beta_ending', ${'Ta beta Premium se termine le ' + dateFr},
+              ${'Ton acces ' + (u.tier === 'pro' ? 'Pro' : 'Premium') + ' offert prend fin le ' + dateFr + '. Tes cartes et tes donnees restent — seul l\'acces aux fonctionnalites ' + (u.tier === 'pro' ? 'Pro' : 'Premium') + ' s\'arrete, sauf abonnement.'},
+              ${JSON.stringify({ ends_at: endsAt, tier: u.tier, url: '/abonnement' })}::jsonb,
+              ${dedup})
+      ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
+      RETURNING id`
+    if (ins.length) created++
+  }
+  return { created, invited: users.length, daysLeft }
+}
+
 // Registre extensible. Prochains : newSetRelease, wishlistDrop...
 const generators = [
   { name: 'wishlist_price', run: wishlistPriceAlerts },
   { name: 'goal_progress', run: goalProgress },
+  { name: 'beta_ending', run: betaEnding },
 ]
 
 async function main() {

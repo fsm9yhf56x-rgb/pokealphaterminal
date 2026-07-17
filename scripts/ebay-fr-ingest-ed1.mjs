@@ -136,15 +136,27 @@ for (const c of cards) {
   processed++;
 
   if (COMMIT) {
+    // INSERT GROUPE : 1 requete pour toutes les annonces de la carte (avant :
+    // 1 INSERT par annonce = des milliers d'allers-retours Neon par run, cause
+    // des timeouts a 45/40/50 min trois nuits de suite).
+    const b = { item: [], kid: [], ed: [], title: [], price: [], cur: [], num: [], tot: [], holo: [], url: [] }
     for (const [rows, edition, kid] of [[ed1,'ed1',c.id_1st],[unl,'unl',idUnl]]) {
       for (const {it,p} of rows) {
-        await sql.query(`INSERT INTO ebay_fr_ed1_raw
-          (item_id, kodo_card_id, edition, title, price, currency, card_number, set_total, is_holo, url, fetched_at, first_seen, last_seen)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now(),now())
-          ON CONFLICT (item_id) DO UPDATE SET price=EXCLUDED.price, title=EXCLUDED.title,
-            kodo_card_id=EXCLUDED.kodo_card_id, edition=EXCLUDED.edition, fetched_at=now(), last_seen=now()`,
-          [it.itemId, kid, edition, it.title, p, it.price?.currency||'EUR', num, total, isHolo(it.title), it.itemWebUrl||null]);
+        b.item.push(it.itemId); b.kid.push(kid); b.ed.push(edition)
+        b.title.push(it.title); b.price.push(p); b.cur.push(it.price?.currency||'EUR')
+        b.num.push(num); b.tot.push(total); b.holo.push(isHolo(it.title)); b.url.push(it.itemWebUrl||null)
       }
+    }
+    if (b.item.length) {
+      await sql.query(`INSERT INTO ebay_fr_ed1_raw
+        (item_id, kodo_card_id, edition, title, price, currency, card_number, set_total, is_holo, url, fetched_at, first_seen, last_seen)
+        SELECT x.item, x.kid, x.ed, x.title, x.price, x.cur, x.num, x.tot, x.holo, x.url, now(), now(), now()
+        FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::numeric[],
+                    $6::text[], $7::text[], $8::text[], $9::boolean[], $10::text[])
+          AS x(item, kid, ed, title, price, cur, num, tot, holo, url)
+        ON CONFLICT (item_id) DO UPDATE SET price=EXCLUDED.price, title=EXCLUDED.title,
+          kodo_card_id=EXCLUDED.kodo_card_id, edition=EXCLUDED.edition, fetched_at=now(), last_seen=now()`,
+        [b.item, b.kid, b.ed, b.title, b.price, b.cur, b.num, b.tot, b.holo, b.url]);
     }
   }
   if (ed1.length) { capEd1+=ed1.length; cardsEd1++; }

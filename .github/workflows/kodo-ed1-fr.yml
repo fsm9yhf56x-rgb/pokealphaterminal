@@ -1,0 +1,42 @@
+name: Kodo Engine - Ed1 FR (eBay FR + prix par etat)
+# Chaine Edition 1 / Unlimited FR, sortie du Consolidate : son ingest eBay
+# (~2730 requetes avec pauses) a tue le Consolidate par timeout deux nuits de
+# suite (45 puis 40 min). Maillon dedie de la cascade nocturne :
+#   EN/JP -> FR -> Ed1 FR (ici) -> Consolidate -> Graded FR
+# Le prix par etat suit le match car il s'ancre sur ebay_fr.
+on:
+  workflow_run:
+    workflows: ["Kodo Engine - Ingest FR (PokeTrace)"]
+    types: [completed]
+  workflow_dispatch:
+jobs:
+  ed1-fr:
+    name: Ed1 eBay FR + prix par etat
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    concurrency:
+      group: kodo-ed1-fr
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm install --no-audit --no-fund --prefer-offline
+      - name: Ingest Ed1 + Unlimited (eBay FR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-fr-ingest-ed1.mjs --commit
+      - name: Match Ed1/Unlimited -> price_matrix
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ebay-fr-match-ed1.mjs --commit
+      - name: Prix par etat FR (percentiles + ratios)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-price-by-state.mjs --commit

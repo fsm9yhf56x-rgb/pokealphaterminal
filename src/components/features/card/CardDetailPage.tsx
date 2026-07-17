@@ -1000,7 +1000,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           rarity: ((card as any).rarity ?? card.rarity_normalized) ?? null,
           card_type: (card as any).card_type ?? null,
           image_url: card.image_url ?? null,
-          k_card_id: (card as any).k_card_id ?? null,
+          k_card_id: (card as any).k_card_id ?? card.id ?? cardId ?? null,
         } as AddCardSeed}
         onAdd={addCard}
       />

@@ -39,9 +39,22 @@ export async function listGoals(userId: string): Promise<{ targets: GoalTarget[]
                ELSE ps.fair_value_eur
              END AS current_price
       FROM goal_wishlist gw
-      LEFT JOIN k_cards kc
-        ON gw.set_id IS NOT NULL AND gw.card_number IS NOT NULL
-       AND kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number
+      -- Resolution carte a 2 chemins (fix JP) :
+      --   1. id construit {lang}-{set}-{num} — vrai pour EN/FR (id = lang-print_id)
+      --   2. (lang, print_id) — seul chemin valide pour le JP (id = jp-{tcgPlayerId})
+      -- ~2094 print_id JP sont en collision (numeros non uniques type S-P) :
+      -- on departage par similarite trigram sur le nom (idx_kcards_name_trgm).
+      LEFT JOIN LATERAL (
+        SELECT kc.print_id, kc.lang
+        FROM k_cards kc
+        WHERE gw.set_id IS NOT NULL AND gw.card_number IS NOT NULL
+          AND kc.lang = lower(gw.lang)
+          AND (kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number
+               OR kc.print_id = gw.set_id || '-' || gw.card_number)
+        ORDER BY (kc.id = lower(gw.lang) || '-' || gw.set_id || '-' || gw.card_number) DESC,
+                 similarity(lower(kc.name_localized), lower(gw.card_name)) DESC
+        LIMIT 1
+      ) kc ON true
       LEFT JOIN price_signals ps
         ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
       WHERE gw.user_id = ${userId}
@@ -115,7 +128,7 @@ export async function createWishItem(
   `) as any[]
   const item = normalizeWish(rows[0])
   // Cote calculée à l'insert aussi (pas seulement au GET) → affichage immédiat, cohérent avec le modal.
-  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number)
+  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number, item.card_name)
   return item
 }
 
@@ -145,20 +158,25 @@ export async function updateWishItem(
   `) as any[]
   if (!rows[0]) return null
   const item = normalizeWish(rows[0])
-  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number)
+  item.current_price = await priceForItem(item.lang, item.set_id, item.card_number, item.card_name)
   return item
 }
 
 /* ── Normalisation (NUMERIC string → number) ── */
 
-/** Cote actuelle d'une carte (règle Kodo headline), depuis price_signals. Null si non résoluble. */
+/** Cote actuelle d'une carte (règle Kodo headline), depuis price_signals. Null si non résoluble.
+ *  Resolution a 2 chemins (fix JP) : id construit d'abord, sinon (lang, print_id),
+ *  collisions departagees par trigram sur le nom — meme regle que listGoals. */
 async function priceForItem(
   lang: string | null | undefined,
   setId: string | null | undefined,
   cardNumber: string | null | undefined,
+  cardName?: string | null,
 ): Promise<number | null> {
   if (!lang || !setId || !cardNumber) return null
-  const cardId = `${String(lang).toLowerCase()}-${setId}-${cardNumber}`
+  const lg = String(lang).toLowerCase()
+  const cardId = `${lg}-${setId}-${cardNumber}`
+  const printId = `${setId}-${cardNumber}`
   const rows = (await sql`
     SELECT CASE
              WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
@@ -167,7 +185,10 @@ async function priceForItem(
            END AS current_price
     FROM k_cards kc
     LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
-    WHERE kc.id = ${cardId}
+    WHERE kc.lang = ${lg}
+      AND (kc.id = ${cardId} OR kc.print_id = ${printId})
+    ORDER BY (kc.id = ${cardId}) DESC,
+             similarity(lower(kc.name_localized), lower(${cardName ?? ''})) DESC
     LIMIT 1
   `) as any[]
   const v = rows[0]?.current_price

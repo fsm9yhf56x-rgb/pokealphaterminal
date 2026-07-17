@@ -3,16 +3,17 @@ import { newsSlug } from '@/lib/news-slug'
 
 /**
  * Actu TCG Pokémon — fil de titres 100% cartes, en français, AVEC vignette.
- * Sources : flux RSS NATIFS (titre + image) :
- *   - PrimeTimePokemon (EN, TCG-pur, media:thumbnail Blogger)
+ * Sources : flux RSS NATIFS (titre + image + lien vers l'article) :
  *   - PokeBeach front-page (EN, TCG-pur, <img> dans description)
  *   - Pokelite (FR, collection/marché, featured image WordPress)
  *   - Pokemon-France (FR, généraliste -> filtré JCC, featured image WordPress)
- * Mise en français (générée 1x puis cache news_cache) :
+ * Le clic ouvre l'ARTICLE SOURCE dans un nouvel onglet : on cite le titre et on
+ * renvoie le lecteur (et le trafic) chez l'éditeur. Aucun corps d'article aspiré.
+ * Mise en français du titre (générée 1x puis cache news_cache) :
  *   1) si ANTHROPIC_API_KEY -> Claude Haiku (titre FR + résumé FR) ;
  *   2) sinon -> traduction GRATUITE Google du titre + résumé éditorial générique.
- * Reformulation/traduction = contenu légitimement nôtre. Aucune source, aucun lien sortant.
- * L'image vient du flux source (vignette éditoriale), affichée sur notre fil + page /actu.
+ * Un item sans URL exploitable n'est ni inséré ni affiché (une carte non
+ * cliquable ne vaut pas mieux que pas de carte).
  * Cache route 30 min.
  */
 export const revalidate = 1800
@@ -32,8 +33,12 @@ const NOT_POKEMON = /\b(league of legends|riftbound|one piece|yu-?gi-?oh|magic t
 type Feed = { url: string; tcgOnly: boolean; lang: 'fr' | 'en'; source: string }
 
 // tcgOnly:false = source déjà 100% TCG -> on prend tout ; true = généraliste -> on filtre.
+//
+// PrimeTime Pokémon a été RETIRÉ (17/07/26) : le blog redirige vers FeedBurner, qui
+// sert de l'Atom (<entry>) et non du RSS malgré ?alt=rss -> 0 item parsé depuis
+// toujours. Et le blog est abandonné : dernier billet en février 2018. Ne pas le
+// remettre sans vérifier ces deux points.
 const FEEDS: Feed[] = [
-  { url: 'https://primetimepokemon.blogspot.com/feeds/posts/default?alt=rss', tcgOnly: false, lang: 'en', source: 'PrimeTime Pokémon' },
   { url: 'https://www.pokebeach.com/forums/forum/front-page-news.18/index.rss', tcgOnly: false, lang: 'en', source: 'PokéBeach' },
   { url: 'https://www.pokelite.fr/feed/', tcgOnly: true, lang: 'fr', source: 'Pokelite' },
   { url: 'https://www.pokemon-france.com/feed/', tcgOnly: true, lang: 'fr', source: 'Pokémon France' },
@@ -55,7 +60,7 @@ function tag(block: string, name: string): string {
 
 /* ── Extraction d'image, par ordre de fiabilité ───────────────────────── */
 function extractImage(block: string): string | null {
-  // 1) media:thumbnail / media:content (Blogger=PrimeTime, certains WP)
+  // 1) media:thumbnail / media:content (certains WP)
   let m = block.match(/<media:(?:thumbnail|content)[^>]*\burl="([^"]+)"/i)
   if (m) {
     let u = m[1]
@@ -73,7 +78,49 @@ function extractImage(block: string): string | null {
   return null
 }
 
-type Raw = { titleEn: string; date: string; ts: number; image: string | null; lang: 'fr' | 'en'; source: string }
+/* ── Extraction du lien de l'article ──────────────────────────────────── */
+// Les 3 flux servent du RSS 2.0 avec un <link> nu dans chaque <item> (vérifié
+// 17/07/26). Le \s* évite de capter un <link rel=... href=.../> auto-fermant,
+// qui laisserait le regex courir jusqu'au </link> d'un autre bloc.
+function extractLink(block: string): string | null {
+  let m = block.match(/<link\s*>([\s\S]*?)<\/link>/i)
+  if (m) {
+    const u = clean(m[1])
+    if (/^https?:\/\//i.test(u)) return u
+  }
+  // Variante Atom, au cas où une source basculerait de format.
+  m = block.match(/<link[^>]*\brel=["']alternate["'][^>]*\bhref=["']([^"']+)["']/i)
+  if (m) return decode(m[1])
+  // Dernier recours : un <guid> qui est déjà une URL (WordPress ?p=123 redirige).
+  const g = clean(tag(block, 'guid'))
+  if (/^https?:\/\//i.test(g)) return g
+  return null
+}
+
+/**
+ * PokéBeach publie son fil de DISCUSSION dans le RSS (/forums/threads/{slug}.{id}/),
+ * pas l'article : le lecteur tomberait sur un forum et un extrait tronqué.
+ * L'article vit à /{année}/{mois}/{slug} — le slug est celui du thread, l'année et
+ * le mois se lisent dans l'URL de la vignette (/news/2026/07/xxx.png).
+ * On ne devine pas : on construit, on VÉRIFIE que ça répond, et à défaut on garde
+ * le thread (qui reste un lien réel). Appelé une seule fois par article, à
+ * l'ingestion — le cache empêche toute répétition.
+ */
+async function pokebeachArticleUrl(threadUrl: string, image: string | null): Promise<string | null> {
+  const slug = threadUrl.match(/\/threads\/([^/]+?)\.\d+\/?$/)
+  const ym = image ? image.match(/\/news\/(\d{4})\/(\d{2})\//) : null
+  if (!slug || !ym) return null
+  const guess = `https://www.pokebeach.com/${ym[1]}/${ym[2]}/${slug[1]}`
+  try {
+    const res = await fetch(guess, { method: 'HEAD', headers: { 'User-Agent': UA }, redirect: 'follow' })
+    if (!res.ok) return null
+    return res.url && /^https?:\/\/(www\.)?pokebeach\.com\//i.test(res.url) ? res.url : guess
+  } catch {
+    return null
+  }
+}
+
+type Raw = { titleEn: string; date: string; ts: number; image: string | null; url: string; lang: 'fr' | 'en'; source: string }
 
 async function fetchFeed(feed: Feed): Promise<Raw[]> {
   try {
@@ -94,9 +141,12 @@ async function fetchFeed(feed: Feed): Promise<Raw[]> {
         if (!POKEMON_KEYS.test(hay)) continue
         if (!TCG_KEYS.test(hay)) continue
       }
+      // Sans lien, la carte serait un cul-de-sac : on ne la garde pas.
+      const url = extractLink(block)
+      if (!url) continue
       const dateStr = (tag(block, 'pubDate') || tag(block, 'dc:date') || tag(block, 'published')).trim()
       const ts = new Date(dateStr).getTime() || 0
-      out.push({ titleEn, date: dateStr, ts, image: extractImage(block), lang: feed.lang, source: feed.source })
+      out.push({ titleEn, date: dateStr, ts, image: extractImage(block), url, lang: feed.lang, source: feed.source })
     }
     return out
   } catch {
@@ -180,6 +230,7 @@ export async function GET() {
       title: r.titleEn as string,
       summary: null as string | null,
       image: r.image as string | null,
+      url: r.url as string,
       lang: r.lang as 'fr' | 'en',
       source: r.source as string,
     }))
@@ -191,16 +242,17 @@ export async function GET() {
       const cTitle: Record<string, string> = {}
       const cSum: Record<string, string | null> = {}
       const cImg: Record<string, string | null> = {}
+      const cUrl: Record<string, string | null> = {}
       try {
-        const rows: any[] = await sql.query('SELECT slug, title, summary, image FROM news_cache WHERE slug = ANY($1)', [slugs])
-        for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary; cImg[r.slug] = r.image }
+        const rows: any[] = await sql.query('SELECT slug, title, summary, image, url FROM news_cache WHERE slug = ANY($1)', [slugs])
+        for (const r of rows) { existing.add(r.slug); cTitle[r.slug] = r.title; cSum[r.slug] = r.summary; cImg[r.slug] = r.image; cUrl[r.slug] = r.url }
       } catch {}
 
-      const insert = async (slug: string, title: string, summary: string, image: string | null, ts: number, source: string) => {
+      const insert = async (slug: string, title: string, summary: string, image: string | null, ts: number, source: string, url: string) => {
         try {
           await sql.query(
-            'INSERT INTO news_cache (slug, title, summary, image, news_date, source) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (slug) DO NOTHING',
-            [slug, title, summary, image, ts ? new Date(ts) : null, source],
+            'INSERT INTO news_cache (slug, title, summary, image, news_date, source, url) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (slug) DO NOTHING',
+            [slug, title, summary, image, ts ? new Date(ts) : null, source, url],
           )
         } catch {}
       }
@@ -211,14 +263,21 @@ export async function GET() {
           p.summary = cSum[p.slug]
           // image cachée prioritaire ; sinon on garde celle du flux courant
           if (cImg[p.slug]) p.image = cImg[p.slug]
+          // idem pour le lien : le cache fait foi (il porte déjà l'article résolu)
+          if (cUrl[p.slug]) p.url = cUrl[p.slug] as string
           return
+        }
+        // Article neuf : sur PokéBeach on tente de remplacer le thread par l'article.
+        if (p.source === 'PokéBeach') {
+          const better = await pokebeachArticleUrl(p.url, p.image)
+          if (better) p.url = better
         }
         // 1) Haiku (titre + résumé riches) si une clé est dispo
         const fr = await reformulate(p.titleEn)
         if (fr) {
           p.title = fr.titre
           p.summary = fr.resume
-          await insert(p.slug, fr.titre, fr.resume, p.image, p.ts, p.source)
+          await insert(p.slug, fr.titre, fr.resume, p.image, p.ts, p.source, p.url)
           return
         }
         // 2) sinon, traduction gratuite du titre + résumé générique
@@ -226,7 +285,7 @@ export async function GET() {
         if (t) {
           p.title = t
           p.summary = GENERIC_FR
-          await insert(p.slug, t, GENERIC_FR, p.image, p.ts, p.source)
+          await insert(p.slug, t, GENERIC_FR, p.image, p.ts, p.source, p.url)
           return
         }
         // 3) sinon : titre anglais, pas d'insert (réessai au prochain run)
@@ -234,7 +293,7 @@ export async function GET() {
     } catch {}
 
     return NextResponse.json({
-      items: picked.map(({ title, date, slug, summary, image, lang, source }) => ({ title, date, slug, summary, image, lang, source })),
+      items: picked.map(({ title, date, slug, summary, image, lang, source, url }) => ({ title, date, slug, summary, image, lang, source, url })),
       count: uniq.length,
     })
   } catch (e: any) {

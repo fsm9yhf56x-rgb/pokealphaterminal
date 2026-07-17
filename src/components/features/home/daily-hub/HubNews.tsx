@@ -1,10 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { newsSlug } from '@/lib/news-slug'
 
-type Item = { title: string; date: string; slug?: string; summary?: string | null; image?: string | null; lang?: 'fr' | 'en'; source?: string | null }
+type Item = { title: string; date: string; summary?: string | null; image?: string | null; lang?: 'fr' | 'en'; source?: string | null; url?: string | null }
 
 const clamp = (n: number) =>
   ({ display: '-webkit-box', WebkitLineClamp: String(n), WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' })
@@ -27,8 +25,11 @@ function rel(d: string): string {
 
 /**
  * KODO WIRE — fil de titres TCG (cartes), en français, type terminal.
- * Défilement continu, pause au survol. Chaque carte ouvre /actu (résumé Kodo).
- * Aucune attribution, aucun lien sortant.
+ * Défilement continu, pause au survol.
+ * Chaque carte ouvre l'ARTICLE SOURCE dans un nouvel onglet : on cite le titre,
+ * on crédite l'éditeur ("via X") et on lui renvoie le lecteur. Pas de rel
+ * "noreferrer" : la source doit voir le trafic que Kodo lui envoie, c'est ce qui
+ * légitime l'usage de sa vignette.
  */
 export function HubNews({ accent = '#E03020' }: { accent?: string }) {
   const [items, setItems] = useState<Item[]>([])
@@ -39,7 +40,9 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
     let on = true
     fetch('/api/news', { cache: 'no-store' })
       .then(r => r.json())
-      .then(d => { if (on) setItems(Array.isArray(d.items) ? d.items : []) })
+      // Une carte sans lien serait un cul-de-sac : la route n'en renvoie pas,
+      // ce filtre est la ceinture de sécurité si un vieux cache remonte.
+      .then(d => { if (on) setItems(Array.isArray(d.items) ? d.items.filter((i: Item) => !!i.url) : []) })
       .catch(() => {})
       .finally(() => { if (on) setLoading(false) })
     return () => { on = false }
@@ -114,9 +117,11 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
       >
         <div className="knews-track flex w-max gap-3" style={{ animationDuration: `${dur}s` }}>
           {loop.map((it, i) => (
-            <Link
+            <a
               key={i}
-              href={`/actu/${it.slug || newsSlug(it.title)}`}
+              href={it.url as string}
+              target="_blank"
+              rel="noopener"
               className="knews-card relative flex h-[74px] w-[320px] shrink-0 items-stretch overflow-hidden rounded-xl border border-[#E5E5EA] bg-white no-underline"
             >
               <span aria-hidden className="absolute left-0 top-0 z-10 h-full w-[3px]" style={{ background: accent }} />
@@ -141,7 +146,7 @@ export function HubNews({ accent = '#E03020' }: { accent?: string }) {
                   {rel(it.date)}{it.source ? ` · via ${it.source}` : ''}
                 </span>
               </span>
-            </Link>
+            </a>
           ))}
         </div>
       </div>

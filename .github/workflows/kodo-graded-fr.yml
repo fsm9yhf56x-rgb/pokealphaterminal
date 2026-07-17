@@ -5,11 +5,14 @@ name: Kodo Engine - Graded FR (eBay FR asks + Cardmarket cleaned)
 #   3. Nettoie Cardmarket gradé -> price_matrix (source cardmarket_fr, plafond
 #      valeur-dependant + apprentissage iteratif + monotonie par societe)
 #   4. Recompute portfolio (prix gradés a jour)
-# Cale a 01:35 UTC : apres ingests prix (00:10/00:15) et consolidation (01:00).
+# CHAINE : part a la FIN du Consolidate (lui-meme chaine aux ingests).
+# L'ancien cron 01:35 entrait en collision avec un Consolidate en retard
+# (constate nuit du 16->17 : annule derriere le Consolidate tue par timeout).
 # Remplace ccc-daily.yml (qui utilisait l'ancien matcher ccc-match-prices).
 on:
-  schedule:
-    - cron: '35 1 * * *'   # 01:35 UTC, apres consolidation (01:00)
+  workflow_run:
+    workflows: ["Kodo Engine - Consolidate (merge + signals)"]
+    types: [completed]
   workflow_dispatch:
 jobs:
   graded-fr:

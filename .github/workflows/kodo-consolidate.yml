@@ -1,10 +1,12 @@
 name: Kodo Engine - Consolidate (merge + signals)
 # Fusionne PPT dans price_matrix puis calcule signals + history snapshot.
-# Tourne APRES les ingests EN/JP (00:10) et FR (00:15), budget 18min chacun.
-# 01:00 = marge confortable pour que les deux ingests soient finis.
+# CHAINE : part a la FIN de l'ingest FR (lui-meme chaine a EN/JP). L'ancien
+# cron 01:00 partait AVANT les ingests quand le cron GitHub avait du retard
+# (constate nuit du 16->17 : consolidate 04:09, ingests 03:32/03:34).
 on:
-  schedule:
-    - cron: '0 1 * * *'   # 01:00 UTC, apres les ingests
+  workflow_run:
+    workflows: ["Kodo Engine - Ingest FR (PokeTrace)"]
+    types: [completed]
   workflow_dispatch:
 jobs:
   consolidate:

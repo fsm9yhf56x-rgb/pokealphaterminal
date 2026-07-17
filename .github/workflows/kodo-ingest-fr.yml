@@ -1,10 +1,14 @@
 name: Kodo Engine - Ingest FR (PokeTrace)
-# Ingestion prix FR (Cardmarket EUR) via PokeTrace. AUTONOME.
-# Decouple de l'EN/JP: tourne meme si l'autre plante (langue prioritaire FR).
-# Plafonne a 18min cote script. Structure dupliquable pour DE/ES/IT plus tard.
+# Ingestion prix FR (Cardmarket EUR) via PokeTrace.
+# CHAINE : part a la FIN d'EN/JP (workflow_run = completion, succes OU echec,
+# donc tourne meme si l'autre plante). Jamais en parallele avec lui : les crons
+# GitHub prennent des heures de retard et les deux runs simultanes se partagent
+# les 429 PokeTrace (constate nuit du 16->17 : EN 882/2800 cartes).
+# Structure dupliquable pour DE/ES/IT plus tard.
 on:
-  schedule:
-    - cron: '15 0 * * *'   # 00:15 UTC, +5min apres EN/JP (eviter parallele PokeTrace)
+  workflow_run:
+    workflows: ["Kodo Engine - Ingest EN/JP (PokeTrace)"]
+    types: [completed]
   workflow_dispatch:
 jobs:
   ingest-fr:

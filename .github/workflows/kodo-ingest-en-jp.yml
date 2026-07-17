@@ -1,7 +1,8 @@
 name: Kodo Engine - Ingest EN/JP (PokeTrace)
-# Ingestion prix EN/JP via PokeTrace. Autonome, decouple du FR.
-# Resumable (kodo_sync_state), plafonne a 18min cote script.
-# Budget-conscious: 1 run/nuit. Augmenter la frequence quand revenus.
+# Ingestion prix EN/JP via PokeTrace. POINT D'ENTREE de la chaine nocturne :
+# EN/JP -> (fin) -> Ingest FR -> (fin) -> Consolidate -> (fin) -> Graded FR.
+# Seul cron de la chaine ; le retard GitHub decale tout en bloc, dans l'ordre.
+# Resumable (kodo_sync_state). Budget-conscious: 1 run/nuit.
 on:
   schedule:
     - cron: '10 0 * * *'   # 00:10 UTC, apres reset quota PokeTrace minuit

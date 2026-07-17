@@ -29,6 +29,10 @@ const flag = (name) => {
 const args = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--tier');
 
 const norm = (e) => String(e).trim().toLowerCase();
+// Table qui donne du Premium : on n'y insere QUE des emails plausibles.
+// Sans ce garde, un argument parasite (typiquement un commentaire zsh avale)
+// devient une invitation silencieuse.
+const isEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
 async function init() {
   await sql`
@@ -67,6 +71,8 @@ async function invite() {
   if (args.length === 0) throw new Error('aucun email fourni');
 
   const emails = args.map(norm);
+  const bad = emails.filter((e) => !isEmail(e));
+  if (bad.length) throw new Error(`pas des emails: ${bad.join(' ')} — rien insere`);
   const rows = await sql`
     INSERT INTO beta_invites (email, tier)
     SELECT unnest(${emails}::text[]), ${tier}

@@ -59,7 +59,17 @@ const PREMIUM_SOON: { label: string; v: 'v2.0' | 'v3.0' }[] = [
 
 export default function AbonnementPage() {
   const { user, profile, isPro } = useAuth() as any
-  const currentPlan: PlanId = profile?.plan || (isPro ? 'pro' : 'free')
+  // CTA et checkout raisonnent sur ce que l'user PAIE (paidPlan), jamais sur
+  // l'acces effectif : un beta-testeur a plan='premium' PRETE mais
+  // paidPlan='free' — le traiter en abonne l'enverrait vers un portail
+  // Stripe sans customer (erreur garantie).
+  const currentPlan: PlanId = profile?.paidPlan ?? (profile?.plan || (isPro ? 'pro' : 'free'))
+  const betaOn: boolean = !!profile?.betaMode
+  const isBetaGuest: boolean = profile?.planSource === 'beta'
+  const betaEndFr: string | null = (() => {
+    const t = Date.parse(profile?.betaEndsAt ?? profile?.betaUntil ?? '')
+    return Number.isFinite(t) ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(new Date(t)) : null
+  })()
 
   const [period, setPeriod] = useState<Period>('mensuel')
   const [acceptCgv, setAcceptCgv] = useState(false)
@@ -74,7 +84,7 @@ export default function AbonnementPage() {
     fetch('/api/early-spots').then(r => r.json()).then(setEarly).catch(() => setEarly(null))
   }, [])
   // Early actif seulement sur cycle mensuel/annuel, offre ouverte, user pas déjà abonné
-  const earlyActive = !!early?.isOpen && period !== 'hebdo' && currentPlan === 'free'
+  const earlyActive = !!early?.isOpen && period !== 'hebdo' && currentPlan === 'free' && !betaOn
 
   // Mapping période UI → cycle Stripe
   const periodToCycle: Record<Period, 'weekly' | 'monthly' | 'yearly'> = {
@@ -98,6 +108,12 @@ export default function AbonnementPage() {
   async function handleCta(plan: PlanId) {
     // Gratuit : rien à payer
     if (plan === 'free') { window.location.href = '/'; return }
+    // BETA : tout est gratuit, aucun appel Stripe ne doit partir (checkout
+    // suspendu). Le message remplace l'action — pas d'erreur, pas de piege.
+    if (betaOn) {
+      setMsg({ type: 'ok', text: 'Tout est gratuit pendant la bêta' + (betaEndFr ? ' (jusqu\u2019au ' + betaEndFr + ')' : '') + '. Les abonnements ouvriront à sa fin.' })
+      return
+    }
     // Déjà abonné (à ce plan OU à un autre) : le portail Stripe gère tout
     // (changement de forfait avec proration, changement de cycle, annulation).
     // Stripe interdit un 2e abonnement via checkout -> on passe par le portail.
@@ -129,6 +145,25 @@ export default function AbonnementPage() {
 
   return (
     <div style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 90px' }}>
+      {betaOn && (
+        <div style={{
+          maxWidth: 620, margin: '0 auto 26px', padding: '13px 18px', borderRadius: 14,
+          background: isBetaGuest ? 'rgba(224,48,32,0.06)' : 'rgba(255,255,255,0.72)',
+          border: isBetaGuest ? '1px solid rgba(224,48,32,0.18)' : '0.5px solid rgba(0,0,0,0.07)',
+          boxShadow: '0 4px 16px rgba(16,20,38,0.06)', textAlign: 'center' as const,
+        }}>
+          <div style={{ fontFamily: FONT.display, fontSize: 13.5, fontWeight: 700, color: isBetaGuest ? '#E03020' : SNOW.ink }}>
+            {isBetaGuest
+              ? 'Ton accès ' + ((profile?.plan === 'pro') ? 'Pro' : 'Premium') + ' est offert pendant la bêta' + (betaEndFr ? ' — jusqu\u2019au ' + betaEndFr : '')
+              : 'Tout est gratuit pendant la bêta'}
+          </div>
+          <div style={{ fontFamily: FONT.body, fontSize: 12, color: SNOW.muted, marginTop: 4, lineHeight: 1.5 }}>
+            {isBetaGuest
+              ? 'Après, ton compte repasse en Gratuit sauf abonnement. Tes cartes et tes données restent.'
+              : 'Les abonnements ouvriront à la fin de la bêta' + (betaEndFr ? ' (' + betaEndFr + ')' : '') + '. Profite, explore — tes données restent.'}
+          </div>
+        </div>
+      )}
       <p style={{
         fontFamily: FONT.data, fontSize: 12, fontWeight: 700, color: SNOW.red,
         letterSpacing: '0.12em', textAlign: 'center', margin: '0 0 12px',
@@ -214,7 +249,7 @@ export default function AbonnementPage() {
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
       </div>
 
-      {currentPlan === 'free' && (
+      {currentPlan === 'free' && !betaOn && (
         <div id="checkout-consent" style={{
           maxWidth: 720, margin: '28px auto 0', padding: '18px 20px', borderRadius: 14,
           background: '#F5F5F7',

@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth/server'
 import { sql } from '@/lib/db/sql'
 import { headers } from 'next/headers'
 import { planFromRow } from '@/lib/plan/from-profile'
+import { betaActive, BETA_ENDS_AT } from '@/lib/beta'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,11 @@ function withPlan(row: Record<string, unknown>) {
     planSource: resolved.source,
     betaUntil: resolved.betaUntil,
     paidPlan: resolved.paidPlan,
+    // Etat GLOBAL de la beta (pour /abonnement notamment : masquer le
+    // checkout pour TOUT le monde, pas seulement les invites). Server-only
+    // a la source (beta.ts) -> le client ne peut le savoir que par ici.
+    betaMode: betaActive(),
+    betaEndsAt: BETA_ENDS_AT,
   }
 }
 

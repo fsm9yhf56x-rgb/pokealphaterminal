@@ -2,7 +2,31 @@ name: Kodo Engine - Ingest EN/JP (PokeTrace)
 # Ingestion prix EN/JP via PokeTrace. POINT D'ENTREE de la chaine nocturne :
 # EN/JP -> (fin) -> Ingest FR -> (fin) -> Consolidate -> (fin) -> Graded FR.
 # Seul cron de la chaine ; le retard GitHub decale tout en bloc, dans l'ordre.
-# Resumable (kodo_sync_state). Budget-conscious: 1 run/nuit.
+# Resumable (kodo_sync_state).
+#
+# === 3 PASSES (17/07) — POURQUOI ===
+# Mesure du 17/07 : 9 816 cartes EN sur 14 419 portaient une donnee de PLUS
+# DE 30 JOURS, alors que le pipeline tournait tous les soirs. Cause : le
+# Tier 1 (detenues + wishlist + >=20 EUR) = 2 741 cartes EN et le budget
+# valait 2 800 -> 59 places/nuit pour le Tier 2 = 166 nuits de rattrapage.
+# La rotation etait theorique. Log preuve : "T1(chaud):2300 T2(rotation):0".
+#
+# Le plafond n'est PAS le quota (5 300/10 000 utilises) mais le TEMPS :
+# MAX_MS = 22 min dans le script x ~0,6 s/carte = ~2 100 cartes par run.
+# Monter KODO_MAINT_REQ ne sert donc a rien : le run coupe avant.
+#
+# 3 STEPS SEQUENTIELS dans le MEME job (et non 3 crons) :
+#   - 3 crons declencheraient la chaine FR/Consolidate 3 fois ;
+#   - un seul job = un seul declenchement en fin de chaine.
+# Les passes ne se marchent pas dessus : markAttempts horodate a la volee et
+# minAgeHours=20 ecarte ce qui vient d'etre tente (cf. kodo-refresh-tiers.js).
+# Attendu : passe 1 = T1, passe 2 = fin du T1 + T2, passe 3 = T2 pur.
+# ~6 300 cartes/nuit -> rattrapage des 9 816 en ~2 nuits.
+# Quota : ~6 300 EN + 2 500 FR = 8 800 / 10 000. Repo public = minutes
+# Actions illimitees, le job de 75 min ne coute rien.
+#
+# APRES LE RATTRAPAGE : garder les 3 passes (le T2 restera frais au lieu de
+# tourner en 166 jours). Si le quota devient juste, retirer la passe 3.
 on:
   schedule:
     - cron: '10 0 * * *'   # 00:10 UTC, apres reset quota PokeTrace minuit
@@ -11,7 +35,7 @@ jobs:
   ingest:
     name: Ingest EN/JP
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 75   # 3 x 22 min + marge (etait 25 = 1 seule passe)
     concurrency:
       group: kodo-ingest-en-jp
       cancel-in-progress: false
@@ -26,10 +50,35 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-fx-refresh.js
-      - name: Ingest EN/JP batch
+
+      # Passe 1 — le Tier 1 (detenues, wishlist, >= 20 EUR).
+      - name: Ingest EN/JP - passe 1/3
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
-          KODO_MAX_REQ: '4000'
-          KODO_MAINT_REQ: '2800'   # Tier 1 EN = 2741 cartes -> couvert chaque nuit
+          KODO_MAX_REQ: '2400'
+          KODO_MAINT_REQ: '2400'
+          KODO_MIN_AGE_H: '20'
+        run: node scripts/kodo-ingest-prices.js
+
+      # Passe 2 — fin du Tier 1, puis le Tier 2 le plus vieux.
+      - name: Ingest EN/JP - passe 2/3
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+          KODO_MAX_REQ: '2400'
+          KODO_MAINT_REQ: '2400'
+          KODO_MIN_AGE_H: '20'
+        run: node scripts/kodo-ingest-prices.js
+
+      # Passe 3 — Tier 2 pur (le rattrapage reel).
+      - name: Ingest EN/JP - passe 3/3
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+          KODO_MAX_REQ: '2400'
+          KODO_MAINT_REQ: '2400'
+          KODO_MIN_AGE_H: '20'
         run: node scripts/kodo-ingest-prices.js

@@ -10,9 +10,22 @@ const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 6000
 const MAX_MS = 22 * 60 * 1000  // le job coupe a 25 min (timeout-minutes)
 const START = Date.now()
 let reqCount = 0
-const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
 
-async function get(path) {
+// QUOTA EPUISE — arret propre.
+// Avant : `if (429) { await sleep(12000); reqCount--; return get(path) }`
+// = recursion SANS sortie ni re-verification du budget, et reqCount-- empeche
+// le compteur de monter -> budget() reste vrai a jamais. Quota epuise =
+// BOUCLE INFINIE de 12 s (constate le 17/07 : run bloque > 1 h). En prod :
+// job GitHub zombie pendant 75 min, chaine FR/Consolidate decalee, zero log.
+// Desormais : 429 isole = rate-limit court -> retry avec backoff (2 essais) ;
+// 429 en rafale = quota journalier -> on arrete, insister ne sert a rien.
+const MAX_429_STREAK = 8
+let streak429 = 0
+let quotaDead = false
+const budget = () => !quotaDead && reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
+
+async function get(path, tries = 0) {
+  if (!budget()) return null
   reqCount++
   const ctrl = new AbortController()
   const to = setTimeout(() => ctrl.abort(), 15000)
@@ -25,7 +38,19 @@ async function get(path) {
     throw e
   }
   clearTimeout(to)
-  if (r.status === 429) { await sleep(12000); reqCount--; return get(path) }
+  if (r.status === 429) {
+    reqCount--            // un refus ne consomme pas de quota
+    streak429++
+    if (streak429 >= MAX_429_STREAK) {
+      quotaDead = true
+      console.warn('[quota] ' + MAX_429_STREAK + ' x 429 d affilee -> quota PokeTrace epuise, arret propre du run')
+      return null
+    }
+    if (tries >= 2) return null     // borne dure : jamais de recursion sans fin
+    await sleep(4000 * (tries + 1)) // backoff 4s / 8s
+    return get(path, tries + 1)
+  }
+  streak429 = 0
   if (r.status !== 200) return null
   return r.json()
 }
@@ -154,6 +179,9 @@ async function ingestOne(kodoCardId, ptId, meta) {
       prefixes: ['en-%', 'jp-%', 'ja-%'],
       budget: maintBudget,
       idScope: 'any',
+      // Passes multiples dans la meme nuit : chacune attaque la suite de la
+      // file au lieu de refaire le T1 (cf. kodo-refresh-tiers.js).
+      minAgeHours: Number(process.env.KODO_MIN_AGE_H) || 20,
     })
     let mPending = selection.map(r => r.kodo_card_id)
     let mDone = 0, mRows = 0
@@ -191,7 +219,8 @@ async function ingestOne(kodoCardId, ptId, meta) {
     await sql`UPDATE kodo_sync_state SET requests_used = requests_used + ${reqCount},
       last_run_at = now(), notes = ${'maintenance: ' + new Date().toISOString()}
       WHERE job_id = ${JOB}`
-    console.log('=== FIN MAINTENANCE EN/JP === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)
+    console.log('=== FIN MAINTENANCE EN/JP === cartes:', mDone, '| rows:', mRows, '| req:', reqCount,
+      quotaDead ? '| ARRET: QUOTA EPUISE' : '')
     return
   }
 

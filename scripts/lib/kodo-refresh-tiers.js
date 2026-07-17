@@ -30,6 +30,16 @@
  *            elles comptent pour le master set, pas pour la valeur.
  *
  * Dans chaque tier : la carte la moins recemment TENTEE passe en premier.
+ *
+ * ── minAgeHours : CE QUI REND LES PASSES MULTIPLES POSSIBLES ───────────────
+ * Le tri est (tier ASC, last_attempt ASC) : un T1 tente il y a 10 minutes
+ * repasse AVANT un T2 vieux de 30 jours. Avec un seul run/nuit c'est sans
+ * effet. Avec plusieurs passes dans la meme nuit, les passes 2 et 3
+ * REFERAIENT le meme T1 -> le T2 ne serait jamais atteint.
+ * minAgeHours ecarte les cartes deja tentees recemment : chaque passe attaque
+ * donc la suite de la file. Mesure du 17/07 : T1 EN = 2741 cartes pour un
+ * budget de 2800 -> 59 places/nuit pour le T2, soit 166 nuits pour rattraper
+ * 9816 cartes perimees. Avec 3 passes : ~4300 places T2/nuit -> 2 nuits.
  */
 
 // Raretes "basses" : le libelle brut, car k_cards.rarity_normalized est NULL
@@ -53,6 +63,10 @@ const ID_SCOPES = {
  * @param {string} [opts.idScope]    'any' | 'us' | 'eu'  (defaut 'any')
  * @param {number} [opts.hotEur]     seuil Tier 1 par valeur (defaut 20)
  * @param {number} [opts.coldDays]   cadence Tier 3 en jours (defaut 365)
+ * @param {number} [opts.minAgeHours] ecarte les cartes tentees il y a moins de
+ *                                    N heures (defaut 20 : un run quotidien
+ *                                    n'est pas affecte, une 2e passe le meme
+ *                                    soir attaque la suite de la file)
  * @returns {Promise<Array<{kodo_card_id: string, tier: number}>>}
  */
 async function selectRefreshBatch(sql, opts) {
@@ -61,6 +75,7 @@ async function selectRefreshBatch(sql, opts) {
   const idScope = ID_SCOPES[opts.idScope || 'any']
   const hotEur = opts.hotEur != null ? opts.hotEur : 20
   const coldDays = opts.coldDays != null ? opts.coldDays : 365
+  const minAgeHours = opts.minAgeHours != null ? opts.minAgeHours : 20
 
   const rows = await sql.query(
     `
@@ -102,12 +117,14 @@ async function selectRefreshBatch(sql, opts) {
     )
     SELECT kodo_card_id, tier
     FROM univers
-    WHERE tier < 3
-       OR last_attempt < now() - ($4 || ' days')::interval
+    WHERE (tier < 3 OR last_attempt < now() - ($4 || ' days')::interval)
+      -- Ecarte ce qui vient d'etre tente : sans ca, une 2e passe le meme soir
+      -- retraiterait le meme T1 (le tri met tier 1 en tete quoi qu'il arrive).
+      AND last_attempt < now() - ($6 || ' hours')::interval
     ORDER BY tier ASC, last_attempt ASC
     LIMIT $5
     `,
-    [prefixes, hotEur, LOW_RARITIES, String(coldDays), budget],
+    [prefixes, hotEur, LOW_RARITIES, String(coldDays), budget, String(minAgeHours)],
   )
   return rows
 }

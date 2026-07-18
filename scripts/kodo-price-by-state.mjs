@@ -25,14 +25,26 @@ const pct=(a,p)=>{const s=[...a].sort((x,y)=>x-y);const i=(s.length-1)*p;const l
 const median=a=>{const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
 const clean=a=>{if(a.length<4)return a;const md=median(a);let k=a.filter(p=>p>=0.30*md);const lg=k.map(Math.log),lm=median(lg);const mad=median(lg.map(l=>Math.abs(l-lm)))||1e-4;return k.filter((p,i)=>Math.abs(lg[i]-lm)<=3*1.4826*mad);};
 
-const upsert = async (kid, printId, tier, price) => {
-  if (!COMMIT) return;
+// FLUSH GROUPE : upsert tamponne puis ecrit par paquets (avant : 1 INSERT par
+// (carte x etat) = ~112 000 allers-retours Neon, cause du timeout du maillon).
+const BUF = { kid: [], tier: [], price: [], print: [] };
+const FLUSH_AT = 2000;
+const flush = async () => {
+  if (!BUF.kid.length) return;
   await sql.query(`INSERT INTO price_matrix
     (kodo_card_id, market, tier, source, variant, spot, avg30d, median30d, currency, is_asking, as_of, print_id)
-    VALUES ($1,'EU',$2,'kodo_state','state',$3,$3,$3,'EUR',false,now(),$4)
+    SELECT x.kid, 'EU', x.tier, 'kodo_state', 'state', x.price, x.price, x.price, 'EUR', false, now(), x.print
+    FROM unnest($1::text[], $2::text[], $3::numeric[], $4::text[]) AS x(kid, tier, price, print)
     ON CONFLICT (kodo_card_id, market, tier, source, variant) DO UPDATE SET
       spot=EXCLUDED.spot, avg30d=EXCLUDED.avg30d, median30d=EXCLUDED.median30d, is_asking=false, as_of=now()`,
-    [kid, tier, Math.round(price*100)/100, printId]);
+    [BUF.kid, BUF.tier, BUF.price, BUF.print]);
+  BUF.kid = []; BUF.tier = []; BUF.price = []; BUF.print = [];
+};
+const upsert = async (kid, printId, tier, price) => {
+  if (!COMMIT) return;
+  BUF.kid.push(kid); BUF.tier.push(tier);
+  BUF.price.push(Math.round(price*100)/100); BUF.print.push(printId);
+  if (BUF.kid.length >= FLUSH_AT) await flush();
 };
 
 // ── NIVEAU 2 : cartes avec distribution eBay (staging ed1_raw) ──
@@ -79,6 +91,7 @@ for (const c of anchorCards) {
   n1++;
 }
 
+if (COMMIT) await flush();  // dernier paquet partiel
 console.log(`=== prix par état -> price_matrix (${COMMIT?'COMMIT':'DRY-RUN'}) ===`);
 console.log(`Niveau 2 (percentiles réels) : ${n2} cartes, ${n2states} lignes état`);
 console.log(`Niveau 1 (ratios décote FR)  : ${n1} cartes, ${n1states} lignes état`);

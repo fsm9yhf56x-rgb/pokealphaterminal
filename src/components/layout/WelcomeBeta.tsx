@@ -43,10 +43,23 @@ export function WelcomeBeta() {
     try { if (localStorage.getItem(key)) return } catch { return }
 
     let cancelled = false
+    let waited = 0
+    // Un dialogue n'est bloquant que s'il est REELLEMENT VISIBLE : des modales
+    // montees-mais-cachees (display:none, 0x0) trainent en permanence dans le
+    // DOM -> sans ce filtre, on attendait un fantome pour toujours (vu 18/07).
+    const dialogVisible = () => {
+      for (const el of Array.from(document.querySelectorAll('[role="dialog"]'))) {
+        const r = (el as HTMLElement).getBoundingClientRect()
+        const cs = getComputedStyle(el as HTMLElement)
+        if (r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' && Number(cs.opacity || '1') > 0.05) return true
+      }
+      return false
+    }
     const tryShow = () => {
       if (cancelled) return
-      // Un autre dialogue est ouvert (onboarding persona...) -> on repasse.
-      if (document.querySelector('[role="dialog"]')) { setTimeout(tryShow, 1000); return }
+      // Garde-fou : au bout de 30 s d'attente, on affiche quand meme
+      // (mieux vaut un empilement rare qu'un message jamais vu).
+      if (dialogVisible() && waited < 30000) { waited += 1000; setTimeout(tryShow, 1000); return }
       try { localStorage.setItem(key, new Date().toISOString()) } catch {}
       setOpen(true)
     }
@@ -84,6 +97,8 @@ export function WelcomeBeta() {
         @keyframes kwbShine { from { transform: translateX(-130%) skewX(-18deg); } to { transform: translateX(240%) skewX(-18deg); } }
         @keyframes kwbHalo { 0%, 100% { opacity: .55; } 50% { opacity: .85; } }
         .kwb-cta { transition: transform .18s cubic-bezier(.2,.85,.3,1), box-shadow .18s ease; }
+        .kwb-cta .kwb-arrow { display: inline-block; transition: transform .2s cubic-bezier(.2,.85,.3,1); margin-left: 6px; }
+        .kwb-cta:hover .kwb-arrow { transform: translateX(4px); }
         .kwb-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(224,48,32,0.38) !important; }
         .kwb-cta:active { transform: translateY(0) scale(.985); }
         .kwb-link { transition: color .18s ease; }
@@ -139,31 +154,32 @@ export function WelcomeBeta() {
             width: 5, height: 5, borderRadius: '50%', background: '#E03020',
             boxShadow: '0 0 7px rgba(224,48,32,0.7)',
           }} />
-          Bêta ouverte
+          Bêta gratuite{endFr ? ' · jusqu\u2019au ' + endFr : ''}
         </div>
 
         <div className="kwb-r" style={{
           animationDelay: '.28s',
-          fontSize: 21.5, fontWeight: 700, color: '#1D1D1F',
-          letterSpacing: '-0.025em', lineHeight: 1.28, marginBottom: 10,
+          fontSize: 23, fontWeight: 700, color: '#1D1D1F',
+          letterSpacing: '-0.028em', lineHeight: 1.24, marginBottom: 11,
         }}>
           Combien vaut vraiment<br />ta collection&nbsp;?
         </div>
 
-        <div className="kwb-r" style={{ animationDelay: '.36s', fontSize: 13.5, lineHeight: 1.65, color: '#6E6E73', fontWeight: 500, marginBottom: 4, maxWidth: 356, marginInline: 'auto' }}>
-          Kodo est en bêta et <strong style={{ color: '#1D1D1F', fontWeight: 700 }}>l\u2019essentiel est gratuit</strong> —
-          explore le catalogue, ajoute tes cartes, suis leur cote au jour le jour.
+        <div className="kwb-r" style={{ animationDelay: '.36s', fontSize: 13.5, lineHeight: 1.65, color: '#6E6E73', fontWeight: 500, marginBottom: 14, maxWidth: 368, marginInline: 'auto' }}>
+          Ajoute tes cartes — Kodo suit leur cote chaque nuit,
+          sur <strong style={{ color: '#1D1D1F', fontWeight: 700 }}>58&#8239;000+ cartes FR, EN et JP</strong>.
         </div>
-        <div className="kwb-r" style={{ animationDelay: '.44s', fontSize: 12.5, lineHeight: 1.6, color: '#86868B', fontWeight: 500, marginBottom: 24, maxWidth: 356, marginInline: 'auto' }}>
-          Les fonctionnalités avancées ouvriront avec les abonnements, à la fin de la bêta{endFr ? ' (' + endFr + ')' : ''}.
-          <strong style={{ color: '#3A3A3E', fontWeight: 600 }}> Ta collection et tes données restent à toi</strong>, quoi qu\u2019il arrive.
+
+        <div className="kwb-r" style={{ animationDelay: '.44s', fontSize: 12, lineHeight: 1.6, color: '#86868B', fontWeight: 500, marginBottom: 22, maxWidth: 360, marginInline: 'auto' }}>
+          Après la bêta, les analyses avancées passeront en abonnement.
+          <strong style={{ color: '#3A3A3E', fontWeight: 600 }}> Tes cartes et tes données restent à toi.</strong>
         </div>
 
         <button
           className="kwb-cta kwb-r"
           onClick={() => setOpen(false)}
           style={{
-            animationDelay: '.52s',
+            animationDelay: '.56s',
             position: 'relative', overflow: 'hidden',
             width: '100%', padding: '13px 16px', borderRadius: 13, border: 'none', cursor: 'pointer',
             background: 'linear-gradient(180deg, #E8402F, #DC2A1A)', color: '#FFF',
@@ -176,7 +192,7 @@ export function WelcomeBeta() {
             background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent)',
             animation: 'kwbShine 2.6s ease-in-out .8s 2',
           }} />
-          Découvrir la valeur de mes cartes
+          Découvrir la valeur de mes cartes<span className="kwb-arrow" aria-hidden>→</span>
         </button>
 
         <Link
@@ -184,13 +200,47 @@ export function WelcomeBeta() {
           onClick={() => setOpen(false)}
           className="kwb-link kwb-r"
           style={{
-            animationDelay: '.6s',
+            animationDelay: '.64s',
             display: 'inline-block', marginTop: 14, fontSize: 11.5, fontWeight: 600,
             color: '#86868B', textDecoration: 'none',
           }}
         >
           Voir ce qui deviendra payant →
         </Link>
+
+        {/* Communaute — l'acces beta ferme se MERITE par la participation
+            (pas une loterie) : c'est Alon qui invite via beta.mjs, la
+            promesse est tenue par une commande. */}
+        <div className="kwb-r" style={{
+          animationDelay: '.72s',
+          marginTop: 16, paddingTop: 15,
+          borderTop: '0.5px solid rgba(0,0,0,0.07)',
+        }}>
+          <a
+            href="https://discord.com/invite/y5p3CqXP4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="kwb-link"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontSize: 11.5, fontWeight: 600, color: '#6E6E73',
+              textDecoration: 'none', lineHeight: 1.5, textAlign: 'left' as const,
+            }}
+          >
+            <span aria-hidden style={{
+              flexShrink: 0, width: 26, height: 26, borderRadius: 8,
+              background: 'rgba(88,101,242,0.10)', border: '1px solid rgba(88,101,242,0.22)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#5865F2">
+                <path d="M20.32 4.37a19.8 19.8 0 0 0-4.89-1.52.07.07 0 0 0-.08.04c-.21.38-.44.87-.6 1.25a18.3 18.3 0 0 0-5.5 0c-.16-.4-.4-.87-.61-1.25a.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.88 1.52.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.05 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.3 1.22-2a.08.08 0 0 0-.04-.1 13 13 0 0 1-1.87-.9.08.08 0 0 1-.01-.13c.13-.09.25-.19.37-.29a.07.07 0 0 1 .08 0 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08 0c.12.1.25.2.38.3a.08.08 0 0 1-.01.12c-.6.35-1.22.65-1.87.9a.08.08 0 0 0-.04.1c.36.7.77 1.37 1.22 2a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6.02-3.03.08.08 0 0 0 .03-.05c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.22 0 2.18 1.1 2.16 2.42 0 1.34-.94 2.42-2.16 2.42Z"/>
+              </svg>
+            </span>
+            <span>
+              Rejoins le Discord — <strong style={{ color: '#3A3A3E', fontWeight: 700 }}>les membres actifs reçoivent des accès à la bêta fermée</strong>
+            </span>
+          </a>
+        </div>
       </div>
     </div>,
     document.body,

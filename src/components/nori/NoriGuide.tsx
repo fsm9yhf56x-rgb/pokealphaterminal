@@ -7,7 +7,8 @@ import { NORI_TOUR, NORI_LINKS } from '@/lib/nori/script'
 
 // Mets ici l'URL R2 de l'avatar de Nori si tu en as une ; sinon emblème ✦.
 const NORI_AVATAR = ''
-const SEEN_KEY = 'nori_tour_seen_v1'
+import { useAuth } from '@/lib/useAuth'
+const SEEN_KEY_BASE = 'nori_tour_seen_v1'
 let noriAutoOpened = false
 const GAP = 64           // distance centre-orbe -> bord bulle
 const BUBBLE_EST = 270   // hauteur estimée pour éviter tout débordement vertical
@@ -90,21 +91,23 @@ export function NoriGuide() {
   }, [stepKey])
 
   // Montage + détection persona
+  const { user } = useAuth() as any
+  const seenKey = user?.id ? SEEN_KEY_BASE + ':' + user.id : null
   useEffect(() => {
     setMounted(true)
     let s = false
-    try { s = !!localStorage.getItem(SEEN_KEY) } catch {}
+    try { s = seenKey ? !!localStorage.getItem(seenKey) : true } catch {}
     setSeen(s)
     const idt = setTimeout(() => setIsInvestor(detectInvestor()), 60)
-    if (!s && !noriAutoOpened) {
+    if (!s && seenKey && !noriAutoOpened) {
       noriAutoOpened = true
-      try { localStorage.setItem(SEEN_KEY, '1') } catch {}
-      const t1 = setTimeout(() => setPulse(true), 700)
-      const t2 = setTimeout(() => { setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false); markSeen() }, 1500)
+      try { localStorage.setItem(seenKey, '1') } catch {}
+      const t1 = setTimeout(() => setPulse(true), 8000)
+      const t2 = setTimeout(() => { setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false); markSeen() }, 9000)
       return () => { clearTimeout(idt); clearTimeout(t1); clearTimeout(t2) }
     }
     return () => clearTimeout(idt)
-  }, [])
+  }, [seenKey])
 
   // Re-détecte le persona si la nav change (toggle Collectionneur/Investisseur)
   useEffect(() => { if (mounted) setIsInvestor(detectInvestor()) }, [pathname, mounted])
@@ -138,7 +141,7 @@ export function NoriGuide() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, i, step?.page, router])
 
-  function markSeen() { setSeen(true); try { localStorage.setItem(SEEN_KEY, '1') } catch {} }
+  function markSeen() { setSeen(true); try { if (seenKey) localStorage.setItem(seenKey, '1') } catch {} }
   function openFromFab() { setPulse(false); setIsInvestor(detectInvestor()); setMode(seen ? 'hub' : 'tour'); if (!seen) setI(0); setOpen(true) }
   function next() { if (last) { finish(); return } setI((v) => Math.min(v + 1, steps.length - 1)) }
   function prev() { setI((v) => Math.max(v - 1, 0)) }

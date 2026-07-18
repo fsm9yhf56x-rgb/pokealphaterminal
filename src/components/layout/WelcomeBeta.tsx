@@ -43,23 +43,16 @@ export function WelcomeBeta() {
     try { if (localStorage.getItem(key)) return } catch { return }
 
     let cancelled = false
-    let waited = 0
     // Un dialogue n'est bloquant que s'il est REELLEMENT VISIBLE : des modales
     // montees-mais-cachees (display:none, 0x0) trainent en permanence dans le
     // DOM -> sans ce filtre, on attendait un fantome pour toujours (vu 18/07).
-    const dialogVisible = () => {
-      for (const el of Array.from(document.querySelectorAll('[role="dialog"]'))) {
-        const r = (el as HTMLElement).getBoundingClientRect()
-        const cs = getComputedStyle(el as HTMLElement)
-        if (r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' && Number(cs.opacity || '1') > 0.05) return true
-      }
-      return false
-    }
+    // Le mot d'accueil passe EN PREMIER (decision Alon 18/07) : le contrat
+    // avant la configuration. Il s'affiche immediatement PAR-DESSUS (z-index
+    // superieur) ; a sa fermeture, l'onboarding persona apparait dessous.
     const tryShow = () => {
       if (cancelled) return
       // Garde-fou : au bout de 30 s d'attente, on affiche quand meme
       // (mieux vaut un empilement rare qu'un message jamais vu).
-      if (dialogVisible() && waited < 30000) { waited += 1000; setTimeout(tryShow, 1000); return }
       try { localStorage.setItem(key, new Date().toISOString()) } catch {}
       setOpen(true)
     }

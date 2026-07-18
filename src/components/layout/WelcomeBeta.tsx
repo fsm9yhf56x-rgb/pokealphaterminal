@@ -154,7 +154,7 @@ export function WelcomeBeta() {
             width: 5, height: 5, borderRadius: '50%', background: '#E03020',
             boxShadow: '0 0 7px rgba(224,48,32,0.7)',
           }} />
-          Bêta gratuite{endFr ? ' · jusqu\u2019au ' + endFr : ''}
+          Bêta ouverte{endFr ? ' · jusqu\u2019au ' + endFr : ''}
         </div>
 
         <div className="kwb-r" style={{

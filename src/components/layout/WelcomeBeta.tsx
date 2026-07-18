@@ -154,7 +154,7 @@ export function WelcomeBeta() {
             width: 5, height: 5, borderRadius: '50%', background: '#E03020',
             boxShadow: '0 0 7px rgba(224,48,32,0.7)',
           }} />
-          Bêta ouverte{endFr ? ' \u00b7 jusqu\u2019au ' + endFr : ''}{endFr ? ' · jusqu\u2019au ' + endFr : ''}
+          Bêta ouverte{endFr ? ' · jusqu’au ' + endFr : ''}
         </div>
 
         <div className="kwb-r" style={{
@@ -166,8 +166,8 @@ export function WelcomeBeta() {
         </div>
 
         <div className="kwb-r" style={{ animationDelay: '.36s', fontSize: 13.5, lineHeight: 1.65, color: '#6E6E73', fontWeight: 500, marginBottom: 14, maxWidth: 368, marginInline: 'auto' }}>
-          Ajoute tes cartes — Kodo suit leur cote chaque nuit,
-          sur <strong style={{ color: '#1D1D1F', fontWeight: 700 }}>58&#8239;000+ cartes FR, EN et JP</strong>.
+          Kodo est en bêta et <strong style={{ color: '#1D1D1F', fontWeight: 700 }}>l’essentiel est gratuit</strong> —
+          explore le catalogue, ajoute tes cartes, suis leur cote au jour le jour.
         </div>
 
         <div className="kwb-r" style={{ animationDelay: '.44s', fontSize: 12, lineHeight: 1.6, color: '#86868B', fontWeight: 500, marginBottom: 22, maxWidth: 360, marginInline: 'auto' }}>

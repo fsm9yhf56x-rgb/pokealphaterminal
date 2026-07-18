@@ -7,6 +7,7 @@ import type { SoonInfo } from '@/lib/constants/navigation'
 import UserMenu from './UserMenu'
 import NotificationBell from './NotificationBell'
 import { BetaBadge } from './BetaBadge'
+import { WelcomeBeta } from './WelcomeBeta'
 import { MobileNav } from './MobileNav'
 import { SoonModal, SoonBadge } from '@/components/ui/snow'
 import { BrandMark } from '@/components/brand/BrandMark'
@@ -227,6 +228,7 @@ export function TopNav() {
         </div>
 
         <BetaBadge />
+        <WelcomeBeta />
         <NotificationBell />
         <span className="knav-usermenu"><UserMenu /></span>
       </nav>

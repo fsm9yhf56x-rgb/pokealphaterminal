@@ -31,6 +31,15 @@ const BUF = { kid: [], tier: [], price: [], print: [] };
 const FLUSH_AT = 2000;
 const flush = async () => {
   if (!BUF.kid.length) return;
+  // DEDUP (fix 20/07) : la cle de conflit est (kid, tier) pour ce script
+  // (market/source/variant constants). Le SELECT Niveau 2 produit une ligne
+  // PAR EDITION (1st/unl) de la meme carte -> deux ecritures de la meme cle
+  // dans le meme lot -> erreur 21000 'cannot affect row a second time'
+  // (4 nuits d'echec Ed1). Dernier arrive gagne.
+  const seen = new Map();
+  for (let i = 0; i < BUF.kid.length; i++) seen.set(BUF.kid[i] + '|' + BUF.tier[i], i);
+  const keep = [...seen.values()].sort((a, b) => a - b);
+  for (const k of Object.keys(BUF)) BUF[k] = keep.map(i => BUF[k][i]);
   await sql.query(`INSERT INTO price_matrix
     (kodo_card_id, market, tier, source, variant, spot, avg30d, median30d, currency, is_asking, as_of, print_id)
     SELECT x.kid, 'EU', x.tier, 'kodo_state', 'state', x.price, x.price, x.price, 'EUR', false, now(), x.print

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { SNOW, FONT, GLASS, RADIUS, SHADOW, EASE } from '@/lib/design/snow'
 import { SoonBadge } from '@/components/ui/snow/SoonBadge'
+import { MaskPrice, betaHidesPrices } from '@/components/subscription/BetaPrice'
 
 type PlanId = 'free' | 'pro' | 'premium'
 type Period = 'hebdo' | 'mensuel' | 'annuel'
@@ -36,7 +37,9 @@ const FEATURES: Record<PlanId, string[]> = {
     'Tout le plan Gratuit',
     'Cartes illimitées',
     'Cartes gradées valorisées dans ton portefeuille',
-    'PSA Pop Reports',
+    'Prix par état — Near Mint à Damaged',
+    'Aperçu « Faut-il la grader ? » (note maximale)',
+    'Pop reports — PSA, PCA, CCC, CGC, BGS',
     'Graphique d’évolution du portefeuille',
     'Statistiques avancées & P&L',
     'Export du portefeuille',
@@ -44,16 +47,19 @@ const FEATURES: Record<PlanId, string[]> = {
   ],
   premium: [
     'Tout le plan Pro',
-    'Prix gradés détaillés — toutes cartes, toutes notes (PSA, CGC…)',
+    'Prix gradés détaillés — toutes notes, toutes sociétés (PSA, PCA, CCC, CGC, BGS)',
+    'Faut-il la grader ? — le calcul complet (note probable, gain net)',
+    'Le marché gradé complet — toutes les notes, toutes les cartes',
+    'Nori, ton experte cartes — le guide interactif',
   ],
 }
 
 // Features Premium a venir — incluses pour les abonnes a leur sortie, sans surcout
 const PREMIUM_SOON: { label: string; v: 'v2.0' | 'v3.0' }[] = [
-  { label: 'Market Terminal & indices', v: 'v2.0' },
+  { label: 'Le marché en direct & tendances', v: 'v2.0' },
   { label: 'Alpha Signals (S / A / B)', v: 'v2.0' },
-  { label: 'Deal Hunter — eBay & Cardmarket', v: 'v2.0' },
-  { label: 'Nori, ton experte cartes — en illimité + support prioritaire', v: 'v2.0' },
+  { label: 'Bonnes affaires — eBay & Cardmarket', v: 'v2.0' },
+  { label: 'Nori en illimité + support prioritaire', v: 'v2.0' },
   { label: 'Whale Tracker', v: 'v3.0' },
 ]
 
@@ -302,6 +308,8 @@ function PlanCard({
 }) {
   const isCurrent = id === currentPlan
   const mainPrice = priceMain ?? cell?.price ?? ''
+  // 0 EUR du plan Gratuit : jamais floute (ce n'est pas un tarif a venir).
+  const maskThisPrice = betaHidesPrices && id !== 'free'
   const sub = priceSub ?? cell?.period ?? ''
 
   // Prix Early Supporter (-40% à vie) : Premium, mensuel/annuel uniquement
@@ -362,13 +370,13 @@ function PlanCard({
         {earlyCell ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 700, color: SNOW.ink, letterSpacing: '-1px' }}>
-              {earlyCell.price}
+              <MaskPrice>{earlyCell.price}</MaskPrice>
             </span>
             <span style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.mutedLight }}>
               {sub}
             </span>
             <span style={{ fontFamily: FONT.display, fontSize: 16, fontWeight: 600, color: SNOW.mutedLight, textDecoration: 'line-through' }}>
-              {mainPrice}
+              {maskThisPrice ? <MaskPrice>{mainPrice}</MaskPrice> : mainPrice}
             </span>
             <span style={{
               fontFamily: FONT.data, fontSize: 14, fontWeight: 800,
@@ -382,10 +390,10 @@ function PlanCard({
         ) : (
           <>
             <span style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 700, color: SNOW.ink, letterSpacing: '-1px' }}>
-              {mainPrice}
+              {maskThisPrice ? <MaskPrice>{mainPrice}</MaskPrice> : mainPrice}
             </span>
             <span style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.mutedLight, marginLeft: 4 }}>
-              {sub}
+              {maskThisPrice ? 'Tarifs à la sortie' : sub}
             </span>
           </>
         )}
@@ -393,10 +401,10 @@ function PlanCard({
       <div style={{ height: 18, marginBottom: 14 }}>
         {earlyCell ? (
           <span style={{ fontFamily: FONT.data, fontSize: 12, fontWeight: 700, color: '#1D1D1F' }}>
-            {earlyCell.sub}
+            <MaskPrice>{earlyCell.sub}</MaskPrice>
           </span>
         ) : cell?.sub ? (
-          <span style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted }}>{cell.sub}</span>
+          <span style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted }}><MaskPrice>{cell.sub}</MaskPrice></span>
         ) : null}
       </div>
 

@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from 'react'
 import { Footer } from '@/components/layout/Footer'
+import { MaskPrice, betaHidesPrices } from '@/components/subscription/BetaPrice'
 
 // ─── Tokens Snow+ v7 ──────────────────────────────────────────────────────────
 
@@ -786,8 +787,8 @@ export default function LandingPage() {
               <h3>Pro</h3>
               <span className="kc-trial">{TRIAL[billing]}</span>
             </div>
-            <div className="kc-price">{PRICES.pro[billing]}<span>{SUFFIX[billing]}</span></div>
-            {billing === 'yearly' && <div className="kc-permonth">soit {PERMONTH.pro}</div>}
+            <div className="kc-price"><MaskPrice>{PRICES.pro[billing]}</MaskPrice><span>{SUFFIX[billing]}</span></div>
+            {billing === 'yearly' && <div className="kc-permonth">soit <MaskPrice>{PERMONTH.pro}</MaskPrice></div>}
             <ul className="kc-plan-list">
               <li><Glyph d="check" size={16} /> Tout le plan Gratuit</li>
               <li><Glyph d="check" size={16} /> Cartes <strong>illimitées</strong></li>
@@ -813,10 +814,10 @@ export default function LandingPage() {
             {earlyOn ? (
               <>
                 <div className="kc-price">
-                  <span style={{ textDecoration:'line-through', opacity:.38, fontSize:'0.55em', fontWeight:600, marginRight:'8px' }}>{PRICES.premium[billing]}</span>
-                  {EARLY_PRICES[billing as 'monthly' | 'yearly']}<span>{SUFFIX[billing]}</span>
+                  <span style={{ textDecoration:'line-through', opacity:.38, fontSize:'0.55em', fontWeight:600, marginRight:'8px' }}><MaskPrice>{PRICES.premium[billing]}</MaskPrice></span>
+                  <MaskPrice>{EARLY_PRICES[billing as 'monthly' | 'yearly']}</MaskPrice><span>{SUFFIX[billing]}</span>
                 </div>
-                {billing === 'yearly' && <div className="kc-permonth">soit {EARLY_PERMONTH} · tarif garanti à vie</div>}
+                {billing === 'yearly' && <div className="kc-permonth">soit <MaskPrice>{EARLY_PERMONTH}</MaskPrice> · tarif garanti à vie</div>}
                 {billing === 'monthly' && <div className="kc-permonth">tarif garanti à vie</div>}
                 {typeof early?.seatsLeft === 'number' && (
                   <div style={{ fontSize:'12px', fontWeight:700, color:'#E03020', marginTop:'4px', fontFamily:'var(--font-display)' }}>
@@ -826,8 +827,8 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <div className="kc-price">{PRICES.premium[billing]}<span>{SUFFIX[billing]}</span></div>
-                {billing === 'yearly' && <div className="kc-permonth">soit {PERMONTH.premium}</div>}
+                <div className="kc-price"><MaskPrice>{PRICES.premium[billing]}</MaskPrice><span>{SUFFIX[billing]}</span></div>
+                {billing === 'yearly' && <div className="kc-permonth">soit <MaskPrice>{PERMONTH.premium}</MaskPrice></div>}
               </>
             )}
             <div className="kc-plan-sublabel">Disponible maintenant</div>

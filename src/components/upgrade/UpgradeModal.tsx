@@ -4,6 +4,7 @@ import { track } from '@/components/layout/Analytics'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { MaskPrice, betaHidesPrices } from '@/components/subscription/BetaPrice'
 
 /* ── Snow+ palette (auto-suffisant, aucune dépendance design) ────── */
 const INK = '#1D1D1F', MUTED = '#6E6E73', LINE = '#E5E5EA'
@@ -160,9 +161,9 @@ export function UpgradeModal({
 
           {/* prix + rareté */}
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${LINE}`, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 26, color: INK, letterSpacing: '-0.03em' }}>{t.price}</span>
+            <span style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 26, color: INK, letterSpacing: '-0.03em' }}><MaskPrice>{t.price}</MaskPrice></span>
             <span style={{ fontFamily: DISPLAY, fontSize: 13, color: MUTED }}>/ mois</span>
-            {t.regularPrice && <span style={{ fontFamily: DISPLAY, fontSize: 15, color: '#AEAEB2', textDecoration: 'line-through', fontWeight: 600 }}>{t.regularPrice}</span>}
+            {t.regularPrice && <span style={{ fontFamily: DISPLAY, fontSize: 15, color: '#AEAEB2', textDecoration: 'line-through', fontWeight: 600 }}><MaskPrice>{t.regularPrice}</MaskPrice></span>}
           </div>
 
           {t.early && (

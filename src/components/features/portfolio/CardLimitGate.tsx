@@ -1,4 +1,5 @@
 'use client'
+import { betaHidesPrices } from '@/components/subscription/BetaPrice'
 
 interface Props {
   gate: { current: number; limit: number } | null
@@ -48,7 +49,7 @@ export function CardLimitGate({ gate, onClose }: Props) {
             boxShadow:'0 4px 14px rgba(224,48,32,0.28)',
           }}>
             {/* prix Pro: 3,99 EUR/mois (cf. LandingPage PRICES.pro.monthly) */}
-            Passer Pro — 3,99 €/mois
+            Passer Pro{betaHidesPrices ? '' : ' — 3,99 €/mois'}
           </a>
           <a href="/abonnement" style={{
             display:'flex', alignItems:'center', justifyContent:'center', gap:8,

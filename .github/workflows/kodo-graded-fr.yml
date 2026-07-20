@@ -13,6 +13,12 @@ on:
   workflow_run:
     workflows: ["Kodo Engine - Consolidate (merge + signals)"]
     types: [completed]
+  # CRON DE SECURITE (20/07) : 5e maillon de la chaine workflow_run — mort
+  # de la meme limite de profondeur GitHub que Consolidate (4e). Filet a
+  # 03:30 UTC, apres celui de Consolidate (02:30) ; concurrency deduplique
+  # si la chaine revit un jour.
+  schedule:
+    - cron: '30 3 * * *'
   workflow_dispatch:
 jobs:
   graded-fr:

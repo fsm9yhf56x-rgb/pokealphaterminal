@@ -5,11 +5,19 @@ const META_KEY = '_meta'
 
 // Cache metadata stored alongside data: tracks data version + timestamp
 interface CacheMeta {
-  version: number  // data version (bump to invalidate)
+  version: string  // data version (bump to invalidate)
   ts: number       // last fetch timestamp
 }
 
-const DATA_VERSION = 8  // bump when public/data/*.json content changes substantially
+let _remoteVersion: string | null | undefined
+async function getRemoteVersion(): Promise<string | null> {
+  if (_remoteVersion !== undefined) return _remoteVersion
+  try {
+    const r = await fetch('/data/version.json', { cache: 'no-store' })
+    _remoteVersion = r.ok ? String((await r.json()).v || '') || null : null
+  } catch { _remoteVersion = null }
+  return _remoteVersion
+}
 const TTL_MS = 24 * 60 * 60 * 1000  // 24h
 
 function openDb(): Promise<IDBDatabase> {
@@ -52,14 +60,16 @@ async function dbSet(key: string, value: unknown): Promise<void> {
 async function isCacheFresh(): Promise<boolean> {
   const meta = await dbGet<CacheMeta>(META_KEY)
   if (!meta) return false
-  if (meta.version !== DATA_VERSION) return false
+  const rv = await getRemoteVersion()
+  if (rv && meta.version !== rv) return false
   if (Date.now() - meta.ts > TTL_MS) return false
   return true
 }
 
 // Update metadata after a fresh fetch
 async function setCacheFresh(): Promise<void> {
-  await dbSet(META_KEY, { version: DATA_VERSION, ts: Date.now() })
+  const rv = await getRemoteVersion()
+  await dbSet(META_KEY, { version: rv ?? 'unknown', ts: Date.now() })
 }
 
 export interface StaticSet {

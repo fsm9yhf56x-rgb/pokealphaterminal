@@ -51,6 +51,16 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/kodo-fx-refresh.js
 
+      # Detection quotidienne (20/07) : les sets en attente de mapping sont
+      # re-sondes chaque nuit (~6 req si rien de neuf). Le soir ou PokeTrace
+      # publie les singles d'une nouvelle serie, source_refs se remplit ICI,
+      # et l'ingest juste en dessous les prend dans la MEME nuit.
+      - name: Map new sets (retry quotidien)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-map-new-sets.js --commit
+
       # Passe 1 — le Tier 1 (detenues, wishlist, >= 20 EUR).
       - name: Ingest EN/JP - passe 1/3
         env:

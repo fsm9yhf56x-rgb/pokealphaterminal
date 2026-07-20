@@ -24,7 +24,8 @@ const clean = arr => {
 // Agrège le staging par (kodo_card_id, edition)
 const rows = await sql`
   SELECT kodo_card_id, edition, price, is_holo, card_number, set_total
-  FROM ebay_fr_ed1_raw WHERE price > 0`;
+  FROM ebay_fr_ed1_raw WHERE price > 0
+    AND title !~* '\\m(english|inglese|german|deutsch|allemand|italian[oa]?|italien|spanish|espanol|espagnol|japanese|japonais|jap|korean|coreen)\\M'`;
 
 // group: key = kodo_card_id|edition -> { prices:[], base1st, num, total }
 const groups = new Map();

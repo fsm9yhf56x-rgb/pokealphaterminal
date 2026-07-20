@@ -21,11 +21,15 @@ export function LiquidProgress({
   height?: number
 }) {
   const clamped = Math.max(0, Math.min(100, pct))
-  const [w, setW] = useState(0)
+  const [w, setW] = useState(clamped)
   const reduce = useRef(false)
+  const didMountRef = useRef(false)
 
   useEffect(() => {
     reduce.current = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // 1er rendu : w est deja initialise a clamped (pas d'animation parasite au
+    // remontage, ex. quand on masque/revele la valeur -> le header re-render).
+    if (!didMountRef.current) { didMountRef.current = true; setW(clamped); return }
     if (reduce.current) { setW(clamped); return }
     const t = setTimeout(() => setW(clamped), 60)
     return () => clearTimeout(t)

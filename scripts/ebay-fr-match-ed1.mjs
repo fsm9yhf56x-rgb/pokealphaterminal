@@ -48,8 +48,13 @@ for (const g of groups.values()) {
 
 // Écriture + garde-fou sanity Éd1 >= Unl
 let wEd1=0, wUnl=0, rejSanity=0;
+if (COMMIT) await sql`DELETE FROM price_matrix WHERE source='ebay_fr' AND variant IN ('ed1_raw','unl_raw')`;
+const ASK_DISCOUNT = 0.88;
+const MIN_ASKS = 3;
 const upsert = async (kid, variant, med, n) => {
   if (!COMMIT) return;
+  if (n < MIN_ASKS) return;
+  med = med * ASK_DISCOUNT;
   const printId = kid.replace(/^fr-/, '');
   await sql.query(`INSERT INTO price_matrix
     (kodo_card_id, market, tier, source, variant, spot, avg30d, median30d, sale_count, currency, is_asking, as_of, print_id)

@@ -43,6 +43,31 @@ function detectInvestor() {
   return links.some((a) => !a.closest('footer') && a.getBoundingClientRect().top < 160)
 }
 
+// Une modale plein ecran est-elle VISIBLE ? Nori doit attendre qu'elles soient
+// toutes fermees avant de s'ouvrir (WelcomeBeta, PersonaOnboarding, cookies...).
+// On ne se fie PAS a role="dialog" : PersonaOnboarding ne le porte pas. On
+// detecte le motif commun a ces overlays -> un element position:fixed qui couvre
+// une large part de l'ecran avec un z-index eleve. La bulle de Nori (~300px)
+// n'atteint jamais le seuil de 60% -> elle est exclue naturellement, pas besoin
+// de la marquer.
+function blockingModalOpen() {
+  if (typeof document === 'undefined') return false
+  const vw = window.innerWidth, vh = window.innerHeight
+  const nodes = Array.from(document.body.querySelectorAll('div')) as HTMLElement[]
+  for (const el of nodes) {
+    const cs = getComputedStyle(el)
+    if (cs.position !== 'fixed') continue
+    if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue
+    const z = parseInt(cs.zIndex || '0', 10)
+    if (!Number.isFinite(z) || z < 1000) continue
+    const r = el.getBoundingClientRect()
+    // Couvre une large part de l'ecran = overlay bloquant (pas la bulle de Nori,
+    // pas un FAB).
+    if (r.width >= vw * 0.6 && r.height >= vh * 0.6) return true
+  }
+  return false
+}
+
 export function NoriGuide() {
   const router = useRouter()
   const pathname = usePathname()
@@ -101,10 +126,29 @@ export function NoriGuide() {
     const idt = setTimeout(() => setIsInvestor(detectInvestor()), 60)
     if (!s && seenKey && !noriAutoOpened) {
       noriAutoOpened = true
-      try { localStorage.setItem(seenKey, '1') } catch {}
-      const t1 = setTimeout(() => setPulse(true), 8000)
-      const t2 = setTimeout(() => { setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false); markSeen() }, 9000)
-      return () => { clearTimeout(idt); clearTimeout(t1); clearTimeout(t2) }
+      // On n'arme plus par un simple timer : Nori attend que l'accueil beta ET
+      // l'onboarding persona soient fermes (plus aucune modale plein ecran).
+      // Poll toutes les 400 ms. Une fois le terrain degage, petite respiration
+      // (pulse a +0,8 s, tour a +1,6 s) puis on consomme le flag SEULEMENT la
+      // (avant, il etait brule d'avance -> le tour pouvait ne jamais se lancer).
+      let pulseT: ReturnType<typeof setTimeout> | undefined
+      let tourT: ReturnType<typeof setTimeout> | undefined
+      let killed = false
+      const start = Date.now()
+      const poll = setInterval(() => {
+        if (killed) return
+        // Garde-fou : au-dela de 45 s d'attente, on lance quand meme (mieux vaut
+        // un empilement rare qu'un tour jamais vu).
+        const timedOut = Date.now() - start > 45000
+        if (blockingModalOpen() && !timedOut) return
+        clearInterval(poll)
+        pulseT = setTimeout(() => { if (!killed) setPulse(true) }, 800)
+        tourT = setTimeout(() => {
+          if (killed) return
+          setIsInvestor(detectInvestor()); setMode('tour'); setI(0); setOpen(true); setPulse(false); markSeen()
+        }, 1600)
+      }, 400)
+      return () => { killed = true; clearTimeout(idt); clearInterval(poll); if (pulseT) clearTimeout(pulseT); if (tourT) clearTimeout(tourT) }
     }
     return () => clearTimeout(idt)
   }, [seenKey])

@@ -71,6 +71,16 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/rebuild-static-data.mjs
+      # LE MAILLON QUI MANQUAIT (20/07) : mappe les nouveaux sets vers
+      # PokeTrace (kodo_set_map + source_refs) -> sans lui, une nouvelle
+      # serie arrive belle et muette, aucun prix possible a jamais.
+      # Set pas encore chez PokeTrace (eux aussi ont un delai) -> log +
+      # retry lundi prochain, jamais d'echec de chaine.
+      - name: Map new sets -> PokeTrace (source_refs)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+        run: node scripts/kodo-map-new-sets.js --commit
       - name: Write data version (hash de contenu, invalide le cache client)
         run: node scripts/write-data-version.mjs
       - name: Auto-commit JSON updates

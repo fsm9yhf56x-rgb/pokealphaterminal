@@ -151,6 +151,7 @@ export default function AbonnementPage() {
 
   return (
     <div style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 20px 90px' }}>
+      <style>{`@keyframes betaPulse { 0%, 100% { transform: scale(1); opacity: 0.5 } 50% { transform: scale(2.6); opacity: 0 } }`}</style>
       {betaOn && (
         <div style={{
           maxWidth: 620, margin: '0 auto 26px', padding: '13px 18px', borderRadius: 14,
@@ -239,18 +240,62 @@ export default function AbonnementPage() {
       {/* Cartes */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: 20, alignItems: 'stretch',
+        gap: 20, alignItems: 'stretch', position: 'relative',
       }}>
-        <PlanCard id="free" name="Gratuit" priceMain="0 €" priceSub="toujours"
+        {betaOn && (
+          <div
+            data-beta-overlay="1"
+            style={{
+              position: 'absolute', inset: 0, zIndex: 5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 20, pointerEvents: 'none',
+            }}
+          >
+            <div style={{
+              pointerEvents: 'auto', maxWidth: 420, width: '100%',
+              background: 'rgba(255,255,255,0.86)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '1px solid rgba(224,48,32,0.14)',
+              borderRadius: 20, padding: '26px 28px', textAlign: 'center' as const,
+              boxShadow: '0 20px 60px rgba(16,20,38,0.16), 0 2px 8px rgba(16,20,38,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ position: 'relative', display: 'inline-flex', width: 9, height: 9 }}>
+                  <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: SNOW.red, opacity: 0.5, animation: 'betaPulse 2s ease-in-out infinite' }} />
+                  <span style={{ position: 'relative', width: 9, height: 9, borderRadius: '50%', background: SNOW.red }} />
+                </span>
+                <span style={{ fontFamily: FONT.display, fontSize: 17, fontWeight: 700, color: SNOW.ink }}>Bienvenue dans la bêta</span>
+              </div>
+              <p style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, lineHeight: 1.6, margin: 0 }}>
+                Tu fais partie des premiers à explorer Kodo. Pendant toute la bêta, <strong style={{ color: SNOW.ink }}>tout est gratuit</strong> — ajoute tes cartes, suis leur cote, fouille le catalogue. Les tarifs arriveront à la sortie{betaEndFr ? ' (prévue le ' + betaEndFr + ')' : ''}, et <strong style={{ color: SNOW.ink }}>tes données restent à toi</strong>.
+              </p>
+              <a
+                href="https://discord.com/invite/y5p3CqXP4"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block', marginTop: 16, padding: '10px 20px',
+                  fontFamily: FONT.display, fontSize: 12.5, fontWeight: 700,
+                  color: '#fff', background: SNOW.red, borderRadius: 999,
+                  textDecoration: 'none', boxShadow: '0 4px 14px rgba(224,48,32,0.28)',
+                }}
+              >
+                Rejoindre le Discord · accès bêta fermée →
+              </a>
+            </div>
+          </div>
+        )}
+        <PlanCard betaLocked={betaOn} id="free" name="Gratuit" priceMain="0 €" priceSub="toujours"
           features={FEATURES.free} cta="Commencer gratuitement"
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
-        <PlanCard id="premium" name="Premium" cell={PRICES.premium[period]}
+        <PlanCard betaLocked={betaOn} id="premium" name="Premium" cell={PRICES.premium[period]}
           features={FEATURES.premium} featuresSoon={PREMIUM_SOON} cta="Passer Premium" recommended
           earlyActive={earlyActive} earlySeatsLeft={early?.seatsLeft} earlyPeriod={period}
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
 
-        <PlanCard id="pro" name="Pro" cell={PRICES.pro[period]}
+        <PlanCard betaLocked={betaOn} id="pro" name="Pro" cell={PRICES.pro[period]}
           features={FEATURES.pro} cta="Essayer Pro"
           currentPlan={currentPlan} busy={busy} onCta={handleCta} />
       </div>
@@ -287,7 +332,7 @@ export default function AbonnementPage() {
 function PlanCard({
   id, name, cell, priceMain, priceSub, features, featuresSoon, cta, recommended, footnote,
   earlyActive, earlySeatsLeft, earlyPeriod,
-  currentPlan, busy, onCta,
+  currentPlan, busy, onCta, betaLocked,
 }: {
   id: PlanId
   name: string
@@ -305,11 +350,16 @@ function PlanCard({
   currentPlan: PlanId
   busy: PlanId | null
   onCta: (p: PlanId) => void
+  betaLocked?: boolean
 }) {
   const isCurrent = id === currentPlan
   const mainPrice = priceMain ?? cell?.price ?? ''
   // 0 EUR du plan Gratuit : jamais floute (ce n'est pas un tarif a venir).
   const maskThisPrice = betaHidesPrices && id !== 'free'
+  // Voile beta : carte ENTIERE floutee + non-cliquable (les 3 plans).
+  const rootVeil: React.CSSProperties | undefined = betaLocked
+    ? { filter: 'blur(5px)', opacity: 0.55, pointerEvents: 'none', userSelect: 'none' }
+    : undefined
   const sub = priceSub ?? cell?.period ?? ''
 
   // Prix Early Supporter (-40% à vie) : Premium, mensuel/annuel uniquement
@@ -333,6 +383,7 @@ function PlanCard({
       ...GLASS.card,
       padding: 28,
       display: 'flex', flexDirection: 'column',
+      ...rootVeil,
       position: 'relative',
       boxShadow: recommended
         ? `${SHADOW.lift}, inset 0 0 0 1.5px ${SNOW.red}`
@@ -471,6 +522,19 @@ function PlanCard({
         )}
       </div>
 
+      {betaLocked ? (
+        <button
+          disabled
+          style={{
+            fontFamily: FONT.display, fontSize: 14, fontWeight: 600,
+            padding: '13px 18px', borderRadius: RADIUS.md, width: '100%',
+            cursor: 'default', border: `1px solid ${SNOW.border}`,
+            background: SNOW.surface, color: SNOW.mutedLight, opacity: 0.85,
+          }}
+        >
+          Disponible à la sortie
+        </button>
+      ) : (
       <button
         onClick={() => onCta(id)}
         disabled={isCurrent || id === 'free' || busy === id}
@@ -490,6 +554,7 @@ function PlanCard({
       >
         {label()}
       </button>
+      )}
 
       {footnote && (
         <p style={{ fontFamily: FONT.body, fontSize: 12, color: SNOW.mutedLight, textAlign: 'center', margin: '12px 0 0' }}>

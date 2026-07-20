@@ -7,12 +7,18 @@ on:
   workflow_run:
     workflows: ["Kodo Engine - Ed1 FR (eBay FR + prix par etat)"]
     types: [completed]
+  # CRON DE SECURITE (20/07) : la chaine EN/JP -> FR -> Ed1 -> Consolidate
+  # fait 4 maillons et GitHub limite la profondeur des chaines workflow_run
+  # -> plus aucun declenchement chaine depuis le 18/07 alors que FR tournait.
+  # Si la chaine marche, concurrency deduplique ; sinon ce cron sauve la nuit.
+  schedule:
+    - cron: '30 2 * * *'
   workflow_dispatch:
 jobs:
   consolidate:
     name: Merge + signals
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45   # le merge G5/G6 seul prend ~15-20 min ; 20 tuait le job pendant les signaux (runs #29-37)
     concurrency:
       group: kodo-consolidate
       cancel-in-progress: false

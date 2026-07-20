@@ -763,7 +763,23 @@ export default function LandingPage() {
           </div>
         </Reveal>
 
-        <div className="kc-pricing3">
+        <div className={betaHidesPrices ? 'kc-pricing3 kc-pricing3-beta' : 'kc-pricing3'}>
+          {betaHidesPrices && (
+            <div className="kc-beta-overlay">
+              <div className="kc-beta-card">
+                <div className="kc-beta-head">
+                  <span className="kc-beta-dot" />
+                  <span className="kc-beta-title">Bienvenue dans la bêta</span>
+                </div>
+                <p className="kc-beta-text">
+                  Tu fais partie des premiers à explorer Kodo. Pendant toute la bêta, <strong>tout est gratuit</strong> — ajoute tes cartes, suis leur cote, fouille le catalogue. Les tarifs arriveront à la sortie, et <strong>tes données restent à toi</strong>.
+                </p>
+                <a href="https://discord.com/invite/y5p3CqXP4" target="_blank" rel="noopener noreferrer" className="kc-beta-cta">
+                  Rejoindre le Discord · accès bêta fermée →
+                </a>
+              </div>
+            </div>
+          )}
           {/* GRATUIT */}
           <Reveal className="kc-plan" style={GLASS}>
             <div className="kc-plan-head">
@@ -1088,6 +1104,42 @@ const CSS = `
 .kc-permonth{font-size:12.5px;color:var(--faint);margin-top:8px;}
 .kc-plan-sublabel { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #86868B; margin: 14px 0 8px; font-family: var(--font-display); }
         .kc-plan-list-soon li { color: #86868B; }
+        /* ── Voile beta sur la grille tarifaire (le temps de la beta) ── */
+        .kc-pricing3-beta { position: relative; }
+        .kc-pricing3-beta > .kc-plan {
+          filter: blur(5px); opacity: 0.55;
+          pointer-events: none; user-select: none;
+        }
+        .kc-beta-overlay {
+          position: absolute; inset: 0; z-index: 5;
+          display: flex; align-items: center; justify-content: center;
+          padding: 20px; pointer-events: none;
+        }
+        .kc-beta-card {
+          pointer-events: auto; max-width: 420px; width: 100%;
+          background: rgba(255,255,255,0.88);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid rgba(224,48,32,0.14);
+          border-radius: 20px; padding: 26px 28px; text-align: center;
+          box-shadow: 0 20px 60px rgba(16,20,38,0.16), 0 2px 8px rgba(16,20,38,0.06);
+        }
+        .kc-beta-head { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .kc-beta-dot { position: relative; width: 9px; height: 9px; border-radius: 50%; background: #E03020; display: inline-block; }
+        .kc-beta-dot::after {
+          content: ''; position: absolute; inset: 0; border-radius: 50%;
+          background: #E03020; animation: kcBetaPulse 2s ease-in-out infinite;
+        }
+        @keyframes kcBetaPulse { 0%, 100% { transform: scale(1); opacity: 0.5 } 50% { transform: scale(2.6); opacity: 0 } }
+        .kc-beta-title { font-family: var(--font-display, 'Sora', sans-serif); font-size: 17px; font-weight: 700; color: #1D1D1F; }
+        .kc-beta-text { font-size: 13px; color: #6E6E73; line-height: 1.6; margin: 0; }
+        .kc-beta-text strong { color: #1D1D1F; font-weight: 700; }
+        .kc-beta-cta {
+          display: inline-block; margin-top: 16px; padding: 10px 20px;
+          font-family: var(--font-display, 'Sora', sans-serif); font-size: 12.5px; font-weight: 700;
+          color: #fff; background: #E03020; border-radius: 999px; text-decoration: none;
+          box-shadow: 0 4px 14px rgba(224,48,32,0.28);
+        }
         .kc-soon-dot { font-weight: 700; margin-right: 2px; }
         .kc-plan-list{list-style:none;padding:0;margin:22px 0 24px;display:flex;flex-direction:column;gap:12px;flex:1;}
 .kc-plan-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);line-height:1.4;}

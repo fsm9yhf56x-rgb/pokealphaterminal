@@ -772,10 +772,10 @@ export default function LandingPage() {
                   <span className="kc-beta-title">Bienvenue dans la bêta</span>
                 </div>
                 <p className="kc-beta-text">
-                  Tu fais partie des premiers à explorer Kodo. Pendant toute la bêta, <strong>tout est gratuit</strong> — ajoute tes cartes, suis leur cote, fouille le catalogue. Les tarifs arriveront à la sortie, et <strong>tes données restent à toi</strong>.
+                  Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées.
                 </p>
                 <a href="https://discord.com/invite/y5p3CqXP4" target="_blank" rel="noopener noreferrer" className="kc-beta-cta">
-                  Rejoindre le Discord · accès bêta fermée →
+                  Rejoins notre Discord et accède à la bêta gratuitement →
                 </a>
               </div>
             </div>
@@ -1116,7 +1116,7 @@ const CSS = `
           padding: 20px; pointer-events: none;
         }
         .kc-beta-card {
-          pointer-events: auto; max-width: 420px; width: 100%;
+          pointer-events: auto; max-width: 480px; width: 100%;
           background: rgba(255,255,255,0.88);
           backdrop-filter: blur(20px) saturate(180%);
           -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -1134,11 +1134,11 @@ const CSS = `
         .kc-beta-title { font-family: var(--font-display, 'Sora', sans-serif); font-size: 17px; font-weight: 700; color: #1D1D1F; }
         .kc-beta-text { font-size: 13px; color: #6E6E73; line-height: 1.6; margin: 0; }
         .kc-beta-text strong { color: #1D1D1F; font-weight: 700; }
-        .kc-beta-cta {
-          display: inline-block; margin-top: 16px; padding: 10px 20px;
+        .kc-beta-cta, .kc-beta-cta:link, .kc-beta-cta:visited, .kc-beta-cta:hover, .kc-beta-cta:active {
+          display: inline-block; margin-top: 16px; padding: 10px 22px;
           font-family: var(--font-display, 'Sora', sans-serif); font-size: 12.5px; font-weight: 700;
-          color: #fff; background: #E03020; border-radius: 999px; text-decoration: none;
-          box-shadow: 0 4px 14px rgba(224,48,32,0.28);
+          color: #fff !important; background: #E03020; border-radius: 999px; text-decoration: none;
+          box-shadow: 0 4px 14px rgba(224,48,32,0.28); white-space: nowrap;
         }
         .kc-soon-dot { font-weight: 700; margin-right: 2px; }
         .kc-plan-list{list-style:none;padding:0;margin:22px 0 24px;display:flex;flex-direction:column;gap:12px;flex:1;}

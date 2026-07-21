@@ -252,7 +252,7 @@ export default function AbonnementPage() {
             }}
           >
             <div style={{
-              pointerEvents: 'auto', maxWidth: 420, width: '100%',
+              pointerEvents: 'auto', maxWidth: 480, width: '100%',
               background: 'rgba(255,255,255,0.86)',
               backdropFilter: 'blur(20px) saturate(180%)',
               WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -268,7 +268,7 @@ export default function AbonnementPage() {
                 <span style={{ fontFamily: FONT.display, fontSize: 17, fontWeight: 700, color: SNOW.ink }}>Bienvenue dans la bêta</span>
               </div>
               <p style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, lineHeight: 1.6, margin: 0 }}>
-                Tu fais partie des premiers à explorer Kodo. Pendant toute la bêta, <strong style={{ color: SNOW.ink }}>tout est gratuit</strong> — ajoute tes cartes, suis leur cote, fouille le catalogue. Les tarifs arriveront à la sortie{betaEndFr ? ' (prévue le ' + betaEndFr + ')' : ''}, et <strong style={{ color: SNOW.ink }}>tes données restent à toi</strong>.
+                Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong style={{ color: SNOW.ink }}>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées.
               </p>
               <a
                 href="https://discord.com/invite/y5p3CqXP4"
@@ -279,9 +279,10 @@ export default function AbonnementPage() {
                   fontFamily: FONT.display, fontSize: 12.5, fontWeight: 700,
                   color: '#fff', background: SNOW.red, borderRadius: 999,
                   textDecoration: 'none', boxShadow: '0 4px 14px rgba(224,48,32,0.28)',
+                  whiteSpace: 'nowrap' as const,
                 }}
               >
-                Rejoindre le Discord · accès bêta fermée →
+                Rejoins notre Discord et accède à la bêta gratuitement →
               </a>
             </div>
           </div>

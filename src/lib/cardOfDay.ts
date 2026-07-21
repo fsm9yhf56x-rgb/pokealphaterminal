@@ -20,13 +20,13 @@ export const ICONIC_CARDS: IconicCard[] = [
   { name: 'Pikachu', setId: 'base1', localId: '58', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Atsuko Nishida',
     anecdote: 'Pikachu devait initialement avoir une evolution intermediaire entre Pikachu et Raichu, appelee Gorochu. Elle n\u2019a jamais vu le jour.' },
   { name: 'Mewtwo', setId: 'base1', localId: '10', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Ken Sugimori',
-    anecdote: 'Mewtwo, clone genetique de Mew, est l\u2019un des Pokemon les plus puissants — sa carte holo du Set de Base reste iconique.' },
+    anecdote: 'Mewtwo, clone génétique de Mew, est l’un des Pokémon les plus puissants — sa carte holo du Set de Base reste iconique.' },
   { name: 'Leviator', setId: 'base1', localId: '6', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Mitsuhiro Arita',
     anecdote: 'Le Leviator holographique du Set de Base est l\u2019une des illustrations les plus reproduites de toute la franchise TCG.' },
   { name: 'Demolosse', setId: 'neo2', localId: '5', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Kagemaru Himeno',
     anecdote: 'L\u2019ere Neo a introduit les premiers Pokemon de seconde generation en TCG, avec un style holographique \u00ab cosmos \u00bb mythique.' },
   { name: 'Lugia', setId: 'neo1', localId: '9', lang: 'fr', era: 'Vintage WOTC', illustrator: 'Kagemaru Himeno',
-    anecdote: 'Le Lugia Neo Genesis est le graal des collectionneurs de l\u2019ere Neo \u2014 son illustration par Himeno est consideree comme une oeuvre d\u2019art.' },
+    anecdote: 'Le Lugia Neo Genesis est le graal des collectionneurs de l’ère Neo — son illustration par Himeno est considérée comme une œuvre d’art.' },
 ]
 
 export interface CardOfDay {

@@ -164,7 +164,7 @@ export function WelcomeBeta() {
         </div>
 
         <div className="kwb-r" style={{ animationDelay: '.44s', fontSize: 12, lineHeight: 1.6, color: '#86868B', fontWeight: 500, marginBottom: 22, maxWidth: 360, marginInline: 'auto' }}>
-          Après la bêta, les analyses avancées passeront en abonnement.
+          Pour la sortie officielle le 1ᵉʳ septembre, on prépare de nouvelles fonctionnalités et quelques surprises.
           <strong style={{ color: '#3A3A3E', fontWeight: 600 }}> Tes cartes et tes données restent à toi.</strong>
         </div>
 

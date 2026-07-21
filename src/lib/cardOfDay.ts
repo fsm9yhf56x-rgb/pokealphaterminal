@@ -1,3 +1,4 @@
+import { getCardImageUrl } from '@/lib/images'
 // Carte du jour pour le hero collectionneur.
 // Priorite : une carte de SA collection (anecdote sur l'ere/artiste).
 // Sinon : une carte iconique curee avec son anecdote. Rotation quotidienne.
@@ -68,7 +69,7 @@ export function getCardOfDay(
     const setId = String(c.set_id ?? '').replace(/^jp-|^en-/, '')
     const num = String(c.card_number ?? '').replace(/^0+/, '')
     const lang = (c.lang === 'EN' ? 'en' : 'fr')
-    const imageUrl = c.image_url || tcgdexImg(lang, setId, num)
+    const imageUrl = getCardImageUrl({ lang, setId, localId: num }) || c.image_url || tcgdexImg(lang, setId, num)
     return {
       name: c.name || 'Carte',
       imageUrl,
@@ -84,7 +85,7 @@ export function getCardOfDay(
   const ic = ICONIC_CARDS[d % ICONIC_CARDS.length]
   return {
     name: ic.name,
-    imageUrl: tcgdexImg(ic.lang, ic.setId, ic.localId),
+    imageUrl: getCardImageUrl({ lang: ic.lang, setId: ic.setId, localId: ic.localId }) || tcgdexImg(ic.lang, ic.setId, ic.localId),
     era: ic.era,
     illustrator: ic.illustrator,
     anecdote: ic.anecdote,

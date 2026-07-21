@@ -185,11 +185,51 @@ async function betaEnding() {
   return { created, invited: users.length, daysLeft }
 }
 
+
+async function setReleaseAlerts() {
+  // Sets dont AU MOINS une date de sortie est atteinte (<= aujourd'hui).
+  const released = await sql`
+    SELECT code,
+           COALESCE(name_fr, name_en, name_jp) AS name,
+           LEAST(
+             COALESCE(release_date_fr, release_date_en, release_date_jp),
+             COALESCE(release_date_en, release_date_jp, release_date_fr),
+             COALESCE(release_date_jp, release_date_en, release_date_fr)
+           ) AS soonest
+    FROM upcoming_sets
+    WHERE COALESCE(release_date_fr, release_date_en, release_date_jp) <= now()
+       OR COALESCE(release_date_en, release_date_jp, release_date_fr) <= now()
+       OR COALESCE(release_date_jp, release_date_en, release_date_fr) <= now()`
+  if (!released.length) return { created: 0, released: 0 }
+
+  let created = 0
+  for (const set of released) {
+    const subs = await sql`SELECT user_id FROM set_alerts WHERE set_code = ${set.code}`
+    for (const sub of subs) {
+      const dedup = `set_release:${set.code}`
+      const ins = await sql`
+        INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
+        VALUES (${sub.user_id}, 'set_release',
+                ${(set.name || 'Un set') + ' est disponible'},
+                ${'La sortie que tu suivais vient de paraitre. Decouvre ' + (set.name || 'le set') + ' des maintenant.'},
+                ${JSON.stringify({ code: set.code, url: '/releases' })}::jsonb,
+                ${dedup})
+        ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
+        RETURNING id`
+      if (ins.length) created++
+    }
+    // Nettoyage : les abonnements d'un set sorti n'ont plus lieu d'etre.
+    await sql`DELETE FROM set_alerts WHERE set_code = ${set.code}`
+  }
+  return { created, released: released.length }
+}
+
 // Registre extensible. Prochains : newSetRelease, wishlistDrop...
 const generators = [
   { name: 'wishlist_price', run: wishlistPriceAlerts },
   { name: 'goal_progress', run: goalProgress },
   { name: 'beta_ending', run: betaEnding },
+  { name: 'set_release', run: setReleaseAlerts },
 ]
 
 async function main() {

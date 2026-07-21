@@ -8,7 +8,7 @@
  * et "Sorties recentes" (grille compacte).
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { SNOW, FONT, GLASS } from '@/lib/design/snow'
 
 type Lang = 'FR' | 'EN' | 'JP'
@@ -41,6 +41,39 @@ const LANG_META: Record<Lang, { flag: string; label: string }> = {
 export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Props) {
   const [langFilter, setLangFilter] = useState<'ALL' | Lang>('ALL')
 
+  // Abonnements aux sorties : 1 seul GET pour toutes les cartes.
+  const [alerts, setAlerts] = useState<Set<string>>(new Set())
+  const [alertsReady, setAlertsReady] = useState(false)
+  useEffect(() => {
+    let ok = true
+    fetch('/api/v1/set-alerts')
+      .then(r => r.ok ? r.json() : { codes: [] })
+      .then(d => { if (ok) { setAlerts(new Set(d.codes || [])); setAlertsReady(true) } })
+      .catch(() => { if (ok) setAlertsReady(true) })
+    return () => { ok = false }
+  }, [])
+  const toggleAlert = useCallback(async (code: string, name: string) => {
+    // Optimiste : on bascule tout de suite, on corrige si le serveur renvoie autre chose.
+    const wasOn = alerts.has(code)
+    setAlerts(prev => { const n = new Set(prev); wasOn ? n.delete(code) : n.add(code); return n })
+    try {
+      const r = await fetch('/api/v1/set-alerts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, name }),
+      })
+      if (r.status === 401) {
+        // non connecte -> on annule l'optimiste et on ouvre le login
+        setAlerts(prev => { const n = new Set(prev); wasOn ? n.add(code) : n.delete(code); return n })
+        window.dispatchEvent(new CustomEvent('kodo:open-auth'))
+        return
+      }
+      const d = await r.json()
+      setAlerts(prev => { const n = new Set(prev); d.subscribed ? n.add(code) : n.delete(code); return n })
+    } catch {
+      setAlerts(prev => { const n = new Set(prev); wasOn ? n.add(code) : n.delete(code); return n })
+    }
+  }, [alerts])
+
   const filtered = langFilter === 'ALL' ? sets : sets.filter(s => s.lang === langFilter)
   const upcoming = filtered.filter(s => !s.isReleased)
   const released = filtered.filter(s => s.isReleased)
@@ -64,7 +97,13 @@ export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Pr
             <section>
               <SectionTitle dot="#2E9E6A" label="À venir" count={upcoming.length} />
               <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 24 }}>
-                {upcoming.map(s => <SetCard key={s.pptId} set={s} />)}
+                {upcoming.map(s => {
+                  const code = s.pptId.startsWith('up:') ? s.slug : null
+                  return <SetCard key={s.pptId} set={s}
+                    subscribed={code ? alerts.has(code) : false}
+                    canSubscribe={!!code && alertsReady}
+                    onToggle={code ? () => toggleAlert(code, s.name) : undefined} />
+                })}
               </div>
             </section>
           )}
@@ -272,9 +311,12 @@ const LANG_TINT: Record<Lang, string> = {
   JP: 'linear-gradient(135deg, rgba(230,90,140,0.14), rgba(150,90,210,0.10))',
 }
 
-function SetCard({ set }: { set: UpcomingSet }) {
+function SetCard({ set, subscribed = false, canSubscribe = false, onToggle }: {
+  set: UpcomingSet; subscribed?: boolean; canSubscribe?: boolean; onToggle?: () => void
+}) {
   const [imgError, setImgError] = useState(false)
   const [hover, setHover] = useState(false)
+  const [pop, setPop] = useState(false)
   const isUrgent = set.daysUntil <= 30 && set.daysUntil > 0
   const hasLogo = !!set.imageUrl && !imgError
   const jColor = isUrgent ? '#E03020' : SNOW.ink
@@ -371,12 +413,35 @@ function SetCard({ set }: { set: UpcomingSet }) {
         </div>
       </div>
 
-      {/* ─── Compteur : discret, rouge seulement si urgent ─── */}
+      {/* ─── Compteur (+ cloche au-dessus) ─── */}
       <div style={{
         display: 'flex', flexDirection: 'column' as const,
         alignItems: 'flex-end', justifyContent: 'center',
-        padding: '14px 22px 14px 12px', gap: 1,
+        padding: '12px 22px 12px 12px', gap: 4,
       }}>
+        {canSubscribe && onToggle && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setPop(true); setTimeout(() => setPop(false), 260); onToggle() }}
+            title={subscribed ? 'Ne plus etre prevenu' : 'Me prevenir a la sortie'}
+            aria-label={subscribed ? 'Se desabonner' : "S'abonner a la sortie"}
+            style={{
+              width: 30, height: 30, borderRadius: 999, marginBottom: 2,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              background: subscribed ? 'rgba(224,48,32,0.12)' : 'rgba(0,0,0,0.035)',
+              border: subscribed ? '1px solid rgba(224,48,32,0.30)' : '1px solid rgba(0,0,0,0.06)',
+              cursor: 'pointer', padding: 0,
+              transform: pop ? 'scale(1.22)' : (hover ? 'scale(1.06)' : 'scale(1)'),
+              transition: 'transform .2s cubic-bezier(.2,.85,.3,1), background .2s, border-color .2s',
+            }}>
+            <svg width="15" height="15" viewBox="0 0 24 24"
+              fill={subscribed ? '#E03020' : 'none'}
+              stroke={subscribed ? '#E03020' : '#86868B'}
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+        )}
         <div style={{
           fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: jColor,
           fontFamily: FONT.display, letterSpacing: '-0.04em', lineHeight: 1,

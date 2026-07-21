@@ -273,10 +273,10 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
       <p style={{
         fontSize: 'clamp(15px, 1.5vw, 17px)',
         color: SNOW.muted, fontFamily: FONT.display,
-        lineHeight: 1.6, maxWidth: 560, margin: '0 auto 14px',
+        lineHeight: 1.6, maxWidth: 620, margin: '0 auto 14px',
       }}>
-        Les nouvelles sorties Pokémon TCG, anticipées pour toi.<br/>
-        Sois prévenu dès qu&apos;un set est disponible.
+        Tiens-toi au courant des prochaines sorties pour le TCG Pokémon !{' '}
+        Active les notifications pour ne rien louper à l&apos;avenir.
       </p>
 
       {lastSyncedLabel && (

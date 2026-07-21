@@ -1,0 +1,29 @@
+name: Kodo Engine - Sync Upcoming (Bulbapedia)
+# Rafraichit la table upcoming_sets depuis Bulbapedia (API MediaWiki).
+# CHAINE a la fin de l'ingest EN/JP (point d'entree nocturne) : pas besoin de
+# son propre cron, il suit la cascade. Independant du reste (un echec ici ne
+# bloque aucun autre maillon). Bulbapedia bouge lentement -> 1x/jour suffit.
+on:
+  workflow_run:
+    workflows: ["Kodo Engine - Ingest EN/JP (PokeTrace)"]
+    types: [completed]
+  workflow_dispatch:
+jobs:
+  sync-upcoming:
+    name: Sync upcoming sets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: kodo-sync-upcoming
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm install --no-audit --no-fund --prefer-offline
+      - name: Sync upcoming_sets depuis Bulbapedia
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/sync-upcoming.mjs --commit

@@ -57,7 +57,7 @@ const csp = [
   // pokebeach / pokemon-france : vignettes des articles Kodo Wire (hotlink des
   // sources RSS). ATTENTION : liste fragile par nature — une nouvelle source RSS
   // = un domaine de plus, sinon la vignette est bloquee silencieusement.
-  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://assets.tcgdex.net https://tcgplayer-cdn.tcgplayer.com https://www.pokebeach.com https://cdn.pokemon-france.com https://*.vercel.app https://*.kodocards.com",
+  "img-src 'self' data: blob: https://pub-1aade8805ea544358d85a303c1feef41.r2.dev https://*.r2.dev https://assets.tcgdex.net https://tcgplayer-cdn.tcgplayer.com https://www.pokebeach.com https://cdn.pokemon-france.com https://bulbapedia.bulbagarden.net https://archives.bulbagarden.net https://*.vercel.app https://*.kodocards.com",
   // Connect: self + Better Auth + Neon + Resend + R2
   "connect-src 'self' https://*.neon.tech https://api.resend.com https://api.tcgdex.net https://*.r2.dev https://va.vercel-scripts.com",
   // Frames: deny (anti-clickjacking)

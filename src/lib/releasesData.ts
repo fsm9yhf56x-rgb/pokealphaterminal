@@ -11,6 +11,7 @@ export type ReleaseSet = {
   pptId: string
   series: string
   lang: Lang
+  langs?: Lang[]
   releaseDate: string
   releaseDateLocale: string
   imageUrl: string | null
@@ -149,7 +150,44 @@ export async function getReleases(): Promise<ReleaseSet[]> {
   const push = (s: ReleaseSet) => { const k = s.lang + ':' + norm(s.name); if (!seen.has(k)) { all.push(s); seen.add(k) } }
   for (const s of upcomingTable) push(s)
   for (const s of [...fr, ...en, ...jp, ...ppt]) push(s)
-  const upcoming = all.filter(s => !s.isReleased).sort((a, b) => a.releaseDate < b.releaseDate ? -1 : 1)
+  // Cle de fusion : nom normalise, prefixe 'ME:' retire (PPT nomme parfois
+  // 'ME: 30th Celebration' ce que Bulbapedia appelle '30th Celebration').
+  const mergeKey = (name: string) => norm(name.replace(/^\s*ME\s*:\s*/i, ''))
+
+  const upcomingRaw = all.filter(s => !s.isReleased)
+  const merged = new Map<string, ReleaseSet>()
+  for (const s of upcomingRaw) {
+    const k = mergeKey(s.name)
+    const cur = merged.get(k)
+    if (!cur) {
+      merged.set(k, { ...s, langs: [s.lang] })
+      continue
+    }
+    // langue ajoutee si nouvelle
+    if (!cur.langs!.includes(s.lang)) cur.langs!.push(s.lang)
+    // date la plus proche l'emporte (+ recalcul daysUntil/isReleased dessus)
+    if (s.releaseDate < cur.releaseDate) {
+      cur.releaseDate = s.releaseDate
+      cur.releaseDateLocale = s.releaseDateLocale
+      cur.daysUntil = s.daysUntil
+      cur.isReleased = s.isReleased
+    }
+    // logo : garder le 1er non nul
+    if (!cur.imageUrl && s.imageUrl) cur.imageUrl = s.imageUrl
+    // slug/pptId : privilegier une entree upcoming_sets (up:) pour la cloche
+    if (!cur.pptId.startsWith('up:') && s.pptId.startsWith('up:')) {
+      cur.pptId = s.pptId; cur.slug = s.slug
+    }
+    // nom : preferer le nom SANS prefixe 'ME:' (plus propre a l'affichage)
+    if (/^\s*ME\s*:/i.test(cur.name) && !/^\s*ME\s*:/i.test(s.name)) cur.name = s.name
+    // serie : garder une serie non vide
+    if (!cur.series && s.series) cur.series = s.series
+  }
+  // ordre des langues stable : FR, EN, JP
+  const LANG_ORDER: Lang[] = ['FR', 'EN', 'JP']
+  const upcoming = [...merged.values()]
+    .map(s => ({ ...s, langs: (s.langs || [s.lang]).slice().sort((a, b) => LANG_ORDER.indexOf(a) - LANG_ORDER.indexOf(b)) }))
+    .sort((a, b) => a.releaseDate < b.releaseDate ? -1 : 1)
   const recent = all.filter(s => s.isReleased).sort((a, b) => a.releaseDate < b.releaseDate ? 1 : -1)
   return [...upcoming, ...recent.slice(0, 14)]
 }

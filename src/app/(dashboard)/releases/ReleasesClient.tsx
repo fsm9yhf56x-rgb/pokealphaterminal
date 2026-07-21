@@ -19,6 +19,7 @@ type UpcomingSet = {
   pptId: string
   series: string
   lang: Lang
+  langs?: Lang[]
   releaseDate: string
   releaseDateLocale: string
   imageUrl: string | null
@@ -74,7 +75,7 @@ export default function ReleasesClient({ sets, upcomingCount, lastSyncedAt }: Pr
     }
   }, [alerts])
 
-  const filtered = langFilter === 'ALL' ? sets : sets.filter(s => s.lang === langFilter)
+  const filtered = langFilter === 'ALL' ? sets : sets.filter(s => (s.langs ?? [s.lang]).includes(langFilter))
   const upcoming = filtered.filter(s => !s.isReleased)
   const released = filtered.filter(s => s.isReleased)
 
@@ -381,7 +382,7 @@ function SetCard({ set, subscribed = false, canSubscribe = false, onToggle }: {
         display: 'flex', flexDirection: 'column' as const,
         justifyContent: 'center', gap: 5, padding: '14px 18px', minWidth: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
           {set.series && (
             <span style={{
               fontSize: 10, fontWeight: 700, color: SNOW.muted,
@@ -390,7 +391,9 @@ function SetCard({ set, subscribed = false, canSubscribe = false, onToggle }: {
               overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180,
             }}>{set.series}</span>
           )}
-          <LangBadge lang={set.lang} size="sm" />
+          <div style={{ display: 'inline-flex', gap: 4 }}>
+            {(set.langs ?? [set.lang]).map(l => <LangBadge key={l} lang={l} size="sm" />)}
+          </div>
         </div>
 
         <h2 style={{

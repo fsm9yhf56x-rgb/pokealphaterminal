@@ -127,7 +127,12 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
   let sourceChip: { label: string; sub: string | null } | null = null
 
   if (showPortfolio) {
-    heroPrice = insufficient ? null : ((portfolio?.curPrice ?? null) ?? userPriceEntry?.price_avg ?? kodoVal ?? ebayNm?.price_avg ?? prices.marketEst ?? cm?.price_avg ?? null)
+    // Le "prix de marche" suit la cote Engine (resolveDisplayPrice = source
+    // unique, lang-aware : FR->cote FR, EN/JP->fair_value). On n'affiche PLUS le
+    // curPrice fige de l'exemplaire ici : ce n'est pas un prix de marche, et il
+    // divergeait du tableau "Prix par etat". Coherence par construction.
+    const resolvedPf = resolveDisplayPrice(card.lang, prices, kodo)
+    heroPrice = insufficient ? null : resolvedPf.price
   } else {
     const resolved = resolveDisplayPrice(card.lang, prices, kodo)
     heroPrice = resolved.price

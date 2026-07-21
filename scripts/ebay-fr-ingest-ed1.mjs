@@ -4,6 +4,7 @@
 // gradé/junk/JP/mauvais numéro). DRY-RUN par défaut, --commit pour écrire.
 // Usage: node scripts/ebay-fr-ingest-ed1.mjs [--commit] [--limit=N] [--set=base1]
 import { neon } from '@neondatabase/serverless';
+import { extractConditionTier } from './lib/ebay-condition.mjs';
 const sql = neon(process.env.DATABASE_URL);
 const COMMIT = process.argv.includes('--commit');
 const LIMIT = Number((process.argv.find(a=>a.startsWith('--limit='))||'').split('=')[1]) || 0;
@@ -139,24 +140,29 @@ for (const c of cards) {
     // INSERT GROUPE : 1 requete pour toutes les annonces de la carte (avant :
     // 1 INSERT par annonce = des milliers d'allers-retours Neon par run, cause
     // des timeouts a 45/40/50 min trois nuits de suite).
-    const b = { item: [], kid: [], ed: [], title: [], price: [], cur: [], num: [], tot: [], holo: [], url: [] }
+    const b = { item: [], kid: [], ed: [], title: [], price: [], cur: [], num: [], tot: [], holo: [], url: [], cond: [], tier: [], csrc: [] }
     for (const [rows, edition, kid] of [[ed1,'ed1',c.id_1st],[unl,'unl',idUnl]]) {
       for (const {it,p} of rows) {
         b.item.push(it.itemId); b.kid.push(kid); b.ed.push(edition)
         b.title.push(it.title); b.price.push(p); b.cur.push(it.price?.currency||'EUR')
         b.num.push(num); b.tot.push(total); b.holo.push(isHolo(it.title)); b.url.push(it.itemWebUrl||null)
+        const cx = extractConditionTier(it.title, it.condition || null)
+        b.cond.push(it.condition || null); b.tier.push(cx.tier); b.csrc.push(cx.source ?? 'none')
       }
     }
     if (b.item.length) {
       await sql.query(`INSERT INTO ebay_fr_ed1_raw
-        (item_id, kodo_card_id, edition, title, price, currency, card_number, set_total, is_holo, url, fetched_at, first_seen, last_seen)
-        SELECT x.item, x.kid, x.ed, x.title, x.price, x.cur, x.num, x.tot, x.holo, x.url, now(), now(), now()
+        (item_id, kodo_card_id, edition, title, price, currency, card_number, set_total, is_holo, url, condition_raw, condition_tier, condition_source, fetched_at, first_seen, last_seen)
+        SELECT x.item, x.kid, x.ed, x.title, x.price, x.cur, x.num, x.tot, x.holo, x.url, x.cond, x.tier, x.csrc, now(), now(), now()
         FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::numeric[],
-                    $6::text[], $7::text[], $8::text[], $9::boolean[], $10::text[])
-          AS x(item, kid, ed, title, price, cur, num, tot, holo, url)
+                    $6::text[], $7::text[], $8::text[], $9::boolean[], $10::text[],
+                    $11::text[], $12::text[], $13::text[])
+          AS x(item, kid, ed, title, price, cur, num, tot, holo, url, cond, tier, csrc)
         ON CONFLICT (item_id) DO UPDATE SET price=EXCLUDED.price, title=EXCLUDED.title,
-          kodo_card_id=EXCLUDED.kodo_card_id, edition=EXCLUDED.edition, fetched_at=now(), last_seen=now()`,
-        [b.item, b.kid, b.ed, b.title, b.price, b.cur, b.num, b.tot, b.holo, b.url]);
+          kodo_card_id=EXCLUDED.kodo_card_id, edition=EXCLUDED.edition,
+          condition_raw=EXCLUDED.condition_raw, condition_tier=EXCLUDED.condition_tier,
+          condition_source=EXCLUDED.condition_source, fetched_at=now(), last_seen=now()`,
+        [b.item, b.kid, b.ed, b.title, b.price, b.cur, b.num, b.tot, b.holo, b.url, b.cond, b.tier, b.csrc]);
     }
   }
   if (ed1.length) { capEd1+=ed1.length; cardsEd1++; }

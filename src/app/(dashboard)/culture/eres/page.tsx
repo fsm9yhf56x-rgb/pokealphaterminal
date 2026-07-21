@@ -14,15 +14,15 @@ const ERAS = [
     desc: 'Nintendo reprend la licence. Apparition des cartes EX, des holos pleines et des séries Delta Species. Une ère de transition graphique et de mécaniques nouvelles.' },
   { name: 'DPP / HGSS',       color: '#0E9E8E', years: '2007 – 2011', tag: 'Diamant, Perle & Or HeartGold',  card: 'https://assets.tcgdex.net/fr/pl/pl1/5',
     desc: 'Diamond & Pearl, Platinum, puis HeartGold SoulSilver. Les cartes LV.X et les Prime marquent l\'époque. Un style plus détaillé et mature.' },
-  { name: 'Black & White',    color: '#5C6270', years: '2011 – 2013', tag: 'Génération Unys',       card: 'https://assets.tcgdex.net/fr/bw/bw9/39',
+  { name: 'Black & White',    label: 'Noir & Blanc',    color: '#5C6270', years: '2011 – 2013', tag: 'Génération Unys',       card: 'https://assets.tcgdex.net/fr/bw/bw9/39',
     desc: 'Refonte complète du design des cartes (bordures, layout). Introduction des Full Art et des Secret Rares qui deviendront un pilier de la collection moderne.' },
-  { name: 'XY',               color: '#C44E8E', years: '2013 – 2016', tag: 'Kalos & Méga-Évolutions', card: 'https://assets.tcgdex.net/fr/xy/xy12/11',
+  { name: 'XY',               label: 'XY',               color: '#C44E8E', years: '2013 – 2016', tag: 'Kalos & Méga-Évolutions', card: 'https://assets.tcgdex.net/fr/xy/xy12/11',
     desc: 'Les Méga-EX et les cartes texturées. XY Évolutions ravive le design vintage. Une ère charnière, très prisée pour ses Full Art et ses Secrets.' },
-  { name: 'Sun & Moon',       color: '#E07B39', years: '2017 – 2019', tag: 'Alola & cartes GX',              card: 'https://assets.tcgdex.net/fr/sm/sm9/33',
+  { name: 'Sun & Moon',       label: 'Soleil & Lune',       color: '#E07B39', years: '2017 – 2019', tag: 'Alola & cartes GX',              card: 'https://assets.tcgdex.net/fr/sm/sm9/33',
     desc: 'Les GX, les Rainbow Rares et les Tag Team. Explosion des cartes arc-en-ciel et des alternatives art. Hidden Fates et son éclat holographique culte.' },
-  { name: 'Sword & Shield',   color: '#4F5FC4', years: '2019 – 2022', tag: 'Galar & cartes V / VMAX',        card: 'https://assets.tcgdex.net/fr/swsh/swsh8/113',
+  { name: 'Sword & Shield',   label: 'Épée & Bouclier',   color: '#4F5FC4', years: '2019 – 2022', tag: 'Galar & cartes V / VMAX',        card: 'https://assets.tcgdex.net/fr/swsh/swsh8/113',
     desc: 'L\'ère des V, VMAX et VSTAR. Les Alternate Arts deviennent l\'objet de toutes les convoitises. Evolving Skies et Charizard atteignent des sommets.' },
-  { name: 'Scarlet & Violet', color: '#D93A3A', years: '2023 – aujourd\'hui', tag: 'Paldea & ère moderne', card: 'https://assets.tcgdex.net/fr/sv/sv03.5/200',
+  { name: 'Scarlet & Violet', label: 'Écarlate & Violet', color: '#D93A3A', years: '2023 – aujourd\'hui', tag: 'Paldea & ère moderne', card: 'https://assets.tcgdex.net/fr/sv/sv03.5/200',
     desc: 'Les ex, les Illustration Rares et Special Illustration Rares. 151 ravive la nostalgie Kanto. L\'ère actuelle, hyper dynamique et spéculative.' },
 ]
 
@@ -44,7 +44,7 @@ function EraRow({ era, index, ownedCount }: { era: typeof ERAS[number]; index: n
         style={{ display: 'flex', gap: 18, alignItems: 'stretch', background: `linear-gradient(135deg, ${era.color}14, rgba(255,255,255,0.6))`, backdropFilter: 'blur(18px) saturate(170%)', WebkitBackdropFilter: 'blur(18px) saturate(170%)', border: `1px solid ${owned ? GOLD + '88' : era.color + '33'}`, borderRadius: RADIUS.lg, padding: '18px 20px', boxShadow: owned ? `0 0 0 1px ${GOLD}55, inset 0 1px 0 rgba(255,255,255,0.85)` : 'inset 0 1px 0 rgba(255,255,255,0.85)', transition: 'transform .2s cubic-bezier(.2,.85,.3,1), box-shadow .2s' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
-            <h3 style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 800, color: SNOW.ink, margin: 0, letterSpacing: '-0.02em' }}>{era.name}</h3>
+            <h3 style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 800, color: SNOW.ink, margin: 0, letterSpacing: '-0.02em' }}>{era.label ?? era.name}</h3>
             <span style={{ fontFamily: 'var(--font-data, "Space Mono", monospace)', fontSize: 12, fontWeight: 600, color: era.color }}>{era.years}</span>
           </div>
           <div style={{ fontFamily: FONT.display, fontSize: 12, fontWeight: 600, color: era.color, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em', opacity: 0.85 }}>{era.tag}</div>

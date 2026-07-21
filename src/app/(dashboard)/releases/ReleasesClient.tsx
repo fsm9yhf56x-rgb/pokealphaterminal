@@ -261,221 +261,131 @@ function Hero({ count, lastSyncedAt }: { count: number, lastSyncedAt?: string | 
 // ────────────────────────────────────────────────────────────
 // Set Card (a venir — grande carte countdown)
 // ────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────
+// Set Card (a venir) — ligne de calendrier compacte et elegante
+// ────────────────────────────────────────────────────────────
+
+// Teinte douce de la vignette selon la langue.
+const LANG_TINT: Record<Lang, string> = {
+  FR: 'linear-gradient(135deg, rgba(64,110,200,0.14), rgba(120,90,210,0.10))',
+  EN: 'linear-gradient(135deg, rgba(224,72,60,0.13), rgba(255,150,90,0.10))',
+  JP: 'linear-gradient(135deg, rgba(230,90,140,0.14), rgba(150,90,210,0.10))',
+}
+
 function SetCard({ set }: { set: UpcomingSet }) {
   const [imgError, setImgError] = useState(false)
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (status === 'loading') return
-    setStatus('loading'); setErrorMsg('')
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), cardId: set.slug, source: 'releases_' + set.slug }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Erreur')
-      }
-      setStatus('success')
-    } catch (err: any) {
-      setStatus('error'); setErrorMsg(err.message || 'Erreur, réessaye')
-    }
-  }
-
+  const [hover, setHover] = useState(false)
   const isUrgent = set.daysUntil <= 30 && set.daysUntil > 0
-  const dayLabel = set.daysUntil <= 1 ? 'jour' : 'jours'
+  const hasLogo = !!set.imageUrl && !imgError
+  const jColor = isUrgent ? '#E03020' : SNOW.ink
+
+  // Initiales pour la vignette de repli (2-3 lettres marquantes du nom).
+  const initials = (set.name || '?')
+    .replace(/[^A-Za-z0-9\s]/g, '')
+    .split(/\s+/).filter(Boolean).slice(0, 2)
+    .map(w => w[0]).join('').toUpperCase() || '?'
 
   return (
-    <article style={{
-      ...GLASS.card,
-      padding: 0, overflow: 'hidden',
-      position: 'relative' as const,
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, 360px) 1fr',
-      minHeight: 320,
-    }}>
-      {/* ─── Colonne visuel (image + bokeh enrichi) ─── */}
+    <article
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        ...GLASS.card,
+        padding: 0, overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: '112px 1fr auto',
+        alignItems: 'stretch',
+        minHeight: 96,
+        transform: hover ? 'translateY(-2px)' : 'translateY(0)',
+        boxShadow: hover
+          ? '0 16px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)'
+          : '0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.7)',
+        transition: 'transform .22s cubic-bezier(.2,.85,.3,1), box-shadow .22s ease',
+      }}>
+
+      {/* ─── Vignette : vrai logo, sinon degrade + initiales ─── */}
       <div style={{
         position: 'relative' as const,
-        background: 'linear-gradient(135deg, rgba(255,140,80,0.10) 0%, rgba(195,135,245,0.10) 45%, rgba(80,210,170,0.08) 100%)',
+        background: LANG_TINT[set.lang],
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 28,
-        borderRight: '1px solid rgba(0,0,0,0.04)',
+        padding: 14,
+        borderRight: '1px solid rgba(0,0,0,0.05)',
         overflow: 'hidden',
       }}>
-        <div aria-hidden style={{
-          position: 'absolute', top: '5%', left: '10%', width: 180, height: 180,
-          background: 'radial-gradient(circle, rgba(255,140,80,0.32), transparent 60%)',
-          filter: 'blur(45px)', pointerEvents: 'none' as const,
-        }} />
-        <div aria-hidden style={{
-          position: 'absolute', top: '30%', right: '5%', width: 150, height: 150,
-          background: 'radial-gradient(circle, rgba(195,135,245,0.30), transparent 60%)',
-          filter: 'blur(40px)', pointerEvents: 'none' as const,
-        }} />
-        <div aria-hidden style={{
-          position: 'absolute', bottom: '10%', left: '25%', width: 130, height: 130,
-          background: 'radial-gradient(circle, rgba(80,210,170,0.25), transparent 60%)',
-          filter: 'blur(40px)', pointerEvents: 'none' as const,
-        }} />
-        {set.imageUrl && !imgError ? (
+        {hasLogo ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
-            src={set.imageUrl}
+            src={set.imageUrl!}
             alt={set.name}
             onError={() => setImgError(true)}
             style={{
-              maxWidth: '100%', maxHeight: 260,
-              width: 'auto', height: 'auto',
-              position: 'relative' as const,
-              filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.22))',
+              maxWidth: '100%', maxHeight: 64, width: 'auto', height: 'auto',
+              objectFit: 'contain' as const,
+              filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.18))',
             }}
           />
         ) : (
           <div style={{
-            width: 180, height: 180, borderRadius: 22,
-            background: 'rgba(255,255,255,0.6)',
-            border: '1px solid rgba(0,0,0,0.06)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: SNOW.muted, fontSize: 12, fontFamily: FONT.display,
-            textAlign: 'center' as const, padding: 16,
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
-          }}>Visuel à venir</div>
+            fontFamily: FONT.display, fontWeight: 800,
+            fontSize: 26, letterSpacing: '-0.02em',
+            color: 'rgba(29,29,31,0.28)',
+            userSelect: 'none' as const,
+          }}>{initials}</div>
         )}
       </div>
 
-      {/* ─── Colonne contenu ─── */}
+      {/* ─── Identite : serie/langue, titre, date ─── */}
       <div style={{
-        padding: '32px 36px',
         display: 'flex', flexDirection: 'column' as const,
-        justifyContent: 'space-between', gap: 22,
+        justifyContent: 'center', gap: 5, padding: '14px 18px', minWidth: 0,
       }}>
-        <div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
-          }}>
-            <div style={{
-              fontSize: 10.5, fontWeight: 700, color: SNOW.muted,
-              fontFamily: FONT.display, letterSpacing: '0.2em',
-              textTransform: 'uppercase' as const,
-            }}>{set.series}</div>
-            <LangBadge lang={set.lang} size="sm" />
-          </div>
-
-          <h2 style={{
-            fontSize: 'clamp(22px, 2.5vw, 28px)',
-            fontWeight: 800, color: SNOW.ink, fontFamily: FONT.display,
-            letterSpacing: '-0.02em', lineHeight: 1.15,
-            margin: '0 0 12px',
-          }}>{set.name}</h2>
-
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '5px 12px', borderRadius: 99,
-            background: 'rgba(255,255,255,0.7)',
-            backdropFilter: 'blur(12px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-            border: '1px solid rgba(0,0,0,0.04)',
-            fontSize: 11.5, fontFamily: FONT.display,
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={SNOW.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span style={{ color: SNOW.muted }}>Sortie prévue le</span>
-            <span style={{ fontWeight: 700, color: SNOW.ink }}>{set.releaseDateLocale}</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {set.series && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: SNOW.muted,
+              fontFamily: FONT.display, letterSpacing: '0.14em',
+              textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const,
+              overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180,
+            }}>{set.series}</span>
+          )}
+          <LangBadge lang={set.lang} size="sm" />
         </div>
 
-        {/* Compteur J-X gigantesque */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '8px 0' }}>
-          <div style={{
-            fontSize: 'clamp(56px, 8vw, 88px)',
-            fontWeight: 800,
-            color: isUrgent ? '#E03020' : SNOW.ink,
-            fontFamily: FONT.display,
-            letterSpacing: '-0.05em', lineHeight: 1,
-            fontVariantNumeric: 'tabular-nums' as const,
-          }}>J-{Math.max(0, set.daysUntil)}</div>
-          <div style={{
-            fontSize: 13, fontWeight: 600, color: SNOW.muted,
-            fontFamily: FONT.display, letterSpacing: '0.02em',
-          }}>{dayLabel}</div>
-        </div>
+        <h2 style={{
+          fontSize: 18, fontWeight: 700, color: SNOW.ink,
+          fontFamily: FONT.display, letterSpacing: '-0.02em', lineHeight: 1.15,
+          margin: 0, whiteSpace: 'nowrap' as const, overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>{set.name}</h2>
 
-        {/* Waitlist */}
-        {status === 'success' ? (
-          <div style={{
-            padding: '14px 18px', borderRadius: 12,
-            background: 'rgba(46,158,106,0.08)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(46,158,106,0.2)',
-            display: 'flex', alignItems: 'center', gap: 10,
-            fontSize: 13, color: '#1a6e48',
-            fontFamily: FONT.display, fontWeight: 600,
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85)',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-            On te prévient dès que le set sort
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-            <input
-              type="email" required placeholder="ton@email.com"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              disabled={status === 'loading'}
-              style={{
-                flex: '1 1 200px', minWidth: 0, height: 46,
-                padding: '0 16px', borderRadius: 12,
-                background: 'rgba(255,255,255,0.92)',
-                backdropFilter: 'blur(12px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                border: '1px solid rgba(0,0,0,0.08)',
-                fontSize: 14, color: SNOW.ink,
-                fontFamily: FONT.display, outline: 'none',
-                boxSizing: 'border-box' as const,
-                boxShadow: '0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95)',
-                transition: 'all .2s',
-              }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'rgba(29,29,31,0.4)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
-            />
-            <button
-              type="submit"
-              disabled={status === 'loading' || !email.trim()}
-              style={{
-                height: 46, padding: '0 24px', borderRadius: 12,
-                background: status === 'loading' ? 'rgba(0,0,0,0.05)' : SNOW.ink,
-                color: status === 'loading' ? SNOW.muted : '#fff',
-                border: 'none',
-                fontSize: 13.5, fontWeight: 700,
-                cursor: status === 'loading' || !email.trim() ? 'default' : 'pointer',
-                fontFamily: FONT.display,
-                transition: 'all .2s cubic-bezier(.2,.85,.3,1)',
-                letterSpacing: '0.02em', whiteSpace: 'nowrap' as const,
-                boxShadow: status === 'loading' ? 'none' : '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12)',
-              }}
-              onMouseEnter={e => { if (status !== 'loading' && email.trim()) { e.currentTarget.style.background = '#000'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-              onMouseLeave={e => { if (status !== 'loading' && email.trim()) { e.currentTarget.style.background = SNOW.ink; e.currentTarget.style.transform = '' } }}
-            >
-              {status === 'loading' ? 'Envoi...' : 'Préviens-moi'}
-            </button>
-            {status === 'error' && (
-              <div style={{ width: '100%', fontSize: 11, color: '#E03020', fontFamily: FONT.display, marginTop: 4 }}>
-                {errorMsg}
-              </div>
-            )}
-          </form>
-        )}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 12, color: SNOW.muted, fontFamily: FONT.display,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>Sortie prevue le <span style={{ fontWeight: 700, color: SNOW.ink }}>{set.releaseDateLocale}</span></span>
+        </div>
+      </div>
+
+      {/* ─── Compteur : discret, rouge seulement si urgent ─── */}
+      <div style={{
+        display: 'flex', flexDirection: 'column' as const,
+        alignItems: 'flex-end', justifyContent: 'center',
+        padding: '14px 22px 14px 12px', gap: 1,
+      }}>
+        <div style={{
+          fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: jColor,
+          fontFamily: FONT.display, letterSpacing: '-0.04em', lineHeight: 1,
+          fontVariantNumeric: 'tabular-nums' as const, whiteSpace: 'nowrap' as const,
+        }}>J-{Math.max(0, set.daysUntil)}</div>
+        <div style={{
+          fontSize: 11, fontWeight: 600, color: SNOW.muted,
+          fontFamily: FONT.display, letterSpacing: '0.03em',
+        }}>jours</div>
       </div>
     </article>
   )

@@ -63,7 +63,23 @@ function parseExpansions(wt, todayIso) {
       const joined = cells.join('\n')
       const name = cells.map(parseName).find(Boolean)
       const date = cells.map(parseDate).find(Boolean)
-      const logo = cells.map(parseLogo).find(Boolean)
+      // index de la cellule contenant le nom {{TCG|...}}
+      const nameIdx = cells.findIndex(c => /\{\{TCG\|/i.test(c))
+      // vrais logos (fichier *Logo*.png) APRES le nom -> le logo suit le nom
+      // dans certaines lignes ; on prend donc la fenetre [nameIdx-2, nameIdx+2]
+      // et on ne garde que les *Logo*, le plus proche du nom.
+      let logo = null
+      if (nameIdx >= 0) {
+        const lo = Math.max(0, nameIdx - 3), hi = Math.min(cells.length, nameIdx + 3)
+        const near = []
+        for (let i = lo; i < hi; i++) {
+          const u = parseLogo(cells[i])
+          if (u && /logo/i.test(u) && !/setsymbol/i.test(u)) near.push({ i, u })
+        }
+        // le plus proche du nom (distance minimale)
+        near.sort((a, b) => Math.abs(a.i - nameIdx) - Math.abs(b.i - nameIdx))
+        logo = near.length ? near[0].u : null
+      }
       // code = 1re cellule courte alphanumerique (ex '30th', 'ME6', 'me05')
       const code = cells.length ? (cells[0].replace(/^\|\s*/, '').trim() || null) : null
       if (name && date && date > todayIso) out.push({ code, name, date, logo })

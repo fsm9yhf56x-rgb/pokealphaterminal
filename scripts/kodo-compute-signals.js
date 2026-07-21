@@ -16,11 +16,13 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       -- fair_value PAR MARCHE de la langue (jamais de melange US/EU) :
       --  EN / JP -> marche US (vente NM US x FX) en priorite ; si aucune vente US,
       --            dernier secours = vente Cardmarket (eu.trend), JAMAIS une annonce.
-      --  FR / EU -> marche Cardmarket (vente AGGREGATED) ; secours annonce EU decotee.
+      --  FR -> sources FRANCAISES UNIQUEMENT (eBay FR, ventes country FR/FR).
+      --       Le trend Cardmarket = toutes langues melangees -> BANNI du FR
+      --       (decision Alon 20/07 : l'or avec l'or). Pas de source FR = pas de prix.
       ROUND(
         CASE
           WHEN base.lang IN ('en','jp') THEN COALESCE(us_nm.p * ${usdEur}, eu.trend)
-          ELSE COALESCE(ed_ebay.p, eu.trend, eu_nm_ask.p * 0.88)
+          ELSE COALESCE(ed_ebay.p, fr_sale.p)
         END::numeric, 2) AS fair_value_eur,
       CASE
         WHEN base.lang IN ('en','jp') THEN
@@ -29,8 +31,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
                ELSE 'insufficient_data' END
         ELSE
           CASE WHEN ed_ebay.p IS NOT NULL THEN 'ebay_fr_edition'
-               WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
-               WHEN eu_nm_ask.p IS NOT NULL THEN 'eu_asking_decote'
+               WHEN fr_sale.p IS NOT NULL THEN 'fr_sale'
                ELSE 'insufficient_data' END
       END,
       COALESCE(ed_ebay.p, fr_sale.p) AS cote_fr_eur,

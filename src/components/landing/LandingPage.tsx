@@ -772,7 +772,7 @@ export default function LandingPage() {
                   <span className="kc-beta-title">Bienvenue dans la bêta</span>
                 </div>
                 <p className="kc-beta-text">
-                  Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées.
+                  Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées. Pour la sortie officielle <strong>le 1er septembre</strong>, on prépare de nouvelles fonctionnalités et quelques surprises.
                 </p>
                 <a href="https://discord.com/invite/y5p3CqXP4" target="_blank" rel="noopener noreferrer" className="kc-beta-cta">
                   Rejoins notre Discord et accède à la bêta gratuitement →

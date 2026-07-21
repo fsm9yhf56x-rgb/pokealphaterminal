@@ -268,7 +268,7 @@ export default function AbonnementPage() {
                 <span style={{ fontFamily: FONT.display, fontSize: 17, fontWeight: 700, color: SNOW.ink }}>Bienvenue dans la bêta</span>
               </div>
               <p style={{ fontFamily: FONT.body, fontSize: 13, color: SNOW.muted, lineHeight: 1.6, margin: 0 }}>
-                Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong style={{ color: SNOW.ink }}>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées.
+                Félicitations, tu fais partie des premiers à explorer Kodo Cards. Pendant la bêta, <strong style={{ color: SNOW.ink }}>tout est gratuit</strong> : ajoute tes cartes, complète tes séries, explore un pokédex multi-langues et des données avancées. Pour la sortie officielle <strong style={{ color: SNOW.ink }}>le 1er septembre</strong>, on prépare de nouvelles fonctionnalités et quelques surprises.
               </p>
               <a
                 href="https://discord.com/invite/y5p3CqXP4"

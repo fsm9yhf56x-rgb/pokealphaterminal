@@ -56,6 +56,26 @@ const upsert = async (kid, printId, tier, price) => {
   if (BUF.kid.length >= FLUSH_AT) await flush();
 };
 
+// ── PRECHARGE : ancres typees (etat reel declare) ──
+// Pour chaque carte ayant >=1 annonce avec condition_tier connu (titre LP/NM/...
+// ou champ eBay fiable), l'ancre EXCELLENT = mediane des votes prix/DECAY[tier].
+// UNE requete pour tout le stock (jamais 1 requete/carte = goulot Neon).
+// Les annonces 'Gradee' (champ eBay) sont EXCLUES : 227 gradees avaient echappe
+// au filtre isGraded(titre) et polluaient le raw.
+const typedRows = await sql`
+  SELECT kodo_card_id,
+         percentile_cont(0.5) WITHIN GROUP (ORDER BY price / CASE condition_tier
+           WHEN 'NEAR_MINT' THEN 1.38 WHEN 'EXCELLENT' THEN 1.00
+           WHEN 'LIGHTLY_PLAYED' THEN 0.79 WHEN 'MODERATELY_PLAYED' THEN 0.65
+           WHEN 'HEAVILY_PLAYED' THEN 0.53 WHEN 'DAMAGED' THEN 0.42 END
+         ) AS anchor,
+         count(*)::int AS votes
+  FROM ebay_fr_ed1_raw
+  WHERE condition_tier IS NOT NULL AND price > 0
+    AND COALESCE(condition_raw,'') NOT IN ('Gradée','Gradee')
+  GROUP BY kodo_card_id`;
+const typedAnchors = new Map(typedRows.map(r => [r.kodo_card_id, { anchor: Number(r.anchor), votes: r.votes }]));
+console.log(`Ancres typees (etat reel declare) : ${typedAnchors.size} cartes`);
 // ── NIVEAU 2 : cartes avec distribution eBay (staging ed1_raw) ──
 const distribCards = await sql`
   SELECT s.kodo_card_id, s.edition, kc.print_id
@@ -65,12 +85,15 @@ const distribCards = await sql`
 let n2=0, n2states=0;
 const n2done = new Set();
 for (const c of distribCards) {
-  const rows = await sql`SELECT price FROM ebay_fr_ed1_raw WHERE kodo_card_id=${c.kodo_card_id} AND edition=${c.edition} AND price>0`;
+  const rows = await sql`SELECT price FROM ebay_fr_ed1_raw WHERE kodo_card_id=${c.kodo_card_id} AND edition=${c.edition} AND price>0 AND COALESCE(condition_raw,'') NOT IN ('Gradée','Gradee')`;
   let prices = clean(rows.map(r=>Number(r.price)));
   if (prices.length < MIN_ANNONCES) continue;
   const printId = c.kodo_card_id.replace(/^fr-/,'');
+  const typed = typedAnchors.get(c.kodo_card_id);
   for (const st of STATES) {
-    const price = pct(prices, STATE_PCT[st]);
+    // Etat reel declare disponible -> l'ancre typee fait foi (le declare prime
+    // sur le modele statistique). Sinon percentiles de la distribution (actuel).
+    const price = typed ? typed.anchor * DECAY[st] : pct(prices, STATE_PCT[st]);
     if (price > 0) { await upsert(c.kodo_card_id, printId, st, price); n2states++; }
   }
   n2++; n2done.add(c.kodo_card_id);
@@ -91,7 +114,10 @@ let n1=0, n1states=0;
 for (const c of anchorCards) {
   if (n2done.has(c.kodo_card_id)) continue;   // déjà en Niveau 2 (plus précis)
   const printId = c.print_id || c.kodo_card_id.replace(/^fr-/,'');
-  const anchor = Number(c.anchor);
+  // Etat reel declare -> l'ancre typee remplace le spot arbitrairement suppose
+  // EXCELLENT (c'est CE mecanisme qui projetait un NM au-dessus des annonces).
+  const typed = typedAnchors.get(c.kodo_card_id);
+  const anchor = typed ? typed.anchor : Number(c.anchor);
   if (!(anchor > 0)) continue;
   for (const st of STATES) {
     const price = anchor * DECAY[st];   // ancre = EXCELLENT (×1.0)

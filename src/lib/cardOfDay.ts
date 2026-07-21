@@ -75,8 +75,8 @@ export function getCardOfDay(
       imageUrl,
       era,
       anecdote: (era && era !== 'Autre' && era !== 'N/A' && era !== 'Ta collection')
-        ? `Une piece de ta collection mise en lumiere aujourd\u2019hui. Issue de l\u2019ere ${era}.`
-        : `Une piece de ta collection mise en lumiere aujourd\u2019hui.`,
+        ? `Une pièce de ta collection mise en lumière aujourd’hui. Issue de l’ère ${era}.`
+        : `Une pièce de ta collection mise en lumière aujourd’hui.`,
       fromCollection: true,
     }
   }

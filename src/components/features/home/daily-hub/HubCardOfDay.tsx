@@ -75,7 +75,9 @@ export function HubCardOfDay() {
         </span>
         <h1 style={{ fontFamily: FONT.display, fontSize: 'clamp(30px,4.5vw,46px)', fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.035em', margin: '0 0 10px', lineHeight: 1.02 }}>{card.name}</h1>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-          <span style={{ fontFamily: FONT.body, fontSize: 11.5, fontWeight: 600, color: SNOW.muted, padding: '4px 11px', borderRadius: RADIUS.pill, background: 'rgba(0,0,0,0.04)' }}>{card.era}</span>
+          {card.era && card.era !== 'Autre' && card.era !== 'N/A' && card.era !== 'Ta collection' && (
+            <span style={{ fontFamily: FONT.body, fontSize: 11.5, fontWeight: 600, color: SNOW.muted, padding: '4px 11px', borderRadius: RADIUS.pill, background: 'rgba(0,0,0,0.04)' }}>{card.era}</span>
+          )}
           {card.illustrator && <span style={{ fontFamily: FONT.body, fontSize: 11.5, fontWeight: 600, color: SNOW.muted, padding: '4px 11px', borderRadius: RADIUS.pill, background: 'rgba(0,0,0,0.04)' }}>{card.illustrator}</span>}
           {card.fromCollection && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: FONT.body, fontSize: 11.5, fontWeight: 700, color: '#B8860B', padding: '4px 11px', borderRadius: RADIUS.pill, background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.3)' }}>

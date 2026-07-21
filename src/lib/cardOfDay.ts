@@ -55,7 +55,7 @@ function dayOfYear(date: Date): number {
 /** Carte du jour : priorite collection, sinon iconique curee. */
 export function getCardOfDay(
   collectionCards: Array<{ name?: string | null; set_id?: string | null; card_number?: string | null; lang?: string | null; set_name?: string | null; image_url?: string | null }> = [],
-  eraOf?: (setName: string | null) => string,
+  eraOf?: (setName: string | null, setId?: string | null) => string,
   date = new Date(),
 ): CardOfDay {
   const d = dayOfYear(date)
@@ -64,7 +64,7 @@ export function getCardOfDay(
   // Priorite : carte de la collection (si au moins une exploitable)
   if (owned.length > 0) {
     const c = owned[d % owned.length]
-    const era = eraOf ? eraOf(c.set_name ?? null) : 'Ta collection'
+    const era = eraOf ? eraOf(c.set_name ?? null, c.set_id ?? null) : 'Ta collection'
     const setId = String(c.set_id ?? '').replace(/^jp-|^en-/, '')
     const num = String(c.card_number ?? '').replace(/^0+/, '')
     const lang = (c.lang === 'EN' ? 'en' : 'fr')
@@ -73,7 +73,9 @@ export function getCardOfDay(
       name: c.name || 'Carte',
       imageUrl,
       era,
-      anecdote: `Une piece de ta collection mise en lumiere aujourd\u2019hui. Issue de l\u2019ere ${era}.`,
+      anecdote: (era && era !== 'Autre' && era !== 'N/A' && era !== 'Ta collection')
+        ? `Une piece de ta collection mise en lumiere aujourd\u2019hui. Issue de l\u2019ere ${era}.`
+        : `Une piece de ta collection mise en lumiere aujourd\u2019hui.`,
       fromCollection: true,
     }
   }

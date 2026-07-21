@@ -484,7 +484,28 @@ function deriveCondition(card: any): string {
   return card.condition || 'Raw'
 }
 
-export function deriveEra(setName: string | null): string {
+// Ere derivee du set_id (prefixe non ambigu). null si non reconnu -> deriveEra
+// retombe alors sur l'heuristique set_name. Couvre aussi Pokemon Pocket (A*).
+export function eraFromSetId(setId?: string | null): string | null {
+  if (!setId) return null
+  const id = setId.toLowerCase()
+  // Pokemon Pocket : ids 'a1', 'a2', 'a4a', 'p-a'... (App, hors series physiques)
+  if (/^a\d|^p-a|^promo-a/.test(id)) return 'Pocket'
+  if (/^(base|bs|jungle|fossil|gym|neo|rocket|si1|bp|wp)/.test(id)) return 'Vintage WOTC'
+  if (/^(ex|ru1|tk|pop)/.test(id)) return 'EX'
+  if (/^(dp|dpp|pl|hgss|hs|col)/.test(id)) return 'DPP / HGSS'
+  if (/^(bw|dv|dc|bwp)/.test(id)) return 'Black & White'
+  if (/^(xy|g1|dq|kss)/.test(id)) return 'XY'
+  if (/^(sm|det|smp)/.test(id)) return 'Sun & Moon'
+  if (/^(swsh|cel|fut|pgo|cr[a-z])/.test(id)) return 'Sword & Shield'
+  if (/^(sv|mew|A4?a?$|pre|sfa|scr|sur|paf|obf|par|mep)/.test(id)) return 'Scarlet & Violet'
+  return null
+}
+
+export function deriveEra(setName: string | null, setId?: string | null): string {
+  // Priorite au set_id (prefixe d'ere non ambigu) si fourni.
+  const byId = eraFromSetId(setId)
+  if (byId) return byId
   if (!setName) return 'N/A'
   const lower = setName.toLowerCase()
   // Heuristique simple — à raffiner avec un mapping set→ère plus tard

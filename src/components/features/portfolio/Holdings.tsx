@@ -973,6 +973,8 @@ export function Holdings() {
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
+  // Nombre d'EXEMPLAIRES (somme des qty), pas de lignes : une carte x20 = 20.
+  const totalQty  = portfolio.reduce((s,c)=>s+(c.qty||1),0)
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
 
@@ -1230,8 +1232,8 @@ export function Holdings() {
   // depasserait FREE_CARD_LIMIT (et ouvre alors la modale de conversion).
   // Appelee en tete de CHAQUE point d'ajout -> zero ajout optimiste, zero clignotement.
   const guardLimit = (n: number): boolean => {
-    if (!isPro && portfolio.length + n > FREE_CARD_LIMIT) {
-      setGate({ current: portfolio.length, limit: FREE_CARD_LIMIT })
+    if (!isPro && totalQty + n > FREE_CARD_LIMIT) {
+      setGate({ current: totalQty, limit: FREE_CARD_LIMIT })
       return true
     }
     return false
@@ -2367,8 +2369,8 @@ export function Holdings() {
                 <div className="value-hero" style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'8px' }}>
                   {portfolio.length>0 ? (
                     <>
-                      <span>{portfolio.length}</span>
-                      <span style={{ fontSize:'17px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>pièce{portfolio.length!==1?'s':''}</span>
+                      <span>{totalQty}</span>
+                      <span style={{ fontSize:'17px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>pièce{totalQty!==1?'s':''}</span>
                     </>
                   ) : <span style={{ color:'#C7C7CC' }}>---</span>}
                 </div>
@@ -2390,14 +2392,14 @@ export function Holdings() {
                 {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commence ta collection</span>}
               </div>
               {!isPro && portfolio.length > 0 && (() => {
-                const used = portfolio.length
+                const used = totalQty
                 const pctRaw = (used / FREE_CARD_LIMIT) * 100
                 const pct = Math.min(100, pctRaw)
                 const near = pctRaw >= 85
                 const remaining = Math.max(0, FREE_CARD_LIMIT - used)
                 const barColor = pctRaw >= 85 ? '#E03020' : pctRaw >= 75 ? '#F59E0B' : '#8E8E93'
                 return (
-                  <div style={{ marginTop: 14, maxWidth: 340 }}>
+                  <div style={{ marginTop: 14, width: 340, maxWidth: '100%' }}>
                     <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom: 6 }}>
                       <span style={{ fontSize:'11px', fontWeight:600, color:'#6E6E73', fontFamily:'var(--font-data)', letterSpacing:'.02em' }}>
                         {used} / {FREE_CARD_LIMIT} cartes

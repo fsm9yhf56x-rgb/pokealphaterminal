@@ -42,7 +42,7 @@ const EBAY_CONDITION_MAP = [
   { tier: 'EXCELLENT', re: /(excellent|tr[eè]s\s+bon)/i },
   { tier: 'LIGHTLY_PLAYED', re: /(bon\s+[ée]tat|good)/i },
   { tier: 'MODERATELY_PLAYED', re: /([ée]tat\s+moyen|average|acceptable)/i },
-  { tier: 'HEAVILY_PLAYED', re: /([ée]tat\s+correct|us[ée]|worn|fair)/i },
+  { tier: 'HEAVILY_PLAYED', re: /([ée]tat\s+correct)/i },  // PAS 'used'/'worn' : etat commercial eBay != etat de collection (55 faux HP le 21/07)
   { tier: 'DAMAGED', re: /(ab[iî]m[ée]|endommag[ée]|damaged|poor)/i },
 ];
 

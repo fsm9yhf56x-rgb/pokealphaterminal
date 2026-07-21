@@ -26,15 +26,15 @@ const CHAPTERS: Chapter[] = [
     ] },
   { num: '04', color: '#C44E8E', period: '2011 – 2019 · Modernisation', title: 'L’ère moderne',
     paras: [
-      'Black & White (2011) opère la plus grande refonte visuelle de l’histoire du jeu : nouvelles bordures, nouveau gabarit, et surtout l’apparition des Full Art et des Secret Rares. Ces cartes alternatives deviennent rapidement le moteur du marché de la collection moderne.',
-      'XY introduit les Méga-Évolutions et les premières cartes texturées ; Sun & Moon apporte les GX, les Rainbow Rares et les Tag Team. La notion de « chase card » \u2014 la carte alternative ultra-recherchée d’un set \u2014 structure désormais l’acte de collectionner.',
+      'Noir & Blanc (2011) opère la plus grande refonte visuelle de l’histoire du jeu : nouvelles bordures, nouveau gabarit, et surtout l’apparition des Full Art et des Secret Rares. Ces cartes alternatives deviennent rapidement le moteur du marché de la collection moderne.',
+      'XY introduit les Méga-Évolutions et les premières cartes texturées ; Soleil & Lune apporte les GX, les Rainbow Rares et les Tag Team. La notion de « chase card » \u2014 la carte alternative ultra-recherchée d’un set \u2014 structure désormais l’acte de collectionner.',
       'C’est aussi l’époque où la gradation se démocratise : PSA, BGS puis CGC transforment l’état d’une carte en valeur chiffrée et liquide. Une carte n’est plus seulement belle : elle a une note.',
     ] },
   { num: '05', color: '#E03020', period: '2020 – 2023 · Le boom', title: 'L’explosion mondiale',
     paras: [
       'La pandémie de 2020 déclenche un boom sans précédent. Confinement, nostalgie et arrivée d’influenceurs comme Logan Paul propulsent les prix à des sommets vertigineux. Des cartes d’enfance se revendent soudain des milliers d’euros, et les médias généralistes s’emparent du phénomène.',
       'Le marché du TCG Pokémon dépasse les 8 milliards d’euros et rivalise désormais avec les marchés de collection traditionnels comme l’art ou les cartes de sport. Les maisons de vente prestigieuses (Heritage, Goldin) ouvrent des sessions dédiées.',
-      'Sword & Shield puis Scarlet & Violet introduisent les Alternate Arts, Illustration Rares et Special Illustration Rares \u2014 des cartes pensées comme de véritables \u0153uvres. Le Charizard d’Evolving Skies devient l’icône de cette nouvelle flambée.',
+      'Épée & Bouclier puis Écarlate & Violet introduisent les Alternate Arts, Illustration Rares et Special Illustration Rares \u2014 des cartes pensées comme de véritables \u0153uvres. Le Charizard d’Evolving Skies devient l’icône de cette nouvelle flambée.',
     ] },
   { num: '06', color: '#4F5FC4', period: 'Aujourd’hui · L’ère globale', title: 'Le Japon, le monde, l’avenir',
     paras: [

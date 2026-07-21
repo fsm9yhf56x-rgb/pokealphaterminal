@@ -100,15 +100,15 @@ const GOLD = '#D4AF37'
 
 // Bande "Ton musee" : carte-bandeau glass v7 + frise des 8 eres (jauge de completion).
 // Reflet patrimonial du portfolio. Affichee seulement si la collection contient des cartes.
-const ERA_ORDER: { name: string; color: string }[] = [
+const ERA_ORDER: { name: string; label?: string; color: string }[] = [
   { name: 'Vintage WOTC', color: '#D4AF37' },
   { name: 'EX', color: '#2A82DD' },
   { name: 'DPP / HGSS', color: '#0E9E8E' },
-  { name: 'Black & White', color: '#5C6270' },
+  { name: 'Black & White', label: 'Noir & Blanc', color: '#5C6270' },
   { name: 'XY', color: '#C44E8E' },
-  { name: 'Sun & Moon', color: '#E07B39' },
-  { name: 'Sword & Shield', color: '#4F5FC4' },
-  { name: 'Scarlet & Violet', color: '#D93A3A' },
+  { name: 'Sun & Moon', label: 'Soleil & Lune', color: '#E07B39' },
+  { name: 'Sword & Shield', label: 'Épée & Bouclier', color: '#4F5FC4' },
+  { name: 'Scarlet & Violet', label: 'Écarlate & Violet', color: '#D93A3A' },
 ]
 
 function MuseumStrip() {
@@ -172,7 +172,7 @@ function MuseumStrip() {
             {ERA_ORDER.map((e) => {
               const has = (countByEra[e.name] ?? 0) > 0
               return (
-                <div key={e.name} title={e.name + (has ? ' · dans ta collection' : '')} style={{
+                <div key={e.name} title={(e.label ?? e.name) + (has ? ' · dans ta collection' : '')} style={{
                   flex: 1, height: 8, borderRadius: 4,
                   background: has ? 'linear-gradient(90deg, ' + e.color + ', ' + e.color + 'CC)' : 'rgba(0,0,0,0.07)',
                   boxShadow: has ? '0 1px 4px ' + e.color + '66, inset 0 1px 0 rgba(255,255,255,0.4)' : 'none',

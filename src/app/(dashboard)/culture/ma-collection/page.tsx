@@ -19,15 +19,15 @@ const ERA_ICONS: Record<string, string> = {
   flame: 'M12 2c1 4 5 6 5 10a5 5 0 01-10 0c0-2 1-3 1-3 1 2 2 2 2 0 0-3 1-5 2-7z',
 }
 
-const ERA_ORDER: { era: string; color: string; period: string; icon: string; short: string }[] = [
+const ERA_ORDER: { era: string; label?: string; color: string; period: string; icon: string; short: string }[] = [
   { era: 'Vintage WOTC',     color: '#D4AF37', period: '1996-2003', icon: 'crown',  short: 'WOTC' },
   { era: 'EX',               color: '#2A82DD', period: '2003-2007', icon: 'gem',    short: 'EX' },
   { era: 'DPP / HGSS',       color: '#0E9E8E', period: '2007-2011', icon: 'sun',    short: 'DPP' },
-  { era: 'Black & White',    color: '#5C6270', period: '2011-2013', icon: 'bolt',   short: 'B&W' },
+  { era: 'Black & White',    label: 'Noir & Blanc',    color: '#5C6270', period: '2011-2013', icon: 'bolt',   short: 'B&W' },
   { era: 'XY',               color: '#C44E8E', period: '2013-2016', icon: 'flower', short: 'XY' },
-  { era: 'Sun & Moon',       color: '#E07B39', period: '2017-2019', icon: 'wave',   short: 'S&M' },
-  { era: 'Sword & Shield',   color: '#4F5FC4', period: '2020-2022', icon: 'sword',  short: 'SWSH' },
-  { era: 'Scarlet & Violet', color: '#D93A3A', period: '2023-...',  icon: 'flame',  short: 'SV' },
+  { era: 'Sun & Moon',       label: 'Soleil & Lune',       color: '#E07B39', period: '2017-2019', icon: 'wave',   short: 'S&M' },
+  { era: 'Sword & Shield',   label: 'Épée & Bouclier',   color: '#4F5FC4', period: '2020-2022', icon: 'sword',  short: 'SWSH' },
+  { era: 'Scarlet & Violet', label: 'Écarlate & Violet', color: '#D93A3A', period: '2023-...',  icon: 'flame',  short: 'SV' },
 ]
 const ERA_INDEX = new Map(ERA_ORDER.map((e, i) => [e.era, i]))
 
@@ -189,7 +189,7 @@ export default function MaCollectionCulturePage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: FONT.display, fontSize: 10.5, fontWeight: 700, color: stats.nextMissing.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Ta prochaine conquête</div>
-                    <div style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.02em' }}>{stats.nextMissing.era}</div>
+                    <div style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 800, color: SNOW.ink, letterSpacing: '-0.02em' }}>{(ERA_ORDER.find(e => e.era === stats.nextMissing!.era)?.label) ?? stats.nextMissing.era}</div>
                     <div style={{ fontFamily: FONT.body, fontSize: 12.5, color: SNOW.muted }}>{stats.nextMissing.period} · explore-la</div>
                   </div>
                 </button>

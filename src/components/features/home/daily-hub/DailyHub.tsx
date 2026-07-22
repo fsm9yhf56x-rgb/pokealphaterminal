@@ -70,9 +70,9 @@ export function DailyHub() {
   const openUpgrade: OnLock = (tier, href, lock) =>
     setUpgrade({ tier, title: lock?.title, sub: lock?.sub, previewHref: href })
 
-  const recent = cards.slice(0, 12)
-  const graded = cards.filter(c => c?.graded).slice(0, 12)
-  const topValue = [...cards].sort((a, b) => (Number(b?.current_price) || 0) - (Number(a?.current_price) || 0)).slice(0, 12)
+  const recent = cards.slice(0, 24)
+  const graded = cards.filter(c => c?.graded).slice(0, 24)
+  const topValue = [...cards].sort((a, b) => (Number(b?.current_price) || 0) - (Number(a?.current_price) || 0)).slice(0, 24)
 
   const tagline = isCollector ? 'Tout l\u2019univers des cartes Pokémon' : 'Le terminal des cartes Pokémon'
 
@@ -111,8 +111,20 @@ export function DailyHub() {
         .kd-cta:hover { transform: translateY(-1px); }
         .kd-shelf { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; -ms-overflow-style: none; scrollbar-width: none; }
         .kd-shelf::-webkit-scrollbar { height: 0; display: none; }
+        /* indice de defilement : fondu sur le bord droit tant qu il reste des cartes */
+        .kd-shelfwrap { position: relative; }
+        .kd-shelfwrap::after {
+          content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 56px;
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.82) 70%, rgba(255,255,255,0.95) 100%);
+          pointer-events: none; opacity: 1; transition: opacity .25s ease; border-radius: 0 12px 12px 0;
+        }
+        .kd-shelfwrap.at-end::after { opacity: 0; }
         .kd-tile { scroll-snap-align: start; position: relative; opacity: 0; animation: kd-tilein .5s cubic-bezier(.2,.85,.3,1) forwards; }
         .kd-tile:hover { z-index: 10; }
+        .kd-shelf { cursor: grab; }
+        .kd-shelf.kd-dragging { cursor: grabbing; scroll-snap-type: none; }
+        .kd-shelf.kd-dragging .kd-tiltcard { transform: none !important; transition: none !important; }
+        .kd-shelf.kd-dragging * { user-select: none; }
         .kd-tiltcard { transition: transform .16s ease-out; will-change: transform; transform: perspective(700px); }
         .kd-shine { position:absolute; inset:0; border-radius:10px; opacity:0; transition:opacity .2s; pointer-events:none; mix-blend-mode: overlay;
           background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 45%); }
@@ -323,9 +335,52 @@ function TiltTile({ c, accent, showPrice, index }: { c: PortfolioCard; accent: s
 }
 
 /* ── CardShelf ──────────────────────────────────────────────────── */
+/* Glisser-deposer a la souris sur une rangee scrollable.
+   Seuil de 4px : en dessous c est un clic (la fiche s ouvre), au dessus un glissement. */
+function useDragScroll() {
+  const ref = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let down = false, moved = false, startX = 0, startScroll = 0
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      down = true; moved = false
+      startX = e.clientX; startScroll = el.scrollLeft
+    }
+    const onMove = (e: PointerEvent) => {
+      if (!down) return
+      const dx = e.clientX - startX
+      if (!moved && Math.abs(dx) < 4) return
+      if (!moved) { moved = true; el.classList.add('kd-dragging') }
+      e.preventDefault()
+      el.scrollLeft = startScroll - dx
+    }
+    const stop = () => {
+      down = false
+      if (moved) { el.classList.remove('kd-dragging'); setTimeout(() => { moved = false }, 0) }
+    }
+    const onClick = (e: MouseEvent) => { if (moved) { e.preventDefault(); e.stopPropagation() } }
+
+    el.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove, { passive: false })
+    window.addEventListener('pointerup', stop)
+    el.addEventListener('click', onClick, true)
+    return () => {
+      el.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', stop)
+      el.removeEventListener('click', onClick, true)
+    }
+  }, [])
+  return ref
+}
+
 function CardShelf({ items, loading, accent, showPrice, emptyLabel, emptyHref }: {
   items: PortfolioCard[]; loading: boolean; accent: string; showPrice: boolean; emptyLabel?: string; emptyHref?: string;
 }) {
+  const dragRef = useDragScroll()
   if (!loading && items.length === 0) {
     if (!emptyLabel) return null
     return (
@@ -340,12 +395,18 @@ function CardShelf({ items, loading, accent, showPrice, emptyLabel, emptyHref }:
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 14px 8px' }}>
         <Link href="/portfolio" style={{ fontFamily: DISPLAY, fontSize: 12.5, fontWeight: 600, color: accent, textDecoration: 'none' }}>Voir tout →</Link>
       </div>
-      <div className="kd-shelf" style={{ display: 'flex', gap: 14, padding: '12px 14px 14px' }}>
+      <div className="kd-shelfwrap">
+      <div ref={dragRef} className="kd-shelf" onScroll={(e) => {
+        const el = e.currentTarget
+        const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8
+        el.parentElement?.classList.toggle('at-end', end)
+      }} style={{ display: 'flex', gap: 14, padding: '12px 14px 14px' }}>
         {loading
           ? Array.from({ length: 6 }).map((_, i) => (
               <div key={i} style={{ width: 120, flex: '0 0 120px' }}><div style={{ width: '100%', aspectRatio: '5 / 7', borderRadius: 10, background: '#EFEFF2' }} /></div>
             ))
           : items.map((c, i) => <TiltTile key={c?.id || i} c={c} index={i} accent={accent} showPrice={showPrice} />)}
+      </div>
       </div>
     </div>
   )

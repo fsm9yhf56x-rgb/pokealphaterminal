@@ -494,7 +494,7 @@ export function Holdings() {
         if (localOnly.length > 0) {
           const toInsert = localOnly.map(c => ({
             user_id: user.id, name: c.name, set_name: c.set || null,
-            set_id: c.setId || null, card_number: c.number || null,
+            set_id: (c.setId || '').replace(/^(fr|en|jp)-/, '') || null, card_number: c.number || null,
             lang: c.lang || 'FR', rarity: c.rarity || null, card_type: c.type || null,
             condition: c.condition || 'NM', graded: c.graded || false,
             qty: c.qty || 1, buy_price: c.buyPrice || null,
@@ -1215,7 +1215,7 @@ export function Holdings() {
     user_id: user!.id,
     name: c.name,
     set_name: c.set || null,
-    set_id: c.setId || null,
+    set_id: (c.setId || '').replace(/^(fr|en|jp)-/, '') || null,
     card_number: c.number || null,
     lang: c.lang || 'FR',
     rarity: c.rarity || null,

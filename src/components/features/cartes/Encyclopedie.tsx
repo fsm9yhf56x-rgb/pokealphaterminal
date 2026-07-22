@@ -259,7 +259,7 @@ export function Encyclopedie() {
   const [browseMode, setBrowseMode]  = useState<'all'|'bloc'>('all')
   const [selBloc,    setSelBloc]     = useState<string|null>(null)
   const [filSet,     setFilSet]      = useState('all')
-  const [filRarity,  setFilRarity]   = useState('all')
+  const [filRarities, setFilRarities] = useState<string[]>([])
   const [sort,       setSort]        = useState<SortKey>('set')
   const { user, isPro } = useAuth()
   const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE)
@@ -388,7 +388,7 @@ export function Encyclopedie() {
   }, [])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [setPickerOpen, setSetPickerOpen] = useState(false)
-  const activeFilterCount = [filEra!=='all', filSet!=='all', filRarity!=='all'].filter(Boolean).length
+  const activeFilterCount = [filEra!=='all', filSet!=='all', filRarities.length>0].filter(Boolean).length
   const [gateCard, setGateCard] = useState<{name:string;lang:string;setId:string;localId:string;image?:string}|null>(null)
   const [authModal, setAuthModal] = useState<null|'login'|'signup'>(null)
   const [lightbox,   setLightbox]    = useState<EnrichedCard|null>(null)
@@ -725,9 +725,26 @@ export function Encyclopedie() {
     })
   }, [allCards])
 
-  const rarities = useMemo(() =>
-    [...new Set(allCards.map(c=>c.rarity).filter(Boolean))].sort()
-  , [allCards])
+  // Toute action de filtrage bascule en grille de cartes : le mode ne se
+  // choisit pas, il se deduit. (Le retour aux blocs se fait par le bouton
+  // 'Retour' deja present dans la vue d'un bloc.)
+  useEffect(() => {
+    if (search || filSet !== 'all' || filRarities.length > 0) setBrowseMode('all')
+  }, [search, filSet, filRarities])
+
+  const rarities = useMemo(() => {
+    let base = allCards.filter(c => c.era !== 'Promos & Coffrets')
+    if (filEra !== 'all') base = base.filter(c => c.era === filEra)
+    if (filSet !== 'all') base = base.filter(c => c.setId === filSet)
+    return [...new Set(base.map(c => c.rarity).filter(Boolean))].sort()
+  }, [allCards, filEra, filSet])
+
+  // Si la rarete choisie n'existe plus dans le nouveau perimetre, on la libere
+  // (sinon : zero resultat sans que l'utilisateur comprenne pourquoi).
+  useEffect(() => {
+    const keep = filRarities.filter(r => rarities.includes(r))
+    if (keep.length !== filRarities.length) { setFilRarities(keep); setPage(0) }
+  }, [rarities, filRarities])
 
   const eras = useMemo(() =>
     [...new Set(allCards.map(c=>c.era))].filter(e=>e!=='Promos & Coffrets').sort((a,b)=>ERA_ORDER.indexOf(a)-ERA_ORDER.indexOf(b))
@@ -750,7 +767,7 @@ export function Encyclopedie() {
   }, [allCards, filEra])
 
   useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
-  useEffect(() => { setPage(0); setVisibleCount(CHUNK_SIZE) }, [search, filSet, filRarity, sort])
+  useEffect(() => { setPage(0); setVisibleCount(CHUNK_SIZE) }, [search, filSet, filRarities, sort])
 
   // Pre-build JP search index (cached, only recalculated when allCards or dict changes)
   const jpSearchIndex = useMemo(() => {
@@ -770,7 +787,7 @@ export function Encyclopedie() {
     let r = allCards.filter(c=>c.era!=='Promos & Coffrets')
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
     if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
-    if (filRarity!=='all') r = r.filter(c=>c.rarity===filRarity)
+    if (filRarities.length) r = r.filter(c=>!!c.rarity && filRarities.includes(c.rarity))
     if (search) {
       const q=search.toLowerCase()
       if (jpSearchIndex) {
@@ -789,7 +806,7 @@ export function Encyclopedie() {
     return sort==='name'
       ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
       : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
-  }, [allCards, filEra, filSet, filRarity, search, sort])
+  }, [allCards, filEra, filSet, filRarities, search, sort])
 
   // Keyboard navigation
   useEffect(() => {
@@ -1304,7 +1321,7 @@ export function Encyclopedie() {
               current={filSet}
               lang={lang}
               totalCount={allCards.length}
-              onSelect={(id)=>{ setFilSet(id); setFilEra('all'); setPage(0) }}
+              onSelect={(id)=>{ setFilSet(id); setPage(0) }}
               onClose={()=>setSetPickerOpen(false)}
             />
             </>)
@@ -1315,7 +1332,7 @@ export function Encyclopedie() {
               <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', color:'#CCC', fontSize:'15px', pointerEvents:'none' }}>{String.fromCharCode(8981)}</span>
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 onFocus={()=>setSearchFocus(true)} onBlur={()=>setTimeout(()=>setSearchFocus(false),200)}
-                placeholder={lang==='JP' ? 'Rechercher (japonais, anglais ou français)...' : 'Rechercher une carte, un set...'}
+                placeholder={lang==='JP' ? 'Rechercher (japonais, anglais ou français)...' : 'Rechercher une carte, une série...'}
                 style={{ width:'100%', height:'40px', padding:'0 32px', border:'1px solid '+(searchFocus&&search.length>=2?'rgba(0,0,0,0.12)':'rgba(0,0,0,0.06)'), borderRadius:searchFocus&&searchSuggs.length>0?'9px 9px 0 0':'9px', fontSize:'13px', color:'#1D1D1F', outline:'none', background:searchFocus?'rgba(255,255,255,0.85)':'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', boxSizing:'border-box' as const, fontFamily:'var(--font-sans)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.75)', transition:'all .2s cubic-bezier(.2,.85,.3,1)' }}/>
               {search && (
                 <button onClick={()=>setSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#CCC', cursor:'pointer', fontSize:'16px', padding:0, lineHeight:1, zIndex:2 }}>{String.fromCharCode(215)}</button>
@@ -1392,10 +1409,11 @@ export function Encyclopedie() {
             <SetSelect
               sets={sets.map(x=>({ id:x.id, name:x.name, count:(x as any).count }))}
               value={filSet}
-              onChange={(id)=>{ setFilSet(id); setFilEra('all'); setPage(0) }}
+              onChange={(id)=>{ setFilSet(id); setPage(0) }}
               blocOf={(sid)=>{ const c = allCards.find(cc=>cc.setId===sid); return c?.era || 'Autre' }}
               blocOrder={ERA_ORDER as any}
               logos={setLogos}
+              dates={setDates}
               displayName={(st)=> lang === 'JP'
                 ? formatJPSetName({ id: st.id, name: st.name, lang: 'JP' as any } as any, sets.map(x=>({ id:x.id, name:x.name, lang:'JP' as any, total:(x as any).count } as TCGSet)))
                 : st.name}
@@ -1404,13 +1422,16 @@ export function Encyclopedie() {
 
             <PillSelect
               options={rarities.filter(Boolean) as string[]}
-              value={filRarity}
-              onChange={(v)=>{ setFilRarity(v); setPage(0) }}
+              multi
+              values={filRarities}
+              onChangeMulti={(vs)=>{ setFilRarities(vs); setPage(0) }}
+              value="all"
+              onChange={()=>{}}
               allLabel="Toutes les raretés"
               minWidth={180}
             />
-            {(filEra!=='all'||filSet!=='all'||filRarity!=='all'||search) && (
-              <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setFilRarity('all'); setSearch(''); setPage(0) }}
+            {(filEra!=='all'||filSet!=='all'||filRarities.length>0||search) && (
+              <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setFilRarities([]); setSearch(''); setPage(0) }}
                 style={{ height:'34px', padding:'0 12px', borderRadius:'7px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>
                 ✕ Effacer
               </button>
@@ -1437,88 +1458,6 @@ export function Encyclopedie() {
           )}
 
           {/* GRID */}
-          {/* Browse toggle */}
-          {!loading && !loadErr && (
-            <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
-              <button onClick={()=>{setBrowseMode('all');setSelBloc(null);setFilSet('all');setFilEra('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'0.5px solid rgba(255,255,255,0.6)', background:browseMode==='all'?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'rgba(255,255,255,0.45)', color:browseMode==='all'?'#1D1D1F':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:browseMode==='all'?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}>Toutes les cartes</button>
-              <button onClick={()=>{setBrowseMode('bloc');setSelBloc(null);setFilSet('all');setPage(0)}} style={{ padding:'6px 14px', borderRadius:'99px', border:'0.5px solid rgba(255,255,255,0.6)', background:browseMode==='bloc'?'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)':'rgba(255,255,255,0.45)', color:browseMode==='bloc'?'#1D1D1F':'#86868B', fontSize:'11px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:browseMode==='bloc'?'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}>Par blocs</button>
-            </div>
-          )}
-          {browseMode==='bloc'&&!selBloc&&!loading&&(
-            <div className="kbloc-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))', gap:'10px', marginBottom:'20px' }}>
-              {blocs.map(b=>{
-                const preview = allCards.filter(c=>c.era===b.name&&c.image).slice(0,3)
-                return (
-                <div key={b.name} className="enc-bloc-tile-v2" onClick={()=>{setSelBloc(b.name);setFilEra(b.name);setPage(0)}} style={{ display:'flex', alignItems:'center', gap:'14px', background:'rgba(255,255,255,0.6)', backdropFilter:'blur(14px) saturate(180%)', WebkitBackdropFilter:'blur(14px) saturate(180%)', border:'0.5px solid rgba(0,0,0,0.05)', borderRadius:14, padding:'12px 16px', cursor:'pointer', transition:'all .25s cubic-bezier(.2,.85,.3,1)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)' }}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.07), inset 0 1px 0 rgba(255,255,255,0.95)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.05)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)'}}>
-                  <div style={{ display:'flex', alignItems:'center', width:'58px', height:'52px', flexShrink:0, position:'relative' }}>
-                    {preview.map((c,i)=>{
-                      const rot = [-7,0,7][i] ?? 0
-                      const left = [0,14,28][i] ?? 0
-                      return (
-                        <div key={c.id} style={{ position:'absolute', left:`${left}px`, height:'48px', width:'34px', borderRadius:'4px', overflow:'hidden', border:'1.5px solid #fff', boxShadow:'0 1px 4px rgba(0,0,0,0.12)', transform:`rotate(${rot}deg)`, zIndex:i }}>
-                          <CardImg setId={c.setId} localId={c.localId} lang={lang} image={c.image} enImage={c.enImage} variant="thumb" fallback="hide" imgStyle={{ objectFit:'cover' }} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:'15px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, display:'flex', alignItems:'baseline', gap:'7px' }}>
-                      <span style={{ overflow:'hidden', textOverflow:'ellipsis' }}>{b.name}</span>
-                      {lang==='JP' && ERA_JP_CODE[b.name] ? <span style={{ fontSize:'10.5px', fontWeight:600, color:'#86868B', fontFamily:'var(--font-mono, monospace)', letterSpacing:'0.04em', flexShrink:0 }}>{ERA_JP_CODE[b.name]}</span> : null}
-                    </div>
-                    <div style={{ fontSize:'11px', color:'#86868B', fontFamily:'var(--font-mono, monospace)' }}>{b.total.toLocaleString()} cartes <span style={{ color:'#C7C7CC' }}>·</span> {b.sets.length} série{b.sets.length>1?'s':''}</div>
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style={{ flexShrink:0, opacity:0.3 }}><path d="M4.5 3L7.5 6L4.5 9" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                )
-              })}
-            </div>
-          )}
-          {browseMode==='bloc'&&selBloc&&!loading&&(
-            <div style={{ marginBottom:'20px' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
-                <button onClick={()=>{setSelBloc(null);setFilEra('all');setFilSet('all');setPage(0)}} style={{ background:'rgba(255,255,255,0.55)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:9, padding:'7px 12px', cursor:'pointer', fontSize:12, fontWeight:500, color:'#1D1D1F', fontFamily:'var(--font-sora, Sora, sans-serif)', display:'flex', alignItems:'center', gap:5, transition:'all .15s cubic-bezier(.2,.85,.3,1)', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.85)' }}>{String.fromCharCode(8249)} Blocs</button>
-                {(()=>{ const logoSid = blocs.find(b=>b.name===selBloc)?.sets.find(st=>setLogos[st.id])?.id; return logoSid ? <img src={setLogos[logoSid]} alt="" style={{ height:'24px', maxWidth:'120px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/> : null })()}
-                <span style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', display:'inline-flex', alignItems:'baseline', gap:'8px' }}>
-                  {selBloc}
-                  {lang==='JP' && selBloc && ERA_JP_CODE[selBloc] ? <span style={{ fontSize:'11px', fontWeight:600, color:'#86868B', fontFamily:'var(--font-mono, monospace)', letterSpacing:'0.04em' }}>{ERA_JP_CODE[selBloc]}</span> : null}
-                </span>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(178px,1fr))', gap:'6px', marginBottom:'16px' }}>
-                <div onClick={()=>{setFilSet('all');setPage(0)}} style={{ padding:'8px 12px', borderRadius:'9px', border:'0.5px solid '+(filSet==='all'?'#1D1D1F':'rgba(0,0,0,0.08)'), background:filSet==='all'?'#1D1D1F':'rgba(255,255,255,0.6)', color:filSet==='all'?'#fff':'#1D1D1F', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'6px' }}>
-                  <span>Toutes</span><span style={{ fontFamily:'var(--font-mono, monospace)', fontSize:'10px', opacity:.6 }}>{blocs.find(b=>b.name===selBloc)?.total.toLocaleString()}</span>
-                </div>
-                {blocs.find(b=>b.name===selBloc)?.sets.map(st=>{
-                  const sel = filSet===st.id
-                  const ow = allCards.filter(c=>c.setId===st.id&&isOwned(c)).length
-                  const enSet = lang==='JP' ? allCards.find(c=>c.setId===st.id)?.enSetName : null
-                  const thumb = allCards.find(c=>c.setId===st.id)
-                  return (
-                  <div key={st.id} onClick={()=>{setFilSet(st.id);setPage(0)}}
-                    className='enc-serie-tile-v3 rh'
-                    style={{ padding:'7px 10px', borderRadius:'11px', border:'0.5px solid '+(sel?'#1D1D1F':'rgba(0,0,0,0.06)'), background:sel?'#1D1D1F':'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', color:sel?'#fff':'#1D1D1F', cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', display:'flex', alignItems:'center', gap:'10px', minWidth:0, boxShadow:sel?'0 2px 10px rgba(0,0,0,0.12)':'inset 0 1px 0 rgba(255,255,255,0.7)' }}
-                    onMouseEnter={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.92)';e.currentTarget.style.boxShadow='0 3px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1.08)'}}}
-                    onMouseLeave={e=>{if(!sel){e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.7)';const im=e.currentTarget.querySelector('img');if(im)im.style.transform='scale(1)'}}}>
-                    <div style={{ width:'30px', height:'42px', borderRadius:'5px', overflow:'hidden', flexShrink:0, background:sel?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.04)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <CardImg setId={st.id} localId={thumb?.localId} lang={lang} image={thumb?.image} enImage={thumb?.enImage} variant="thumb" fallback="hide" imgStyle={{ objectFit:'cover', transition:'transform .25s cubic-bezier(.2,.85,.3,1)' }} />
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:'12px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.25 }}>
-                        {st.name}
-                      </div>
-                      <div style={{ fontSize:'10px', color:sel?'rgba(255,255,255,0.6)':'#86868B', marginTop:'1px' }}>
-                        {ow>0?<><span style={{ color:sel?'#86EFAC':'#2E9E6A', fontWeight:700 }}>{ow}</span><span>/{st.count} cartes</span></>:<>{st.count} cartes</>}
-                        {enSet&&<span style={{ color:sel?'rgba(255,255,255,0.35)':'#C7C7CC', marginLeft:'5px' }}>{enSet}</span>}
-                      </div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           {!loading && !loadErr && filtered.length>0 && (
             <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', marginBottom:'8px' }}>
               <span style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{Math.min(visibleCount, filtered.length)} / {filtered.length} cartes affichées</span>
@@ -1530,7 +1469,7 @@ export function Encyclopedie() {
               <div style={{ fontSize:'48px', opacity:.15, marginBottom:'16px' }}>{String.fromCharCode(9997)}</div>
               <div style={{ fontSize:'16px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:'6px' }}>Aucune carte trouvée</div>
               <div style={{ fontSize:'13px', color:'#86868B', marginBottom:'16px' }}>Essayez avec d'autres filtres ou un autre terme de recherche.</div>
-              <button onClick={()=>{setFilEra('all');setFilSet('all');setFilRarity('all');setSearch('');setPage(0)}}
+              <button onClick={()=>{setFilEra('all');setFilSet('all');setFilRarities([]);setSearch('');setPage(0)}}
                 style={{ padding:'8px 16px', borderRadius:'8px', background:'#1D1D1F', color:'#fff', border:'none', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)' }}>
                 Effacer les filtres
               </button>

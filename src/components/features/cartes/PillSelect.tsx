@@ -3,9 +3,13 @@
 import { useState, useRef, useEffect } from 'react'
 
 interface Props {
-  options: string[]                 // libellés des blocs (ERA_ORDER filtré)
-  value: string                     // 'all' ou un libellé
+  options: string[]                 // libellés proposés
+  value: string                     // 'all' ou un libellé (mode simple)
   onChange: (v: string) => void
+  /** mode multi-sélection (raretés) : plusieurs valeurs cumulables */
+  multi?: boolean
+  values?: string[]
+  onChangeMulti?: (v: string[]) => void
   allLabel?: string
   disabled?: boolean
   minWidth?: number
@@ -18,7 +22,7 @@ interface Props {
  * avec le verre du reste. Ici la même DA (verre dense, bordure blanche,
  * accent Kodo) mais SANS recherche ni grille : 11 blocs, une liste suffit.
  */
-export function PillSelect({ options, value, onChange, allLabel = 'Tous', disabled, minWidth = 170 }: Props) {
+export function PillSelect({ options, value, onChange, multi, values = [], onChangeMulti, allLabel = 'Tous', disabled, minWidth = 170 }: Props) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -33,8 +37,20 @@ export function PillSelect({ options, value, onChange, allLabel = 'Tous', disabl
     return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('keydown', onKey) }
   }, [open])
 
-  const pick = (v: string) => { onChange(v); setOpen(false) }
-  const active = value !== 'all'
+  // Multi : le panneau RESTE ouvert (on cumule), simple : il se ferme.
+  const pick = (v: string) => {
+    if (multi) {
+      if (v === 'all') { onChangeMulti?.([]); setOpen(false); return }
+      onChangeMulti?.(values.includes(v) ? values.filter(x => x !== v) : [...values, v])
+      return
+    }
+    onChange(v); setOpen(false)
+  }
+  const active = multi ? values.length > 0 : value !== 'all'
+  const btnLabel = multi
+    ? (values.length === 0 ? allLabel : values.length === 1 ? values[0] : `${values.length} raretés`)
+    : (value !== 'all' ? value : allLabel)
+  const isOn = (v: string) => (multi ? values.includes(v) : value === v)
 
   return (
     <div ref={wrapRef} style={{ position: 'relative', flexShrink: 0 }}>
@@ -91,7 +107,7 @@ export function PillSelect({ options, value, onChange, allLabel = 'Tous', disabl
         }}
       >
         <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {active ? value : allLabel}
+          {btnLabel}
         </span>
         <svg width="11" height="11" viewBox="0 0 12 12" fill="none"
           style={{ flexShrink: 0, opacity: 0.45, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }}>
@@ -102,14 +118,15 @@ export function PillSelect({ options, value, onChange, allLabel = 'Tous', disabl
       {open && (<>
         <span className="kps-tip" aria-hidden />
         <div className="kps-panel">
-          <button className={`kps-item${value === 'all' ? ' on' : ''}`} onClick={() => pick('all')}>
+          <button className={`kps-item${!active ? ' on' : ''}`} onClick={() => pick('all')}>
             <span>{allLabel}</span>
           </button>
           <div className="kps-sep" />
           <div className="kps-grid">
             {options.map((o, i) => (
-              <button key={o} className={`kps-item${value === o ? ' on' : ''}`} onClick={() => pick(o)} style={{ animationDelay: (0.03 + i * 0.016) + 's' }}>
+              <button key={o} className={`kps-item${isOn(o) ? ' on' : ''}`} onClick={() => pick(o)} style={{ animationDelay: (0.03 + i * 0.016) + 's' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o}</span>
+                {multi && isOn(o) && <span style={{ fontWeight: 700, color: '#E03020', flexShrink: 0 }}>✓</span>}
               </button>
             ))}
           </div>

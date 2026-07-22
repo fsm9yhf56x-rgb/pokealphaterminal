@@ -14,6 +14,8 @@ interface Props {
   blocOrder: string[]
   /** setId -> URL de logo */
   logos?: Record<string, string>
+  /** setId -> date de sortie ISO (pour l'ordre chronologique) */
+  dates?: Record<string, string>
   /** nom affiché (formatJPSetName en JP) */
   displayName?: (set: SetLite) => string
   disabled?: boolean
@@ -36,7 +38,7 @@ interface Props {
  * une grille de logos seule aurait été trouée. Les variantes (Éd1, Shadowless)
  * héritent du logo de leur set parent.
  */
-export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, displayName, disabled }: Props) {
+export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, dates, displayName, disabled }: Props) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -75,15 +77,37 @@ export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, dis
     // Chronologique DANS chaque bloc : l'ordre du catalogue est alphabetique
     // (Aquapolis avant Set de Base), ce qui n'a aucun sens pour un collectionneur.
     // sets[] arrive deja trie par sortie -> on garde cet ordre d'origine.
+    // Cle de tri : (parent, variante). Le parent porte sa date si elle existe,
+    // sinon son rang dans le catalogue ; la variante suit immediatement.
+    // Ordre canonique des sets sans date (TCGdex n'en fournit quasi aucune :
+    // 1 set FR sur 9). Ces sets sont figes depuis 1999, la liste ne bougera pas.
+    const CANON = ['base1','base2','base3','base4','base5','base6','gym1','gym2',
+      'neo1','neo2','neo3','neo4','ecard1','ecard2','ecard3','si1','ex1','ex2','ex3']
+    const canonRank = (id: string) => { const i = CANON.indexOf(id); return i < 0 ? 999 : i }
+    const parentOf = (id: string) => id.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
+    const isVariant = (id: string) => id !== parentOf(id)
     const rank = new Map(sets.map((s, i) => [s.id, i]))
-    for (const arr of byBloc.values()) arr.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0))
+    for (const arr of byBloc.values()) {
+      arr.sort((a, b) => {
+        const pa = parentOf(a.id), pb = parentOf(b.id)
+        if (pa !== pb) {
+          const da = dates?.[pa] || '', db = dates?.[pb] || ''
+          if (da && db && da !== db) return da.localeCompare(db)
+          const ca = canonRank(pa), cb = canonRank(pb)
+          if (ca !== cb) return ca - cb
+          return (rank.get(pa) ?? rank.get(a.id) ?? 0) - (rank.get(pb) ?? rank.get(b.id) ?? 0)
+        }
+        // meme parent : le set de base d'abord, ses variantes ensuite
+        return (isVariant(a.id) ? 1 : 0) - (isVariant(b.id) ? 1 : 0)
+      })
+    }
     return [...byBloc.keys()]
       .sort((a, b) => {
         const ia = blocOrder.indexOf(a), ib = blocOrder.indexOf(b)
         return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib)
       })
       .map(b => ({ bloc: b, list: byBloc.get(b)! }))
-  }, [sets, q, blocOf, blocOrder, displayName])
+  }, [sets, q, blocOf, blocOrder, displayName, dates])
 
   const shown = groups.reduce((n, g) => n + g.list.length, 0)
   const current = value === 'all' ? null : sets.find(s => s.id === value)

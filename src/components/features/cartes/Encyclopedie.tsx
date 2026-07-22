@@ -259,6 +259,12 @@ export function Encyclopedie() {
   const [browseMode, setBrowseMode]  = useState<'all'|'bloc'>('all')
   const [selBloc,    setSelBloc]     = useState<string|null>(null)
   const [filSet,     setFilSet]      = useState('all')
+  // ?set=xxx : lu APRES le montage (l initialiseur useState s execute au SSR,
+  // ou window n existe pas -> la valeur serait perdue a l hydratation)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('set')
+    if (p) setFilSet(p)
+  }, [])
   const [filRarities, setFilRarities] = useState<string[]>([])
   const [sort,       setSort]        = useState<SortKey>('set')
   const { user, isPro } = useAuth()

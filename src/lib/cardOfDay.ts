@@ -36,6 +36,9 @@ export interface CardOfDay {
   illustrator?: string
   anecdote: string
   fromCollection: boolean
+  setId?: string
+  setName?: string
+  number?: string
 }
 
 // Mapping setId -> serie TCGdex (pour construire l'URL image).
@@ -74,10 +77,11 @@ export function getCardOfDay(
       name: c.name || 'Carte',
       imageUrl,
       era,
-      anecdote: (era && era !== 'Autre' && era !== 'N/A' && era !== 'Ta collection')
-        ? `Une pièce de ta collection mise en lumière aujourd’hui. Issue de l’ère ${era}.`
-        : `Une pièce de ta collection mise en lumière aujourd’hui.`,
+      anecdote: '',
       fromCollection: true,
+      setId,
+      setName: c.set_name ?? undefined,
+      number: num,
     }
   }
 

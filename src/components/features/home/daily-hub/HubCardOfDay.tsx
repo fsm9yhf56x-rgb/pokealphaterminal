@@ -21,6 +21,17 @@ export function HubCardOfDay() {
 
   const card = useMemo(() => getCardOfDay(cards as any, deriveEra), [cards])
 
+  // Contexte collectionneur : ce que cette carte represente dans sa serie.
+  // On n affiche que ce qu on sait vraiment (principe Kodo : pas de donnee inventee).
+  const ctx = useMemo(() => {
+    if (!card.fromCollection || !card.setId) return null
+    const norm = (x: unknown) => String(x ?? '').replace(/^(fr|en|jp)-/, '')
+    const inSet = (cards ?? []).filter((c: any) => norm(c?.set_id) === norm(card.setId))
+    const owned = inSet.reduce((n: number, c: any) => n + (Number(c?.qty) || 1), 0)
+    return { owned, distinct: inSet.length, setName: card.setName || null }
+  }, [cards, card])
+
+
   function onMove(e: React.MouseEvent) {
     const el = cardRef.current
     if (!el) return
@@ -86,7 +97,15 @@ export function HubCardOfDay() {
             </span>
           )}
         </div>
-        <p style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.inkSoft, margin: '0 0 20px', maxWidth: '46ch', lineHeight: 1.6 }}>{card.anecdote}</p>
+        {card.anecdote
+          ? <p style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.inkSoft, margin: '0 0 20px', maxWidth: '46ch', lineHeight: 1.6 }}>{card.anecdote}</p>
+          : ctx && ctx.distinct > 0
+            ? <p style={{ fontFamily: FONT.body, fontSize: 15, color: SNOW.inkSoft, margin: '0 0 20px', maxWidth: '46ch', lineHeight: 1.6 }}>
+                {card.number ? <>Carte <strong style={{ color: SNOW.ink }}>n°{card.number}</strong>{ctx.setName ? <> de {ctx.setName}</> : null}. </> : null}
+                Tu as <strong style={{ color: SNOW.ink }}>{ctx.distinct} carte{ctx.distinct > 1 ? 's' : ''}</strong> de cette série
+                {ctx.owned > ctx.distinct ? <> ({ctx.owned} exemplaires)</> : null}.
+              </p>
+            : <div style={{ marginBottom: 20 }} />}
         <button onClick={() => router.push('/culture')} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: RADIUS.pill, background: '#1D1D1F', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: FONT.display, fontWeight: 600, fontSize: 13.5, transition: 'gap .2s, transform .2s' }}
           onMouseEnter={e => { e.currentTarget.style.gap = '11px'; e.currentTarget.style.transform = 'translateY(-1px)' }}
           onMouseLeave={e => { e.currentTarget.style.gap = '7px'; e.currentTarget.style.transform = '' }}>

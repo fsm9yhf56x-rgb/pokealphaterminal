@@ -51,6 +51,8 @@ export function PillSelect({ options, value, onChange, multi, values = [], onCha
     ? (values.length === 0 ? allLabel : values.length === 1 ? values[0] : `${values.length} raretés`)
     : (value !== 'all' ? value : allLabel)
   const isOn = (v: string) => (multi ? values.includes(v) : value === v)
+  // Colonnes selon le volume : 11 blocs tiennent en 2, 39 raretes exigent 3.
+  const cols = options.length > 24 ? 3 : options.length > 10 ? 2 : 1
 
   return (
     <div ref={wrapRef} style={{ position: 'relative', flexShrink: 0 }}>
@@ -60,7 +62,7 @@ export function PillSelect({ options, value, onChange, multi, values = [], onCha
         @keyframes kpsTip { from { opacity: 0; transform: translateY(-4px) rotate(45deg) } to { opacity: 1; transform: rotate(45deg) } }
         .kps-panel {
           position: absolute; top: calc(100% + 7px); left: 0; z-index: 60;
-          min-width: 100%; width: max-content; max-width: 420px; max-height: 320px; overflow-y: auto;
+          min-width: 100%; width: max-content; max-height: 460px; overflow-y: auto;
           padding: 6px;
           background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(250,250,253,0.95));
           backdrop-filter: blur(36px) saturate(190%); -webkit-backdrop-filter: blur(36px) saturate(190%);
@@ -90,7 +92,12 @@ export function PillSelect({ options, value, onChange, multi, values = [], onCha
         @media (prefers-reduced-motion: reduce) { .kps-panel, .kps-tip, .kps-item { animation: none !important } }
         .kps-item.on { background: rgba(224,48,32,0.08); color: #1D1D1F; font-weight: 600; box-shadow: inset 2px 0 0 #E03020; }
         .kps-sep { height: 0.5px; background: rgba(0,0,0,0.06); margin: 5px 6px; }
-        .kps-grid { display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 2px; }
+        .kps-grid { display: grid; gap: 2px; }
+        .kps-hint {
+          font-size: 10.5px; color: #AEAEB2; font-family: var(--font-sora,Sora,sans-serif);
+          padding: 2px 11px 7px; display: flex; align-items: center; gap: 5px;
+        }
+
       `}</style>
 
       <button
@@ -122,11 +129,16 @@ export function PillSelect({ options, value, onChange, multi, values = [], onCha
             <span>{allLabel}</span>
           </button>
           <div className="kps-sep" />
-          <div className="kps-grid">
+          {multi && (
+            <div className="kps-hint">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Plusieurs choix possibles
+            </div>
+          )}
+          <div className="kps-grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cols >= 3 ? 148 : 158}px, 1fr))` }}>
             {options.map((o, i) => (
               <button key={o} className={`kps-item${isOn(o) ? ' on' : ''}`} onClick={() => pick(o)} style={{ animationDelay: (0.03 + i * 0.016) + 's' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o}</span>
-                {multi && isOn(o) && <span style={{ fontWeight: 700, color: '#E03020', flexShrink: 0 }}>✓</span>}
               </button>
             ))}
           </div>

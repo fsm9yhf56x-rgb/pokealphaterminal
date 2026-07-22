@@ -18,6 +18,7 @@
  *   Fallbacks intégrés si absentes.
  */
 
+import { BrandMark } from '@/components/brand/BrandMark'
 import {
   useEffect,
   useRef,
@@ -352,8 +353,7 @@ function Nav() {
     <header className={`kc-nav${scrolled ? ' kc-nav-frost' : ''}`}>
       <div className="kc-nav-inner">
         <a href="#top" className="kc-logo" aria-label="Kodo Cards">
-          <span>Kodo</span>
-          <span style={{ color: SNOW.accent }}>&nbsp;Cards</span>
+          <BrandMark size={34} inline mark={false} />
         </a>
 
         <nav className="kc-nav-links">
@@ -936,6 +936,7 @@ const CSS = `
 }
 .kc-landing *{box-sizing:border-box;}
 .kc-landing a{color:inherit;text-decoration:none;}
+.kc-btn-primary,.kc-btn-primary:link,.kc-btn-primary:visited,.kc-btn-primary:hover,.kc-btn-primary:active{color:#fff !important;}
 .kc-landing h1,.kc-landing h2,.kc-landing h3,.kc-landing h4{font-family:var(--display);margin:0;letter-spacing:-.02em;}
 
 /* Reveal */
@@ -988,7 +989,7 @@ const CSS = `
 .kc-btn:active{transform:scale(.97);}
 .kc-btn-sm{padding:9px 16px;font-size:14px;border-radius:11px;}
 .kc-btn-block{width:100%;}
-.kc-btn-primary{background:linear-gradient(135deg,${SNOW.accent},${SNOW.accent2});color:#fff;box-shadow:0 6px 20px rgba(224,48,32,.28);}
+.kc-btn-primary{background:linear-gradient(135deg,${SNOW.accent},${SNOW.accent2});color:#fff !important;box-shadow:0 6px 20px rgba(224,48,32,.28);}
 .kc-btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(224,48,32,.34);}
 .kc-btn-ghost{background:rgba(255,255,255,.7);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border);backdrop-filter:blur(8px);}
 .kc-btn-ghost:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px ${SNOW.borderStrong};}

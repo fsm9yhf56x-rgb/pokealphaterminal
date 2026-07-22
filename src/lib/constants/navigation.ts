@@ -51,8 +51,8 @@ export const NAV: NavItem[] = [
     href:  '/cartes',
     children: [
       { label:'Cartes',     href:'/cartes'        },
-      { label:'Scelles',    href:'/cartes/scelles'},
-      { label:'Jeux Video', href:'/cartes/jeux'   },
+      { label:'Scellés',    href:'/cartes/scelles'},
+      { label:'Jeux vidéo', href:'/cartes/jeux'   },
     ],
   },
   {
@@ -163,7 +163,7 @@ export const NAV: NavItem[] = [
     href:  '/culture',
     collectorOnly: true,
     children: [
-      { label:'Ma collection', href:'/culture/ma-collection' },
+      { label:'Mes époques', href:'/culture/ma-collection' },
       { label:'Artistes',    href:'/culture/artistes'   },
       { label:'Lore',        href:'/culture/lore'       },
       { label:'Ères',        href:'/culture/eres'       },

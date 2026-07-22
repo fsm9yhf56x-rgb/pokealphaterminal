@@ -41,20 +41,20 @@ type CardItem = {
 }
 
 const ENCYCLOPEDIA: CardItem[] = [
-  { id:'e1',  name:'Charizard Alt Art',    set:'SV151',            year:2023, number:'006', rarity:'Alt Art',     type:'fire',     lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:920,  qty:1, psa:312,  signal:'S', hot:true  },
-  { id:'e2',  name:'Umbreon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'215', rarity:'Alt Art',     type:'dark',     lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:880,  qty:1,            signal:'A'           },
-  { id:'e3',  name:'Charizard VMAX',       set:'Champion Path',    year:2020, number:'074', rarity:'Secret Rare', type:'fire',     lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:420,  qty:1, psa:1240                       },
-  { id:'e4',  name:'Gengar VMAX Alt',      set:'Fusion Strike',    year:2021, number:'271', rarity:'Alt Art',     type:'psychic',  lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:340,  qty:1                                 },
-  { id:'e5',  name:'Pikachu VMAX RR',      set:'Vivid Voltage',    year:2020, number:'188', rarity:'Secret Rare', type:'electric', lang:'JP', condition:'Raw', graded:false, buyPrice:0, curPrice:110,  qty:1, psa:4200                       },
-  { id:'e6',  name:'Rayquaza VMAX Alt',    set:'Evolving Skies',   year:2021, number:'218', rarity:'Alt Art',     type:'electric', lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:740,  qty:1,            signal:'A'           },
-  { id:'e7',  name:'Mewtwo V Alt',         set:'Pokemon GO',       year:2022, number:'071', rarity:'Alt Art',     type:'psychic',  lang:'JP', condition:'Raw', graded:false, buyPrice:0, curPrice:280,  qty:1,            signal:'B'           },
-  { id:'e8',  name:'Blastoise Base Set',   set:'Base Set',         year:1999, number:'002', rarity:'Holo Rare',   type:'water',    lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:620,  qty:1, psa:890                        },
-  { id:'e9',  name:'Lugia Neo Genesis',    set:'Neo Genesis',      year:2000, number:'009', rarity:'Holo Rare',   type:'water',    lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:580,  qty:1, psa:2100                       },
-  { id:'e10', name:'Mew ex Alt Art',       set:'SV151',            year:2023, number:'205', rarity:'Alt Art',     type:'psychic',  lang:'JP', condition:'Raw', graded:false, buyPrice:0, curPrice:140,  qty:1                                 },
-  { id:'e11', name:'Gardevoir ex SAR',     set:'Scarlet & Violet', year:2023, number:'245', rarity:'Secret Rare', type:'psychic',  lang:'FR', condition:'Raw', graded:false, buyPrice:0, curPrice:95,   qty:1                                 },
-  { id:'e12', name:'Miraidon ex SAR',      set:'Scarlet & Violet', year:2023, number:'254', rarity:'Secret Rare', type:'electric', lang:'FR', condition:'Raw', graded:false, buyPrice:0, curPrice:72,   qty:1                                 },
-  { id:'e13', name:'Sylveon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'212', rarity:'Alt Art',     type:'psychic',  lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:290,  qty:1                                 },
-  { id:'e14', name:'Glaceon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'209', rarity:'Alt Art',     type:'water',    lang:'EN', condition:'Raw', graded:false, buyPrice:0, curPrice:180,  qty:1                                 },
+  { id:'e1',  name:'Charizard Alt Art',    set:'SV151',            year:2023, number:'006', rarity:'Alt Art',     type:'fire',     lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:920,  qty:1, psa:312,  signal:'S', hot:true  },
+  { id:'e2',  name:'Umbreon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'215', rarity:'Alt Art',     type:'dark',     lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:880,  qty:1,            signal:'A'           },
+  { id:'e3',  name:'Charizard VMAX',       set:'Champion Path',    year:2020, number:'074', rarity:'Secret Rare', type:'fire',     lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:420,  qty:1, psa:1240                       },
+  { id:'e4',  name:'Gengar VMAX Alt',      set:'Fusion Strike',    year:2021, number:'271', rarity:'Alt Art',     type:'psychic',  lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:340,  qty:1                                 },
+  { id:'e5',  name:'Pikachu VMAX RR',      set:'Vivid Voltage',    year:2020, number:'188', rarity:'Secret Rare', type:'electric', lang:'JP', condition:'Near Mint', graded:false, buyPrice:0, curPrice:110,  qty:1, psa:4200                       },
+  { id:'e6',  name:'Rayquaza VMAX Alt',    set:'Evolving Skies',   year:2021, number:'218', rarity:'Alt Art',     type:'electric', lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:740,  qty:1,            signal:'A'           },
+  { id:'e7',  name:'Mewtwo V Alt',         set:'Pokemon GO',       year:2022, number:'071', rarity:'Alt Art',     type:'psychic',  lang:'JP', condition:'Near Mint', graded:false, buyPrice:0, curPrice:280,  qty:1,            signal:'B'           },
+  { id:'e8',  name:'Blastoise Base Set',   set:'Base Set',         year:1999, number:'002', rarity:'Holo Rare',   type:'water',    lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:620,  qty:1, psa:890                        },
+  { id:'e9',  name:'Lugia Neo Genesis',    set:'Neo Genesis',      year:2000, number:'009', rarity:'Holo Rare',   type:'water',    lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:580,  qty:1, psa:2100                       },
+  { id:'e10', name:'Mew ex Alt Art',       set:'SV151',            year:2023, number:'205', rarity:'Alt Art',     type:'psychic',  lang:'JP', condition:'Near Mint', graded:false, buyPrice:0, curPrice:140,  qty:1                                 },
+  { id:'e11', name:'Gardevoir ex SAR',     set:'Scarlet & Violet', year:2023, number:'245', rarity:'Secret Rare', type:'psychic',  lang:'FR', condition:'Near Mint', graded:false, buyPrice:0, curPrice:95,   qty:1                                 },
+  { id:'e12', name:'Miraidon ex SAR',      set:'Scarlet & Violet', year:2023, number:'254', rarity:'Secret Rare', type:'electric', lang:'FR', condition:'Near Mint', graded:false, buyPrice:0, curPrice:72,   qty:1                                 },
+  { id:'e13', name:'Sylveon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'212', rarity:'Alt Art',     type:'psychic',  lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:290,  qty:1                                 },
+  { id:'e14', name:'Glaceon VMAX Alt',     set:'Evolving Skies',   year:2021, number:'209', rarity:'Alt Art',     type:'water',    lang:'EN', condition:'Near Mint', graded:false, buyPrice:0, curPrice:180,  qty:1                                 },
 ]
 
 const CARD_SETS_ALL = ['Toutes', ...new Set(ENCYCLOPEDIA.map(c=>c.set))]
@@ -198,7 +198,7 @@ export function Holdings() {
             id: c.id, kCardId: c.k_card_id || undefined, name: c.name, set: c.set_name || '', year: 0,
             number: c.card_number || '', rarity: c.rarity || '', type: c.card_type || 'fire',
             lang: (c.lang || 'FR') as 'EN'|'JP'|'FR',
-            condition: c.condition || 'Raw', graded: c.graded || false,
+            condition: c.condition || 'Near Mint', graded: c.graded || false,
             gradeCompany: c.grade_company || undefined, gradeValue: c.grade_value != null ? String(c.grade_value) : undefined,
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
             serverPriced: Number(c.current_price) > 0, priceBasis: c.price_basis || undefined,
@@ -619,7 +619,7 @@ export function Holdings() {
         name:c.name??'', set:c.set??'', setId:c.setId??'',
         type:typeMap[c.type]??'fire',
         lang:(c.lang==='JP'?'JP':c.lang==='FR'?'FR':'EN') as 'EN'|'JP'|'FR',
-        condition:'Raw', graded:false, buyPrice:'', qty:1,
+        condition:'Near Mint', graded:false, buyPrice:'', qty:1,
         year:c.year??new Date().getFullYear(),
         image:c.image??'', setTotal:c.setTotal??0,
         number:c.number??'', rarity:c.rarity??'', edition:c.edition??'Unlimited', variant:c.variant??'Normal',
@@ -1013,6 +1013,10 @@ export function Holdings() {
       const num = fc.localId||''
       const arr = ownedByNum.get(normNum(num))
       if(arr){
+        // UNE VIGNETTE PAR EXEMPLAIRE (decision Alon 22/07) : le collectionneur
+        // veut voir physiquement ce qu'il a — chaque etat, chaque quantite,
+        // chaque gradee separement. L'agregation par carte a ete essayee puis
+        // RETIREE : elle masquait 5 exemplaires derriere un seul '×28'.
         arr.forEach(owned=>{
           if(!usedIds.has(owned.id)){
             usedIds.add(owned.id)
@@ -1304,7 +1308,7 @@ export function Holdings() {
     // (name/set/carte conserves) -> permet d'enchainer plusieurs exemplaires de la
     // meme carte en etats/grades differents (ex 1 Near Mint + 1 PSA 9).
     setAddedInSession(n=>n+1)
-    setAddForm(p=>({...p, condition:'Raw', graded:false, gradeValue:'', buyPrice:'', qty:1}))
+    setAddForm(p=>({...p, condition:'Near Mint', graded:false, gradeValue:'', buyPrice:'', qty:1}))
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
@@ -2491,7 +2495,7 @@ export function Holdings() {
                     name:c.name,set:binderSet||'',year:new Date().getFullYear(),
                     number:c.localId||'',rarity:c.rarity||'',
                     type:'fire',lang:sc[0]?.lang||'FR',
-                    condition:'Raw',graded:false,
+                    condition:'Near Mint',graded:false,
                     buyPrice:0,curPrice:0,qty:1,
                     image:c.image||undefined,
                     setId:sc[0]?.setId||'',setTotal:fullSetCards.length,
@@ -2670,11 +2674,26 @@ export function Holdings() {
                             const normN = (x:any) => String(x ?? '').trim().replace(/^0+/, '') || '0'
                             const ownedMap = new Map<string,CardItem>()
                             const countMap = new Map<string,number>()
-                            setCards.forEach(c => { const k=normN(c.number); if(!ownedMap.has(k)) ownedMap.set(k, c); countMap.set(k, (countMap.get(k)||0)+(c.qty||1)) })
+                            // Vue COMPLETION : une case = un numero du set, la vignette porte la
+                            // VALEUR DE LIGNE (somme prix x qte) et le nombre d'exemplaires non
+                            // cotes. Le representant est le mieux cote (avant : le premier
+                            // rencontre -> un PSA 10 sans cote masquait 20 NM a 175,99 EUR).
+                            const lineVal = new Map<string,number>()
+                            const uncoted = new Map<string,number>()
+                            setCards.forEach(c => {
+                              const k = normN(c.number)
+                              const q = Number(c.qty)||1
+                              const px = Number(c.curPrice)||0
+                              const prev = ownedMap.get(k)
+                              if(!prev || px > (Number(prev.curPrice)||0)) ownedMap.set(k, c)
+                              countMap.set(k, (countMap.get(k)||0)+q)
+                              lineVal.set(k, (lineVal.get(k)||0) + px*q)
+                              uncoted.set(k, (uncoted.get(k)||0) + (px>0?0:q))
+                            })
                             return shelfGhosts.map(fc => {
                               const k = normN(fc.localId||'')
                               const owned = ownedMap.get(k)
-                              if(owned) return { type:'owned' as const, count: countMap.get(k)||1, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '' } }
+                              if(owned) return { type:'owned' as const, count: countMap.get(k)||1, card:{ ...owned, image: cleanImageUrl(fc.image) || cleanImageUrl(owned.image) || '', __lineValue: lineVal.get(k)||0, __uncoted: uncoted.get(k)||0, __count: countMap.get(k)||1, __mixed: (countMap.get(k)||1) > (Number(owned.qty)||1) } as any }
                               return { type:'ghost' as const, name:fc.name, number:fc.localId||'', image:cleanImageUrl(fc.image)||'', rarity:fc.rarity||'' }
                             })
                           })()
@@ -2882,16 +2901,16 @@ export function Holdings() {
                                   </div>
                                 )}
                                 {inFullSet&&card.qty>1&&<span style={{ position:'absolute', top:'4px', left:'4px', fontSize:'9px', fontWeight:700, padding:'2px 6px', borderRadius:'99px', background:'rgba(0,0,0,.55)', color:'#fff', zIndex:3, fontFamily:'var(--font-data)' }}>{String.fromCharCode(215)}{card.qty}</span>}
-                                {inFullSet&&card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'rgba(0,0,0,.6)';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', boxShadow:'0 1px 4px rgba(0,0,0,.2)', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', overflow:'hidden' }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
-                                {inFullSet&&!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:'rgba(255,255,255,0.9)', color:'#6E6E73', border:'0.5px solid rgba(0,0,0,0.06)', fontSize:'9px', fontWeight:700, padding:'2px 7px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', boxShadow:'0 1px 3px rgba(0,0,0,.12)', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
+                                {inFullSet&&card.graded&&!((card as any).__mixed)&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'rgba(0,0,0,.6)';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'3px 7px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', boxShadow:'0 1px 4px rgba(0,0,0,.2)', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', overflow:'hidden' }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
+                                {inFullSet&&!card.graded&&!((card as any).__mixed)&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ position:'absolute', bottom:'4px', right:'4px', zIndex:3, background:'rgba(255,255,255,0.9)', color:'#6E6E73', border:'0.5px solid rgba(0,0,0,0.06)', fontSize:'9px', fontWeight:700, padding:'2px 7px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', boxShadow:'0 1px 3px rgba(0,0,0,.12)', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                                 <div style={{ padding:'6px 6px 4px', position:'relative' }}>
                                   
                                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   </div>
                                   <div style={{ minHeight:'14px', marginTop:'1px' }}>
-                                    {card.curPrice > 0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                                    {card.curPrice <= 0 && (card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote') && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                                    {(() => { const k:any=card; const lv = k.__lineValue != null ? Number(k.__lineValue) : (Number(card.curPrice)||0); const unc = Number(k.__uncoted||0); const cnt = Number(k.__count||1); return (<>{lv>0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{lv.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}{lv>0 && (cnt>1 || unc>0) && <div style={{ fontSize:'8px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{cnt>1 ? 'Total ' + cnt + ' carte' + (cnt>1?'s':'') : ''}{cnt>1 && unc>0 ? ' \u00b7 ' : ''}{unc>0 ? unc + ' sans cote' : ''}</div>}</>) })()}
+                                    {!(Number((card as any).__lineValue ?? card.curPrice) > 0) && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
@@ -3100,7 +3119,7 @@ export function Holdings() {
                             </div>
                             <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
                               {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                              {card.curPrice<=0&&(card.priceBasis==='insufficient_data'||card.priceBasis==='sans_cote')&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                              {!(Number(card.curPrice) > 0)&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
                             </div>
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
@@ -3597,7 +3616,7 @@ export function Holdings() {
                         name:c.name, set:addSetName, year:new Date().getFullYear(),
                         number:c.localId||'', rarity:c.rarity||'',
                         type:'fire', lang:addSetLang,
-                        condition:'Raw', graded:false,
+                        condition:'Near Mint', graded:false,
                         buyPrice:0, curPrice:0, qty:1,
                         image:c.image||undefined,
                         setId:addSetId, setTotal:addSetCards.length,

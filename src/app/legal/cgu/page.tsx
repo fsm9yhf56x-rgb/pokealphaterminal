@@ -9,7 +9,7 @@ export default function Page() {
       <h2>Préambule</h2>
       <p>Les présentes Conditions Générales d’Utilisation, ci-après les « CGU », encadrent l’accès et l’utilisation du site internet accessible à l’adresse <a href="https://kodocards.com" target="_blank" rel="noopener noreferrer">https://kodocards.com</a> ainsi que des services proposés par KodoCards.</p>
       <p>Elles sont conclues entre :</p>
-      <p>KodoCards, société par actions simplifiée en cours d’immatriculation au Registre du commerce et des sociétés de Marseille, au capital social de 200,00 euros, dont le siège social est situé 110 Cours Lieutaud, 13006 Marseille, représentée par son Président, Monsieur Alon GUEZ, et joignable à l’adresse <a href="mailto:contact@kodocards.com">contact@kodocards.com</a>,</p>
+      <p>KodoCards, société par actions simplifiée immatriculée au Registre du commerce et des sociétés de Marseille sous le numéro 107 543 795, au capital social de 200,00 euros, dont le siège social est situé 110 Cours Lieutaud, 13006 Marseille, représentée par son Président, Monsieur Alon GUEZ, et joignable à l’adresse <a href="mailto:contact@kodocards.com">contact@kodocards.com</a>,</p>
       <p>ci-après « KodoCards » ou « l’Éditeur »,</p>
       <p>et toute personne accédant au Site ou utilisant les services KodoCards, ci-après « l’Utilisateur ».</p>
       <h2>ARTICLE 1 : Acceptation des CGU</h2>
@@ -125,7 +125,7 @@ export default function Page() {
       <p>L’accès à ces sites tiers s’effectue sous la seule responsabilité de l’Utilisateur.</p>
       <h2>ARTICLE 11 : Données personnelles</h2>
       <p>Dans le cadre de l’utilisation du Site et des services, KodoCards peut traiter des données personnelles relatives aux Utilisateurs.</p>
-      <p>Le responsable du traitement est KodoCards SAS, société par actions simplifiée en cours d’immatriculation.</p>
+      <p>Le responsable du traitement est KodoCards SAS, société par actions simplifiée immatriculée au RCS de Marseille sous le numéro 107 543 795.</p>
       <p>Les traitements de données personnelles sont décrits dans la Politique de confidentialité accessible sur le Site.</p>
       <p>Cette politique précise notamment les catégories de données collectées, les finalités des traitements, les bases légales, les destinataires, les durées de conservation, les droits des personnes concernées et les modalités d’exercice de ces droits.</p>
       <p>L’Utilisateur peut exercer ses droits dans les conditions prévues par la réglementation applicable en contactant KodoCards à l’adresse suivante : <a href="mailto:contact@kodocards.com">contact@kodocards.com</a>.</p>

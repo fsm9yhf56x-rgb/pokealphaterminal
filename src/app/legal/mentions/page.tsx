@@ -8,9 +8,9 @@ export default function Page() {
     <PublicDoc title="Mentions légales" updated="13/07/2026">
       <h2>I.   Édition du site</h2>
       <p>Conformément à l’article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l’économie numérique (LCEN), il est précisé aux utilisateurs du site <a href="https://kodocards.com/" target="_blank" rel="noopener noreferrer">https://kodocards.com/</a> l’identité des intervenants dans le cadre de sa réalisation et de son suivi.</p>
-      <p>Propriétaire du site : KodoCards, société par actions simplifiée en cours d’immatriculation.</p>
+      <p>Propriétaire du site : KodoCards, société par actions simplifiée au capital de 200,00 euros, immatriculée au RCS de Marseille sous le numéro 107 543 795.</p>
       <p>Siège social : 110 Cours Lieutaud, 13006, Marseille.</p>
-      <p>Identifiant : Société en cours d’immatriculation au Registre du commerce et des sociétés de Marseille.</p>
+      <p>Identifiant : SIREN 107 543 795 — RCS Marseille.</p>
       <p>Capital social : 200,00 €.</p>
       <p>Contact : <a href="mailto:contact@kodocards.com">contact@kodocards.com</a></p>
       <h2>II. Identité du directeur de la publication :</h2>

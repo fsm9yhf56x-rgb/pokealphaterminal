@@ -8,7 +8,7 @@ export default function Page() {
     <PublicDoc title="Conditions générales de vente" updated="13/07/2026">
       <h2>PRÉAMBULE</h2>
       <p>Les présentes Conditions Générales de Vente, ci-après les « CGV », sont conclues entre :</p>
-      <p>La société KodoCards, société par actions simplifiée en cours d’immatriculation au Registre du commerce et des sociétés de Marseille, au capital social de 200,00 euros, dont le siège social est situé 110 Cours Lieutaud, 13006 Marseille, représentée par son Président, Monsieur Alon GUEZ, et joignable à l’adresse <a href="mailto:contact@kodocards.com">contact@kodocards.com</a>, ci-après « KodoCards » ou « l’Éditeur ».</p>
+      <p>La société KodoCards, société par actions simplifiée immatriculée au Registre du commerce et des sociétés de Marseille sous le numéro 107 543 795, au capital social de 200,00 euros, dont le siège social est situé 110 Cours Lieutaud, 13006 Marseille, représentée par son Président, Monsieur Alon GUEZ, et joignable à l’adresse <a href="mailto:contact@kodocards.com">contact@kodocards.com</a>, ci-après « KodoCards » ou « l’Éditeur ».</p>
       <p>Et :</p>
       <p>Toute personne physique majeure, agissant à des fins personnelles et non professionnelles, ayant souscrit à un abonnement payant aux services KodoCards depuis le site kodocards.com, ci-après le « Client ».</p>
       <h2>ARTICLE 1 : OBJET ET OPPOSABILITÉ</h2>
@@ -120,7 +120,7 @@ export default function Page() {
       <p>Aucune clause des présentes CGV ne peut avoir pour effet de limiter ou supprimer les droits légaux du Client consommateur.</p>
       <h2>ARTICLE 13 : DONNÉES PERSONNELLES</h2>
       <p>Dans le cadre de la souscription et de l’utilisation des services KodoCards, KodoCards traite des données personnelles relatives au Client.</p>
-      <p>Le responsable du traitement est KodoCards, société par actions simplifiée en cours d’immatriculation, représentée par son Président. Les traitements de données personnelles sont décrits dans la Politique de confidentialité accessible sur le Site.</p>
+      <p>Le responsable du traitement est KodoCards, société par actions simplifiée immatriculée au RCS de Marseille sous le numéro 107 543 795, représentée par son Président. Les traitements de données personnelles sont décrits dans la Politique de confidentialité accessible sur le Site.</p>
       <p>Cette politique précise notamment les catégories de données collectées, les finalités des traitements, les bases légales, les destinataires, les durées de conservation, les droits des personnes concernées et les modalités d’exercice de ces droits.</p>
       <p>Le Client peut exercer ses droits dans les conditions prévues par la réglementation applicable en contactant KodoCards à l’adresse suivante : <a href="mailto:contact@kodocards.com">contact@kodocards.com</a></p>
       <h2>ARTICLE 14 : MÉDIATION ET LITIGES</h2>

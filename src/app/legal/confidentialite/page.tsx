@@ -8,7 +8,7 @@ export default function Page() {
     <PublicDoc title="Politique de confidentialité" updated="13/07/2026">
       <p>La présente politique de confidentialité définit et vous informe sur les modalités selon lesquelles KodoCards traite vos données conformément au Règlement (UE) 2016/679 du 27 avril 2016 relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel et à la libre circulation de ces données (ci-après le « RGPD »).</p>
       <h2>1. Responsable du traitement des données</h2>
-      <p>Le responsable de traitement est KodoCards, SAS, en cours d’immatriculation au RCS de Marseille, dont le siège social est situé au 110 Cours Lieutaud, 13006 Marseille.</p>
+      <p>Le responsable de traitement est KodoCards, SAS, immatriculée au RCS de Marseille sous le numéro 107 543 795, dont le siège social est situé au 110 Cours Lieutaud, 13006 Marseille.</p>
       <h2>2. Données collectées</h2>
       <p>Une donnée à caractère personnel est une donnée qui permet d’identifier un individu directement ou indirectement à partir d’une donnée ou d’un croisement de données.</p>
       <ul>

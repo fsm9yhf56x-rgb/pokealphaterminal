@@ -66,7 +66,7 @@ async function wishlistPriceAlerts() {
         INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
         VALUES (${r.user_id}, 'wishlist_price', ${'Prix atteint : ' + r.card_name},
                 ${r.card_name + ' est à ' + eur(cur) + ' — ta cible était ' + eur(target) + '.'},
-                ${JSON.stringify({ wid: r.wid, card_name: r.card_name, current_price: cur, target_price: target, url: '/portfolio' })}::jsonb,
+                ${JSON.stringify({ wid: r.wid, card_name: r.card_name, current_price: cur, target_price: target, url: '/portfolio/objectifs' })}::jsonb,
                 ${dedup})
         ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
         RETURNING id`
@@ -123,7 +123,7 @@ async function goalProgress() {
         INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
         VALUES (${t.user_id}, 'goal_reached', 'Objectif atteint',
                 ${'Bravo, tu as atteint ton objectif : ' + label + '.'},
-                ${JSON.stringify({ targetId: t.id, metric: t.metric, target, current: cur, url: '/portfolio' })}::jsonb,
+                ${JSON.stringify({ targetId: t.id, metric: t.metric, target, current: cur, url: '/portfolio/objectifs' })}::jsonb,
                 ${dReached})
         ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
         RETURNING id`
@@ -134,7 +134,7 @@ async function goalProgress() {
         INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
         VALUES (${t.user_id}, 'goal_almost', 'Objectif presque atteint',
                 ${'Tu y es presque : ' + Math.round(pct) + '% de ton objectif « ' + label + ' ».'},
-                ${JSON.stringify({ targetId: t.id, metric: t.metric, target, current: cur, pct: Math.round(pct), url: '/portfolio' })}::jsonb,
+                ${JSON.stringify({ targetId: t.id, metric: t.metric, target, current: cur, pct: Math.round(pct), url: '/portfolio/objectifs' })}::jsonb,
                 ${dAlmost})
         ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
         RETURNING id`

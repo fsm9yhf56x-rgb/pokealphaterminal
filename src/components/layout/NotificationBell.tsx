@@ -23,8 +23,10 @@ const TYPE_ICON: Record<string, { icon: string; tint: string }> = {
   wishlist_price: { icon: '▾', tint: '#1D9E75' },
   goal_reached: { icon: '★', tint: '#E03020' },
   goal_almost: { icon: '◍', tint: '#C9A84C' },
-  referral_reward: { icon: '🎁', tint: '#6E56CF' },
-  test: { icon: '🔔', tint: '#86868B' },
+  referral_reward: { icon: '◈', tint: '#6E56CF' },
+  set_release: { icon: '▸', tint: '#2A82DD' },
+  beta_ending: { icon: '○', tint: '#E03020' },
+  test: { icon: '●', tint: '#86868B' },
 }
 
 export default function NotificationBell() {
@@ -231,7 +233,7 @@ export default function NotificationBell() {
                 <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: 13, color: SNOW.mutedLight }}>Chargement…</div>
               ) : items.length === 0 ? (
                 <div style={{ padding: '38px 18px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 30, marginBottom: 8, opacity: 0.45 }}>🔔</div>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10, display: 'block', marginInline: 'auto' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   <div style={{ fontSize: 13, color: SNOW.mutedLight }}>Aucune notification pour l’instant.</div>
                 </div>
               ) : (

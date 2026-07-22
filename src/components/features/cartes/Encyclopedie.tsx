@@ -4,6 +4,8 @@ import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { CardImg } from '@/components/ui/CardImg'
 import AuthModal from '@/components/layout/AuthModal'
 import { CollectionGate } from './CollectionGate'
+import { SetSelect } from './SetSelect'
+import { PillSelect } from './PillSelect'
 import { SetPicker } from './SetPicker'
 import { useCardPrices } from '@/components/features/prices/hooks/useCardPrices'
 import { SNOW } from '@/lib/design/colors'
@@ -470,6 +472,7 @@ export function Encyclopedie() {
   }
 
   const [setLogos, setSetLogos] = useState<Record<string,string>>({})
+  const [setDates, setSetDates] = useState<Record<string,string>>({})
   const [jpEnDict, setJpEnDict] = useState<Record<string,string>>({})
   const [setBlocks, setSetBlocks] = useState<Record<string,string>>({})
 
@@ -483,15 +486,18 @@ export function Encyclopedie() {
     const loadLogos = async () => {
       try {
         const res = await fetch(`/data/sets-${lang}.json`)
-        const sets: {id:string;logo:string|null;serie:string|null}[] = await res.json()
+        const sets: {id:string;logo:string|null;serie:string|null;releaseDate?:string|null}[] = await res.json()
         const logos: Record<string,string> = {}
         const blocks: Record<string,string> = {}
+        const dates: Record<string,string> = {}
         sets.forEach(s => {
           if (s.logo) logos[s.id] = s.logo
           if (s.serie) blocks[s.id] = s.serie
+          if (s.releaseDate) dates[s.id] = s.releaseDate
         })
         setSetLogos(logos)
         setSetBlocks(blocks)
+        setSetDates(dates)
       } catch {}
     }
     loadLogos()
@@ -734,7 +740,13 @@ export function Encyclopedie() {
       if (!map.has(c.setId)) map.set(c.setId,{id:c.setId,name:c.setName,count:0})
       map.get(c.setId)!.count++
     })
-    return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))
+    return [...map.values()].sort((x,y)=>{
+      const dx = setDates[x.id] || '', dy = setDates[y.id] || ''
+      if (dx && dy && dx !== dy) return dx.localeCompare(dy)
+      if (dx && !dy) return -1
+      if (!dx && dy) return 1
+      return x.name.localeCompare(y.name)
+    })
   }, [allCards, filEra])
 
   useEffect(() => { setFilSet('all'); setPage(0) }, [filEra])
@@ -1151,8 +1163,7 @@ export function Encyclopedie() {
           .klang-label { display: none !important; }
           .lang-btn { padding: 8px 12px !important; }
           /* Set : remplacer le carousel scrollable par le bouton SetPicker */
-          .kset-pick-btn { display: flex !important; }
-          .kset-carousel-wrap { display: none !important; }
+          /* (bascule retiree : le bouton est desormais visible partout) */
           /* Vue Par blocs : grille pleine largeur + retirer les puces de séries tronquées */
           .kbloc-grid { grid-template-columns: 1fr !important; }
           .kbloc-chips { display: none !important; }
@@ -1285,39 +1296,10 @@ export function Encyclopedie() {
             const curSetName = filSet==='all' ? 'Toutes les séries' : (allCards.find(c=>c.setId===filSet)?.setName || filSet)
             return (<>
             {/* Bouton mobile : ouvre le SetPicker plein écran */}
-            <button className="kset-pick-btn" onClick={()=>setSetPickerOpen(true)}
-              style={{ display:'none', width:'100%', alignItems:'center', justifyContent:'space-between', height:'44px', padding:'0 14px', marginBottom:'12px', borderRadius:'10px', border:'1px solid rgba(0,0,0,0.06)', background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', color:'#1D1D1F', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
-              <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, color:filSet==='all'?'#888':'#1D1D1F' }}>{curSetName}</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink:0, opacity:0.5 }}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-            <div className="kset-carousel-wrap" style={{ marginBottom:'12px', position:'relative' }}>
-              <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:-200,behavior:'smooth'})}}
-                style={{ position:'absolute', left:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'rgba(255,255,255,0.75)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.6)', boxShadow:'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#48484A' }}>‹</button>
-              <button onClick={()=>{const el=document.querySelector('.set-carousel') as HTMLElement;if(el)el.scrollBy({left:200,behavior:'smooth'})}}
-                style={{ position:'absolute', right:'-4px', top:'50%', transform:'translateY(-50%)', width:'28px', height:'28px', borderRadius:'50%', background:'rgba(255,255,255,0.75)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'0.5px solid rgba(255,255,255,0.6)', boxShadow:'0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3, fontSize:'12px', color:'#48484A' }}>›</button>
-              <div className="set-carousel" style={{ display:'flex', gap:'6px', overflowX:'auto' as const, paddingBottom:'4px', padding:'0 20px', scrollbarWidth:'none' as any }}>
-                {(lang==='JP'
-                  ? ['sv2a-pokemon-card-151','m2a-high-class-pack-mega-dream-ex','sv11w-white-flare','sv11b-black-bolt','sv10-the-glory-of-team-rocket','sv9-battle-partners','sv8a-terastal-fest-ex','sv8-super-electric-breaker','sv7-stellar-miracle','sv6-transformation-mask','sv5a-crimson-haze','sv4a-shiny-treasure-ex','m2-inferno-x','m1l-mega-brave','sv-p-promotional-cards']
-                  : lang==='FR'
-                  ? ['sv03.5','base1','base1-1st','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
-                  : ['sv03.5','base1','base1-shadowless','base1-shadowless-ns','base2','base2-1st','base3','base3-1st','base5','base5-1st','gym1','gym1-1st','gym2','gym2-1st','neo1','neo1-1st','neo2','neo2-1st','neo3','neo3-1st','neo4','neo4-1st','swsh12.5','sv04','sv01','cel25','sv08','sm12','swsh8','sv06']
-                ).filter(sid=>allCards.some(c=>c.setId===sid)).map(sid=>{
-                  const nm = allCards.find(c=>c.setId===sid)?.setName||sid
-                  const ct = allCards.filter(c=>c.setId===sid).length
-                  return (
-                    <button key={sid} onClick={()=>{setFilSet(sid);setFilEra('all');setPage(0)}}
-                      style={{ flexShrink:0, padding:'6px 13px', borderRadius:'99px', border:'1px solid rgba(0,0,0,0.05)', background:'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', color:'#48484A', fontSize:'11px', fontWeight:500, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)', whiteSpace:'nowrap' as const, display:'flex', alignItems:'center', gap:'4px', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.7)' }}
-                      onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.85)';e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.5)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.7)'}}>
-                      {setLogos[sid]&&<img src={setLogos[sid]} alt="" style={{ height:'14px', maxWidth:'50px', objectFit:'contain' }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                      {nm} <span style={{ opacity:.5 }}>{(()=>{ const ow=allCards.filter(c=>c.setId===sid&&isOwned(c)).length; return ow>0?<><span style={{ color:'#2E9E6A', fontWeight:700 }}>{ow}</span>/{ct}</>:ct })()}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            
             <SetPicker
               open={setPickerOpen}
+              logos={setLogos}
               sets={sets.map(x=>({ id:x.id, name:x.name, count:(x as any).count }))}
               current={filSet}
               lang={lang}
@@ -1399,48 +1381,34 @@ export function Encyclopedie() {
 
           {/* Filters */}
           <div className={`kfilters-row${filtersOpen?' open':''}`} style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
-            <select className="fsel" value={filEra} style={{ background:filEra!=='all'?'#FFF5F0':'', borderColor:filEra!=='all'?'#FFD0C0':'', color:filEra!=='all'?'#C84B00':'#AAA' }} onChange={e=>{ const v=e.target.value; setFilEra(v); setFilSet('all'); setPage(0); if(browseMode==='bloc') setSelBloc(v==='all'?null:v) }}>
-              <option value="all">Tous les blocs</option>
-              {eras.map(e=><option key={e} value={e}>{e}</option>)}
-            </select>
+            <PillSelect
+              options={eras}
+              value={filEra}
+              onChange={(v)=>{ setFilEra(v); setPage(0) }}
+              allLabel="Tous les blocs"
+              minWidth={170}
+            />
 
-            <select className="fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} disabled={loading}
-              style={{ maxWidth:'220px', color:filSet==='all'?'#AAA':'#111' }}>
-              <option value="all">Toutes les séries{sets.length>0?` (${sets.length})`:''}</option>
-              {(() => {
-                // Groupement par BLOC FR (meme source de verite que la vue "Par blocs").
-                // On utilise l'era deja calculee sur chaque carte (via series) -> 0 systeme parallele.
-                // setEra: map setId -> libelle de bloc, derive de allCards (qui porte c.era).
-                const setEra = new Map<string,string>()
-                allCards.forEach(c => { if (!setEra.has(c.setId)) setEra.set(c.setId, c.era) })
-                const byBloc = new Map<string, typeof sets>()
-                for (const st of sets) {
-                  const bloc = setEra.get(st.id) || 'Autre'
-                  if (!byBloc.has(bloc)) byBloc.set(bloc, [])
-                  byBloc.get(bloc)!.push(st)
-                }
-                const orderedBlocs = [...byBloc.keys()].sort((a,b)=>{
-                  const ia = ERA_ORDER.indexOf(a), ib = ERA_ORDER.indexOf(b)
-                  return (ia<0?999:ia) - (ib<0?999:ib)
-                })
-                return orderedBlocs.map(bloc => (
-                  <optgroup key={bloc} label={bloc}>
-                    {byBloc.get(bloc)!.map(orig => {
-                      const displayName = lang === 'JP'
-                        ? formatJPSetName({ id: orig.id, name: orig.name, lang: 'JP' as any } as any, sets.map(s=>({id:s.id,name:s.name,lang:'JP' as any,total:(s as any).count} as TCGSet)))
-                        : orig.name
-                      return (<option key={orig.id} value={orig.id}>{displayName} ({orig.count})</option>)
-                    })}
-                  </optgroup>
-                ))
-              })()}
-            </select>
+            <SetSelect
+              sets={sets.map(x=>({ id:x.id, name:x.name, count:(x as any).count }))}
+              value={filSet}
+              onChange={(id)=>{ setFilSet(id); setFilEra('all'); setPage(0) }}
+              blocOf={(sid)=>{ const c = allCards.find(cc=>cc.setId===sid); return c?.era || 'Autre' }}
+              blocOrder={ERA_ORDER as any}
+              logos={setLogos}
+              displayName={(st)=> lang === 'JP'
+                ? formatJPSetName({ id: st.id, name: st.name, lang: 'JP' as any } as any, sets.map(x=>({ id:x.id, name:x.name, lang:'JP' as any, total:(x as any).count } as TCGSet)))
+                : st.name}
+              disabled={loading}
+            />
 
-            <select className="fsel" value={filRarity} onChange={e=>{setFilRarity(e.target.value);setPage(0)}}
-              style={{ maxWidth:'180px', color:filRarity==='all'?'#AAA':'#534AB7', background:filRarity!=='all'?'#EEEDFE':'', borderColor:filRarity!=='all'?'#CECBF6':'' }}>
-              <option value="all">Toutes les raretés</option>
-              {rarities.map(r=>(<option key={r} value={r}>{r}</option>))}
-            </select>
+            <PillSelect
+              options={rarities.filter(Boolean) as string[]}
+              value={filRarity}
+              onChange={(v)=>{ setFilRarity(v); setPage(0) }}
+              allLabel="Toutes les raretés"
+              minWidth={180}
+            />
             {(filEra!=='all'||filSet!=='all'||filRarity!=='all'||search) && (
               <button onClick={()=>{ setFilEra('all'); setFilSet('all'); setFilRarity('all'); setSearch(''); setPage(0) }}
                 style={{ height:'34px', padding:'0 12px', borderRadius:'7px', border:'1px solid #EBEBEB', background:'#fff', color:'#888', fontSize:'12px', cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', gap:'4px' }}>

@@ -386,7 +386,6 @@ export function Encyclopedie() {
     mq.addEventListener('change', enforce)
     return () => mq.removeEventListener('change', enforce)
   }, [])
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const [setPickerOpen, setSetPickerOpen] = useState(false)
   const activeFilterCount = [filEra!=='all', filSet!=='all', filRarities.length>0].filter(Boolean).length
   const [gateCard, setGateCard] = useState<{name:string;lang:string;setId:string;localId:string;image?:string}|null>(null)
@@ -1161,21 +1160,50 @@ export function Encyclopedie() {
           .kcard-grid[data-size="L"] { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 12px !important; }
           /* Vue tableau désactivée en mobile : le toggle grille/liste n'a plus de raison d'être */
           .kview-toggle { display: none !important; }
-          /* Filtres repliables : bouton visible, selects caches par defaut */
-          .kfilters-toggle { display: flex !important; }
+          /* Filtres : Serie pleine largeur, Blocs + Raretes en 50/50 dessous */
+          .kfilters-toggle { display: none !important; }
           .kfilters-row {
-            max-height: 0; overflow: hidden; padding-top: 0 !important; padding-bottom: 0 !important;
-            margin-bottom: 0 !important; border: none !important; box-shadow: none !important;
-            opacity: 0; transition: max-height .3s ease, opacity .25s ease, padding .3s ease;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            align-items: stretch !important;
             position: static !important;
+            padding: 0 !important;
+            margin: 0 0 14px !important;
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
           }
-          .kfilters-row.open {
-            max-height: 320px; opacity: 1;
-            padding: 14px 12px !important; margin-bottom: 18px !important;
-            border: 1px solid rgba(0,0,0,0.04) !important;
+          /* le wrapper ET le bouton doivent s etirer (flexShrink inline sur le wrapper) */
+          .kfilters-row > * {
+            min-width: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            flex: none !important;
           }
-          /* Selects pleine largeur dans le panneau ouvert */
-          .kfilters-row .fsel { width: 100% !important; max-width: none !important; flex: none !important; }
+          .kfilters-row .fsel {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            justify-content: space-between !important;
+          }
+          /* 1 = Blocs, 2 = Series, 3 = Raretes */
+          .kfilters-row > *:nth-child(2) { grid-column: 1 / -1 !important; order: 1 !important; }
+          .kfilters-row > *:nth-child(1) { order: 2 !important; }
+          .kfilters-row > *:nth-child(3) { order: 3 !important; }
+          /* Effacer : pleine largeur sous les filtres */
+          .kfilters-row > button { grid-column: 1 / -1 !important; order: 4 !important; justify-content: center !important; }
+          /* compteur du panneau : doublon de « X / Y cartes affichees » juste dessous */
+          .kfilters-row > span { display: none !important; }
+          /* Raretes : colonne de droite -> panneau ancre a droite, sinon il sort de l ecran */
+          .kfilters-row > *:nth-child(3) .kps-panel { left: auto !important; right: 0 !important; }
+          .kfilters-row > *:nth-child(3) .kps-tip { left: auto !important; right: 28px !important; }
+          /* panneaux de filtre : 1 colonne, borne au viewport (39 raretes debordaient) */
+          .kfilters-row .kps-panel { max-width: calc(100vw - 28px) !important; }
+          .kfilters-row .kps-grid { grid-template-columns: 1fr !important; }
+          .kfilters-row > *:nth-child(3) .kps-panel { width: calc(100vw - 28px) !important; }
           /* Langue compacte : drapeaux seuls (3 langues = pas besoin de texte) */
           .klang-label { display: none !important; }
           .lang-btn { padding: 8px 12px !important; }
@@ -1386,18 +1414,8 @@ export function Encyclopedie() {
             )}
           </div>
 
-          {/* Bouton Filtres — mobile uniquement */}
-          <button className="kfilters-toggle" onClick={()=>setFiltersOpen(o=>!o)}
-            style={{ display:'none', width:'100%', alignItems:'center', justifyContent:'space-between', height:'42px', padding:'0 14px', marginBottom:'12px', borderRadius:'10px', border:'1px solid rgba(0,0,0,0.06)', background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', color:'#1D1D1F', fontSize:'14px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)' }}>
-            <span style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-              <span>Filtres</span>
-              {activeFilterCount>0 && <span style={{ fontSize:'11px', fontWeight:700, color:'#fff', background:'#E03020', borderRadius:'999px', minWidth:'18px', height:'18px', display:'inline-flex', alignItems:'center', justifyContent:'center', padding:'0 5px' }}>{activeFilterCount}</span>}
-            </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform:filtersOpen?'rotate(180deg)':'none', transition:'transform .2s', opacity:0.5 }}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-
           {/* Filters */}
-          <div className={`kfilters-row${filtersOpen?' open':''}`} style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+          <div className="kfilters-row" style={{ display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center', position:'sticky' as const, top:0, zIndex:30, background:'rgba(255,255,255,0.7)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', padding:'14px 12px', margin:'0 -12px 18px', borderRadius:'12px', border:'1px solid rgba(0,0,0,0.04)', boxShadow:'0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
             <PillSelect
               options={eras}
               value={filEra}

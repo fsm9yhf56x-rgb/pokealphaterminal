@@ -22,7 +22,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       ROUND(
         CASE
           WHEN base.lang IN ('en','jp') THEN COALESCE(us_nm.p * ${usdEur}, eu.trend)
-          ELSE COALESCE(ed_ebay.p, fr_sale.p)
+          ELSE COALESCE(ebay_state.p, ed_ebay.p, fr_sale.p * 0.88)
         END::numeric, 2) AS fair_value_eur,
       CASE
         WHEN base.lang IN ('en','jp') THEN
@@ -30,11 +30,12 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
                WHEN eu.trend IS NOT NULL THEN 'cardmarket_trend'
                ELSE 'insufficient_data' END
         ELSE
-          CASE WHEN ed_ebay.p IS NOT NULL THEN 'ebay_fr_edition'
+          CASE WHEN ebay_state.p IS NOT NULL THEN 'ebay_fr_state'
+               WHEN ed_ebay.p IS NOT NULL THEN 'ebay_fr_edition'
                WHEN fr_sale.p IS NOT NULL THEN 'fr_sale'
                ELSE 'insufficient_data' END
       END,
-      COALESCE(ed_ebay.p, fr_sale.p) AS cote_fr_eur,
+      COALESCE(ebay_state.p, ed_ebay.p, fr_sale.p * 0.88) AS cote_fr_eur,
       eu_langs.j AS cote_lang,
       CASE WHEN tot.sales > 0 THEN LEAST(100, ROUND(LOG(tot.sales + 1) * 28))::real ELSE NULL END AS liquidity_score,
       CASE WHEN eu.trend IS NOT NULL AND us_nm.p IS NOT NULL AND eu.trend > 0
@@ -88,6 +89,20 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       WHERE print_id = base.print_id AND source='cardmarket_unsold' AND tier='NEAR_MINT'
         AND split_part(kodo_card_id,'-',1) = base.lang
         AND spot * (CASE WHEN currency='USD' THEN ${usdEur}::numeric ELSE 1::numeric END) <= 20000 LIMIT 1) eu_nm_ask ON true
+    -- Niveau 2 : carte avec une VRAIE distribution d'annonces FR par etat
+    -- (>=8 annonces eBay FR). Sa ligne EXCELLENT fait foi comme cote : elle est
+    -- construite sur les etats declares par les vendeurs, la ou ed_ebay n'est
+    -- qu'une mediane globale decotee. Sans ca les deux chiffres sortaient des
+    -- MEMES annonces par deux calculs differents (Pyroli : titre 57,20 vs
+    -- EXCELLENT 65,00) -> incomprehensible sur la fiche.
+    LEFT JOIN LATERAL (
+      SELECT pm.spot AS p
+      FROM price_matrix pm
+      WHERE pm.print_id = base.print_id AND pm.source='kodo_state' AND pm.tier='EXCELLENT'
+        AND split_part(pm.kodo_card_id,'-',1) = base.lang
+        AND (SELECT count(*) FROM ebay_fr_ed1_raw r
+             WHERE r.kodo_card_id = pm.kodo_card_id AND r.price > 0) >= 8
+      LIMIT 1) ebay_state ON true
     -- Cote FR = ventes FR reelles (country_breakdown.FR.language.FR.avg), PAS l'AGGREGATED global
     LEFT JOIN LATERAL (
       SELECT (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric AS p
@@ -96,6 +111,10 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
         AND split_part(kodo_card_id,'-',1) = base.lang
         AND country_breakdown->'FR'->'language'->'FR'->>'avg' IS NOT NULL
         AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric > 0
+        -- n>=3 : cardmarket_unsold = des ANNONCES. Une seule annonce n'est pas un
+        -- marche (Nosferalto Team Rocket cotait 40 500 EUR sur 1 annonce quand ses
+        -- asks NM reels sont a 2 332). Meme seuil que G2 gradee et eBay Ed1.
+        AND COALESCE((country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int, 0) >= 3
       ORDER BY (country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int DESC NULLS LAST
       LIMIT 1) fr_sale ON true
     -- Repartition par pays (depuis country_breakdown, cette langue)

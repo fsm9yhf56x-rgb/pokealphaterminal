@@ -101,14 +101,20 @@ for (const c of distribCards) {
 
 // ── NIVEAU 1 : cartes FR avec un prix d'ancrage mais PAS de distribution ──
 // Ancre = AGGREGATED (cardmarket) ou ed1_raw/unl_raw (ebay_fr). L'ancre ≈ état EXCELLENT.
+// ANCRE = LE PRIX FR HEADLINE LUI-MEME (price_signals.cote_fr_eur), pas le
+// trend Cardmarket. Avant : l'ancre etait AGGREGATED = toutes langues melangees
+// -> le tableau d'etats servait de l'allemand sous une fiche FR (l'inverse du
+// Lot 2), et le headline ne correspondait a AUCUNE ligne (Pyroli : titre 57,20
+// vs EXCELLENT 65,00 = deux marches differents, incomprehensible pour l'user).
+// cote_fr_eur porte deja la regle FR complete (eBay FR, sinon annonces FR/FR
+// n>=3 x0,88) -> la regle vit a UN endroit, et comme DECAY.EXCELLENT = 1.00,
+// la ligne EXCELLENT vaut EXACTEMENT le prix affiche en tete. Par construction.
+// Pas de cote FR = pas de tableau d'etats (coherent : on n'invente pas).
 const anchorCards = await sql`
-  SELECT DISTINCT pm.kodo_card_id, pm.print_id, pm.spot AS anchor
-  FROM price_matrix pm
-  WHERE pm.kodo_card_id LIKE 'fr-%' AND pm.market='EU' AND pm.spot > 0
-    AND (
-      (pm.source='cardmarket' AND pm.tier='AGGREGATED')
-      OR (pm.source='ebay_fr' AND pm.variant IN ('ed1_raw','unl_raw'))
-    )`;
+  SELECT kc.id AS kodo_card_id, ps.print_id, ps.cote_fr_eur AS anchor
+  FROM price_signals ps
+  JOIN k_cards kc ON kc.print_id = ps.print_id AND kc.lang = 'fr'
+  WHERE ps.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL AND ps.cote_fr_eur > 0`;
 
 let n1=0, n1states=0;
 for (const c of anchorCards) {

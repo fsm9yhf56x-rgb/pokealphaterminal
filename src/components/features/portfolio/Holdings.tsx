@@ -304,7 +304,7 @@ export function Holdings() {
   const [addForm,     setAddForm]     = useState<{
     name:string; set:string; setId:string; type:string; lang:'EN'|'JP'|'FR';
     condition:string; graded:boolean; gradeCompany?:string; gradeValue?:string; buyPrice:string; qty:number; year:number; image:string; setTotal:number; number:string; rarity:string; edition:string; variant:string;
-  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Raw',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
+  }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Near Mint',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
@@ -1190,7 +1190,10 @@ export function Holdings() {
         gradeCompany: m ? m[1].toUpperCase() : p.gradeCompany,
         gradeValue: m ? m[2] : p.gradeValue}))
     } else if (cond === 'Raw' || cond === 'Scelle') {
-      setAddForm(p=>({...p, condition:cond, graded:false, gradeValue:''}))
+      // 'Raw' = statut (non gradee), PAS un etat. Par defaut on ecrit Near Mint,
+      // sinon la carte partait en base avec condition='Raw' -> badge RAW alors
+      // que l'UI montrait Near Mint comme selectionne (mensonge d'affichage).
+      setAddForm(p=>({...p, condition: cond === 'Raw' ? 'Near Mint' : cond, graded:false, gradeValue:''}))
     } else {
       // Grade choisi explicitement (ex "PSA 10", "CCC 9.5") -> splitte company + note.
       const m = cond.match(/^\s*(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA|AOG|GSG|PGS)\s*[_ ]?\s*([0-9]{1,2}(?:\.5)?)/i)
@@ -2946,9 +2949,17 @@ export function Holdings() {
                                 {/* Micro-rectangles */}
                                 <div style={{ position:'absolute', inset:'3px', display:'flex', gap:'1px', borderRadius:'4px', overflow:'hidden' }}>
                                   {Array.from({ length: bars }).map((_, i) => {
-                                    const idx = total <= 150 ? i : Math.round((i / bars) * total)
-                                    const ghostNum = ghostNums[idx] || String(idx + 1)
-                                    const isOwned = ownedNumbers.has(normMM(ghostNum)) || ownedNumbers.has(normMM(idx + 1))
+                                    // Chaque barre couvre un INTERVALLE de cartes, pas un point.
+                                    // Avant : un seul numero echantillonne (Math.round) -> sur un set
+                                    // de 230 cartes pour 150 barres, ~1 carte sur 3 ne pouvait JAMAIS
+                                    // allumer de repere (Draieul #161 invisible malgre l'ajout reussi).
+                                    const from = Math.floor((i / bars) * total)
+                                    const to = Math.max(from, Math.ceil(((i + 1) / bars) * total) - 1)
+                                    let isOwned = false
+                                    for (let n = from; n <= to && !isOwned; n++) {
+                                      const g = ghostNums[n]
+                                      if ((g && ownedNumbers.has(normMM(g))) || ownedNumbers.has(normMM(n + 1))) isOwned = true
+                                    }
                                     return (
                                       <div key={i} style={{ flex:1, minWidth:'2px', borderRadius:'1.5px', background:isOwned ? '#E03020' : '#E5E5EA', opacity:isOwned ? 0.9 : 0.5 }} />
                                     )

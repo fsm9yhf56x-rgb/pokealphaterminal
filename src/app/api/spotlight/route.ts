@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
       WHERE pm.kodo_card_id = ${cardId} AND pm.spot IS NOT NULL AND pm.spot > 0
     ` as Array<any>
     const RAW_TIERS: Record<string, string> = {
-      NEAR_MINT: 'NEAR_MINT', LIGHTLY_PLAYED: 'LIGHTLY_PLAYED', MODERATELY_PLAYED: 'MODERATELY_PLAYED',
+      NEAR_MINT: 'NEAR_MINT', EXCELLENT: 'EXCELLENT', LIGHTLY_PLAYED: 'LIGHTLY_PLAYED', MODERATELY_PLAYED: 'MODERATELY_PLAYED',
       HEAVILY_PLAYED: 'HEAVILY_PLAYED', DAMAGED: 'DAMAGED', MINT: 'MINT', AGGREGATED: 'CARDMARKET_TREND',
     }
     const toEur = (v: any, cur: string) => v == null ? null : (cur === 'USD' ? Math.round(Number(v) * USD_EUR * 100) / 100 : Number(v))
@@ -499,7 +499,11 @@ export async function GET(req: NextRequest) {
     //    MINT ignore (ambigu), dedup par tier (saleCount max), garde-fou outlier.
     //    Le composant <PriceByCondition> affiche ces donnees labellees "annonces FR"
     //    si non vide, sinon placeholder. Se remplit tout seul quand la densite arrive.
-    const FR_RAW_TIERS = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
+    // EXCELLENT etait absent de cette liste (recopie sans lui quand MINT a ete
+    // retire) -> le cran manquait dans le tableau alors que le moteur le calcule,
+    // et c'est justement lui qui porte le prix de marche headline (Nostenfer Ed1 :
+    // 175,99 EXCELLENT affiche en tete, invisible dans le tableau = fiche inexplicable).
+    const FR_RAW_TIERS = ['NEAR_MINT', 'EXCELLENT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
     const FR_MIN_ASKING = 3
     const frByCondition: Record<string, { price: number; saleCount: number; isAsking: boolean }> = {}
     const coteRef = (kodo?.coteFrEur ?? kodo?.fairValueEur ?? marketEst ?? null)

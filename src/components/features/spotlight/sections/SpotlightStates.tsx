@@ -7,6 +7,7 @@ import { SNOW, FONT, fmtPrice } from '../snowTokens'
 
 const COND_LABEL: Record<string, string> = {
   NEAR_MINT: 'Near Mint',
+  EXCELLENT: 'Excellent',
   LIGHTLY_PLAYED: 'Lightly Played',
   MODERATELY_PLAYED: 'Moderately Played',
   HEAVILY_PLAYED: 'Heavily Played',
@@ -14,12 +15,13 @@ const COND_LABEL: Record<string, string> = {
 }
 const COND_SUB: Record<string, string> = {
   NEAR_MINT: 'comme neuf',
+  EXCELLENT: 'quasi parfait',
   LIGHTLY_PLAYED: 'légers défauts',
   MODERATELY_PLAYED: 'défauts visibles',
   HEAVILY_PLAYED: 'usure marquée',
   DAMAGED: 'abîmée',
 }
-const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', LIGHTLY_PLAYED: 'LP', MODERATELY_PLAYED: 'MP', HEAVILY_PLAYED: 'HP', DAMAGED: 'DMG' }
+const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', EXCELLENT: 'EX', LIGHTLY_PLAYED: 'LP', MODERATELY_PLAYED: 'MP', HEAVILY_PLAYED: 'HP', DAMAGED: 'DMG' }
 const SRC_LABEL: Record<string, string> = { ebay: 'eBay', tcgplayer: 'TCGplayer', cardmarket: 'Cardmarket' }
 
 function gradeFromVariant(v: string): { tier: string; n: string; lab: string } | null {
@@ -80,7 +82,7 @@ export function SpotlightStates({ prices, kodo, lang }: Props & { lang?: string 
   const topGraded = sortedGraded[0]
   const topG = topGraded ? gradeFromVariant((topGraded as any).variant) : null
 
-  const otherRawConds = ['LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const
+  const otherRawConds = ['EXCELLENT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED'] as const
   const otherRaw: RawBest[] = otherRawConds.filter(c => bestRaw[c]).map(c => bestRaw[c])
   const otherGraded = sortedGraded.slice(1)
   const hasMore = otherRaw.length + otherGraded.length > 0

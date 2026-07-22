@@ -13,6 +13,7 @@ const LANG: Record<string, string> = { EN: 'Anglais', FR: 'Français', JP: 'Japo
 
 const COND_LABEL: Record<string, string> = {
   NEAR_MINT: 'Near Mint',
+  EXCELLENT: 'Excellent',
   LIGHTLY_PLAYED: 'Lightly Played',
   MODERATELY_PLAYED: 'Moderately Played',
   HEAVILY_PLAYED: 'Heavily Played',

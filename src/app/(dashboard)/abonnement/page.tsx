@@ -282,7 +282,7 @@ export default function AbonnementPage() {
                   whiteSpace: 'nowrap' as const,
                 }}
               >
-                Rejoins notre Discord et accède à la bêta gratuitement →
+                Rejoins le Discord et gagne un accès Premium →
               </a>
             </div>
           </div>

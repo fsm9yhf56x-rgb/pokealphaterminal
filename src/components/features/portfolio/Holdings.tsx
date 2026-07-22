@@ -2451,7 +2451,7 @@ export function Holdings() {
           </div>
           </div>
           <div style={{ display:'flex', gap:'6px', alignItems:'center', marginTop:14 }}>
-            {([['binder','Binder'],['showcase','Vitrine'],['wrapped',`Wrapped ${new Date().getFullYear()}`]] as Array<[ViewMode,string]>).map(([v,l])=>(
+            {([['binder','Classeur'],['showcase','Vitrine'],['wrapped',`Wrapped ${new Date().getFullYear()}`]] as Array<[ViewMode,string]>).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={'vtab'+(view===v?' on':'')}>{l}</button>
             ))}
           </div>

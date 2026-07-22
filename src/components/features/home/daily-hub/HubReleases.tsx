@@ -5,9 +5,28 @@ import { useRouter } from 'next/navigation'
 import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
 
 type Lang = 'FR' | 'EN' | 'JP'
-type SetItem = { name: string; lang: Lang; releaseDate: string; releaseDateLocale: string; imageUrl: string | null; isReleased: boolean; pptId: string }
+type SetItem = { name: string; lang: Lang; langs?: Lang[] | null; releaseDate: string; releaseDateLocale: string; imageUrl: string | null; isReleased: boolean; pptId: string }
 
 const LANG_COLOR: Record<Lang, string> = { FR: '#2A82DD', EN: '#E03020', JP: '#D4AF37' }
+const FLAG: Record<Lang, string> = { FR: '\u{1F1EB}\u{1F1F7}', EN: '\u{1F1FA}\u{1F1F8}', JP: '\u{1F1EF}\u{1F1F5}' }
+// Les sets A VENIR arrivent deja fusionnes par l'API (champ langs).
+// Les sets SORTIS non : Pitch Black (EN) et Nuit Noire (FR) = meme sortie,
+// deux lignes. On fusionne ici sur (date + langue differente) et on garde le
+// nom de la 1re occurrence, avec les drapeaux de toutes les langues.
+function mergeByDate(list: SetItem[]): SetItem[] {
+  const out: SetItem[] = []
+  for (const s of list) {
+    const hit = out.find(o => o.releaseDate === s.releaseDate && o.name !== s.name)
+    if (hit) {
+      const cur = hit.langs && hit.langs.length ? hit.langs : [hit.lang]
+      const add = s.langs && s.langs.length ? s.langs : [s.lang]
+      hit.langs = [...new Set([...cur, ...add])] as Lang[]
+    } else {
+      out.push({ ...s, langs: s.langs && s.langs.length ? s.langs : [s.lang] })
+    }
+  }
+  return out
+}
 
 /**
  * HubReleases - "L'actu des sorties". Consomme /api/releases (fusion TCGdex + PPT).
@@ -26,8 +45,8 @@ export function HubReleases() {
       .then((d) => {
         if (!alive) return
         const sets: SetItem[] = d.sets || []
-        setUpcoming(sets.filter(s => !s.isReleased).slice(0, 2))
-        setRecent(sets.filter(s => s.isReleased).slice(0, 3))
+        setUpcoming(mergeByDate(sets.filter(s => !s.isReleased)).slice(0, 2))
+        setRecent(mergeByDate(sets.filter(s => s.isReleased)).slice(0, 3))
         setLoading(false)
       })
       .catch(() => { if (alive) setLoading(false) })
@@ -81,7 +100,7 @@ function ReleaseRow({ set }: { set: SetItem }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <span style={{ fontFamily: FONT.display, fontSize: 14, fontWeight: 700, color: SNOW.ink, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{set.name}</span>
-          <span style={{ flexShrink: 0, padding: '1px 6px', borderRadius: RADIUS.pill, background: lc + '1A', border: `1px solid ${lc}44`, color: lc, fontSize: 9, fontWeight: 700, fontFamily: FONT.display, letterSpacing: '0.04em' }}>{set.lang}</span>
+          <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, lineHeight: 1, letterSpacing: '0.02em' }} title={(set.langs && set.langs.length ? set.langs : [set.lang]).join(' \u00b7 ')}>{(set.langs && set.langs.length ? set.langs : [set.lang]).map(l => <span key={l}>{FLAG[l]}</span>)}</span>
         </div>
         <div style={{ fontFamily: FONT.body, fontSize: 12, color: SNOW.muted, marginTop: 2 }}>{set.releaseDateLocale}</div>
       </div>

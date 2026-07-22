@@ -74,13 +74,17 @@ export function TopNav() {
         }
 
         .knav-link {
-          font-size: 14.5px;
+          /* CAPITALES : le letter-spacing NEGATIF des minuscules tasse les
+             majuscules -> passe en positif (.09em). Taille reduite car une
+             capitale pese plus lourd a taille egale. Padding elargi = de l'air. */
+          font-size: 12px;
           font-weight: 600;
-          color: #5A5A5E;
+          text-transform: uppercase;
+          color: #6E6E73;
           text-decoration: none;
-          padding: 9px 18px;
+          padding: 10px 22px;
           font-family: var(--font-sora, 'Sora', sans-serif);
-          letter-spacing: -0.018em;
+          letter-spacing: 0.09em;
           transition: color .22s ease;
           display: inline-flex;
           align-items: center;
@@ -94,7 +98,7 @@ export function TopNav() {
           flex-shrink: 0;
         }
         .knav-link:hover { color: #1D1D1F; }
-        .knav-link.act { color: #1D1D1F; font-weight: 700; }
+        .knav-link.act { color: #1D1D1F; font-weight: 700; letter-spacing: 0.085em; }
 
         .knav-pro {
           font-size: 8.5px;
@@ -172,7 +176,7 @@ export function TopNav() {
         {/* Logo — wordmark typographique */}
         <Link href="/home" className="knav-logo" style={{
           display: 'flex', alignItems: 'center',
-          textDecoration: 'none', marginRight: 28, flexShrink: 0,
+          textDecoration: 'none', marginRight: 56, flexShrink: 0,
           padding: '6px 10px',
           borderRadius: 12,
           transition: 'background .2s',

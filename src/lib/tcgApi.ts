@@ -1,7 +1,7 @@
 const BASE = 'https://api.tcgdex.net/v2'
 const TTL  = 24 * 60 * 60 * 1000
 
-export interface TCGSet     { id:string; name:string; lang:string; total?:number; releaseDate?:string }
+export interface TCGSet     { id:string; name:string; lang:string; total?:number; releaseDate?:string; logo?:string|null; serie?:string|null }
 export interface TCGCard    { id:string; name:string; localId:string; image?:string; rarity?:string }
 export interface TCGCardFull {
   id:string; localId:string; name:string; image?:string
@@ -28,8 +28,16 @@ function setCache(key:string, data:unknown) {
 }
 
 export async function fetchSets(lang:Lang): Promise<TCGSet[]> {
-  const l=LC[lang], key=`tcg_sets_${l}`
+  const l=LC[lang], key=`tcg_sets_v2_${l}`
   const hit=getCache<TCGSet[]>(key); if (hit) return hit
+  try {
+    const r=await fetch(`/data/sets-${lang}.json`)
+    if (r.ok) {
+      const j:Array<{id:string;name:string;logo?:string|null;serie?:string|null;releaseDate?:string|null;total?:number}>=await r.json()
+      const sets:TCGSet[]=j.map(s=>({id:s.id,name:s.name,lang,total:s.total,releaseDate:s.releaseDate??undefined,logo:s.logo??null,serie:s.serie??null}))
+      if (sets.length) { setCache(key,sets); return sets }
+    }
+  } catch {}
   const res=await fetch(`${BASE}/${l}/sets`)
   if (!res.ok) throw new Error(`fetchSets ${lang} failed`)
   const raw:Array<{id:string;name:string;cardCount?:{total?:number};releaseDate?:string}>=await res.json()

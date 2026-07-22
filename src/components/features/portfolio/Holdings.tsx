@@ -761,45 +761,43 @@ export function Holdings() {
     }
     doImgBackfill()
   }, [portfolio.length])
-
-  // -- Fetch set logos via TCGDex API --
+  // -- Logos de set : lus dans NOS JSON statiques (k_sets.logo_url), plus
+  // aucun appel TCGdex depuis le navigateur. Les variantes Ed1/Shadowless
+  // heritent du logo parent DEJA en base (neo4-1st porte le logo de neo4).
   useEffect(() => {
-    const sets = [...new Set(portfolio.map(c => c.set))]
-    sets.forEach(async setName => {
-      if (setLogos[setName]) return
-      const sc = portfolio.filter(c => c.set === setName)
-      const sid = sc.find(c => c.setId)?.setId || liveSets.find(ls => ls.name === setName)?.id || liveSets.find(ls => ls.name.toLowerCase() === String(setName ?? '').toLowerCase())?.id || ''
-      if (!sid) return
-      // For edition sets, use parent set logo
-      const parentSid = sid.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
-      const lang = sc[0]?.lang === 'JP' ? 'ja' : sc[0]?.lang === 'EN' ? 'en' : 'fr'
-      // TCGdex ne connait pas les ids JP du catalogue PPT (jp-*, ou slugs type
-      // bw1-white-collection / xy5-bg-gaia-volcano) -> 404 sur le logo. On skip :
-      // logo de set = cosmetique, aucun impact fonctionnel.
-      if (lang === 'ja' || parentSid.startsWith('jp-')) return
-      try {
-        // Check if parent logo already cached
-        if (parentSid !== sid) {
-          const parentCacheKey = 'pka_logo_' + parentSid
-          const parentCached = localStorage.getItem(parentCacheKey)
-          if (parentCached) { setSetLogos(prev => ({ ...prev, [setName]: parentCached })); return }
-        }
-        const cacheKey = 'pka_logo_' + parentSid
-        const cached = localStorage.getItem(cacheKey)
-        if (cached) { setSetLogos(prev => ({ ...prev, [setName]: cached })); const cb=localStorage.getItem('pka_block_'+sid); if(cb){ setSetBlocks(prev=>({...prev,[setName]:cb})); return } }
-        const res = await fetch('https://api.tcgdex.net/v2/' + lang + '/sets/' + parentSid)
-        if (!res.ok) return
-        const data = await res.json()
-        const logo = data.logo || data.symbol || ''
-        if (logo) {
-          const logoWithExt = logo + '.png'
-          localStorage.setItem(cacheKey, logoWithExt)
-          setSetLogos(prev => ({ ...prev, [setName]: logoWithExt }))
-          if (data.serie && data.serie.name) { setSetBlocks(prev => ({ ...prev, [setName]: data.serie.name })); localStorage.setItem('pka_block_'+sid, data.serie.name) }
-        }
-      } catch {}
-    })
-  }, [portfolio.length, liveSets.length])
+    if (!portfolio.length) return
+    let dead = false
+    ;(async () => {
+      // liveSets n'est peuple qu'a l'ouverture du formulaire d'ajout -> on lit
+      // NOS index directement (une fois par langue, caches par le navigateur).
+      const langs = [...new Set(portfolio.map(c => (c.lang === 'EN' ? 'EN' : c.lang === 'JP' ? 'JP' : 'FR')))]
+      const idx: Record<string, { id:string; name:string; logo?:string|null; serie?:string|null }> = {}
+      const byName: Record<string, { id:string; name:string; logo?:string|null; serie?:string|null }> = {}
+      for (const L of langs) {
+        try {
+          const r = await fetch('/data/sets-' + L + '.json')
+          if (!r.ok) continue
+          const j = await r.json()
+          for (const st of j) { idx[st.id] = st; byName[st.name] = st }
+        } catch {}
+      }
+      if (dead) return
+      const logos: Record<string,string> = {}
+      const blocks: Record<string,string> = {}
+      for (const setName of [...new Set(portfolio.map(c => c.set))]) {
+        const sc = portfolio.filter(c => c.set === setName)
+        const sid = String(sc.find(c => c.setId)?.setId || '')
+        const bare = sid.replace(/^(fr-|en-|jp-)/, '')
+        const parent = bare.replace(/-1st$|-shadowless$|-shadowless-ns$/, '')
+        const hit = idx[bare] || idx[parent] || byName[String(setName)]
+        if (hit?.logo) logos[setName] = hit.logo
+        if (hit?.serie) blocks[setName] = hit.serie
+      }
+      if (Object.keys(logos).length) setSetLogos(prev => ({ ...logos, ...prev }))
+      if (Object.keys(blocks).length) setSetBlocks(prev => ({ ...blocks, ...prev }))
+    })()
+    return () => { dead = true }
+  }, [portfolio.length])
 
   // -- Fetch shelf ghost cards pour chaque set visible --
   useEffect(() => {

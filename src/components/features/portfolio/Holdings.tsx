@@ -2437,10 +2437,26 @@ export function Holdings() {
                 </div>
               )}
               {!show.pnl&&bestByValue&&(
-                <div style={{ background:'rgba(255,248,229,0.7)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(212,175,55,0.25)', borderRadius:10, padding:'8px 14px', maxWidth:220 }}>
-                  <div style={{ fontSize:10, color:'#8A6500', textTransform:'uppercase' as const, letterSpacing:'.08em', fontFamily:'var(--font-display)', marginBottom:4, fontWeight:600 }}>Pièce maîtresse</div>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bestByValue.name}</div>
-                  <div style={{ fontSize:10, color:'#6E6E73' }}>{bestByValue.set}</div>
+                <div className="kc-masterpiece" onClick={()=>{ setSpotCard(bestByValue); setEditQty(null) }} style={{ position:'relative', overflow:'hidden', background:'linear-gradient(135deg, rgba(255,255,255,0.92), rgba(253,247,236,0.86))', backdropFilter:'blur(22px) saturate(190%)', WebkitBackdropFilter:'blur(22px) saturate(190%)', border:'1px solid rgba(176,138,58,0.30)', boxShadow:'0 6px 20px rgba(120,90,20,0.13), 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)', borderRadius:14, padding:'12px 18px 12px 12px', maxWidth:330, display:'flex', alignItems:'center', gap:14, cursor:'pointer', transition:'transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease' }}
+                  onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 30px rgba(120,90,20,0.16), inset 0 1px 0 rgba(255,255,255,0.9)' }}
+                  onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 6px 20px rgba(120,90,20,0.13), 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)' }}>
+                  {/* La carte elle-meme : un collectionneur veut VOIR sa piece,
+                      pas lire son nom. Halo dore diffus derriere = elle rayonne
+                      au lieu d'etre posee. Retenue Snow+ : de la lumiere, pas de dorure. */}
+                  <div aria-hidden style={{ position:'absolute', left:-30, bottom:-40, width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(212,175,55,0.30), rgba(212,175,55,0) 70%)', pointerEvents:'none' }} />
+                  {cleanImageUrl(bestByValue.image) && (
+                    <div style={{ position:'relative', flexShrink:0, width:88 }}>
+                      <div aria-hidden style={{ position:'absolute', inset:-16, borderRadius:'50%', background:'radial-gradient(circle, rgba(196,150,60,0.28), rgba(196,150,60,0) 72%)', filter:'blur(10px)', pointerEvents:'none' }} />
+                      <img src={cleanImageUrl(bestByValue.image)} alt={bestByValue.name} loading="lazy"
+                        style={{ position:'relative', width:88, aspectRatio:'63/88', objectFit:'cover', borderRadius:7, display:'block', boxShadow:'0 8px 20px rgba(90,70,30,0.22), 0 2px 5px rgba(0,0,0,0.12)' }}
+                        onError={e=>{ const t=e.target as HTMLImageElement; t.style.display='none' }} />
+                    </div>
+                  )}
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:9.5, color:'#8F6B22', textTransform:'uppercase' as const, letterSpacing:'.12em', fontFamily:'var(--font-display)', marginBottom:5, fontWeight:700 }}>Pièce maîtresse</div>
+                    <div style={{ fontSize:15, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bestByValue.name}</div>
+                    <div style={{ fontSize:10, color:'#6E6E73', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bestByValue.set}</div>
+                  </div>
                 </div>
               )}
               <GlassButton onClick={()=>{ setShareCtx('portfolio'); setShareCard(null); setShareOpen(true) }}

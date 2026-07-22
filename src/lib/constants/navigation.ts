@@ -39,7 +39,7 @@ export const NAV: NavItem[] = [
     label: 'Portfolio',
     href:  '/portfolio',
     children: [
-      { label:'Mes cartes',   href:'/portfolio'             },
+      { label:'Ma collection', href:'/portfolio'            },
       { label:'Performance',  href:'/portfolio/performance', collectorHide: true },
       { label:'Allocations',  href:'/portfolio/allocation'  },
       { label:'Objectifs',    href:'/portfolio/objectifs'   },

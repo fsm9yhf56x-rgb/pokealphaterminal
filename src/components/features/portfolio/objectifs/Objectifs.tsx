@@ -312,7 +312,7 @@ function SummaryKPIs({ agg }: { agg: ObjAggregates }) {
     {
       label: 'Wishlist',
       value: agg.enrichedWishlist.length.toString(),
-      sub: agg.wishlistAlerts > 0 ? `${agg.wishlistAlerts} prix atteint${agg.wishlistAlerts > 1 ? 's' : ''} ▲` : 'Cartes à acquérir',
+      sub: agg.wishlistAlerts > 0 ? `${agg.wishlistAlerts} prix atteint${agg.wishlistAlerts > 1 ? 's' : ''} ▾` : 'Cartes à acquérir',
       color: agg.wishlistAlerts > 0 ? 'var(--perf-up)' : 'var(--ink)',
     },
   ]

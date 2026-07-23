@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { ObjAggregates, EnrichedWish } from './Objectifs'
 import { SnowButton } from '@/components/ui/snow'
 import { usePersona } from '@/lib/usePersona'
+import { usePlan } from '@/lib/usePlan'
 import { getCardImageUrl } from '@/lib/images'
 
 /**
@@ -20,6 +21,7 @@ export function ObjWishlist({
   onUpdate: (id: string, patch: { target_price?: number | null; priority?: 1 | 2 | 3; acquired?: boolean }) => void
 }) {
   const { isCollector } = usePersona()
+  const { isFree } = usePlan()
   const wishlist = agg.enrichedWishlist
 
   if (wishlist.length === 0) {
@@ -65,6 +67,27 @@ export function ObjWishlist({
     <div>
       <SectionTitle>
         {isCollector ? 'Cartes manquantes' : 'Wishlist'} · {wishlist.length} carte{wishlist.length > 1 ? 's' : ''}
+        {isFree && (
+          <span style={{
+            marginLeft: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 11px',
+            background: wishlist.length >= 3 ? '#E03020' : 'rgba(224,48,32,0.08)',
+            color: wishlist.length >= 3 ? '#FFFFFF' : '#E03020',
+            fontSize: 10,
+            fontWeight: 700,
+            fontFamily: 'var(--font-sora, Sora, sans-serif)',
+            borderRadius: 99,
+            textTransform: 'none' as const,
+            letterSpacing: 0,
+            border: '1px solid ' + (wishlist.length >= 3 ? '#E03020' : 'rgba(224,48,32,0.22)'),
+            boxShadow: wishlist.length >= 3 ? '0 2px 8px rgba(224,48,32,0.28)' : 'none',
+          }}>
+            {wishlist.length}/3 · Gratuit
+          </span>
+        )}
         {!isCollector && agg.wishlistAlerts > 0 && (
           <span style={{
             marginLeft: 8,
@@ -77,9 +100,19 @@ export function ObjWishlist({
             textTransform: 'none' as const,
             letterSpacing: 0,
             border: '1px solid rgba(29,158,117,0.2)',
-          }}>▲ {agg.wishlistAlerts} alerte{agg.wishlistAlerts > 1 ? 's' : ''}</span>
+          }}>▾ {agg.wishlistAlerts} alerte{agg.wishlistAlerts > 1 ? 's' : ''}</span>
         )}
       </SectionTitle>
+      {isFree && wishlist.length >= 3 && (
+        <div style={{
+          margin: '-4px 0 12px',
+          fontSize: 12.5,
+          color: '#86868B',
+          fontFamily: 'var(--font-sora, Sora, sans-serif)',
+        }}>
+          Limite du plan Gratuit atteinte. <a href="/abonnement" style={{ color: '#E03020', fontWeight: 700, textDecoration: 'none' }}>Passer Pro pour une wishlist illimitée →</a>
+        </div>
+      )}
 
       <div style={{
         background: 'rgba(255,255,255,0.65)',
@@ -184,7 +217,8 @@ function WishRow({
   const commitPrice = () => {
     setEditPrice(false)
     const t = priceVal.trim()
-    const parsed = t === '' ? null : parseFloat(t)
+    // saisie FR : la virgule est le separateur decimal usuel
+    const parsed = t === '' ? null : parseFloat(String(t).replace(',', '.'))
     const newVal = parsed != null && !isNaN(parsed) && parsed >= 0 ? parsed : null
     if (newVal !== (wish.target_price ?? null)) onUpdate(wish.id, { target_price: newVal })
   }
@@ -333,13 +367,19 @@ function WishRow({
                 letterSpacing: '0.06em',
                 borderRadius: 99,
                 boxShadow: '0 2px 6px rgba(29,158,117,0.3)',
-              }}>▲ Achat</span>
+              }}>▾ Achat</span>
             ) : (
               <span style={{
                 fontSize: 10.5,
                 color: '#AEAEB2',
                 fontFamily: 'var(--font-sora, Sora, sans-serif)',
-              }}>En attente</span>
+              }}>{(() => {
+                const cur = Number(wish.current_price)
+                const tgt = Number(wish.target_price)
+                if (!(cur > 0) || !(tgt > 0)) return '\u2014'
+                const pct = Math.round((1 - tgt / cur) * 100)
+                return pct > 0 ? '\u2212' + pct + ' % \u00e0 atteindre' : '\u2014'
+              })()}</span>
             )}
           </div>
         </>
@@ -457,6 +497,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function formatEUR(v: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency', currency: 'EUR',
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
   }).format(v)
 }

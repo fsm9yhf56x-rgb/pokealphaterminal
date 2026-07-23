@@ -85,7 +85,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
   }, [onClose])
 
   const isTargetValid = mode === 'target'
-    ? targetValue && parseFloat(targetValue) > 0
+    ? targetValue && parseFloat(String(targetValue).replace(',', '.')) > 0
     : true
 
   const isWishValid = mode === 'wish'
@@ -101,7 +101,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
       if (mode === 'target') {
         if (isEdit && editTarget && onUpdateTarget) {
           await onUpdateTarget(editTarget.id, {
-            target_value: parseFloat(targetValue),
+            target_value: parseFloat(String(targetValue).replace(',', '.')),
             label: targetLabel.trim() || null,
             deadline: deadline || null,
           })
@@ -109,7 +109,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
           const meta = METRIC_OPTIONS.find(o => o.value === metric)!
           const created = await onAddTarget({
             metric,
-            target_value: parseFloat(targetValue),
+            target_value: parseFloat(String(targetValue).replace(',', '.')),
             unit: meta.unit || null,
             label: targetLabel.trim() || null,
             deadline: deadline || null,
@@ -126,7 +126,7 @@ export function ObjAddModal({ mode, onClose, onAddTarget, onAddWish, currentValu
           lang: wishLang,
           rarity: wishRarity.trim() || null,
           priority: wishPriority,
-          target_price: wishTargetPrice ? parseFloat(wishTargetPrice) : null,
+          target_price: wishTargetPrice ? parseFloat(String(wishTargetPrice).replace(',', '.')) : null,
           notes: wishNotes.trim() || null,
         })
         // Echec serveur : garder le modal ouvert (jamais de faux succes).
@@ -349,7 +349,7 @@ function TargetForm({
           <div style={{ marginTop: 7, fontSize: 11.5, fontFamily: 'var(--font-sora, Sora, sans-serif)', color: '#6E6E73' }}>
             Actuellement : <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-data, "Space Mono", monospace)' }}>{fmtVal(current)}</strong>
             {(() => {
-              const t = parseFloat(targetValue)
+              const t = parseFloat(String(targetValue).replace(',', '.'))
               if (!targetValue || isNaN(t)) return null
               const gap = t - current
               if (gap <= 0) return <span style={{ marginLeft: 8, color: '#1D9E75', fontWeight: 700 }}>✓ cible atteinte</span>
@@ -438,11 +438,11 @@ function WishForm({
         </div>
       </Field>
 
-      <Field label="Set">
+      <Field label="Série *">
         <AutocompleteInput
           value={wishSet}
           onChange={(v) => { setWishSet(v); setWishSetId(''); setWishName(''); setWishCard(null) }}
-          placeholder="Cherche un set — ex : 151, Prismatique…"
+          placeholder="Cherche une série — ex : 151, Prismatique…"
           fetcher={async (q) => {
             const sets = await getSets(wishLang)
             const nq = norm(q)
@@ -469,11 +469,11 @@ function WishForm({
         />
       </Field>
 
-      <Field label="Nom de la carte *">
+      <Field label="Nom de la carte">
         <AutocompleteInput
           value={wishName}
           onChange={(v) => { setWishName(v); setWishCard(null) }}
-          placeholder={wishSet ? 'Cherche dans le set — ou parcours la liste' : 'Nom de la carte…'}
+          placeholder={wishSet ? 'Cherche dans la série — ou parcours la liste' : 'Nom de la carte…'}
           autoFocus
           fetcher={async (q) => {
             const sets = await getSets(wishLang)
@@ -487,7 +487,7 @@ function WishForm({
           }}
           deps={[wishLang, wishSet, wishSetId]}
           disabled={!wishSet}
-          disabledHint="Choisis d'abord un set"
+          disabledHint="Choisis d'abord une série"
           onPick={(item) => {
             const d = item.data as { card: StaticCard; setId: string } | undefined
             if (d?.card) { setWishCard(d.card); setWishSetId(d.setId); setWishRarity(d.card.r || '') }
@@ -531,7 +531,7 @@ function WishForm({
       </Field>
 
       <Field label="Prix cible (€)">
-        <Input type="number" value={wishTargetPrice} onChange={setWishTargetPrice} placeholder="Ex: 80" />
+        <Input inputMode="decimal" value={wishTargetPrice} onChange={setWishTargetPrice} placeholder="Ex : 12,50" />
         {wishCard && (
           <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, fontFamily: 'var(--font-sora, Sora, sans-serif)' }}>
             {priceLoading ? (
@@ -762,12 +762,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Input({
   type = 'text',
+  inputMode,
   value,
   onChange,
   placeholder,
   autoFocus,
 }: {
   type?: string
+  inputMode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url' | 'none'
   value: string
   onChange: (v: string) => void
   placeholder?: string
@@ -776,6 +778,7 @@ function Input({
   return (
     <input
       type={type}
+      inputMode={inputMode}
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}

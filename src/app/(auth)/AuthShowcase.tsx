@@ -12,7 +12,7 @@
  * + repli en dégradé si l'image R2 manque.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 
 const R2 = process.env.NEXT_PUBLIC_R2_PUBLIC_URL
   || 'https://pub-1aade8805ea544358d85a303c1feef41.r2.dev'
@@ -86,7 +86,59 @@ function Tile({ src, i }: { src: string; i: number }) {
   )
 }
 
+/** Compteur qui monte : la donnee se construit sous les yeux. */
+function CountUp({ to, suffix = '' }: { to: number; suffix?: string }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setN(to); return }
+    const start = performance.now()
+    const dur = 1400
+    let raf = 0
+    const tick = (t: number) => {
+      const p = Math.min((t - start) / dur, 1)
+      // easing out-expo : demarre vite, se pose en douceur
+      const e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p)
+      setN(Math.round(to * e))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [to])
+  return <>{n.toLocaleString('fr-FR')}{suffix}</>
+}
+
 export function AuthShowcase() {
+  const rootRef = useRef<HTMLElement | null>(null)
+
+  // Parallaxe douce : le mur repond au curseur, tres legerement.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let raf = 0
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect()
+        const x = (e.clientX - r.left) / r.width - 0.5
+        const y = (e.clientY - r.top) / r.height - 0.5
+        el.style.setProperty('--px', (x * 16).toFixed(2) + 'px')
+        el.style.setProperty('--py', (y * 12).toFixed(2) + 'px')
+      })
+    }
+    const onLeave = () => {
+      el.style.setProperty('--px', '0px')
+      el.style.setProperty('--py', '0px')
+    }
+    window.addEventListener('mousemove', onMove)
+    el.addEventListener('mouseleave', onLeave)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('mousemove', onMove)
+      el.removeEventListener('mouseleave', onLeave)
+    }
+  }, [])
+
   const columns = useMemo(() => {
     // Melange deterministe (pas de Math.random : evite un ecart SSR/client)
     const deck = [...POOL]
@@ -103,7 +155,7 @@ export function AuthShowcase() {
   }, [])
 
   return (
-    <aside className="as-root" aria-hidden>
+    <aside ref={rootRef} className="as-root" aria-hidden>
       <div className="as-wall">
         {columns.map((col, ci) => (
           <div key={ci} className={`as-col as-col-${ci % 3}`}>
@@ -121,7 +173,7 @@ export function AuthShowcase() {
         <h2 className="as-title">Chaque carte,<br />sa vraie cote.</h2>
         <div className="as-stats">
           <div className="as-stat">
-            <strong>70 000+</strong>
+            <strong><CountUp to={70000} suffix="+" /></strong>
             <span>cartes référencées</span>
           </div>
           <div className="as-stat">
@@ -145,7 +197,10 @@ export function AuthShowcase() {
           border-radius: 22px;
           isolation: isolate;
         }
+        .as-root { --px: 0px; --py: 0px; }
         .as-wall {
+          translate: var(--px) var(--py);
+          transition: translate .5s cubic-bezier(.2,.8,.2,1);
           position: absolute;
           inset: -30% -25%;
           display: flex;

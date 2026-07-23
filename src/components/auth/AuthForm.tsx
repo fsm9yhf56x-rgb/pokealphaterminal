@@ -460,13 +460,38 @@ export default function AuthForm({
   return (
     <>
       <style>{authStyles}</style>
-      <div style={cardStyle}>{formContent}</div>
+      <div style={cardStyle}>
+        <span className="af-card-sheen" aria-hidden />
+        {formContent}
+      </div>
     </>
   )
 }
 
 // ─── CSS animations (inline pour porter avec le composant) ─────────────────
 const authStyles = `
+  /* Balayage de lumiere a l entree : meme grammaire que le panneau
+     de notifications (la lumiere traverse en diagonale une seule fois). */
+  @keyframes authSheen {
+    0%   { opacity: 0; transform: translateX(-120%) skewX(-18deg); }
+    18%  { opacity: .55; }
+    100% { opacity: 0; transform: translateX(220%) skewX(-18deg); }
+  }
+  .af-card-sheen {
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .af-card-sheen::before {
+    content: '';
+    position: absolute; top: -30%; bottom: -30%; left: 0;
+    width: 38%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.85), transparent);
+    animation: authSheen 1.5s cubic-bezier(.25,.6,.3,1) .35s both;
+  }
+  @media (prefers-reduced-motion: reduce) { .af-card-sheen { display: none; } }
   @keyframes authCardEnter {
     0% { opacity: 0; transform: translateY(20px) scale(0.97); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -475,7 +500,13 @@ const authStyles = `
     0%, 100% { box-shadow: 0 0 0 0 rgba(29,29,31,0); }
     50% { box-shadow: 0 0 0 6px rgba(29,29,31,0.06); }
   }
-  .af-input { transition: all .15s cubic-bezier(.2,.8,.2,1); }
+  .af-input {
+    transition: border-color .18s cubic-bezier(.2,.8,.2,1),
+                box-shadow .18s cubic-bezier(.2,.8,.2,1),
+                background .18s ease,
+                transform .18s cubic-bezier(.2,.8,.2,1);
+  }
+  .af-input:focus { transform: translateY(-1px); }
   .af-input:focus {
     border-color: ${SNOW.red} !important;
     background: #fff !important;
@@ -491,7 +522,7 @@ const authStyles = `
     transform: translateY(-2px);
     box-shadow: 0 10px 26px rgba(0,0,0,0.22);
   }
-  .af-btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .af-btn-primary:active:not(:disabled) { transform: translateY(0) scale(.985); }
   .af-btn-pulse { animation: authBtnPulse 2s ease-in-out infinite; }
   .af-btn-google {
     width: 100%; padding: 12px; border-radius: ${RADIUS.md}px;
@@ -519,6 +550,18 @@ const authStyles = `
   }
   .af-eye svg { width: 18px; height: 18px; }
   .af-eye:hover { color: ${SNOW.ink}; background: rgba(0,0,0,0.04); }
+  @keyframes afFieldIn {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: none; }
+  }
+  form > div { animation: afFieldIn .5s cubic-bezier(.2,.9,.25,1) both; }
+  form > div:nth-of-type(1) { animation-delay: .26s; }
+  form > div:nth-of-type(2) { animation-delay: .32s; }
+  form > div:nth-of-type(3) { animation-delay: .38s; }
+  form > button { animation: afFieldIn .5s cubic-bezier(.2,.9,.25,1) both .44s; }
+  @media (prefers-reduced-motion: reduce) {
+    form > div, form > button { animation: none !important; }
+  }
   .af-link { transition: color .1s ease; }
   .af-link:hover { color: ${SNOW.ink} !important; }
 `

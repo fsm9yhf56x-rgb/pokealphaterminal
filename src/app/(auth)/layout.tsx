@@ -20,7 +20,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="ath-left">
         {/* Barre haute : retour seul, la marque descend dans la colonne */}
         <header className="ath-header">
-          <Link href="/" className="ath-back">← Retour</Link>
+          <Link href="/" className="ath-back">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Retour</span>
+          </Link>
         </header>
 
         <div className="ath-brandbar">
@@ -126,19 +132,41 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           z-index: 3;
           pointer-events: none;
         }
-        .ath-back {
+                .ath-back {
+          animation: ath-brand-in .6s cubic-bezier(.2,.9,.25,1) both .3s;
           pointer-events: auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
           font-family: var(--font-dm, system-ui);
-          font-size: 13px; font-weight: 500;
-          color: #6E6E73; text-decoration: none;
-          padding: 8px 14px; border-radius: 999px;
-          background: rgba(255,255,255,0.6);
-          backdrop-filter: blur(12px) saturate(180%);
-          -webkit-backdrop-filter: blur(12px) saturate(180%);
-          border: 1px solid rgba(229,229,234,0.6);
-          transition: transform .18s cubic-bezier(.2,.8,.2,1), background .18s ease;
+          font-size: 13px;
+          font-weight: 600;
+          color: #6E6E73;
+          text-decoration: none;
+          padding: 9px 16px 9px 13px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.72);
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          border: 1px solid rgba(255,255,255,0.9);
+          box-shadow: 0 1px 2px rgba(20,20,40,0.04), 0 6px 18px rgba(20,20,40,0.06);
+          transition: color .2s ease, background .2s ease,
+                      box-shadow .25s cubic-bezier(.2,.8,.2,1),
+                      transform .25s cubic-bezier(.2,.8,.2,1);
           white-space: nowrap;
         }
+        .ath-back svg {
+          width: 15px; height: 15px;
+          transition: transform .25s cubic-bezier(.34,1.4,.4,1);
+        }
+        .ath-back:hover {
+          color: #1D1D1F;
+          background: rgba(255,255,255,0.95);
+          box-shadow: 0 2px 4px rgba(20,20,40,0.05), 0 10px 26px rgba(20,20,40,0.10);
+          transform: translateY(-1px);
+        }
+        .ath-back:hover svg { transform: translateX(-3px); }
+        .ath-back:active { transform: translateY(0) scale(.97); }
         .ath-back:hover {
           transform: translateX(-2px);
           background: rgba(255,255,255,0.9);
@@ -155,8 +183,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         }
         .ath-slot {
           width: 100%;
-          max-width: 500px;
-          animation: ath-in .62s cubic-bezier(.2,.85,.3,1) both;
+          max-width: 460px;
+          animation: ath-in .7s cubic-bezier(.2,.9,.25,1) both .16s;
         }
         @keyframes ath-in {
           from { opacity: 0; transform: translateY(16px) scale(.985); }
@@ -177,7 +205,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           text-decoration: none;
           color: #1D1D1F;
           transition: opacity .18s ease, transform .18s cubic-bezier(.2,.8,.2,1);
-          animation: ath-brand-in .7s cubic-bezier(.2,.85,.3,1) both .06s;
+          animation: ath-brand-in .75s cubic-bezier(.2,.9,.25,1) both .05s;
         }
         .ath-brand:hover { opacity: .78; transform: translateY(-1px); }
         @keyframes ath-brand-in {
@@ -191,13 +219,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         .ath-trust {
           list-style: none;
-          margin: 26px 0 0;
+          margin: 20px 0 0;
           padding: 0;
           display: flex;
           justify-content: center;
           gap: 20px;
           flex-wrap: wrap;
-          animation: ath-brand-in .7s cubic-bezier(.2,.85,.3,1) both .34s;
+          animation: ath-brand-in .7s cubic-bezier(.2,.9,.25,1) both .42s;
         }
         .ath-trust li {
           display: inline-flex;

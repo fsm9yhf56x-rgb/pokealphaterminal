@@ -10,6 +10,7 @@ import { bearer } from 'better-auth/plugins'
 import { Pool } from '@neondatabase/serverless'
 import { sendEmail } from '@/lib/email/resend'
 import ResetPasswordEmail from '@/emails/ResetPasswordEmail'
+import VerifyEmail from '@/emails/VerifyEmail'
 
 let _auth: Auth<BetterAuthOptions> | null = null
 
@@ -45,6 +46,31 @@ function buildAuth(): Auth<BetterAuthOptions> {
   const options: BetterAuthOptions = {
     database: new Pool({ connectionString: process.env.DATABASE_URL }),
 
+    // Verification d adresse NON bloquante : l email part a l inscription,
+    // mais l utilisateur entre dans l app sans avoir clique.
+    // Passer requireEmailVerification a true le jour du Stripe live
+    // (un compte qui paie doit avoir une adresse valide) — penser a
+    // basculer les comptes existants a emailVerified=true avant.
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: 'Confirme ton adresse email Kodo Cards',
+            react: VerifyEmail({
+              userName: user.name ?? undefined,
+              verifyUrl: url,
+            }),
+          })
+        } catch (err) {
+          // On AVALE l erreur volontairement : si Resend echoue, l inscription
+          // doit quand meme aboutir (contrairement a sendResetPassword qui throw).
+          console.error('[Better Auth] sendVerificationEmail failed', { email: user.email, error: err })
+        }
+      },
+    },
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,

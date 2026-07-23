@@ -45,6 +45,7 @@ export default function AuthForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showPw, setShowPw] = useState(false)
 
   // Form "ready to submit" pour glow pulse sur le bouton
   const formReady = useMemo(() => {
@@ -116,11 +117,16 @@ export default function AuthForm({
   // Le layout (auth) porte deja le degrade + blobs. AuthForm ne fait que la card.
 
   const cardStyle: React.CSSProperties = {
-    ...GLASS.card,
     width: '100%',
-    maxWidth: 440,
-    padding: '34px 32px',
-    boxShadow: '0 24px 70px rgba(20,20,40,0.10), 0 2px 8px rgba(20,20,40,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
+    // Assise discrete : le formulaire a besoin d etre tenu, pas encadre.
+    // Fond a peine pose + bordure fine, loin de la carte blanche flottante.
+    padding: '34px 26px 30px',
+    borderRadius: 20,
+    background: 'rgba(255,255,255,0.55)',
+    border: '1px solid rgba(255,255,255,0.75)',
+    boxShadow: '0 1px 2px rgba(20,20,40,0.03), 0 12px 32px rgba(20,20,40,0.05)',
+    backdropFilter: 'blur(16px) saturate(160%)',
+    WebkitBackdropFilter: 'blur(16px) saturate(160%)',
     position: 'relative',
     zIndex: 1,
     animation: 'authCardEnter .45s cubic-bezier(.16,1,.3,1) both',
@@ -179,18 +185,29 @@ export default function AuthForm({
   // ─── Form ────────────────────────────────────────────────────────────────
   const inputStyle = (hasError: boolean): React.CSSProperties => ({
     width: '100%',
-    padding: '13px 15px',
-    borderRadius: RADIUS.md,
-    border: `1.5px solid ${hasError ? SNOW.red : 'rgba(229,229,234,0.9)'}`,
-    fontSize: 14.5,
+    padding: '16px 17px',
+    borderRadius: 13,
+    border: `1.5px solid ${hasError ? SNOW.red : 'rgba(0,0,0,0.07)'}`,
+    fontSize: 15,
+    boxShadow: '0 1px 2px rgba(20,20,40,0.04)',
     color: SNOW.ink,
     fontFamily: FONT.body,
     boxSizing: 'border-box',
-    background: 'rgba(255,255,255,0.82)',
+    background: '#FFFFFF',
     backdropFilter: 'blur(8px)',
     transition: 'all .15s cubic-bezier(.2,.8,.2,1)',
     outline: 'none',
   })
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: SNOW.ink,
+    fontFamily: FONT.display,
+    margin: '0 0 7px 2px',
+    letterSpacing: '-0.1px',
+  }
 
   const fieldErrorStyle: React.CSSProperties = {
     fontSize: 12, color: SNOW.red, margin: '5px 2px 0',
@@ -200,21 +217,22 @@ export default function AuthForm({
   const formContent = (
     <>
       {!isModal && (
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: 30 }}>
           <h1 style={{
             fontSize: 34, fontWeight: 800, color: SNOW.ink,
-            margin: 0, fontFamily: FONT.display, letterSpacing: '-1.1px',
-            lineHeight: 1.08,
+            margin: 0, fontFamily: FONT.display, letterSpacing: '-1.2px',
+            lineHeight: 1.1,
+            whiteSpace: 'nowrap',
           }}>
-            {mode === 'login' ? 'Bon retour' : 'Crée ton compte'}
+            {mode === 'login' ? 'Ta collection t\u2019attend' : 'Commence ta collection'}
           </h1>
           <p style={{
-            fontSize: 14.5, color: SNOW.muted, margin: '9px 0 0',
+            fontSize: 14.5, color: SNOW.muted, margin: '12px 0 0',
             fontFamily: FONT.body, lineHeight: 1.5,
           }}>
             {mode === 'login'
-              ? 'Connecte-toi pour accéder à ta collection.'
-              : 'Rejoins Kodo Cards en quelques secondes.'}
+              ? 'Connecte-toi pour la retrouver.'
+              : 'Quelques secondes, et tu ajoutes ta première carte.'}
           </p>
         </div>
       )}
@@ -250,60 +268,76 @@ export default function AuthForm({
 
       <form onSubmit={handleSubmit} noValidate>
         {mode === 'signup' && (
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 16 }}>
+            <label htmlFor="af-name" style={labelStyle}>Nom ou pseudo</label>
             <input
+              id="af-name"
               className="af-input"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ton nom ou pseudo"
+              placeholder="Comment on t'appelle ?"
               autoComplete="name"
-              aria-label="Nom"
               aria-invalid={!!fieldErrors.name}
               style={inputStyle(!!fieldErrors.name)}
             />
             {fieldErrors.name && <p style={fieldErrorStyle}>{fieldErrors.name}</p>}
           </div>
         )}
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 16 }}>
+          <label htmlFor="af-email" style={labelStyle}>Email</label>
           <input
+            id="af-email"
             className="af-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="toi@exemple.com"
             autoComplete="email"
-            aria-label="Email"
             aria-invalid={!!fieldErrors.email}
             style={inputStyle(!!fieldErrors.email)}
           />
           {fieldErrors.email && <p style={fieldErrorStyle}>{fieldErrors.email}</p>}
         </div>
-        <div style={{ marginBottom: mode === 'login' ? 10 : 16 }}>
-          <input
-            className="af-input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={mode === 'signup' ? 'Mot de passe (8 caractères min)' : 'Mot de passe'}
-            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-            aria-label="Mot de passe"
-            aria-invalid={!!fieldErrors.password}
-            style={inputStyle(!!fieldErrors.password)}
-          />
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <label htmlFor="af-pw" style={labelStyle}>Mot de passe</label>
+            {mode === 'login' && (
+              <Link href="/forgot-password" className="af-link" style={{
+                fontSize: 12, color: SNOW.muted, fontFamily: FONT.body,
+                textDecoration: 'none', fontWeight: 500,
+              }}>
+                Oublié ?
+              </Link>
+            )}
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input
+              id="af-pw"
+              className="af-input"
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={mode === 'signup' ? '8 caractères minimum' : '••••••••'}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              aria-invalid={!!fieldErrors.password}
+              style={{ ...inputStyle(!!fieldErrors.password), paddingRight: 46 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              aria-label={showPw ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              className="af-eye"
+            >
+              {showPw ? (
+                <svg viewBox="0 0 24 24" fill="none"><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.4 5.3A9.6 9.6 0 0112 5c5 0 9 4.5 9 7a11 11 0 01-2.4 3.5M6.3 6.7A11.4 11.4 0 003 12c0 2.5 4 7 9 7 1.2 0 2.3-.3 3.3-.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none"><path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7z" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.8"/></svg>
+              )}
+            </button>
+          </div>
           {fieldErrors.password && <p style={fieldErrorStyle}>{fieldErrors.password}</p>}
         </div>
-
-        {mode === 'login' && (
-          <div style={{ textAlign: 'right', marginBottom: 16 }}>
-            <Link href="/forgot-password" className="af-link" style={{
-              fontSize: 12, color: SNOW.muted, fontFamily: FONT.body,
-              textDecoration: 'none', fontWeight: 500,
-            }}>
-              Mot de passe oublié ?
-            </Link>
-          </div>
-        )}
 
         {mode === 'signup' && (
           <div style={{ marginBottom: 18 }}>
@@ -358,7 +392,7 @@ export default function AuthForm({
           type="submit"
           disabled={loading}
           style={{
-            width: '100%', padding: '15px', borderRadius: RADIUS.md,
+            width: '100%', padding: '17px', borderRadius: 13,
             border: 'none', background: SNOW.ink, color: '#fff',
             fontSize: 14, fontWeight: 700,
             cursor: loading ? 'wait' : 'pointer',
@@ -378,7 +412,7 @@ export default function AuthForm({
       </form>
 
       <p style={{
-        textAlign: 'center', margin: '18px 0 0',
+        textAlign: 'left', margin: '20px 0 0',
         fontSize: 13, color: SNOW.muted, fontFamily: FONT.body,
       }}>
         {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}{' '}
@@ -476,6 +510,15 @@ const authStyles = `
     transform: translateY(-1px);
   }
   .af-btn-google:disabled { opacity: 0.6; cursor: wait; }
+  .af-eye {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 34px; height: 34px; border: none; background: none;
+    color: #AEAEB2; cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 9px; transition: color .15s ease, background .15s ease;
+  }
+  .af-eye svg { width: 18px; height: 18px; }
+  .af-eye:hover { color: ${SNOW.ink}; background: rgba(0,0,0,0.04); }
   .af-link { transition: color .1s ease; }
   .af-link:hover { color: ${SNOW.ink} !important; }
 `

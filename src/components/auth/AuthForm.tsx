@@ -119,7 +119,8 @@ export default function AuthForm({
     ...GLASS.card,
     width: '100%',
     maxWidth: 440,
-    padding: '36px 32px',
+    padding: '34px 32px',
+    boxShadow: '0 24px 70px rgba(20,20,40,0.10), 0 2px 8px rgba(20,20,40,0.04), inset 0 1px 0 rgba(255,255,255,0.9)',
     position: 'relative',
     zIndex: 1,
     animation: 'authCardEnter .45s cubic-bezier(.16,1,.3,1) both',
@@ -178,14 +179,14 @@ export default function AuthForm({
   // ─── Form ────────────────────────────────────────────────────────────────
   const inputStyle = (hasError: boolean): React.CSSProperties => ({
     width: '100%',
-    padding: '13px 14px',
+    padding: '13px 15px',
     borderRadius: RADIUS.md,
-    border: `1.5px solid ${hasError ? SNOW.red : 'rgba(229,229,234,0.8)'}`,
-    fontSize: 14,
+    border: `1.5px solid ${hasError ? SNOW.red : 'rgba(229,229,234,0.9)'}`,
+    fontSize: 14.5,
     color: SNOW.ink,
     fontFamily: FONT.body,
     boxSizing: 'border-box',
-    background: 'rgba(255,255,255,0.65)',
+    background: 'rgba(255,255,255,0.82)',
     backdropFilter: 'blur(8px)',
     transition: 'all .15s cubic-bezier(.2,.8,.2,1)',
     outline: 'none',
@@ -199,35 +200,16 @@ export default function AuthForm({
   const formContent = (
     <>
       {!isModal && (
-        <div style={{ marginBottom: 26 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            marginBottom: 12,
-          }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 10,
-              background: SNOW.ink, display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              animation: 'float 4s ease-in-out infinite',
-            }}>
-              <span style={{ color: '#fff', fontSize: 16, fontWeight: 800, fontFamily: FONT.display }}>K</span>
-            </div>
-            <span style={{
-              fontSize: 11, color: SNOW.muted, textTransform: 'uppercase',
-              letterSpacing: '0.16em', fontWeight: 600, fontFamily: FONT.display,
-            }}>
-              Kodo <span style={{ color: SNOW.red }}>Cards</span>
-            </span>
-          </div>
+        <div style={{ marginBottom: 22 }}>
           <h1 style={{
-            fontSize: 28, fontWeight: 700, color: SNOW.ink,
-            margin: 0, fontFamily: FONT.display, letterSpacing: '-0.6px',
-            lineHeight: 1.2,
+            fontSize: 34, fontWeight: 800, color: SNOW.ink,
+            margin: 0, fontFamily: FONT.display, letterSpacing: '-1.1px',
+            lineHeight: 1.08,
           }}>
             {mode === 'login' ? 'Bon retour' : 'Crée ton compte'}
           </h1>
           <p style={{
-            fontSize: 14, color: SNOW.muted, margin: '8px 0 0',
+            fontSize: 14.5, color: SNOW.muted, margin: '9px 0 0',
             fontFamily: FONT.body, lineHeight: 1.5,
           }}>
             {mode === 'login'
@@ -376,7 +358,7 @@ export default function AuthForm({
           type="submit"
           disabled={loading}
           style={{
-            width: '100%', padding: '14px', borderRadius: RADIUS.md,
+            width: '100%', padding: '15px', borderRadius: RADIUS.md,
             border: 'none', background: SNOW.ink, color: '#fff',
             fontSize: 14, fontWeight: 700,
             cursor: loading ? 'wait' : 'pointer',
@@ -384,14 +366,19 @@ export default function AuthForm({
             letterSpacing: '-0.2px',
           }}
         >
-          {loading
-            ? 'Chargement…'
-            : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+          {loading ? 'Chargement…' : (
+            <span className="af-cta">
+              {mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          )}
         </button>
       </form>
 
       <p style={{
-        textAlign: 'center', margin: '22px 0 0',
+        textAlign: 'center', margin: '18px 0 0',
         fontSize: 13, color: SNOW.muted, fontFamily: FONT.body,
       }}>
         {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}{' '}
@@ -405,9 +392,9 @@ export default function AuthForm({
               setFieldErrors({})
             }}
             style={{
-              background: 'none', border: 'none', color: SNOW.ink,
-              cursor: 'pointer', fontWeight: 600, fontSize: 13,
-              fontFamily: FONT.body, textDecoration: 'underline', padding: 0,
+              background: 'none', border: 'none', color: SNOW.red,
+              cursor: 'pointer', fontWeight: 700, fontSize: 14,
+              fontFamily: FONT.body, textDecoration: 'none', padding: 0,
             }}
           >
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
@@ -415,8 +402,8 @@ export default function AuthForm({
         ) : (
           <Link href={mode === 'login' ? '/signup' : '/login'} className="af-link"
             style={{
-              color: SNOW.ink, fontWeight: 600, fontSize: 13,
-              fontFamily: FONT.body, textDecoration: 'underline',
+              color: SNOW.red, fontWeight: 700, fontSize: 14,
+              fontFamily: FONT.body, textDecoration: 'none',
             }}
           >
             {mode === 'login' ? 'Créer un compte' : 'Se connecter'}
@@ -456,15 +443,19 @@ const authStyles = `
   }
   .af-input { transition: all .15s cubic-bezier(.2,.8,.2,1); }
   .af-input:focus {
-    border-color: ${SNOW.ink} !important;
-    background: rgba(255,255,255,0.95) !important;
-    box-shadow: 0 0 0 3px rgba(29,29,31,0.06) !important;
+    border-color: ${SNOW.red} !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 4px rgba(224,48,32,0.10) !important;
     outline: none;
   }
+  .af-input::placeholder { color: #B4B4B9; }
   .af-btn-primary { transition: all .2s cubic-bezier(.2,.8,.2,1); }
+  .af-cta { display: inline-flex; align-items: center; gap: 8px; }
+  .af-cta svg { transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+  .af-btn-primary:hover:not(:disabled) .af-cta svg { transform: translateX(4px); }
   .af-btn-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.22);
   }
   .af-btn-primary:active:not(:disabled) { transform: translateY(0); }
   .af-btn-pulse { animation: authBtnPulse 2s ease-in-out infinite; }

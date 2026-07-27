@@ -82,11 +82,21 @@ const sql = neon(process.env.DATABASE_URL)
   console.log('Cartes ajoutees:', rc.length)
 
   // MAJ images des cartes existantes (id = c.id brut)
+  //
+  // GARDE ANTI-RETROGRADATION : has_image ne repasse JAMAIS a false.
+  // Certaines images sont importees a la main depuis d autres sources
+  // (ex: 312 cartes de sous-sets SWSH rapatriees depuis pokemontcg.io,
+  // que TCGdex n a pas). Le staging tcg_cards reflete TCGdex et porte
+  // has_image=false pour elles : sans cette garde, le sync du lundi les
+  // ferait disparaitre de l affichage alors qu elles sont bien sur R2.
   const imgUpd = await sql`
-    UPDATE k_cards kc SET has_image = c.has_image, image_url = c.image_url
+    UPDATE k_cards kc SET
+      has_image = kc.has_image OR c.has_image,
+      image_url = COALESCE(c.image_url, kc.image_url)
     FROM tcg_cards c
     WHERE kc.id = c.id
-      AND (kc.has_image IS DISTINCT FROM c.has_image OR kc.image_url IS DISTINCT FROM c.image_url)`
+      AND ((c.has_image AND NOT kc.has_image)
+           OR (c.image_url IS NOT NULL AND kc.image_url IS DISTINCT FROM c.image_url))`
   console.log('Images mises a jour:', imgUpd.count ?? 0)
 
   const f = await sql`SELECT

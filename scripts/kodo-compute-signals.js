@@ -114,7 +114,25 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
         -- n>=3 : cardmarket_unsold = des ANNONCES. Une seule annonce n'est pas un
         -- marche (Nosferalto Team Rocket cotait 40 500 EUR sur 1 annonce quand ses
         -- asks NM reels sont a 2 332). Meme seuil que G2 gradee et eBay Ed1.
-        AND COALESCE((country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int, 0) >= 3
+        --
+        -- EXCEPTION n=2 CONCORDANTES : deux annonces qui s'accordent a moins de 25%
+        -- d'ecart ne sont pas du bruit, elles se corroborent (Nymphali VMAX 600-650,
+        -- Ptera ex 380-400). On ecarte en revanche les n=2 qui se contredisent
+        -- (Pikachu et Zekrom GX 240-700 = 98% d'ecart : deux marches differents,
+        -- pas deux observations du meme prix). Une seule annonce n'a par definition
+        -- aucune dispersion mesurable -> reste exclue.
+        AND (
+          COALESCE((country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int, 0) >= 3
+          OR (
+            (country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int = 2
+            AND (country_breakdown->'FR'->'language'->'FR'->>'high')::numeric IS NOT NULL
+            AND (country_breakdown->'FR'->'language'->'FR'->>'low')::numeric IS NOT NULL
+            AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric > 0
+            AND ((country_breakdown->'FR'->'language'->'FR'->>'high')::numeric
+                 - (country_breakdown->'FR'->'language'->'FR'->>'low')::numeric)
+                / (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric <= 0.25
+          )
+        )
       ORDER BY (country_breakdown->'FR'->'language'->'FR'->>'saleCount')::int DESC NULLS LAST
       LIMIT 1) fr_sale ON true
     -- Repartition par pays (depuis country_breakdown, cette langue)

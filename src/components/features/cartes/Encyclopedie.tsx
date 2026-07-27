@@ -72,6 +72,17 @@ const TC: Record<string,string> = {
   Metal:'#8090A8', Dragon:'#9060A0', Fairy:'#FF88AA',
 }
 
+/**
+ * Sets ecartes de l Index : Energies de base vendues comme "set" par TCGdex.
+ * Aucune image, aucun interet de collection, elles encombrent le selecteur.
+ */
+const HIDDEN_SETS = new Set([
+  'mee', 'sve',   // Energies de base : aucune image, aucun interet de collection
+  'xya',          // 6 cartes sans cote, 3 sans image, 2 avec la MAUVAISE image
+                  // (24a et 55a servent le meme Garchomp sur R2), nom mal traduit.
+                  // On ne sait rien en dire de juste -> mieux vaut ne rien montrer.
+])
+
 const ERA_ORDER = ['Original (WotC)','EX','Diamant & Perle / Platine','Noir & Blanc','XY','Soleil & Lune','Épée & Bouclier','Écarlate & Violet','Méga-Évolution','Pokémon Pocket','Promos & Coffrets']
 // Code serie japonais affiche a cote du nom international (vue JP uniquement)
 const ERA_JP_CODE: Record<string,string> = {
@@ -640,7 +651,10 @@ export function Encyclopedie() {
           seen.add(key)
           return true
         })
-        return { sets: staticSets as any[], cards: dedupedCards }
+        return {
+          sets: (staticSets as any[]).filter(st => !HIDDEN_SETS.has(st.id)),
+          cards: dedupedCards.filter(c => !HIDDEN_SETS.has(c.setId)),
+        }
       } catch { return null }
     }
 

@@ -73,15 +73,28 @@ export function CardImg(props: CardImgProps) {
       fontFamily: 'var(--font-display, sans-serif)', maxWidth: '100%', overflow: 'hidden',
       display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
     }
+    // Silhouette de carte plutot qu un cadre vide : ~500 cartes promo et tous
+    // les sets JP n ont pas d image chez TCGdex. Un dos de carte se fond dans
+    // la grille la ou un rectangle gris fait un trou.
     return (
-      <div style={ph}>
-        <svg width="22" height="30" viewBox="0 0 22 30" fill="none" aria-hidden="true">
-          <rect x="1" y="1" width="20" height="28" rx="3" stroke="#C7C7CC" strokeWidth="1.5" />
-          <circle cx="11" cy="10.5" r="3.2" stroke="#C7C7CC" strokeWidth="1.3" />
-          <path d="M4 24l4.5-5 3 3 3-3.5 3.5 5.5" stroke="#C7C7CC" strokeWidth="1.3" strokeLinejoin="round" />
-        </svg>
-        {props.name ? <div style={nameSt}>{props.name}</div> : null}
-        {props.number ? <div style={{ fontSize: 8, color: '#C7C7CC', fontFamily: 'var(--font-mono, monospace)' }}>{props.number}</div> : null}
+      <div style={{ ...ph, justifyContent: 'space-between', padding: 0, background: '#EFEFF2', overflow: 'hidden', position: 'relative' }}>
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, padding: '9%',
+          display: 'flex', flexDirection: 'column', gap: '5%',
+          background: 'linear-gradient(158deg, #E8E8ED 0%, #DEDEE4 55%, #E4E4EA 100%)',
+        }}>
+          <div style={{ flex: '1 1 auto', borderRadius: 3, background: 'linear-gradient(150deg, rgba(255,255,255,0.55), rgba(0,0,0,0.05))' }} />
+          <div style={{ height: '9%', borderRadius: 2, background: 'rgba(255,255,255,0.5)' }} />
+          <div style={{ height: '6%', width: '62%', borderRadius: 2, background: 'rgba(255,255,255,0.42)' }} />
+        </div>
+        <div style={{
+          position: 'relative', zIndex: 1, width: '100%', marginTop: 'auto',
+          padding: '6px 7px 7px', display: 'flex', flexDirection: 'column', gap: 2,
+          background: 'linear-gradient(0deg, rgba(255,255,255,0.94) 60%, rgba(255,255,255,0))',
+        }}>
+          {props.name ? <div style={nameSt}>{props.name}</div> : null}
+          {props.number ? <div style={{ fontSize: 8, color: '#AEAEB2', fontFamily: 'var(--font-mono, monospace)', textAlign: 'center' }}>{props.number}</div> : null}
+        </div>
       </div>
     )
   }

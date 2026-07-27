@@ -63,6 +63,15 @@ export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, dat
 
   const norm = (x: string) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
+  /** Repli quand TCGdex n a pas de logo (McDonald s, Trainer Kits, tous les sets JP). */
+  const initials = (name: string) => {
+    const clean = name.replace(/[()]/g, ' ').trim()
+    const year = clean.match(/\b(19|20)(\d{2})\b/)          // McDonald s 2012 -> 12
+    const words = clean.split(/\s+/).filter(w => /[A-Za-z\u00C0-\u017F]/.test(w))
+    const letters = words.slice(0, 2).map(w => w[0]).join('').toUpperCase()
+    return year ? (letters.slice(0, 1) + year[2]) : letters.slice(0, 3)
+  }
+
   const groups = useMemo(() => {
     const needle = norm(q.trim())
     const kept = needle
@@ -170,7 +179,7 @@ export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, dat
         .kss-tile:hover .kss-logo { transform: scale(1.07) }
         @media (prefers-reduced-motion: reduce) { .kss-panel, .kss-tip, .kss-tile { animation: none !important } }
         .kss-logo { transition: transform .18s cubic-bezier(.2,.85,.3,1); height: 18px; width: 44px; flex-shrink: 0; object-fit: contain; object-position: center; padding: 4px 5px; border-radius: 7px; background: rgba(245,245,247,0.7); box-sizing: content-box; }
-        .kss-nologo { width: 54px; height: 26px; flex-shrink: 0; border-radius: 4px; background: rgba(0,0,0,0.05); }
+        .kss-nologo { width: 54px; height: 26px; flex-shrink: 0; border-radius: 7px; background: linear-gradient(150deg, rgba(0,0,0,0.06), rgba(0,0,0,0.03)); display: flex; align-items: center; justify-content: center; font-family: var(--font-sora, system-ui); font-size: 11px; font-weight: 800; letter-spacing: -0.02em; color: #86868B; }
         .kss-name { font-size: 13px; font-weight: 600; color: #1D1D1F; line-height: 1.3; letter-spacing: -0.011em; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .kss-sub { font-size: 10px; font-weight: 500; color: #AEAEB2; font-family: var(--font-sora,Sora,sans-serif); flex-shrink: 0; letter-spacing: 0; }
         .kss-empty { text-align: center; color: #AEAEB2; font-size: 13px; padding: 28px 10px; font-family: var(--font-dm,"DM Sans",sans-serif); }
@@ -232,7 +241,7 @@ export function SetSelect({ sets, value, onChange, blocOf, blocOrder, logos, dat
                         {logo
                           ? <img className="kss-logo" src={logo} alt="" loading="lazy"
                               onError={e => { const t = e.target as HTMLImageElement; t.style.visibility = 'hidden' }} />
-                          : <span className="kss-nologo" />}
+                          : <span className="kss-nologo">{initials(nm)}</span>}
                         <span className="kss-name">{nm}</span>
                         <span className="kss-sub">{s.count ?? ''}</span>
                       </button>

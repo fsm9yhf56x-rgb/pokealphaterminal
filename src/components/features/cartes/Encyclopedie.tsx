@@ -135,6 +135,14 @@ const SERIES_TO_ERA: Record<string, string> = {
   'promo': 'Promos & Coffrets',
 }
 
+/** Sur les promos, TCGdex met "Sans Rareté" : la vraie rareté imprimee est Promo. */
+function displayRarity(rarity?: string | null, era?: string | null): string {
+  if (!rarity) return ''
+  const isPromo = era === 'Promos & Coffrets'
+  const none = /^sans\s*raret[eé]$/i.test(rarity.trim())
+  return (isPromo && none) ? 'Promo' : rarity
+}
+
 function setIdToEra(setId:string, serie?:string|null): string {
   // Priority 1: if serie is provided (from JSON), use it directly
   if (serie && SERIES_TO_ERA[serie]) return SERIES_TO_ERA[serie]
@@ -741,7 +749,7 @@ export function Encyclopedie() {
     let base = allCards.filter(c => c.era !== 'Promos & Coffrets')
     if (filEra !== 'all') base = base.filter(c => c.era === filEra)
     if (filSet !== 'all') base = base.filter(c => c.setId === filSet)
-    return [...new Set(base.map(c => c.rarity).filter(Boolean))].sort()
+    return [...new Set(base.map(c => displayRarity(c.rarity, c.era)).filter(Boolean))].sort()
   }, [allCards, filEra, filSet])
 
   // Si la rarete choisie n'existe plus dans le nouveau perimetre, on la libere
@@ -789,10 +797,15 @@ export function Encyclopedie() {
   }, [allCards, jpEnDict, lang])
 
   const filtered = useMemo(() => {
-    let r = allCards.filter(c=>c.era!=='Promos & Coffrets')
+    // Les promos sont ecartees de la vue d ensemble (elles noieraient la grille),
+    // mais elles DOIVENT s afficher des qu on demande une serie precise ou qu on
+    // cherche un nom — sinon le selecteur propose des sets qui rendent 0 carte.
+    let r = (filSet !== 'all' || search)
+      ? allCards
+      : allCards.filter(c=>c.era!=='Promos & Coffrets')
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
     if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
-    if (filRarities.length) r = r.filter(c=>!!c.rarity && filRarities.includes(c.rarity))
+    if (filRarities.length) r = r.filter(c=>!!c.rarity && filRarities.includes(displayRarity(c.rarity, c.era)))
     if (search) {
       const q=search.toLowerCase()
       if (jpSearchIndex) {
@@ -1390,7 +1403,7 @@ export function Encyclopedie() {
                             <span>{card.setName}</span>
                             <span style={{ color:'#C7C7CC' }}>{String.fromCharCode(183)}</span>
                             <span>#{card.localId}</span>
-                            {card.rarity && <><span style={{ color:'#C7C7CC' }}>{String.fromCharCode(183)}</span><span>{card.rarity}</span></>}
+                            {card.rarity && <><span style={{ color:'#C7C7CC' }}>{String.fromCharCode(183)}</span><span>{displayRarity(card.rarity, card.era)}</span></>}
                           </div>
                         </div>
                         <span style={{ fontSize:'14px', flexShrink:0 }}>{lang==='EN'?String.fromCodePoint(127482,127480):lang==='FR'?String.fromCodePoint(127467,127479):String.fromCodePoint(127471,127477)}</span>
@@ -1507,7 +1520,7 @@ export function Encyclopedie() {
             const ownedInSet = allCards.filter(c=>c.setId===filSet&&isOwned(c)).length
             const pct = totalInSet>0?Math.round(ownedInSet/totalInSet*100):0
             const rarityDist: Record<string,number> = {}
-            allCards.filter(c=>c.setId===filSet).forEach(c=>{ const r=c.rarity||'Inconnue'; rarityDist[r]=(rarityDist[r]||0)+1 })
+            allCards.filter(c=>c.setId===filSet).forEach(c=>{ const r=displayRarity(c.rarity, c.era)||'Inconnue'; rarityDist[r]=(rarityDist[r]||0)+1 })
             const topRarities = Object.entries(rarityDist).sort((a,b)=>b[1]-a[1]).slice(0,6)
             return (
               <div style={{ background:'linear-gradient(135deg,#FAFAFA,#F0F0F2)', border:'1px solid #E5E5EA', borderRadius:'16px', padding:'20px 24px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'24px', flexWrap:'wrap' as const }}>
@@ -1563,7 +1576,8 @@ export function Encyclopedie() {
                       }}>
                       <div style={{ height: cfg.imgH, background: 'rgba(0,0,0,0.025)', position: 'relative' as const, overflow: 'hidden' as const, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                         {card.rarity && (()=>{
-                          const rc = getRarityColor(card.rarity)
+                          const rLabel = displayRarity(card.rarity, card.era)
+                          const rc = getRarityColor(rLabel)
                           return (
                             <div style={{
                               position: 'absolute' as const,
@@ -1582,22 +1596,16 @@ export function Encyclopedie() {
                               boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
                               backdropFilter: 'blur(8px)',
                               WebkitBackdropFilter: 'blur(8px)',
-                            }}>{card.rarity}</div>
+                            }}>{rLabel}</div>
                           )
                         })()}
                         {img ? (
                           <CardImg setId={card.setId} localId={card.localId} lang={lang} image={card.image} enImage={card.enImage} name={card.name} number={card.localId} variant="full" imgClassName="card-img" imgStyle={{ padding: cardSize==='L'?'6px':'3px', boxSizing:'border-box' }} />
                         ) : (
-                          <div style={{
-                            position: 'absolute' as const, inset: 0,
-                            background: 'linear-gradient(145deg, rgba(0,0,0,0.025) 0%, rgba(0,0,0,0.045) 100%)',
-                            display: 'flex',
-                            flexDirection: 'column' as const,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 5,
-                          }}>
-                            {cardSize!=='S' && <div style={{ fontSize:'7px', color:'#BBB', fontFamily:'var(--font-display)', textAlign:'center' as const, lineHeight:1.3 }}>Image non<br/>disponible</div>}
+                          <div style={{ position: 'absolute' as const, inset: 0 }}>
+                            <CardImg setId={card.setId} localId={card.localId} lang={lang}
+                              name={cardSize==='S' ? undefined : card.name}
+                              number={cardSize==='S' ? undefined : card.localId} variant="full" />
                           </div>
                         )}
                         <div style={{
@@ -1708,7 +1716,8 @@ export function Encyclopedie() {
               </div>
               {pageCards.map((card,i) => {
                 const isSel = selId===card.id
-                const rc = card.rarity ? getRarityColor(card.rarity) : null
+                const rLabel = card.rarity ? displayRarity(card.rarity, card.era) : ''
+                const rc = rLabel ? getRarityColor(rLabel) : null
                 const owned = isOwned(card)
                 return (
                   <div key={card.id} className="rh"
@@ -1736,7 +1745,7 @@ export function Encyclopedie() {
                       {setLogos[card.setId]&&<img src={setLogos[card.setId]} alt="" style={{ height:'13px', maxWidth:'40px', objectFit:'contain', opacity:.5, flexShrink:0 }} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
                       {card.setName}{lang==='JP'&&card.enSetName&&<span style={{ color:'#AEAEB2', marginLeft:'4px' }}>({card.enSetName})</span>}
                     </div>
-                    <div>{rc&&<span style={{ fontSize:'9px', fontWeight:600, padding:'2px 6px', borderRadius:'4px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{card.rarity}</span>}</div>
+                    <div>{rc&&<span style={{ fontSize:'9px', fontWeight:600, padding:'2px 6px', borderRadius:'4px', background:rc.bg, color:rc.fg, fontFamily:'var(--font-display)' }}>{rLabel}</span>}</div>
                     <div style={{ fontSize:'11px', color:'#AEAEB2', fontFamily:'var(--font-data)', textAlign:'right' as const }}>#{card.localId}</div>
                     <div style={{ textAlign:'right' }}>
                       <button className="zoom-btn" onClick={e=>{e.stopPropagation();setLightbox(card)}} style={{ width:'26px', height:'26px', borderRadius:'6px', background:'#F5F5F7', border:'1px solid #EBEBEB', cursor:'pointer', display:'inline-flex', alignItems:'center', justifyContent:'center', opacity:.5, transition:'all .15s' }}

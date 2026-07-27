@@ -194,7 +194,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         /* Marque : le premier élément que l'œil rencontre */
         .ath-brandbar {
           flex: 0 0 auto;
-          padding: 26px 20px 0;
+          padding: 52px 20px 0;
           display: flex;
           justify-content: center;
         }

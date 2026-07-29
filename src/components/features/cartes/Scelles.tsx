@@ -107,6 +107,7 @@ export function Scelles() {
   const [facets, setFacets] = useState<Facet[]>([])
   const [market, setMarket] = useState('EU_FR')
   const [total, setTotal] = useState(0)
+  const [pricedTotal, setPricedTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadErr, setLoadErr] = useState(false)
   const [filSku, setFilSku] = useState('all')
@@ -129,6 +130,7 @@ export function Scelles() {
         setFacets(Array.isArray(d.facets) ? d.facets : [])
         setMarket(String(d.priceMarket || ''))
         setTotal(Number(d.total || 0))
+        setPricedTotal(Number(d.priced || 0))
       })
       .catch(() => { if (alive) { setItems([]); setFacets([]); setLoadErr(true) } })
       .finally(() => { if (alive) setLoading(false) })
@@ -309,7 +311,7 @@ export function Scelles() {
                 ) : (
                   <span>
                     <strong style={{ color: '#111' }}>{(total || filtered.length).toLocaleString('fr-FR')}</strong> produits ·{' '}
-                    <strong style={{ color: '#111' }}>{cotes.toLocaleString('fr-FR')}</strong> cotés ·{' '}
+                    <strong style={{ color: '#111' }}>{(hasFilters ? cotes : (pricedTotal || cotes)).toLocaleString('fr-FR')}</strong> cotés ·{' '}
                     {market === 'EU_FR' ? 'annonces France' : 'marché américain converti'}
                   </span>
                 )}

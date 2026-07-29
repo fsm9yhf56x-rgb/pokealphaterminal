@@ -106,6 +106,12 @@ const SKU_RULES = [
 const CONTENT_RE = /\bset\s*of\s*(\d{1,3})\b|\b(\d{1,3})\s*(displays?|bundles?|blisters?|etb|coffrets?|mini[\s-]*tins?|tins?|boosters?|packs?)\b/;
 const CONTENT_UNIT = { display: 'display', bundle: 'bundle', blister: 'blister', etb: 'etb', coffret: 'coffret', minitin: 'mini_tin', tin: 'mini_tin', booster: 'booster', pack: 'booster' };
 
+// Un contenant reel ne depasse pas la quarantaine d'unites (case de 24 blisters,
+// display de 36 boosters). Au-dela, le nombre capte est un NOM DE SERIE ou une
+// reference : "SV: Scarlet & Violet 151 Booster Bundle Case" donnait
+// "151 boosters" alors que 151 est le nom du set.
+const CONTENT_MAX = 36;
+
 export function detectContent(n) {
   const m = CONTENT_RE.exec(n);
   if (!m) return null;
@@ -114,7 +120,9 @@ export function detectContent(n) {
   const key = String(m[3] || '').replace(/[\s-]/g, '').replace(/s$/, '');
   const unit = CONTENT_UNIT[key] || null;
   if (!unit) return null;
-  return { qty: Number(m[2]), unit };
+  const qty = Number(m[2]);
+  if (!(qty >= 2 && qty <= CONTENT_MAX)) return null;
+  return { qty, unit };
 }
 
 export function detectSku(n) {

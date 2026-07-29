@@ -40,12 +40,16 @@ const SKU_LABEL: Record<string, string> = {
 // Uniquement la ou le contenu est CERTAIN — un ETB fait 8, 9 ou 10 selon l'epoque,
 // donc pas de prix au booster pour lui plutot qu'un chiffre invente.
 const BOOSTERS_PER_SKU: Record<string, number> = { display: 36, demi_display: 18, bundle: 6, tripack: 3, booster: 1 };
+// Standardises dans tous les marches. Ailleurs qu'en FR, TCGplayer vend ses
+// propres lots sous le mot "bundle" -> on ne compte que ce qui est universel.
+const BOOSTERS_UNIVERSAL: Record<string, number> = { display: 36, demi_display: 18 };
 
-function boosterCount(sku: string | null, qty: number | null, unit: string | null): number | null {
+function boosterCount(sku: string | null, qty: number | null, unit: string | null, lang: string): number | null {
   if (!sku) return null;
   if (sku === 'display_bundle' && qty && unit === 'bundle') return qty * 6;
   if (sku === 'case' && qty && unit === 'display') return qty * 36;
-  const n = BOOSTERS_PER_SKU[sku];
+  const table = lang === 'fr' ? BOOSTERS_PER_SKU : BOOSTERS_UNIVERSAL;
+  const n = table[sku];
   return n == null ? null : n;
 }
 
@@ -116,7 +120,7 @@ export async function GET(req: NextRequest) {
       // Cote EN il est derive du product_type PPT, qui range un CASE de 6 bundles
       // sous 'Booster Bundle' -> tout calcul par booster serait faux.
       const skuTrusted = String(r.sku_source || '') === 'parser' || String(r.source || '') === 'ebay_fr';
-      const boosters = skuTrusted ? boosterCount(skuKey, contentQty, unit) : null;
+      const boosters = skuTrusted ? boosterCount(skuKey, contentQty, unit, lang) : null;
       const low = r.low_eur == null ? null : Number(r.low_eur);
       return {
         id: String(r.id),
@@ -151,8 +155,13 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // compte sur tout le perimetre filtre, pas sur la page servie : sinon
+    // "2292 produits - 1000 cotes" alors que 1000 n'est que le plafond de pagination
     const totalRows = await sql.query(
-      `SELECT count(*)::int n FROM k_sealed_products p WHERE ${where.slice(0, where.length).join(' AND ')}`,
+      `SELECT count(*)::int n, count(sp.market_eur)::int priced
+         FROM k_sealed_products p
+         LEFT JOIN sealed_prices sp ON sp.sealed_id = p.id
+        WHERE ${where.join(' AND ')}`,
       params.slice(0, params.length - 2)
     );
 
@@ -169,6 +178,7 @@ export async function GET(req: NextRequest) {
       lang: lang.toUpperCase(),
       count: items.length,
       total: totalRows[0] ? Number(totalRows[0].n) : items.length,
+      priced: totalRows[0] ? Number(totalRows[0].priced) : 0,
       // le marche dont sortent ces prix, pour que l'UI puisse l'annoncer honnetement
       priceMarket: lang === 'fr' ? 'EU_FR' : 'US',
       items,

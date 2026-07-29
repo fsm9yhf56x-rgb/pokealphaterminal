@@ -1,622 +1,549 @@
 'use client'
+// Scelles — catalogue scelle Kodo, branche sur /api/v1/sealed (donnees REELLES).
+//
+// DA reprise de l'Encyclopedie au detail pres : eyebrow + h1, segmented control
+// de langue a drapeaux, recherche pleine largeur en verre depoli, barre de
+// filtres sticky (PillSelect + SetSelect), vignettes TRANSLUCIDES sur le degrade
+// de page, drawer lateral. Les <select> natifs et les boites CSS a degrades
+// ont ete retires — c'est ce que la refonte du Pokedesk avait supprime ailleurs.
+//
+// REGLES D'AFFICHAGE (miroir des singles) :
+//   - prix FR = annonces eBay FR decotees -> "des X EUR", jamais "X EUR"
+//   - nombre de vendeurs affiche : c'est ce qui rend le prix credible
+//   - pas de cote -> "Donnees insuffisantes", JAMAIS 0 EUR
+//   - le marche est annonce en clair (FR = annonces France, EN = US converti)
+//   - vignette : packshot officiel s'il existe, sinon logo de serie, sinon typo.
+//     On n'affiche JAMAIS une photo d'annonce (la route les filtre deja).
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { SNOW, FONT } from '@/lib/design/snow'
-import { SnowButton } from '@/components/ui/snow'
+import { FONT } from '@/lib/design/snow'
 import { useAuth } from '@/lib/useAuth'
+import { usePersona } from '@/lib/usePersona'
 import { supabase } from '@/lib/supabase'
 import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
+import { SetSelect } from '@/components/features/cartes/SetSelect'
+import { PillSelect } from '@/components/features/cartes/PillSelect'
 
-type Lang = 'EN'|'FR'|'JP'
-type ProductType = 'booster'|'display'|'etb'|'bundle'
-type SetData = { id:string; name:string; logo:string|null; serie:string|null; releaseDate:string; total:number }
+type Lang = 'FR' | 'EN'
 
-interface SealedProduct {
-  id: string; name: string; setId: string; setName: string; serie: string;
-  type: ProductType; year: number; logo: string|null; total: number
+interface SealedPrice {
+  value: number; currency: string; isAsking: boolean
+  low: number | null; perBooster: number | null
+  method: string | null; market: string | null
+  sellers: number | null; sampleSize: number | null; updatedAt: string | null
 }
 
-interface PortfolioCard {
-  id:string; name:string; set:string; setId?:string; number:string; rarity:string;
-  type:string; lang:string; condition:string; graded:boolean; buyPrice:number;
-  curPrice:number; qty:number; year:number; image?:string; setTotal?:number;
+interface SealedItem {
+  id: string; name: string; lang: string
+  sku: string | null; skuLabel: string
+  content: { qty: number; unit: string; label: string } | null
+  setId: string | null; setName: string | null; series: string | null
+  setLogo: string | null; image: string | null
+  boosters: number | null
+  price: SealedPrice | null
 }
 
-const TYPE_META: Record<ProductType,{label:string;cards:number;
-  fc:string;bc:string;sl:string;sr:string;tp:string;bt:string}> = {
-  booster:  { label:'Booster',  cards:10,
-    fc:'linear-gradient(170deg,#AB5AC0,#6B1A90,#400860)',bc:'linear-gradient(170deg,#2A0840,#180530)',
-    sl:'linear-gradient(180deg,#8A3AAF,#5A1A80)',sr:'linear-gradient(180deg,#9A4ABF,#6A2A90)',
-    tp:'linear-gradient(90deg,#9A4ABF,#AB5AC0,#9A4ABF)',bt:'#3A0850'},
-  display:  { label:'Display',  cards:360,
-    fc:'linear-gradient(160deg,#009AE8,#005AB0,#003070)',bc:'linear-gradient(160deg,#001A50,#001030)',
-    sl:'linear-gradient(180deg,#0088E0,#005AA0)',sr:'linear-gradient(180deg,#007AD0,#004A90)',
-    tp:'linear-gradient(180deg,#00AAF0,#008AD0)',bt:'#001A40'},
-  etb:      { label:'ETB',      cards:65,
-    fc:'linear-gradient(160deg,#E87A50,#C04A28,#8A2010)',bc:'linear-gradient(160deg,#601008,#380808)',
-    sl:'linear-gradient(180deg,#D86A40,#A83818)',sr:'linear-gradient(180deg,#D06838,#9A3018)',
-    tp:'linear-gradient(180deg,#F08A60,#E07A50)',bt:'#501008'},
-  bundle:   { label:'Coffret',  cards:40,
-    fc:'linear-gradient(160deg,#EFD057,#C4A332,#907018)',bc:'linear-gradient(160deg,#605010,#403808)',
-    sl:'linear-gradient(180deg,#DABB40,#B09828)',sr:'linear-gradient(180deg,#D4B238,#A08A20)',
-    tp:'linear-gradient(180deg,#FFE067,#EFD057)',bt:'#504010'},
+interface Facet { sku: string; label: string; total: number; priced: number }
+
+const CHUNK = 48
+
+const BLOC_LABEL: Record<string, string> = {
+  me: 'Méga-Évolution', sv: 'Écarlate & Violet', swsh: 'Épée & Bouclier',
+  sm: 'Soleil & Lune', xy: 'XY', bw: 'Noir & Blanc', hgss: 'HeartGold SoulSilver',
+  pl: 'Platine', dp: 'Diamant & Perle', ex: 'EX', ecard: 'e-Card',
+  neo: 'Neo', gym: 'Gym', base: 'Wizards',
 }
+const BLOC_ORDER = [
+  'Méga-Évolution', 'Écarlate & Violet', 'Épée & Bouclier', 'Soleil & Lune', 'XY',
+  'Noir & Blanc', 'Platine', 'Diamant & Perle', 'e-Card', 'EX', 'Neo', 'Gym', 'Wizards', 'Autre',
+]
+const blocOfSeries = (s: string | null) => (s ? BLOC_LABEL[s] || 'Autre' : 'Autre')
+const flag = (l: Lang) => (l === 'FR' ? String.fromCodePoint(127467, 127479) : String.fromCodePoint(127482, 127480))
 
-const DIMS: Record<ProductType,{w:number;h:number;d:number}> = {
-  booster:{w:52,h:110,d:8}, display:{w:100,h:78,d:42},
-  etb:{w:78,h:94,d:38}, bundle:{w:96,h:66,d:28}
-}
+// Un plancher tres eloigne de la mediane n'est pas une affaire, c'est un doute :
+// produit abime, boite vide passee entre les mailles, ou lot mal detecte.
+// Sous ce rapport on TAIT le plancher plutot que de suggerer une aubaine
+// invalidable (meme logique que la garde de monotonie sur les notes gradees).
+const LOW_MIN_RATIO = 0.4
+const usableLow = (p: SealedPrice | null) =>
+  p && p.low != null && p.value > 0 && p.low / p.value >= LOW_MIN_RATIO ? p.low : null
 
-const ERA_ORDER = ['Scarlet & Violet','Sword & Shield','Sun & Moon','XY','Black & White','DP / Platinum','EX','Original (WotC)']
-const CHUNK = 40
+const eur = (n: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: n >= 100 ? 0 : 2 }).format(n)
 
-function SealedImg({type,logo,selected,realImg}:{type:ProductType;logo:string|null;setName:string;selected:boolean;realImg?:string}) {
-  const tm=TYPE_META[type]
-  const bgs: Record<ProductType,string> = {
-    booster:'linear-gradient(145deg,#F8F0FF 0%,#F0E8FA 50%,#EBE0F5 100%)',
-    display:'linear-gradient(145deg,#EEF5FF 0%,#E5EFFA 50%,#DDEAF8 100%)',
-    etb:'linear-gradient(145deg,#FFF5F0 0%,#FAEEE8 50%,#F5E5DD 100%)',
-    bundle:'linear-gradient(145deg,#FFFCF0 0%,#FAF5E5 50%,#F5F0DA 100%)',
-  }
+function Visual({ item, h, small }: { item: SealedItem; h: string; small?: boolean }) {
+  const [broken, setBroken] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const packshot = !broken && item.image ? item.image : null
+  const logo = !packshot && item.setLogo ? item.setLogo : null
   return (
-    <div style={{width:'100%',aspectRatio:'1',borderRadius:14,background:realImg?bgs[type]:'#F5F5F7',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',border:selected?'2px solid #1D1D1F':'1px solid #F0F0F2',transition:'all .25s',boxShadow:selected?'inset 0 0 0 1px rgba(0,0,0,.05)':'none'}}>
-      {realImg ? (
-        <>
-          <img src={realImg} alt="" style={{maxWidth:'85%',maxHeight:'85%',objectFit:'contain' as const,filter:'drop-shadow(0 4px 12px rgba(0,0,0,.12))',transition:'transform .3s cubic-bezier(.34,1.2,.64,1)'}}
-            onMouseEnter={e=>{(e.target as HTMLImageElement).style.transform='scale(1.05)'}}
-            onMouseLeave={e=>{(e.target as HTMLImageElement).style.transform='scale(1)'}}
-            onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-          <div style={{position:'absolute',top:8,right:8,padding:'3px 8px',borderRadius:6,background:'rgba(255,255,255,.85)',backdropFilter:'blur(4px)',border:'0.5px solid rgba(0,0,0,.06)',fontSize:9,fontWeight:600,color:'#86868B',fontFamily:'var(--font-display)'}}>{tm.label}</div>
-        </>
+    <div className="sc-visual" style={{ height: h, background: 'rgba(0,0,0,0.025)', position: 'relative' as const, overflow: 'hidden' as const, borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {packshot ? (
+        <img src={packshot} alt="" onError={() => setBroken(true)} onLoad={() => setLoaded(true)}
+          className={loaded ? 'sc-img-in' : undefined}
+          style={{ maxWidth: '84%', maxHeight: '84%', objectFit: 'contain' as const, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,.10))', opacity: loaded ? 1 : 0 }} />
+      ) : logo ? (
+        <img src={logo} alt="" onError={() => setBroken(true)} onLoad={() => setLoaded(true)}
+          className={loaded ? 'sc-img-in' : undefined}
+          style={{ maxWidth: '62%', maxHeight: '46%', objectFit: 'contain' as const, opacity: loaded ? 0.9 : 0 }} />
       ) : (
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:16}}>
-          {logo?<img src={logo} alt="" style={{height:32,maxWidth:120,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>:null}
-          <div style={{fontSize:11,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
-          <div style={{fontSize:9,color:'#D2D2D7',fontFamily:'var(--font-display)'}}>{tm.cards} cartes</div>
-        </div>
+        <span style={{ fontSize: small ? '9px' : '11px', color: '#C7C7CC', fontFamily: 'var(--font-display)', letterSpacing: '.08em', textTransform: 'uppercase' as const }}>
+          {item.skuLabel}
+        </span>
       )}
     </div>
   )
 }
+
 export function Scelles() {
-  const [sets, setSets] = useState<SetData[]>([])
-  const [cardsDb, setCardsDb] = useState<Record<string,{id:string;img:string;r:string}[]>>({})
-  const [realProducts, setRealProducts] = useState<{id:string;name:string;set:string;type:string;img:string}[]>([])
+  const { user } = useAuth()
+  const { isInvestor } = usePersona()
+  const [sortBooster, setSortBooster] = useState(false)
   const [lang, setLang] = useState<Lang>('FR')
-  const [filType, setFilType] = useState<'all'|ProductType>('all')
-  const [filEra, setFilEra] = useState('all')
+  const [items, setItems] = useState<SealedItem[]>([])
+  const [facets, setFacets] = useState<Facet[]>([])
+  const [market, setMarket] = useState('EU_FR')
+  const [loading, setLoading] = useState(true)
+  const [loadErr, setLoadErr] = useState(false)
+  const [filSku, setFilSku] = useState('all')
   const [filSet, setFilSet] = useState('all')
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<'recent'|'name'|'cards'>('recent')
-  const [scFiltersOpen, setScFiltersOpen] = useState(false)
+  const [searchFocus, setSearchFocus] = useState(false)
   const [visible, setVisible] = useState(CHUNK)
-  const [selId, setSelId] = useState<string|null>(null)
+  const [selId, setSelId] = useState<string | null>(null)
   const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
-  const [portfolio, setPortfolio] = useState<PortfolioCard[]>([])
-  const { user } = useAuth()
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  // Connecte -> Neon = source de verite (cross-device)
   useEffect(() => {
-    if (!user) return
-    supabase.from('portfolio_cards').select('*').eq('user_id', user.id)
-      .then(({ data, error }: any) => {
-        if (error || !data) return
-        setPortfolio(data.map((c: any) => ({
-          id: c.id, name: c.name, set: c.set_name || '', setId: c.set_id || undefined,
-          number: c.card_number || '', rarity: c.rarity || '',
-          type: c.card_type || '', lang: c.lang || 'FR',
-          condition: c.condition || 'Raw', graded: c.graded || false,
-          buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
-          qty: c.qty || 1, year: 0, image: c.image_url || undefined,
-        })))
+    let alive = true
+    setLoading(true); setLoadErr(false)
+    fetch('/api/v1/sealed?lang=' + lang + '&limit=1000&sort=price', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return
+        setItems(Array.isArray(d.items) ? d.items : [])
+        setFacets(Array.isArray(d.facets) ? d.facets : [])
+        setMarket(String(d.priceMarket || ''))
       })
-  }, [user?.id])
-  const [groupBySet, setGroupBySet] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement>(null)
+      .catch(() => { if (alive) { setItems([]); setFacets([]); setLoadErr(true) } })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [lang])
 
-  useEffect(()=>{
-    fetch('/data/sets-EN.json').then(r=>r.json()).then((d:SetData[])=>setSets(d)).catch(()=>{})
-    fetch('/data/cards-FR.json').then(r=>r.json()).then((d:Record<string,{id:string;img:string;r:string}[]>)=>setCardsDb(d)).catch(()=>{})
-    fetch('/data/sealed-products.json').then(r=>r.json()).then(d=>setRealProducts(d)).catch(()=>{})
-    try { const p=localStorage.getItem('portfolio'); if(p) setPortfolio(JSON.parse(p)) } catch{}
-  },[])
+  useEffect(() => { setVisible(CHUNK); setSelId(null) }, [lang, filSku, filSet, search, sortBooster])
 
-  const products = useMemo(()=>{
-    return realProducts.map(rp => {
-      const matchSet = sets.find(s => 
-        rp.set.toLowerCase().includes(s.name.toLowerCase()) || 
-        s.name.toLowerCase().includes(rp.set.toLowerCase()) ||
-        rp.name.toLowerCase().includes(s.name.toLowerCase())
-      )
-      return {
-        id: rp.id,
-        name: rp.name,
-        setId: matchSet?.id || rp.set.toLowerCase().replace(/\s+/g,'-'),
-        setName: rp.set,
-        serie: matchSet?.serie || 'Autre',
-        type: (rp.type || 'booster') as ProductType,
-        year: matchSet?.releaseDate ? parseInt(matchSet.releaseDate.slice(0,4)) : 2020,
-        logo: matchSet?.logo || null,
-        total: matchSet?.total || 0,
-      }
-    })
-  },[realProducts, sets])
+  const setsLite = useMemo(() => {
+    const m = new Map<string, { id: string; name: string; count: number }>()
+    for (const it of items) {
+      if (!it.setId || !it.setName) continue
+      const cur = m.get(it.setId)
+      if (cur) cur.count++
+      else m.set(it.setId, { id: it.setId, name: it.setName, count: 1 })
+    }
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name))
+  }, [items])
 
-  const eras = useMemo(()=>{
-    const e=[...new Set(products.map(p=>p.serie))]
-    return e.sort((a,b)=>{const ai=ERA_ORDER.indexOf(a),bi=ERA_ORDER.indexOf(b);return(ai===-1?99:ai)-(bi===-1?99:bi)})
-  },[products])
+  const setLogos = useMemo(() => {
+    const o: Record<string, string> = {}
+    for (const it of items) if (it.setId && it.setLogo && !o[it.setId]) o[it.setId] = it.setLogo
+    return o
+  }, [items])
 
-  const setsInEra = useMemo(()=>{
-    const base=filEra==='all'?products:products.filter(p=>p.serie===filEra)
-    const seen=new Set<string>()
-    return base.filter(p=>{if(seen.has(p.setId))return false;seen.add(p.setId);return true}).map(p=>({id:p.setId,name:p.setName}))
-  },[products,filEra])
+  const setBloc = useMemo(() => {
+    const o: Record<string, string> = {}
+    for (const it of items) if (it.setId && !o[it.setId]) o[it.setId] = blocOfSeries(it.series)
+    return o
+  }, [items])
 
-  const filtered = useMemo(()=>{
-    let r=products
-    if(filType!=='all') r=r.filter(p=>p.type===filType)
-    if(filEra!=='all') r=r.filter(p=>p.serie===filEra)
-    if(filSet!=='all') r=r.filter(p=>p.setId===filSet)
-    if(search){const q=search.toLowerCase();r=r.filter(p=>p.name.toLowerCase().includes(q)||p.setName.toLowerCase().includes(q)||p.serie.toLowerCase().includes(q))}
-    if(sort==='name') return [...r].sort((a,b)=>a.name.localeCompare(b.name))
-    if(sort==='cards') return [...r].sort((a,b)=>b.total-a.total)
-    return [...r].sort((a,b)=>b.year-a.year||a.setName.localeCompare(b.setName)||a.type.localeCompare(b.type))
-  },[products,filType,filEra,filSet,search,sort])
+  const skuOfLabel = useMemo(() => {
+    const o: Record<string, string> = {}
+    for (const f of facets) o[f.label] = f.sku
+    return o
+  }, [facets])
+  const labelOfSku = useMemo(() => {
+    const o: Record<string, string> = {}
+    for (const f of facets) o[f.sku] = f.label
+    return o
+  }, [facets])
 
-  const pageItems=filtered.slice(0,visible)
-  const hasMore=visible<filtered.length
-  const selProduct=selId?products.find(p=>p.id===selId):null
-  // Ouvre le mini-modal scelle (quantite + prix) pour le produit selectionne.
-  const openSealedModal = () => {
-    if (!selProduct) return
+  const filtered = useMemo(() => {
+    let r = items
+    if (filSku !== 'all') r = r.filter((i) => i.sku === filSku)
+    if (filSet !== 'all') r = r.filter((i) => i.setId === filSet)
+    if (search) {
+      const q = search.toLowerCase()
+      r = r.filter((i) => i.name.toLowerCase().includes(q) || (i.setName || '').toLowerCase().includes(q))
+    }
+    if (sortBooster) {
+      // le moins cher au booster d'abord : c'est le format le mieux value
+      return [...r].sort((a, b) => (a.price?.perBooster ?? 1e9) - (b.price?.perBooster ?? 1e9))
+    }
+    return [...r].sort((a, b) => (b.price?.value ?? -1) - (a.price?.value ?? -1))
+  }, [items, filSku, filSet, search, sortBooster])
+
+  useEffect(() => {
+    if (!sentinelRef.current) return
+    const obs = new IntersectionObserver(
+      (e) => { if (e[0].isIntersecting && visible < filtered.length) setVisible((p) => Math.min(p + CHUNK, filtered.length)) },
+      { rootMargin: '400px' }
+    )
+    obs.observe(sentinelRef.current)
+    return () => obs.disconnect()
+  }, [visible, filtered.length])
+
+  const pageItems = filtered.slice(0, visible)
+  const selected = selId ? items.find((i) => i.id === selId) || null : null
+  const cotes = filtered.filter((i) => i.price).length
+  const hasFilters = filSku !== 'all' || filSet !== 'all' || search !== ''
+
+  const openModal = useCallback(() => {
+    if (!selected) return
     setSealedSeed({
-      name: selProduct.name,
-      set_name: selProduct.setName || null,
-      set_id: selProduct.setId || null,
-      card_type: selProduct.type,
-      year: selProduct.year,
-      image_url: selProduct.logo || null,
+      name: selected.name, set_name: selected.setName, set_id: selected.setId,
+      card_type: selected.sku, year: 0, image_url: selected.image || selected.setLogo,
     })
-  }
-  // onAdd du modal : ecrit le scelle avec sa quantite et son prix. Meme insert
-  // qu'avant (condition Sealed), etendu au buy_price et a la qte du modal. Guest
-  // -> localStorage. Renvoie une valeur non-null pour le compteur multi-boites.
+  }, [selected])
+
+  // CORRIGE deux defauts de l'ancienne version : la langue etait figee a 'FR'
+  // (un produit EN entrait en FR) et le prix connu n'etait jamais ecrit.
   const handleSealedAdd = async (payload: Record<string, unknown>) => {
     const id = crypto.randomUUID()
     const name = String(payload.name ?? 'Produit')
     const set_name = payload.set_name ? String(payload.set_name) : ''
     const set_id = payload.set_id ? String(payload.set_id) : undefined
     const card_type = String(payload.card_type ?? '')
-    const year = Number(payload.year ?? 0) || 0
     const image_url = payload.image_url ? String(payload.image_url) : undefined
     const qty = Number(payload.qty ?? 1) || 1
     const buy_price = payload.buy_price != null ? (Number(payload.buy_price) || 0) : null
-    const card: PortfolioCard = {
-      id, name, set: set_name, setId: set_id, number: 'SEALED', rarity: 'Sealed',
-      type: card_type, lang: 'FR', condition: 'Sealed', graded: false,
-      buyPrice: buy_price ?? 0, curPrice: 0, qty, year, image: image_url,
-    }
-    setPortfolio(p => [...p, card])
+    const current_price = selected?.price?.value ?? null
+    const itemLang = selected?.lang || lang
+
     if (user) {
       const { data, error } = await supabase.from('portfolio_cards').insert({
         id, user_id: user.id, name,
-        set_name: set_name || null, set_id: set_id || null,
-        card_number: 'SEALED', lang: 'FR',
+        set_name: set_name || null,
+        set_id: (set_id || '').replace(/^(fr|en|jp)-/, '') || null,
+        card_number: 'SEALED', lang: itemLang,
         rarity: 'Sealed', card_type,
         condition: 'Sealed', graded: false,
-        qty, buy_price, current_price: null,
+        qty, buy_price, current_price,
         image_url: image_url || null,
       }).select()
-      if (error) {
-        console.error('[KC SEALED] insert failed:', error)
-        setPortfolio(p => p.filter(c => c.id !== id))
-        return null
-      }
-      const row: any = data && data[0] ? data[0] : null
-      if (row && row.current_price != null) {
-        setPortfolio(p => p.map(c => c.id === id ? { ...c, curPrice: Number(row.current_price) || 0 } : c))
-      }
+      if (error) { console.error('[KC SEALED] insert failed:', error); return null }
+      const row = data && data[0] ? data[0] : null
       return row ?? { id }
-    } else {
-      try {
-        const prev = JSON.parse(localStorage.getItem('portfolio') || '[]')
-        prev.push(card)
-        localStorage.setItem('portfolio', JSON.stringify(prev))
-      } catch {}
-      return card
     }
+    try {
+      const prev = JSON.parse(localStorage.getItem('portfolio') || '[]')
+      prev.push({
+        id, name, set: set_name, setId: set_id, number: 'SEALED', rarity: 'Sealed',
+        type: card_type, lang: itemLang, condition: 'Sealed', graded: false,
+        buyPrice: buy_price ?? 0, curPrice: current_price ?? 0, qty, image: image_url,
+      })
+      localStorage.setItem('portfolio', JSON.stringify(prev))
+    } catch { }
+    return { id }
   }
-
-  useEffect(()=>{setVisible(CHUNK)},[filType,filEra,filSet,search,sort])
-
-  useEffect(()=>{
-    if(!sentinelRef.current)return
-    const obs=new IntersectionObserver(e=>{if(e[0].isIntersecting&&visible<filtered.length)setVisible(p=>Math.min(p+CHUNK,filtered.length))},{rootMargin:'400px'})
-    obs.observe(sentinelRef.current)
-    return()=>obs.disconnect()
-  },[visible,filtered.length])
-
-  const findRealImg = useCallback((name: string, setName: string, type: string): string|null => {
-    const q = name.toLowerCase()
-    const sq = setName.toLowerCase()
-    // Try exact name match
-    let m = realProducts.find(p => p.name.toLowerCase() === q)
-    if (m) return m.img
-    // Try set + type match
-    m = realProducts.find(p => p.set.toLowerCase().includes(sq) && p.type === type)
-    if (m) return m.img
-    // Try set match (any type)
-    m = realProducts.find(p => p.set.toLowerCase().includes(sq))
-    if (m) return m.img
-    // Try partial name
-    m = realProducts.find(p => q.includes(p.name.toLowerCase().split(' ').slice(0,2).join(' ')))
-    if (m) return m.img
-    return null
-  }, [realProducts])
-
-  const artworksForSet = useCallback((setId: string): string[] => {
-    const cards = cardsDb[setId]
-    if (!cards || cards.length === 0) return []
-    const rarityOrder = ['Illustration rare','Special Art Rare','Holo Rare V','Holo Rare VMAX','Holo Rare VSTAR','Ultra Rare','Secret Rare','Rare','Holo Rare','Double rare','Uncommon']
-    const sorted = [...cards].filter(c => c.img).sort((a, b) => {
-      const ai = rarityOrder.indexOf(a.r), bi = rarityOrder.indexOf(b.r)
-      return (ai === -1 ? 50 : ai) - (bi === -1 ? 50 : bi)
-    })
-    return sorted.slice(0, 8).map(c => c.img)
-  }, [cardsDb])
-
-  const ownedInSet=useCallback((setId:string)=>portfolio.filter(c=>c.setId===setId||c.set===sets.find(s=>s.id===setId)?.name).length,[portfolio,sets])
-
-  const flag=(l:Lang)=>l==='EN'?'\ud83c\uddfa\ud83c\uddf8':l==='FR'?'\ud83c\uddeb\ud83c\uddf7':'\ud83c\uddef\ud83c\uddf5'
-  const stats=useMemo(()=>({total:filtered.length,sets:new Set(filtered.map(p=>p.setId)).size,eras:new Set(filtered.map(p=>p.serie)).size}),[filtered])
-
-  const grouped = useMemo(()=>{
-    if(!groupBySet) return null
-    const map=new Map<string,SealedProduct[]>()
-    filtered.forEach(p=>{if(!map.has(p.setId))map.set(p.setId,[]);map.get(p.setId)!.push(p)})
-    return [...map.entries()].sort((a,b)=>(b[1][0]?.year||0)-(a[1][0]?.year||0))
-  },[filtered,groupBySet])
 
   return (
     <>
       <style>{`
-        @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes cardIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-        @keyframes panelIn{from{opacity:0;transform:translateX(14px) scale(.98)}to{opacity:1;transform:translateX(0) scale(1)}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .sc-card{
-          transition:transform .3s cubic-bezier(.2,.85,.3,1),box-shadow .3s ease,border-color .2s ease;
-          border-radius:14px;overflow:hidden;cursor:pointer;position:relative;
-          background:rgba(255,255,255,0.65);
-          backdrop-filter:blur(14px) saturate(180%);
-          -webkit-backdrop-filter:blur(14px) saturate(180%);
-          box-shadow:0 1px 3px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8);
-        }
-        .sc-card:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 10px 28px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.9);}
-        .sc-card:hover .sc-img{transform:scale(1.05)}
-        .sc-card:hover .sc-name{color:#000 !important}
-        .sc-card.sel{border-color:#1D1D1F !important;box-shadow:0 8px 28px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.9)}
-        .sc-img{transition:transform .4s cubic-bezier(.2,.85,.3,1);will-change:transform}
-        .sc-pill{
-          padding:6px 13px;border-radius:99px;
-          background:rgba(255,255,255,0.5);
-          backdrop-filter:blur(12px) saturate(180%);
-          -webkit-backdrop-filter:blur(12px) saturate(180%);
-          border:1px solid rgba(0,0,0,0.05);
-          color:#48484A;font-size:11.5px;font-weight:500;cursor:pointer;
-          font-family:var(--font-sora);
-          transition:all .2s cubic-bezier(.2,.85,.3,1);
-          white-space:nowrap;
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);
-        }
-        .sc-pill:hover{background:rgba(255,255,255,0.75);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.85)}
-        .sc-pill.on{background:linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%) !important;color:#1D1D1F !important;border-color:rgba(255,255,255,0.6) !important;box-shadow:0 2px 8px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,0.95) !important}
-        .sc-srt{
-          padding:6px 13px;border-radius:99px;border:none;background:transparent;
-          color:#86868B;font-size:11.5px;font-weight:600;cursor:pointer;
-          font-family:var(--font-sora);transition:all .2s;
-        }
-        .sc-srt:hover{background:rgba(255,255,255,0.6);color:#1D1D1F}
-        .sc-srt.on{background:linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%) !important;color:#1D1D1F !important;box-shadow:0 2px 8px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,0.95) !important}
-        .sc-fsel{
-          height:36px;padding:0 12px;
-          background:rgba(255,255,255,0.55);
-          backdrop-filter:blur(12px) saturate(180%);
-          -webkit-backdrop-filter:blur(12px) saturate(180%);
-          border:1px solid rgba(0,0,0,0.06);
-          border-radius:8px;font-size:12.5px;outline:none;cursor:pointer;
-          font-family:var(--font-sora);color:#1D1D1F;
-          transition:all .2s;
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
-        }
-        .sc-fsel:focus,.sc-fsel:hover{background:rgba(255,255,255,0.75);border-color:rgba(0,0,0,0.08)}
-        .sc-search{
-          width:100%;height:40px;padding:0 14px 0 36px;
-          background:rgba(255,255,255,0.55);
-          backdrop-filter:blur(12px) saturate(180%);
-          -webkit-backdrop-filter:blur(12px) saturate(180%);
-          border:1px solid rgba(0,0,0,0.06);
-          border-radius:9px;font-size:13px;color:#1D1D1F;outline:none;
-          font-family:var(--font-dm);box-sizing:border-box;
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
-          transition:all .2s;
-        }
-        .sc-search:focus{background:rgba(255,255,255,0.75);border-color:rgba(0,0,0,0.1)}
-        .sc-lang{
-          background:rgba(255,255,255,0.45);
-          backdrop-filter:blur(12px) saturate(180%);
-          -webkit-backdrop-filter:blur(12px) saturate(180%);
-          border-radius:12px;padding:4px;display:flex;gap:3px;
-          border:1px solid rgba(0,0,0,0.04);
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
-        }
-        .sc-lang-btn{
-          padding:8px 14px;border-radius:9px;border:none;
-          font-family:var(--font-sora);font-size:13px;cursor:pointer;
-          display:flex;align-items:center;gap:6px;
-          transition:all .25s cubic-bezier(.2,.85,.3,1);
-          background:transparent;color:#86868B;font-weight:500;
-        }
-        .sc-lang-btn.on{
-          background:rgba(255,255,255,0.95) !important;color:#1D1D1F !important;font-weight:700 !important;
-          box-shadow:0 2px 8px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,1) !important;
-        }
-        .sc-sticky-bar{
-          position:sticky;top:0;z-index:30;
-          background:rgba(255,255,255,0.7);
-          backdrop-filter:blur(20px) saturate(180%);
-          -webkit-backdrop-filter:blur(20px) saturate(180%);
-          padding:14px 12px;margin:0 -12px 18px;
-          border-radius:12px;
-          border:1px solid rgba(0,0,0,0.04);
-          box-shadow:0 1px 3px rgba(0,0,0,0.03),inset 0 1px 0 rgba(255,255,255,0.85);
-        }
-        .sc-panel{
-          background:rgba(255,255,255,0.7);
-          backdrop-filter:blur(28px) saturate(180%);
-          -webkit-backdrop-filter:blur(28px) saturate(180%);
-          border:1px solid rgba(255,255,255,0.55);
-          border-radius:18px;overflow:hidden;
-          box-shadow:0 12px 40px rgba(0,0,0,0.1),0 2px 8px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.9);
-          animation:panelIn .3s cubic-bezier(.2,.85,.3,1);
-        }
-        @media (max-width: 767px) {
-          .sc-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 10px !important; }
-          .sc-lang-label { display: none !important; }
-          .sc-fsel { width: 100% !important; max-width: none !important; }
-          .sc-filters-toggle { display: flex !important; }
-          .sc-sticky-bar {
-            max-height: 0; overflow: hidden; opacity: 0; margin-bottom: 0 !important;
-            transition: max-height .3s ease, opacity .25s ease;
+        @keyframes scFadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes scCardIn { from { opacity:0; transform:translateY(9px); filter:blur(5px) } to { opacity:1; transform:none; filter:blur(0) } }
+        @keyframes scSpin { to { transform:rotate(360deg) } }
+        @keyframes scPanelIn { 0% { opacity:0; transform:translateX(14px) scale(.985) } 66% { opacity:1; transform:translateX(-2px) scale(1.004) } 100% { opacity:1; transform:none } }
+        @keyframes scImgIn { from { opacity:0; transform:scale(.97) } to { opacity:1; transform:none } }
+        @keyframes scShimmer { 0% { background-position:-420px 0 } 100% { background-position:420px 0 } }
+        @keyframes scRowIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
+
+        .sc-card { transition: transform .24s cubic-bezier(.2,.85,.3,1), box-shadow .24s cubic-bezier(.2,.85,.3,1), border-color .18s; will-change: transform; }
+        .sc-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.09), 0 3px 8px rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.92) !important; }
+        .sc-card:active { transform: translateY(-1px) scale(.994); }
+        .sc-card .sc-visual img { transition: transform .32s cubic-bezier(.2,.85,.3,1); }
+        .sc-card:hover .sc-visual img { transform: scale(1.045); }
+        .sc-img-in { animation: scImgIn .34s cubic-bezier(.2,.85,.3,1) both; }
+
+        .sc-panel { animation: scPanelIn .3s cubic-bezier(.34,1.18,.64,1) both; }
+        .sc-mrow { animation: scRowIn .28s cubic-bezier(.2,.85,.3,1) both; }
+
+        .sc-skel { background: linear-gradient(90deg, rgba(0,0,0,0.035) 25%, rgba(0,0,0,0.06) 37%, rgba(0,0,0,0.035) 63%); background-size: 840px 100%; animation: scShimmer 1.25s ease-in-out infinite; border-radius: 6px; }
+
+        .sc-lang { transition: all .2s cubic-bezier(.34,1.4,.64,1); }
+        .sc-lang:active { transform: scale(.94); }
+        .sc-cta { transition: transform .18s cubic-bezier(.34,1.3,.64,1), box-shadow .2s; }
+        .sc-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(29,29,31,.26); }
+        .sc-cta:active { transform: translateY(0) scale(.985); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sc-card, .sc-card:hover, .sc-card:active, .sc-card .sc-visual img, .sc-card:hover .sc-visual img,
+          .sc-panel, .sc-mrow, .sc-skel, .sc-lang, .sc-cta, .sc-img-in {
+            animation: none !important; transition: none !important; transform: none !important;
           }
-          .sc-sticky-bar.open { max-height: 400px; opacity: 1; margin-bottom: 18px !important; }
         }
       `}</style>
 
-      <div style={{animation:'fadeIn .25s ease-out',width:'100%',display:'flex',gap:20,alignItems:'flex-start'}}>
-        <div style={{flex:1,minWidth:0}}>
+      <div style={{ animation: 'scFadeIn .25s ease-out', width: '100%', display: 'flex', gap: '20px', alignItems: 'flex-start', fontFamily: FONT.body }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+
           {/* Header */}
-          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap' as const,gap:12}}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <div>
-              <p style={{fontSize:10,color:'#AAA',textTransform:'uppercase' as const,letterSpacing:'.1em',margin:'0 0 4px',fontFamily:'var(--font-display)'}}>Pokédesk</p>
-              <h1 style={{fontSize:26,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',letterSpacing:'-.5px',margin:'0 0 6px'}}>Scellés</h1>
-              <div style={{fontSize:12,color:'#86868B'}}><strong style={{color:'#1D1D1F'}}>{stats.total}</strong> produits · <strong style={{color:'#1D1D1F'}}>{stats.sets}</strong> séries · <strong style={{color:'#1D1D1F'}}>{stats.eras}</strong> blocs</div>
+              <p style={{ fontSize: '10px', color: '#AAA', textTransform: 'uppercase', letterSpacing: '.1em', margin: '0 0 4px', fontFamily: 'var(--font-display)' }}>Produits</p>
+              <h1 style={{ fontSize: '26px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', letterSpacing: '-.5px', margin: '0 0 5px' }}>Scellés</h1>
+              <div style={{ fontSize: '12px', color: '#888', minHeight: '18px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {loading ? (
+                  <>
+                    <div style={{ position: 'relative', width: '14px', height: '14px', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', inset: 0, border: '1.5px solid #EEE', borderTop: '1.5px solid #555', borderRadius: '50%', animation: 'scSpin .7s linear infinite' }} />
+                      <div style={{ position: 'absolute', inset: '3px', borderRadius: '50%', background: '#999' }} />
+                    </div>
+                    <span style={{ color: '#AAA' }}>Chargement du catalogue…</span>
+                  </>
+                ) : loadErr ? (
+                  <span style={{ color: '#E03020' }}>Erreur de chargement</span>
+                ) : (
+                  <span>
+                    <strong style={{ color: '#111' }}>{filtered.length.toLocaleString('fr-FR')}</strong> produits ·{' '}
+                    <strong style={{ color: '#111' }}>{cotes.toLocaleString('fr-FR')}</strong> cotés ·{' '}
+                    {market === 'EU_FR' ? 'annonces France' : 'marché américain converti'}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="sc-lang">
-                {(['EN','FR','JP'] as Lang[]).map(l=>(
-                  <button key={l} onClick={()=>setLang(l)} className={'sc-lang-btn'+(lang===l?' on':'')}>
-                    <span>{flag(l)}</span><span className="sc-lang-label">{l==='EN'?'English':l==='FR'?'Français':'日本語'}</span>
-                  </button>
-                ))}
-            </div>
-          </div>
 
-          {/* Vue : grille / par série — en pill sous l'en-tête (comme Cartes) */}
-          <div style={{display:'flex',gap:8,marginBottom:14}}>
-            <button onClick={()=>setGroupBySet(false)} className={'sc-pill'+(!groupBySet?' on':'')}>Vue grille</button>
-            <button onClick={()=>setGroupBySet(true)} className={'sc-pill'+(groupBySet?' on':'')}>Par série</button>
-          </div>
-
-          {/* Search + Sort */}
-          <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap' as const,alignItems:'center'}}>
-            <div style={{position:'relative' as const,flex:1,minWidth:200}}>
-              <span style={{position:'absolute' as const,left:11,top:'50%',transform:'translateY(-50%)',color:'#CCC',fontSize:15,pointerEvents:'none' as const}}>{String.fromCharCode(8981)}</span>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un produit scellé..." className="sc-search"/>
-            </div>
-            <div style={{display:'flex',gap:3,background:'rgba(255,255,255,0.45)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',border:'1px solid rgba(0,0,0,0.04)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.75)',borderRadius:9,padding:3}}>
-              {([['recent','Récent'],['name','Nom'],['cards','Cartes']] as ['recent'|'name'|'cards',string][]).map(([k,l])=>(
-                <button key={k} onClick={()=>setSort(k)} className={'sc-srt'+(sort===k?' on':'')}>{l}</button>
+            <div style={{ background: '#F5F5F5', borderRadius: '12px', padding: '4px', display: 'flex', gap: '3px', flexShrink: 0 }}>
+              {(['FR', 'EN'] as Lang[]).map((l) => (
+                <button key={l} onClick={() => setLang(l)} className="sc-lang"
+                  style={{ padding: '8px 14px', borderRadius: '9px', border: 'none', background: lang === l ? '#fff' : 'transparent', color: lang === l ? '#111' : '#888', fontFamily: 'var(--font-display)', fontWeight: lang === l ? 700 : 500, fontSize: '13px', cursor: 'pointer', boxShadow: lang === l ? '0 2px 8px rgba(0,0,0,.1)' : 'none', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <span>{flag(l)}</span>
+                  <span>{l === 'FR' ? 'Français' : 'English'}</span>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Bouton Filtres — mobile */}
-          {(()=>{ const n=[filEra!=='all',filSet!=='all',filType!=='all'].filter(Boolean).length; return (
-          <button className="sc-filters-toggle" onClick={()=>setScFiltersOpen(o=>!o)}
-            style={{display:'none',width:'100%',alignItems:'center',justifyContent:'space-between',height:42,padding:'0 14px',marginBottom:12,borderRadius:10,border:'1px solid rgba(0,0,0,0.06)',background:'rgba(255,255,255,0.7)',backdropFilter:'blur(20px) saturate(180%)',WebkitBackdropFilter:'blur(20px) saturate(180%)',color:'#1D1D1F',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',boxShadow:'0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.9)'}}>
-            <span style={{display:'flex',alignItems:'center',gap:8}}>
-              <span>Filtres</span>
-              {n>0&&<span style={{fontSize:11,fontWeight:700,color:'#fff',background:'#E03020',borderRadius:999,minWidth:18,height:18,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>{n}</span>}
-            </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{transform:scFiltersOpen?'rotate(180deg)':'none',transition:'transform .2s',opacity:0.5}}><path d="M3 4.5L6 7.5L9 4.5" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          )})()}
-
-          {/* Filters */}
-          <div className={'sc-sticky-bar'+(scFiltersOpen?' open':'')} style={{display:'flex',gap:8,flexWrap:'wrap' as const,alignItems:'center'}}>
-            <select className="sc-fsel" value={filEra} onChange={e=>{setFilEra(e.target.value);setFilSet('all')}} style={{color:filEra!=='all'?'#111':'#AAA'}}>
-              <option value="all">Tous les blocs</option>
-              {eras.map(e=><option key={e} value={e}>{e}</option>)}
-            </select>
-            <select className="sc-fsel" value={filSet} onChange={e=>setFilSet(e.target.value)} style={{maxWidth:220,color:filSet!=='all'?'#111':'#AAA'}}>
-              <option value="all">Toutes les séries ({setsInEra.length})</option>
-              {setsInEra.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <div style={{width:1,height:24,background:'#EBEBEB'}}/>
-            {(['all','booster','display','etb','bundle'] as ('all'|ProductType)[]).map(t=>(
-              <button key={t} onClick={()=>setFilType(t)} className={'sc-pill'+(filType===t?' on':'')}>{t==='all'?'Tous':TYPE_META[t].label}</button>
-            ))}
-            {(filEra!=='all'||filSet!=='all'||filType!=='all'||search)&&(
-              <SnowButton size="sm" variant="ghost" onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}}>✕ Effacer</SnowButton>
-            )}
-            <span style={{fontSize:11,color:'#AEAEB2',marginLeft:'auto',fontFamily:'var(--font-display)'}}>{filtered.length} produits</span>
+          {/* Recherche */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+              <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#CCC', fontSize: '15px', pointerEvents: 'none' }}>{String.fromCharCode(8981)}</span>
+              <input value={search} onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchFocus(true)} onBlur={() => setSearchFocus(false)}
+                placeholder="Rechercher un produit, une série..."
+                style={{ width: '100%', height: '40px', padding: '0 32px', border: '1px solid ' + (searchFocus ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.06)'), borderRadius: '9px', fontSize: '13px', color: '#1D1D1F', outline: 'none', background: searchFocus ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(12px) saturate(180%)', WebkitBackdropFilter: 'blur(12px) saturate(180%)', boxSizing: 'border-box' as const, fontFamily: 'var(--font-sans)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)', transition: 'all .2s cubic-bezier(.2,.85,.3,1)' }} />
+              {search ? (
+                <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#CCC', cursor: 'pointer', fontSize: '16px', padding: 0, lineHeight: 1 }}>{String.fromCharCode(215)}</button>
+              ) : null}
+            </div>
           </div>
 
-          {/* Set header when filtered */}
-          {filSet!=='all'&&(()=>{
-            const s=sets.find(x=>x.id===filSet)
-            const owned=ownedInSet(filSet)
-            const total=s?.total||0
-            const pct=total>0?Math.round(owned/total*100):0
-            return s?(
-              <div style={{background:'linear-gradient(135deg,#FAFAFA,#F0F0F2)',border:'1px solid #E5E5EA',borderRadius:16,padding:'20px 24px',marginBottom:20,display:'flex',alignItems:'center',gap:24,flexWrap:'wrap' as const}}>
-                {s.logo&&<img src={s.logo} alt="" style={{height:48,maxWidth:200,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                <div style={{flex:1,minWidth:180}}>
-                  <div style={{fontSize:18,fontWeight:700,color:'#1D1D1F',fontFamily:'var(--font-display)'}}>{s.name}</div>
-                  {s.serie&&<div style={{fontSize:11,color:'#86868B',fontFamily:'var(--font-display)',marginBottom:8}}>{s.serie} · {s.releaseDate?.slice(0,4)} · {s.total} cartes</div>}
-                  <div style={{display:'flex',alignItems:'center',gap:12}}>
-                    <div style={{height:6,flex:1,maxWidth:200,background:'#E5E5EA',borderRadius:3,overflow:'hidden'}}><div style={{height:'100%',width:pct+'%',background:pct===100?'#2E9E6A':pct>50?'#F5A623':'#E03020',borderRadius:3,transition:'width .4s'}}/></div>
-                    <span style={{fontSize:12,fontWeight:600,color:pct===100?'#2E9E6A':'#1D1D1F',fontFamily:'var(--font-data)'}}>{owned}/{total} ({pct}%)</span>
-                  </div>
-                </div>
-              </div>
-            ):null
-          })()}
+          {/* Filtres */}
+          <div className="kfilters-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', position: 'sticky' as const, top: 0, zIndex: 30, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', padding: '14px 12px', margin: '0 -12px 18px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)' }}>
+            <PillSelect
+              options={facets.map((f) => f.label)}
+              value={filSku === 'all' ? 'all' : (labelOfSku[filSku] || 'all')}
+              onChange={(v) => setFilSku(v === 'all' ? 'all' : (skuOfLabel[v] || 'all'))}
+              allLabel="Tous les produits"
+              minWidth={186}
+              disabled={loading}
+            />
+            <SetSelect
+              sets={setsLite}
+              value={filSet}
+              onChange={(id) => setFilSet(id)}
+              blocOf={(sid) => setBloc[sid] || 'Autre'}
+              blocOrder={BLOC_ORDER}
+              logos={setLogos}
+              disabled={loading}
+            />
+            {isInvestor ? (
+              <button className="fsel" onClick={() => setSortBooster((v) => !v)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, color: sortBooster ? '#1D1D1F' : '#86868B', background: sortBooster ? 'rgba(224,48,32,0.04)' : undefined, borderColor: sortBooster ? 'rgba(224,48,32,0.35)' : undefined }}>
+                {sortBooster ? 'Prix au booster' : 'Cote décroissante'}
+              </button>
+            ) : null}
+            {hasFilters ? (
+              <button onClick={() => { setFilSku('all'); setFilSet('all'); setSearch('') }}
+                style={{ height: '34px', padding: '0 12px', borderRadius: '7px', border: '1px solid #EBEBEB', background: '#fff', color: '#888', fontSize: '12px', cursor: 'pointer', fontFamily: 'var(--font-display)' }}>
+                Réinitialiser
+              </button>
+            ) : null}
+            <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#AAA' }}>
+              {filtered.length.toLocaleString('fr-FR')} produits
+            </span>
+          </div>
 
-          {/* Grid */}
-          {!groupBySet && (
-            <div className="sc-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
-              {pageItems.map((item,idx)=>{
-                const tm=TYPE_META[item.type]
-                const owned=ownedInSet(item.setId)
-                const isSel=selId===item.id
-                const realImg=findRealImg(item.name,item.setName,item.type)
-                return (
-                  <div key={item.id} className="sc-card" onClick={()=>setSelId(isSel?null:item.id)}
-                    style={{background:'#fff',border:'1.5px solid '+(isSel?'#111':'#EBEBEB'),boxShadow:isSel?'0 8px 28px rgba(0,0,0,.1)':'0 2px 8px rgba(0,0,0,.04)',animation:'cardIn .28s '+Math.min(idx,18)*.025+'s ease-out both'}}>
-                    <div style={{height:180,background:'#F5F5F5',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      {realImg ? (
-                        <img src={realImg} alt={item.name} className="sc-img"
-                          style={{maxWidth:'88%',maxHeight:'88%',objectFit:'contain' as const,filter:'drop-shadow(0 4px 12px rgba(0,0,0,.1))'}}
-                          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                      ) : (
-                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                          {item.logo&&<img src={item.logo} alt="" style={{height:32,maxWidth:120,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                          <div style={{fontSize:11,fontWeight:600,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{tm.label}</div>
-                        </div>
-                      )}
-                      <div style={{position:'absolute',top:6,left:6,zIndex:2,padding:'2px 6px',borderRadius:4,background:item.type==='booster'?'#F5EAFF':item.type==='display'?'#F0F5FF':item.type==='etb'?'#FFF5F0':'#FFFDE0',fontSize:8,fontWeight:600,color:item.type==='booster'?'#7B2D8B':item.type==='display'?'#003DAA':item.type==='etb'?'#C84B00':'#8B6E00',fontFamily:'var(--font-display)',letterSpacing:'.02em'}}>{tm.label}</div>
-                      {owned>0&&<div style={{position:'absolute',top:6,right:6,width:20,height:20,borderRadius:'50%',background:'#27500A',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>}
-                    </div>
-                    <div style={{padding:'10px 12px 12px'}}>
-                      <div className="sc-name" style={{fontSize:13,fontWeight:600,color:'#111',fontFamily:'var(--font-display)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,lineHeight:1.3}}>{item.name}</div>
-                      <div style={{fontSize:10,color:'#AEAEB2',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'flex',alignItems:'center',gap:4}}>
-                        {item.logo&&<img src={item.logo} alt="" style={{height:11,maxWidth:40,objectFit:'contain' as const,opacity:.6}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                        <span>{item.setName}</span>
-                        <span style={{fontFamily:'monospace',marginLeft:2}}>{item.year}</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+          {!loading && !loadErr ? (
+            <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' as const, marginBottom: '10px' }}>
+              {Math.min(visible, filtered.length)} / {filtered.length} produits affichés
             </div>
-          )}
+          ) : null}
 
-          {/* Grouped by set */}
-          {groupBySet && grouped && grouped.map(([setId,prods])=>{
-            const s=sets.find(x=>x.id===setId)
-            const owned=ownedInSet(setId)
-            return (
-              <div key={setId} style={{marginBottom:24,background:'#fff',border:'1px solid #EBEBEB',borderRadius:16,overflow:'hidden'}}>
-                <div style={{padding:'16px 20px',borderBottom:'1px solid #F0F0F0',display:'flex',alignItems:'center',gap:14}}>
-                  {s?.logo&&<img src={s.logo} alt="" style={{height:24,maxWidth:100,objectFit:'contain' as const}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)'}}>{s?.name||setId}</div>
-                    <div style={{fontSize:10,color:'#AEAEB2'}}>{s?.serie} · {s?.releaseDate?.slice(0,4)} · {owned}/{s?.total||0} cartes</div>
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(185px,1fr))', gap: '12px' }}>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: '12px', overflow: 'hidden' as const, animation: 'scCardIn .35s ' + i * 0.03 + 's cubic-bezier(.2,.85,.3,1) both' }}>
+                  <div className="sc-skel" style={{ height: '160px', borderRadius: 0 }} />
+                  <div style={{ padding: '10px 12px 12px' }}>
+                    <div className="sc-skel" style={{ height: '11px', width: '72%', marginBottom: '7px' }} />
+                    <div className="sc-skel" style={{ height: '9px', width: '48%', marginBottom: '10px' }} />
+                    <div className="sc-skel" style={{ height: '13px', width: '38%' }} />
                   </div>
                 </div>
-                <div style={{display:'flex',gap:0,overflowX:'auto' as const,scrollbarWidth:'none' as any}}>
-                  {prods.map(p=>{
-                    const isSel=selId===p.id
-                    return (
-                      <div key={p.id} onClick={()=>setSelId(isSel?null:p.id)}
-                        style={{flex:'0 0 180px',padding:14,borderRight:'1px solid #F5F5F5',cursor:'pointer',background:isSel?'#F5F5F7':'transparent',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                        <SealedImg type={p.type} logo={p.logo} setName={p.setName} selected={isSel} realImg={findRealImg(p.name,p.setName,p.type)||undefined}/>
-                        <div style={{fontSize:11,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',textAlign:'center' as const}}>{TYPE_META[p.type].label}</div>
-                        <div style={{fontSize:9,color:'#AEAEB2',textAlign:'center' as const}}>{TYPE_META[p.type].cards} cartes</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-
-          {hasMore&&<div ref={sentinelRef} style={{display:'flex',justifyContent:'center',padding:'32px 0'}}><div style={{display:'flex',alignItems:'center',gap:8,color:'#AEAEB2',fontSize:12,fontFamily:'var(--font-display)'}}><div style={{width:16,height:16,border:'2px solid #E5E5EA',borderTop:'2px solid #86868B',borderRadius:'50%',animation:'spin .7s linear infinite'}}/>Chargement...</div></div>}
-          {!hasMore&&filtered.length>CHUNK&&<div style={{textAlign:'center' as const,padding:'20px 0',color:'#AEAEB2',fontSize:11,fontFamily:'var(--font-display)'}}>{filtered.length} produits affichés</div>}
-          {filtered.length===0&&sets.length>0&&(
-            <div style={{textAlign:'center' as const,padding:'60px 20px'}}>
-              <div style={{fontSize:48,opacity:.15,marginBottom:16}}>📦</div>
-              <div style={{fontSize:16,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',marginBottom:6}}>Aucun produit trouvé</div>
-              <SnowButton variant="primary" onClick={()=>{setFilEra('all');setFilSet('all');setFilType('all');setSearch('')}}>Effacer les filtres</SnowButton>
+              ))}
             </div>
-          )}
+          ) : null}
+
+          {!loading && filtered.length === 0 ? (
+            <div style={{ padding: '56px 0', textAlign: 'center' as const, color: '#888', fontSize: '13px' }}>
+              Aucun produit ne correspond.
+            </div>
+          ) : null}
+
+          <div style={{ display: loading ? 'none' : 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(185px,1fr))', gap: '12px' }}>
+            {pageItems.map((it, idx) => {
+              const sel = selId === it.id
+              return (
+                <div key={it.id} className="sc-card" onClick={() => setSelId(sel ? null : it.id)}
+                  style={{
+                    background: 'rgba(255,255,255,0.65)',
+                    border: '1px solid ' + (sel ? '#1D1D1F' : 'rgba(0,0,0,0.05)'),
+                    borderRadius: '12px', overflow: 'hidden' as const, cursor: 'pointer',
+                    boxShadow: sel
+                      ? '0 0 0 1px #1D1D1F, 0 16px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)'
+                      : '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    animation: 'scCardIn .35s ' + Math.min(idx, 18) * 0.025 + 's cubic-bezier(.2,.85,.3,1) both',
+                  }}>
+                  <div style={{ position: 'relative' as const }}>
+                    <Visual item={it} h="160px" />
+                    <div style={{ position: 'absolute' as const, bottom: 7, left: 7, zIndex: 2, padding: '3px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.92)', fontSize: 7.5, fontWeight: 700, color: '#6E6E73', fontFamily: 'var(--font-display)', letterSpacing: '.04em', textTransform: 'uppercase' as const, boxShadow: '0 2px 6px rgba(0,0,0,0.08)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+                      {it.skuLabel}
+                    </div>
+                    <div style={{ position: 'absolute' as const, bottom: 6, right: 7, fontSize: 11, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px) saturate(180%)', WebkitBackdropFilter: 'blur(10px) saturate(180%)', borderRadius: 5, padding: '2px 6px', boxShadow: '0 2px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95)', border: '1px solid rgba(0,0,0,0.04)' }}>
+                      {flag(it.lang === 'EN' ? 'EN' : 'FR')}
+                    </div>
+                  </div>
+                  <div style={{ padding: '10px 12px 12px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', marginBottom: '3px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, lineHeight: 1.3 }}>
+                      {it.setName || it.name}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#86868B', marginBottom: '7px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                      {it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
+                    </div>
+                    {it.price && it.price.value > 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
+                          {it.price.isAsking ? <span style={{ fontSize: '10px', fontWeight: 500, color: '#888', marginRight: '3px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
+                          {eur(it.price.value)}
+                        </span>
+                        {it.price.sellers ? (
+                          <span style={{ fontSize: '10px', color: '#AAA' }}>{it.price.sellers} vendeurs</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {it.price && it.price.value > 0 && isInvestor && it.price.perBooster ? (
+                      <div style={{ fontSize: '10.5px', color: '#6E6E73', marginTop: '3px', fontFamily: 'var(--font-data)' }}>
+                        {eur(it.price.perBooster)} <span style={{ color: '#AAA', fontFamily: 'var(--font-display)' }}>/ booster</span>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '11px', color: '#AAA' }}>Données insuffisantes</div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div ref={sentinelRef} style={{ height: 1 }} />
         </div>
 
-        {/* Detail panel */}
-        {selProduct && (
-          <div  style={{width:285,flexShrink:0,position:'sticky' as any,top:80,maxHeight:'calc(100vh - 100px)',overflowY:'auto' as any}}>
-            <div className="sc-panel">
-              <div style={{background:'linear-gradient(135deg,#F8F8FA,#EDEDF0)',display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 0',position:'relative',minHeight:160}}>
-                <SealedImg type={selProduct.type} logo={selProduct.logo} setName={selProduct.setName} selected={false} realImg={findRealImg(selProduct.name,selProduct.setName,selProduct.type)||undefined}/>
-                <button onClick={()=>setSelId(null)} style={{position:'absolute',top:8,left:8,width:26,height:26,borderRadius:'50%',background:'rgba(255,255,255,.9)',border:'1px solid rgba(0,0,0,.08)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        {/* Drawer lateral */}
+        {selected ? (
+          <aside className="sc-panel" style={{ width: '420px', flexShrink: 0, position: 'sticky' as const, top: '16px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '14px', boxShadow: '0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)', overflow: 'hidden' as const, animation: 'scFadeIn .2s ease-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '10px', color: '#AAA', textTransform: 'uppercase' as const, letterSpacing: '.1em', fontFamily: 'var(--font-display)' }}>Aperçu</span>
+              <button onClick={() => setSelId(null)} style={{ background: 'none', border: 'none', color: '#AAA', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: 0 }}>{String.fromCharCode(215)}</button>
+            </div>
+
+            <div style={{ padding: '16px' }}>
+              <div style={{ borderRadius: '10px', overflow: 'hidden' as const, border: '1px solid rgba(0,0,0,0.05)', marginBottom: '14px' }}>
+                <Visual item={selected} h="220px" />
               </div>
-              <div style={{padding:14}}>
-                <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8,marginBottom:2}}>
-                  <div style={{fontSize:16,fontWeight:700,color:'#111',fontFamily:'var(--font-display)',lineHeight:1.2}}>{selProduct.name}</div>
-                  <span style={{flexShrink:0,padding:'3px 8px',borderRadius:5,background:selProduct.type==='booster'?'#F5EAFF':selProduct.type==='display'?'#F0F5FF':selProduct.type==='etb'?'#FFF5F0':'#FFFDE0',color:selProduct.type==='booster'?'#7B2D8B':selProduct.type==='display'?'#003DAA':selProduct.type==='etb'?'#C84B00':'#8B6E00',fontSize:9,fontWeight:600,fontFamily:'var(--font-display)'}}>{TYPE_META[selProduct.type].label}</span>
+
+              <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '3px' }}>
+                {flag(selected.lang === 'EN' ? 'EN' : 'FR')} {selected.setName || ''}
+              </div>
+              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', margin: '0 0 12px', lineHeight: 1.25 }}>
+                {selected.skuLabel}{selected.content ? ' · ' + selected.content.label : ''}
+              </h2>
+
+              <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: '10px', padding: '13px 14px', marginBottom: '14px' }}>
+                <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
+                  {selected.price?.isAsking ? 'Annonces en cours' : 'Prix de marché'}
                 </div>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10,marginBottom:14,padding:'8px 10px',background:'#F8F8FA',borderRadius:8,border:'1px solid #F0F0F2'}}>
-                  {selProduct.logo&&<img src={selProduct.logo} alt="" style={{height:22,maxWidth:80,objectFit:'contain' as const,flexShrink:0}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>}
-                  <div style={{minWidth:0}}>
-                    <div style={{fontSize:11,fontWeight:600,color:'#1D1D1F',fontFamily:'var(--font-display)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{selProduct.setName}</div>
-                    <div style={{fontSize:9,color:'#AEAEB2',fontFamily:'var(--font-display)'}}>{selProduct.serie} · {selProduct.year}</div>
+                {selected.price && selected.price.value > 0 ? (
+                  <>
+                    <div style={{ fontSize: '26px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)', letterSpacing: '-.5px' }}>
+                      {selected.price.isAsking ? <span style={{ fontSize: '14px', fontWeight: 500, color: '#888', marginRight: '5px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
+                      {eur(selected.price.value)}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#86868B', marginTop: '4px' }}>
+                      {selected.price.sellers ? selected.price.sellers + ' vendeurs' : ''}
+                      {selected.price.sampleSize ? ' · ' + selected.price.sampleSize + ' annonces' : ''}
+                      {selected.price.market === 'US' ? ' · marché américain converti' : ' · France'}
+                    </div>
+                    {selected.price.perBooster ? (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>{eur(selected.price.perBooster)}</span>
+                        <span style={{ fontSize: '11.5px', color: '#86868B' }}>par booster · {selected.boosters} au total</span>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div style={{ fontSize: '14px', color: '#AAA' }}>Données insuffisantes</div>
+                )}
+              </div>
+
+              {isInvestor && selected.price && selected.price.value > 0 ? (
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
+                    Lecture de marché
+                  </div>
+                  {usableLow(selected.price) ? (
+                    <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Fourchette</span>
+                      <span style={{ fontSize: '12.5px', color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>
+                        {eur(usableLow(selected.price) as number)} — {eur(selected.price.value)}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', animationDelay: '.05s' }}>
+                    <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Liquidité</span>
+                    <span style={{ fontSize: '12.5px', color: '#1D1D1F' }}>
+                      {(selected.price.sellers ?? 0) >= 15 ? 'Élevée' : (selected.price.sellers ?? 0) >= 6 ? 'Moyenne' : 'Faible'}
+                      <span style={{ color: '#AAA', fontFamily: 'var(--font-data)', marginLeft: 5 }}>{selected.price.sellers ?? 0}</span>
+                    </span>
+                  </div>
+                  <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', animationDelay: '.1s' }}>
+                    <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Nature du prix</span>
+                    <span style={{ fontSize: '12.5px', color: '#1D1D1F' }}>
+                      {selected.price.isAsking ? 'Annonces (décotées)' : 'Ventes conclues'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#AAA', marginTop: '8px', lineHeight: 1.45 }}>
+                    Pas encore assez d&apos;historique pour une variation. Les écarts s&apos;afficheront à mesure que les relevés s&apos;accumulent.
                   </div>
                 </div>
-                <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:14}}>
-                  {[['Contenu',TYPE_META[selProduct.type].cards+' cartes'],['Cartes dans le set',String(selProduct.total)],['Année',String(selProduct.year)],['Bloc',selProduct.serie]].map(([l,v])=>(
-                    <div key={l} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-                      <span style={{fontSize:10,color:'#AAA',fontFamily:'var(--font-display)',flexShrink:0}}>{l}</span>
-                      <span style={{fontSize:11,color:'#111',fontFamily:'var(--font-display)',fontWeight:500,textAlign:'right' as const,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{v}</span>
-                    </div>
-                  ))}
-                </div>
-                {(()=>{
-                  const owned=ownedInSet(selProduct.setId)
-                  const total=selProduct.total
-                  const pct=total>0?Math.round(owned/total*100):0
-                  return (
-                    <div style={{background:'#F5F5F7',borderRadius:10,padding:'10px 12px',marginBottom:12}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                        <span style={{fontSize:10,color:'#86868B',fontFamily:'var(--font-display)'}}>Ma collection</span>
-                        <span style={{fontSize:10,fontWeight:600,color:pct===100?'#2E9E6A':'#1D1D1F',fontFamily:'var(--font-data)'}}>{owned}/{total} ({pct}%)</span>
-                      </div>
-                      <div style={{height:4,borderRadius:2,background:'#E8E8ED',overflow:'hidden'}}>
-                        <div style={{width:pct+'%',height:'100%',borderRadius:2,background:pct===100?'linear-gradient(90deg,#C9A84C,#D4AF37)':'#E03020',transition:'width .3s'}}/>
-                      </div>
-                    </div>
-                  )
-                })()}
-                <SnowButton fullWidth variant="primary" onClick={()=>openSealedModal()}>
-                  + Ajouter au portfolio
-                </SnowButton>
-              </div>
+              ) : null}
+
+              <button onClick={openModal} className="sc-cta"
+                style={{ width: '100%', height: '44px', borderRadius: '10px', background: '#1D1D1F', color: '#fff', border: 'none', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+                <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> Ajouter au portfolio
+              </button>
             </div>
-          </div>
-        )}
+          </aside>
+        ) : null}
       </div>
-          <AddSealedModal open={!!sealedSeed} onClose={() => setSealedSeed(null)} product={sealedSeed} onAdd={handleSealedAdd} />
+
+      <AddSealedModal open={!!sealedSeed} onClose={() => setSealedSeed(null)} product={sealedSeed} onAdd={handleSealedAdd} />
     </>
   )
 }

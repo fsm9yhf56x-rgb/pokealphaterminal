@@ -1,0 +1,64 @@
+name: kodo-sealed-fr
+
+# Scelle FR : decouverte + cote depuis les annonces eBay FR, puis retypage et
+# peremption. Cron PROPRE (pas de workflow_run) : la chaine nocturne casse deja
+# au 4e maillon et le scelle FR n'a aucune dependance vers les autres ingests.
+#
+# 05:30 UTC : apres le scelle EN/JP (03:00), le graded FR (03:30), le catalogue
+# (04:00 le lundi) et la pop PSA (05:00). Aucune collision.
+#
+# Quota : ~175 series x 4 requetes = 700 appels eBay Browse, tres loin du plafond.
+# Ne consomme AUCUN credit PokeTrace ni PPT.
+
+on:
+  schedule:
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+    inputs:
+      sets:
+        description: 'Series a cibler (csv, vide = toutes)'
+        required: false
+        default: ''
+
+concurrency:
+  group: kodo-sealed-fr
+  cancel-in-progress: false
+
+jobs:
+  sealed-fr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # npm install et non npm ci : le lock omet les deps @emnapi/* de sharp sur
+      # macOS-arm64 alors que linux-x64 les reclame (panne CI du 13/07).
+      - run: npm install
+
+      - name: Ingest scelle FR (eBay)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+          KODO_SEALED_SETS: ${{ github.event.inputs.sets }}
+        run: node scripts/kodo-ingest-sealed-fr.mjs --commit
+
+      # Idempotent et gratuit : rattrape les produits que l'ingest PPT de 03:00
+      # vient d'ajouter avec le product_type fournisseur.
+      - name: Retypage depuis les noms
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          node scripts/kodo-sealed-normalize.mjs --lang fr --commit
+          node scripts/kodo-sealed-normalize.mjs --lang en --commit
+
+      # Une cote non revue depuis plusieurs cycles est morte : on la retire
+      # plutot que de l'afficher comme actuelle.
+      - name: Peremption des cotes mortes
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-sealed-expire.mjs --commit

@@ -133,23 +133,24 @@ async function search(tk, q, minPrice) {
 
 // Idempotent : la colonne d'identite eBay est posee au premier run et jamais retouchee.
 await sql.query(`ALTER TABLE k_sealed_products ADD COLUMN IF NOT EXISTS ebay_epid text`);
+await sql.query(`ALTER TABLE k_sealed_products ADD COLUMN IF NOT EXISTS sku_source text`);
 
 async function upsertProducts(rows) {
   if (!rows.length) return;
   await sql.query(
     `INSERT INTO k_sealed_products
        (id, tcgplayer_id, lang, name, set_name, set_id, product_type, image_url,
-        kodo_set_id, sku, content_qty, content_unit, source, first_seen_at, last_seen_at, ebay_epid)
+        kodo_set_id, sku, content_qty, content_unit, source, first_seen_at, last_seen_at, ebay_epid, sku_source)
      SELECT * FROM unnest(
        $1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
-       $9::text[], $10::text[], $11::int[], $12::text[], $13::text[], $14::timestamptz[], $15::timestamptz[], $16::text[])
+       $9::text[], $10::text[], $11::int[], $12::text[], $13::text[], $14::timestamptz[], $15::timestamptz[], $16::text[], $17::text[])
      ON CONFLICT (id) DO UPDATE SET
        name=EXCLUDED.name, set_name=EXCLUDED.set_name, product_type=EXCLUDED.product_type,
        image_url=COALESCE(EXCLUDED.image_url, k_sealed_products.image_url),
        ebay_epid=COALESCE(EXCLUDED.ebay_epid, k_sealed_products.ebay_epid),
        kodo_set_id=EXCLUDED.kodo_set_id, sku=EXCLUDED.sku,
        content_qty=EXCLUDED.content_qty, content_unit=EXCLUDED.content_unit,
-       last_seen_at=EXCLUDED.last_seen_at, updated_at=now()`,
+       last_seen_at=EXCLUDED.last_seen_at, sku_source='parser', updated_at=now()`,
     [
       rows.map((r) => r.id), rows.map(() => null), rows.map(() => 'fr'),
       rows.map((r) => r.name), rows.map((r) => r.setName), rows.map((r) => r.setId),
@@ -157,7 +158,7 @@ async function upsertProducts(rows) {
       rows.map((r) => r.setId), rows.map((r) => r.sku),
       rows.map((r) => (r.content ? r.content.qty : null)), rows.map((r) => (r.content ? r.content.unit : null)),
       rows.map(() => 'ebay_fr'), rows.map(() => new Date()), rows.map(() => new Date()),
-      rows.map((r) => r.epid || null),
+      rows.map((r) => r.epid || null), rows.map(() => 'parser'),
     ]
   );
 }

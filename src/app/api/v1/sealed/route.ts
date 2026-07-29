@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
 
     const rows = await sql.query(
       `SELECT p.id, p.name, p.lang, p.sku, p.product_type, p.set_name, p.set_id,
-              p.kodo_set_id, p.content_qty, p.content_unit, p.image_url, p.source,
+              p.kodo_set_id, p.content_qty, p.content_unit, p.image_url, p.source, p.sku_source,
               sp.market_eur, sp.low_eur, sp.raw_eur, sp.method, sp.market, sp.is_asking,
               sp.sellers, sp.sample_size, sp.as_of, sp.updated_at,
               ks.name_fr AS set_name_fr, ks.logo_url, ks.series
@@ -112,7 +112,11 @@ export async function GET(req: NextRequest) {
       const contentQty = r.content_qty == null ? null : Number(r.content_qty);
       const unit = r.content_unit ? String(r.content_unit) : null;
       const skuKey = r.sku ? String(r.sku) : null;
-      const boosters = boosterCount(skuKey, contentQty, unit);
+      // Le SKU n'est fiable que s'il vient du parseur de titres (source ebay_fr).
+      // Cote EN il est derive du product_type PPT, qui range un CASE de 6 bundles
+      // sous 'Booster Bundle' -> tout calcul par booster serait faux.
+      const skuTrusted = String(r.sku_source || '') === 'parser' || String(r.source || '') === 'ebay_fr';
+      const boosters = skuTrusted ? boosterCount(skuKey, contentQty, unit) : null;
       const low = r.low_eur == null ? null : Number(r.low_eur);
       return {
         id: String(r.id),
@@ -128,11 +132,12 @@ export async function GET(req: NextRequest) {
         image: servableImage(r.image_url as string | null, r.source as string | null),
         // contenu certain -> le collectionneur peut comparer un display a un demi-display
         boosters,
+        skuTrusted,
         price: value == null || !(value > 0) ? null : {
           value,
           currency: 'EUR',
           low: low != null && low > 0 && low <= value ? low : null,
-          perBooster: boosters ? Math.round((value / boosters) * 100) / 100 : null,
+          perBooster: boosters && boosters > 1 ? Math.round((value / boosters) * 100) / 100 : null,
           // true -> l'UI DOIT afficher "des X EUR", pas "X EUR"
           isAsking: Boolean(r.is_asking),
           method: r.method ? String(r.method) : null,
@@ -146,6 +151,11 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    const totalRows = await sql.query(
+      `SELECT count(*)::int n FROM k_sealed_products p WHERE ${where.slice(0, where.length).join(' AND ')}`,
+      params.slice(0, params.length - 2)
+    );
+
     const facets = await sql.query(
       `SELECT p.sku, count(*)::int n, count(sp.market_eur)::int cotes
          FROM k_sealed_products p
@@ -158,6 +168,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       lang: lang.toUpperCase(),
       count: items.length,
+      total: totalRows[0] ? Number(totalRows[0].n) : items.length,
       // le marche dont sortent ces prix, pour que l'UI puisse l'annoncer honnetement
       priceMarket: lang === 'fr' ? 'EU_FR' : 'US',
       items,

@@ -81,33 +81,40 @@ export const SKU_LABEL = {
 // Un titre matche le PREMIER motif -> "case etb" sort en CASE, jamais en ETB.
 const SKU_RULES = [
   // "case de 6 displays", "case 24 blisters", "carton de 6" -- MAIS PAS "dans sa case individuelle"
-  { sku: SKU.CASE, re: /\b(case|carton)\b(?!\s*(individuelle|de\s*protection|acrylique|plexi))/ },
+  // "case" au sens carton. Pieges anglais : "Special Case File" et "On the Case"
+  // (jeux de mots Detective Pikachu) ne sont pas des cartons.
+  { sku: SKU.CASE, re: /(?<!on\s+the\s+)\b(case|carton)\b(?!\s*(individuelle|de\s*protection|acrylique|plexi|files?\b|study\b))/ },
   { sku: SKU.DISPLAY_BUNDLE, re: /\b(display|boite|lot)\b[^a-z]{0,12}\b(de\s*)?\d{1,2}\s*bundles?\b|\bdisplay\s*bundle\b|\b\d{1,2}\s*bundles?\b/ },
-  { sku: SKU.DISPLAY_TIN, re: /\b\d{1,2}\s*mini[\s-]*tins?\b|\b(display|presentoir|boite)\b(?:\s+[a-z0-9']+){0,4}\s+mini[\s-]*tins?\b/ },
-  { sku: SKU.DEMI_DISPLAY, re: /\b(demi[\s-]*display|1\/2\s*display|half\s*display|18\s*boosters?)\b/ },
-  { sku: SKU.DISPLAY, re: /\b(display|booster\s*box)\b|\b(boite|boitier)\b[^a-z]{0,12}\b(de\s*)?36\b|\b36\s*boosters?\b/ },
+  { sku: SKU.DECK, re: /\bbuild\s*&?\s*battle\b[^a-z]{0,12}(box\s*)?display\b|\bdecks?\b[^a-z]{0,12}display\b/ },
+  { sku: SKU.COFFRET, re: /\b(pin|figure|premium)?\s*collection\b[^a-z]{0,12}display\b/ },
+  { sku: SKU.BLISTER, re: /\bblisters?\b[^a-z]{0,12}display\b/ },
+  { sku: SKU.DISPLAY_TIN, re: /\b\d{1,2}\s*mini[\s-]*tins?\b|\b(display|presentoir|boite)\b(?:\s+[a-z0-9']+){0,4}\s+mini[\s-]*tins?\b|\bmini[\s-]*tins?\b[^a-z]{0,12}display\b/ },
+  { sku: SKU.DEMI_DISPLAY, re: /\b(demi[\s-]*display|1\/2\s*display|half\s*display|half\s*booster\s*box(es)?|18\s*boosters?)\b/ },
+  { sku: SKU.DISPLAY, re: /\b(display|booster\s*box(es)?)\b|\b(boite|boitier)\b[^a-z]{0,12}\b(de\s*)?36\b|\b36\s*boosters?\b/ },
   { sku: SKU.ETB, re: /\betb\b|\bcoffret\s*(du\s*)?dresseur\s*d?'?\s*elite\b|\belite\s*trainer\s*box\b|\bdresseur\s*elite\b/ },
   { sku: SKU.BUNDLE, re: /\bbundle\b|\b6\s*boosters?\b/ },
   { sku: SKU.TRIPACK, re: /\btri[\s-]*pack\b|\b3\s*boosters?\b|\bpack\s*de\s*3\b/ },
   { sku: SKU.BLISTER, re: /\bblisters?\b/ },
   { sku: SKU.TIN, re: /\b(pokebox|poke\s*box|mini[\s-]*tins?|tins?)\b/ },
-  { sku: SKU.DECK, re: /\b(deck|starter|paquet\s*de\s*combat)\b/ },
-  { sku: SKU.COFFRET, re: /\bcoffrets?\b|\bcollection\s*(premium|speciale)\b/ },
-  { sku: SKU.BOOSTER, re: /\bboosters?\b|\bsachets?\b/ },
+  { sku: SKU.DECK, re: /\b(deck|starter|paquet\s*de\s*combat|theme\s*deck|league\s*battle\s*deck|build\s*&?\s*battle)\b/ },
+  { sku: SKU.COFFRET, re: /\bcoffrets?\b|\bcollection\s*(premium|speciale)\b|\b(premium\s*)?collection\b|\bbox\b/ },
+  { sku: SKU.BOOSTER, re: /\bboosters?\b|\bsachets?\b|\bsleeved\s*booster\b|\bpromo\s*pack\b/ },
 ];
 
 // "case 24 blisters", "display 10 bundles", "8 mini-tins" -> {qty, unit}
 // Sans ca, un case de 6 displays et un case de 24 blisters tomberaient dans le meme panier.
-const CONTENT_RE = /\b(\d{1,2})\s*(displays?|bundles?|blisters?|etb|coffrets?|mini[\s-]*tins?|tins?|boosters?)\b/;
-const CONTENT_UNIT = { display: 'display', bundle: 'bundle', blister: 'blister', etb: 'etb', coffret: 'coffret', minitin: 'mini_tin', tin: 'mini_tin', booster: 'booster' };
+const CONTENT_RE = /\bset\s*of\s*(\d{1,3})\b|\b(\d{1,3})\s*(displays?|bundles?|blisters?|etb|coffrets?|mini[\s-]*tins?|tins?|boosters?|packs?)\b/;
+const CONTENT_UNIT = { display: 'display', bundle: 'bundle', blister: 'blister', etb: 'etb', coffret: 'coffret', minitin: 'mini_tin', tin: 'mini_tin', booster: 'booster', pack: 'booster' };
 
 export function detectContent(n) {
   const m = CONTENT_RE.exec(n);
   if (!m) return null;
-  const key = m[2].replace(/[\s-]/g, '').replace(/s$/, '');
+  // "[Set of 8]" ne dit PAS de quoi : quantite sans unite, inexploitable seule
+  if (m[1] && !m[3]) return null;
+  const key = String(m[3] || '').replace(/[\s-]/g, '').replace(/s$/, '');
   const unit = CONTENT_UNIT[key] || null;
   if (!unit) return null;
-  return { qty: Number(m[1]), unit };
+  return { qty: Number(m[2]), unit };
 }
 
 export function detectSku(n) {
@@ -236,12 +243,21 @@ export function parseSealedTitle(title, opts = {}) {
 // Un ETB contient 8, 9 ou 10 boosters selon l'epoque, un coffret est variable :
 // pour ceux-la on ne publie PAS de prix au booster plutot qu'un chiffre invente.
 export const BOOSTERS_PER_SKU = { display: 36, demi_display: 18, bundle: 6, tripack: 3, booster: 1 };
+// Standardises dans TOUS les marches : un display fait 36 boosters partout.
+export const BOOSTERS_UNIVERSAL = { display: 36, demi_display: 18 };
 
-/** boosters contenus, ou null si le contenu n'est pas certain */
-export function boosterCount(sku, content) {
+/**
+ * Boosters contenus, ou null si le contenu n'est pas certain.
+ * @param {string} [lang] 'fr' -> table complete (les libelles FR designent les
+ *   produits officiels). Ailleurs, table restreinte : TCGplayer vend ses propres
+ *   lots sous le mot "bundle" ("Sleeved Booster Pack Bundle [Set of 8]"), les
+ *   compter pour 6 donnerait un prix au booster faux.
+ */
+export function boosterCount(sku, content, lang) {
   if (sku === 'display_bundle' && content && content.unit === 'bundle') return content.qty * 6;
   if (sku === 'case' && content && content.unit === 'display') return content.qty * 36;
-  const n = BOOSTERS_PER_SKU[sku];
+  const table = String(lang || '').toLowerCase() === 'fr' ? BOOSTERS_PER_SKU : BOOSTERS_UNIVERSAL;
+  const n = table[sku];
   return n == null ? null : n;
 }
 

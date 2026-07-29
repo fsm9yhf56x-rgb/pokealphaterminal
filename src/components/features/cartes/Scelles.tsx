@@ -39,7 +39,7 @@ interface SealedItem {
   content: { qty: number; unit: string; label: string } | null
   setId: string | null; setName: string | null; series: string | null
   setLogo: string | null; image: string | null
-  boosters: number | null
+  boosters: number | null; skuTrusted?: boolean
   price: SealedPrice | null
 }
 
@@ -74,14 +74,17 @@ const eur = (n: number) =>
 function Visual({ item, h, small }: { item: SealedItem; h: string; small?: boolean }) {
   const [broken, setBroken] = useState(false)
   const [loaded, setLoaded] = useState(false)
-  const packshot = !broken && item.image ? item.image : null
+  // TCGplayer sert un placeholder "Image Coming Soon" pour les produits non
+  // photographies : ce n'est pas une illustration, on tombe sur le logo de serie.
+  const isPlaceholder = !!item.image && /coming.?soon|placeholder|no.?image|blank/i.test(item.image)
+  const packshot = !broken && item.image && !isPlaceholder ? item.image : null
   const logo = !packshot && item.setLogo ? item.setLogo : null
   return (
-    <div className="sc-visual" style={{ height: h, background: 'rgba(0,0,0,0.025)', position: 'relative' as const, overflow: 'hidden' as const, borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="sc-visual" style={{ height: h, background: packshot ? '#fff' : 'rgba(0,0,0,0.025)', position: 'relative' as const, overflow: 'hidden' as const, borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {packshot ? (
         <img src={packshot} alt="" onError={() => setBroken(true)} onLoad={() => setLoaded(true)}
           className={loaded ? 'sc-img-in' : undefined}
-          style={{ maxWidth: '84%', maxHeight: '84%', objectFit: 'contain' as const, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,.10))', opacity: loaded ? 1 : 0 }} />
+          style={{ maxWidth: '92%', maxHeight: '92%', objectFit: 'contain' as const, opacity: loaded ? 1 : 0 }} />
       ) : logo ? (
         <img src={logo} alt="" onError={() => setBroken(true)} onLoad={() => setLoaded(true)}
           className={loaded ? 'sc-img-in' : undefined}
@@ -103,6 +106,7 @@ export function Scelles() {
   const [items, setItems] = useState<SealedItem[]>([])
   const [facets, setFacets] = useState<Facet[]>([])
   const [market, setMarket] = useState('EU_FR')
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadErr, setLoadErr] = useState(false)
   const [filSku, setFilSku] = useState('all')
@@ -124,6 +128,7 @@ export function Scelles() {
         setItems(Array.isArray(d.items) ? d.items : [])
         setFacets(Array.isArray(d.facets) ? d.facets : [])
         setMarket(String(d.priceMarket || ''))
+        setTotal(Number(d.total || 0))
       })
       .catch(() => { if (alive) { setItems([]); setFacets([]); setLoadErr(true) } })
       .finally(() => { if (alive) setLoading(false) })
@@ -303,7 +308,7 @@ export function Scelles() {
                   <span style={{ color: '#E03020' }}>Erreur de chargement</span>
                 ) : (
                   <span>
-                    <strong style={{ color: '#111' }}>{filtered.length.toLocaleString('fr-FR')}</strong> produits ·{' '}
+                    <strong style={{ color: '#111' }}>{(total || filtered.length).toLocaleString('fr-FR')}</strong> produits ·{' '}
                     <strong style={{ color: '#111' }}>{cotes.toLocaleString('fr-FR')}</strong> cotés ·{' '}
                     {market === 'EU_FR' ? 'annonces France' : 'marché américain converti'}
                   </span>
@@ -355,7 +360,7 @@ export function Scelles() {
               logos={setLogos}
               disabled={loading}
             />
-            {isInvestor ? (
+            {isInvestor && items.some((i) => i.price?.perBooster) ? (
               <button className="fsel" onClick={() => setSortBooster((v) => !v)}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, color: sortBooster ? '#1D1D1F' : '#86868B', background: sortBooster ? 'rgba(224,48,32,0.04)' : undefined, borderColor: sortBooster ? 'rgba(224,48,32,0.35)' : undefined }}>
                 {sortBooster ? 'Prix au booster' : 'Cote décroissante'}
@@ -374,7 +379,7 @@ export function Scelles() {
 
           {!loading && !loadErr ? (
             <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' as const, marginBottom: '10px' }}>
-              {Math.min(visible, filtered.length)} / {filtered.length} produits affichés
+              {Math.min(visible, filtered.length)} / {(total > filtered.length && !hasFilters ? total : filtered.length).toLocaleString('fr-FR')} produits affichés
             </div>
           ) : null}
 
@@ -430,20 +435,22 @@ export function Scelles() {
                       {it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
                     </div>
                     {it.price && it.price.value > 0 ? (
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
-                          {it.price.isAsking ? <span style={{ fontSize: '10px', fontWeight: 500, color: '#888', marginRight: '3px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
-                          {eur(it.price.value)}
-                        </span>
-                        {it.price.sellers ? (
-                          <span style={{ fontSize: '10px', color: '#AAA' }}>{it.price.sellers} vendeurs</span>
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
+                            {it.price.isAsking ? <span style={{ fontSize: '10px', fontWeight: 500, color: '#888', marginRight: '3px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
+                            {eur(it.price.value)}
+                          </span>
+                          {it.price.sellers ? (
+                            <span style={{ fontSize: '10px', color: '#AAA' }}>{it.price.sellers} vendeurs</span>
+                          ) : null}
+                        </div>
+                        {isInvestor && it.price.perBooster ? (
+                          <div style={{ fontSize: '10.5px', color: '#6E6E73', marginTop: '3px', fontFamily: 'var(--font-data)' }}>
+                            {eur(it.price.perBooster)} <span style={{ color: '#AAA', fontFamily: 'var(--font-display)' }}>/ booster</span>
+                          </div>
                         ) : null}
-                      </div>
-                    ) : null}
-                    {it.price && it.price.value > 0 && isInvestor && it.price.perBooster ? (
-                      <div style={{ fontSize: '10.5px', color: '#6E6E73', marginTop: '3px', fontFamily: 'var(--font-data)' }}>
-                        {eur(it.price.perBooster)} <span style={{ color: '#AAA', fontFamily: 'var(--font-display)' }}>/ booster</span>
-                      </div>
+                      </>
                     ) : (
                       <div style={{ fontSize: '11px', color: '#AAA' }}>Données insuffisantes</div>
                     )}

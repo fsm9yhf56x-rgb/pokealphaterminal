@@ -103,8 +103,8 @@ const SKU_RULES = [
 
 // "case 24 blisters", "display 10 bundles", "8 mini-tins" -> {qty, unit}
 // Sans ca, un case de 6 displays et un case de 24 blisters tomberaient dans le meme panier.
-const CONTENT_RE = /\bset\s*of\s*(\d{1,3})\b|\b(\d{1,3})\s*(displays?|bundles?|blisters?|etb|coffrets?|mini[\s-]*tins?|tins?|boosters?|packs?)\b/;
-const CONTENT_UNIT = { display: 'display', bundle: 'bundle', blister: 'blister', etb: 'etb', coffret: 'coffret', minitin: 'mini_tin', tin: 'mini_tin', booster: 'booster', pack: 'booster' };
+const CONTENT_RE = /\bset\s*of\s*(\d{1,3})\b|\b(\d{1,3})\s*(booster\s*box(?:es)?|displays?|booster\s*bundles?|bundles?|blisters?|etb|elite\s*trainer\s*box(?:es)?|coffrets?|mini[\s-]*tins?|tins?|boosters?|packs?)\b/;
+const CONTENT_UNIT = { display: 'display', boosterbox: 'display', boosterboxe: 'display', bundle: 'bundle', boosterbundle: 'bundle', blister: 'blister', etb: 'etb', elitetrainerbox: 'etb', elitetrainerboxe: 'etb', coffret: 'coffret', minitin: 'mini_tin', tin: 'mini_tin', booster: 'booster', pack: 'booster' };
 
 // Un contenant reel ne depasse pas la quarantaine d'unites (case de 24 blisters,
 // display de 36 boosters). Au-dela, le nombre capte est un NOM DE SERIE ou une
@@ -267,6 +267,14 @@ export function boosterCount(sku, content, lang) {
   const table = String(lang || '').toLowerCase() === 'fr' ? BOOSTERS_PER_SKU : BOOSTERS_UNIVERSAL;
   const n = table[sku];
   return n == null ? null : n;
+}
+
+/** SKU dont le contenu VARIE et fait donc partie de l'identite du produit */
+export const CONTENT_BEARING = new Set(['case', 'display_bundle', 'display_tin']);
+
+/** cle d'identite d'un produit : le contenu ne compte que la ou il varie */
+export function productKey(sku, content) {
+  return CONTENT_BEARING.has(sku) && content ? sku + ':' + content.qty + content.unit : sku;
 }
 
 export const MIN_ASKS = 3;      // jamais de cote sur 1-2 annonces (piege Demolosse 2745 EUR)

@@ -58,6 +58,23 @@ const UNIT_LABEL: Record<string, string> = {
   etb: 'coffrets', coffret: 'coffrets', mini_tin: 'mini-tins', booster: 'boosters',
 };
 
+/**
+ * Titre court : le nom du produit debarrasse de la serie, qui est affichee a part.
+ * Sans ca, dix produits d'une meme serie portent le MEME titre — cinq "SV: Scarlet
+ * & Violet 151" a des prix differents sans qu'on puisse les distinguer.
+ *   "Brilliant Stars Booster Box Case"      + "Brilliant Stars" -> "Booster Box Case"
+ *   "Display 36 boosters — Nuit Noire"      + "Nuit Noire"      -> "Display 36 boosters"
+ */
+function shortName(name: string, setName: string | null): string {
+  if (!setName) return name;
+  const esc = setName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let out = name.trim();
+  out = out.replace(new RegExp('^' + esc + '[\\s:\\-\u2013\u2014]*', 'i'), '');
+  out = out.replace(new RegExp('[\\s:\\-\u2013\u2014]*' + esc + '$', 'i'), '');
+  out = out.trim();
+  return out.length >= 3 ? out : name;
+}
+
 /** Une photo d'annonce eBay n'est pas une illustration produit. */
 function servableImage(url: string | null, source: string | null): string | null {
   if (!url) return null;
@@ -122,15 +139,17 @@ export async function GET(req: NextRequest) {
       const skuTrusted = String(r.sku_source || '') === 'parser' || String(r.source || '') === 'ebay_fr';
       const boosters = skuTrusted ? boosterCount(skuKey, contentQty, unit, lang) : null;
       const low = r.low_eur == null ? null : Number(r.low_eur);
+      const setName = r.set_name_fr ? String(r.set_name_fr) : (r.set_name ? String(r.set_name) : null);
       return {
         id: String(r.id),
         name: String(r.name),
+        shortName: shortName(String(r.name), setName),
         lang: String(r.lang).toUpperCase(),
         sku: skuKey,
         skuLabel: skuKey ? (SKU_LABEL[skuKey] || String(r.product_type || skuKey)) : String(r.product_type || ''),
         content: contentQty && unit ? { qty: contentQty, unit, label: contentQty + ' ' + (UNIT_LABEL[unit] || unit) } : null,
         setId: r.kodo_set_id ? String(r.kodo_set_id) : (r.set_id ? String(r.set_id) : null),
-        setName: r.set_name_fr ? String(r.set_name_fr) : (r.set_name ? String(r.set_name) : null),
+        setName,
         series: r.series ? String(r.series) : null,
         setLogo: r.logo_url ? String(r.logo_url) : null,
         image: servableImage(r.image_url as string | null, r.source as string | null),

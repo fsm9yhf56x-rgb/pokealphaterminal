@@ -36,6 +36,14 @@ const START = Date.now();
 const TODAY = new Date().toISOString().slice(0, 10);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// eBay plafonne l'application a la journee. Sans garde, le script continue de
+// tirer dans le vide apres le premier 429 : le run parait tourner, ne ramene
+// plus rien, et brule le temps du job (meme piege que la boucle 429 PokeTrace
+// du 17/07). On compte les refus consecutifs et on s'arrete proprement.
+const MAX_429 = Number(process.env.KODO_EBAY_MAX_429 || 5);
+let streak429 = 0;
+let quotaDead = false;
+
 const SERIE_RANK = {
   me: 140, sv: 130, swsh: 120, sm: 110, xy: 100, bw: 90, hgss: 85, pl: 82, dp: 80,
   ex: 60, ecard: 50, neo: 40, gym: 30, base: 20, col: 45, cel25: 125, g: 95, dv: 88, dc: 92, det: 118,
@@ -120,10 +128,22 @@ async function search(tk, q, minPrice) {
   const price = minPrice > 0 ? ',price:[' + minPrice + '..8000]' : '';
   const p = new URLSearchParams({ q, limit: '100', filter: 'itemLocationCountry:FR,priceCurrency:EUR' + price });
   try {
+    if (quotaDead) return { items: [], err: 'quota' };
     const r = await fetch('https://api.ebay.com/buy/browse/v1/item_summary/search?' + p, {
       headers: { Authorization: 'Bearer ' + tk, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_FR' },
     });
+    if (r.status === 429) {
+      streak429++;
+      if (streak429 >= MAX_429) {
+        quotaDead = true;
+        console.log('!! quota eBay epuise (' + streak429 + ' refus consecutifs) — arret propre');
+      } else {
+        await sleep(Math.min(2000 * Math.pow(2, streak429), 20000));
+      }
+      return { items: [], err: 429 };
+    }
     if (!r.ok) return { items: [], err: r.status };
+    streak429 = 0;
     const j = await r.json();
     return { items: j.itemSummaries || [] };
   } catch (e) { return { items: [], err: e.message }; }
@@ -243,6 +263,7 @@ let seen = 0, kept = 0, newProducts = 0, stopped = false;
 
 for (const set of sets) {
   if (Date.now() - START > MAX_MS) { console.log('!! plafond de temps atteint, arret propre'); stopped = true; break; }
+  if (quotaDead) { stopped = true; break; }
 
   const uniq = new Map();
   for (const plan of QUERY_PLAN) {

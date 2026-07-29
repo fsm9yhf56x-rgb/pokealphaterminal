@@ -1,6 +1,6 @@
-name: kodo-sealed-fr
+name: kodo-sealed
 
-# Scelle FR : decouverte + cote depuis les annonces eBay FR, puis retypage et
+# Scelle FR + EN : decouverte + cote depuis les annonces eBay FR, puis retypage et
 # peremption. Cron PROPRE (pas de workflow_run) : la chaine nocturne casse deja
 # au 4e maillon et le scelle FR n'a aucune dependance vers les autres ingests.
 #
@@ -21,13 +21,13 @@ on:
         default: ''
 
 concurrency:
-  group: kodo-sealed-fr
+  group: kodo-sealed
   cancel-in-progress: false
 
 jobs:
-  sealed-fr:
+  sealed:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,8 +45,16 @@ jobs:
           KODO_SEALED_SETS: ${{ github.event.inputs.sets }}
         run: node scripts/kodo-ingest-sealed-fr.mjs --commit
 
-      # Idempotent et gratuit : rattrape les produits que l'ingest PPT de 03:00
-      # vient d'ajouter avec le product_type fournisseur.
+      - name: Decouverte scelle EN (eBay US)
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+          KODO_SEALED_SETS: ${{ github.event.inputs.sets }}
+        run: node scripts/kodo-ingest-sealed-en.mjs --commit
+
+      # Idempotent et gratuit : rattrape d'eventuels SKU herites du fournisseur.
       - name: Retypage depuis les noms
         if: always()
         env:

@@ -34,7 +34,7 @@ interface SealedPrice {
 }
 
 interface SealedItem {
-  id: string; name: string; lang: string
+  id: string; name: string; shortName: string; lang: string
   sku: string | null; skuLabel: string
   content: { qty: number; unit: string; label: string } | null
   setId: string | null; setName: string | null; series: string | null
@@ -68,12 +68,28 @@ const LOW_MIN_RATIO = 0.4
 const usableLow = (p: SealedPrice | null) =>
   p && p.low != null && p.value > 0 && p.low / p.value >= LOW_MIN_RATIO ? p.low : null
 
+/** age d'un releve, en clair : un prix sans date est un prix qu'on ne peut pas juger */
+function ageLabel(iso: string | null): string | null {
+  if (!iso) return null
+  const d = new Date(iso).getTime()
+  if (!Number.isFinite(d)) return null
+  const j = Math.floor((Date.now() - d) / 86400000)
+  if (j <= 0) return "aujourd'hui"
+  if (j === 1) return 'hier'
+  if (j < 31) return 'il y a ' + j + ' jours'
+  const m = Math.round(j / 30)
+  return 'il y a ' + m + ' mois'
+}
+
 const eur = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: n >= 100 ? 0 : 2 }).format(n)
 
 function Visual({ item, h, small }: { item: SealedItem; h: string; small?: boolean }) {
   const [broken, setBroken] = useState(false)
-  const [loaded, setLoaded] = useState(false)
+  // Pas d'opacite conditionnelle : quand l'image vient du cache navigateur, onLoad
+  // ne se declenche pas et elle restait invisible (constate dans le drawer).
+  const loaded = true
+  const setLoaded = (_: boolean) => { }
   // TCGplayer sert un placeholder "Image Coming Soon" pour les produits non
   // photographies : ce n'est pas une illustration, on tombe sur le logo de serie.
   const isPlaceholder = !!item.image && /coming.?soon|placeholder|no.?image|blank/i.test(item.image)
@@ -179,7 +195,7 @@ export function Scelles() {
     if (filSet !== 'all') r = r.filter((i) => i.setId === filSet)
     if (search) {
       const q = search.toLowerCase()
-      r = r.filter((i) => i.name.toLowerCase().includes(q) || (i.setName || '').toLowerCase().includes(q))
+      r = r.filter((i) => i.name.toLowerCase().includes(q) || (i.setName || '').toLowerCase().includes(q) || (i.skuLabel || '').toLowerCase().includes(q))
     }
     if (sortBooster) {
       // le moins cher au booster d'abord : c'est le format le mieux value
@@ -430,11 +446,11 @@ export function Scelles() {
                     </div>
                   </div>
                   <div style={{ padding: '10px 12px 12px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', marginBottom: '3px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, lineHeight: 1.3 }}>
-                      {it.setName || it.name}
+                    <div title={it.name} style={{ fontSize: '13px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', marginBottom: '3px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, lineHeight: 1.3 }}>
+                      {it.shortName || it.name}
                     </div>
                     <div style={{ fontSize: '10px', color: '#86868B', marginBottom: '7px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                      {it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
+                      {it.setName || it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
                     </div>
                     {it.price && it.price.value > 0 ? (
                       <>
@@ -480,9 +496,12 @@ export function Scelles() {
               <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '3px' }}>
                 {flag(selected.lang === 'EN' ? 'EN' : 'FR')} {selected.setName || ''}
               </div>
-              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', margin: '0 0 12px', lineHeight: 1.25 }}>
-                {selected.skuLabel}{selected.content ? ' · ' + selected.content.label : ''}
+              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', margin: '0 0 6px', lineHeight: 1.25 }}>
+                {selected.shortName || selected.name}
               </h2>
+              <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '12px' }}>
+                {selected.skuLabel}{selected.content ? ' · ' + selected.content.label : ''}
+              </div>
 
               <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: '10px', padding: '13px 14px', marginBottom: '14px' }}>
                 <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
@@ -495,9 +514,10 @@ export function Scelles() {
                       {eur(selected.price.value)}
                     </div>
                     <div style={{ fontSize: '11.5px', color: '#86868B', marginTop: '4px' }}>
-                      {selected.price.sellers ? selected.price.sellers + ' vendeurs' : ''}
-                      {selected.price.sampleSize ? ' · ' + selected.price.sampleSize + ' annonces' : ''}
-                      {selected.price.market === 'US' ? ' · marché américain converti' : ' · France'}
+                      {selected.price.sellers ? selected.price.sellers + ' vendeurs · ' : ''}
+                      {selected.price.sampleSize ? selected.price.sampleSize + ' annonces · ' : ''}
+                      {selected.price.market === 'US' ? 'marché américain converti' : 'France'}
+                      {ageLabel(selected.price.updatedAt) ? ' · relevé ' + ageLabel(selected.price.updatedAt) : ''}
                     </div>
                     {selected.price.perBooster ? (
                       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -526,17 +546,30 @@ export function Scelles() {
                   ) : null}
                   <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', animationDelay: '.05s' }}>
                     <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Liquidité</span>
-                    <span style={{ fontSize: '12.5px', color: '#1D1D1F' }}>
-                      {(selected.price.sellers ?? 0) >= 15 ? 'Élevée' : (selected.price.sellers ?? 0) >= 6 ? 'Moyenne' : 'Faible'}
-                      <span style={{ color: '#AAA', fontFamily: 'var(--font-data)', marginLeft: 5 }}>{selected.price.sellers ?? 0}</span>
+                    <span style={{ fontSize: '12.5px', color: selected.price.sellers ? '#1D1D1F' : '#AAA' }}>
+                      {selected.price.sellers ? (
+                        <>
+                          {selected.price.sellers >= 15 ? 'Élevée' : selected.price.sellers >= 6 ? 'Moyenne' : 'Faible'}
+                          <span style={{ color: '#AAA', fontFamily: 'var(--font-data)', marginLeft: 5 }}>{selected.price.sellers}</span>
+                        </>
+                      ) : 'Non renseignée'}
                     </span>
                   </div>
                   <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', animationDelay: '.1s' }}>
                     <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Nature du prix</span>
-                    <span style={{ fontSize: '12.5px', color: '#1D1D1F' }}>
-                      {selected.price.isAsking ? 'Annonces (décotées)' : 'Ventes conclues'}
+                    <span style={{ fontSize: '12.5px', color: '#1D1D1F', textAlign: 'right' as const }}>
+                      {selected.price.isAsking
+                        ? 'Annonces France, décotées'
+                        : 'Agrégat fournisseur'}
                     </span>
                   </div>
+                  {!selected.price.isAsking ? (
+                    <div style={{ fontSize: '11px', color: '#AAA', marginTop: '6px', lineHeight: 1.45 }}>
+                      Le fournisseur publie un prix unique sans détailler le nombre de ventes
+                      ni leur période. Nous l&apos;affichons tel quel, sans lui prêter une
+                      précision qu&apos;il ne donne pas.
+                    </div>
+                  ) : null}
                   <div style={{ fontSize: '11px', color: '#AAA', marginTop: '8px', lineHeight: 1.45 }}>
                     Pas encore assez d&apos;historique pour une variation. Les écarts s&apos;afficheront à mesure que les relevés s&apos;accumulent.
                   </div>

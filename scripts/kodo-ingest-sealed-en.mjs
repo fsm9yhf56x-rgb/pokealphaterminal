@@ -321,23 +321,25 @@ for (let i = 0; i < prix.length; i += CH) {
   await sql.query(
     `INSERT INTO sealed_prices
        (sealed_id, market_eur, low_eur, market_usd, low_usd, currency_src, sellers,
-        as_of, computed_at, method, market, sample_size, is_asking, raw_eur)
+        as_of, computed_at, method, market, sample_size, is_asking, raw_eur, last_priced_at)
      SELECT * FROM unnest(
        $1::text[], $2::numeric[], $3::numeric[], $4::numeric[], $5::numeric[], $6::text[], $7::int[],
-       $8::timestamptz[], $9::timestamptz[], $10::text[], $11::text[], $12::int[], $13::bool[], $14::numeric[])
+       $8::timestamptz[], $9::timestamptz[], $10::text[], $11::text[], $12::int[], $13::bool[], $14::numeric[], $15::timestamptz[])
      ON CONFLICT (sealed_id) DO UPDATE SET
        market_eur=EXCLUDED.market_eur, low_eur=EXCLUDED.low_eur,
        market_usd=EXCLUDED.market_usd, low_usd=EXCLUDED.low_usd,
        currency_src=EXCLUDED.currency_src, sellers=EXCLUDED.sellers,
        as_of=EXCLUDED.as_of, computed_at=now(), method=EXCLUDED.method,
        market=EXCLUDED.market, sample_size=EXCLUDED.sample_size,
-       is_asking=EXCLUDED.is_asking, raw_eur=EXCLUDED.raw_eur`,
+       is_asking=EXCLUDED.is_asking, raw_eur=EXCLUDED.raw_eur,
+       last_priced_at=COALESCE(EXCLUDED.last_priced_at, sealed_prices.last_priced_at)`,
     [
       b.map((x) => x.id), b.map((x) => x.eur), b.map((x) => x.eurLow),
       b.map((x) => x.usd), b.map((x) => x.usdLow), b.map(() => 'USD'), b.map((x) => x.sellers),
       b.map(() => new Date()), b.map(() => new Date()),
       b.map(() => 'ebay_us_ask'), b.map(() => 'US'), b.map((x) => x.n),
       b.map(() => true), b.map((x) => x.eurRaw),
+      b.map((x) => (x.eur != null ? new Date() : null)),
     ]
   );
   await sql.query(

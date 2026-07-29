@@ -188,21 +188,23 @@ async function upsertPrices(rows) {
   await sql.query(
     `INSERT INTO sealed_prices
        (sealed_id, market_eur, low_eur, market_usd, low_usd, currency_src, sellers,
-        as_of, computed_at, method, market, sample_size, is_asking, raw_eur)
+        as_of, computed_at, method, market, sample_size, is_asking, raw_eur, last_priced_at)
      SELECT * FROM unnest(
        $1::text[], $2::numeric[], $3::numeric[], $4::numeric[], $5::numeric[], $6::text[], $7::int[],
-       $8::timestamptz[], $9::timestamptz[], $10::text[], $11::text[], $12::int[], $13::bool[], $14::numeric[])
+       $8::timestamptz[], $9::timestamptz[], $10::text[], $11::text[], $12::int[], $13::bool[], $14::numeric[], $15::timestamptz[])
      ON CONFLICT (sealed_id) DO UPDATE SET
        market_eur=EXCLUDED.market_eur, low_eur=EXCLUDED.low_eur, currency_src=EXCLUDED.currency_src,
        sellers=EXCLUDED.sellers, as_of=EXCLUDED.as_of, computed_at=now(),
        method=EXCLUDED.method, market=EXCLUDED.market, sample_size=EXCLUDED.sample_size,
-       is_asking=EXCLUDED.is_asking, raw_eur=EXCLUDED.raw_eur`,
+       is_asking=EXCLUDED.is_asking, raw_eur=EXCLUDED.raw_eur,
+       last_priced_at=COALESCE(EXCLUDED.last_priced_at, sealed_prices.last_priced_at)`,
     [
       rows.map((r) => r.id), rows.map((r) => r.price), rows.map((r) => r.low),
       rows.map(() => null), rows.map(() => null), rows.map(() => 'EUR'), rows.map((r) => r.sellers),
       rows.map(() => new Date()), rows.map(() => new Date()),
       rows.map((r) => r.method), rows.map(() => 'EU_FR'), rows.map((r) => r.n),
       rows.map(() => true), rows.map((r) => r.raw),
+      rows.map((r) => (r.price != null ? new Date() : null)),
     ]
   );
   const withPrice = rows.filter((r) => r.price != null);

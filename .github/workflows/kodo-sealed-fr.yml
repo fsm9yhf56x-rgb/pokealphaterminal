@@ -4,15 +4,16 @@ name: kodo-sealed
 # peremption. Cron PROPRE (pas de workflow_run) : la chaine nocturne casse deja
 # au 4e maillon et le scelle FR n'a aucune dependance vers les autres ingests.
 #
-# 05:30 UTC : apres le scelle EN/JP (03:00), le graded FR (03:30), le catalogue
-# (04:00 le lundi) et la pop PSA (05:00). Aucune collision.
+# 07:30 UTC : le quota eBay se remet a zero a 07:00 UTC (verifie via getRateLimits).
+# Tourner avant, c'est consommer le reliquat de la veille. Et apres le scelle
+# EN/JP (03:00), le graded FR (03:30), le catalogue (04:00 lundi), la pop PSA (05:00).
 #
 # Quota : ~175 series x 4 requetes = 700 appels eBay Browse, tres loin du plafond.
 # Ne consomme AUCUN credit PokeTrace ni PPT.
 
 on:
   schedule:
-    - cron: '30 5 * * *'
+    - cron: '30 7 * * *'
   workflow_dispatch:
     inputs:
       sets:
@@ -37,6 +38,12 @@ jobs:
       # macOS-arm64 alors que linux-x64 les reclame (panne CI du 13/07).
       - run: npm install
 
+      - name: Quota eBay avant
+        env:
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-quota.mjs --label "avant scelle"
+
       - name: Ingest scelle FR (eBay)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -44,6 +51,13 @@ jobs:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
           KODO_SEALED_SETS: ${{ github.event.inputs.sets }}
         run: node scripts/kodo-ingest-sealed-fr.mjs --commit
+
+      - name: Quota eBay apres FR
+        if: always()
+        env:
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-quota.mjs --label "apres FR"
 
       - name: Decouverte scelle EN (eBay US)
         if: always()
@@ -54,6 +68,13 @@ jobs:
           KODO_SEALED_SETS: ${{ github.event.inputs.sets }}
         run: node scripts/kodo-ingest-sealed-en.mjs --commit
 
+      - name: Quota eBay apres EN
+        if: always()
+        env:
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
+        run: node scripts/ebay-quota.mjs --label "apres EN"
+
       # Idempotent et gratuit : rattrape d'eventuels SKU herites du fournisseur.
       - name: Retypage depuis les noms
         if: always()
@@ -63,10 +84,12 @@ jobs:
           node scripts/kodo-sealed-normalize.mjs --lang fr --commit
           node scripts/kodo-sealed-normalize.mjs --lang en --commit
 
-      # Une cote non revue depuis plusieurs cycles est morte : on la retire
-      # plutot que de l'afficher comme actuelle.
-      - name: Peremption des cotes mortes
+      # PLUS DE PEREMPTION DESTRUCTRICE (decision 29/07) : un produit disparu des
+      # annonces GARDE son prix et sa date. L'affichage le signale comme ancien ;
+      # il redevient courant des qu'une annonce similaire revient. Effacer
+      # laisserait le vintage vide onze mois sur douze.
+      - name: Etat des cotes (observation)
         if: always()
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node scripts/kodo-sealed-expire.mjs --commit
+        run: node scripts/kodo-sealed-expire.mjs --check

@@ -10,12 +10,12 @@ import { SNOW, FONT, RADIUS } from '@/lib/design/snow'
 /**
  * Bloc "Culture du jour" du Daily Hub collectionneur.
  *
- * Pepite (anecdote / artiste / ere) en rotation quotidienne deterministe,
- * reliee a la collection quand pertinent ("X dans ta collection").
+ * Pepite en rotation quotidienne deterministe, reliee a la collection quand
+ * pertinent ("X dans ta collection").
  *
- * Traitement EDITORIAL : le titre porte, le texte respire, un seul accent
- * colore. L'icone generique dans son carre a saute — c'est ce qui faisait
- * "composant de template" plutot que "rendez-vous quotidien".
+ * COMPACT par principe : c'est une anecdote, donc un detail. Elle se lit d'un
+ * coup d'oeil et le texte occupe toute la largeur — un bloc haut avec du vide
+ * a droite donnait a un aparte l'importance d'une affiche.
  */
 export function HubCultureDaily() {
   const router = useRouter()
@@ -36,17 +36,13 @@ export function HubCultureDaily() {
     <button className="cd-root" onClick={() => router.push(item.href)}
       style={{ ['--acc' as any]: item.color }}>
 
-      {/* Halo qui respire : la couleur de la pepite donne le ton */}
-      <span className="cd-halo" aria-hidden />
-      {/* Filet d'accent : la seule couleur franche du bloc */}
       <span className="cd-rule" aria-hidden />
-      {/* Filigrane typographique : remplit la droite sans rien inventer.
-          Procede editorial classique — le mot devient de la matiere. */}
-      <span className="cd-ghost" aria-hidden>{kindLabel}</span>
 
       <div className="cd-body">
-        <div className="cd-top">
+        <div className="cd-head">
           <span className="cd-eyebrow">{item.eyebrow}</span>
+          <span className="cd-sep" aria-hidden />
+          <h3 className="cd-title">{item.title}</h3>
           <span className="cd-kind">{kindLabel}</span>
           {ownedCount > 0 && (
             <span className="cd-owned">
@@ -55,124 +51,97 @@ export function HubCultureDaily() {
             </span>
           )}
         </div>
-
-        <h3 className="cd-title">{item.title}</h3>
         <p className="cd-text">{item.text}</p>
-
-        <div className="cd-foot">
-          <span className="cd-cta">
-            En savoir plus
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </span>
-        </div>
       </div>
+
+      <svg className="cd-arrow" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
 
       <style>{`
         .cd-root {
           position: relative; overflow: hidden;
-          display: block; width: 100%; text-align: left; cursor: pointer;
-          padding: 26px 30px 24px 34px;
+          display: flex; align-items: center; gap: 16px;
+          width: 100%; text-align: left; cursor: pointer;
+          padding: 15px 18px 15px 22px;
           border-radius: ${RADIUS.lg};
-          background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(255,255,255,.58));
+          background: linear-gradient(135deg, color-mix(in srgb, var(--acc) 7%, rgba(255,255,255,.78)), rgba(255,255,255,.6));
           border: 1px solid rgba(255,255,255,.9);
-          box-shadow: 0 1px 3px rgba(20,20,40,.04), 0 14px 40px rgba(20,20,40,.06);
-          backdrop-filter: blur(20px) saturate(180%);
-          -webkit-backdrop-filter: blur(20px) saturate(180%);
-          transition: transform .26s cubic-bezier(.2,.85,.3,1), box-shadow .26s ease;
-          animation: cdIn .6s cubic-bezier(.2,.85,.3,1) both;
+          box-shadow: 0 1px 3px rgba(20,20,40,.04), 0 8px 24px rgba(20,20,40,.05);
+          backdrop-filter: blur(18px) saturate(175%);
+          -webkit-backdrop-filter: blur(18px) saturate(175%);
+          transition: transform .22s cubic-bezier(.2,.85,.3,1), box-shadow .22s ease;
+          animation: cdIn .55s cubic-bezier(.2,.85,.3,1) both;
         }
         .cd-root:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 2px 6px rgba(20,20,40,.05), 0 22px 54px rgba(20,20,40,.11);
+          transform: translateY(-2px);
+          box-shadow: 0 2px 5px rgba(20,20,40,.05), 0 14px 34px rgba(20,20,40,.09);
         }
 
-        /* Filet vertical : l'unique aplat de couleur, il signe le bloc */
+        /* Filet vertical : l'unique aplat de couleur */
         .cd-rule {
-          position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px;
-          border-radius: 0 4px 4px 0;
-          background: linear-gradient(180deg, var(--acc), color-mix(in srgb, var(--acc) 55%, transparent));
-          transition: top .26s cubic-bezier(.2,.85,.3,1), bottom .26s cubic-bezier(.2,.85,.3,1);
+          position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px;
+          border-radius: 0 3px 3px 0;
+          background: linear-gradient(180deg, var(--acc), color-mix(in srgb, var(--acc) 50%, transparent));
+          transition: top .22s cubic-bezier(.2,.85,.3,1), bottom .22s cubic-bezier(.2,.85,.3,1);
         }
         .cd-root:hover .cd-rule { top: 0; bottom: 0; }
 
-        .cd-halo {
-          position: absolute; top: -120px; right: -90px;
-          width: 300px; height: 300px; border-radius: 50%;
-          background: radial-gradient(circle, color-mix(in srgb, var(--acc) 17%, transparent), transparent 68%);
-          pointer-events: none;
-          animation: cdBreath 7s ease-in-out infinite;
+        .cd-body { flex: 1; min-width: 0; }
+
+        /* Tout l'en-tete sur UNE ligne : l'anecdote reste un aparte */
+        .cd-head {
+          display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+          margin-bottom: 5px;
         }
-
-        .cd-ghost {
-          position: absolute; right: -14px; bottom: -26px;
-          font-family: ${FONT.display};
-          font-size: clamp(64px, 9vw, 108px); font-weight: 800;
-          letter-spacing: -.06em; line-height: 1;
-          color: var(--acc); opacity: .085;
-          pointer-events: none; user-select: none; white-space: nowrap;
-          transition: opacity .3s ease, transform .4s cubic-bezier(.2,.85,.3,1);
-        }
-        .cd-root:hover .cd-ghost { opacity: .085; transform: translateX(-6px); }
-        @media (max-width: 720px) { .cd-ghost { display: none; } }
-
-        .cd-body { position: relative; z-index: 1; }
-
-        .cd-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
         .cd-eyebrow {
-          font-family: ${FONT.display}; font-size: 10.5px; font-weight: 800;
-          letter-spacing: .12em; text-transform: uppercase; color: var(--acc);
-          animation: cdUp .5s cubic-bezier(.2,.85,.3,1) both .06s;
+          font-family: ${FONT.display}; font-size: 9.5px; font-weight: 800;
+          letter-spacing: .13em; text-transform: uppercase; color: var(--acc);
+          flex-shrink: 0;
+        }
+        .cd-sep { width: 3px; height: 3px; border-radius: 50%; background: ${SNOW.mutedLight}; align-self: center; flex-shrink: 0; }
+        .cd-title {
+          margin: 0; font-family: ${FONT.display};
+          font-size: 15.5px; font-weight: 700; letter-spacing: -.02em; color: ${SNOW.ink};
         }
         .cd-kind {
-          font-family: ${FONT.body}; font-size: 9.5px; font-weight: 700;
+          font-family: ${FONT.body}; font-size: 9px; font-weight: 700;
           letter-spacing: .06em; text-transform: uppercase; color: ${SNOW.mutedLight};
-          padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.045);
-          animation: cdUp .5s cubic-bezier(.2,.85,.3,1) both .1s;
+          padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,.045);
+          flex-shrink: 0;
         }
         .cd-owned {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-family: ${FONT.body}; font-size: 10.5px; font-weight: 700; color: #B8860B;
-          padding: 3px 9px; border-radius: 999px;
+          display: inline-flex; align-items: center; gap: 4px;
+          font-family: ${FONT.body}; font-size: 9.5px; font-weight: 700; color: #B8860B;
+          padding: 2px 8px; border-radius: 999px;
           background: rgba(212,175,55,.14); border: 1px solid rgba(212,175,55,.3);
-          animation: cdUp .5s cubic-bezier(.2,.85,.3,1) both .14s;
+          flex-shrink: 0;
         }
-        .cd-owned svg { width: 11px; height: 11px; }
+        .cd-owned svg { width: 10px; height: 10px; }
 
-        /* Le titre porte le bloc : c'est lui qu'on lit en diagonale */
-        .cd-title {
-          margin: 0 0 9px;
-          font-family: ${FONT.display}; font-size: clamp(21px, 2.4vw, 27px);
-          font-weight: 800; letter-spacing: -.035em; line-height: 1.1; color: ${SNOW.ink};
-          animation: cdUp .55s cubic-bezier(.2,.85,.3,1) both .16s;
-        }
+        /* Le texte occupe TOUTE la largeur : plus de vide a droite */
         .cd-text {
-          margin: 0; max-width: 78ch;
-          font-family: ${FONT.body}; font-size: 14.5px; line-height: 1.62; color: ${SNOW.muted};
-          animation: cdUp .55s cubic-bezier(.2,.85,.3,1) both .22s;
+          margin: 0; max-width: none;
+          font-family: ${FONT.body}; font-size: 13px; line-height: 1.55; color: ${SNOW.muted};
         }
 
-        .cd-foot { display: flex; align-items: center; justify-content: flex-end; margin-top: 18px; }
-        .cd-cta {
-          display: inline-flex; align-items: center; gap: 7px;
-          font-family: ${FONT.display}; font-size: 12.5px; font-weight: 700; color: var(--acc);
-          animation: cdUp .5s cubic-bezier(.2,.85,.3,1) both .28s;
-          transition: gap .22s cubic-bezier(.2,.8,.2,1);
+        .cd-arrow {
+          width: 16px; height: 16px; flex-shrink: 0;
+          color: ${SNOW.mutedLight};
+          transition: transform .22s cubic-bezier(.2,.8,.2,1), color .22s ease;
         }
-        .cd-cta svg { width: 14px; height: 14px; }
-        .cd-root:hover .cd-cta { gap: 11px; }
+        .cd-root:hover .cd-arrow { transform: translateX(3px); color: var(--acc); }
 
-        @keyframes cdIn    { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @keyframes cdUp    { from { opacity: 0; transform: translateY(9px); }  to { opacity: 1; transform: none; } }
-        @keyframes cdBreath{ 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.09); } }
+        @keyframes cdIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
         @media (max-width: 640px) {
-          .cd-root { padding: 22px 20px 20px 26px; }
+          .cd-root { padding: 13px 14px 13px 18px; gap: 11px; }
+          .cd-title { font-size: 14.5px; }
+          .cd-text { font-size: 12.5px; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .cd-root, .cd-eyebrow, .cd-kind, .cd-owned, .cd-title, .cd-text, .cd-cta, .cd-halo {
-            animation: none !important;
-          }
-          .cd-root, .cd-rule, .cd-cta { transition: none !important; }
+          .cd-root { animation: none !important; }
+          .cd-root, .cd-rule, .cd-arrow { transition: none !important; }
         }
       `}</style>
     </button>

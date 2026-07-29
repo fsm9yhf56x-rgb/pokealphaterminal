@@ -237,7 +237,7 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
         const sid = String((topCard as any).set_id ?? '').replace(/^(fr|en|jp)-/i, '')
         const num = String((topCard as any).card_number ?? '')
         const lg = String((topCard as any).lang ?? 'FR').toLowerCase()
-        return (sid && num) ? `/carte/${lg}-${sid}-${num}` : null
+        return (sid && num) ? `/cartes/${lg}-${sid}-${num}` : null
       })(),
       priority: 75,
     })

@@ -4,6 +4,7 @@ import { formatEUR } from '@/lib/formatPrice'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { getProfile, Ic, D } from './WrappedView'
+import { usePersona } from '@/lib/usePersona'
 
 interface CardItem {
   id:string; name:string; set:string; year:number; type:string;
@@ -27,6 +28,7 @@ interface ShareSheetProps {
 
 
 export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, totalBuy, totalROI, totalGain, showToast, showcase }: ShareSheetProps) {
+  const { isInvestor } = usePersona()
   const [generating, setGenerating] = useState(false)
   const [imageUrl, setImageUrl] = useState<string|null>(null)
   const [copied, setCopied] = useState(false)
@@ -91,7 +93,7 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     p.set('lang', c.lang || 'FR')
     p.set('rarity', c.rarity || '')
     p.set('cond', c.condition || '')
-    if ((c.curPrice || 0) > 0) p.set('price', String(c.curPrice))
+    if (isInvestor && (c.curPrice || 0) > 0) p.set('price', String(c.curPrice))
     if (grade) { p.set('grade', grade); p.set('grader', grader) }
     p.set('ref', referral)
     if (format !== 'story') p.set('format', format)
@@ -118,10 +120,12 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
       return (sid && num) ? `${R2}/${lp}/${sid}/${num}.${ext}` : String(c.image || '')
     }).filter(Boolean).join('|')
     const p = new URLSearchParams()
-    p.set('total', totalClean)
+    // Heros de l'image : la valeur pour l'investisseur, ce qu'il a reuni pour
+    // le collectionneur. Plus partageable : on montre sa collection, pas sa note.
+    p.set('total', isInvestor ? totalClean : `${portfolio.reduce((n:number,c:any)=>n+(Number(c.qty)||1),0)} pièces`)
     p.set('cards', String(portfolio.length))
     p.set('sets', String(nSets))
-    if (totalROI > 0) p.set('roi', `+${totalROI}%`)
+    if (isInvestor && totalROI > 0) p.set('roi', `+${totalROI}%`)
     p.set('ref', referral)
     if (format === 'wide') p.set('format', 'wide')
     p.set('imgs', imgsP)
@@ -151,12 +155,14 @@ export function ShareSheet({ open, onClose, context, card, portfolio, totalCur, 
     }
     const p = new URLSearchParams()
     p.set('year', String(wrappedYear))
-    p.set('total', totalClean)
+    // Heros de l'image : la valeur pour l'investisseur, ce qu'il a reuni pour
+    // le collectionneur. Plus partageable : on montre sa collection, pas sa note.
+    p.set('total', isInvestor ? totalClean : `${portfolio.reduce((n:number,c:any)=>n+(Number(c.qty)||1),0)} pièces`)
     p.set('cards', String(portfolio.length))
     p.set('sets', String(wSets))
     p.set('graded', String(gradedCount))
     if (topSet) p.set('topSet', topSet)
-    if (totalROI > 0) p.set('roi', `+${totalROI}%`)
+    if (isInvestor && totalROI > 0) p.set('roi', `+${totalROI}%`)
     if (star?.name) p.set('starName', star.name)
     if (starImg) p.set('starImg', starImg)
     if (format === 'post') p.set('format', 'post')

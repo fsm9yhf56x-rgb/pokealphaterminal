@@ -971,6 +971,30 @@ export function Holdings() {
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
+  // Taux de couverture : une valeur totale partielle DOIT dire qu elle l est.
+  // Compte en EXEMPLAIRES (20 NM cotes + 1 commune sans cote = 95%, pas 50%) :
+  // c est ce qui reflete la collection reelle, pas un decompte de lignes.
+  const coverage = (() => {
+    // Les communes et peu communes sont EXCLUES du denominateur : elles ne
+    // valent objectivement rien (8,5% de couverture sur 10 400 cartes au
+    // catalogue FR) et personne n attend une cote dessus. Les compter ferait
+    // afficher "9% de ta collection cotée" a quelqu un dont toutes les cartes
+    // de valeur sont pourtant cotees.
+    // Les raretes du portfolio sont tantot FR tantot EN selon la porte
+    // d ecriture (sonde: "Uncommon", "Double Rare" cotoient "Rare").
+    // Une rarete NULL n est PAS exclue : on ne sait pas ce que c est,
+    // et l ecarter fausserait le taux dans l autre sens.
+    const sansInteret = (r?: string | null) =>
+      !!r && /^(commune?|peu commune|common|uncommon|sans raret)/i.test(String(r).trim())
+    let cotes = 0, tot = 0
+    for (const c of portfolio) {
+      if (sansInteret((c as any).rarity)) continue
+      const q = Number(c.qty) || 1
+      tot += q
+      if (Number(c.curPrice) > 0) cotes += q
+    }
+    return { cotes, tot, pct: tot ? Math.round((cotes / tot) * 100) : 100 }
+  })()
   // Nombre d'EXEMPLAIRES (somme des qty), pas de lignes : une carte x20 = 20.
   const totalQty  = portfolio.reduce((s,c)=>s+(c.qty||1),0)
   const totalGain = totalCur-totalBuy
@@ -2367,7 +2391,26 @@ export function Holdings() {
               {show.pnl ? (
                 <div className={"value-hero" + (valuePulse ? " price-pulse" : "")} style={{ fontSize:'clamp(26px, 7.5vw, 38px)', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'6px' }}>
                   {portfolio.length>0 ? (
+                    <>
                     <AnimatedTotal target={totalCur} ready={!pricesLoading} />
+                    {!pricesLoading && coverage.pct < 100 && coverage.tot > 0 && (
+                      <div
+                        title={(coverage.tot - coverage.cotes) + ' carte(s) sans cote disponible — le total ne les compte pas.'}
+                        style={{
+                          marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 5,
+                          fontSize: 11, fontWeight: 600, color: '#86868B',
+                          fontFamily: 'var(--font-display)', cursor: 'help',
+                          letterSpacing: 'normal', wordSpacing: 'normal',
+                          whiteSpace: 'nowrap',
+                        }}>
+                        <span style={{
+                          width: 5, height: 5, borderRadius: '50%',
+                          background: coverage.pct >= 90 ? '#1D9E75' : coverage.pct >= 70 ? '#D4A017' : '#AEAEB2',
+                        }} />
+                        <span>{coverage.pct}% de ta collection cotée</span>
+                      </div>
+                    )}
+                    </>
                   ) : <span style={{ color:'#C7C7CC' }}>---</span>}
                 </div>
               ) : (

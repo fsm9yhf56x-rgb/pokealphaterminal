@@ -224,12 +224,107 @@ async function setReleaseAlerts() {
   return { created, released: released.length }
 }
 
+async function setCompletion() {
+  // Les collectionneurs seulement.
+  const users = await sql`
+    SELECT id FROM profiles
+    WHERE COALESCE(persona, 'collector') <> 'investor'`
+  if (!users.length) return { completed: 0, almost: 0, rearmed: 0 }
+  const ids = users.map(u => u.id)
+
+  // Pour chaque (user, série) : combien de cartes distinctes possédées,
+  // et combien la série en compte au total.
+  //
+  // set_id du portfolio est déjà normalisé (sans préfixe de langue) depuis le
+  // fix du 22/07, mais on strip par sécurité — une ligne ancienne peut traîner.
+  const rows = await sql`
+    WITH mine AS (
+      SELECT pc.user_id,
+             regexp_replace(lower(COALESCE(pc.set_id, '')), '^(fr|en|jp)-', '') AS setid,
+             COUNT(DISTINCT NULLIF(ltrim(lower(COALESCE(pc.card_number, '')), '0'), '')) AS have
+      FROM portfolio_cards pc
+      WHERE pc.user_id = ANY(${ids})
+        AND COALESCE(pc.set_id, '') <> ''
+        AND COALESCE(pc.card_number, '') <> ''
+      GROUP BY 1, 2
+    ),
+    totals AS (
+      SELECT regexp_replace(print_id, '-[^-]+$', '') AS setid,
+             lower(lang) AS lang,
+             COUNT(*) AS total
+      FROM k_cards
+      GROUP BY 1, 2
+    )
+    SELECT m.user_id, m.setid, m.have::int AS have, t.total::int AS total,
+           COALESCE(s.name, m.setid) AS set_name
+    FROM mine m
+    JOIN totals t ON t.setid = m.setid
+    LEFT JOIN k_sets s ON s.id = m.setid
+    WHERE t.total > 0
+      -- une "série" d'une seule carte n'a pas de sens à célébrer
+      AND t.total >= 10
+      AND m.have > 0
+    ORDER BY m.user_id, m.setid`
+
+  // Une série existe en plusieurs langues : on garde le total le plus grand
+  // (le catalogue le plus complet) pour ne pas annoncer 100% a tort.
+  const best = new Map()
+  for (const r of rows) {
+    const k = r.user_id + '|' + r.setid
+    const prev = best.get(k)
+    if (!prev || r.total > prev.total) best.set(k, r)
+  }
+
+  let completed = 0, almost = 0, rearmed = 0
+
+  for (const r of best.values()) {
+    const missing = Math.max(0, r.total - r.have)
+    const dDone = `set_completed:${r.setid}`
+    const dAlmost = `set_almost:${r.setid}`
+
+    if (missing === 0) {
+      const ins = await sql`
+        INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
+        VALUES (${r.user_id}, 'set_completed', 'Série complète',
+                ${r.set_name + ' : les ' + r.total + ' cartes sont réunies. Bravo.'},
+                ${JSON.stringify({ setId: r.setid, setName: r.set_name, total: r.total, url: '/portfolio/objectifs' })}::jsonb,
+                ${dDone})
+        ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
+        RETURNING id`
+      if (ins.length) completed++
+      await sql`UPDATE notifications SET dedup_key = NULL
+                WHERE user_id = ${r.user_id} AND dedup_key = ${dAlmost}`
+    } else if (missing <= 3) {
+      const ins = await sql`
+        INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
+        VALUES (${r.user_id}, 'set_almost', 'Tu y es presque',
+                ${'Plus que ' + missing + ' carte' + (missing > 1 ? 's' : '') + ' pour terminer ' + r.set_name + '.'},
+                ${JSON.stringify({ setId: r.setid, setName: r.set_name, missing, total: r.total, url: '/portfolio/objectifs' })}::jsonb,
+                ${dAlmost})
+        ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
+        RETURNING id`
+      if (ins.length) almost++
+      await sql`UPDATE notifications SET dedup_key = NULL
+                WHERE user_id = ${r.user_id} AND dedup_key = ${dDone}`
+    } else {
+      // On s'éloigne du but : on ré-arme les deux pour pouvoir re-notifier.
+      const upd = await sql`UPDATE notifications SET dedup_key = NULL
+                WHERE user_id = ${r.user_id} AND dedup_key IN (${dDone}, ${dAlmost})
+                RETURNING id`
+      if (upd.length) rearmed++
+    }
+  }
+
+  return { completed, almost, rearmed, series: best.size }
+}
+
 // Registre extensible. Prochains : newSetRelease, wishlistDrop...
 const generators = [
   { name: 'wishlist_price', run: wishlistPriceAlerts },
   { name: 'goal_progress', run: goalProgress },
   { name: 'beta_ending', run: betaEnding },
   { name: 'set_release', run: setReleaseAlerts },
+  { name: 'set_completion', run: setCompletion },
 ]
 
 async function main() {

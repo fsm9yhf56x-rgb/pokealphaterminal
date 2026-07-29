@@ -17,6 +17,7 @@ import { GradedEvPanel } from "@/components/features/card/GradedEvPanel"
 import { fetchCardDetail, type TCGCardFull } from "@/lib/tcgApi"
 import { usePortfolio } from "@/lib/usePortfolio"
 import { usePersona } from "@/lib/usePersona"
+import { CollectorPanel } from "./CollectorPanel"
 import { usePlan } from "@/lib/usePlan"
 import { useGoals } from "@/lib/useGoals"
 import { useAuth } from "@/lib/useAuth"
@@ -150,7 +151,7 @@ const TIP_MARKET = "Dernier prix de référence observé sur le marché, en éta
 const TIP_FAIR = "Notre estimation de la valeur de la carte à partir des ventes récentes, toutes sources confondues. Peut différer du dernier prix affiché."
 
 
-type TabKey = "prix" | "histo" | "grade" | "infos"
+type TabKey = "collection" | "prix" | "histo" | "grade" | "infos"
 
 export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
@@ -165,7 +166,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [gradedCompany, setGradedCompany] = useState<string>("PSA")
-  const [activeTab, setActiveTab] = useState<TabKey>("prix")
+  const [activeTab, setActiveTab] = useState<TabKey>(isInvestor ? "prix" : "collection")
   const [authOpen, setAuthOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
@@ -578,6 +579,19 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   )
 
   // ── Onglet DETAILS enrichi : carte d'identite visuelle ─────────────────────
+  const TabCollection = () => (
+    <CollectorPanel
+      cardId={card.id}
+      lang={card.lang as "FR" | "EN" | "JP"}
+      setId={String(card.set_id ?? "")}
+      setName={String(card.set_name ?? card.set_id ?? "")}
+      localId={String(card.local_id ?? "")}
+      name={String(card.name ?? "")}
+      rarity={card.rarity_normalized ?? null}
+      illustrator={illustrator}
+      era={card.era ?? null}
+    />
+  )
   const TabInfos = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
       {hasAbout ? (
@@ -732,8 +746,14 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   )
 
   const TABS: { key: TabKey; label: string }[] = [
-    { key: "prix", label: "Prix" },
-    { key: "histo", label: "Historique" },
+    // L investisseur ne voit AUCUN changement : sa liste et son onglet par
+    // defaut sont inchanges. L onglet Collection n existe que cote collectionneur.
+    // Le collectionneur qui veut la cote bascule en investisseur : c est a un
+    // clic. Ici aucune mention de prix — sauf Gradation, ou la question
+    // "faut-il la faire grader" est autant celle du collectionneur.
+    ...(isInvestor ? [] : [{ key: "collection" as TabKey, label: "Collection" }]),
+    ...(isInvestor ? [{ key: "prix" as TabKey, label: "Prix" },
+                      { key: "histo" as TabKey, label: "Historique" }] : []),
     { key: "grade", label: "Gradation" },
     { key: "infos", label: "Détails" },
   ]
@@ -743,7 +763,8 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
     grade: { title: "Faut-il la faire grader ?", desc: "Le calcul complet : valeur gradée, population PSA, espérance de gain. Gratuit dès l'inscription.", minHeight: 300 },
   }
   const renderTab = (k: TabKey) => {
-    const content = k === "prix" ? <TabPrix /> : k === "histo" ? <TabHisto /> : k === "grade" ? <TabGrade /> : <TabInfos />
+    const content = k === "collection" ? <TabCollection />
+      : k === "prix" ? <TabPrix /> : k === "histo" ? <TabHisto /> : k === "grade" ? <TabGrade /> : <TabInfos />
     const g = !user ? GUEST_TAB[k] : undefined
     if (g) return <GuestGate locked title={g.title} desc={g.desc} minHeight={g.minHeight}>{content}</GuestGate>
     return content
@@ -811,7 +832,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
         </div>
 
         <div className="kc-body">
-          <div className="kc-price kc-rise" style={{ animationDelay: ".12s", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", marginTop: 20, paddingTop: 20, borderTop: `1px solid ${SNOW.borderSoft}` }}>
+          {isInvestor && <div className="kc-price kc-rise" style={{ animationDelay: ".12s", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", marginTop: 20, paddingTop: 20, borderTop: `1px solid ${SNOW.borderSoft}` }}>
             {market != null ? (
               <div>
                 <div style={{ fontSize: 11, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".07em", textTransform: "uppercase", fontFamily: FONT.display, marginBottom: 3, display: "inline-flex", alignItems: "center" }}>Prix de marché<HeroTip text={TIP_MARKET} /></div>
@@ -831,7 +852,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                 <div style={{ fontSize: 16, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(fairValue)}</div>
               </div>
             ) : null}
-          </div>
+          </div>}
 
           <div className="kc-rise" style={{ animationDelay: ".18s", display: "flex", gap: 4, marginTop: 24 }}>
             {TABS.map(t => {
@@ -867,8 +888,8 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           {owned.length > 0 ? (
             <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
               <div style={{ textAlign: "right" }}>
-                <span style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display, marginRight: 7 }}>{ownedUnits > 1 ? `${ownedUnits} exemplaires` : "1 exemplaire"}{ownedHasValue ? " · valeur" : ""}</span>
-                {ownedHasValue ? <span style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(ownedValue)}</span> : null}
+                <span style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display, marginRight: 7 }}>{ownedUnits > 1 ? `${ownedUnits} exemplaires` : "1 exemplaire"}{ownedHasValue && isInvestor ? " · valeur" : ""}</span>
+                {ownedHasValue && isInvestor ? <span style={{ fontSize: 18, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(ownedValue)}</span> : null}
               </div>
               {show.pnl && ownedPnl != null ? (
                 <span style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT.display, color: ownedPnl >= 0 ? "#1D9E75" : "#E03020" }}>
@@ -907,12 +928,12 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
                           Premium
                         </span>
                       </div>
-                    ) : cur != null ? (
+                    ) : cur != null && isInvestor ? (
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>{isInvestor ? "Valeur" : "Cote actuelle"}</div>
                         <div style={{ fontSize: 17, fontWeight: 700, color: SNOW.ink, fontFamily: FONT.display }}>{fmtEur(cur)}</div>
                       </div>
-                    ) : c.graded ? (
+                    ) : c.graded && isInvestor ? (
                       <div style={{ textAlign: "right", maxWidth: 300 }}>
                         <div style={{ fontSize: 10, color: SNOW.mutedLight, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", fontFamily: FONT.display }}>Cote {gradeLabel}</div>
                         <div style={{ fontSize: 11.5, color: SNOW.muted, fontFamily: FONT.display, marginTop: 3, lineHeight: 1.45 }}>Pas encore de prix collecte pour cette note. La cote s'affichera automatiquement des qu'une vente sera detectee.</div>

@@ -81,6 +81,7 @@ export default function IllustrateurPage() {
   }
   function closeCard() { setSelId(null); setDetail(null) }
 
+  const [filter, setFilter] = useState<'all' | 'mine'>('all')
   const { cards: owned } = usePortfolio()
 
   // normalise un numéro de carte : strip zéros initiaux, lowercase
@@ -101,7 +102,9 @@ export default function IllustrateurPage() {
   }
   const ownedCount = cards.filter(c => isOwned(c.id)).length
 
-  const withImg = cards.filter(c => c.image)
+  // Chez un illustrateur prolifique (340 cartes), les 12 qu on possede se
+  // noient. Le filtre permet de ne voir que les siennes.
+  const withImg = cards.filter(c => c.image && (filter === 'all' || isOwned(c.id)))
 
   // En-tête intelligent : ères couvertes (dérivées des ids) + bio si maître connu
   const eraMap = new Map<string, string>()
@@ -124,9 +127,57 @@ export default function IllustrateurPage() {
         {/* Stats dérivées */}
         <p style={{ fontFamily: FONT.body, fontSize: 14, color: SNOW.muted, margin: '0 0 14px' }}>
           {loading ? 'Chargement…' : `${cards.length} carte${cards.length !== 1 ? 's' : ''} illustrée${cards.length !== 1 ? 's' : ''}`}
-          {!loading && ownedCount > 0 ? ` · ${ownedCount} dans ta collection` : ''}
           {!loading && master ? ` · ${master.period}` : ''}
         </p>
+
+        {/* Progression : meme grammaire que le classeur de la fiche carte —
+            l illustrateur est un axe de collection au meme titre que la serie. */}
+        {!loading && cards.length > 0 && (() => {
+          const pct = Math.round((ownedCount / cards.length) * 100)
+          const done = pct === 100
+          const R = 22, C = 2 * Math.PI * R
+          return (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 16,
+              padding: '14px 20px 14px 14px', marginBottom: 16,
+              borderRadius: 16,
+              background: done
+                ? 'linear-gradient(135deg, rgba(29,158,117,.10), rgba(255,255,255,.6))'
+                : 'linear-gradient(135deg, rgba(255,255,255,.78), rgba(255,255,255,.55))',
+              border: `1px solid ${done ? 'rgba(29,158,117,.28)' : 'rgba(255,255,255,.9)'}`,
+              boxShadow: '0 1px 3px rgba(20,20,40,.04), 0 12px 34px rgba(20,20,40,.06)',
+              backdropFilter: 'blur(18px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+            }}>
+              <div style={{ position: 'relative', width: 54, height: 54, flex: '0 0 54px' }}>
+                <svg viewBox="0 0 54 54" style={{ width: 54, height: 54, transform: 'rotate(-90deg)' }}>
+                  <circle cx="27" cy="27" r={R} fill="none" stroke="rgba(0,0,0,.07)" strokeWidth="5" />
+                  <circle cx="27" cy="27" r={R} fill="none" strokeWidth="5" strokeLinecap="round"
+                    stroke={done ? '#1D9E75' : '#E03020'}
+                    strokeDasharray={C} strokeDashoffset={C - (C * pct) / 100}
+                    style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.2,.85,.3,1)' }} />
+                </svg>
+                <span style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-data)', fontSize: 12.5, fontWeight: 700, color: SNOW.ink,
+                }}>{pct}%</span>
+              </div>
+              <div>
+                <div style={{ fontFamily: FONT.display, fontSize: 18, color: SNOW.ink, lineHeight: 1.2 }}>
+                  <strong style={{ fontWeight: 800, letterSpacing: '-.02em' }}>{ownedCount}</strong>
+                  <span style={{ color: SNOW.mutedLight, fontWeight: 500 }}> / {cards.length} dans ta collection</span>
+                </div>
+                <div style={{ fontFamily: FONT.body, fontSize: 13, color: done ? '#1D9E75' : SNOW.muted, marginTop: 3, fontWeight: done ? 600 : 400 }}>
+                  {done
+                    ? 'Tu as toutes ses cartes.'
+                    : ownedCount === 0
+                      ? `Aucune carte de ${name} pour le moment.`
+                      : `Il t'en manque ${cards.length - ownedCount}.`}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Bio maître */}
         {master && (
@@ -157,6 +208,32 @@ export default function IllustrateurPage() {
       ) : withImg.length === 0 ? (
         <div style={{ padding: 48, textAlign: 'center', color: SNOW.muted, fontFamily: FONT.body, fontSize: 14, background: 'rgba(255,255,255,0.55)', borderRadius: RADIUS.lg, border: `1px solid ${SNOW.border}` }}>Aucune carte avec illustration disponible.</div>
       ) : (
+        <>
+        {ownedCount > 0 && (
+          <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}>
+            {([['all', 'Toutes', cards.filter(c => c.image).length],
+               ['mine', 'Les miennes', ownedCount]] as Array<['all' | 'mine', string, number]>).map(([k, label, n]) => (
+              <button key={k} onClick={() => setFilter(k)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
+                  border: `1px solid ${filter === k ? SNOW.ink : 'rgba(0,0,0,.07)'}`,
+                  background: filter === k ? SNOW.ink : 'rgba(255,255,255,.66)',
+                  color: filter === k ? '#fff' : SNOW.muted,
+                  fontFamily: FONT.display, fontSize: 12.5, fontWeight: 600,
+                  transition: 'all .18s cubic-bezier(.2,.8,.2,1)',
+                }}>
+                {label}
+                <span style={{
+                  fontFamily: 'var(--font-data)', fontSize: 10.5, fontWeight: 700,
+                  padding: '1px 6px', borderRadius: 999,
+                  background: filter === k ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.06)',
+                  color: filter === k ? '#fff' : SNOW.muted,
+                }}>{n}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 104 : 130}px, 1fr))`, gap: isMobile ? 10 : 14 }}>
           {withImg.map((c) => {
             const src = imgSrc(c.image, 'low')
@@ -179,6 +256,7 @@ export default function IllustrateurPage() {
             )
           })}
         </div>
+        </>
       )}
 
       {/* Drawer carte — autonome, glass v7 */}

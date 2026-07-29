@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SpotlightV2 } from '@/components/features/spotlight/SpotlightV2'
+import { CollectorSidePanel } from './CollectorSidePanel'
+import { usePersona } from '@/lib/usePersona'
 
 /**
  * CardSidePanel = panneau lateral generique reutilisable (Pokedesk, Portfolio).
@@ -33,7 +35,7 @@ export function CardSidePanel({
   onClose,
   portfolio,
   actions,
-  title = 'Aperçu marché',
+  title,
   width = 440,
 }: {
   cardId: string
@@ -44,6 +46,7 @@ export function CardSidePanel({
   title?: string
   width?: number
 }) {
+  const { isInvestor } = usePersona()
   // Echap ferme le panneau
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -137,7 +140,7 @@ export function CardSidePanel({
           color: 'var(--ink-muted)',
           fontFamily: 'var(--font-display)',
         }}>
-          {title}
+          {title ?? (isInvestor ? 'Aperçu marché' : 'Aperçu')}
         </span>
         <button
           onClick={onClose}
@@ -165,7 +168,9 @@ export function CardSidePanel({
 
       {/* Corps : la fiche riche (SpotlightV2 s'adapte au contexte portfolio) */}
       <div className="card-side-body" style={{ padding: '8px 16px 20px' }}>
-        <SpotlightV2 cardId={cardId} lang={lang} portfolio={portfolio as any} />
+        {isInvestor
+          ? <SpotlightV2 cardId={cardId} lang={lang} portfolio={portfolio as any} />
+          : <CollectorSidePanel cardId={cardId} lang={lang as any} />}
         {actions ? (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
             {actions}

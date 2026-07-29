@@ -22,6 +22,7 @@ import { CardSidePanel } from '@/components/features/card/CardSidePanel'
 import type { TCGSet } from '@/lib/tcgApi'
 import { getSets, getCards, type StaticSet, type StaticCard } from '@/lib/cardDb'
 import { AddToCollectionModal, type AddCardSeed } from '@/components/features/card/AddToCollectionModal'
+import { usePersona } from '@/lib/usePersona'
 
 interface PortfolioCard {
   id:string; name:string; set:string; setId?:string; number:string; rarity:string;
@@ -277,6 +278,7 @@ export function Encyclopedie() {
   const [filEra,     setFilEra]      = useState('all')
   const [browseMode, setBrowseMode]  = useState<'all'|'bloc'>('all')
   const [selBloc,    setSelBloc]     = useState<string|null>(null)
+  const { isInvestor } = usePersona()
   const [filSet,     setFilSet]      = useState('all')
   // ?set=xxx : lu APRES le montage (l initialiseur useState s execute au SSR,
   // ou window n existe pas -> la valeur serait perdue a l hydratation)
@@ -1689,7 +1691,7 @@ export function Encyclopedie() {
                             {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
-                        {(()=>{ const gp = getPrice(card); return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{formatEUR(gp, 'small')}</div> : null })()}
+                        {(()=>{ const gp = isInvestor ? getPrice(card) : null; return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{formatEUR(gp, 'small')}</div> : null })()}
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
                           return (

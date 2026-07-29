@@ -21,12 +21,20 @@ export function useNav(): NavItem[] {
       return NAV.filter((item) => !item.collectorOnly)
     }
     // collector : on masque le spéculatif (collectorHide), on garde le reste + Culture
+    //
+    // "Portfolio" est le mot que le collectionneur voit sur CHAQUE ecran : il
+    // trahit a lui seul un outil d investisseur. On le renomme ici plutot que
+    // de dupliquer un libelle dans la config — le lexique vit dans usePersona.
+    // "Collection" (et pas "Ma Collection") pour eviter "Ma Collection > Ma collection".
+    const RELABEL: Record<string, string> = { Portfolio: 'Collection' }
     return NAV
       .filter((item) => !item.collectorHide)
-      .map((item) =>
-        item.children
-          ? { ...item, children: item.children.filter((c) => !c.collectorHide) }
-          : item,
-      )
+      .map((item) => ({
+        ...item,
+        label: RELABEL[item.label] ?? item.label,
+        ...(item.children
+          ? { children: item.children.filter((c) => !c.collectorHide) }
+          : {}),
+      }))
   }, [isCollector])
 }

@@ -2699,7 +2699,7 @@ export function Holdings() {
                             </button>
                           ))}
                           <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                          {(([{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}].concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
+                          {((([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]).concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
                             <button key={so.k} onClick={()=>setBinderSort(so.k)}
                               style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                               {so.l}
@@ -2968,8 +2968,18 @@ export function Holdings() {
                                     <div style={{ fontSize:'11px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }} title={card.lang==='JP'&&card.setId&&frCardsMap['__id__'+(card.number||'')]?frCardsMap['__id__'+card.number]:undefined}>{card.name}</div>
                                   </div>
                                   <div style={{ minHeight:'14px', marginTop:'1px' }}>
-                                    {(() => { const k:any=card; const lv = k.__lineValue != null ? Number(k.__lineValue) : (Number(card.curPrice)||0); const unc = Number(k.__uncoted||0); const cnt = Number(k.__count||1); return (<>{lv>0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{lv.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}{lv>0 && (cnt>1 || unc>0) && <div style={{ fontSize:'8px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{cnt>1 ? 'Total ' + cnt + ' carte' + (cnt>1?'s':'') : ''}{cnt>1 && unc>0 ? ' \u00b7 ' : ''}{unc>0 ? unc + ' sans cote' : ''}</div>}</>) })()}
-                                    {!(Number((card as any).__lineValue ?? card.curPrice) > 0) && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                                    {(() => {
+                                      const k:any=card
+                                      const cnt = Number(k.__count||1)
+                                      // Le collectionneur voit ce qu il possede, pas ce que ca vaut.
+                                      if (!isInvestor) return cnt > 0
+                                        ? <div style={{ fontSize:'10px', fontWeight:700, color:SNOW.ink, fontFamily:'var(--font-display)' }}>{cnt} exemplaire{cnt>1?'s':''}</div>
+                                        : null
+                                      const lv = k.__lineValue != null ? Number(k.__lineValue) : (Number(card.curPrice)||0)
+                                      const unc = Number(k.__uncoted||0)
+                                      return (<>{lv>0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{lv.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}{lv>0 && (cnt>1 || unc>0) && <div style={{ fontSize:'8px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{cnt>1 ? 'Total ' + cnt + ' carte' + (cnt>1?'s':'') : ''}{cnt>1 && unc>0 ? ' \u00b7 ' : ''}{unc>0 ? unc + ' sans cote' : ''}</div>}</>)
+                                    })()}
+                                    {isInvestor && !(Number((card as any).__lineValue ?? card.curPrice) > 0) && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
@@ -3091,7 +3101,7 @@ export function Holdings() {
                         </button>
                       ))}
                       <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                      {((binderSet==='__all__'?[{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}]:[{k:'number',l:'N°'},{k:'name',l:'A→Z'},{k:'price',l:'Prix'}]) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
+                      {((binderSet==='__all__'?([{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]):([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
                         <button key={so.k} onClick={()=>setBinderSort(so.k)}
                           style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
                           {so.l}
@@ -3177,8 +3187,8 @@ export function Holdings() {
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
                             <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
-                              {card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                              {!(Number(card.curPrice) > 0)&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                              {isInvestor&&card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
+                              {isInvestor && !(Number(card.curPrice) > 0)&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
                             </div>
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>

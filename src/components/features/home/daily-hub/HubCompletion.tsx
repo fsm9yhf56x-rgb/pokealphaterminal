@@ -29,13 +29,20 @@ export function HubCompletion() {
 
   // Regroupe les cartes possedees par set_id, calcule owned/total/pct.
   const best = useMemo(() => {
+    // On compte les cartes DISTINCTES : 3 exemplaires d'Artikodin ne font pas
+    // avancer la serie de 3. Sans ca, une progression peut depasser le total.
+    const seen: Record<string, Set<string>> = {}
     const owned: Record<string, { name: string; owned: number }> = {}
     for (const c of cards ?? []) {
       const sid = (c as any).set_id
       if (!sid) continue
-      const qty = Number((c as any).qty) || 1
+      const num = String((c as any).card_number ?? '').replace(/^0+(?=\d)/, '').toLowerCase()
+      if (!num) continue
+      if (!seen[sid]) seen[sid] = new Set()
+      if (seen[sid].has(num)) continue
+      seen[sid].add(num)
       const e = owned[sid] || { name: (c as any).set_name || sid, owned: 0 }
-      e.owned += qty
+      e.owned += 1
       owned[sid] = e
     }
     const enriched = Object.entries(owned).map(([setId, v]) => {

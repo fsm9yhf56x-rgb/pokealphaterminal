@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
 import { usePersona } from '@/lib/usePersona'
+import { useRouter } from 'next/navigation'
 
 interface PortfolioCard {
   qty?: number
@@ -20,6 +21,7 @@ interface InsightData {
   detail: string
   accent: 'green' | 'red' | 'gold' | 'blue' | 'neutral'
   image?: string | null   // vignette de carte (cas "joyau")
+  href?: string | null    // fiche de la carte (cas "joyau")
 }
 
 /**
@@ -34,6 +36,7 @@ export function HubInsight({
   indices: any[]   // ignore v2
   loading: boolean
 }) {
+  const router = useRouter()
   const { isCollector } = usePersona()
   const insight = useMemo(() => generateV1Insight(cards, isCollector), [cards, isCollector])
   const [imgErr, setImgErr] = useState(false)
@@ -44,8 +47,14 @@ export function HubInsight({
   const accent = ACCENT[insight.accent]
   const showThumb = !!insight.image && !imgErr
 
+  const go = () => { if (insight.href) router.push(insight.href) }
   return (
-    <div style={{
+    <div
+      onClick={go}
+      role={insight.href ? 'button' : undefined}
+      tabIndex={insight.href ? 0 : undefined}
+      onKeyDown={e => { if (insight.href && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go() } }}
+      style={{ cursor: insight.href ? 'pointer' : 'default',
       ...GLASS.card,
       display: 'flex',
       alignItems: 'center',
@@ -76,22 +85,37 @@ export function HubInsight({
 
       {/* Visuel : vignette de la carte (joyau) OU icône */}
       {showThumb ? (
-        <div style={{ width: 42, flexShrink: 0, position: 'relative', zIndex: 1 }}>
+        <div style={{ width: 74, flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          {/* Une piece d'exception se regarde : elle a droit a sa lumiere.
+              A 42px c'etait une vignette, le mot "joyau" n'etait pas tenu. */}
+          <span aria-hidden style={{
+            position: 'absolute', inset: -14, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(212,175,55,.34), transparent 70%)',
+            filter: 'blur(9px)', pointerEvents: 'none',
+            animation: 'jewelGlow 4.5s ease-in-out infinite',
+          }} />
           <img
             src={insight.image as string}
             alt=""
             loading="lazy"
             onError={() => setImgErr(true)}
             style={{
+              position: 'relative',
               width: '100%',
               aspectRatio: '5 / 7',
               objectFit: 'cover',
-              borderRadius: RADIUS.md,
+              borderRadius: 9,
               display: 'block',
-              border: '0.5px solid rgba(0,0,0,0.08)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.16)',
+              border: '1px solid rgba(212,175,55,.42)',
+              boxShadow: '0 8px 24px rgba(20,20,40,.24), 0 2px 6px rgba(0,0,0,.12)',
+              transform: 'rotate(-2.5deg)',
+              transition: 'transform .3s cubic-bezier(.2,.85,.3,1)',
             }}
+            onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'rotate(0deg) scale(1.06)' }}
+            onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'rotate(-2.5deg)' }}
           />
+          <style>{`@keyframes jewelGlow { 0%,100% { opacity:.7; transform:scale(1) } 50% { opacity:1; transform:scale(1.12) } }
+            @media (prefers-reduced-motion: reduce) { @keyframes jewelGlow { 0%,100% { opacity:.8; transform:none } } }`}</style>
         </div>
       ) : (
         <div style={{
@@ -208,6 +232,13 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
         : `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
       accent: 'gold',
       image: topCard.image_url ?? null,
+      href: (() => {
+        // La fiche se construit depuis lang + set + numero, comme partout ailleurs.
+        const sid = String((topCard as any).set_id ?? '').replace(/^(fr|en|jp)-/i, '')
+        const num = String((topCard as any).card_number ?? '')
+        const lg = String((topCard as any).lang ?? 'FR').toLowerCase()
+        return (sid && num) ? `/carte/${lg}-${sid}-${num}` : null
+      })(),
       priority: 75,
     })
   }

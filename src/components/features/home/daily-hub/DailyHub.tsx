@@ -167,6 +167,9 @@ export function DailyHub() {
           {/* ░░ LA UNE — héros + joyau (importance max) */}
           <GrandeRubrique label="À la une" accent={accent} sub="Ta pièce du jour" />
           <HubCardOfDay />
+          {/* La pepite suit la carte du jour : les deux racontent l'univers,
+              elles se repondent. Isolee en fin de page, elle n'etait pas lue. */}
+          <div style={{ marginTop: 14 }}><HubCultureDaily /></div>
           <HubInsight cards={cards} spreads={spreads.allSignals} indices={market.indices} loading={portfolio.loading || spreads.loading || market.loading} />
 
           {/* ░░ TA QUÊTE — le moteur de complétion (remonté) */}
@@ -220,7 +223,6 @@ export function DailyHub() {
         {/* ▒ LE MONDE POKÉMON — actu réelle + sorties + culture (partagé) */}
         <Rubrique label="Le monde Pokémon" accent={accent} />
         <HubReleases />
-        <HubCultureDaily />
 
         {/* CONVERSION + signature */}
         {!isPremium && <Conversion isCollector={isCollector} accent={accent} />}
@@ -416,7 +418,7 @@ function CardShelf({ items, loading, accent, showPrice, emptyLabel, emptyHref }:
 function PrideStats({ cards }: { cards: PortfolioCard[] }) {
   const cells = [
     { v: cards.length, l: 'cartes' },
-    { v: new Set(cards.map(c => c?.set_name).filter(Boolean)).size, l: 'sets entamés' },
+    { v: new Set(cards.map(c => c?.set_name).filter(Boolean)).size, l: 'séries entamées' },
     { v: cards.filter(c => c?.graded).length, l: 'gradées' },
     { v: new Set(cards.map(c => c?.rarity).filter(Boolean)).size, l: 'raretés' },
   ]

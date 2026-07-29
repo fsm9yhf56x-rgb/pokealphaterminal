@@ -2551,7 +2551,7 @@ export function Holdings() {
                 {show.pnl&&portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
                 {portfolio.length>0&&(()=>{
                   const nSets = [...new Set(portfolio.map(c=>c.set))].length
-                  if (show.pnl) return <span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{nSets} set{nSets!==1?'s':''}</span>
+                  if (show.pnl) return <span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{nSets} {isInvestor ? (nSets!==1?'sets':'set') : (nSets!==1?'séries':'série')}</span>
 
                   // Collectionneur : ce dont il est fier, pas ce que ca vaut.
                   const graded = portfolio.reduce((n,c)=>n+((c as any).graded?(Number(c.qty)||1):0),0)

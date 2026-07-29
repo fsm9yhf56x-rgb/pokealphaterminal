@@ -41,7 +41,7 @@ export const NAV: NavItem[] = [
     children: [
       { label:'Ma collection', href:'/portfolio'            },
       { label:'Performance',  href:'/portfolio/performance', collectorHide: true },
-      { label:'Allocations',  href:'/portfolio/allocation'  },
+      { label:'Allocations',  href:'/portfolio/allocation', collectorHide: true },
       { label:'Objectifs',    href:'/portfolio/objectifs'   },
       { label:'Faut-il grader ?', href:'/portfolio/graded-ev', tier:'premium' },
     ],

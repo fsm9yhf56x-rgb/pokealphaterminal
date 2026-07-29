@@ -31,7 +31,8 @@ export default function UserMenu() {
   function routeAllowedFor(path: string, mode: 'collector' | 'investor'): boolean {
     const collectorOnly = path === '/culture' || path.startsWith('/culture/')
     const collectorHide =
-      path === '/market' || path.startsWith('/market/') || path === '/portfolio/performance'
+      path === '/market' || path.startsWith('/market/')
+      || path === '/portfolio/performance' || path === '/portfolio/allocation'
     if (mode === 'investor' && collectorOnly) return false
     if (mode === 'collector' && collectorHide) return false
     return true

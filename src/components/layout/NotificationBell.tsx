@@ -25,6 +25,9 @@ const TYPE_ICON: Record<string, { icon: string; tint: string }> = {
   goal_almost: { icon: '◍', tint: '#C9A84C' },
   referral_reward: { icon: '◈', tint: '#6E56CF' },
   set_release: { icon: '▸', tint: '#2A82DD' },
+  // Completion de serie : le moment fort du collectionneur.
+  set_completed: { icon: '◆', tint: '#1D9E75' },
+  set_almost: { icon: '◇', tint: '#C9A84C' },
   beta_ending: { icon: '○', tint: '#E03020' },
   test: { icon: '●', tint: '#86868B' },
 }

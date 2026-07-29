@@ -1,5 +1,6 @@
 "use client"
 import { formatEUR } from '@/lib/formatPrice'
+import { usePersona } from '@/lib/usePersona'
 
 interface CardItem {
   id:string; name:string; set:string; year:number; type:string;
@@ -71,6 +72,7 @@ interface Props {
 }
 
 export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain, onShare }: Props) {
+  const { isInvestor } = usePersona()
   const wrappedYear = new Date().getFullYear()
   const setsOwned = [...new Set(portfolio.map(c=>c.set))]
   const rareCt = portfolio.filter(c=>c.rarity&&RARE_SET.has(c.rarity)).length
@@ -171,14 +173,14 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
           fontFamily:'var(--font-display)',
           letterSpacing:'-4px',
           lineHeight:0.95,
-        }}>{formatEUR(totalCur, 'big')}</div>
+        }}>{isInvestor ? formatEUR(totalCur, 'big') : totalQty.toLocaleString('fr-FR')}</div>
 
         {/* Ligne dorée signature ultra-fine */}
         <div style={{ width:80, height:1, background:'linear-gradient(90deg, transparent, #D1D1D6, transparent)', margin:'24px auto 16px' }}/>
 
-        <div style={{ fontSize:10, fontWeight:600, color:'#86868B', letterSpacing:'0.32em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>Valeur totale de ta collection</div>
+        <div style={{ fontSize:10, fontWeight:600, color:'#86868B', letterSpacing:'0.32em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>{isInvestor ? 'Valeur totale de ta collection' : `Carte${totalQty>1?'s':''} réunie${totalQty>1?'s':''} cette année`}</div>
 
-        {totalBuy>0&&(
+        {isInvestor&&totalBuy>0&&(
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginTop:18, background:'rgba(46,158,106,0.1)', border:'1px solid rgba(46,158,106,0.25)', borderRadius:99, padding:'7px 16px' }}>
             <Ic d={D.trend} c="#2E9E6A" s={14}/>
             <span style={{ fontSize:13, color:'#2E9E6A', fontWeight:700, fontFamily:'var(--font-data)' }}>+{totalROI}% · {formatEUR(totalGain, 'sign')}</span>
@@ -189,7 +191,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
         <div style={{ display:'flex', justifyContent:'center', gap:48, marginTop:36 }}>
           {([
             {v:totalQty, l:'cartes'},
-            {v:setsOwned.length, l:'sets'},
+            {v:setsOwned.length, l:isInvestor?'sets':'séries'},
             {v:rareCt, l:'rares'},
           ]).map((stat,i)=>(
             <div key={i} style={{ textAlign:'center' }}>
@@ -264,7 +266,7 @@ export function WrappedView({ portfolio, totalCur, totalBuy, totalROI, totalGain
                     <span style={{ fontSize:10, fontWeight:700, color:'#C855D4', fontFamily:'var(--font-display)', letterSpacing:'0.08em', textTransform:'uppercase' as const }}>{rarestCard.rarity}</span>
                   </div>
                 )}
-                {rarestCard.curPrice>0&&(
+                {isInvestor&&rarestCard.curPrice>0&&(
                   <div style={{ fontSize:32, fontWeight:800, color:'#1D1D1F', fontFamily:'var(--font-data)', marginTop:14, letterSpacing:'-0.5px' }}>{formatEUR(rarestCard.curPrice, 'big')}</div>
                 )}
               </div>

@@ -114,6 +114,40 @@ const GRADE_COMPANIES = [
 
 type GridItem = { type:'owned'; card:CardItem; count?:number } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
+/**
+ * Choisit la carte du mur pour la position donnee.
+ *
+ * i * pas (mod n) avec `pas` premier avec n parcourt TOUTES les cartes avant
+ * d'en repeter une : deux voisines ne peuvent jamais etre identiques, et le
+ * mur montre la collection entiere plutot que trois cartes en boucle.
+ * Deterministe (pas de Math.random) : aucun ecart entre le rendu serveur et
+ * le client.
+ */
+function makeWallPick(n: number) {
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b))
+  const pas = [7, 5, 11, 3, 13, 1].find(p => p < n && gcd(p, n) === 1) ?? 1
+  return (i: number, row: number) => n > 0 ? ((i * pas + row * 3) % n + n) % n : 0
+}
+
+/** Le nombre de pieces se construit sous les yeux : la collection prend corps. */
+function CountUpQty({ to }: { to: number }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (typeof window !== 'undefined'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setN(to); return }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min((t - t0) / 950, 1)
+      setN(Math.round(to * (1 - Math.pow(1 - p, 4))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [to])
+  return <>{n}</>
+}
+
 export function Holdings() {
   const { labels, show, isInvestor } = usePersona()
   // -- IndexedDB persistence --
@@ -968,6 +1002,7 @@ export function Holdings() {
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
+  const wallPick = useMemo(() => makeWallPick(portfolio.length), [portfolio.length])
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
@@ -1392,6 +1427,31 @@ export function Holdings() {
     <div>
       <style dangerouslySetInnerHTML={{__html:`
         @keyframes fadeUp    { 0%{opacity:0;transform:translateY(24px) scale(.97)} 60%{opacity:1;transform:translateY(-4px) scale(1.005)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+        /* 48 cartes = 24 dupliquees. 108 + 11 de marge = 119px par carte,
+           donc un jeu complet vaut 24 x 119 = 2856px : le raccord est exact. */
+        @keyframes hdSheen {
+          0%       { opacity: 0; transform: translateX(-40%) skewX(-14deg); }
+          6%       { opacity: .5; }
+          16%      { opacity: 0; transform: translateX(160%) skewX(-14deg); }
+          100%     { opacity: 0; transform: translateX(160%) skewX(-14deg); }
+        }
+        .hd-sheen {
+          position: absolute; top: -20%; bottom: -20%; left: 0; width: 26%;
+          background: linear-gradient(100deg, transparent, rgba(255,255,255,.85), transparent);
+          pointer-events: none; z-index: 1;
+          animation: hdSheen 11s cubic-bezier(.3,.6,.3,1) infinite 2.5s;
+        }
+        @media (prefers-reduced-motion: reduce) { .hd-sheen { display: none; } }
+        @keyframes hdDrift { from { transform: translateX(0); } to { transform: translateX(-2856px); } }
+        .hd-wall { translate: var(--px, 0) var(--py, 0); transition: translate .55s cubic-bezier(.2,.8,.2,1); }
+        .hd-row { will-change: transform; }
+        .hd-row-0 { animation: hdDrift 86s linear infinite; }
+        .hd-row-1 { animation: hdDrift 124s linear infinite reverse; }
+        @media (prefers-reduced-motion: reduce) {
+          .hd-row-0, .hd-row-1 { animation: none !important; }
+          .hd-wall { transition: none !important; }
+        }
+        @keyframes wallIn { from { opacity: 0; transform: rotate(-7deg) translateX(34px) scale(1.04); } to { opacity: 1; transform: rotate(-7deg); } }
         @keyframes cardIn    { from{opacity:0;transform:scale(.88) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes slotIn    { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
         @keyframes setExpand { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
@@ -1806,10 +1866,10 @@ export function Holdings() {
                       </div>
                       {hasPrice ? (
                         <div>
-                          <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'.06em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:2 }}>{isInvestor ? 'Prix de marché' : 'Valeur'}</div>
-                          <div style={{ fontSize:24, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.1 }}>{formatEUR(spotCard.curPrice)}</div>
+                          <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'.06em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:2 }}>{isInvestor ? 'Prix de marché' : (spotCard.rarity ? 'Rareté' : 'Dans ta collection')}</div>
+                          <div style={{ fontSize:isInvestor?24:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.15 }}>{isInvestor ? formatEUR(spotCard.curPrice) : (spotCard.rarity || spotCard.set || '\u2014')}</div>
                           {spotCard.qty > 1 ? (
-                            <div style={{ fontSize:12, color:'#6E6E73', fontFamily:'var(--font-display)', marginTop:3 }}>{'\u00D7'}{spotCard.qty} {'\u00B7'} {formatEUR(spotCard.curPrice * spotCard.qty)} au total</div>
+                            <div style={{ fontSize:12, color:'#6E6E73', fontFamily:'var(--font-display)', marginTop:3 }}>{'\u00D7'}{spotCard.qty}{isInvestor ? <> {'\u00B7'} {formatEUR(spotCard.curPrice * spotCard.qty)} au total</> : ' exemplaires'}</div>
                           ) : null}
                           {show.pnl && spotCard.buyPrice > 0 ? (() => {
                             const pv = spotCard.curPrice - spotCard.buyPrice
@@ -2381,8 +2441,72 @@ export function Holdings() {
             boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
             padding: '20px 26px 18px',
             marginBottom: 14,
+            position: 'relative' as const,
+            overflow: 'hidden' as const,
+          }}
+          onMouseMove={e=>{
+            const el = e.currentTarget.querySelector('.hd-wall') as HTMLElement | null
+            if (!el) return
+            const r = e.currentTarget.getBoundingClientRect()
+            const x = (e.clientX - r.left) / r.width - .5
+            const y = (e.clientY - r.top) / r.height - .5
+            el.style.setProperty('--px', (x * 22).toFixed(1) + 'px')
+            el.style.setProperty('--py', (y * 14).toFixed(1) + 'px')
+          }}
+          onMouseLeave={e=>{
+            const el = e.currentTarget.querySelector('.hd-wall') as HTMLElement | null
+            if (el) { el.style.setProperty('--px','0px'); el.style.setProperty('--py','0px') }
           }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'14px', flexWrap:'wrap' }}>
+          {/* Le mur VIVANT : SA collection derive lentement, deux rangees a des
+              vitesses differentes (parallaxe naturelle) et repond au curseur.
+              PAS de gap : avec 2n cartes il y a 2n-1 intervalles, donc -50%
+              tomberait a cote du raccord. marginRight sur chaque carte ->
+              largeur exacte, boucle sans couture. */}
+          {!show.pnl && portfolio.length > 0 && (
+            <div aria-hidden className="hd-wall" style={{
+              position:'absolute', inset:'-58% -8%', pointerEvents:'none', zIndex:0,
+              display:'flex', flexDirection:'column', gap:'11px', justifyContent:'center',
+              transform:'rotate(-7deg)', transformOrigin:'center',
+              maskImage:'linear-gradient(100deg, transparent 0%, transparent 26%, rgba(0,0,0,.5) 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.5) 84%, transparent 97%)',
+              WebkitMaskImage:'linear-gradient(100deg, transparent 0%, transparent 26%, rgba(0,0,0,.5) 42%, rgba(0,0,0,.92) 58%, rgba(0,0,0,.5) 84%, transparent 97%)',
+              animation:'wallIn 1.2s cubic-bezier(.2,.85,.3,1) both',
+            }}>
+              {/* L'eclat : les cartes accrochent la lumiere, comme quand on les
+                  incline. Passage lent et espace — un reflet, pas un gyrophare. */}
+              <span className="hd-sheen" aria-hidden />
+              {[0, 1].map(row => (
+                <div key={'row'+row} className={'hd-row hd-row-'+row} style={{
+                  display:'flex', justifyContent:'flex-start',
+                  // flex-end collait le contenu a droite : comme il est plus large
+                  // que le cadre, il debordait a GAUCHE et l'animation le poussait
+                  // encore plus loin -> plus rien a droite. On part de la gauche.
+                  marginLeft: row === 1 ? '-59px' : '0',
+                  width: 'max-content',
+                }}>
+                  {Array.from({ length: 48 }).map((_, i) => {
+                    const c: any = portfolio[wallPick(i % 24, row)]
+                    const src = c?.image ? cleanImageUrl(c.image) : ''
+                    return (
+                      <div key={'wm'+row+'-'+i} style={{
+                        flex:'0 0 108px', width:'108px', height:'151px',
+                        marginRight:'11px',
+                        borderRadius:'9px', overflow:'hidden',
+                        boxShadow:'0 8px 22px rgba(20,20,40,.16)',
+                        background:'#E9E9EE',
+                      }}>
+                        {src ? (
+                          <img src={src} alt="" loading="lazy"
+                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
+                            onError={e=>{(e.target as HTMLImageElement).style.visibility='hidden'}} />
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'14px', flexWrap:'wrap' }}>
             <div>
               <div style={{ fontSize:'10px', fontWeight:600, color:'#6E6E73', textTransform:'uppercase' as const, letterSpacing:'.15em', fontFamily:'var(--font-display)', marginBottom:'6px', display:'flex', alignItems:'center', gap:6 }} className='section-reveal'>
                 <span style={{ display:'inline-block', width:3, height:10, background:'#1D1D1F', borderRadius:2 }} />
@@ -2417,7 +2541,7 @@ export function Holdings() {
                 <div className="value-hero" style={{ fontSize:'38px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-1.5px', lineHeight:1, display:'flex', alignItems:'baseline', gap:'8px' }}>
                   {portfolio.length>0 ? (
                     <>
-                      <span>{totalQty}</span>
+                      <span><CountUpQty to={totalQty} /></span>
                       <span style={{ fontSize:'17px', fontWeight:500, color:'#86868B', letterSpacing:'0' }}>pièce{totalQty!==1?'s':''}</span>
                     </>
                   ) : <span style={{ color:'#C7C7CC' }}>---</span>}
@@ -2425,18 +2549,48 @@ export function Holdings() {
               )}
               <div className="value-hero-sub" style={{ display:'flex', alignItems:'center', gap:'10px', marginTop:'8px', flexWrap:'wrap' }}>
                 {show.pnl&&portfolio.length>0&&totalBuy>0&&<span style={{ fontSize:'14px', fontWeight:600, color:totalGain>=0?'#2E9E6A':'#E03020', background:totalGain>=0?'rgba(46,158,106,.08)':'rgba(224,48,32,.08)', padding:'3px 10px', borderRadius:'99px' }}>{totalGain>=0?'+':''}{totalROI}% · {totalGain>=0?'+':''}EUR {totalGain.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>}
-                {portfolio.length>0&&<span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{[...new Set(portfolio.map(c=>c.set))].length} set{[...new Set(portfolio.map(c=>c.set))].length!==1?'s':''}{!show.pnl&&eraCount>0?` · ${eraCount} ère${eraCount!==1?'s':''}`:''}</span>}
-                {!show.pnl&&portfolio.length>0&&(
-                  <button onClick={()=>setValueHidden(v=>!v)} style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:'12px', color:'#86868B', fontFamily:'var(--font-data)', background:'rgba(0,0,0,0.035)', border:'1px solid rgba(0,0,0,0.06)', borderRadius:99, padding:'3px 11px', cursor:'pointer', transition:'all .15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(0,0,0,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(0,0,0,0.035)'}}>
-                    {valueHidden ? (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    ) : (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    )}
-                    {valueHidden ? `${labels.portfolioValue} masquée` : `EUR ${totalCur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`}
-                  </button>
-                )}
+                {portfolio.length>0&&(()=>{
+                  const nSets = [...new Set(portfolio.map(c=>c.set))].length
+                  if (show.pnl) return <span style={{ fontSize:'13px', color:'#86868B', fontFamily:'var(--font-display)' }}>{nSets} set{nSets!==1?'s':''}</span>
+
+                  // Collectionneur : ce dont il est fier, pas ce que ca vaut.
+                  const graded = portfolio.reduce((n,c)=>n+((c as any).graded?(Number(c.qty)||1):0),0)
+                  const langs = [...new Set(portfolio.map(c=>c.lang).filter(Boolean))]
+
+                  const chips: { n: string; l: string; tint?: string }[] = []
+                  chips.push({ n: String(nSets), l: nSets>1 ? 'séries' : 'série' })
+                  if (eraCount>0) chips.push({ n: String(eraCount), l: eraCount>1 ? 'ères' : 'ère' })
+                  if (graded>0) chips.push({ n: String(graded), l: graded>1 ? 'gradées' : 'gradée', tint: '#C9A227' })
+
+                  return (
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:'7px', flexWrap:'wrap' }}>
+                      {chips.map((c,i)=>(
+                        <span key={c.l} style={{
+                          display:'inline-flex', alignItems:'baseline', gap:'5px',
+                          padding:'5px 11px', borderRadius:'999px',
+                          background: c.tint ? c.tint+'14' : 'rgba(0,0,0,0.04)',
+                          border: '1px solid ' + (c.tint ? c.tint+'2E' : 'rgba(0,0,0,0.05)'),
+                          animation:`cardIn .5s ${0.06*i}s cubic-bezier(.2,.85,.3,1) both`,
+                        }}>
+                          <strong style={{ fontSize:'13.5px', fontWeight:800, color: c.tint || '#1D1D1F', fontFamily:'var(--font-display)', letterSpacing:'-.02em' }}>{c.n}</strong>
+                          <span style={{ fontSize:'11.5px', fontWeight:600, color:'#86868B', fontFamily:'var(--font-display)' }}>{c.l}</span>
+                        </span>
+                      ))}
+                      {langs.length>0&&(
+                        <span style={{
+                          display:'inline-flex', alignItems:'center', gap:'6px',
+                          padding:'5px 11px', borderRadius:'999px',
+                          background:'rgba(0,0,0,0.04)', border:'1px solid rgba(0,0,0,0.05)',
+                          animation:`cardIn .5s ${0.06*chips.length}s cubic-bezier(.2,.85,.3,1) both`,
+                        }}>
+                          {langs.map(l=>(
+                            <span key={l} style={{ fontSize:'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-display)', letterSpacing:'.05em' }}>{l}</span>
+                          ))}
+                        </span>
+                      )}
+                    </span>
+                  )
+                })()}
                 {portfolio.length===0&&<span style={{ fontSize:'13px', color:'#86868B' }}>Commence ta collection</span>}
               </div>
               {!isPro && portfolio.length > 0 && (() => {
@@ -3459,10 +3613,26 @@ export function Holdings() {
                           </div>
                           {/* Nom */}
                           <div style={{ fontSize:'14px', fontWeight:700, color:'rgba(255,255,255,.85)', fontFamily:'var(--font-display)', letterSpacing:'.06em', textTransform:'uppercase' as const, marginBottom:'6px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{card.name}</div>
-                          {/* Prix */}
-                          <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', letterSpacing:'-.02em', lineHeight:1, marginBottom:'8px' }}>
-                            {formatEUR(card.curPrice, 'small')}
-                          </div>
+                          {/* Place d'honneur : la valeur pour l'investisseur,
+                              ce que la carte EST pour le collectionneur. */}
+                          {isInvestor ? (
+                            <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', letterSpacing:'-.02em', lineHeight:1, marginBottom:'8px' }}>
+                              {formatEUR(card.curPrice, 'small')}
+                            </div>
+                          ) : (
+                            <div style={{ marginBottom:'8px' }}>
+                              {card.rarity ? (
+                                <div style={{ fontSize:'16px', fontWeight:700, color:'#fff', fontFamily:'var(--font-display)', letterSpacing:'-.01em', lineHeight:1.15 }}>
+                                  {card.rarity}
+                                </div>
+                              ) : null}
+                              {card.set ? (
+                                <div style={{ fontSize:'11px', fontWeight:500, color:'rgba(255,255,255,.5)', fontFamily:'var(--font-display)', marginTop:'3px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                                  {card.set}
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
                           {/* Meta */}
                           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
                             <span style={{ fontSize:'14px' }}>{ls.flag}</span>

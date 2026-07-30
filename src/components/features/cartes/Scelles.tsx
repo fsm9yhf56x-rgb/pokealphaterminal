@@ -121,7 +121,7 @@ function Visual({ item, h, small }: { item: SealedItem; h: string; small?: boole
 
 export function Scelles() {
   const { user } = useAuth()
-  const { isInvestor } = usePersona()
+  const { isInvestor, isCollector } = usePersona()
   const [sortBooster, setSortBooster] = useState(false)
   const [lang, setLang] = useState<Lang>('FR')
   const [items, setItems] = useState<SealedItem[]>([])
@@ -331,9 +331,13 @@ export function Scelles() {
                   <span style={{ color: '#E03020' }}>Erreur de chargement</span>
                 ) : (
                   <span>
-                    <strong style={{ color: '#111' }}>{(total || filtered.length).toLocaleString('fr-FR')}</strong> produits ·{' '}
-                    <strong style={{ color: '#111' }}>{(hasFilters ? cotes : (pricedTotal || cotes)).toLocaleString('fr-FR')}</strong> cotés ·{' '}
-                    {market === 'EU_FR' ? 'annonces France' : 'marché américain converti'}
+                    <strong style={{ color: '#111' }}>{(total || filtered.length).toLocaleString('fr-FR')}</strong> produits
+                    {isCollector ? null : (
+                      <>
+                        {' · '}<strong style={{ color: '#111' }}>{(hasFilters ? cotes : (pricedTotal || cotes)).toLocaleString('fr-FR')}</strong> cotés
+                        {' · '}{market === 'EU_FR' ? 'annonces France' : 'marché américain converti'}
+                      </>
+                    )}
                   </span>
                 )}
               </div>
@@ -457,7 +461,7 @@ export function Scelles() {
                     <div style={{ fontSize: '10px', color: '#86868B', marginBottom: '7px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                       {it.setName || it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
                     </div>
-                    {it.price && it.price.value > 0 ? (
+                    {isCollector ? null : it.price && it.price.value > 0 ? (
                       <>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
                           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
@@ -520,6 +524,7 @@ export function Scelles() {
                 {selected.skuLabel}{selected.content ? ' · ' + selected.content.label : ''}
               </div>
 
+              {isCollector ? null : (
               <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: '10px', padding: '13px 14px', marginBottom: '14px' }}>
                 <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
                   {selected.price?.basis === 'window' ? 'Annonces sur 90 jours'
@@ -557,6 +562,8 @@ export function Scelles() {
                   <div style={{ fontSize: '14px', color: '#AAA' }}>Données insuffisantes</div>
                 )}
               </div>
+
+              )}
 
               {isInvestor && selected.price && selected.price.value > 0 ? (
                 <div style={{ marginBottom: '14px' }}>

@@ -114,12 +114,9 @@ const GRADE_COMPANIES = [
 
 type GridItem = { type:'owned'; card:CardItem; count?:number } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
 
-/** 'SEALED' et 'Sealed' sont des cles techniques : on n'affiche jamais ces mots. */
-const frLabel = (v: unknown): string => {
-  const t = String(v ?? '')
-  if (t === 'SEALED' || t.toLowerCase() === 'sealed') return 'Scellé'
-  return t
-}
+/** Un scelle porte card_number 'SEALED'. Regle unique : partout ou l'on veut des
+ *  CARTES (series, vitrine, mur), on filtre avec ca, et nulle part autrement. */
+const isSealed = (c?: { number?: string } | null): boolean => String(c?.number ?? '') === 'SEALED'
 
 /**
  * Choisit la carte du mur pour la position donnee.
@@ -308,10 +305,15 @@ export function Holdings() {
   const [localShowcase, setLocalShowcase] = useState<CardItem[]>(()=>{
     try { const r=localStorage.getItem('pka_showcase'); return r?JSON.parse(r):[] } catch { return [] }
   })
+  // CARTES seules. Un display n'est pas une carte d'un set : il fausserait la
+  // completion x/226, la piece maitresse, la vitrine et le mur. Declare ICI parce
+  // que la vitrine (juste dessous) et le mur (wallPick) en dependent tous les deux.
+  const portfolioCards = useMemo(() => portfolio.filter(c => !isSealed(c)), [portfolio])
   // Connecte : vitrine derivee du portfolio (showcase_position). Invite : localStorage.
-  const showcase = user
-    ? portfolio.filter(c=>c.showcasePos!==undefined).sort((a,b)=>(a.showcasePos??0)-(b.showcasePos??0))
-    : localShowcase
+  const showcase = useMemo(() => (user
+    ? portfolioCards.filter(c=>c.showcasePos!==undefined).sort((a,b)=>(a.showcasePos??0)-(b.showcasePos??0))
+    : localShowcase.filter(c => !isSealed(c))
+  ), [user?.id, portfolioCards, localShowcase])
   const [showPickerForShowcase, setShowPickerForShowcase] = useState(false)
   const [vitrineSearch, setVitrineSearch] = useState('')
   const [vitrineFilter, setVitrineFilter] = useState('all')
@@ -1011,7 +1013,7 @@ export function Holdings() {
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
-  const wallPick = useMemo(() => makeWallPick(portfolio.length), [portfolio.length])
+  const wallPick = useMemo(() => makeWallPick(portfolioCards.length), [portfolioCards.length])
 
   const totalBuy  = portfolio.reduce((s,c)=>s+c.buyPrice*c.qty,0)
   const totalCur  = portfolio.reduce((s,c)=>s+c.curPrice*c.qty,0)
@@ -1041,18 +1043,13 @@ export function Holdings() {
   })()
   // Nombre d'EXEMPLAIRES (somme des qty), pas de lignes : une carte x20 = 20.
   const totalQty  = portfolio.reduce((s,c)=>s+(c.qty||1),0)
-  // CARTES seules : la vue par series mesure la completion d'un set, or un display
-  // ou un ETB n'est pas une carte de ce set. Il resterait compte dans le "x/226"
-  // et dans la valeur de ligne. Le scelle reste visible partout ailleurs.
-  const portfolioCards = portfolio.filter(c => String(c.number ?? '') !== 'SEALED')
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
 
   // Compteur isolé dans <AnimatedTotal/> (animation confinée, ne re-rend pas tout Holdings)
   const valuePulse: false | 'up' | 'down' = false
-  const cartesSeules = portfolio.filter(c => String(c.number ?? '') !== 'SEALED')
-  const bestCard  = cartesSeules.length>0?[...cartesSeules].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const bestByValue = cartesSeules.length>0?[...cartesSeules].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
+  const bestCard  = portfolioCards.length>0?[...portfolioCards].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
+  const bestByValue = portfolioCards.length>0?[...portfolioCards].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
   const eraCount = new Set(portfolio.map(c=>{ const y=c.year||0; if(y&&y<=2002)return 'vintage'; if(y&&y<=2010)return 'classic'; if(y&&y<=2019)return 'modern'; if(y)return 'current'; return 'unknown' }).filter(e=>e!=='unknown')).size
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? (binderSetFilter==='all' ? portfolio : portfolio.filter(c=>c.set===binderSetFilter)) : portfolio.filter(c=>c.set===binderSet)
@@ -1385,6 +1382,7 @@ export function Holdings() {
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
   const addToShowcase = (card:CardItem) => {
+    if(isSealed(card)) return
     if(showcase.find(c=>c.id===card.id)) return
     if (user) {
       const pos = Math.max(0, ...showcase.map(c=>c.showcasePos??0)) + 1
@@ -1994,7 +1992,7 @@ export function Holdings() {
                 </button>
               </div>
               {(()=>{
-                const available = portfolio.filter(c=>!showcase.find(sc=>sc.id===c.id))
+                const available = portfolioCards.filter(c=>!showcase.find(sc=>sc.id===c.id))
                 const filtered = available.filter(c=>{
                   const matchSearch = !vitrineSearch || String(c.name ?? '').toLowerCase().includes(vitrineSearch.toLowerCase()) || String(c.set ?? '').toLowerCase().includes(vitrineSearch.toLowerCase())
                   const RARE_SET = ['Alt Art','Secret Rare','Gold Star','Ultra Rare','Illustration Rare','Special Art Rare']
@@ -2476,7 +2474,7 @@ export function Holdings() {
               PAS de gap : avec 2n cartes il y a 2n-1 intervalles, donc -50%
               tomberait a cote du raccord. marginRight sur chaque carte ->
               largeur exacte, boucle sans couture. */}
-          {!show.pnl && portfolio.length > 0 && (
+          {!show.pnl && portfolioCards.length > 0 && (
             <div aria-hidden className="hd-wall" style={{
               position:'absolute', inset:'-58% -8%', pointerEvents:'none', zIndex:0,
               display:'flex', flexDirection:'column', gap:'11px', justifyContent:'center',
@@ -2498,7 +2496,7 @@ export function Holdings() {
                   width: 'max-content',
                 }}>
                   {Array.from({ length: 48 }).map((_, i) => {
-                    const c: any = portfolio[wallPick(i % 24, row)]
+                    const c: any = portfolioCards[wallPick(i % 24, row)]
                     const src = c?.image ? cleanImageUrl(c.image) : ''
                     return (
                       <div key={'wm'+row+'-'+i} style={{

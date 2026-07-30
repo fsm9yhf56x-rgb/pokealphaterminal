@@ -13,6 +13,7 @@
 // GET /api/v1/sealed?lang=FR&sku=display&set=me05&q=nuit&sort=price&limit=200
 
 import { NextRequest, NextResponse } from 'next/server';
+import { checkPublicRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -83,6 +84,13 @@ function servableImage(url: string | null, source: string | null): string | null
 }
 
 export async function GET(req: NextRequest) {
+  // Route publique servant le catalogue scelle cote : c'est du moat data, la meme
+  // chose que kodo/prices/batch protege deja. Un utilisateur qui navigue fait
+  // quelques appels, un aspirateur en fait des centaines.
+  // Fail-open si Upstash est indisponible : on prefere servir que bloquer.
+  const _rl = await checkPublicRateLimit(req, 'data');
+  if (_rl) return _rl;
+
   try {
     const sp = req.nextUrl.searchParams;
     const lang = String(sp.get('lang') || 'fr').toLowerCase();

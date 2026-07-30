@@ -78,7 +78,7 @@ type ViewMode = 'binder'|'showcase'|'wrapped'
 // prix differents (NM vs LP vs MP...). Pendant du badge de grade pour les gradees.
 function rawStateLabel(condition?: string): string {
   const c = (condition || '').toLowerCase()
-  if (c.includes('sealed') || c.includes('scell')) return 'SEALED'
+  if (c.includes('sealed') || c.includes('scell')) return 'SCELLÉ'
   if (c.includes('near') || c === 'nm' || c === 'mint')       return 'NM'
   if (c.includes('excellent') || c === 'ex')                  return 'EX'
   if (c.includes('lightly') || c === 'lp')                    return 'LP'
@@ -113,6 +113,13 @@ const GRADE_COMPANIES = [
 ]
 
 type GridItem = { type:'owned'; card:CardItem; count?:number } | { type:'ghost'; name:string; number:string; image:string; rarity:string }
+
+/** 'SEALED' et 'Sealed' sont des cles techniques : on n'affiche jamais ces mots. */
+const frLabel = (v: unknown): string => {
+  const t = String(v ?? '')
+  if (t === 'SEALED' || t.toLowerCase() === 'sealed') return 'Scellé'
+  return t
+}
 
 /**
  * Choisit la carte du mur pour la position donnee.
@@ -237,7 +244,9 @@ export function Holdings() {
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
             serverPriced: Number(c.current_price) > 0, priceBasis: c.price_basis || undefined,
             qty: c.qty || 1,
-            image: (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined),
+            image: (String(c.card_number ?? '') === 'SEALED'
+              ? (c.image_url || undefined)
+              : (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined)),
             setId: c.set_id || undefined, favorite: c.is_favorite || false,
             showcasePos: c.showcase_position ?? undefined,
             notes: c.notes || undefined,
@@ -1032,13 +1041,18 @@ export function Holdings() {
   })()
   // Nombre d'EXEMPLAIRES (somme des qty), pas de lignes : une carte x20 = 20.
   const totalQty  = portfolio.reduce((s,c)=>s+(c.qty||1),0)
+  // CARTES seules : la vue par series mesure la completion d'un set, or un display
+  // ou un ETB n'est pas une carte de ce set. Il resterait compte dans le "x/226"
+  // et dans la valeur de ligne. Le scelle reste visible partout ailleurs.
+  const portfolioCards = portfolio.filter(c => String(c.number ?? '') !== 'SEALED')
   const totalGain = totalCur-totalBuy
   const totalROI  = totalBuy>0?Math.round((totalGain/totalBuy)*100):0
 
   // Compteur isolé dans <AnimatedTotal/> (animation confinée, ne re-rend pas tout Holdings)
   const valuePulse: false | 'up' | 'down' = false
-  const bestCard  = portfolio.length>0?[...portfolio].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
-  const bestByValue = portfolio.length>0?[...portfolio].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
+  const cartesSeules = portfolio.filter(c => String(c.number ?? '') !== 'SEALED')
+  const bestCard  = cartesSeules.length>0?[...cartesSeules].sort((a,b)=>((b.curPrice-b.buyPrice)/Math.max(b.buyPrice,1))-((a.curPrice-a.buyPrice)/Math.max(a.buyPrice,1)))[0]:null
+  const bestByValue = cartesSeules.length>0?[...cartesSeules].sort((a,b)=>(b.curPrice*b.qty)-(a.curPrice*a.qty))[0]:null
   const eraCount = new Set(portfolio.map(c=>{ const y=c.year||0; if(y&&y<=2002)return 'vintage'; if(y&&y<=2010)return 'classic'; if(y&&y<=2019)return 'modern'; if(y)return 'current'; return 'unknown' }).filter(e=>e!=='unknown')).size
   const slotsPer  = (binderSet&&binderSet!=='__all__') ? 9999 : binderCols*10
   const binderFiltered = (!binderSet || binderSet==='__all__') ? (binderSetFilter==='all' ? portfolio : portfolio.filter(c=>c.set===binderSetFilter)) : portfolio.filter(c=>c.set===binderSet)
@@ -2863,11 +2877,11 @@ export function Holdings() {
                       </div>
                     )}
                     {(()=>{
-                      const raw=[...new Set(portfolio.map(c=>c.set))]
+                      const raw=[...new Set(portfolioCards.map(c=>c.set))]
                       const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw
                       return ordered
                     })().filter(n=>String(n ?? '').toLowerCase().includes(setSearch.toLowerCase())).map((setName,si)=>{
-                      const setCards=portfolio.filter(c=>c.set===setName)
+                      const setCards=portfolioCards.filter(c=>c.set===setName)
                       const setIdKey=setCards.find(c=>c.setId)?.setId??''
                       const total=setCards[0]?.setTotal||0
                       const resolvedTotal=total||(setIdKey?setTotalsMap[setIdKey]:0)||setTotalsMap[setName]||setTotalsMap[String(setName ?? '').toLowerCase()]||0
@@ -3137,7 +3151,7 @@ export function Holdings() {
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
-                                    {card.number&&card.number!=='???'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                                    {card.number&&card.number!=='???'&&card.number!=='SEALED'&&<span style={{ fontSize:'9px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                                     {card.rarity&&<span style={{ fontSize:'9px', color:'#86868B' }}>{card.rarity}</span>}
 
                                   </div>
@@ -3317,8 +3331,9 @@ export function Holdings() {
                           {/* Image pleine hauteur */}
                           <div style={{ position:'relative', width:'100%', aspectRatio:'63/88', overflow:'hidden', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04)', flex:'none' }}>
                             {card.image ? (()=>{
+                              const isSealed = String(card.number ?? '') === 'SEALED'
                               return <img src={cleanImageUrl(card.image)} alt={card.name}
-                                style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
+                                style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit: isSealed ? 'contain' : 'cover', padding: isSealed ? '14%' : 0, background: isSealed ? 'rgba(0,0,0,0.025)' : undefined, boxSizing:'border-box' as const, display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
                                 onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null; t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} }}
                               />
                             })() : (
@@ -3336,8 +3351,8 @@ export function Holdings() {
                           </div>
                           {/* Étiquette bas — propre et sobre */}
                           <div style={{ padding:'6px 4px 8px', position:'relative' }}>
-                            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'3px' }}>
-                              <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{card.name}</div>
+                            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'3px' }}>
+                              <div style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const, lineHeight:1.22, minHeight:'2.44em' }}>{card.name}</div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
                             <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
@@ -3346,7 +3361,7 @@ export function Holdings() {
                             </div>
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
-                              {card.number&&card.number!=='???'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                              {card.number&&card.number!=='???'&&card.number!=='SEALED'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
                               {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ marginLeft:'auto', flexShrink:0, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
                               {!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ marginLeft:'auto', flexShrink:0, background:'transparent', color:'#8A8A8E', border:'0.5px solid rgba(0,0,0,0.16)', fontSize:'9px', fontWeight:700, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                             </div>
@@ -3357,7 +3372,7 @@ export function Holdings() {
                               </div>
                             )}
                             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'4px', marginTop:'4px' }}>
-                              {card.rarity&&card.rarity!==''?<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, flex:1 }}>{card.rarity}</span>:<span style={{ flex:1 }}/>}
+                              {card.rarity&&card.rarity!==''&&card.rarity!=='Sealed'?<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, flex:1 }}>{card.rarity}</span>:<span style={{ flex:1 }}/>}
                               <span style={{ fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>×{card.qty}</span>
                             </div>
                           </div>

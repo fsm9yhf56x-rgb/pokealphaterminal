@@ -1712,6 +1712,9 @@ export function Holdings() {
         .breathe-A { animation:breatheA 3s ease-in-out infinite; }
         .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;border:1px solid #EBEBEB;box-shadow:0 1px 3px rgba(0,0,0,.03); }
         .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 12px 32px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.02) !important;border-color:#D2D2D7 !important; }
+        .pocket-shell img { transition:transform .45s cubic-bezier(.22,.85,.3,1); }
+        .pocket-shell:hover img { transform:scale(1.035); }
+        @media (prefers-reduced-motion: reduce){ .pocket-shell:hover img{ transform:none } .kbinder-grid > *{ animation:none !important } }
         
         @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 8px rgba(224,48,32,.1)} }
         .empty-pocket { animation:slotPulse 3s ease-in-out infinite;border:2px dashed #D2D2D7 !important;background:#FAFAFA !important; }
@@ -3277,7 +3280,7 @@ export function Holdings() {
                     })}
                   </div>
                 ):(<>
-                  <div className="kbinder-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'auto', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
+                  <div className="kbinder-grid" key={`g-${binderFilter}-${binderLangFilter}-${binderSetFilter}-${binderSort}-${binderPage}`} style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'auto', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
                     {pageItems.map((item,idx)=>{
                       if(item.type==='ghost'){
                         const gi=item
@@ -3323,7 +3326,7 @@ export function Holdings() {
                       return (
                         <div key={card.id}
                           className='pocket-shell'
-                          style={{ background:'transparent', border:'none', boxShadow:'none', animation:`illuminate .35s ${Math.min(idx,12)*.06}s ease-out both`, position:'relative', borderRadius:'10px', overflow:'visible', cursor:'pointer', transition:'transform .3s cubic-bezier(.22,.68,0,1.1), box-shadow .35s ease', display:'flex', flexDirection:'column' as const, height:'100%' }}
+                          style={{ background:'transparent', border:'none', boxShadow:'none', animation:`illuminate .42s ${Math.min(idx,14)*.035}s cubic-bezier(.22,.85,.3,1) both`, position:'relative', borderRadius:'10px', overflow:'visible', cursor:'pointer', transition:'transform .3s cubic-bezier(.22,.68,0,1.1), box-shadow .35s ease', display:'flex', flexDirection:'column' as const, height:'100%' }}
                           onMouseLeave={e=>{ e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='0' }}
                           onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-8px)'; e.currentTarget.style.boxShadow='0 20px 40px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.04)'; const rb=e.currentTarget.querySelector('.remove-btn') as HTMLElement|null; if(rb) rb.style.opacity='1' }}
                           onClick={()=>{ setSpotCard(card); setEditQty(null) }}>

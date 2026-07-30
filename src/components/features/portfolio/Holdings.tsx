@@ -188,7 +188,7 @@ export function Holdings() {
   const { user, loading: authLoading, isPro } = useAuth()
   const [view,        setView]        = useState<ViewMode>('binder')
 
-  const [binderSet,   setBinderSet]   = useState<string|null>(null)
+  const [binderSet,   setBinderSet]   = useState<string|null>('__all__')
   const [dragIdx,     setDragIdx]     = useState<number|null>(null)
   const [showInfo,    setShowInfo]    = useState(true)
   const [setSearch,   setSetSearch]   = useState('')
@@ -202,10 +202,10 @@ export function Holdings() {
   })
   const [binderSort,  setBinderSort]  = useState<'number'|'name'|'price'|'date'|'series'|'recent'>('number')
   const [valueHidden, setValueHidden] = useState(true)
-  const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'>('all')
+  const [binderFilter, setBinderFilter] = useState<'all'|'graded'|'raw'|'rare'|'sealed'>('all')
   const [binderSetFilter, setBinderSetFilter] = useState<string>('all')
   const [binderLangFilter, setBinderLangFilter] = useState<'all'|'EN'|'FR'|'JP'>('all')
-  useEffect(()=>{ if(binderSet==='__all__'){ setBinderSort(prev=> prev==='number' ? 'series' : prev) } else if(binderSet){ setBinderSort(prev=> (prev==='series'||prev==='recent') ? 'number' : prev) } },[binderSet])
+  useEffect(()=>{ if(binderSet==='__all__'){ setBinderSort(prev=> prev==='number' ? 'series' : prev) } else if(binderSet){ setBinderSort(prev=> (prev==='series'||prev==='recent') ? 'number' : prev) } else { setBinderSort('number') } },[binderSet])
   const [setTotalsMap, setSetTotalsMap] = useState<Record<string,number>>({})
   const [setDateMap, setSetDateMap] = useState<Record<string,string>>({})
   useEffect(()=>{
@@ -1065,7 +1065,8 @@ export function Holdings() {
   })
   const binderFilteredFinal = binderSorted.filter(c=>{
     if(binderFilter==='graded' && !c.graded) return false
-    if(binderFilter==='raw' && c.graded) return false
+    if(binderFilter==='sealed' && !isSealed(c)) return false
+    if(binderFilter==='raw' && (c.graded || isSealed(c))) return false
     if(binderSet==='__all__' && binderLangFilter!=='all' && c.lang!==binderLangFilter) return false
     if(setSearch && !String(c.name ?? '').toLowerCase().includes(setSearch.toLowerCase()) && !String(c.set ?? '').toLowerCase().includes(setSearch.toLowerCase())) return false
     return true
@@ -1719,6 +1720,22 @@ export function Holdings() {
         .vtab:hover:not(.on) { transform:translateY(-1px);color:#1D1D1F;box-shadow:0 6px 16px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9); }
         .vtab:active { transform:scale(.97);transition-duration:.08s; }
         .vtab.on { background:linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%) !important;color:#1D1D1F !important;box-shadow:0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
+        .ksubrail{ display:inline-flex; gap:2px; padding:3px; background:rgba(0,0,0,.045); border-radius:99px; }
+        .kseg{ padding:6px 14px; border:none; background:transparent; border-radius:99px; color:#6E6E73; font-size:11.5px; font-weight:600; font-family:var(--font-display); cursor:pointer; white-space:nowrap; transition:background .22s cubic-bezier(.2,.85,.3,1), color .18s ease, transform .12s ease; }
+        .kseg:hover{ color:#1D1D1F; }
+        .kseg.on{ background:#FFF; color:#1D1D1F; box-shadow:0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.03); }
+        .kseg:active{ transform:scale(.96); }
+        .kseg:focus{ outline:none; }
+        .kseg:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(0,0,0,.10); }
+        .kadd-mini:focus{ outline:none; }
+        .kadd-mini:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(0,0,0,.08); }
+        .kseg-sm{ height:28px; padding:0 12px; font-size:11px; }
+        .ksubrail{ height:34px; box-sizing:border-box; align-items:center; }
+        .kctrl-field{ height:34px; padding:0 12px; border-radius:99px; border:none; background:rgba(255,255,255,.62); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07); color:#1D1D1F; font-size:11.5px; font-weight:600; font-family:var(--font-display); outline:none; transition:box-shadow .18s ease, background .18s ease; }
+        .kctrl-field:hover{ background:rgba(255,255,255,.85); }
+        .kctrl-field:focus{ background:#FFF; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07), 0 0 0 3px rgba(0,0,0,.05); }
+        @media (max-width:1180px){ .kadd-lbl{ display:none } }
+        @media (prefers-reduced-motion: reduce){ .kseg{ transition:none } .kseg:active{ transform:none } }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .2s cubic-bezier(.25,.46,.45,.94);color:#86868B;border:1px solid #D2D2D7;background:#fff; }
         /* Responsive — clamp colonnes binder (override inline grid via !important) */
         @media (max-width:1023px){
@@ -2675,23 +2692,25 @@ export function Holdings() {
             </div>
           </div>
           </div>
-          <div style={{ display:'flex', gap:'6px', alignItems:'center', marginTop:14 }}>
+          <div style={{ display:'flex', gap:'6px', alignItems:'center', marginTop:14, flexWrap:'wrap' as const }}>
             {([['binder','Classeur'],['showcase','Vitrine'],['wrapped',`Wrapped ${new Date().getFullYear()}`]] as Array<[ViewMode,string]>).map(([v,l])=>(
               <button key={v} onClick={()=>setView(v)} className={'vtab'+(view===v?' on':'')}>{l}</button>
             ))}
+            {view==='binder' && portfolio.length>0 && (<>
+              <span aria-hidden style={{ width:'1px', height:'20px', background:'rgba(0,0,0,0.09)', margin:'0 5px', flexShrink:0 }} />
+              <div className="ksubrail">
+                {[
+                  { k:'all',    l:'Tout',        on:binderSet==='__all__'&&binderFilter==='all',    go:()=>{ setBinderSet('__all__'); setBinderFilter('all') } },
+                  { k:'series', l:'Par séries', on:binderSet!=='__all__',                          go:()=>{ setBinderSet(null);      setBinderFilter('all') } },
+                  { k:'graded', l:'Gradées',    on:binderSet==='__all__'&&binderFilter==='graded', go:()=>{ setBinderSet('__all__'); setBinderFilter('graded') } },
+                  { k:'raw',    l:'Raw',         on:binderSet==='__all__'&&binderFilter==='raw',    go:()=>{ setBinderSet('__all__'); setBinderFilter('raw') } },
+                  { k:'sealed', l:'Scellés',    on:binderSet==='__all__'&&binderFilter==='sealed', go:()=>{ setBinderSet('__all__'); setBinderFilter('sealed') } },
+                ].map(t=>(
+                  <button key={t.k} onClick={()=>{ t.go(); setBinderPage(0) }} className={'kseg'+(t.on?' on':'')}>{t.l}</button>
+                ))}
+              </div>
+            </>)}
           </div>
-          {view==='binder' && portfolio.length>0 && (
-            <div style={{ display:'flex', gap:'4px', marginTop:'6px' }}>
-              <button onClick={()=>{ setBinderSet(null); setBinderPage(0) }}
-                style={{ padding:'7px 16px', borderRadius:'99px', border:'none', background:!binderSet?'#1D1D1F':'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', boxShadow:!binderSet?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:!binderSet?'#fff':'#6E6E73', fontSize:'11.5px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                Par séries
-              </button>
-              <button onClick={()=>{ setBinderSet('__all__'); setBinderPage(0) }}
-                style={{ padding:'7px 16px', borderRadius:'99px', border:'none', background:binderSet==='__all__'?'#1D1D1F':'rgba(255,255,255,0.5)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', boxShadow:binderSet==='__all__'?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:binderSet==='__all__'?'#fff':'#6E6E73', fontSize:'11.5px', fontWeight:600, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .15s' }}>
-                Toute ma collection
-              </button>
-            </div>
-          )}
           {binderSet&&binderSet!=='__all__'&&view==='binder'&&(
             <div className="kdetail-hero" style={{ display:'flex', flexDirection:'column', alignItems:'center', marginTop:'0', padding:'28px 0 20px', position:'relative' }}>
               <div className="kdetail-halo" style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:'500px', height:'250px', borderRadius:'50%', background:'radial-gradient(ellipse, rgba(224,48,32,.07) 0%, rgba(255,107,53,.03) 35%, transparent 65%)', pointerEvents:'none' }}/>
@@ -2774,44 +2793,73 @@ export function Holdings() {
                 boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.4)',
               }}>
                 <div className="kcollection-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
-                  <div className="kcollection-title">
-                    <div style={{ fontSize:13, color:'#48484A', fontFamily:'var(--font-display)' }}>
-                  {binderSet ? (
-                    // Breadcrumb glass quand on est dans une vue set/all
-                    <div className="kbreadcrumb" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 10px 5px 6px', background:'rgba(255,255,255,0.65)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderRadius:99, border:'1px solid rgba(229,229,234,0.6)', boxShadow:'0 1px 2px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85)', maxWidth:'100%' }}>
-                      <button onClick={()=>setBinderSet(null)} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'transparent', border:'none', borderRadius:99, color:'#1D1D1F', fontSize:11, fontWeight:600, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .15s' }}
-                        onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,0,0,0.06)' }}
-                        onMouseLeave={e=>{ e.currentTarget.style.background='transparent' }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                        Mes séries
-                      </button>
-                      <span style={{ width:1, height:14, background:'rgba(0,0,0,0.08)' }} />
-                      <span style={{ fontSize:11, fontWeight:600, color:'#6E6E73', fontFamily:'var(--font-display)', padding:'0 4px' }}>
-                        {binderSet==='__all__' ? 'Toute ma collection' : binderSet}
-                      </span>
-                      {binderSet!=='__all__' && (
-                        <>
-                          <span style={{ width:1, height:14, background:'rgba(0,0,0,0.08)' }} />
-                          <button onClick={()=>setBinderSet('__all__')} style={{ padding:'4px 10px', background:'transparent', border:'none', borderRadius:99, color:'#6E6E73', fontSize:11, fontWeight:500, fontFamily:'var(--font-display)', cursor:'pointer', transition:'all .15s' }}
-                            onMouseEnter={e=>{ e.currentTarget.style.background='rgba(0,0,0,0.06)'; e.currentTarget.style.color='#1D1D1F' }}
-                            onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#6E6E73' }}>
-                            Voir tout
-                          </button>
-                        </>
-                      )}
+                  <div className="kcollection-title" style={{ flex:1, minWidth:0 }}>
+                    {binderSet===null&&(
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' as const }}>
+                      <div style={{ position:'relative', flex:'1 1 160px', minWidth:'140px', maxWidth:'300px' }}>
+                        <input type="text" placeholder="Rechercher une série" value={setSearch} onChange={e=>setSetSearch(e.target.value)} className="kctrl-field" style={{ width:'100%', paddingLeft:'31px', boxSizing:'border-box' as const }}/>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        {setSearch&&<button onClick={()=>setSetSearch('')} aria-label="Effacer" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>}
+                      </div>
                     </div>
-                  ) : null}
-                </div>
+                    )}
+                    {binderSet!==null&&(
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' as const }}>
+                      {binderSet==='__all__'&&(
+                        <div style={{ position:'relative', flexShrink:0 }}>
+                          <select value={binderSetFilter} onChange={e=>{setBinderSetFilter(e.target.value);setBinderPage(0)}} className="kctrl-field" style={{ maxWidth:'168px', paddingRight:'28px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer', color:binderSetFilter==='all'?'#6E6E73':'#1D1D1F', textOverflow:'ellipsis' }}>
+                            <option value="all">Toutes les séries</option>
+                            {[...new Set(portfolioCards.map(c=>c.set))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(sname=>(
+                              <option key={sname} value={sname}>{sname}</option>
+                            ))}
+                          </select>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                      )}
+                      <div style={{ position:'relative', flex:'1 1 130px', minWidth:'120px', maxWidth:'260px' }}>
+                        <input type="text" placeholder="Rechercher" value={setSearch} onChange={e=>{setSetSearch(e.target.value);setBinderPage(0)}} className="kctrl-field" style={{ width:'100%', paddingLeft:'31px', boxSizing:'border-box' as const }}/>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        {setSearch&&<button onClick={()=>setSetSearch('')} aria-label="Effacer" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>}
+                      </div>
+                      {binderSet==='__all__'&&(
+                        <div className="ksubrail">
+                          {([{k:'all',l:''},{k:'FR',l:'\u{1F1EB}\u{1F1F7}'},{k:'EN',l:'\u{1F1FA}\u{1F1F8}'},{k:'JP',l:'\u{1F1EF}\u{1F1F5}'}] as {k:'all'|'EN'|'FR'|'JP';l:string}[]).map(lg=>(
+                            <button key={lg.k} onClick={()=>{setBinderLangFilter(lg.k);setBinderPage(0)}} className={'kseg kseg-sm'+(binderLangFilter===lg.k?' on':'')} aria-label={lg.k==='all'?'Toutes les langues':lg.k} title={lg.k==='all'?'Toutes les langues':lg.k} style={{ padding:'0 9px' }}>
+                              {lg.k==='all'
+                                ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ display:'block' }}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg>
+                                : lg.l}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ position:'relative', flexShrink:0 }} title="Trier">
+                        <select value={binderSort} onChange={e=>setBinderSort(e.target.value as any)} className="kctrl-field" style={{ paddingLeft:'29px', paddingRight:'25px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer' }}>
+                          {((binderSet==='__all__'?([{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]):([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
+                            <option key={so.k} value={so.k}>{so.l}</option>
+                          ))}
+                        </select>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.2" strokeLinecap="round" style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M3 6h13M3 12h9M3 18h5"/></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                    )}
                   </div>
                   <div className="kadd-btns" style={{ display:'flex', gap:'6px', alignItems:'center' }}>
                     <style>{`
-                      .kadd-mini{ display:inline-flex; flex-direction:row; align-items:center; gap:6px; height:38px; padding:0 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); color:#48484A; font-size:13px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:all .15s; flex-shrink:0; }
-                      .kadd-mini:hover{ background:rgba(255,255,255,0.85); border-color:rgba(0,0,0,0.12); color:#1D1D1F; }
+                      .kadd-mini{ display:inline-flex; flex-direction:row; align-items:center; gap:6px; height:34px; padding:0 13px; border-radius:99px; border:none; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07); background:rgba(255,255,255,.62); color:#48484A; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .18s ease, color .18s ease, transform .12s ease; flex-shrink:0; }
+                      .kadd-mini:hover{ background:rgba(255,255,255,.92); color:#1D1D1F; }
+                      .kadd-mini:active{ transform:scale(.97); }
+                      .kadd-primary{ display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 15px; border-radius:99px; border:none; background:#1D1D1F; color:#FFF; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .18s ease, transform .12s ease; flex-shrink:0; }
+                      .kadd-primary:hover{ background:#000; }
+                      .kadd-primary:active{ transform:scale(.97); }
+                      .kadd-sep{ width:1px; height:20px; background:rgba(0,0,0,.09); flex-shrink:0; margin:0 3px; }
+                      @media (max-width:900px){ .kadd-sep{ display:none } }
                     `}</style>
-                    <GlassButton onClick={()=>setAddOpen(true)}
-                      icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>}>
+                    <span aria-hidden className="kadd-sep" />
+                    <button className="kadd-primary" onClick={()=>setAddOpen(true)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                       Ajouter une carte
-                    </GlassButton>
+                    </button>
                     <div className="kadd-secondary" style={{ display:'contents' }}>
                     {(!binderSet||binderSet==='__all__')&&<button className="kadd-mini" onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
@@ -2819,16 +2867,20 @@ export function Holdings() {
                     </button>}
                     <button className="kadd-mini" onClick={()=>setImportOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                      <span>Import</span>
+                      <span className="kadd-lbl">Import</span>
                     </button>
                     <button className="kadd-mini" onClick={()=>setScannerSoonOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      <span>Scan</span>
+                      <span className="kadd-lbl">Scan</span>
                     </button>
                     </div>
-                    {(binderSet!==null)&&<div className="kadd-cols" style={{ display:'flex', gap:6 }}>{[6,7,8,9].map(n=>(
-                      <button key={n} onClick={()=>{setBinderCols(n);setBinderPage(0)}} className="colbtn" style={{ border:`1px solid ${binderCols===n?'#1D1D1F':'#D2D2D7'}`, background:binderCols===n?'#1D1D1F':'transparent', color:binderCols===n?'#fff':'#86868B' }}>{n}</button>
-                    ))}</div>}
+                    {(binderSet!==null)&&(
+                      <button className="kadd-mini" onClick={()=>{setBinderCols(n=>n>=9?6:n+1);setBinderPage(0)}}
+                        aria-label={'Colonnes : '+binderCols} title={'Colonnes : '+binderCols+' (cliquer pour changer)'}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 4v16M9 4v16M15 4v16M21 4v16"/></svg>
+                        <span style={{ fontFamily:'var(--font-data)', minWidth:'7px' }}>{binderCols}</span>
+                      </button>
+                    )}
 
                   </div>
                 </div>
@@ -2844,36 +2896,6 @@ export function Holdings() {
                 ) : (!binderSet || binderSet==='__all__') && binderSet!=='__all__' ? (
                   /* VUE SETS — SHELF */
                   <div style={{ display:'flex', flexDirection:'column', gap:'0' }}>
-                    {true&&(
-                      <div className="kfilt-row" style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px' }}>
-                        <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
-                          <input
-                            type="text"
-                            placeholder="Rechercher une série..." onFocus={e=>{e.currentTarget.style.background='rgba(255,255,255,0.8)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 0 0 3px rgba(0,0,0,0.05)'}} onBlur={e=>{e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7)'}}
-                            value={setSearch}
-                            onChange={e=>setSetSearch(e.target.value)}
-                            style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', border:'none', boxShadow:'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:'#1D1D1F', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .15s' }}
-                          />
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                          {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#48484A', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>×</button>}
-                        </div>
-                        <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
-                          {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradées'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
-                            <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
-                              style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
-                              {fi.l}
-                            </button>
-                          ))}
-                          <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                          {((([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]).concat(binderSet==='__all__'?[{k:'series',l:'Série'}]:[])) as {k:'number'|'name'|'price'|'series';l:string}[]).map(so=>(
-                            <button key={so.k} onClick={()=>setBinderSort(so.k)}
-                              style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
-                              {so.l}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     {(()=>{
                       const raw=[...new Set(portfolioCards.map(c=>c.set))]
                       const ordered=setOrder.length>0?[...setOrder.filter(n=>raw.includes(n)),...raw.filter(n=>!setOrder.includes(n))]:raw
@@ -3145,7 +3167,7 @@ export function Holdings() {
                                       const unc = Number(k.__uncoted||0)
                                       return (<>{lv>0 && <div style={{ fontSize:'10px', fontWeight:600, color:SNOW.ink, fontFamily:'var(--font-data)' }}>{lv.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}{lv>0 && (cnt>1 || unc>0) && <div style={{ fontSize:'8px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)' }}>{cnt>1 ? 'Total ' + cnt + ' carte' + (cnt>1?'s':'') : ''}{cnt>1 && unc>0 ? ' \u00b7 ' : ''}{unc>0 ? unc + ' sans cote' : ''}</div>}</>)
                                     })()}
-                                    {isInvestor && !(Number((card as any).__lineValue ?? card.curPrice) > 0) && <div style={{ fontSize:'9px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                                    {isInvestor && !(Number((card as any).__lineValue ?? card.curPrice) > 0) && <div title="Données insuffisantes" style={{ fontSize:'12px', fontWeight:700, color:'#D2D2D7', fontFamily:'var(--font-data)', lineHeight:1.3 }}>{String.fromCharCode(8212)}</div>}
                                   </div>
                                   <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'3px' }}>
                                     <span style={{ fontSize:'11px', lineHeight:1 }}>{card.lang==='EN'?'\u{1F1FA}\u{1F1F8}':card.lang==='FR'?'\u{1F1EB}\u{1F1F7}':'\u{1F1EF}\u{1F1F5}'}</span>
@@ -3232,49 +3254,6 @@ export function Holdings() {
                     })}
                   </div>
                 ):(<>
-                  <div className="kfilt-row" style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-                    <div className="kfilt-serie" style={{ position:'relative', flexShrink:0 }}>
-                      <select value={binderSetFilter} onChange={e=>{setBinderSetFilter(e.target.value);setBinderPage(0)}}
-                        style={{ maxWidth:'170px', padding:'8px 30px 8px 14px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)', border:'none', boxShadow:binderSetFilter==='all'?'inset 0 0 0 0.5px rgba(255,255,255,0.7)':'inset 0 0 0 1px rgba(224,48,32,0.45)', color:binderSetFilter==='all'?'#6E6E73':'#1D1D1F', fontSize:'11px', fontWeight:600, fontFamily:'var(--font-display)', cursor:'pointer', outline:'none', appearance:'none' as const, WebkitAppearance:'none' as const, textOverflow:'ellipsis', whiteSpace:'nowrap' as const, overflow:'hidden' }}>
-                        <option value="all">Toutes les séries</option>
-                        {[...new Set(portfolio.map(c=>c.set))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(sname=>(
-                          <option key={sname} value={sname}>{sname}</option>
-                        ))}
-                      </select>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
-                    <div className="kfilt-search" style={{ position:'relative', flex:1, minWidth:'120px' }}>
-                      <input type="text" placeholder="Rechercher une carte..."
-                        onFocus={e=>{e.currentTarget.style.background='rgba(255,255,255,0.8)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7), 0 0 0 3px rgba(0,0,0,0.05)'}}
-                        onBlur={e=>{e.currentTarget.style.background='rgba(255,255,255,0.55)';e.currentTarget.style.boxShadow='inset 0 0 0 0.5px rgba(255,255,255,0.7)'}}
-                        value={setSearch} onChange={e=>{setSetSearch(e.target.value);setBinderPage(0)}}
-                        style={{ width:'100%', padding:'8px 14px 8px 34px', borderRadius:'99px', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(20px) saturate(180%)', WebkitBackdropFilter:'blur(20px) saturate(180%)', border:'none', boxShadow:'inset 0 0 0 0.5px rgba(255,255,255,0.7)', color:'#1D1D1F', fontSize:'12px', fontFamily:'var(--font-display)', outline:'none', boxSizing:'border-box' as const, transition:'all .15s' }}/>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-                      {setSearch&&<button onClick={()=>setSetSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>×</button>}
-                    </div>
-                    <div className="kfilt-chips" style={{ display:'flex', gap:'4px', alignItems:'center', flexShrink:0 }}>
-                      {([{k:'all' as const,l:'Toutes'},{k:'graded' as const,l:'Gradées'},{k:'raw' as const,l:'Raw'}] as const).map(fi=>(
-                        <button key={fi.k} onClick={()=>{setBinderFilter(fi.k);setBinderPage(0)}}
-                          style={{ padding:'6px 13px',borderRadius:'99px',border:'none',background:binderFilter===fi.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderFilter===fi.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderFilter===fi.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
-                          {fi.l}
-                        </button>
-                      ))}
-                      <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                      {([{k:'all',l:'Toutes'},{k:'FR',l:'\u{1F1EB}\u{1F1F7}'},{k:'EN',l:'\u{1F1FA}\u{1F1F8}'},{k:'JP',l:'\u{1F1EF}\u{1F1F5}'}] as {k:'all'|'EN'|'FR'|'JP';l:string}[]).map(lg=>(
-                        <button key={lg.k} onClick={()=>{setBinderLangFilter(lg.k);setBinderPage(0)}}
-                          style={{ padding:'6px 11px',borderRadius:'99px',border:'none',background:binderLangFilter===lg.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderLangFilter===lg.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderLangFilter===lg.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
-                          {lg.l}
-                        </button>
-                      ))}
-                      <div style={{ width:'1px',height:'16px',background:'rgba(0,0,0,0.08)',margin:'0 4px' }}/>
-                      {((binderSet==='__all__'?([{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]):([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
-                        <button key={so.k} onClick={()=>setBinderSort(so.k)}
-                          style={{ padding:'6px 12px',borderRadius:'99px',border:'none',background:binderSort===so.k?'#1D1D1F':'rgba(255,255,255,0.5)',backdropFilter:'blur(12px) saturate(180%)',WebkitBackdropFilter:'blur(12px) saturate(180%)',boxShadow:binderSort===so.k?'0 2px 8px rgba(0,0,0,0.12)':'inset 0 0 0 0.5px rgba(255,255,255,0.7)',color:binderSort===so.k?'#fff':'#6E6E73',fontSize:'10.5px',fontWeight:600,cursor:'pointer',fontFamily:'var(--font-display)',transition:'all .15s' }}>
-                          {so.l}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                   <div className="kbinder-grid" style={{ display:'grid', gridTemplateColumns:`repeat(${binderCols},minmax(0,1fr))`, gridAutoRows:'auto', gap:binderCols>=7?'8px':'12px', padding:'4px 0' }}>
                     {pageItems.map((item,idx)=>{
                       if(item.type==='ghost'){
@@ -3344,36 +3323,46 @@ export function Holdings() {
                             
                             {/* Badges positionnés sur l'image */}
                             {card.signal&&<div style={{ position:'absolute', top:'5px', right:'5px', fontSize:'8px', fontWeight:800, background:TIER_BG[card.signal], color:'#1D1D1F', padding:'2px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', zIndex:2 }}>{card.signal}</div>}
-                            {(card.setId?.includes('-shadowless')||card.setId?.includes('-1st'))&&(
-                              <div style={{ position:'absolute', bottom:'5px', left:'5px', zIndex:2, display:'flex', alignItems:'center', gap:'3px', filter:'drop-shadow(0 1px 3px rgba(0,0,0,.35))' }}>
-                                {card.setId?.includes('-shadowless-ns')||card.setId?.includes('-1st')?<span className="ed-badge ed-1st-edition">1ST EDITION</span>:null}
-                                {card.setId?.includes('-shadowless')?<span className="ed-badge ed-shadowless">SHADOWLESS</span>:null}
-                              </div>
-                            )}
 
                             
                           </div>
                           {/* Étiquette bas — propre et sobre */}
                           <div style={{ padding:'6px 4px 6px', position:'relative', flex:1, display:'flex', flexDirection:'column' as const }}>
                             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'3px' }}>
-                              <div title={card.name} style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', flex:1, lineHeight:1.22, ...(isSealed(card) ? { display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const } : { textOverflow:'ellipsis', whiteSpace:'nowrap' as const }) }}>{card.name}</div>
+                              <div style={{ flex:1, minWidth:0 }}>
+                                {(()=>{
+                                  const em=String.fromCharCode(8212)
+                                  const cut=isSealed(card)&&card.name.includes(em)
+                                  const t=cut?card.name.split(em)[0].trim():card.name
+                                  const sr=cut?card.name.split(em).slice(1).join(em).trim():(card.set||'')
+                                  return (<>
+                                    <div title={card.name} style={{ fontSize:fsName, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.25 }}>{t}</div>
+                                    <div title={sr} style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#86868B', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, lineHeight:1.35, marginTop:'1px' }}>{sr||String.fromCharCode(160)}</div>
+                                  </>)
+                                })()}
+                              </div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
                             </div>
                             {isInvestor && (
                             <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
                               {isInvestor&&card.curPrice>0&&<div style={{ fontSize:binderCols>=7?'10px':'12px', fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-data)', letterSpacing:'-0.2px' }}>{card.curPrice.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} {String.fromCharCode(8364)}</div>}
-                              {isInvestor && !(Number(card.curPrice) > 0)&&<div style={{ fontSize:binderCols>=7?'9px':'10px', fontWeight:500, color:'#AEAEB2', fontFamily:'var(--font-display)', fontStyle:'italic' }}>Données insuffisantes</div>}
+                              {isInvestor && !(Number(card.curPrice) > 0)&&<div title="Données insuffisantes" style={{ fontSize:'12px', fontWeight:700, color:'#D2D2D7', fontFamily:'var(--font-data)', lineHeight:1.3 }}>{String.fromCharCode(8212)}</div>}
                             </div>
                             )}
                             <div style={{ display:'flex', alignItems:'center', gap:'4px', marginTop:'auto' }}>
                               <span style={{ fontSize:'11px' }}>{card.lang==='EN'?'🇺🇸':card.lang==='FR'?'🇫🇷':'🇯🇵'}</span>
                               {card.number&&card.number!=='???'&&card.number!=='SEALED'&&<span style={{ fontSize:'10px', color:'#6E6E73', fontFamily:'var(--font-data)' }}>#{card.number}</span>}
+                              {(()=>{
+                                const sid=card.setId||''
+                                const is1st=sid.includes('-shadowless-ns')||sid.includes('-1st')
+                                const isShd=sid.includes('-shadowless')&&!is1st
+                                if(!is1st&&!isShd) return null
+                                const lbl=is1st?'1ST EDITION':'SHADOWLESS'
+                                return <span className={'ed-badge '+(is1st?'ed-1st-edition':'ed-shadowless')} style={{ flexShrink:0, fontSize:binderCols>=8?'7px':'8px', padding:binderCols>=8?'2px 4px':'2px 5px' }}>{lbl}</span>
+                              })()}
                               {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ marginLeft:'auto', flexShrink:0, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
                               {!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ marginLeft:'auto', flexShrink:0, background:'transparent', color:'#8A8A8E', border:'0.5px solid rgba(0,0,0,0.16)', fontSize:'9px', fontWeight:700, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
-                            </div>
-                            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'4px', marginTop:'4px' }}>
-                              {card.rarity&&card.rarity!==''&&card.rarity!=='Sealed'?<span style={{ fontSize:binderCols>=7?'9px':'11px', color:'#6E6E73', fontFamily:'var(--font-display)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const, flex:1 }}>{card.rarity}</span>:<span style={{ flex:1 }}/>}
-                              <span style={{ fontSize:binderCols>=7?'9px':'11px', fontWeight:700, color:'#6E6E73', fontFamily:'var(--font-data)', flexShrink:0 }}>×{card.qty}</span>
+                              {card.qty>1&&<span style={{ fontSize:'10px', fontWeight:700, color:'#AEAEB2', fontFamily:'var(--font-data)', flexShrink:0, marginLeft:'2px' }}>{String.fromCharCode(215)}{card.qty}</span>}
                             </div>
                           </div>
                           <div className="remove-btn" onMouseDown={e=>{e.stopPropagation();e.preventDefault()}}

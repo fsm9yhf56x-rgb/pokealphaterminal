@@ -99,7 +99,11 @@ export async function GET(req: NextRequest) {
     const { neon } = await import('@neondatabase/serverless');
     const sql = neon(process.env.DATABASE_URL as string);
 
-    const where: string[] = ['p.lang = $1'];
+    // Le catalogue servi est celui que le MARCHE prouve : produits decouverts sur
+    // eBay (FR et US). Les 2292 lignes PPT restent en base comme reserve de
+    // packshots — leur prix etait une boite noire et leurs variantes n'existaient
+    // pas dans les titres du marche — mais elles ne sont plus le catalogue.
+    const where: string[] = ["p.lang = $1", "p.source IN ('ebay_fr','ebay_us')"];
     const params: unknown[] = [lang];
     if (sku) { params.push(sku); where.push('p.sku = $' + params.length); }
     if (set) { params.push(set); where.push('(p.kodo_set_id = $' + params.length + ' OR p.set_id = $' + params.length + ')'); }

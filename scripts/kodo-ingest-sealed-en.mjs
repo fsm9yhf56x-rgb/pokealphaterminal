@@ -97,6 +97,53 @@ const productName = (sku, content, setName) =>
 
 // ---------------------------------------------------------------- eBay US
 
+// ---------------------------------------------------------------- journal des annonces
+
+// On enregistre TOUTES les annonces croisees, y compris celles qu'on exclut et
+// celles qui ne passent pas le seuil de 3 vendeurs. Raison : c'est l'annonce
+// isolee d'aujourd'hui qui, accumulee sur 90 jours, formera l'echantillon du
+// vintage. Un display Set de Base ne trouve pas 3 vendeurs le meme jour, mais il
+// en trouve 12 sur trois mois — et cette donnee ne s'achete pas, elle s'accumule.
+// Dedup par item_id : une annonce vue 40 nuits reste UNE ligne, first/last_seen_at
+// donnant sa duree de vie (une annonce qui disparait vite s'est souvent vendue).
+async function journaliser(sql, lang, lignes) {
+  if (!lignes.length) return 0;
+  const CH = 400;
+  let n = 0;
+  for (let i = 0; i < lignes.length; i += CH) {
+    const b = lignes.slice(i, i + CH);
+    await sql.query(
+      `INSERT INTO sealed_asks_raw
+         (item_id, lang, sealed_id, kodo_set_id, sku, content_qty, content_unit,
+          title, price, currency, seller, condition_raw, ebay_epid, image_url,
+          excluded, exclude_reason, first_seen_at, last_seen_at)
+       SELECT * FROM unnest(
+         $1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::int[], $7::text[],
+         $8::text[], $9::numeric[], $10::text[], $11::text[], $12::text[], $13::text[], $14::text[],
+         $15::bool[], $16::text[], $17::timestamptz[], $18::timestamptz[])
+       ON CONFLICT (item_id) DO UPDATE SET
+         last_seen_at = EXCLUDED.last_seen_at,
+         price = EXCLUDED.price,
+         sealed_id = COALESCE(EXCLUDED.sealed_id, sealed_asks_raw.sealed_id),
+         sku = COALESCE(EXCLUDED.sku, sealed_asks_raw.sku),
+         excluded = EXCLUDED.excluded,
+         exclude_reason = EXCLUDED.exclude_reason`,
+      [
+        b.map((x) => x.itemId), b.map(() => lang), b.map((x) => x.sealedId ?? null),
+        b.map((x) => x.setId ?? null), b.map((x) => x.sku ?? null),
+        b.map((x) => x.qty ?? null), b.map((x) => x.unit ?? null),
+        b.map((x) => x.title), b.map((x) => x.price), b.map((x) => x.currency),
+        b.map((x) => x.seller ?? null), b.map((x) => x.condition ?? null),
+        b.map((x) => x.epid ?? null), b.map((x) => x.image ?? null),
+        b.map((x) => !!x.excluded), b.map((x) => x.reason ?? null),
+        b.map(() => new Date()), b.map(() => new Date()),
+      ]
+    );
+    n += b.length;
+  }
+  return n;
+}
+
 async function token() {
   const b = Buffer.from(APP + ':' + CERT).toString('base64');
   const r = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
@@ -178,7 +225,7 @@ console.log((COMMIT ? '>>> COMMIT' : '>>> DRY-RUN') + ' | ' + sets.length + ' se
 console.log(packshots.size + ' packshots PPT disponibles pour enrichissement\n');
 
 const outProducts = [], outPrices = [];
-let vus = 0, retenus = 0, stopped = false;
+let vus = 0, retenus = 0, stopped = false, journalisees = 0;
 const rejets = new Map();
 const rejet = (k) => rejets.set(k, (rejets.get(k) || 0) + 1);
 
@@ -195,39 +242,61 @@ for (const set of sets) {
   }
 
   const groups = new Map();
+  const journal = [];
   for (const it of uniq.values()) {
     vus++;
     const title = it.title || '';
     const n = normalize(title);
 
+    // Journal : on enregistre TOUT, y compris les exclues et les non-appariees.
+    // L'entree est mutable et deja poussee — chaque filtre y inscrit son motif.
+    const j = {
+      itemId: it.itemId, title,
+      price: Number(it.price && it.price.value) || 0,
+      currency: (it.price && it.price.currency) || 'USD',
+      seller: (it.seller && it.seller.username) || null,
+      condition: it.condition || null,
+      epid: it.epid || null,
+      image: (it.image && it.image.imageUrl) || null,
+      setId: set.id, sku: null, qty: null, unit: null,
+      sealedId: null, excluded: false, reason: null,
+    };
+    journal.push(j);
+
     const foreign = detectFlags(title).filter((f) => f !== 'en');
-    if (foreign.length) { rejet('drapeau_' + foreign[0]); continue; }
+    if (foreign.length) { j.excluded = true; j.reason = 'drapeau_' + foreign[0]; rejet(j.reason); continue; }
 
     const c = normalize(String(it.condition || ''));
-    if (/non[\s-]*scelle|occasion|used|opened/.test(c)) { rejet('non_scelle'); continue; }
+    if (/non[\s-]*scelle|occasion|used|opened/.test(c)) { j.excluded = true; j.reason = 'non_scelle'; rejet('non_scelle'); continue; }
 
     const ex = detectExclusion(n);
-    if (ex) { rejet(ex); continue; }
+    if (ex) { j.excluded = true; j.reason = ex; rejet(ex); continue; }
 
     // la serie doit etre NOMMEE dans le titre : c'est notre seul ancrage
-    if (!n.includes(set.norm)) { rejet('serie_absente'); continue; }
+    if (!n.includes(set.norm)) { j.excluded = true; j.reason = 'serie_absente'; rejet('serie_absente'); continue; }
 
     const sku = detectSku(n);
-    if (!sku) { rejet('sku_inconnu'); continue; }
+    if (!sku) { j.excluded = true; j.reason = 'sku_inconnu'; rejet('sku_inconnu'); continue; }
 
     const content = detectContent(n);
-    if (CONTENT_BEARING.has(sku) && !content) { rejet('contenu_indetermine'); continue; }
+    j.sku = sku;
+    if (CONTENT_BEARING.has(sku) && !content) { j.excluded = true; j.reason = 'contenu_indetermine'; rejet('contenu_indetermine'); continue; }
 
     const price = Number(it.price && it.price.value);
     if (!Number.isFinite(price) || price <= 0) continue;
     retenus++;
 
+    j.qty = content ? content.qty : null;
+    j.unit = content ? content.unit : null;
+    j.sealedId = productId(set.id, sku, CONTENT_BEARING.has(sku) ? content : null);
     const key = productKey(sku, content);
     if (!groups.has(key)) groups.set(key, { sku, content: CONTENT_BEARING.has(sku) ? content : null, rows: [] });
     groups.get(key).rows.push({
       price, seller: (it.seller && it.seller.username) || null, itemId: it.itemId,
     });
   }
+
+  if (COMMIT) journalisees += await journaliser(sql, 'en', journal.filter((x) => x.itemId && x.price > 0));
 
   const lignes = [];
   for (const g of groups.values()) {
@@ -277,6 +346,7 @@ const prix = outPrices.filter((p) => !ambigus.has(p.id));
 console.log('\n================ RECAP ================');
 console.log('annonces vues        : ' + vus);
 console.log('annonces retenues    : ' + retenus + ' (' + Math.round((retenus / Math.max(vus, 1)) * 100) + '%)');
+console.log('annonces journalisees: ' + journalisees);
 console.log('produits prouves     : ' + produits.length);
 console.log('avec packshot PPT    : ' + produits.filter((p) => p.image).length);
 console.log('ecartes (ambigus)    : ' + ambigus.size);
@@ -326,12 +396,13 @@ for (let i = 0; i < prix.length; i += CH) {
        $1::text[], $2::numeric[], $3::numeric[], $4::numeric[], $5::numeric[], $6::text[], $7::int[],
        $8::timestamptz[], $9::timestamptz[], $10::text[], $11::text[], $12::int[], $13::bool[], $14::numeric[], $15::timestamptz[])
      ON CONFLICT (sealed_id) DO UPDATE SET
-       market_eur=EXCLUDED.market_eur, low_eur=EXCLUDED.low_eur,
+       market_eur=COALESCE(EXCLUDED.market_eur, sealed_prices.market_eur),
+       low_eur=COALESCE(EXCLUDED.low_eur, sealed_prices.low_eur),
        market_usd=EXCLUDED.market_usd, low_usd=EXCLUDED.low_usd,
-       currency_src=EXCLUDED.currency_src, sellers=EXCLUDED.sellers,
+       currency_src=EXCLUDED.currency_src, sellers=COALESCE(EXCLUDED.sellers, sealed_prices.sellers),
        as_of=EXCLUDED.as_of, computed_at=now(), method=EXCLUDED.method,
        market=EXCLUDED.market, sample_size=EXCLUDED.sample_size,
-       is_asking=EXCLUDED.is_asking, raw_eur=EXCLUDED.raw_eur,
+       is_asking=EXCLUDED.is_asking, raw_eur=COALESCE(EXCLUDED.raw_eur, sealed_prices.raw_eur),
        last_priced_at=COALESCE(EXCLUDED.last_priced_at, sealed_prices.last_priced_at)`,
     [
       b.map((x) => x.id), b.map((x) => x.eur), b.map((x) => x.eurLow),

@@ -120,7 +120,6 @@ await sql.query(`
          CASE WHEN vendeurs >= 3 THEN round((mediane_brute * 0.88)::numeric, 2) END AS cote_decotee,
          (vendeurs >= 3) AS cotable
     FROM agg`);
-  await sql.query(`DROP VIEW IF EXISTS sealed_ask_window_tmp`);
 console.log('  vue sealed_ask_window creee (fenetre 90 jours, une voix par vendeur)');
 
 const v = await sql.query(`SELECT count(*)::int n FROM sealed_ask_window`);

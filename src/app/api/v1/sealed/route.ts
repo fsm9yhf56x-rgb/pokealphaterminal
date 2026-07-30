@@ -122,10 +122,13 @@ export async function GET(req: NextRequest) {
               p.kodo_set_id, p.content_qty, p.content_unit, p.image_url, p.source, p.sku_source,
               sp.market_eur, sp.low_eur, sp.raw_eur, sp.method, sp.market, sp.is_asking,
               sp.sellers, sp.sample_size, sp.as_of, sp.updated_at,
-              ks.name_fr AS set_name_fr, ks.logo_url, ks.series
+              ks.name_fr AS set_name_fr, ks.logo_url, ks.series,
+              w.cote_decotee AS w_price, w.vendeurs AS w_sellers,
+              w.plancher AS w_low, w.plafond AS w_high, w.cotable AS w_cotable
          FROM k_sealed_products p
          LEFT JOIN sealed_prices sp ON sp.sealed_id = p.id
          LEFT JOIN k_sets ks ON ks.id = p.kodo_set_id
+         LEFT JOIN sealed_ask_window w ON w.sealed_id = p.id
         WHERE ${where.join(' AND ')}
         ORDER BY ${order}
         LIMIT ${pLimit} OFFSET ${pOffset}`,
@@ -136,6 +139,17 @@ export async function GET(req: NextRequest) {
       const value = r.market_eur == null ? null : Number(r.market_eur);
       const contentQty = r.content_qty == null ? null : Number(r.content_qty);
       const unit = r.content_unit ? String(r.content_unit) : null;
+      // RESOLUTION EN TROIS TEMPS
+      //  1. l'instantane (sealed_prices) : la donnee du jour, la plus juste
+      //  2. la fenetre 90 jours : quand le jour n'a pas atteint 3 vendeurs mais que
+      //     trois mois y arrivent. C'est ce qui rend le vintage cotable — un display
+      //     Set de Base ne trouve pas 3 vendeurs le meme jour, mais 12 sur 90 jours.
+      //  3. la fourchette : meme la fenetre echoue -> on montre ce qui passe
+      //     ("2 annonces sur 90 jours, de 449 a 79 000 EUR") plutot qu'un vide muet.
+      const wPrice = r.w_price == null ? null : Number(r.w_price);
+      const wSellers = r.w_sellers == null ? null : Number(r.w_sellers);
+      const wLow = r.w_low == null ? null : Number(r.w_low);
+      const wHigh = r.w_high == null ? null : Number(r.w_high);
       const skuKey = r.sku ? String(r.sku) : null;
       // Le SKU n'est fiable que s'il vient du parseur de titres (source ebay_fr).
       // Cote EN il est derive du product_type PPT, qui range un CASE de 6 bundles
@@ -144,6 +158,8 @@ export async function GET(req: NextRequest) {
       const boosters = skuTrusted ? boosterCount(skuKey, contentQty, unit, lang) : null;
       const low = r.low_eur == null ? null : Number(r.low_eur);
       const setName = r.set_name_fr ? String(r.set_name_fr) : (r.set_name ? String(r.set_name) : null);
+      const spotOk = value != null && value > 0;
+      const winOk = wPrice != null && wPrice > 0;
       return {
         id: String(r.id),
         name: String(r.name),
@@ -160,9 +176,30 @@ export async function GET(req: NextRequest) {
         // contenu certain -> le collectionneur peut comparer un display a un demi-display
         boosters,
         skuTrusted,
-        price: value == null || !(value > 0) ? null : {
+        // fourchette des annonces vues sur 90 jours, meme sans cote possible
+        range: wLow != null && wHigh != null && !spotOk && !winOk ? {
+          low: wLow, high: wHigh, sellers: wSellers, days: 90,
+        } : null,
+        price: !spotOk && winOk ? {
+          // repli sur la fenetre : l'UI doit dire "sur 90 jours", pas "aujourd'hui"
+          value: wPrice as number,
+          currency: 'EUR',
+          basis: 'window',
+          windowDays: 90,
+          low: wLow != null && wLow <= (wPrice as number) ? wLow : null,
+          perBooster: boosters && boosters > 1 ? Math.round(((wPrice as number) / boosters) * 100) / 100 : null,
+          isAsking: true,
+          method: 'ebay_ask_90d',
+          market: lang === 'fr' ? 'EU_FR' : 'US',
+          sellers: wSellers,
+          sampleSize: null,
+          raw: null,
+          asOf: null,
+          updatedAt: null,
+        } : !spotOk ? null : {
           value,
           currency: 'EUR',
+          basis: 'spot',
           low: low != null && low > 0 && low <= value ? low : null,
           perBooster: boosters && boosters > 1 ? Math.round((value / boosters) * 100) / 100 : null,
           // true -> l'UI DOIT afficher "des X EUR", pas "X EUR"

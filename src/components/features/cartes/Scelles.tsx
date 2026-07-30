@@ -28,6 +28,7 @@ type Lang = 'FR' | 'EN'
 
 interface SealedPrice {
   value: number; currency: string; isAsking: boolean
+  basis?: 'spot' | 'window'; windowDays?: number
   low: number | null; perBooster: number | null
   method: string | null; market: string | null
   sellers: number | null; sampleSize: number | null; updatedAt: string | null
@@ -40,6 +41,10 @@ interface SealedItem {
   setId: string | null; setName: string | null; series: string | null
   setLogo: string | null; image: string | null
   boosters: number | null; skuTrusted?: boolean
+  // Fourchette des annonces vues sur 90 jours quand aucune cote n'est possible :
+  // pour le scelle vintage c'est le seul affichage honnete — le collectionneur voit
+  // ce qui passe au lieu d'un "Donnees insuffisantes" muet.
+  range?: { low: number; high: number; sellers: number | null; days: number } | null
   price: SealedPrice | null
 }
 
@@ -462,12 +467,24 @@ export function Scelles() {
                           {it.price.sellers ? (
                             <span style={{ fontSize: '10px', color: '#AAA' }}>{it.price.sellers} vendeurs</span>
                           ) : null}
+                          {it.price.basis === 'window' ? (
+                            <span style={{ fontSize: '9.5px', color: '#AAA', fontFamily: 'var(--font-display)' }}>sur {it.price.windowDays || 90} j</span>
+                          ) : null}
                         </div>
                         {isInvestor && it.price.perBooster ? (
                           <div style={{ fontSize: '10.5px', color: '#6E6E73', marginTop: '3px', fontFamily: 'var(--font-data)' }}>
                             {eur(it.price.perBooster)} <span style={{ color: '#AAA', fontFamily: 'var(--font-display)' }}>/ booster</span>
                           </div>
                         ) : null}
+                      </>
+                    ) : it.range ? (
+                      <>
+                        <div style={{ fontSize: '12px', color: '#6E6E73', fontFamily: 'var(--font-data)' }}>
+                          {eur(it.range.low)} — {eur(it.range.high)}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#AAA', marginTop: '2px' }}>
+                          {it.range.sellers || 0} annonce{(it.range.sellers || 0) > 1 ? 's' : ''} sur {it.range.days} j
+                        </div>
                       </>
                     ) : (
                       <div style={{ fontSize: '11px', color: '#AAA' }}>Données insuffisantes</div>
@@ -505,7 +522,8 @@ export function Scelles() {
 
               <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: '10px', padding: '13px 14px', marginBottom: '14px' }}>
                 <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
-                  {selected.price?.isAsking ? 'Annonces en cours' : 'Prix de marché'}
+                  {selected.price?.basis === 'window' ? 'Annonces sur 90 jours'
+                    : selected.price?.isAsking ? 'Annonces en cours' : 'Prix de marché'}
                 </div>
                 {selected.price && selected.price.value > 0 ? (
                   <>
@@ -525,6 +543,15 @@ export function Scelles() {
                         <span style={{ fontSize: '11.5px', color: '#86868B' }}>par booster · {selected.boosters} au total</span>
                       </div>
                     ) : null}
+                  </>
+                ) : selected.range ? (
+                  <>
+                    <div style={{ fontSize: '20px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)', letterSpacing: '-.3px' }}>
+                      {eur(selected.range.low)} — {eur(selected.range.high)}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#86868B', marginTop: '4px', lineHeight: 1.4 }}>
+                      {selected.range.sellers || 0} annonce{(selected.range.sellers || 0) > 1 ? 's' : ''} relevée{(selected.range.sellers || 0) > 1 ? 's' : ''} sur {selected.range.days} jours · pas assez de vendeurs distincts pour une cote
+                    </div>
                   </>
                 ) : (
                   <div style={{ fontSize: '14px', color: '#AAA' }}>Données insuffisantes</div>
@@ -558,9 +585,9 @@ export function Scelles() {
                   <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', animationDelay: '.1s' }}>
                     <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Nature du prix</span>
                     <span style={{ fontSize: '12.5px', color: '#1D1D1F', textAlign: 'right' as const }}>
-                      {selected.price.isAsking
-                        ? 'Annonces France, décotées'
-                        : 'Agrégat fournisseur'}
+                      {selected.price.basis === 'window'
+                        ? 'Annonces, décotées · fenêtre ' + (selected.price.windowDays || 90) + ' j'
+                        : selected.price.isAsking ? 'Annonces France, décotées' : 'Agrégat fournisseur'}
                     </span>
                   </div>
                   {!selected.price.isAsking ? (

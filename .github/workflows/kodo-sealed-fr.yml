@@ -75,6 +75,15 @@ jobs:
           EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
         run: node scripts/ebay-quota.mjs --label "apres EN"
 
+      # Un produit qu'aucune journee isolee ne valide peut l'etre sur 90 jours : un
+      # display Set de Base 1ere edition passe une fois par mois. Le seuil de 3
+      # vendeurs ne bouge pas, seule sa fenetre change.
+      - name: Promotion depuis la fenetre 90 jours
+        if: always()
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/kodo-sealed-promote.mjs --commit
+
       # Idempotent et gratuit : rattrape d'eventuels SKU herites du fournisseur.
       - name: Retypage depuis les noms
         if: always()

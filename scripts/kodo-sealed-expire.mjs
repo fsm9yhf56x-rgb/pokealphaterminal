@@ -33,7 +33,7 @@ const DAYS = {
   jp: Number(process.env.KODO_SEALED_EXPIRE_JP || 21),
 };
 
-console.log((COMMIT ? '>>> COMMIT' : '>>> DRY-RUN') + ' | seuils : ' +
+console.log('>>> OBSERVATION' + ' | age des cotes (observation) : ' +
   Object.entries(DAYS).map(([k, v]) => k + ' ' + v + 'j').join(' · ') + '\n');
 
 const etat = await sql.query(
@@ -69,28 +69,9 @@ for (const lang of ['fr', 'en', 'jp']) {
     + x.perimes + ' perimes · derniere ecriture il y a ' + (age == null ? '?' : age + 'j'));
 }
 
-if (!COMMIT) {
-  console.log('\nDRY-RUN : rien ecrit. Relancer avec --commit.');
-  process.exit(0);
-}
+// Plus de branche destructrice : --commit et --check font desormais la meme chose.
+void COMMIT;
 
-let total = 0;
-for (const lang of ['fr', 'en', 'jp']) {
-  const rows = await sql.query(
-    `UPDATE sealed_prices sp
-        SET market_eur = NULL, low_eur = NULL, raw_eur = NULL,
-            sellers = NULL, sample_size = NULL,
-            method = 'insufficient_data'
-       FROM k_sealed_products p
-      WHERE p.id = sp.sealed_id
-        AND p.lang = $1
-        AND sp.market_eur IS NOT NULL
-        AND sp.updated_at < now() - (($2::int) || ' days')::interval
-      RETURNING sp.sealed_id`,
-    [lang, DAYS[lang]]
-  );
-  if (rows.length) console.log('  ' + lang.toUpperCase() + ' : ' + rows.length + ' cotes perimees');
-  total += rows.length;
-}
-console.log('\n' + total + ' cotes retirees. Les produits restent au catalogue.');
-void etat;
+console.log('\nCe script n OBSERVE que. La suppression de prix a ete RETIREE du pipeline.');
+console.log('Regle actee le 30/07 : un produit disparu des annonces garde son prix ET sa date.');
+console.log('Il redevient courant des qu une annonce similaire revient (COALESCE dans les ingests).');

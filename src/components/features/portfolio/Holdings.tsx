@@ -1725,6 +1725,11 @@ export function Holdings() {
         .kseg:hover{ color:#1D1D1F; }
         .kseg.on{ background:#FFF; color:#1D1D1F; box-shadow:0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.03); }
         .kseg:active{ transform:scale(.96); }
+        .kreset{ display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 11px; border:none; border-radius:99px; background:rgba(224,48,32,.08); color:#E03020; font-size:11px; font-weight:600; font-family:var(--font-display); cursor:pointer; white-space:nowrap; animation:kresetIn .26s cubic-bezier(.2,.85,.3,1) backwards; transition:background .18s ease, transform .12s ease; }
+        .kreset:hover{ background:rgba(224,48,32,.14); }
+        .kreset:active{ transform:scale(.95); }
+        @keyframes kresetIn{ from{ opacity:0; transform:translateX(6px) } to{ opacity:1; transform:none } }
+        @media (prefers-reduced-motion: reduce){ .kreset{ animation:none } .kreset:active{ transform:none } }
         .kseg:focus{ outline:none; }
         .kseg:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(0,0,0,.10); }
         .kadd-mini:focus{ outline:none; }
@@ -2709,6 +2714,24 @@ export function Holdings() {
                   <button key={t.k} onClick={()=>{ t.go(); setBinderPage(0) }} className={'kseg'+(t.on?' on':'')}>{t.l}</button>
                 ))}
               </div>
+              <span aria-hidden style={{ flex:1, minWidth:'8px' }} />
+              {binderSet!==null&&(()=>{
+                const n=binderFilteredFinal.reduce((t,c)=>t+(c.qty||1),0)
+                const neutre=binderFilter==='all'&&binderLangFilter==='all'&&binderSetFilter==='all'&&!setSearch
+                return (
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:'9px', flexShrink:0 }}>
+                    <span style={{ fontSize:'11.5px', color:'#6E6E73', fontFamily:'var(--font-display)' }}>
+                      <strong style={{ color:'#1D1D1F', fontWeight:700, fontFamily:'var(--font-data)' }}>{n.toLocaleString('fr-FR')}</strong>{' '}{neutre?'pi\u00e8ces':(n>1?'r\u00e9sultats':'r\u00e9sultat')}
+                    </span>
+                    {!neutre&&(
+                      <button className="kreset" onClick={()=>{ setBinderFilter('all'); setBinderLangFilter('all'); setBinderSetFilter('all'); setSetSearch(''); setBinderPage(0) }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        {'R\u00e9initialiser'}
+                      </button>
+                    )}
+                  </span>
+                )
+              })()}
             </>)}
           </div>
           {binderSet&&binderSet!=='__all__'&&view==='binder'&&(

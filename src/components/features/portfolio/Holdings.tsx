@@ -1728,6 +1728,27 @@ export function Holdings() {
         .kseg:hover{ color:#1D1D1F; }
         .kseg.on{ background:#FFF; color:#1D1D1F; box-shadow:0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.03); }
         .kseg:active{ transform:scale(.96); }
+        .kadd-mini{ transition:background .2s cubic-bezier(.2,.85,.3,1), color .2s ease, transform .16s cubic-bezier(.2,.85,.3,1), box-shadow .22s ease; }
+        .kadd-mini:hover{ transform:translateY(-1px); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.07); }
+        .kadd-mini:active{ transform:translateY(0) scale(.95); transition-duration:.07s; }
+        .kadd-mini svg{ transition:transform .32s cubic-bezier(.34,1.45,.4,1); }
+        .kadd-mini:hover svg{ transform:scale(1.13); }
+        .kadd-primary{ box-shadow:0 1px 3px rgba(0,0,0,.15); transition:background .2s ease, transform .16s cubic-bezier(.2,.85,.3,1), box-shadow .24s ease; }
+        .kadd-primary:hover{ transform:translateY(-1px); box-shadow:0 7px 20px rgba(0,0,0,.22); }
+        .kadd-primary:active{ transform:translateY(0) scale(.97); transition-duration:.07s; }
+        .kadd-primary svg{ transition:transform .38s cubic-bezier(.34,1.6,.4,1); }
+        .kadd-primary:hover svg{ transform:scale(1.18); }
+        .kseg{ transition:background .26s cubic-bezier(.34,1.25,.4,1), color .18s ease, transform .14s cubic-bezier(.2,.85,.3,1); }
+        .kseg:hover:not(.on){ background:rgba(255,255,255,.45); }
+        .kseg.on{ animation:ksegPop .32s cubic-bezier(.34,1.45,.4,1); }
+        @keyframes ksegPop{ 0%{transform:scale(.93)} 58%{transform:scale(1.035)} 100%{transform:scale(1)} }
+        .knum-pop{ display:inline-block; animation:knumPop .36s cubic-bezier(.34,1.55,.4,1); }
+        @keyframes knumPop{ 0%{transform:translateY(-4px) scale(.82); opacity:.35} 100%{transform:none; opacity:1} }
+        @media (prefers-reduced-motion: reduce){
+          .kadd-mini:hover, .kadd-primary:hover{ transform:none }
+          .kadd-mini:hover svg, .kadd-primary:hover svg{ transform:none }
+          .kseg.on, .knum-pop{ animation:none }
+        }
         .kreset{ display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 11px; border:none; border-radius:99px; background:rgba(224,48,32,.08); color:#E03020; font-size:11px; font-weight:600; font-family:var(--font-display); cursor:pointer; white-space:nowrap; animation:kresetIn .26s cubic-bezier(.2,.85,.3,1) backwards; transition:background .18s ease, transform .12s ease; }
         .kreset:hover{ background:rgba(224,48,32,.14); }
         .kreset:active{ transform:scale(.95); }
@@ -1742,7 +1763,33 @@ export function Holdings() {
         .kctrl-field{ height:34px; padding:0 12px; border-radius:99px; border:none; background:rgba(255,255,255,.62); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07); color:#1D1D1F; font-size:11.5px; font-weight:600; font-family:var(--font-display); outline:none; transition:box-shadow .18s ease, background .18s ease; }
         .kctrl-field:hover{ background:rgba(255,255,255,.85); }
         .kctrl-field:focus{ background:#FFF; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07), 0 0 0 3px rgba(0,0,0,.05); }
-        @media (max-width:1180px){ .kadd-lbl{ display:none } }
+        .kadd-btns{ flex-wrap:nowrap!important; flex-shrink:0; }
+        @media (max-width:1700px){ .kadd-lbl{ display:none } }
+        @media (max-width:1620px){ .kadd-long{ display:none } }
+        @media (max-width:1540px){ .kadd-serie-lbl{ display:none } }
+        /* Sous 1500px on ARRETE de comprimer : deux lignes assumees, filtres puis
+           actions a droite. Une ligne qui casse au hasard est pire que deux lignes
+           voulues. */
+        @media (max-width:1500px){
+          .kcollection-head{ flex-wrap:wrap!important; row-gap:10px; }
+          .kcollection-title{ flex:1 1 100%!important; }
+          .kadd-btns{ margin-left:auto; }
+        }
+        /* La grille suit la largeur reelle : a 1017px, 7 colonnes donnaient des
+           vignettes de 55px et des noms reduits a une lettre. */
+        @media (max-width:1500px){ .kbinder-grid{ grid-template-columns:repeat(6,minmax(0,1fr))!important } }
+        @media (max-width:1300px){ .kbinder-grid{ grid-template-columns:repeat(5,minmax(0,1fr))!important } }
+        @media (max-width:1150px){ .kbinder-grid{ grid-template-columns:repeat(4,minmax(0,1fr))!important } }
+        @media (max-width:1400px){ .ed-badge{ font-size:7px!important; padding:2px 4px!important; letter-spacing:.02em!important } }
+        @media (max-width:1023px){ .kadd-cols{ display:none!important } }
+        @media (max-width:767px){
+          .kadd-btns > .kadd-primary{ width:100%!important; justify-content:center; height:40px; }
+          .kadd-btns > .kadd-sep{ display:none!important; }
+          .kfilt-searchbox{ flex:1 1 100%!important; max-width:none!important; }
+          .kctrl-field{ height:38px; font-size:12.5px; }
+          .ksubrail{ height:38px; }
+          .kseg-sm{ height:31px; font-size:11.5px; }
+        }
         @media (prefers-reduced-motion: reduce){ .kseg{ transition:none } .kseg:active{ transform:none } }
         .colbtn { width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font-display);transition:all .2s cubic-bezier(.25,.46,.45,.94);color:#86868B;border:1px solid #D2D2D7;background:#fff; }
         /* Responsive — clamp colonnes binder (override inline grid via !important) */
@@ -1772,8 +1819,8 @@ export function Holdings() {
           .kadd-btns{ flex-direction:column!important; width:100%; align-items:stretch!important; gap:8px!important; }
           .kadd-btns > .gb, .kadd-btns > button:not(.kadd-mini){ width:100%!important; }
           /* La rangée des 3 mini-boutons : display:contents ne marche pas pour flexer, on remet un flex */
-          .kadd-secondary{ display:flex!important; gap:8px!important; width:100%; }
-          .kadd-mini{ flex:1; min-width:0; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:40px; border-radius:99px; border:none; background:rgba(255,255,255,0.5); backdrop-filter:blur(12px) saturate(180%); -webkit-backdrop-filter:blur(12px) saturate(180%); box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.7); color:#6E6E73; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; }
+          .kadd-secondary{ display:flex!important; gap:8px!important; width:100%; justify-content:center; }
+          .kadd-mini{ flex:0 1 96px; min-width:0; display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; height:40px; border-radius:99px; border:none; background:rgba(255,255,255,0.5); backdrop-filter:blur(12px) saturate(180%); -webkit-backdrop-filter:blur(12px) saturate(180%); box-shadow:inset 0 0 0 0.5px rgba(255,255,255,0.7); color:#6E6E73; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; }
           .kadd-mini:active{ background:rgba(0,0,0,0.04); }
           /* Boutons colonnes binder : inutiles en mobile (densité forcée) */
           .kadd-cols{ display:none!important; }
@@ -2724,7 +2771,7 @@ export function Holdings() {
                 return (
                   <span style={{ display:'inline-flex', alignItems:'center', gap:'9px', flexShrink:0 }}>
                     <span style={{ fontSize:'11.5px', color:'#6E6E73', fontFamily:'var(--font-display)' }}>
-                      <strong style={{ color:'#1D1D1F', fontWeight:700, fontFamily:'var(--font-data)' }}>{n.toLocaleString('fr-FR')}</strong>{' '}{neutre?'pi\u00e8ces':(n>1?'r\u00e9sultats':'r\u00e9sultat')}
+                      <strong key={n} className="knum-pop" style={{ color:'#1D1D1F', fontWeight:700, fontFamily:'var(--font-data)' }}>{n.toLocaleString('fr-FR')}</strong>{' '}{neutre?'pi\u00e8ces':(n>1?'r\u00e9sultats':'r\u00e9sultat')}
                     </span>
                     {!neutre&&(
                       <button className="kreset" onClick={()=>{ setBinderFilter('all'); setBinderLangFilter('all'); setBinderSetFilter('all'); setSetSearch(''); setBinderPage(0) }}>
@@ -2832,7 +2879,7 @@ export function Holdings() {
                     {binderSet!==null&&(
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' as const }}>
                       {binderSet==='__all__'&&(
-                        <div style={{ position:'relative', flexShrink:0 }}>
+                        <div className="kfilt-serie" style={{ position:'relative', flexShrink:0 }}>
                           <select value={binderSetFilter} onChange={e=>{setBinderSetFilter(e.target.value);setBinderPage(0)}} className="kctrl-field" style={{ maxWidth:'168px', paddingRight:'28px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer', color:binderSetFilter==='all'?'#6E6E73':'#1D1D1F', textOverflow:'ellipsis' }}>
                             <option value="all">Toutes les séries</option>
                             {[...new Set(portfolioCards.map(c=>c.set))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(sname=>(
@@ -2842,7 +2889,7 @@ export function Holdings() {
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
                         </div>
                       )}
-                      <div style={{ position:'relative', flex:'1 1 130px', minWidth:'120px', maxWidth:'260px' }}>
+                      <div className="kfilt-searchbox" style={{ position:'relative', flex:'1 1 130px', minWidth:'120px', maxWidth:'260px' }}>
                         <input type="text" placeholder="Rechercher" value={setSearch} onChange={e=>{setSetSearch(e.target.value);setBinderPage(0)}} className="kctrl-field" style={{ width:'100%', paddingLeft:'31px', boxSizing:'border-box' as const }}/>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                         {setSearch&&<button onClick={()=>setSetSearch('')} aria-label="Effacer" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#86868B', cursor:'pointer', fontSize:'14px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>}
@@ -2859,10 +2906,12 @@ export function Holdings() {
                         </div>
                       )}
                       <div style={{ position:'relative', flexShrink:0 }} title="Trier">
-                        <select value={binderSort} onChange={e=>setBinderSort(e.target.value as any)} className="kctrl-field" style={{ paddingLeft:'29px', paddingRight:'25px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer' }}>
-                          {((binderSet==='__all__'?([{k:'series',l:'Sortie'},{k:'recent',l:'Récent'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[]):([{k:'number',l:'N°'},{k:'name',l:'A→Z'}] as any[]).concat(isInvestor?[{k:'price',l:'Prix'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
+                        <select value={binderSort} onChange={e=>setBinderSort(e.target.value as any)} className="kctrl-field" aria-label="Trier" style={{ paddingLeft:'29px', paddingRight:'25px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer' }}>
+                          <optgroup label="Trier par">
+                          {((binderSet==='__all__'?([{k:'series',l:'Ordre des séries'},{k:'recent',l:'Ajoutées récemment'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[]):([{k:'number',l:'Numéro de carte'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
                             <option key={so.k} value={so.k}>{so.l}</option>
                           ))}
+                          </optgroup>
                         </select>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.2" strokeLinecap="round" style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M3 6h13M3 12h9M3 18h5"/></svg>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
@@ -2884,12 +2933,12 @@ export function Holdings() {
                     <span aria-hidden className="kadd-sep" />
                     <button className="kadd-primary" onClick={()=>setAddOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                      Ajouter une carte
+                      <span>Ajouter<span className="kadd-long"> une carte</span></span>
                     </button>
                     <div className="kadd-secondary" style={{ display:'contents' }}>
                     {(!binderSet||binderSet==='__all__')&&<button className="kadd-mini" onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
-                      <span>Série</span>
+                      <span className="kadd-serie-lbl">Série</span>
                     </button>}
                     <button className="kadd-mini" onClick={()=>setImportOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
@@ -2901,10 +2950,10 @@ export function Holdings() {
                     </button>
                     </div>
                     {(binderSet!==null)&&(
-                      <button className="kadd-mini" onClick={()=>{setBinderCols(n=>n>=9?6:n+1);setBinderPage(0)}}
+                      <button className="kadd-mini kadd-cols" onClick={()=>{setBinderCols(n=>n>=9?6:n+1);setBinderPage(0)}}
                         aria-label={'Colonnes : '+binderCols} title={'Colonnes : '+binderCols+' (cliquer pour changer)'}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 4v16M9 4v16M15 4v16M21 4v16"/></svg>
-                        <span style={{ fontFamily:'var(--font-data)', minWidth:'7px' }}>{binderCols}</span>
+                        <span key={binderCols} className="knum-pop" style={{ fontFamily:'var(--font-data)', minWidth:'7px' }}>{binderCols}</span>
                       </button>
                     )}
 
@@ -3368,6 +3417,8 @@ export function Holdings() {
                                 })()}
                               </div>
                               {show.pnl&&card.buyPrice>0&&<div style={{ fontSize:'11px', fontWeight:700, color:roi>=0?'#2E9E6A':'#E03020', fontFamily:'var(--font-data)', flexShrink:0 }}>{roi>=0?'+':''}{roi}%</div>}
+                              {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ flexShrink:0, marginTop:'2px', background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
+                              {!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ flexShrink:0, marginTop:'2px', background:'transparent', color:'#8A8A8E', border:'0.5px solid rgba(0,0,0,0.16)', fontSize:'9px', fontWeight:700, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                             </div>
                             {isInvestor && (
                             <div style={{ minHeight:binderCols>=7?'14px':'17px', marginTop:'2px' }}>
@@ -3386,8 +3437,6 @@ export function Holdings() {
                                 const lbl=is1st?'1ST EDITION':'SHADOWLESS'
                                 return <span className={'ed-badge '+(is1st?'ed-1st-edition':'ed-shadowless')} style={{ flexShrink:0, fontSize:binderCols>=8?'7px':'8px', padding:binderCols>=8?'2px 4px':'2px 5px' }}>{lbl}</span>
                               })()}
-                              {card.graded&&(()=>{const gLbl=`${card.gradeCompany||'PSA'} ${card.gradeValue||''}`.trim();const gv=parseInt(String(card.gradeValue||card.condition).replace(/[^0-9]/g,''))||0;const bgG=gv>=10?'linear-gradient(145deg,#8B7320,#B8942F,#D4AF37,#F5ECA0,#FFFAD0,#F5ECA0,#D4AF37,#B8942F,#8B7320)':gv>=9?'linear-gradient(145deg,#707070,#A8A8A8,#D8D8D8,#F0F0F0,#D8D8D8,#A8A8A8,#707070)':gv>=5?'linear-gradient(145deg,#6B4226,#A0724A,#C4956A,#E0BFA0,#C4956A,#A0724A,#6B4226)':'#6E6E73';const fgG=gv>=10?'#1a1200':gv>=9?'#222':gv>=5?'#2a1800':'#fff';return <span style={{ marginLeft:'auto', flexShrink:0, background:bgG, color:fgG, fontSize:'8px', fontWeight:800, padding:'2px 6px', borderRadius:'5px', fontFamily:'var(--font-data)', letterSpacing:'.03em', backgroundSize:gv>=5?'300% 300%':'auto', animation:gv>=5?'metalShift 8s ease-in-out infinite':'none', border:gv>=10?'1px solid rgba(212,175,55,.4)':gv>=9?'1px solid rgba(168,168,168,.4)':gv>=5?'1px solid rgba(160,114,74,.3)':'none', position:'relative', overflow:'hidden', whiteSpace:'nowrap' as const }}>{gv>=5&&<span style={{ position:'absolute', inset:0, borderRadius:'5px', background:gv>=10?'linear-gradient(145deg,transparent 30%,rgba(255,255,240,.35) 45%,transparent 60%)':gv>=9?'linear-gradient(145deg,transparent 30%,rgba(255,255,255,.3) 45%,transparent 60%)':'linear-gradient(145deg,transparent 30%,rgba(224,191,160,.25) 45%,transparent 60%)', backgroundSize:'300% 300%', animation:'metalShift 8s ease-in-out infinite', pointerEvents:'none' }}/>}<span style={{ position:'relative', zIndex:1 }}>{gLbl}</span></span>})()}
-                              {!card.graded&&(()=>{ const lbl=rawStateLabel(card.condition); return <span style={{ marginLeft:'auto', flexShrink:0, background:'transparent', color:'#8A8A8E', border:'0.5px solid rgba(0,0,0,0.16)', fontSize:'9px', fontWeight:700, padding:'1px 6px', borderRadius:'4px', fontFamily:'var(--font-display)', letterSpacing:'.02em', whiteSpace:'nowrap' as const }}>{lbl}</span> })()}
                               {card.qty>1&&<span style={{ fontSize:'10px', fontWeight:700, color:'#AEAEB2', fontFamily:'var(--font-data)', flexShrink:0, marginLeft:'2px' }}>{String.fromCharCode(215)}{card.qty}</span>}
                             </div>
                           </div>

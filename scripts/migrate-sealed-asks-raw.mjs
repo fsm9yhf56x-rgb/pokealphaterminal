@@ -92,8 +92,9 @@ console.log('  4 index poses');
 // Vue de lecture : la cote sur fenetre glissante, une voix par vendeur.
 // C'est la MEME regle que aggregateAsks (mediane des medianes vendeur, decote 0.88),
 // mais appliquee a 90 jours au lieu de l'instantane.
+await sql.query(`DROP VIEW IF EXISTS sealed_ask_window`);
 await sql.query(`
-  CREATE OR REPLACE VIEW sealed_ask_window AS
+  CREATE VIEW sealed_ask_window AS
   WITH par_vendeur AS (
     SELECT sealed_id, lang,
            COALESCE(seller, 'anon:' || item_id) AS voix,
@@ -104,14 +105,22 @@ await sql.query(`
        AND last_seen_at > now() - interval '90 days'
      GROUP BY 1, 2, 3
   )
-  SELECT sealed_id, lang,
-         count(*)::int AS vendeurs,
-         round(percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_vendeur)::numeric, 2) AS mediane_brute,
-         round((percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_vendeur) * 0.88)::numeric, 2) AS cote_decotee,
-         round(min(prix_vendeur)::numeric, 2) AS plancher,
-         round(max(prix_vendeur)::numeric, 2) AS plafond
-    FROM par_vendeur
-   GROUP BY 1, 2`);
+  ), agg AS (
+    SELECT sealed_id, lang,
+           count(*)::int AS vendeurs,
+           round(percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_vendeur)::numeric, 2) AS mediane_brute,
+           round(min(prix_vendeur)::numeric, 2) AS plancher,
+           round(max(prix_vendeur)::numeric, 2) AS plafond
+      FROM par_vendeur GROUP BY 1, 2
+  )
+  -- Le seuil de 3 vendeurs vaut pour la fenetre comme pour l'instantane : allonger
+  -- la periode ne dispense pas de la pluralite des voix. Les cas sous le seuil
+  -- gardent leur fourchette, pour afficher "N annonces en cours, de X a Y EUR".
+  SELECT sealed_id, lang, vendeurs, mediane_brute, plancher, plafond,
+         CASE WHEN vendeurs >= 3 THEN round((mediane_brute * 0.88)::numeric, 2) END AS cote_decotee,
+         (vendeurs >= 3) AS cotable
+    FROM agg`);
+  await sql.query(`DROP VIEW IF EXISTS sealed_ask_window_tmp`);
 console.log('  vue sealed_ask_window creee (fenetre 90 jours, une voix par vendeur)');
 
 const v = await sql.query(`SELECT count(*)::int n FROM sealed_ask_window`);

@@ -188,14 +188,39 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   // RETURNING print_id faisait remonter ~480 000 lignes au driver HTTP Neon pour
   // le seul besoin d'un compteur -> 'fetch failed' apres 23 min (echecs des 29-30/07).
   // La CTE fait le meme travail cote serveur et ne renvoie qu'un entier.
+  // ECRITURE INCREMENTALE (30/07) : on n'insere QUE si le prix a change, ou si le
+  // dernier point de la serie a plus de 7 jours.
+  // Avant : 480 000 lignes reecrites chaque nuit, dont 94% identiques a la veille
+  //   -> 16,9 M lignes / 2972 MB, et un simple lag() prenait 167 secondes.
+  // Un graphique se reconstruit exactement a partir des seuls changements (l'UI
+  // relie les points, donc un prix stable donne une ligne plate). Le point
+  // hebdomadaire evite qu'une serie stable depuis deux mois s'arrete net.
   const r5 = await sql`
-    WITH ins AS (
+    WITH candidat AS (
+      SELECT pm.print_id, pm.tier, pm.source, pm.market, pm.spot, pm.sale_count, pm.currency
+        FROM price_matrix pm
+       WHERE pm.print_id IS NOT NULL AND pm.spot IS NOT NULL
+    ), dernier AS (
+      SELECT DISTINCT ON (ph.print_id, ph.tier, ph.source)
+             ph.print_id, ph.tier, ph.source, ph.price, ph.day
+        FROM price_history ph
+        JOIN candidat c ON c.print_id = ph.print_id AND c.tier = ph.tier AND c.source = ph.source
+       ORDER BY ph.print_id, ph.tier, ph.source, ph.day DESC
+    ), ins AS (
       INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
-      SELECT print_id, CURRENT_DATE, tier, source, market, spot, sale_count, currency
-      FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
-      ON CONFLICT DO NOTHING RETURNING 1
+      SELECT c.print_id, CURRENT_DATE, c.tier, c.source, c.market, c.spot, c.sale_count, c.currency
+        FROM candidat c
+        LEFT JOIN dernier d
+          ON d.print_id = c.print_id AND d.tier = c.tier AND d.source = c.source
+       WHERE d.print_id IS NULL
+          OR d.price IS DISTINCT FROM c.spot
+          OR d.day <= CURRENT_DATE - 7
+      ON CONFLICT (print_id, day, tier, source) DO UPDATE
+        SET price = EXCLUDED.price, sale_count = EXCLUDED.sale_count,
+            market = EXCLUDED.market, currency = EXCLUDED.currency
+      RETURNING 1
     ) SELECT count(*)::int AS n FROM ins`
-  console.log('rows history:', r5[0].n)
+  console.log('rows history (changements + controle hebdo):', r5[0].n)
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
   // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
   //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).
@@ -205,7 +230,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   const r6 = await sql`
     WITH ins AS (
     INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
-    SELECT print_id, CURRENT_DATE, tier, 'cardmarket_fr', 'FR', price, sale_count, 'EUR'
+    SELECT t.print_id, CURRENT_DATE, t.tier, 'cardmarket_fr', 'FR', t.price, t.sale_count, 'EUR'
     FROM (
       SELECT pm.print_id, pm.tier,
              ROUND(AVG((country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric), 2) AS price,
@@ -218,7 +243,17 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
         AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric <= 100000
       GROUP BY pm.print_id, pm.tier
     ) t
-    ON CONFLICT DO NOTHING RETURNING 1
+    LEFT JOIN LATERAL (
+      SELECT ph.price AS last_price, ph.day AS last_day FROM price_history ph
+       WHERE ph.print_id = t.print_id AND ph.tier = t.tier AND ph.source = 'cardmarket_fr'
+       ORDER BY ph.day DESC LIMIT 1
+    ) d ON true
+    WHERE d.last_price IS NULL
+       OR d.last_price IS DISTINCT FROM t.price
+       OR d.last_day <= CURRENT_DATE - 7
+    ON CONFLICT (print_id, day, tier, source) DO UPDATE
+      SET price = EXCLUDED.price, sale_count = EXCLUDED.sale_count
+    RETURNING 1
     ) SELECT count(*)::int AS n FROM ins`
   console.log('rows history FR pur (country.FR.language.FR, source=cardmarket_fr):', r6[0].n)
   console.log('Signaux + history a jour.')

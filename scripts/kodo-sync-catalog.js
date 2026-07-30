@@ -81,6 +81,67 @@ const sql = neon(process.env.DATABASE_URL)
     RETURNING id`
   console.log('Cartes ajoutees:', rc.length)
 
+  // ===== 3b. RATTRAPAGE DES RARETES =====
+  // TCGdex publie le catalogue AVANT les raretes : une carte entree pendant cette
+  // fenetre restait sans rarete a vie (ME04 et ME05, 242 cartes). On ne remplit
+  // que ce qui est NULL — jamais d'ecrasement d'une valeur existante.
+  const rrp = await sql`
+    WITH upd AS (
+      UPDATE k_prints kp SET rarity = src.rarity
+        FROM (
+          SELECT DISTINCT ON (regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', '') || '-' || c.local_id)
+                 regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', '') || '-' || c.local_id AS id,
+                 c.rarity
+            FROM tcg_cards c
+           WHERE c.rarity IS NOT NULL AND c.set_id IS NOT NULL AND c.local_id IS NOT NULL
+           ORDER BY regexp_replace(c.set_id, '^(en|fr|jp|de|es|it|pt|ko|zh|ru|pl)-', '') || '-' || c.local_id,
+                    CASE WHEN c.lang='EN' THEN 0 WHEN c.lang='FR' THEN 1 ELSE 2 END
+        ) src
+       WHERE kp.id = src.id AND kp.rarity IS NULL
+      RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('Raretes rattrapees (k_prints):', rrp[0].n)
+
+  const rrc = await sql`
+    WITH upd AS (
+      UPDATE k_cards kc
+         SET rarity = c.rarity, rarity_normalized = COALESCE(kc.rarity_normalized, c.rarity_normalized)
+        FROM tcg_cards c
+       WHERE kc.id = c.id AND c.rarity IS NOT NULL AND kc.rarity IS NULL
+      RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('Raretes rattrapees (k_cards):', rrc[0].n)
+
+  // ===== 3c. VARIANTES D'EDITION : rarete deduite du set parent =====
+  const rrv = await sql`
+    WITH upd AS (
+      UPDATE k_prints v SET rarity = p.rarity
+        FROM k_prints p
+       WHERE v.rarity IS NULL AND p.rarity IS NOT NULL
+         AND p.id = regexp_replace(v.id, '-(1st|shadowless)(-ns)?-', '-')
+      RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('Raretes deduites du parent (variantes):', rrv[0].n)
+
+  const rrvc = await sql`
+    WITH upd AS (
+      UPDATE k_cards kc SET rarity = kp.rarity
+        FROM k_prints kp
+       WHERE kp.id = kc.print_id AND kc.rarity IS NULL AND kp.rarity IS NOT NULL
+      RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('Cartes alignees sur leur print:', rrvc[0].n)
+
+  // ===== 3d. PORTEFEUILLES : rarete recopiee depuis le catalogue =====
+  const rpf = await sql`
+    WITH upd AS (
+      UPDATE portfolio_cards pc SET rarity = kc.rarity, updated_at = now()
+        FROM k_cards kc
+       WHERE kc.id = pc.k_card_id AND pc.rarity IS NULL AND kc.rarity IS NOT NULL
+      RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('Raretes propagees aux portefeuilles:', rpf[0].n)
+
   // MAJ images des cartes existantes (id = c.id brut)
   //
   // GARDE ANTI-RETROGRADATION : has_image ne repasse JAMAIS a false.

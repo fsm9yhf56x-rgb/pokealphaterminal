@@ -108,6 +108,14 @@ async function getExistingCardIds(langPrefix) {
   return ids;
 }
 
+// Cartes dont la rarete MANQUE : seules celles-la justifient un appel detaille.
+async function getCardsMissingRarity(langPrefix) {
+  const ids = new Set();
+  const rows = await sql`SELECT id FROM tcg_cards WHERE id LIKE ${langPrefix + '-%'} AND rarity IS NULL`;
+  rows.forEach(r => ids.add(r.id));
+  return ids;
+}
+
 // NEW: set des cartes deja imagees -> permet de skip le HEAD R2
 async function getImagedCardIds(langPrefix) {
   const ids = new Set();
@@ -154,7 +162,7 @@ async function syncCardImage(lang, setId, localId, tcgdexImage) {
 // ── Sync pour une langue ──
 async function syncLang(lang) {
   console.log(`\n=== ${lang.toUpperCase()} ===`);
-  const stats = { new_cards: 0, new_sets: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
+  const stats = { new_cards: 0, new_sets: 0, rarities_filled: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
 
   if (ONLY_IMAGES) {
     console.log('Mode: comblement images uniquement');
@@ -164,6 +172,8 @@ async function syncLang(lang) {
   }
 
   const existingIds = await getExistingCardIds(lang);
+  const rarityMissing = await getCardsMissingRarity(lang);
+  console.log(`${rarityMissing.size} cartes sans rarete (detail a redemander)`);
   console.log(`${existingIds.size} cartes deja en DB`);
 
   // NEW: cartes deja imagees (pour skip le HEAD R2). Ignore si --recheck-images.
@@ -224,7 +234,9 @@ async function syncLang(lang) {
       for (const id of existingIds) if (id.startsWith(setPrefix)) knownCount++;
       const fullyKnown = expected > 0 ? knownCount >= expected : anyKnown;
 
-      if (anyKnown && allKnownAndImaged && fullyKnown) {
+      let missingRarity = false;
+      for (const id of rarityMissing) { if (id.startsWith(setPrefix)) { missingRarity = true; break; } }
+      if (anyKnown && allKnownAndImaged && fullyKnown && !missingRarity) {
         continue; // rien a faire pour ce set, zero appel reseau detaille
       }
     }
@@ -249,6 +261,27 @@ async function syncLang(lang) {
         }
         stats.new_cards++;
         setNewCards++;
+      }
+
+      // RATTRAPAGE : TCGdex publie le catalogue AVANT les raretes. Une carte entree
+      // pendant cette fenetre restait sans rarete a vie (ME04, ME05 : 242 cartes).
+      // On ne touche QUE les champs descriptifs venant de la source, et seulement
+      // s'ils sont absents chez nous : jamais d'ecrasement de ce qu'on maitrise.
+      // La LISTE d'un set ne renvoie que id/image/localId/name : la rarete n'existe
+      // QUE sur la fiche detaillee. L'optim du 19/06 a supprime ces appels pour les
+      // sets connus -> depuis, toute serie entre sans rarete, definitivement.
+      // On ne redemande le detail que pour les cartes dont la rarete MANQUE
+      // (242 appels pour ME04+ME05, contre des milliers si on relisait tout).
+      if (cardInDb && !DRY && rarityMissing.has(dbId)) {
+        try {
+          const dj = await fetchJson(`${TCGDEX}/${lang}/cards/${card.id}`);
+          if (dj && dj.rarity) {
+            const upd = await sql`
+              UPDATE tcg_cards SET rarity = ${dj.rarity}, synced_at = NOW()
+               WHERE id = ${dbId} AND rarity IS NULL RETURNING id`;
+            if (upd.length) stats.rarities_filled++;
+          }
+        } catch (e) { stats.errors.push(`rarity ${dbId}: ${e.message}`); }
       }
 
       // OPTIM: carte deja connue ET deja imagee -> aucun appel reseau (skip HEAD R2)
@@ -292,7 +325,7 @@ async function syncLang(lang) {
   const log = await startSyncLog(jobName, TRIGGER);
   const start = Date.now();
 
-  const allStats = { new_cards: 0, new_sets: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
+  const allStats = { new_cards: 0, new_sets: 0, rarities_filled: 0, images_uploaded: 0, images_skipped: 0, images_failed: 0, errors: [] };
   let status = 'success';
   let errorMsg = null;
 
@@ -303,6 +336,7 @@ async function syncLang(lang) {
       allStats.new_sets += s.new_sets;
       allStats.images_uploaded += s.images_uploaded;
       allStats.images_skipped += s.images_skipped;
+      allStats.rarities_filled += (s.rarities_filled || 0);
       allStats.images_failed += s.images_failed;
       allStats.errors.push(...s.errors);
     }
@@ -318,6 +352,7 @@ async function syncLang(lang) {
   console.log(`\nTOTAL`);
   console.log(`   Nouvelles cartes     : +${allStats.new_cards}`);
   console.log(`   Images uploadees     : +${allStats.images_uploaded}`);
+  console.log(`   Raretes recuperees    : +${allStats.rarities_filled}`);
   console.log(`   Images deja presentes: ${allStats.images_skipped}`);
   console.log(`   Images echouees      : ${allStats.images_failed}`);
   if (allStats.errors.length) {

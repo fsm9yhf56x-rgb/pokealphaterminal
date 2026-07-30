@@ -7,7 +7,10 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   const usdEur = Number(fx[0] && fx[0].rate || 0.92)
   console.log('FX USD->EUR:', usdEur)
 
+  let totalSignaux = 0
+  for (const LANG of ['fr', 'en', 'jp']) {
   const r4 = await sql`
+    WITH ins AS (
     INSERT INTO price_signals (print_id, lang, fair_value_eur, fair_value_method, cote_fr_eur, cote_lang,
       liquidity_score, spread_us_eu_pct, grade_ev_psa10_eur, anomaly, computed_at)
     SELECT
@@ -52,6 +55,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       LEFT JOIN k_prints kp ON kp.id = pm0.print_id
       WHERE pm0.print_id IS NOT NULL
         AND EXISTS (SELECT 1 FROM k_prints k2 WHERE k2.id = pm0.print_id)
+        AND split_part(pm0.kodo_card_id, '-', 1) = ${LANG}
     ) base
     -- Cardmarket trend DE CETTE LANGUE (cle: filtre kodo_card_id prefixe lang)
     LEFT JOIN LATERAL (SELECT spot AS trend FROM price_matrix
@@ -156,28 +160,42 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       cote_fr_eur=EXCLUDED.cote_fr_eur, cote_lang=EXCLUDED.cote_lang,
       liquidity_score=EXCLUDED.liquidity_score, spread_us_eu_pct=EXCLUDED.spread_us_eu_pct,
       grade_ev_psa10_eur=EXCLUDED.grade_ev_psa10_eur, computed_at=now()
-    RETURNING print_id`
-  console.log('signaux calcules (par langue):', r4.length)
-  const rz = await sql`UPDATE price_signals SET fair_value_eur = NULL WHERE fair_value_eur < 0.02 AND fair_value_eur IS NOT NULL RETURNING print_id`
-  console.log('quasi-zeros nulles (< 0.02 EUR):', rz.length)
+    RETURNING 1
+    ) SELECT count(*)::int AS n FROM ins`
+  console.log('  ' + LANG + ' : ' + r4[0].n + ' signaux')
+  totalSignaux += r4[0].n
+  }
+  console.log('signaux calcules (total):', totalSignaux)
+  const rz = await sql`WITH upd AS (
+    UPDATE price_signals SET fair_value_eur = NULL
+     WHERE fair_value_eur < 0.02 AND fair_value_eur IS NOT NULL RETURNING 1
+  ) SELECT count(*)::int AS n FROM upd`
+  console.log('quasi-zeros nulles (< 0.02 EUR):', rz[0].n)
   // Nettoyage des ORPHELINS : un print peut avoir disparu de price_matrix (prix purges)
   // tout en gardant une vieille ligne price_signals jamais reecrite (l'INSERT ... SELECT
   // part de price_matrix, donc ON CONFLICT ne se declenche pas pour ces prints).
   // On nulle leur fair_value pour ne pas afficher un prix fantome (ex Blastoise 1st Ed).
   const ro = await sql`
+    WITH upd AS (
     UPDATE price_signals ps SET fair_value_eur = NULL, fair_value_method = 'insufficient_data', computed_at = now()
     WHERE ps.fair_value_eur IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM price_matrix pm
         WHERE pm.print_id = ps.print_id AND split_part(pm.kodo_card_id,'-',1) = ps.lang)
-    RETURNING print_id`
-  console.log('orphelins nulles (print absent de price_matrix):', ro.length)
+    RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('orphelins nulles (print absent de price_matrix):', ro[0].n)
   console.log('\n=== SNAPSHOT price_history ===')
+  // RETURNING print_id faisait remonter ~480 000 lignes au driver HTTP Neon pour
+  // le seul besoin d'un compteur -> 'fetch failed' apres 23 min (echecs des 29-30/07).
+  // La CTE fait le meme travail cote serveur et ne renvoie qu'un entier.
   const r5 = await sql`
-    INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
-    SELECT print_id, CURRENT_DATE, tier, source, market, spot, sale_count, currency
-    FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
-    ON CONFLICT DO NOTHING RETURNING print_id`
-  console.log('rows history:', r5.length)
+    WITH ins AS (
+      INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
+      SELECT print_id, CURRENT_DATE, tier, source, market, spot, sale_count, currency
+      FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL
+      ON CONFLICT DO NOTHING RETURNING 1
+    ) SELECT count(*)::int AS n FROM ins`
+  console.log('rows history:', r5[0].n)
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
   // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
   //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).
@@ -185,6 +203,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   // dedoublonnage par (print,tier) en gardant le prix median pondere par saleCount.
   // ACCUMULE jour par jour -> densite future pour afficher les grades FR honnetement.
   const r6 = await sql`
+    WITH ins AS (
     INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
     SELECT print_id, CURRENT_DATE, tier, 'cardmarket_fr', 'FR', price, sale_count, 'EUR'
     FROM (
@@ -199,7 +218,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
         AND (country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric <= 100000
       GROUP BY pm.print_id, pm.tier
     ) t
-    ON CONFLICT DO NOTHING RETURNING print_id`
-  console.log('rows history FR pur (country.FR.language.FR, source=cardmarket_fr):', r6.length)
+    ON CONFLICT DO NOTHING RETURNING 1
+    ) SELECT count(*)::int AS n FROM ins`
+  console.log('rows history FR pur (country.FR.language.FR, source=cardmarket_fr):', r6[0].n)
   console.log('Signaux + history a jour.')
 })().catch(e => { console.error('ERR:', e.message); process.exit(1) })

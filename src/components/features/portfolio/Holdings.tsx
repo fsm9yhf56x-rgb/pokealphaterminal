@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { AnimatedTotal } from './AnimatedTotal'
+import { KodoSelect } from '@/components/ui/KodoSelect'
 import { fetchSets, fetchCardsForSet, fetchCardDetail, type TCGSet, type TCGCard } from '@/lib/tcgApi'
 import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups'
 import { formatEUR } from '@/lib/formatPrice'
@@ -1712,9 +1713,7 @@ export function Holdings() {
         .breathe-A { animation:breatheA 3s ease-in-out infinite; }
         .pocket-shell { position:relative;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .55s cubic-bezier(.4,0,.1,1),box-shadow .6s cubic-bezier(.4,0,.1,1);background:#fff;border:1px solid #EBEBEB;box-shadow:0 1px 3px rgba(0,0,0,.03); }
         .pocket-shell:hover { transform:translateY(-6px) !important;box-shadow:0 12px 32px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.02) !important;border-color:#D2D2D7 !important; }
-        .pocket-shell img { transition:transform .45s cubic-bezier(.22,.85,.3,1); }
-        .pocket-shell:hover img { transform:scale(1.035); }
-        @media (prefers-reduced-motion: reduce){ .pocket-shell:hover img{ transform:none } .kbinder-grid > *{ animation:none !important } }
+        @media (prefers-reduced-motion: reduce){ .kbinder-grid > *{ animation:none !important } }
         
         @keyframes slotPulse { 0%,100%{border-color:#D2D2D7;box-shadow:0 0 0 0 rgba(224,48,32,0)} 50%{border-color:#E03020;box-shadow:0 0 0 8px rgba(224,48,32,.1)} }
         .empty-pocket { animation:slotPulse 3s ease-in-out infinite;border:2px dashed #D2D2D7 !important;background:#FAFAFA !important; }
@@ -1731,10 +1730,13 @@ export function Holdings() {
         .kadd-mini{ transition:background .2s cubic-bezier(.2,.85,.3,1), color .2s ease, transform .16s cubic-bezier(.2,.85,.3,1), box-shadow .22s ease; }
         .kadd-mini:hover{ transform:translateY(-1px); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.07); }
         .kadd-mini:active{ transform:translateY(0) scale(.95); transition-duration:.07s; }
+        .kadd-secondary .kadd-mini{ height:28px; padding:0 11px; background:transparent; box-shadow:none; }
+        .kadd-secondary .kadd-mini:hover{ background:#FFF; transform:none; box-shadow:0 1px 3px rgba(0,0,0,.10); }
+        .kadd-secondary .kadd-mini:active{ transform:scale(.95); }
         .kadd-mini svg{ transition:transform .32s cubic-bezier(.34,1.45,.4,1); }
         .kadd-mini:hover svg{ transform:scale(1.13); }
         .kadd-primary{ box-shadow:0 1px 3px rgba(0,0,0,.15); transition:background .2s ease, transform .16s cubic-bezier(.2,.85,.3,1), box-shadow .24s ease; }
-        .kadd-primary:hover{ transform:translateY(-1px); box-shadow:0 7px 20px rgba(0,0,0,.22); }
+        .kadd-primary:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.20); }
         .kadd-primary:active{ transform:translateY(0) scale(.97); transition-duration:.07s; }
         .kadd-primary svg{ transition:transform .38s cubic-bezier(.34,1.6,.4,1); }
         .kadd-primary:hover svg{ transform:scale(1.18); }
@@ -2879,14 +2881,16 @@ export function Holdings() {
                     {binderSet!==null&&(
                     <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' as const }}>
                       {binderSet==='__all__'&&(
-                        <div className="kfilt-serie" style={{ position:'relative', flexShrink:0 }}>
-                          <select value={binderSetFilter} onChange={e=>{setBinderSetFilter(e.target.value);setBinderPage(0)}} className="kctrl-field" style={{ maxWidth:'168px', paddingRight:'28px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer', color:binderSetFilter==='all'?'#6E6E73':'#1D1D1F', textOverflow:'ellipsis' }}>
-                            <option value="all">Toutes les séries</option>
-                            {[...new Set(portfolioCards.map(c=>c.set))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(sname=>(
-                              <option key={sname} value={sname}>{sname}</option>
-                            ))}
-                          </select>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'11px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
+                        <div className="kfilt-serie" style={{ flexShrink:0 }}>
+                          <KodoSelect ariaLabel="S\u00e9rie" heading={'S\u00e9rie'} searchable maxWidth={168} panelWidth={286}
+                            value={binderSetFilter} onChange={v=>{setBinderSetFilter(v);setBinderPage(0)}}
+                            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>}
+                            options={[{ value:'all', label:'Toutes les s\u00e9ries', image:'', count:portfolioCards.reduce((t,c)=>t+(c.qty||1),0) },
+                              ...[...new Set(portfolioCards.map(c=>c.set))].filter(Boolean).sort((x,y)=>String(x).localeCompare(String(y))).map(sn=>({
+                                value:String(sn), label:String(sn),
+                                image:setLogos[String(sn)]||'',
+                                count:portfolioCards.filter(c=>c.set===sn).reduce((t,c)=>t+(c.qty||1),0),
+                              }))]} />
                         </div>
                       )}
                       <div className="kfilt-searchbox" style={{ position:'relative', flex:'1 1 130px', minWidth:'120px', maxWidth:'260px' }}>
@@ -2905,16 +2909,11 @@ export function Holdings() {
                           ))}
                         </div>
                       )}
-                      <div style={{ position:'relative', flexShrink:0 }} title="Trier">
-                        <select value={binderSort} onChange={e=>setBinderSort(e.target.value as any)} className="kctrl-field" aria-label="Trier" style={{ paddingLeft:'29px', paddingRight:'25px', appearance:'none' as const, WebkitAppearance:'none' as const, cursor:'pointer' }}>
-                          <optgroup label="Trier par">
-                          {((binderSet==='__all__'?([{k:'series',l:'Ordre des séries'},{k:'recent',l:'Ajoutées récemment'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[]):([{k:'number',l:'Numéro de carte'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[])) as {k:'number'|'name'|'price'|'series'|'recent';l:string}[]).map(so=>(
-                            <option key={so.k} value={so.k}>{so.l}</option>
-                          ))}
-                          </optgroup>
-                        </select>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.2" strokeLinecap="round" style={{ position:'absolute', left:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M3 6h13M3 12h9M3 18h5"/></svg>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.5" strokeLinecap="round" style={{ position:'absolute', right:'9px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M6 9l6 6 6-6"/></svg>
+                      <div style={{ flexShrink:0 }}>
+                        <KodoSelect ariaLabel="Trier" heading="Trier par" maxWidth={210} panelWidth={218}
+                          value={binderSort} onChange={v=>setBinderSort(v as any)}
+                          icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2.2" strokeLinecap="round"><path d="M3 6h13M3 12h9M3 18h5"/></svg>}
+                          options={((binderSet==='__all__'?([{k:'series',l:'Ordre des séries'},{k:'recent',l:'Ajoutées récemment'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[]):([{k:'number',l:'Numéro de carte'},{k:'name',l:'Nom (A→Z)'}] as any[]).concat(isInvestor?[{k:'price',l:'Valeur décroissante'}]:[])) as {k:string;l:string}[]).map(so=>({ value:so.k, label:so.l }))} />
                       </div>
                     </div>
                     )}
@@ -2924,7 +2923,7 @@ export function Holdings() {
                       .kadd-mini{ display:inline-flex; flex-direction:row; align-items:center; gap:6px; height:34px; padding:0 13px; border-radius:99px; border:none; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.07); background:rgba(255,255,255,.62); color:#48484A; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .18s ease, color .18s ease, transform .12s ease; flex-shrink:0; }
                       .kadd-mini:hover{ background:rgba(255,255,255,.92); color:#1D1D1F; }
                       .kadd-mini:active{ transform:scale(.97); }
-                      .kadd-primary{ display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 15px; border-radius:99px; border:none; background:#1D1D1F; color:#FFF; font-size:12px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .18s ease, transform .12s ease; flex-shrink:0; }
+                      .kadd-primary{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 13px; border-radius:99px; border:none; background:#1D1D1F; color:#FFF; font-size:11.5px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .18s ease, transform .12s ease; flex-shrink:0; }
                       .kadd-primary:hover{ background:#000; }
                       .kadd-primary:active{ transform:scale(.97); }
                       .kadd-sep{ width:1px; height:20px; background:rgba(0,0,0,.09); flex-shrink:0; margin:0 3px; }
@@ -2935,7 +2934,7 @@ export function Holdings() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                       <span>Ajouter<span className="kadd-long"> une carte</span></span>
                     </button>
-                    <div className="kadd-secondary" style={{ display:'contents' }}>
+                    <div className="kadd-secondary" style={{ display:'inline-flex', alignItems:'center', gap:2, padding:3, background:'rgba(0,0,0,.045)', borderRadius:99, flexShrink:0 }}>
                     {(!binderSet||binderSet==='__all__')&&<button className="kadd-mini" onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
                       <span className="kadd-serie-lbl">Série</span>
@@ -2949,6 +2948,7 @@ export function Holdings() {
                       <span className="kadd-lbl">Scan</span>
                     </button>
                     </div>
+                    <span aria-hidden className="kadd-sep" />
                     {(binderSet!==null)&&(
                       <button className="kadd-mini kadd-cols" onClick={()=>{setBinderCols(n=>n>=9?6:n+1);setBinderPage(0)}}
                         aria-label={'Colonnes : '+binderCols} title={'Colonnes : '+binderCols+' (cliquer pour changer)'}>
@@ -3435,7 +3435,7 @@ export function Holdings() {
                                 const isShd=sid.includes('-shadowless')&&!is1st
                                 if(!is1st&&!isShd) return null
                                 const lbl=is1st?'1ST EDITION':'SHADOWLESS'
-                                return <span className={'ed-badge '+(is1st?'ed-1st-edition':'ed-shadowless')} style={{ flexShrink:0, fontSize:binderCols>=8?'7px':'8px', padding:binderCols>=8?'2px 4px':'2px 5px' }}>{lbl}</span>
+                                return <span className={'ed-badge '+(is1st?'ed-1st-edition':'ed-shadowless')} style={{ flexShrink:0, marginLeft:'auto', fontSize:binderCols>=8?'7px':'8px', padding:binderCols>=8?'2px 4px':'2px 5px' }}>{lbl}</span>
                               })()}
                               {card.qty>1&&<span style={{ fontSize:'10px', fontWeight:700, color:'#AEAEB2', fontFamily:'var(--font-data)', flexShrink:0, marginLeft:'2px' }}>{String.fromCharCode(215)}{card.qty}</span>}
                             </div>

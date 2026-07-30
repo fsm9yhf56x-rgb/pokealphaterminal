@@ -53,7 +53,7 @@ export function TopNav() {
           display: flex;
           align-items: center;
           gap: 4px;
-          flex: 1;
+          flex: 0 1 auto;
           min-width: 0;
           position: relative;
           overflow: visible;
@@ -142,6 +142,19 @@ export function TopNav() {
         .knav-sig-dot { color: #C7C7CC; font-weight: 700; }
         .knav-sig-jp { font-family: 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif; color: #E03020; font-size: 10px; letter-spacing: 0.06em; }
         @media (max-width: 1023px) { .knav-sig { display: none !important; } }
+        .knav-logo { margin-right: 56px; }
+        /* Zone morte 1024-1400px : un seul palier a 1023px laissait les liens et
+           les actions se chevaucher. On comprime par etapes avant de basculer. */
+        @media (max-width: 1400px) {
+          .knav-logo { margin-right: 28px !important; }
+          .knav-link { padding-inline: 11px !important; letter-spacing: .06em !important; }
+        }
+        @media (max-width: 1200px) {
+          .knav-logo { margin-right: 12px !important; }
+          .knav-bar { padding-inline: 14px !important; }
+          .knav-link { padding-inline: 8px !important; font-size: 11px !important; }
+          .knav-pro { display: none !important; }
+        }
 
 
         @media (max-width: 1023px) {
@@ -176,7 +189,7 @@ export function TopNav() {
         {/* Logo — wordmark typographique */}
         <Link href="/home" className="knav-logo" style={{
           display: 'flex', alignItems: 'center',
-          textDecoration: 'none', marginRight: 56, flexShrink: 0,
+          textDecoration: 'none', flexShrink: 0,
           padding: '6px 10px',
           borderRadius: 12,
           transition: 'background .2s',
@@ -231,6 +244,7 @@ export function TopNav() {
           })}
         </div>
 
+        <span aria-hidden style={{ flex: 1, minWidth: 8 }} />
         <BetaBadge />
         <WelcomeBeta />
         <NotificationBell />

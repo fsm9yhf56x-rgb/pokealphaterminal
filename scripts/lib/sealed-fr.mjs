@@ -182,6 +182,7 @@ export function detectSetCodes(n) {
  * @param {object} opts
  * @param {Map<string,string>} [opts.byCode]  code normalise ("ev3.5") -> kodo_set_id
  * @param {Array<{id:string,norm:string}>} [opts.byName]  noms de sets FR normalises
+ * @param {string} [opts.description] shortDescription eBay (fieldgroups=EXTENDED)
  * @param {string} [opts.condition]  champ condition eBay ("Neuf/Scelle", "Occasion/Non-scelle"...)
  */
 export function parseSealedTitle(title, opts = {}) {
@@ -201,6 +202,22 @@ export function parseSealedTitle(title, opts = {}) {
   if (foreign.length) { res.excluded = true; res.excludeReason = 'drapeau_' + foreign[0]; }
 
   // 1. etat : on fait confiance au champ eBay, il est declaratif et fiable sur le scelle
+  // LA DESCRIPTION CORRIGE LE TITRE. Deux cas mesures sur le marche reel :
+  //  - "DISPLAY POKEMON TONNERRE PERDU" 950 EUR -> description "DEMI DISPLAY"
+  //  - un display a 2300 EUR -> description "plu sceller" (= ouvert)
+  // Le titre est du marketing, la description est ce que le vendeur assume.
+  // Elle ne peut que RESTREINDRE : jamais promouvoir un demi-display en display.
+  if (opts.description) {
+    const d = normalize(opts.description);
+    if (/\bdemie?[\s-]*display\b|1\/2\s*display|\b18\s*boosters?\b/.test(d) && res.sku === SKU.DISPLAY) {
+      res.sku = SKU.DEMI_DISPLAY;
+      res.skuSource = 'description';
+    }
+    if (/\bplu[s]?[\s-]*scell|\bdescell|\bnon[\s-]*scell|\bouvert\b|\bentame\b/.test(d)) {
+      res.sealed = false;
+      if (!res.excluded) { res.excluded = true; res.excludeReason = 'non_scelle_description'; }
+    }
+  }
   if (opts.condition != null) {
     const c = normalize(opts.condition);
     if (/non[\s-]*scelle|occasion/.test(c)) { res.sealed = false; if (!res.excluded) { res.excluded = true; res.excludeReason = 'non_scelle'; } }
@@ -211,9 +228,16 @@ export function parseSealedTitle(title, opts = {}) {
     // categories vagues (Ungraded, Unspecified, Non gradee, Neuf, New) representent
     // ~4% des annonces retenues et sont exactement la ou se cachent les ouverts.
     // 'New/Factory Sealed' et 'Neuf/Scelle' couvrent 95% du volume : le cout est faible.
-    else if (!/\bscelle\b|factory[\s-]*sealed|\bsealed\b|sigillato|fabrikversiegelt|precintado|verzegeld/.test(c)) {
+    // 'Non gradee' / 'Ungraded' sont des categories NEUTRES : elles ne prouvent
+    // ni le scellage ni l'ouverture. Le display ouvert a 2300 EUR ne se trahissait
+    // que dans sa DESCRIPTION ("plu sceller"), pas dans sa condition. Les exclure
+    // ferait tomber des annonces legitimes (un display scelle a 5490 EUR portait
+    // la meme etiquette). On ne rejette que ce qui indique un ETAT DE CARTE joue,
+    // qui n'a aucun sens sur un produit scelle et signale un vendeur qui decrit
+    // autre chose que ce que le titre annonce.
+    else if (/\bgood\b|\blike[\s-]*new\b|bon[\s-]*etat|\bplayed\b|\bacceptable\b|\bfair\b/.test(c)) {
       res.sealed = false;
-      if (!res.excluded) { res.excluded = true; res.excludeReason = 'scellage_non_atteste'; }
+      if (!res.excluded) { res.excluded = true; res.excludeReason = 'etat_de_carte'; }
     }
     else if (/scelle|neuf/.test(c)) res.sealed = true;
   }
@@ -322,14 +346,30 @@ export function aggregateAsks(rows, opts = {}) {
     return { price: null, raw: null, low: null, n: rows.length, sellers: votes.length, method: 'insufficient_data' };
   }
   const raw = median(votes);
-  // Le plancher subit la MEME decote que la mediane. Sans ca on compare une
-  // annonce brute a une mediane decotee -> low > price (constate sur
-  // 'Offensive Vapeur' : market 1672 pour un low de 1900, impossible).
-  const lowRaw = Math.min(...votes);
+  const sorted = [...votes].sort((a, b) => a - b);
+  // LE PRIX AFFICHE EST LA MOINS CHERE, PAS UNE MEDIANE. Une mediane decotee est
+  // un prix que personne ne pratique : le lien menait a 2300 quand l'ecran disait
+  // 1848. Avec des liens sortants, le nombre affiche DOIT etre cliquable.
+  //
+  // Garde anti-aberrant : une annonce a moins de 45% de la deuxieme n'est pas une
+  // affaire, c'est un piege (lot mal decrit, accessoire, arnaque). On prend alors
+  // la deuxieme. La mediane reste calculee et exposee en 'raw' pour situer
+  // l'annonce dans son marche.
+  // GARDE ANTI-ABERRANT, relatif a la MEDIANE et non au voisin immediat.
+  // Compare au voisin, une chaine d'annonces mal classees passe entiere :
+  // en-bw5-display avait un minimum a 56 EUR pour une mediane de 26 997 EUR
+  // (carte seule ou accessoire classe en display). Un "DISPLAY TONNERRE PERDU"
+  // a 950 EUR contre une mediane de 2250 etait en fait un demi-display — le
+  // titre ne le disait pas, seule la description le revelait.
+  // Sous 50% de la mediane, l'annonce ne decrit probablement pas le meme produit :
+  // on prend la premiere qui tient. Avec des liens sortants, mettre en avant une
+  // annonce mal classee revient a recommander une arnaque.
+  const plancher = raw * 0.5;
+  const floor = sorted.find((v) => v >= plancher) ?? raw;
   return {
-    price: Math.round(raw * discount * 100) / 100,
+    price: Math.round(floor * 100) / 100,
     raw: Math.round(raw * 100) / 100,
-    low: Math.round(lowRaw * discount * 100) / 100,
+    low: Math.round(sorted[0] * 100) / 100,
     n: rows.length,
     sellers: votes.length,
     method: 'ebay_fr_ask',

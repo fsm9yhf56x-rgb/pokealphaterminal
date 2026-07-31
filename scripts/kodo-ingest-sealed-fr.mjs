@@ -173,7 +173,11 @@ async function token() {
 
 async function search(tk, q, minPrice) {
   const price = minPrice > 0 ? ',price:[' + minPrice + '..8000]' : '';
-  const p = new URLSearchParams({ q, limit: '100', filter: 'itemLocationCountry:FR,priceCurrency:EUR' + price });
+  // fieldgroups=EXTENDED ramene shortDescription SANS appel supplementaire ni cout
+  // de quota. Indispensable : le titre ment. "DISPLAY POKEMON TONNERRE PERDU" a
+  // 950 EUR avait pour description "DEMI DISPLAY ... BLISTER", et un display
+  // ouvert a 2300 EUR n'avouait que dans son texte ("plu sceller").
+  const p = new URLSearchParams({ q, limit: '100', fieldgroups: 'EXTENDED', filter: 'itemLocationCountry:FR,priceCurrency:EUR' + price });
   try {
     if (quotaDead) return { items: [], err: 'quota' };
     const r = await fetch('https://api.ebay.com/buy/browse/v1/item_summary/search?' + p, {
@@ -327,7 +331,7 @@ for (const set of sets) {
   const journal = [];
   for (const it of uniq.values()) {
     seen++;
-    const p = parseSealedTitle(it.title, { byCode, byName, condition: it.condition });
+    const p = parseSealedTitle(it.title, { byCode, byName, condition: it.condition, description: it.shortDescription });
     // Journal AVANT les filtres : on garde meme les annonces exclues (pour auditer le
     // parseur plus tard sans re-interroger eBay) et celles qui ne passent pas le seuil
     // de vendeurs — ce sont elles qui, accumulees sur 90 jours, coteront le vintage.

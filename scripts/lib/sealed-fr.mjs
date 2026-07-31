@@ -48,6 +48,7 @@ export const SKU = {
   CASE: 'case',
   DISPLAY_BUNDLE: 'display_bundle',
   DISPLAY_TIN: 'display_tin',
+  DISPLAY_KIT: 'display_kit',
   DEMI_DISPLAY: 'demi_display',
   DISPLAY: 'display',
   ETB: 'etb',
@@ -65,6 +66,7 @@ export const SKU_LABEL = {
   case: 'Case',
   display_bundle: 'Display de bundles',
   display_tin: 'Display de mini-tins',
+  display_kit: 'Display de kits',
   demi_display: 'Demi-display',
   display: 'Display 36 boosters',
   etb: "Coffret Dresseur d'Elite",
@@ -89,6 +91,11 @@ const SKU_RULES = [
   { sku: SKU.COFFRET, re: /\b(pin|figure|premium)?\s*collection\b[^a-z]{0,12}display\b/ },
   { sku: SKU.BLISTER, re: /\bblisters?\b[^a-z]{0,12}display\b/ },
   { sku: SKU.DISPLAY_TIN, re: /\b\d{1,2}\s*mini[\s-]*tins?\b|\b(display|presentoir|boite)\b(?:\s+[a-z0-9']+){0,4}\s+mini[\s-]*tins?\b|\bmini[\s-]*tins?\b[^a-z]{0,12}display\b/ },
+  // Un display de KITS est un contenant scelle de kits du dresseur, exactement
+  // comme un display est un contenant de boosters. Produit legitime, SKU propre.
+  // Detecte AVANT display : "Display de 8 Kit du dresseur" ne doit jamais sortir
+  // en display 36 boosters — 65 EUR contre 1143 EUR, ce n'est pas le meme objet.
+  { sku: SKU.DISPLAY_KIT, re: /\b(display|bo(i|î)te|presentoir)\b[^a-z]{0,14}(de\s*)?\d{0,2}\s*kits?\b|\bkits?\s*du\s*dresseur\b[^a-z]{0,8}(display|x\s*\d{1,2})/ },
   { sku: SKU.DEMI_DISPLAY, re: /\b(demie?[\s-]*display|1\/2\s*display|half\s*display|half\s*booster\s*box(es)?|18\s*boosters?)\b/ },
   { sku: SKU.DISPLAY, re: /\b(display|booster\s*box(es)?)\b|\b(boite|boitier)\b[^a-z]{0,12}\b(de\s*)?36\b|\b36\s*boosters?\b/ },
   { sku: SKU.ETB, re: /\betb\b|\bcoffret\s*(du\s*)?dresseur\s*d?'?\s*elite\b|\belite\s*trainer\s*box\b|\bdresseur\s*elite\b/ },
@@ -138,10 +145,24 @@ const EXCLUSIONS = [
   { reason: 'preco', re: /\bprecos?\b|\bpre[\s-]*commande\b|\bprecommande\b|\bpre[\s-]*order\b|\bpreorder\b/ },
   { reason: 'defaut', re: /\(\s*defaut\s*\)|\bdefaut\b|\babime\b|\bendommage\b|\bdechire\b|\bouvert\b|\bnon[\s-]*scelle\b|\breconditionne\b/ },
   { reason: 'lot', re: /\blot\b[^a-z]{0,12}\b(display|etb|coffret|bundle|blister|demi)\b|\blot\s*(de\s*)?\d|\blot\b[^a-z]{0,3}\d|^\s*\d{1,2}\s*(demi|display|coffret|etb|blister)\b|\bx\s*\d{1,2}\b(?!\s*(booster|carte))/ },
+  // LOT a l'anglaise. Le motif 'lot' etait ecrit en francais et ne voyait rien de
+  // "Lot Of 48", "36x Packs", "Set of 4", "(Lot of 10)". Mesure sur le journal :
+  // 454 annonces, dont des boosters unitaires a 5200 EUR qui etaient en fait des
+  // lots de 48 -> ils faisaient exploser la mediane de leur SKU.
+  { reason: 'lot', re: /\blot\s*of\b|\blot\s*des?\b|\bset\s*of\s*\d|\b\d{1,3}\s*x\s*(pack|booster|coffret|etb|tin|bundle|blister)|\bpacks?\s*lot\b/ },
+  // CADRE d'exposition : "Display Frame", "Frame Gift" — le mot display designe
+  // ici un encadrement mural, pas une boite de boosters.
+  { reason: 'accessoire', re: /\bdisplay\s*frame\b|\bframe\s*gift\b|\bcard\s*frame\b/ },
+  // OUVERT a l'anglaise. "Displayed" est un participe passe (exposé), "Opened
+  // Live" un live d'ouverture : dans les deux cas le produit n'est plus scelle.
+  { reason: 'non_scelle', re: /\bopened\s*live\b|\bunsealed\b|\bdisplayed\b|\bno\s*packs?\b/ },
+  // INNER CASE : carton interne de blisters chez le distributeur, pas un case de
+  // displays. Le mot "case" a deux sens dans la chaine logistique.
+  { reason: 'contenu_indetermine', re: /\binner\s*case\b/ },
   { reason: 'accessoire', re: /\bacrylique\b|\bplexi\b|\bsleeves?\b|\bprotege[\s-]*cartes?\b|\bclasseur\b|\bportfolio\b|\brangement\b|\bvitrine\b|\bstand\b/ },
   { reason: 'grade', re: /\bwata\b|\bcgc\s*\d|\bpsa\s*\d|\bgraded?\b|\bgradee?\b/ },
   { reason: 'custom', re: /\bcustom\b|\bfait\s*main\b|\brepro\b|\bfake\b|\bproxy\b|\bpersonnalise\b/ },
-  { reason: 'autre_langue', re: /\b(english|anglais(e|es)?|japonais(e|es)?|japanese|jap|allemand(e|es)?|german|deutsch|italien(ne|nes)?|italian|espagnol(e|es)?|spanish|korean|coreen(ne)?|chinois(e)?)\b/ },
+  { reason: 'autre_langue', re: /\b(english|anglais(e|es)?|japonais(e|es)?|japanese|jap|allemand(e|es)?|german|deutsch|italien(ne|nes)?|italian|espagnol(e|es)?|spanish|korean|coreen(ne)?|chinois(e)?|portugais(e)?|portuguese|brazilian|bresilien(ne)?|russian|russe|nederlands|dutch|polish|polski)\b/ },
 ];
 
 export function detectExclusion(n) {
@@ -364,12 +385,21 @@ export function aggregateAsks(rows, opts = {}) {
   // Sous 50% de la mediane, l'annonce ne decrit probablement pas le meme produit :
   // on prend la premiere qui tient. Avec des liens sortants, mettre en avant une
   // annonce mal classee revient a recommander une arnaque.
+  // LE PRIX D'APPEL EST LA MOINS CHERE ANNONCE REELLE, pas le minimum des votes.
+  // La dedup par vendeur protege la MEDIANE (un vendeur qui republie 3x ne fait
+  // pas la cote seul), mais appliquee au plancher elle fabrique un prix que
+  // personne n'affiche : un vendeur a 1450 et 1550 pese 1500, et l'ecran
+  // annoncait "des 1496" au-dessus d'une liste commencant a 1450.
   const plancher = raw * 0.5;
-  const floor = sorted.find((v) => v >= plancher) ?? raw;
+  const reelles = rows
+    .map((r) => Number(r.price))
+    .filter((v) => Number.isFinite(v) && v > 0)
+    .sort((a, b) => a - b);
+  const floor = reelles.find((v) => v >= plancher) ?? sorted.find((v) => v >= plancher) ?? raw;
   return {
     price: Math.round(floor * 100) / 100,
     raw: Math.round(raw * 100) / 100,
-    low: Math.round(sorted[0] * 100) / 100,
+    low: Math.round((reelles[0] ?? sorted[0]) * 100) / 100,
     n: rows.length,
     sellers: votes.length,
     method: 'ebay_fr_ask',

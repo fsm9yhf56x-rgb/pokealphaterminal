@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/useAuth'
 import { usePersona } from '@/lib/usePersona'
 import { supabase } from '@/lib/supabase'
 import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
+import AuthModal from '@/components/layout/AuthModal'
 import { SetSelect } from '@/components/features/cartes/SetSelect'
 import { PillSelect } from '@/components/features/cartes/PillSelect'
 
@@ -158,6 +159,7 @@ export function Scelles() {
     window.history.replaceState(null, '', u.toString())
   }, [])
   const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
+  const [authOpen, setAuthOpen] = useState(false)
   // Annonces reelles du produit selectionne. Distinctes de la cote : la cote est
   // une mediane decotee que personne ne pratique, ces lignes sont ce qu'on peut
   // acheter maintenant.
@@ -276,11 +278,15 @@ export function Scelles() {
 
   const openModal = useCallback(() => {
     if (!selected) return
+    // Un visiteur qui arrive par un lien partage n'a pas de compte : lui ouvrir
+    // le formulaire d'ajout mene a une impasse (l'insert echoue silencieusement
+    // et la ligne part dans localStorage). On propose la creation de compte.
+    if (!user) { setAuthOpen(true); return }
     setSealedSeed({
       name: selected.name, set_name: selected.setName, set_id: selected.setId,
       card_type: selected.sku, year: 0, image_url: selected.image || selected.setLogo,
     })
-  }, [selected])
+  }, [selected, user])
 
   // CORRIGE deux defauts de l'ancienne version : la langue etait figee a 'FR'
   // (un produit EN entrait en FR) et le prix connu n'etait jamais ecrit.
@@ -673,7 +679,7 @@ export function Scelles() {
 
               <button onClick={openModal} className="sc-cta"
                 style={{ width: '100%', height: '44px', borderRadius: '10px', background: '#1D1D1F', color: '#fff', border: 'none', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
-                <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> Ajouter au portfolio
+                <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> {user ? 'Ajouter au portfolio' : 'Suivre ce produit'}
               </button>
             </div>
           </aside>
@@ -681,6 +687,7 @@ export function Scelles() {
       </div>
 
       <AddSealedModal open={!!sealedSeed} onClose={() => setSealedSeed(null)} product={sealedSeed} onAdd={handleSealedAdd} />
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode="signup" />
     </>
   )
 }

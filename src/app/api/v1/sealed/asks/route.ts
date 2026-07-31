@@ -46,7 +46,18 @@ export async function GET(req: Request) {
       [product, limit]
     ) as Array<Record<string, unknown>>
 
-    const asks = rows
+    // GARDE ANTI-ABERRANT, le meme que l'agregation. Une annonce tres sous la
+    // mediane des autres ne decrit generalement pas le meme produit : un demi-
+    // display titre "DISPLAY" a 950 EUR quand les vrais sont a 1500, un display
+    // a 429 EUR quand la cote est a 999. Le calcul les ecarte deja ; sans ce
+    // filtre l'ecran les affichait quand meme, et le prix d'appel — qui derive
+    // desormais de cette liste — retombait sur l'annonce ecartee.
+    const prix = rows.map((r) => Number(r.price)).filter((v) => Number.isFinite(v) && v > 0).sort((a, b) => a - b);
+    const mediane = prix.length ? prix[Math.floor(prix.length / 2)] : 0;
+    const plancher = mediane * 0.5;
+    const propres = mediane > 0 ? rows.filter((r) => Number(r.price) >= plancher) : rows;
+
+    const asks = propres
       .map((r) => {
         const url = ebayItemUrl(String(r.item_id), lang, 'sealed-' + product)
         if (!url) return null

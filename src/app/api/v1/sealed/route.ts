@@ -113,7 +113,13 @@ export async function GET(req: NextRequest) {
     // pas dans les titres du marche — mais elles ne sont plus le catalogue.
     const where: string[] = ["p.lang = $1", "p.source IN ('ebay_fr','ebay_us')"];
     const params: unknown[] = [lang];
-    if (sku) { params.push(sku); where.push('p.sku = $' + params.length); }
+    // sku accepte une LISTE : l'UI groupe les contenants (case, display_tin,
+    // display_bundle) sous une seule entree — 14 produits au total, trois
+    // pastilles distinctes ne meriteraient pas leur place.
+    if (sku) {
+      const skus = sku.split(',').map((x) => x.trim()).filter(Boolean);
+      if (skus.length) { params.push(skus); where.push('p.sku = ANY($' + params.length + '::text[])'); }
+    }
     if (set) { params.push(set); where.push('(p.kodo_set_id = $' + params.length + ' OR p.set_id = $' + params.length + ')'); }
     if (q) { params.push('%' + q + '%'); where.push('(p.name ILIKE $' + params.length + ' OR p.set_name ILIKE $' + params.length + ')'); }
 

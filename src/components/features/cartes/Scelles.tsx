@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/useAuth'
 import { usePersona } from '@/lib/usePersona'
 import { supabase } from '@/lib/supabase'
 import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
+import { buildSealedDbRow, buildSealedLocalRow } from '@/lib/sealed-portfolio'
 import AuthModal from '@/components/layout/AuthModal'
 import { SetSelect } from '@/components/features/cartes/SetSelect'
 import { PillSelect } from '@/components/features/cartes/PillSelect'
@@ -284,7 +285,8 @@ export function Scelles() {
     if (!user) { setAuthOpen(true); return }
     setSealedSeed({
       name: selected.name, set_name: selected.setName, set_id: selected.setId,
-      card_type: selected.sku, year: 0, image_url: selected.image || selected.setLogo,
+      card_type: selected.sku, lang: selected.lang || lang,
+      year: 0, image_url: selected.image || selected.setLogo,
     })
   }, [selected, user])
 
@@ -300,30 +302,20 @@ export function Scelles() {
     const qty = Number(payload.qty ?? 1) || 1
     const buy_price = payload.buy_price != null ? (Number(payload.buy_price) || 0) : null
     const current_price = selected?.price?.value ?? null
-    const itemLang = selected?.lang || lang
+    const itemLang = String(payload.lang ?? selected?.lang ?? lang)
+    const seed = { name, set_name, set_id: set_id ?? null, card_type, lang: itemLang, image_url: image_url ?? null }
+    const opts = { qty, buyPrice: buy_price, currentPrice: current_price }
 
     if (user) {
-      const { data, error } = await supabase.from('portfolio_cards').insert({
-        id, user_id: user.id, name,
-        set_name: set_name || null,
-        set_id: (set_id || '').replace(/^(fr|en|jp)-/, '') || null,
-        card_number: 'SEALED', lang: itemLang,
-        rarity: 'Sealed', card_type,
-        condition: 'Sealed', graded: false,
-        qty, buy_price, current_price,
-        image_url: image_url || null,
-      }).select()
+      const { data, error } = await supabase.from('portfolio_cards')
+        .insert(buildSealedDbRow(seed, opts, { id, userId: user.id })).select()
       if (error) { console.error('[KC SEALED] insert failed:', error); return null }
       const row = data && data[0] ? data[0] : null
       return row ?? { id }
     }
     try {
       const prev = JSON.parse(localStorage.getItem('portfolio') || '[]')
-      prev.push({
-        id, name, set: set_name, setId: set_id, number: 'SEALED', rarity: 'Sealed',
-        type: card_type, lang: itemLang, condition: 'Sealed', graded: false,
-        buyPrice: buy_price ?? 0, curPrice: current_price ?? 0, qty, image: image_url,
-      })
+      prev.push(buildSealedLocalRow(seed, opts, { id }))
       localStorage.setItem('portfolio', JSON.stringify(prev))
     } catch { }
     return { id }

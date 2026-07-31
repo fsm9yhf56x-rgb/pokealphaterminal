@@ -163,7 +163,12 @@ const EXCLUSIONS = [
   // INNER CASE : carton interne de blisters chez le distributeur, pas un case de
   // displays. Le mot "case" a deux sens dans la chaine logistique.
   { reason: 'contenu_indetermine', re: /\binner\s*case\b/ },
-  { reason: 'accessoire', re: /\bacrylique\b|\bplexi\b|\bsleeves?\b|\bprotege[\s-]*cartes?\b|\bclasseur\b|\bportfolio\b|\brangement\b|\bvitrine\b|\bstand\b/ },
+  // ACCESSOIRE — mais seulement si c'est LE produit vendu. Un accessoire precede
+  // de "+", "avec" ou "inclus" est un BONUS : "Display Soleil Et Lune SL01 36
+  // Boosters FR Scellee + ACRYLIQUE" est un display a 1350 EUR, pas une
+  // protection. Quatre vrais displays etaient rejetes ainsi.
+  // Le negative lookbehind exclut la forme bonus ; le mot seul reste rejete.
+  { reason: 'accessoire', re: /(?<![+&]\s{0,3})(?<!\bavec\s{1,3})(?<!\binclus\s{1,3})(?<!\boffert\s{1,3})\b(acrylique|plexi|sleeves?|protege[\s-]*cartes?|classeur|portfolio|rangement|vitrine|stand)\b/ },
   { reason: 'grade', re: /\bwata\b|\bcgc\s*\d|\bpsa\s*\d|\bgraded?\b|\bgradee?\b/ },
   { reason: 'custom', re: /\bcustom\b|\bfait\s*main\b|\brepro\b|\bfake\b|\bproxy\b|\bpersonnalise\b/ },
   { reason: 'autre_langue', re: /\b(english|anglais(e|es)?|japonais(e|es)?|japanese|jap|allemand(e|es)?|german|deutsch|italien(ne|nes)?|italian|espagnol(e|es)?|spanish|korean|coreen(ne)?|chinois(e)?|portugais(e)?|portuguese|brazilian|bresilien(ne)?|russian|russe|nederlands|dutch|polish|polski)\b/ },

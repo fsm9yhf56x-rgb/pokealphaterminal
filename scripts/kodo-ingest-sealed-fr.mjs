@@ -19,6 +19,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import { parseSealedTitle, aggregateAsks, normalize, SKU_LABEL, MIN_ASKS, ASK_DISCOUNT } from './lib/sealed-fr.mjs';
+import { verifyAsk, aspectsToMap } from './lib/sealed-verify.mjs';
 
 const DB_URL = process.env.DATABASE_URL;
 const APP = process.env.EBAY_APP_ID;
@@ -41,6 +42,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // plus rien, et brule le temps du job (meme piege que la boucle 429 PokeTrace
 // du 17/07). On compte les refus consecutifs et on s'arrete proprement.
 const MAX_429 = Number(process.env.KODO_EBAY_MAX_429 || 5);
+// Nombre d'annonces verifiees par produit (les moins cheres). 0 = desactive.
+// 114 produits FR x 8 = ~900 appels, a ajouter aux ~700 de recherche : tient
+// dans le quota Browse par defaut. L'anglais (457 produits) demandera
+// l'augmentation en cours de demande aupres d'eBay.
+const VERIFY_TOP = Number(process.env.KODO_SEALED_VERIFY_TOP || 8);
+let verifCount = 0, verifRejets = 0;
 let streak429 = 0;
 let quotaDead = false;
 
@@ -370,6 +377,9 @@ for (const set of sets) {
       seller: (it.seller && it.seller.username) || null,
       epid: it.epid || null,
       image: (it.image && it.image.imageUrl) || null,
+      itemId: it.itemId || null,
+      href: it.itemHref || null,
+      title: it.title || '',
     });
   }
 
@@ -391,6 +401,42 @@ for (const set of sets) {
 
   if (COMMIT) journalisees += await journaliser(sql, 'fr', journal.filter((x) => x.itemId && x.price > 0));
 
+  // VERIFICATION PAR LES CARACTERISTIQUES. localizedAspects n'existe pas dans
+  // item_summary/search (verifie) et l'endpoint multi-items renvoie 403 : il faut
+  // UN APPEL PAR ANNONCE. On ne verifie donc pas tout — on verifie les N MOINS
+  // CHERES de chaque produit, celles qui fixent le prix affiche et qui sont
+  // listees avec un lien sortant. Une erreur sur la 40e annonce ne se voit nulle
+  // part ; une erreur sur celle qu'on met en avant coute la confiance.
+  // Attrape ce qu'aucun titre ne dit : un display JAPONAIS a 385 EUR (Langue),
+  // un presentoir vendu comme display (Nombre de boites), un kit a 60 cartes
+  // annonce comme display 36 boosters (Nombre de cartes).
+  if (VERIFY_TOP > 0 && !quotaDead) {
+    for (const g of groups.values()) {
+      const cands = g.rows
+        .filter((r) => r.href && Number.isFinite(r.price))
+        .sort((a, b) => a.price - b.price)
+        .slice(0, VERIFY_TOP);
+      for (const r of cands) {
+        if (Date.now() - START > MAX_MS) break;
+        try {
+          const rr = await fetch(r.href, { headers: { Authorization: 'Bearer ' + tk, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_FR' } });
+          if (rr.status === 429) { quotaDead = true; break; }
+          if (!rr.ok) continue;
+          const d = await rr.json();
+          const v = verifyAsk({ sku: g.sku, content: g.content, titleRaw: r.title }, aspectsToMap(d.localizedAspects), 'fr');
+          verifCount++;
+          if (!v.ok) {
+            r.rejected = v.reason;
+            verifRejets++;
+            if (COMMIT) await sql`UPDATE sealed_asks_raw SET excluded = true, exclude_reason = ${v.reason} WHERE item_id = ${r.itemId}`;
+          }
+        } catch { /* une verification qui echoue ne doit pas casser la passe */ }
+        await sleep(120);
+      }
+      if (quotaDead) break;
+      g.rows = g.rows.filter((r) => !r.rejected);
+    }
+  }
   const lines = [];
   for (const g of groups.values()) {
     const agg = aggregateAsks(g.rows);

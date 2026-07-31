@@ -98,12 +98,12 @@ export function verifyAsk(parsed, aspects, langAttendue = 'fr') {
     return { ok: false, reason: 'pas_un_produit_scelle' };
   }
 
-  // --- ACCESSOIRE. Ni langue ni nombre de cartes ni configuration credible sur
-  // un produit a plus de 20 EUR : protection acrylique, sleeves, presentoir vide.
-  const aucunSignal = !langue && !Number.isFinite(cartes) && !Number.isFinite(boites);
-  if (aucunSignal && /protection|acrylique|sleeve|presentoir|vitrine|support/.test(norm(parsed.titleRaw || ''))) {
-    return { ok: false, reason: 'accessoire' };
-  }
+  // PAS DE REGLE "ACCESSOIRE" ICI. Une version precedente rejetait quand aucune
+  // caracteristique n'etait renseignee : elle a tue deux vrais displays Soleil et
+  // Lune a 1350 et 1250 EUR, simplement parce que leurs vendeurs particuliers
+  // n'avaient rempli aucun champ. L'absence de donnee n'est PAS une preuve.
+  // Les accessoires se detectent dans le TITRE (motif 'accessoire' du parseur),
+  // la ou le mot est explicite.
 
   return { ok: true, reason: null };
 }

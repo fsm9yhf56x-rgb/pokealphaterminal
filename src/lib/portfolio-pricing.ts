@@ -193,7 +193,33 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
       AND (pc.current_price IS DISTINCT FROM v.price_eur OR pc.price_basis IS DISTINCT FROM v.basis)
     RETURNING pc.id, pc.current_price, pc.price_basis
   `
-  return (rows as any[]).map((r) => ({
+  // SCELLE. Un display n'a pas de k_card_id : le JOIN k_cards ci-dessus (INNER)
+  // l'ecartait, son current_price restait fige a la valeur d'ajout pendant que
+  // les cartes se rafraichissaient chaque nuit.
+  //
+  // Jointure sur la CLE PRIMAIRE reconstruite (lang-set-sku), pas sur le triplet
+  // de colonnes : 195 produits EN partagent (en, tin, 2374), le fourre-tout des
+  // produits PPT non rattaches au pont kodo_set_id. Un JOIN sur trois colonnes
+  // dupliquerait ces lignes et gonflerait la valeur du portefeuille.
+  //
+  // market_eur est deja en euros pour les deux marches (US converti a l'ingest),
+  // donc aucun FX a appliquer ici.
+  const sealedRows = await sql`
+    UPDATE portfolio_cards pc
+    SET current_price = ROUND(sp.market_eur::numeric, 2),
+        price_basis = 'sealed:' || sp.method,
+        updated_at = now()
+    FROM sealed_prices sp
+    WHERE pc.card_number = 'SEALED'
+      AND sp.sealed_id = lower(pc.lang) || '-' || pc.set_id || '-' || pc.card_type
+      AND sp.market_eur IS NOT NULL
+      AND (${scopeAll} OR pc.id = ANY(${ids as any}))
+      AND (pc.current_price IS DISTINCT FROM ROUND(sp.market_eur::numeric, 2)
+           OR pc.price_basis IS DISTINCT FROM 'sealed:' || sp.method)
+    RETURNING pc.id, pc.current_price, pc.price_basis
+  `
+
+  return ([...(rows as any[]), ...(sealedRows as any[])]).map((r) => ({
     id: r.id,
     current_price: r.current_price != null ? Number(r.current_price) : null,
     price_basis: r.price_basis ?? null,

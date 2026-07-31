@@ -168,3 +168,27 @@ export async function getSyncDate(): Promise<string | null> {
     return meta.lastSync
   } catch { return null }
 }
+
+// ── Catalogue a plat, pour la recherche toutes series confondues ────────────
+// getCards() lit IndexedDB a chaque appel (~3 Mo deserialises) : sans ce cache
+// module, ouvrir le modal d'ajout paierait le prix a chaque fois.
+export interface FlatCard {
+  id: string; setId: string; name: string; localId: string
+  image: string | null; rarity: string | null
+}
+const _flat = new Map<string, FlatCard[]>()
+
+export async function getAllCardsFlat(lang: 'FR' | 'EN' | 'JP'): Promise<FlatCard[]> {
+  const hit = _flat.get(lang)
+  if (hit) return hit
+  const bySet = await getCards(lang)
+  const out: FlatCard[] = []
+  for (const setId of Object.keys(bySet)) {
+    for (const c of bySet[setId]) {
+      // StaticCard : n = nom, lid = numero local, r = rarete
+      out.push({ id: c.id, setId, name: c.n, localId: c.lid, image: c.img, rarity: c.r })
+    }
+  }
+  _flat.set(lang, out)
+  return out
+}

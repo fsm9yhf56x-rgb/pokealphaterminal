@@ -12,6 +12,7 @@ import { formatEUR } from '@/lib/formatPrice'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
 import AddSealedPicker from './AddSealedPicker'
+import AddCardPicker, { type CardSeed } from './AddCardPicker'
 import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
 import { buildSealedDbRow, buildSealedLocalRow } from '@/lib/sealed-portfolio'
 import { useRouter } from 'next/navigation'
@@ -357,6 +358,7 @@ export function Holdings() {
   }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Near Mint',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
+  const [cardPickOpen,   setCardPickOpen]   = useState(false)
   const [sealedPickOpen, setSealedPickOpen] = useState(false)
   const [sealedSeed,     setSealedSeed]     = useState<SealedSeed | null>(null)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
@@ -1427,6 +1429,33 @@ export function Holdings() {
     return { id }
   }
 
+  // Le catalogue sait la langue, la serie, le nom, le numero, l'image et la
+  // rarete. Il ne sait RIEN de l'etat, de la gradation ni du prix d'achat :
+  // c'est pourquoi le formulaire reste la seconde etape.
+  const applyCardSeed = (seed: CardSeed) => {
+    setCardPickOpen(false)
+    setLiveCards([])
+    setAddForm(p => ({
+      ...p, lang: seed.lang, set: seed.setName, setId: seed.setId,
+      name: seed.name, number: seed.localId, image: seed.image || '',
+      rarity: seed.rarity || '', setTotal: 0,
+    }))
+    setNameValidated(true)
+    setAddSuggs([])
+    setAddOpen(true)
+    // La serie complete alimente les suggestions du formulaire (enchainer
+    // plusieurs cartes du meme set sans repasser par le picker).
+    setCardsLoading(true)
+    getCardsForSet(seed.lang, seed.setId)
+      .then(cards => {
+        setLiveCards(staticToTCGCards(cards, seed.setId, seed.lang,
+          (l, si, lid) => getCardImageUrl({ lang: l, setId: si, localId: lid })) as any)
+        setAddForm(p => ({ ...p, setTotal: cards.length }))
+      })
+      .catch(() => {})
+      .finally(() => setCardsLoading(false))
+  }
+
   const addToShowcase = (card:CardItem) => {
     if(isSealed(card)) return
     if(showcase.find(c=>c.id===card.id)) return
@@ -2264,7 +2293,7 @@ export function Holdings() {
                 {([['card','Carte'],['sealed','Scelle']] as const).map(([k,lbl])=>{
                   const on = k==='card'
                   return (
-                    <button key={k} onClick={()=>{ if(k==='sealed'){ setAddOpen(false); setSealedPickOpen(true) } }}
+                    <button key={k} onClick={()=>{ setAddOpen(false); if(k==='sealed') setSealedPickOpen(true); else setCardPickOpen(true) }}
                       style={{ flex:1, padding:'10px 8px', borderRadius:10, border:'1px solid rgba(255,255,255,0.6)',
                         background: on ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)' : 'rgba(255,255,255,0.45)',
                         backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)',
@@ -2999,7 +3028,7 @@ export function Holdings() {
                       @media (max-width:900px){ .kadd-sep{ display:none } }
                     `}</style>
                     <span aria-hidden className="kadd-sep" />
-                    <button className="kadd-primary" onClick={()=>setAddOpen(true)}>
+                    <button className="kadd-primary" onClick={()=>setCardPickOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                       <span>Ajouter</span>
                     </button>
@@ -3033,7 +3062,7 @@ export function Holdings() {
                   <div style={{ textAlign:'center', padding:'64px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:'16px' }}>
                     <div style={{ fontSize:'14px', color:'#48484A', fontFamily:'var(--font-display)' }}>Collection vide</div>
                     <div style={{ fontSize:'12px', color:'#6E6E73', fontFamily:'var(--font-display)', maxWidth:'260px' }}>Ajoutez votre première carte pour commencer</div>
-                    <GlassButton size="lg" onClick={()=>setAddOpen(true)}>
+                    <GlassButton size="lg" onClick={()=>setCardPickOpen(true)}>
                       + Ajouter ma première carte
                     </GlassButton>
                   </div>
@@ -4321,8 +4350,11 @@ export function Holdings() {
         ]}
         brevoListId={null}
       />
+      <AddCardPicker open={cardPickOpen} onClose={()=>setCardPickOpen(false)}
+        onSwitchToSealed={()=>{ setCardPickOpen(false); setSealedPickOpen(true) }}
+        onPick={applyCardSeed} defaultLang={addForm.lang} />
       <AddSealedPicker open={sealedPickOpen} onClose={()=>setSealedPickOpen(false)}
-        onSwitchToCard={()=>{ setSealedPickOpen(false); setAddOpen(true) }}
+        onSwitchToCard={()=>{ setSealedPickOpen(false); setCardPickOpen(true) }}
         onPick={(seed)=>{ setSealedPickOpen(false); setSealedSeed(seed) }} />
       <AddSealedModal open={!!sealedSeed} onClose={()=>setSealedSeed(null)}
         product={sealedSeed} onAdd={handleSealedAdd} />

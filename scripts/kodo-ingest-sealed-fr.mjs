@@ -20,7 +20,7 @@
 import { neon } from '@neondatabase/serverless';
 import { parseSealedTitle, aggregateAsks, normalize, SKU_LABEL, MIN_ASKS, ASK_DISCOUNT } from './lib/sealed-fr.mjs';
 import { verifyAsk, aspectsToMap } from './lib/sealed-verify.mjs';
-import { budgetDisponible } from './lib/sealed-scheduler.mjs';
+import { budgetDisponible, planifierRecherche, COUT_RECHERCHE } from './lib/sealed-scheduler.mjs';
 
 const DB_URL = process.env.DATABASE_URL;
 const APP = process.env.EBAY_APP_ID;
@@ -56,6 +56,8 @@ const VERIFY_TOP = Number(process.env.KODO_SEALED_VERIFY_TOP || 8);
 // Plafond de verification. 0 = calcule depuis le quota reel au demarrage
 // (voir plus bas) : un budget fige casse des qu'un horaire bouge ou que le
 // catalogue grossit. La valeur d'env reste prioritaire pour les tests.
+// Budget de recherche, calcule au demarrage depuis le quota reel (voir plus bas).
+let RECHERCHE_MAX = 800;
 let VERIFY_MAX = Number(process.env.KODO_SEALED_VERIFY_MAX || 0);
 let verifCount = 0, verifRejets = 0;
 let streak429 = 0;
@@ -324,6 +326,30 @@ for (const r of setRows) {
 sets.sort((a, b) => b.rank - a.rank || a.id.localeCompare(b.id));
 if (ONLY.length) sets = sets.filter((s) => ONLY.includes(s.id) || ONLY.includes(s.code));
 else if (LIMIT > 0) sets = sets.slice(0, LIMIT);
+else {
+  // ORDRE PAR SCORE, pas par rang de serie. Le rang est deterministe : les memes
+  // series passaient toujours en premier et les dernieres n'etaient jamais
+  // servies quand le budget s'epuisait. Le score (valeur x age x mouvement)
+  // s'auto-regule — une serie non servie voit son age croitre et remonte.
+  // Repli sur l'ordre par rang si le planificateur echoue : mieux vaut un ordre
+  // imparfait que pas d'ingestion du tout.
+  try {
+    const budgetRecherche = Math.max(COUT_RECHERCHE, RECHERCHE_MAX);
+    const plan = await planifierRecherche(sql, { lang: 'fr', budget: budgetRecherche });
+    if (plan.length) {
+      const prio = new Map(plan.map((x, i) => [x.set_id, i]));
+      // Les series absentes du plan (jamais vues, donc sans cote ni annonce)
+      // passent APRES celles planifiees mais restent traitees : c'est ainsi
+      // qu'une nouvelle serie entre au catalogue.
+      sets.sort((a, b) => (prio.get(a.id) ?? 9e9) - (prio.get(b.id) ?? 9e9));
+      const servies = sets.filter((x) => prio.has(x.id)).length;
+      console.log('ordre par score : ' + servies + ' series planifiees, ' +
+        (sets.length - servies) + ' hors plan (nouvelles ou sans donnees)');
+    }
+  } catch (e) {
+    console.log('planificateur indisponible (' + String(e.message).slice(0, 60) + ') — ordre par rang');
+  }
+}
 
 // Produits FR deja connus : une fois decouvert, un produit ne quitte plus le catalogue.
 // Si le marche ne le porte plus aujourd'hui, c'est son PRIX qui tombe a NULL, pas le produit.
@@ -335,7 +361,10 @@ const tk = await token();
 if (!VERIFY_MAX) {
   // Le scelle EN tourne juste apres dans le meme job : on lui laisse la moitie.
   const b = await budgetDisponible(tk, { reservePart: 0.5 });
-  VERIFY_MAX = Math.max(0, b.budget - 800); // 800 reserves a la recherche FR
+  // La recherche prend ce dont elle a besoin (4 appels par serie), plafonnee a
+  // la moitie du budget pour que la verification ne soit jamais etranglee.
+  RECHERCHE_MAX = Math.min(Math.floor(b.budget / 2), 175 * COUT_RECHERCHE);
+  VERIFY_MAX = Math.max(0, b.budget - RECHERCHE_MAX);
   console.log('budget verification : ' + VERIFY_MAX + ' appels (quota restant ' +
     (b.restant ?? '?') + ', source ' + b.source + ')');
 }

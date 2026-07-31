@@ -342,7 +342,12 @@ for (const set of sets) {
       setId: p.setId || null, sku: p.sku || null,
       qty: p.content ? p.content.qty : null,
       unit: p.content ? p.content.unit : null,
-      sealedId: (!p.excluded && p.setId === set.id && p.sku) ? productId(set.id, p.sku, p.content) : null,
+      // Le rattachement suit la serie DETECTEE dans le titre, pas la serie
+      // interrogee : une requete ME05 ramene aussi des annonces ME04 (debordement
+      // eBay). Avec p.setId === set.id, ces annonces partaient sealed_id NULL
+      // alors que leur produit existe au catalogue -> matiere perdue pour la
+      // fenetre 90j, chaque nuit, sur 175 series.
+      sealedId: (!p.excluded && p.setId && p.sku) ? productId(p.setId, p.sku, p.content) : null,
       excluded: !!p.excluded, reason: p.excludeReason || null,
     });
     if (p.excluded || p.setId !== set.id) continue;

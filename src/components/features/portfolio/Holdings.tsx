@@ -1406,7 +1406,10 @@ export function Holdings() {
     const opts = {
       qty: Number(payload.qty ?? 1) || 1,
       buyPrice: payload.buy_price != null ? (Number(payload.buy_price) || 0) : null,
-      currentPrice: null,
+      // La cote connue au moment du choix. La laisser nulle affichait une ligne
+      // sans prix jusqu'au passage de portfolio-prices : le chiffre etait sous
+      // les yeux de l'utilisateur une seconde plus tot.
+      currentPrice: payload.current_price != null ? Number(payload.current_price) : null,
     }
     const local = buildSealedLocalRow(seed, opts, { id }) as any
     if (user) {

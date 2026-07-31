@@ -145,6 +145,7 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
               onClick={() => onPick({
                 name: it.name, set_name: it.setName ?? null, set_id: it.setId ?? null,
                 card_type: it.sku ?? null, lang: it.lang, year: 0,
+                current_price: it.price?.value ?? null,
                 image_url: it.image || it.setLogo || null,
               })}
               style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 10px", marginBottom: 5, borderRadius: 12, border: "none", background: "rgba(255,255,255,0.55)", cursor: "pointer", textAlign: "left", boxShadow: "inset 0 0 0 .5px rgba(0,0,0,.055)" }}

@@ -13,6 +13,7 @@ export interface SealedSeed {
   set_id: string | null
   card_type: string | null   // SKU, pas le libelle
   lang: string               // langue DU PRODUIT (cle de valorisation)
+  current_price?: number | null  // cote connue a l'instant du choix
   year: number
   image_url: string | null
 }
@@ -47,6 +48,7 @@ export function AddSealedModal({
       set_id: product.set_id,
       card_type: product.card_type,
       lang: product.lang,
+      current_price: product.current_price ?? null,
       year: product.year,
       image_url: product.image_url,
       qty,

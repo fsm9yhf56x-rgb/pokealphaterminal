@@ -23,11 +23,19 @@ export async function GET() {
         pc.card_number,
         pc.lang,
         COALESCE(pc.qty, 1)               AS qty,
-        CASE WHEN kc.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL
-             THEN ps.cote_fr_eur ELSE ps.fair_value_eur END AS price_eur
+        COALESCE(
+          CASE WHEN kc.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL
+               THEN ps.cote_fr_eur ELSE ps.fair_value_eur END,
+          sp.market_eur
+        ) AS price_eur
       FROM portfolio_cards pc
       LEFT JOIN k_cards kc ON kc.id = pc.k_card_id
       LEFT JOIN price_signals ps ON ps.print_id = kc.print_id
+      -- Le scelle n'a pas de k_card_id : sans cette branche il sortait avec un
+      -- prix NULL, donc absent du total ET de la liste du recap.
+      LEFT JOIN sealed_prices sp
+        ON pc.card_number = 'SEALED'
+       AND sp.sealed_id = lower(pc.lang) || '-' || pc.set_id || '-' || pc.card_type
       WHERE pc.user_id = ${user.id}
     `) as Array<{
       id: string

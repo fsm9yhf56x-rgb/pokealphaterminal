@@ -246,6 +246,7 @@ async function setCompletion() {
       WHERE pc.user_id = ANY(${ids})
         AND COALESCE(pc.set_id, '') <> ''
         AND COALESCE(pc.card_number, '') <> ''
+        AND pc.card_number <> 'SEALED'
       GROUP BY 1, 2
     ),
     totals AS (

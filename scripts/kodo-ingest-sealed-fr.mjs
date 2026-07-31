@@ -463,10 +463,27 @@ for (const set of sets) {
       // rien a l'ecran et brule du quota.
       const voix = new Set(g.rows.map((r) => r.seller || ('anon:' + r.price)));
       if (voix.size < MIN_ASKS) continue;
+      // MEMOIRE : une annonce deja verifiee ne l'est jamais deux fois. Elle ne
+      // change pas de nature — son prix peut bouger, elle reste le meme produit
+      // dans la meme langue. C'est ce qui fait passer le cout du STOCK (10 877
+      // annonces) au FLUX, et ce qui rend les trois langues tenables a 5000/jour.
+      const dejaVues = new Set(
+        (await sql`SELECT item_id FROM sealed_asks_raw
+                    WHERE sealed_id = ${productId(set.id, g.sku, g.content)}
+                      AND verified_at IS NOT NULL`).map((x) => x.item_id)
+      );
+      // RISQUE, pas seulement prix. Une annonce tres en dessous de la mediane du
+      // produit est presque toujours un intrus (demi-display titre "DISPLAY",
+      // produit japonais, lot vendu a la piece) ; une annonce dans la moyenne
+      // merite rarement un appel. On classe donc par ecart a la mediane.
+      const prix = g.rows.map((r) => Number(r.price)).filter((v) => v > 0).sort((a, b) => a - b);
+      const med = prix.length ? prix[Math.floor(prix.length / 2)] : 0;
       const cands = g.rows
-        .filter((r) => r.href && Number.isFinite(r.price))
-        .sort((a, b) => a.price - b.price)
-        .slice(0, VERIFY_TOP);
+        .filter((r) => r.href && Number.isFinite(r.price) && !dejaVues.has(r.itemId))
+        .map((r) => ({ r, risque: med > 0 ? Math.max(0, 1 - r.price / med) : 0 }))
+        .sort((a, b) => b.risque - a.risque || a.r.price - b.r.price)
+        .slice(0, VERIFY_TOP)
+        .map((x) => x.r);
       for (const r of cands) {
         if (Date.now() - START > MAX_MS) break;
         try {
@@ -479,7 +496,13 @@ for (const set of sets) {
           if (!v.ok) {
             r.rejected = v.reason;
             verifRejets++;
-            if (COMMIT) await sql`UPDATE sealed_asks_raw SET excluded = true, exclude_reason = ${v.reason} WHERE item_id = ${r.itemId}`;
+            if (COMMIT) await sql`UPDATE sealed_asks_raw SET excluded = true, exclude_reason = ${v.reason},
+                                         verified_at = now(), verify_reason = ${v.reason}
+                                   WHERE item_id = ${r.itemId}`;
+          } else if (COMMIT) {
+            // Marquer aussi les annonces VALIDES : sans cela on les repasse
+            // chaque nuit et le cout ne descend jamais.
+            await sql`UPDATE sealed_asks_raw SET verified_at = now() WHERE item_id = ${r.itemId}`;
           }
         } catch { /* une verification qui echoue ne doit pas casser la passe */ }
         await sleep(120);

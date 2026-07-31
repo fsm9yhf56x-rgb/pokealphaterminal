@@ -375,6 +375,21 @@ const outProducts = [];
 const outPrices = [];
 let seen = 0, kept = 0, newProducts = 0, stopped = false, journalisees = 0;
 
+// ROTATION QUOTIDIENNE. Le budget de verification (VERIFY_MAX) s'epuise sur les
+// premieres series de l'ordre : sans rotation, ce sont TOUJOURS les memes ~63
+// series sur 175 qui sont verifiees, et les autres gardent indefiniment une cote
+// non verifiee. On decale le point de depart chaque jour ; l'ordre relatif du
+// planificateur est conserve, seul le debut change. 3 jours couvrent tout.
+if (!ONLY.length && sets.length > 1) {
+  const PAS = Number(process.env.KODO_SEALED_ROTATE || 60);
+  const jour = Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 86400000);
+  const off = ((jour * PAS) % sets.length + sets.length) % sets.length;
+  if (off) {
+    sets.push(...sets.splice(0, off));
+    console.log('rotation du jour : depart a la serie #' + off + ' (' + sets[0].id + ')');
+  }
+}
+
 for (const set of sets) {
   if (Date.now() - START > MAX_MS) { console.log('!! plafond de temps atteint, arret propre'); stopped = true; break; }
   if (quotaDead) { stopped = true; break; }

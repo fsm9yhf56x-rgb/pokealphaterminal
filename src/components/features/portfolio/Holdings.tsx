@@ -1999,17 +1999,20 @@ export function Holdings() {
                   {/* Un scelle n'a pas de fiche catalogue : le lien pointait sur l'UUID
                       de la ligne portfolio -> /api/spotlight reconstruisait
                       'fr-sm12-SEALED', absent de k_cards_export = fiche vide. */}
-                  {!isSealed(spotCard) && (
-                  <a href={`/cartes/${encodeURIComponent(cleanId)}`}
+                  {/* Scelle : la fiche est le panneau de la page Scelles, desormais
+                      adressable par ?p=<cle>. La cle se reconstruit comme dans le
+                      pipeline de valorisation : lang-set-sku (type = card_type). */}
+                  <a href={isSealed(spotCard)
+                    ? `/cartes/scelles?p=${encodeURIComponent(String(spotCard.lang).toLowerCase() + '-' + (spotCard.setId || '') + '-' + (spotCard.type || ''))}`
+                    : `/cartes/${encodeURIComponent(cleanId)}`}
                     style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:16, padding:'15px 18px', borderRadius:13, background:'#1D1D1F', color:'#fff', textDecoration:'none', fontSize:14.5, fontWeight:700, fontFamily:'var(--font-display)', boxShadow:'0 6px 18px rgba(0,0,0,0.18)', transition:'all .18s cubic-bezier(.2,.8,.2,1)' }}
                     onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 10px 26px rgba(0,0,0,0.24)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='translateX(3px)' }}
                     onMouseLeave={e=>{ e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)'; const a=e.currentTarget.querySelector('.kc-cta-arrow') as HTMLElement|null; if(a) a.style.transform='none' }}>
-                    Voir la fiche complète
+                    {isSealed(spotCard) ? 'Voir le produit' : 'Voir la fiche complète'}
                     <span className="kc-cta-arrow" style={{ display:'inline-flex', transition:'transform .18s cubic-bezier(.2,.8,.2,1)' }}>
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </span>
                   </a>
-                  )}
                 </div>
               </div>
             </div>,

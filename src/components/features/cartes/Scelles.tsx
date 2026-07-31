@@ -123,7 +123,16 @@ export function Scelles() {
   const { user } = useAuth()
   const { isInvestor, isCollector } = usePersona()
   const [sortBooster, setSortBooster] = useState(false)
-  const [lang, setLang] = useState<Lang>('FR')
+  // Produit cible passe en URL (?p=fr-sm12-display) : la fiche devient
+  // adressable, donc partageable et atteignable depuis le classeur. La langue
+  // se deduit du prefixe de la cle, sinon on ouvrirait la page en FR sur un
+  // produit EN et l'item ne serait pas dans la liste chargee.
+  const urlProduct = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('p')
+    : null
+  const [lang, setLang] = useState<Lang>(
+    urlProduct && urlProduct.startsWith('en-') ? 'EN' : 'FR'
+  )
   const [items, setItems] = useState<SealedItem[]>([])
   const [facets, setFacets] = useState<Facet[]>([])
   const [market, setMarket] = useState('EU_FR')
@@ -136,7 +145,17 @@ export function Scelles() {
   const [search, setSearch] = useState('')
   const [searchFocus, setSearchFocus] = useState(false)
   const [visible, setVisible] = useState(CHUNK)
-  const [selId, setSelId] = useState<string | null>(null)
+  const [selId, setSelId] = useState<string | null>(urlProduct)
+  // Un state par rendu ne suffit pas : l'effet de reinitialisation ci-dessous
+  // tourne AU MONTAGE et effacerait la selection venue de l'URL.
+  const firstRun = useRef(true)
+  const selectProduct = useCallback((id: string | null) => {
+    setSelId(id)
+    if (typeof window === 'undefined') return
+    const u = new URL(window.location.href)
+    if (id) u.searchParams.set('p', id); else u.searchParams.delete('p')
+    window.history.replaceState(null, '', u.toString())
+  }, [])
   const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -158,7 +177,11 @@ export function Scelles() {
     return () => { alive = false }
   }, [lang])
 
-  useEffect(() => { setVisible(CHUNK); setSelId(null) }, [lang, filSku, filSet, search, sortBooster])
+  useEffect(() => {
+    setVisible(CHUNK)
+    if (firstRun.current) { firstRun.current = false; return }
+    selectProduct(null)
+  }, [lang, filSku, filSet, search, sortBooster, selectProduct])
 
   const setsLite = useMemo(() => {
     const m = new Map<string, { id: string; name: string; count: number }>()
@@ -435,7 +458,7 @@ export function Scelles() {
             {pageItems.map((it, idx) => {
               const sel = selId === it.id
               return (
-                <div key={it.id} className="sc-card" onClick={() => setSelId(sel ? null : it.id)}
+                <div key={it.id} className="sc-card" onClick={() => selectProduct(sel ? null : it.id)}
                   style={{
                     background: 'rgba(255,255,255,0.65)',
                     border: '1px solid ' + (sel ? '#1D1D1F' : 'rgba(0,0,0,0.05)'),
@@ -506,7 +529,7 @@ export function Scelles() {
           <aside className="sc-panel" style={{ width: '420px', flexShrink: 0, position: 'sticky' as const, top: '16px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '14px', boxShadow: '0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)', overflow: 'hidden' as const, animation: 'scFadeIn .2s ease-out' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
               <span style={{ fontSize: '10px', color: '#AAA', textTransform: 'uppercase' as const, letterSpacing: '.1em', fontFamily: 'var(--font-display)' }}>Aperçu</span>
-              <button onClick={() => setSelId(null)} style={{ background: 'none', border: 'none', color: '#AAA', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: 0 }}>{String.fromCharCode(215)}</button>
+              <button onClick={() => selectProduct(null)} style={{ background: 'none', border: 'none', color: '#AAA', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: 0 }}>{String.fromCharCode(215)}</button>
             </div>
 
             <div style={{ padding: '16px' }}>

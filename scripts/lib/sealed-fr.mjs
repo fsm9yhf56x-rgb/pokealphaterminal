@@ -66,7 +66,7 @@ export const SKU_LABEL = {
   case: 'Case',
   display_bundle: 'Display de bundles',
   display_tin: 'Display de mini-tins',
-  display_kit: 'Display de kits',
+  display_kit: 'Display kits Avant-Première',
   demi_display: 'Demi-display',
   display: 'Display 36 boosters',
   etb: "Coffret Dresseur d'Elite",
@@ -95,7 +95,11 @@ const SKU_RULES = [
   // comme un display est un contenant de boosters. Produit legitime, SKU propre.
   // Detecte AVANT display : "Display de 8 Kit du dresseur" ne doit jamais sortir
   // en display 36 boosters — 65 EUR contre 1143 EUR, ce n'est pas le meme objet.
-  { sku: SKU.DISPLAY_KIT, re: /\b(display|bo(i|î)te|presentoir)\b[^a-z]{0,14}(de\s*)?\d{0,2}\s*kits?\b|\bkits?\s*du\s*dresseur\b[^a-z]{0,8}(display|x\s*\d{1,2})/ },
+  { sku: SKU.DISPLAY_KIT, re: /\b(display|bo(i|î)te|presentoir)\b[^a-z]{0,14}(de\s*)?\d{0,2}\s*kits?\b|\bkits?\s*du\s*dresseur\b[^a-z]{0,8}(display|x\s*\d{1,2})|\bkit\s*(d'?\s*)?ap\b|\bkits?\s*avant[\s-]*premiere\b/ },
+  // Un display de KITS est un contenant scelle de kits du dresseur, exactement
+  // comme un display est un contenant de boosters. Produit legitime, SKU propre.
+  // Detecte AVANT display : "Display de 8 Kit du dresseur" a 65 EUR polluait le
+  // display Soleil et Lune a 1143 EUR — meme mot, objets sans rapport.
   { sku: SKU.DEMI_DISPLAY, re: /\b(demie?[\s-]*display|1\/2\s*display|half\s*display|half\s*booster\s*box(es)?|18\s*boosters?)\b/ },
   { sku: SKU.DISPLAY, re: /\b(display|booster\s*box(es)?)\b|\b(boite|boitier)\b[^a-z]{0,12}\b(de\s*)?36\b|\b36\s*boosters?\b/ },
   { sku: SKU.ETB, re: /\betb\b|\bcoffret\s*(du\s*)?dresseur\s*d?'?\s*elite\b|\belite\s*trainer\s*box\b|\bdresseur\s*elite\b/ },

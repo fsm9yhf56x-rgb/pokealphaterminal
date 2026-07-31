@@ -89,7 +89,7 @@ const SKU_RULES = [
   { sku: SKU.COFFRET, re: /\b(pin|figure|premium)?\s*collection\b[^a-z]{0,12}display\b/ },
   { sku: SKU.BLISTER, re: /\bblisters?\b[^a-z]{0,12}display\b/ },
   { sku: SKU.DISPLAY_TIN, re: /\b\d{1,2}\s*mini[\s-]*tins?\b|\b(display|presentoir|boite)\b(?:\s+[a-z0-9']+){0,4}\s+mini[\s-]*tins?\b|\bmini[\s-]*tins?\b[^a-z]{0,12}display\b/ },
-  { sku: SKU.DEMI_DISPLAY, re: /\b(demi[\s-]*display|1\/2\s*display|half\s*display|half\s*booster\s*box(es)?|18\s*boosters?)\b/ },
+  { sku: SKU.DEMI_DISPLAY, re: /\b(demie?[\s-]*display|1\/2\s*display|half\s*display|half\s*booster\s*box(es)?|18\s*boosters?)\b/ },
   { sku: SKU.DISPLAY, re: /\b(display|booster\s*box(es)?)\b|\b(boite|boitier)\b[^a-z]{0,12}\b(de\s*)?36\b|\b36\s*boosters?\b/ },
   { sku: SKU.ETB, re: /\betb\b|\bcoffret\s*(du\s*)?dresseur\s*d?'?\s*elite\b|\belite\s*trainer\s*box\b|\bdresseur\s*elite\b/ },
   { sku: SKU.BUNDLE, re: /\bbundle\b|\b6\s*boosters?\b/ },
@@ -135,9 +135,9 @@ export function detectSku(n) {
 // Chaque motif dit POURQUOI on jette : l'ingest logue la raison, on peut auditer.
 const EXCLUSIONS = [
   { reason: 'vide', re: /\b(boite|boitier|display|carton)\s*vide\b|\bvide\b|\bempty\b|\bsans\s*(les\s*)?cartes?\b|\bpresentoir\b/ },
-  { reason: 'preco', re: /\bpre[\s-]*commande\b|\bprecommande\b|\bpre[\s-]*order\b|\bpreorder\b/ },
+  { reason: 'preco', re: /\bprecos?\b|\bpre[\s-]*commande\b|\bprecommande\b|\bpre[\s-]*order\b|\bpreorder\b/ },
   { reason: 'defaut', re: /\(\s*defaut\s*\)|\bdefaut\b|\babime\b|\bendommage\b|\bdechire\b|\bouvert\b|\bnon[\s-]*scelle\b|\breconditionne\b/ },
-  { reason: 'lot', re: /\blot\s*(de\s*)?\d|\blot\b[^a-z]{0,3}\d|^\s*\d{1,2}\s*(demi|display|coffret|etb|blister)\b|\bx\s*\d{1,2}\b(?!\s*(booster|carte))/ },
+  { reason: 'lot', re: /\blot\b[^a-z]{0,12}\b(display|etb|coffret|bundle|blister|demi)\b|\blot\s*(de\s*)?\d|\blot\b[^a-z]{0,3}\d|^\s*\d{1,2}\s*(demi|display|coffret|etb|blister)\b|\bx\s*\d{1,2}\b(?!\s*(booster|carte))/ },
   { reason: 'accessoire', re: /\bacrylique\b|\bplexi\b|\bsleeves?\b|\bprotege[\s-]*cartes?\b|\bclasseur\b|\bportfolio\b|\brangement\b|\bvitrine\b|\bstand\b/ },
   { reason: 'grade', re: /\bwata\b|\bcgc\s*\d|\bpsa\s*\d|\bgraded?\b|\bgradee?\b/ },
   { reason: 'custom', re: /\bcustom\b|\bfait\s*main\b|\brepro\b|\bfake\b|\bproxy\b|\bpersonnalise\b/ },

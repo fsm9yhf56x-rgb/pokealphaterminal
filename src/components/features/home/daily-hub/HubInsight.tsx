@@ -1,4 +1,5 @@
 'use client'
+import { kthumbFit, kthumbFrame } from '@/lib/sealed-fit'
 
 import { useMemo, useState } from 'react'
 import { SNOW, FONT, GLASS, RADIUS, TRANSITION } from '@/lib/design/snow'
@@ -21,6 +22,7 @@ interface InsightData {
   detail: string
   accent: 'green' | 'red' | 'gold' | 'blue' | 'neutral'
   image?: string | null   // vignette de carte (cas "joyau")
+  imageNumber?: string | null   // card_number de la piece ; 'SEALED' = scelle
   href?: string | null    // fiche de la carte (cas "joyau")
 }
 
@@ -102,8 +104,8 @@ export function HubInsight({
             style={{
               position: 'relative',
               width: '100%',
-              aspectRatio: '5 / 7',
-              objectFit: 'cover',
+              ...kthumbFrame({ card_number: insight.imageNumber }, '5 / 7'),
+              ...kthumbFit({ card_number: insight.imageNumber }),
               borderRadius: 9,
               display: 'block',
               border: '1px solid rgba(212,175,55,.42)',
@@ -232,6 +234,7 @@ function generateV1Insight(cards: PortfolioCard[], isCollector: boolean): Insigh
         : `Estimée à ${formatEUR(topCardValue)}, c'est ta pièce la plus précieuse en valeur unitaire.`,
       accent: 'gold',
       image: topCard.image_url ?? null,
+      imageNumber: (topCard as any).card_number ?? null,
       href: (() => {
         // La fiche se construit depuis lang + set + numero, comme partout ailleurs.
         const sid = String((topCard as any).set_id ?? '').replace(/^(fr|en|jp)-/i, '')

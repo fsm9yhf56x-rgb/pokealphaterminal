@@ -1,4 +1,5 @@
 'use client'
+import { isSealed, kthumbFit } from '@/lib/sealed-fit'
 import { track } from '@/components/layout/Analytics'
 import { createPortal } from 'react-dom'
 
@@ -10,6 +11,9 @@ import { groupSetsByEra, filterCoreSets, formatJPSetName } from '@/lib/setGroups
 import { formatEUR } from '@/lib/formatPrice'
 
 import ImportPortfolioModal from './ImportPortfolioModal'
+import AddSealedPicker from './AddSealedPicker'
+import { AddSealedModal, type SealedSeed } from '@/components/features/card/AddSealedModal'
+import { buildSealedDbRow, buildSealedLocalRow } from '@/lib/sealed-portfolio'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
@@ -117,7 +121,7 @@ type GridItem = { type:'owned'; card:CardItem; count?:number } | { type:'ghost';
 
 /** Un scelle porte card_number 'SEALED'. Regle unique : partout ou l'on veut des
  *  CARTES (series, vitrine, mur), on filtre avec ca, et nulle part autrement. */
-const isSealed = (c?: { number?: string } | null): boolean => String(c?.number ?? '') === 'SEALED'
+// isSealed / kthumbFit vivent desormais dans src/lib/sealed-fit.ts
 
 /**
  * Choisit la carte du mur pour la position donnee.
@@ -353,6 +357,8 @@ export function Holdings() {
   }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Near Mint',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
+  const [sealedPickOpen, setSealedPickOpen] = useState(false)
+  const [sealedSeed,     setSealedSeed]     = useState<SealedSeed | null>(null)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
   const [addSetLang,   setAddSetLang]   = useState<'FR'|'EN'|'JP'>('FR')
   const [addSetId,     setAddSetId]     = useState('')
@@ -1383,6 +1389,41 @@ export function Holdings() {
     setAddForm(p=>({...p, condition:'Near Mint', graded:false, gradeValue:'', buyPrice:'', qty:1}))
     showToast(newCard.name+(newCard.qty>1?' x'+newCard.qty:'')+' ajoutee')
   }
+  // Scelle : la FORME de la ligne vient de src/lib/sealed-portfolio (partagee avec
+  // la page Scelles). Ne pas la redecider ici — c'est cette forme que joint la
+  // valorisation nocturne sur lang-set_id-card_type.
+  const handleSealedAdd = async (payload: Record<string, unknown>) => {
+    if (guardLimit(1)) return null
+    const id = crypto.randomUUID()
+    const seed = {
+      name: String(payload.name ?? 'Produit'),
+      set_name: payload.set_name ? String(payload.set_name) : null,
+      set_id: payload.set_id ? String(payload.set_id) : null,
+      card_type: payload.card_type ? String(payload.card_type) : null,
+      lang: String(payload.lang ?? 'FR'),
+      image_url: payload.image_url ? String(payload.image_url) : null,
+    }
+    const opts = {
+      qty: Number(payload.qty ?? 1) || 1,
+      buyPrice: payload.buy_price != null ? (Number(payload.buy_price) || 0) : null,
+      currentPrice: null,
+    }
+    const local = buildSealedLocalRow(seed, opts, { id }) as any
+    if (user) {
+      const { error } = await supabase.from('portfolio_cards')
+        .insert(buildSealedDbRow(seed, opts, { id, userId: user.id }))
+      if (error) { console.error('[KC SEALED] insert failed:', error); return null }
+    } else {
+      try {
+        const prev = JSON.parse(localStorage.getItem('portfolio') || '[]')
+        prev.push(local); localStorage.setItem('portfolio', JSON.stringify(prev))
+      } catch { }
+    }
+    setPortfolio(prev => [...prev, local])
+    showToast(seed.name + (opts.qty > 1 ? ' x' + opts.qty : '') + ' ajoute')
+    return { id }
+  }
+
   const addToShowcase = (card:CardItem) => {
     if(isSealed(card)) return
     if(showcase.find(c=>c.id===card.id)) return
@@ -2167,7 +2208,7 @@ export function Holdings() {
                         {card.image?(
                           <img src={cleanImageUrl(card.image)} alt={card.name}
                             loading="lazy"
-                            style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
+                            style={{ width:'100%', aspectRatio:'63/88', ...kthumbFit(card), display:'block' }}
                             onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null; t.style.display='none' }}/>
                         ):(
                           <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}15,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -2196,7 +2237,7 @@ export function Holdings() {
             <div className='add-modal' style={{ background:'rgba(255,255,255,0.62)', backdropFilter:'blur(32px) saturate(180%)', WebkitBackdropFilter:'blur(32px) saturate(180%)', borderRadius:26, padding:26, maxWidth:540, width:'100%', animation:'fadeUp .25s ease-out', maxHeight:'94vh', overflowY:'auto' as const, boxShadow:'0 30px 80px rgba(0,0,0,0.22), 0 10px 24px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1px rgba(0,0,0,0.05)', border:'none' }} onClick={e=>e.stopPropagation()}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'18px' }}>
                 <div>
-                  <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter une carte</div>
+                  <div style={{ fontSize:'17px', fontWeight:600, color:'#1D1D1F', fontFamily:'var(--font-display)' }}>Ajouter</div>
                   <div style={{ fontSize:'10px', marginTop:'3px', color:'#AEAEB2', fontWeight:500 }}>* champs obligatoires</div>
                 </div>
                 <button onClick={()=>{ setAddOpen(false); setAddSuggs([]); setNameValidated(false); setAddedInSession(0) }} style={{
@@ -2214,6 +2255,23 @@ export function Holdings() {
                   onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.6)';e.currentTarget.style.color='#48484A';e.currentTarget.style.transform=''}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
+              </div>
+
+              <div style={{ display:'flex', gap:6, marginBottom:14 }}>
+                {([['card','Carte'],['sealed','Scelle']] as const).map(([k,lbl])=>{
+                  const on = k==='card'
+                  return (
+                    <button key={k} onClick={()=>{ if(k==='sealed'){ setAddOpen(false); setSealedPickOpen(true) } }}
+                      style={{ flex:1, padding:'10px 8px', borderRadius:10, border:'1px solid rgba(255,255,255,0.6)',
+                        background: on ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)' : 'rgba(255,255,255,0.45)',
+                        backdropFilter:'blur(12px) saturate(180%)', WebkitBackdropFilter:'blur(12px) saturate(180%)',
+                        color: on ? '#1D1D1F' : '#48484A', fontSize:12.5, fontWeight:700, cursor:'pointer',
+                        fontFamily:'var(--font-display)', transition:'all .2s cubic-bezier(.2,.85,.3,1)',
+                        boxShadow: on ? '0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)' : 'inset 0 1px 0 rgba(255,255,255,0.7)' }}>
+                      {k==='sealed'?'Scell\u00E9':lbl}
+                    </button>
+                  )
+                })}
               </div>
 
               <div style={{ marginBottom:'14px' }}>
@@ -2590,7 +2648,7 @@ export function Holdings() {
                       }}>
                         {src ? (
                           <img src={src} alt="" loading="lazy"
-                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}
+                            style={{ width:'100%', height:'100%', ...kthumbFit(c), display:'block' }}
                             onError={e=>{(e.target as HTMLImageElement).style.visibility='hidden'}} />
                         ) : null}
                       </div>
@@ -2739,7 +2797,7 @@ export function Holdings() {
                     <div style={{ position:'relative', flexShrink:0, width:88 }}>
                       <div aria-hidden style={{ position:'absolute', inset:-16, borderRadius:'50%', background:'radial-gradient(circle, rgba(196,150,60,0.28), rgba(196,150,60,0) 72%)', filter:'blur(10px)', pointerEvents:'none' }} />
                       <img src={cleanImageUrl(bestByValue.image)} alt={bestByValue.name} loading="lazy"
-                        style={{ position:'relative', width:88, aspectRatio:'63/88', objectFit:'cover', borderRadius:7, display:'block', boxShadow:'0 8px 20px rgba(90,70,30,0.22), 0 2px 5px rgba(0,0,0,0.12)' }}
+                        style={{ position:'relative', width:88, aspectRatio:'63/88', ...kthumbFit(bestByValue), borderRadius:7, display:'block', boxShadow:'0 8px 20px rgba(90,70,30,0.22), 0 2px 5px rgba(0,0,0,0.12)' }}
                         onError={e=>{ const t=e.target as HTMLImageElement; t.style.display='none' }} />
                     </div>
                   )}
@@ -2940,7 +2998,7 @@ export function Holdings() {
                     <span aria-hidden className="kadd-sep" />
                     <button className="kadd-primary" onClick={()=>setAddOpen(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                      <span>Ajouter<span className="kadd-long"> une carte</span></span>
+                      <span>Ajouter</span>
                     </button>
                     <div className="kadd-secondary" style={{ display:'inline-flex', alignItems:'center', gap:2, padding:3, background:'rgba(0,0,0,.045)', borderRadius:99, flexShrink:0 }}>
                     {(!binderSet||binderSet==='__all__')&&<button className="kadd-mini" onClick={()=>{setAddSetOpen(true);setAddSetCards([]);setAddSetId('');setAddSetName('')}}>
@@ -3190,7 +3248,7 @@ export function Holdings() {
                                     <div style={{ borderRadius:'12px', overflow:'hidden', border:'1px solid #E5E5EA', position:'relative' }}>
                                       {gi.image?(
                                         <img src={cleanImageUrl(gi.image)} alt={gi.name}
-                                          style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block', filter:'grayscale(1)' }}
+                                          style={{ width:'100%', aspectRatio:'63/88', ...kthumbFit(gi), display:'block', filter:'grayscale(1)' }}
                                           onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
                                       ):(
                                         <div style={{ width:'100%', aspectRatio:'63/88', background:'#EDEDF0' }}/>
@@ -3223,7 +3281,7 @@ export function Holdings() {
                                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(29,29,31,.05) 0%,transparent 40%)', zIndex:2, pointerEvents:'none' }}/>
                                 {card.image?(
                                   <img src={cleanImageUrl(card.image)} alt={card.name} loading="lazy" decoding="async"
-                                    style={{ width:'100%', aspectRatio:'63/88', objectFit:'cover', display:'block' }}
+                                    style={{ width:'100%', aspectRatio:'63/88', ...kthumbFit(card), display:'block' }}
                                     onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null }}/>
                                 ):(
                                   <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec2}18,${ec2}06)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -3390,13 +3448,12 @@ export function Holdings() {
 
                           {/* Image pleine hauteur */}
                           <div style={{ position:'relative', width:'100%', aspectRatio:'63/88', overflow:'hidden', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04)', flex:'none' }}>
-                            {card.image ? (()=>{
-                              const isSealed = String(card.number ?? '') === 'SEALED'
-                              return <img src={cleanImageUrl(card.image)} alt={card.name}
-                                style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit: isSealed ? 'contain' : 'cover', padding: isSealed ? '14%' : 0, background: isSealed ? 'rgba(0,0,0,0.025)' : undefined, boxSizing:'border-box' as const, display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
+                            {card.image ? (
+                              <img src={cleanImageUrl(card.image)} alt={card.name}
+                                style={{ position:'absolute', inset:0, width:'100%', height:'100%', ...kthumbFit(card), display:'block', borderRadius:'10px', transition:'transform .4s cubic-bezier(.34,1.1,.64,1)' }}
                                 onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null; t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} }}
                               />
-                            })() : (
+                            ) : (
                               <div style={{ width:'100%', aspectRatio:'63/88', background:`linear-gradient(145deg,${ec}15,${ec}06)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px', position:'relative' }}>
                                 <div style={{ position:'absolute', width:'60%', height:'60%', borderRadius:'50%', background:eg, filter:'blur(18px)', opacity:.5 }}/>
                                 <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:`radial-gradient(circle at 35% 35%,${ec}CC,${ec}77)`, boxShadow:`0 0 16px ${eg}`, position:'relative', zIndex:1 }}/>
@@ -3655,7 +3712,7 @@ export function Holdings() {
                           {/* Image */}
                           {card.image ? (
                             <img src={cleanImageUrl(card.image)} alt={card.name}
-                              style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                              style={{ position:'absolute', inset:0, width:'100%', height:'100%', ...kthumbFit(card) }}
                               onError={e=>{ const t=e.target as HTMLImageElement; t.onerror=null; t.style.opacity='0'; t.style.height='100%'; const p=t.parentElement; if(p&&!p.querySelector('.no-img-ph')){const d=document.createElement('div');d.className='no-img-ph';d.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer';d.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span style="font-size:8px;color:#AEAEB2">Ajouter</span>';p.appendChild(d)} }}/>
                           ) : (
                             <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -4016,7 +4073,7 @@ export function Holdings() {
                         opacity:0, animation:`wcFade .5s ease-out ${i*120}ms forwards`,
                       }}>
                         <img src={url} alt={c.name} draggable={false}
-                          style={{ width:'100%',height:'100%',objectFit:'cover',display:'block' }}
+                          style={{ width:'100%',height:'100%',...kthumbFit(c),display:'block' }}
                           onError={e=>{ const el=e.currentTarget.parentElement as HTMLElement|null; if(el) el.style.display='none' }} />
                         <div style={{ position:'absolute',inset:0,pointerEvents:'none',mixBlendMode:'overlay',
                           background:'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 48%, transparent 62%)',
@@ -4261,6 +4318,11 @@ export function Holdings() {
         ]}
         brevoListId={null}
       />
+      <AddSealedPicker open={sealedPickOpen} onClose={()=>setSealedPickOpen(false)}
+        onSwitchToCard={()=>{ setSealedPickOpen(false); setAddOpen(true) }}
+        onPick={(seed)=>{ setSealedPickOpen(false); setSealedSeed(seed) }} />
+      <AddSealedModal open={!!sealedSeed} onClose={()=>setSealedSeed(null)}
+        product={sealedSeed} onAdd={handleSealedAdd} />
       <ImportPortfolioModal
         isOpen={importOpen}
         onClose={()=>setImportOpen(false)}

@@ -1,4 +1,5 @@
 'use client'
+import { isSealed, kthumbFit } from '@/lib/sealed-fit'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -286,7 +287,7 @@ function CountUp({ value, dur = 900 }: { value: number; dur?: number }) {
 }
 
 /* ── Vignette carte (image_url + fallback) ──────────────────────── */
-function CardThumb({ url, name }: { url: string | null; name: string }) {
+function CardThumb({ url, name, number }: { url: string | null; name: string; number?: string | null }) {
   const [err, setErr] = useState(false)
   if (!url || err) {
     const initial = (name || '?').trim().charAt(0).toUpperCase()
@@ -294,7 +295,7 @@ function CardThumb({ url, name }: { url: string | null; name: string }) {
       <div style={{ width: '100%', aspectRatio: '5 / 7', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(160deg, #F0F0F3 0%, #E2E2E7 100%)', color: '#B8B8BF', fontFamily: DISPLAY, fontWeight: 800, fontSize: 30, border: '0.5px solid rgba(0,0,0,0.06)' }}>{initial}</div>
     )
   }
-  return <img src={url} alt={name} loading="lazy" onError={() => setErr(true)} style={{ width: '100%', aspectRatio: '5 / 7', objectFit: 'cover', borderRadius: 10, display: 'block', border: '0.5px solid rgba(0,0,0,0.06)' }} />
+  return <img src={url} alt={name} loading="lazy" onError={() => setErr(true)} style={{ width: '100%', aspectRatio: '5 / 7', ...kthumbFit({ card_number: number }), borderRadius: 10, display: 'block', border: '0.5px solid rgba(0,0,0,0.06)' }} />
 }
 
 /* ── TiltTile (carte holo 3D suivant le curseur) ────────────────── */
@@ -323,7 +324,7 @@ function TiltTile({ c, accent, showPrice, index }: { c: PortfolioCard; accent: s
   return (
     <div className="kd-tile" style={{ width: 120, flex: '0 0 120px', animationDelay: `${index * 45}ms` }} onMouseMove={onMove} onMouseLeave={onLeave}>
       <div ref={cardRef} className="kd-tiltcard" style={{ position: 'relative', borderRadius: 10, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }}>
-        <CardThumb url={c?.image_url || getCardImageUrl({ lang: c?.lang as any, setId: c?.set_id || '', localId: c?.card_number || '' }) || null} name={c?.name} />
+        <CardThumb url={c?.image_url || (isSealed(c) ? null : getCardImageUrl({ lang: c?.lang as any, setId: c?.set_id || '', localId: c?.card_number || '' })) || null} name={c?.name} number={c?.card_number} />
         {grade && <span style={{ position: 'absolute', top: 6, left: 6, fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#fff', background: 'rgba(20,20,22,0.82)', padding: '2px 6px', borderRadius: 5, letterSpacing: '0.03em', backdropFilter: 'blur(4px)' }}>{grade}</span>}
         {c?.is_favorite && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 12, color: '#F5A623', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}>★</span>}
         {c?.qty > 1 && <span style={{ position: 'absolute', bottom: 6, right: 6, fontFamily: MONO, fontSize: 9, fontWeight: 700, color: INK, background: 'rgba(255,255,255,0.92)', padding: '1px 5px', borderRadius: 5 }}>×{c.qty}</span>}

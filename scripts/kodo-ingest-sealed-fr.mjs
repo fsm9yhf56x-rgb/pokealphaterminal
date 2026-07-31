@@ -532,7 +532,11 @@ for (const set of sets) {
     });
     outPrices.push({
       id, price: agg.price, raw: agg.raw,
-      low: agg.low,
+      // low_eur porte le prix SERVI, pas le minimum brut : agg.low ignore la
+      // garde a 50% de la mediane (en-bw5-display, 56 EUR pour une mediane a
+      // 26 997). Une colonne qui contient parfois une arnaque finit toujours
+      // par etre lue par un ecran.
+      low: agg.price,
       sellers: agg.sellers, n: agg.n, method: agg.method,
     });
     lines.push({ id, ...agg, sku: g.sku, content: g.content, isNew: !known.has(id) });

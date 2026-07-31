@@ -47,6 +47,12 @@ const MAX_429 = Number(process.env.KODO_EBAY_MAX_429 || 5);
 // dans le quota Browse par defaut. L'anglais (457 produits) demandera
 // l'augmentation en cours de demande aupres d'eBay.
 const VERIFY_TOP = Number(process.env.KODO_SEALED_VERIFY_TOP || 8);
+// PLAFOND GLOBAL. La verification tourne par serie : 175 series x ~3 groupes x 8
+// = ~4000 appels, plus 700 de recherche, sur un quota Browse de 5000. Trop pres
+// du plafond — un depassement couperait l'ingestion en cours de route. On borne
+// le budget de verification pour que la recherche, coeur du job, ne soit jamais
+// sacrifiee. A relever quand l'augmentation de quota eBay sera accordee.
+const VERIFY_MAX = Number(process.env.KODO_SEALED_VERIFY_MAX || 1200);
 let verifCount = 0, verifRejets = 0;
 let streak429 = 0;
 let quotaDead = false;
@@ -412,6 +418,11 @@ for (const set of sets) {
   // annonce comme display 36 boosters (Nombre de cartes).
   if (VERIFY_TOP > 0 && !quotaDead) {
     for (const g of groups.values()) {
+      if (verifCount >= VERIFY_MAX) break;
+      // Un groupe sous le seuil ne produira aucune cote : le verifier ne change
+      // rien a l'ecran et brule du quota.
+      const voix = new Set(g.rows.map((r) => r.seller || ('anon:' + r.price)));
+      if (voix.size < MIN_ASKS) continue;
       const cands = g.rows
         .filter((r) => r.href && Number.isFinite(r.price))
         .sort((a, b) => a.price - b.price)
@@ -484,6 +495,7 @@ console.log('avec cote          : ' + outPrices.filter((p) => p.price != null).l
 console.log('donnees insuff.    : ' + outPrices.filter((p) => p.price == null).length);
 console.log('avec epid eBay     : ' + outProducts.filter((p) => p.epid).length);
 console.log('avec illustration  : ' + outProducts.filter((p) => p.image).length);
+console.log('verifications      : ' + verifCount + ' appels, ' + verifRejets + ' rejets');
 if (stopped) console.log('run PARTIEL (plafond de temps) : les sets non traites gardent leur etat precedent');
 
 if (!COMMIT) {

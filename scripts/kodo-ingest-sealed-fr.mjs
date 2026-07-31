@@ -20,6 +20,7 @@
 import { neon } from '@neondatabase/serverless';
 import { parseSealedTitle, aggregateAsks, normalize, SKU_LABEL, MIN_ASKS, ASK_DISCOUNT } from './lib/sealed-fr.mjs';
 import { verifyAsk, aspectsToMap } from './lib/sealed-verify.mjs';
+import { budgetDisponible } from './lib/sealed-scheduler.mjs';
 
 const DB_URL = process.env.DATABASE_URL;
 const APP = process.env.EBAY_APP_ID;
@@ -52,7 +53,10 @@ const VERIFY_TOP = Number(process.env.KODO_SEALED_VERIFY_TOP || 8);
 // du plafond — un depassement couperait l'ingestion en cours de route. On borne
 // le budget de verification pour que la recherche, coeur du job, ne soit jamais
 // sacrifiee. A relever quand l'augmentation de quota eBay sera accordee.
-const VERIFY_MAX = Number(process.env.KODO_SEALED_VERIFY_MAX || 1200);
+// Plafond de verification. 0 = calcule depuis le quota reel au demarrage
+// (voir plus bas) : un budget fige casse des qu'un horaire bouge ou que le
+// catalogue grossit. La valeur d'env reste prioritaire pour les tests.
+let VERIFY_MAX = Number(process.env.KODO_SEALED_VERIFY_MAX || 0);
 let verifCount = 0, verifRejets = 0;
 let streak429 = 0;
 let quotaDead = false;
@@ -328,6 +332,13 @@ const known = new Set(
 );
 
 const tk = await token();
+if (!VERIFY_MAX) {
+  // Le scelle EN tourne juste apres dans le meme job : on lui laisse la moitie.
+  const b = await budgetDisponible(tk, { reservePart: 0.5 });
+  VERIFY_MAX = Math.max(0, b.budget - 800); // 800 reserves a la recherche FR
+  console.log('budget verification : ' + VERIFY_MAX + ' appels (quota restant ' +
+    (b.restant ?? '?') + ', source ' + b.source + ')');
+}
 console.log((COMMIT ? '>>> COMMIT' : '>>> DRY-RUN') + ' | ' + sets.length + ' sets | ' + known.size + ' produits FR deja connus');
 console.log('seuil ' + MIN_ASKS + ' vendeurs distincts | decote ' + ASK_DISCOUNT + '\n');
 

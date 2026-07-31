@@ -148,6 +148,31 @@ export async function POST(req: Request) {
           }
         }
       }
+      // Repli par (lang, print_id) — LA vraie cle carte dans les 3 langues.
+      // mkCandidates fabrique 'jp-{card_number}' en supposant que le numero EST
+      // l'id JP (jp-{tcgPlayerId}) : vrai quand la carte vient du catalogue,
+      // FAUX quand card_number est le numero local ('4' -> 'jp-4' inexistant).
+      // 6 cartes s11-lost-abyss etaient orphelines, donc jamais valorisees.
+      const stillNull = body.insertRows.filter((r: any) => !r.k_card_id && r.lang && r.set_id && r.card_number != null)
+      if (stillNull.length) {
+        const prints = Array.from(new Set(stillNull.map((r: any) => `${r.set_id}-${r.card_number}`)))
+        const byPrint = await sql.query(
+          'SELECT id, lower(lang) AS lang, print_id, name_localized FROM k_cards WHERE print_id = ANY($1)',
+          [prints]
+        ) as any[]
+        for (const r of stillNull) {
+          const want = `${r.set_id}-${r.card_number}`
+          const lang = String(r.lang).toLowerCase()
+          const hits = byPrint.filter((k) => k.print_id === want && k.lang === lang)
+          if (hits.length === 1) { r.k_card_id = hits[0].id; continue }
+          // Collision de print_id (2094 cas en JP : 'S-P', 'WAT'...) -> le nom tranche.
+          if (hits.length > 1 && r.name) {
+            const n = String(r.name).toLowerCase()
+            const exact = hits.find((k) => String(k.name_localized || '').toLowerCase() === n)
+            if (exact) r.k_card_id = exact.id
+          }
+        }
+      }
       // Normalisation: toutes les rows doivent avoir la MEME cle k_card_id (null si non resolu),
       // sinon buildQuery (Object.keys(rows[0])) produit un nombre de colonnes incoherent entre rows.
       for (const r of body.insertRows) { if (r.k_card_id === undefined) r.k_card_id = null }

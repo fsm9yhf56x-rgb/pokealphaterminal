@@ -29,7 +29,7 @@ type Lang = 'FR' | 'EN'
 interface SealedPrice {
   value: number; currency: string; isAsking: boolean
   basis?: 'spot' | 'window'; windowDays?: number
-  low: number | null; perBooster: number | null
+  low: number | null; perBooster: number | null; raw: number | null
   method: string | null; market: string | null
   sellers: number | null; sampleSize: number | null; updatedAt: string | null
 }
@@ -86,6 +86,7 @@ function ageLabel(iso: string | null): string | null {
   return 'il y a ' + m + ' mois'
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eur = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: n >= 100 ? 0 : 2 }).format(n)
 
@@ -157,6 +158,20 @@ export function Scelles() {
     window.history.replaceState(null, '', u.toString())
   }, [])
   const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
+  // Annonces reelles du produit selectionne. Distinctes de la cote : la cote est
+  // une mediane decotee que personne ne pratique, ces lignes sont ce qu'on peut
+  // acheter maintenant.
+  type Ask = { url: string; price: number; seller: string | null; condition: string | null; seenAt: string | null }
+  const [asks, setAsks] = useState<Ask[]>([])
+  useEffect(() => {
+    if (!selId) { setAsks([]); return }
+    let alive = true
+    fetch('/api/v1/sealed/asks?p=' + encodeURIComponent(selId) + '&limit=6', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((d) => { if (alive) setAsks(Array.isArray(d.asks) ? d.asks : []) })
+      .catch(() => { if (alive) setAsks([]) })
+    return () => { alive = false }
+  }, [selId])
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -488,7 +503,7 @@ export function Scelles() {
                       <>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
                           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
-                            {it.price.isAsking ? <span style={{ fontSize: '10px', fontWeight: 500, color: '#888', marginRight: '3px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
+                            {it.price.isAsking ? <span style={{ fontSize: '10px', fontWeight: 500, color: '#888', marginRight: '3px', fontFamily: 'var(--font-display)' }}>cote</span> : null}
                             {eur(it.price.value)}
                           </span>
                           {it.price.sellers ? (
@@ -556,14 +571,27 @@ export function Scelles() {
                 {selected.price && selected.price.value > 0 ? (
                   <>
                     <div style={{ fontSize: '26px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)', letterSpacing: '-.5px' }}>
-                      {selected.price.isAsking ? <span style={{ fontSize: '14px', fontWeight: 500, color: '#888', marginRight: '5px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
+                      {selected.price.isAsking ? <span style={{ fontSize: '14px', fontWeight: 500, color: '#888', marginRight: '5px', fontFamily: 'var(--font-display)' }}>cote</span> : null}
                       {eur(selected.price.value)}
                     </div>
-                    <div style={{ fontSize: '11.5px', color: '#86868B', marginTop: '4px' }}>
-                      {selected.price.sellers ? selected.price.sellers + ' vendeurs · ' : ''}
-                      {selected.price.sampleSize ? selected.price.sampleSize + ' annonces · ' : ''}
-                      {selected.price.market === 'US' ? 'marché américain converti' : 'France'}
-                      {ageLabel(selected.price.updatedAt) ? ' · relevé ' + ageLabel(selected.price.updatedAt) : ''}
+                    {/* D'ou vient le nombre. Sans cette phrase, la cote tombe du ciel
+                        et la decote ressemble a du jargon au lieu d'un gage de serieux. */}
+                    <div style={{ fontSize: '11.5px', color: '#6E6E73', marginTop: '6px', lineHeight: 1.5 }}>
+                      {selected.price.raw && selected.price.isAsking ? (
+                        <>
+                          Médiane de {selected.price.sellers || 0} vendeur{(selected.price.sellers || 0) > 1 ? 's' : ''}{' '}
+                          <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-data)', fontWeight: 600 }}>{eur(selected.price.raw)}</strong>,
+                          {' '}moins 12&nbsp;% : ce sont des prix <em>demandés</em>, pas des ventes conclues.
+                        </>
+                      ) : (
+                        <>
+                          {selected.price.sellers ? selected.price.sellers + ' vendeur' + ((selected.price.sellers || 0) > 1 ? 's' : '') + ' · ' : ''}
+                          {selected.price.market === 'US' ? 'marché américain converti' : 'annonces France'}
+                        </>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#AEAEB2', marginTop: '3px' }}>
+                      {ageLabel(selected.price.updatedAt) ? 'Relevé ' + ageLabel(selected.price.updatedAt) : ''}
                     </div>
                     {selected.price.perBooster ? (
                       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -595,9 +623,9 @@ export function Scelles() {
                   </div>
                   {usableLow(selected.price) ? (
                     <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Fourchette</span>
+                      <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>La moins chère en vente</span>
                       <span style={{ fontSize: '12.5px', color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>
-                        {eur(usableLow(selected.price) as number)} — {eur(selected.price.value)}
+                        {eur(usableLow(selected.price) as number)}
                       </span>
                     </div>
                   ) : null}
@@ -629,6 +657,32 @@ export function Scelles() {
                   ) : null}
                   <div style={{ fontSize: '11px', color: '#AAA', marginTop: '8px', lineHeight: 1.45 }}>
                     Pas encore assez d&apos;historique pour une variation. Les écarts s&apos;afficheront à mesure que les relevés s&apos;accumulent.
+                  </div>
+                </div>
+              ) : null}
+
+              {asks.length > 0 ? (
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
+                    En vente maintenant
+                  </div>
+                  {asks.map((a, i) => (
+                    <a key={a.url} href={a.url} target="_blank" rel="sponsored noopener noreferrer"
+                      className="sc-ask"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', textDecoration: 'none', background: i === 0 ? 'rgba(224,48,32,0.05)' : 'transparent', marginBottom: '3px', transition: 'background .16s ease' }}>
+                      <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#1D1D1F', fontFamily: 'var(--font-data)', minWidth: '74px' }}>{eur(a.price)}</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {a.condition ? a.condition : ''}{a.condition && a.seller ? ' · ' : ''}{a.seller || ''}
+                      </span>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="M7 17L17 7M8 7h9v9" />
+                      </svg>
+                    </a>
+                  ))}
+                  <div style={{ fontSize: '10.5px', color: '#AEAEB2', marginTop: '7px', lineHeight: 1.45 }}>
+                    Annonces eBay relevées {ageLabel(asks[0]?.seenAt) || 'récemment'} · elles peuvent avoir été vendues depuis.
+                    <br />
+                    Liens partenaires : KodoCards perçoit une commission sur les achats, sans effet sur la cote ni sur l’ordre d’affichage.
                   </div>
                 </div>
               ) : null}

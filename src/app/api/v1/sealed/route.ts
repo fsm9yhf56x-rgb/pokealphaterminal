@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
       `SELECT p.id, p.name, p.lang, p.sku, p.product_type, p.set_name, p.set_id,
               p.kodo_set_id, p.content_qty, p.content_unit, p.image_url, p.source, p.sku_source,
               sp.market_eur, sp.low_eur, sp.raw_eur, sp.method, sp.market, sp.is_asking,
-              sp.sellers, sp.sample_size, sp.as_of, sp.updated_at,
+              sp.sellers, sp.sample_size, sp.as_of, sp.updated_at, sp.last_priced_at,
               ks.name_fr AS set_name_fr, ks.logo_url, ks.series,
               w.cote_decotee AS w_price, w.vendeurs AS w_sellers,
               w.plancher AS w_low, w.plafond AS w_high, w.cotable AS w_cotable
@@ -218,7 +218,12 @@ export async function GET(req: NextRequest) {
           sampleSize: r.sample_size == null ? null : Number(r.sample_size),
           raw: r.raw_eur == null ? null : Number(r.raw_eur),
           asOf: r.as_of ?? null,
-          updatedAt: r.updated_at ?? null,
+          // AGE DU PRIX, pas heure d'ecriture du pipeline. updated_at est pose
+          // par le trigger kodo_touch_sealed_prices a chaque passe, meme quand la
+          // cote n'est pas recalculee : l'ecran affichait "releve aujourd'hui" sur
+          // un prix vieux de deux jours. Meme distinction que sync-health, inversee:
+          // ici c'est l'age de la COTE qui interesse le collectionneur.
+          updatedAt: r.last_priced_at ?? null,
         },
       };
     });

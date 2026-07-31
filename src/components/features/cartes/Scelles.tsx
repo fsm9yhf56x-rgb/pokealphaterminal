@@ -579,9 +579,12 @@ export function Scelles() {
                     <div style={{ fontSize: '11.5px', color: '#6E6E73', marginTop: '6px', lineHeight: 1.5 }}>
                       {selected.price.isAsking ? (
                         <>
-                          La <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>moins chère</strong> des{' '}
-                          {selected.price.sellers || 0} annonce{(selected.price.sellers || 0) > 1 ? 's' : ''} en cours en France.
-                          {' '}C&apos;est un prix demandé, pas une vente conclue.
+                          {(selected.price.sampleSize || 0) >= 3 ? (<>
+                            La <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>moins chère</strong> des{' '}
+                            {selected.price.sampleSize} annonces en cours en France. C&apos;est un prix demandé, pas une vente conclue.
+                          </>) : (<>
+                            Dernier relevé fiable : le marché n&apos;a plus assez d&apos;annonces distinctes aujourd&apos;hui pour recalculer.
+                          </>)}
                         </>
                       ) : (
                         <>

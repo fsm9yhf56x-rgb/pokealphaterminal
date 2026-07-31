@@ -139,7 +139,14 @@ async function journaliser(sql, lang, lignes) {
        ON CONFLICT (item_id) DO UPDATE SET
          last_seen_at = EXCLUDED.last_seen_at,
          price = EXCLUDED.price,
-         sealed_id = COALESCE(EXCLUDED.sealed_id, sealed_asks_raw.sealed_id),
+         -- Le COALESCE protegeait contre l'effacement mais empechait la
+         -- CORRECTION : une annonce mal classee le restait a vie. Le
+         -- "DISPLAY POKEMON TONNERRE PERDU" a 950 EUR, reclasse en demi-display
+         -- par sa description, gardait son ancien rattachement. On ecrase quand
+         -- la passe a produit un verdict, on conserve seulement si elle n'a
+         -- rien conclu (annonce non revue).
+         sealed_id = CASE WHEN EXCLUDED.sku IS NOT NULL THEN EXCLUDED.sealed_id
+                          ELSE COALESCE(EXCLUDED.sealed_id, sealed_asks_raw.sealed_id) END,
          sku = COALESCE(EXCLUDED.sku, sealed_asks_raw.sku),
          excluded = EXCLUDED.excluded,
          exclude_reason = EXCLUDED.exclude_reason`,

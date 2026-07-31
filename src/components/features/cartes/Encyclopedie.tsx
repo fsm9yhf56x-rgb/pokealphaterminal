@@ -1,4 +1,5 @@
 'use client'
+import { aliasBag, compileQuery, matchCompiled, scoreCompiled, queryTokenCount } from '@/lib/search-alias'
 
 import { getCardImageUrl, cleanLegacyUrl } from '@/lib/images'
 import { CardImg } from '@/components/ui/CardImg'
@@ -12,7 +13,7 @@ import { SNOW } from '@/lib/design/colors'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/useAuth'
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, useDeferredValue } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { fetchSets, fetchAllCards, fetchCardDetail, type TCGCard, type TCGCardFull } from '@/lib/tcgApi'
@@ -268,13 +269,41 @@ export function Encyclopedie() {
   const [loadErr,    setLoadErr]     = useState(false)
   const [loadMsg,    setLoadMsg]     = useState('')
 
+  // SAC D'ALIAS. Ce que le collectionneur a sous les yeux n'est dans aucun champ :
+  // le code imprime (EB1, ME1), le numero sur le total (134/132), le nom EN d'une
+  // serie FR. Calcule une fois par carte : 22 529 normalisations a chaque frappe
+  // rendraient la saisie poussive.
+  const aliasIndex = useMemo(() => {
+    const totaux = new Map<string, number>()
+    for (const c of allCards) totaux.set(c.setId, (totaux.get(c.setId) || 0) + 1)
+    const idx = new Map<string, string>()
+    for (const c of allCards) {
+      idx.set(c.id, aliasBag({
+        name: c.name, setId: c.setId, setName: c.setName,
+        setNameEn: (c as any).enSetName || null,
+        localId: c.localId, setTotal: totaux.get(c.setId) || null,
+        extra: [(c as any).enName, c.rarity],
+      }))
+    }
+    return idx
+  }, [allCards])
+
   const [search,     setSearch]      = useState('')
   const [searchFocus, setSearchFocus] = useState(false)
+  // La frappe reste prioritaire ; le filtrage des 22 529 cartes s'execute en
+  // arriere-plan sur la valeur differee. L'input ne bloque plus.
+  const searchDefer = useDeferredValue(search)
+  const compiled = useMemo(() => compileQuery(searchDefer), [searchDefer])
   const searchSuggs = useMemo(() => {
     if (search.length < 2) return []
     const q = search.toLowerCase()
-    return allCards.filter(c => c.name.toLowerCase().includes(q) || c.setName.toLowerCase().includes(q) || (c.enName && c.enName.toLowerCase().includes(q))).slice(0, 8)
-  }, [search, allCards])
+    const out: typeof allCards = []
+    for (const c of allCards) {
+      if (matchCompiled(aliasIndex.get(c.id) || '', compiled)) out.push(c)
+      if (out.length >= 8) break   // on s'arrete a 8 : inutile de balayer 22 529 cartes
+    }
+    return out
+  }, [allCards, aliasIndex, compiled])
   const [filEra,     setFilEra]      = useState('all')
   const [browseMode, setBrowseMode]  = useState<'all'|'bloc'>('all')
   const [selBloc,    setSelBloc]     = useState<string|null>(null)
@@ -816,21 +845,34 @@ export function Encyclopedie() {
     // Les promos sont ecartees de la vue d ensemble (elles noieraient la grille),
     // mais elles DOIVENT s afficher des qu on demande une serie precise ou qu on
     // cherche un nom — sinon le selecteur propose des sets qui rendent 0 carte.
-    let r = (filSet !== 'all' || search)
+    let r = (filSet !== 'all' || searchDefer)
       ? allCards
       : allCards.filter(c=>c.era!=='Promos & Coffrets')
     if (filEra!=='all') r = r.filter(c=>c.era===filEra)
     if (filSet!=='all') r = r.filter(c=>c.setId===filSet)
     if (filRarities.length) r = r.filter(c=>!!c.rarity && filRarities.includes(displayRarity(c.rarity, c.era)))
-    if (search) {
-      const q=search.toLowerCase()
-      if (jpSearchIndex) {
-        r = r.filter(c => {
-          const indexed = jpSearchIndex.get(c.id)
-          return indexed ? indexed.includes(q) : false
-        })
+    if (searchDefer) {
+      const q = searchDefer.toLowerCase()
+      const strict = r.filter(c => {
+        // Les alias d'abord (code de serie, numero sur total, nom EN).
+        if (matchCompiled(aliasIndex.get(c.id) || '', compiled)) return true
+        // Puis la translitteration JP, que les alias ne savent pas deriver.
+        const jp = jpSearchIndex?.get(c.id)
+        return jp ? jp.includes(q) : false
+      })
+      if (strict.length || queryTokenCount(compiled) < 2) {
+        r = strict
       } else {
-        r = r.filter(c=>c.name.toLowerCase().includes(q)||c.setName.toLowerCase().includes(q)||c.localId===q)
+        // DEGRADATION. Un jeton fautif ("em1" pour "me1") ne doit pas effacer un
+        // jeton juste ("herbi"). On garde les meilleurs scores plutot que rien.
+        // Ce second passage ne s'execute QUE si la conjonction rend zero.
+        let best = 0
+        const scores = new Map<string, number>()
+        for (const c of r) {
+          const n = scoreCompiled(aliasIndex.get(c.id) || '', compiled)
+          if (n > 0) { scores.set(c.id, n); if (n > best) best = n }
+        }
+        r = best > 0 ? r.filter(c => scores.get(c.id) === best) : []
       }
     }
     // Auto sort by number when a specific set is filtered
@@ -840,7 +882,7 @@ export function Encyclopedie() {
     return sort==='name'
       ? [...r].sort((a,b)=>a.name.localeCompare(b.name))
       : [...r].sort((a,b)=>(b.year-a.year)||a.setName.localeCompare(b.setName)||parseInt(a.localId)-parseInt(b.localId))
-  }, [allCards, filEra, filSet, filRarities, search, sort])
+  }, [allCards, filEra, filSet, filRarities, searchDefer, sort, aliasIndex, jpSearchIndex, compiled])
 
   // Keyboard navigation
   useEffect(() => {
@@ -1391,7 +1433,7 @@ export function Encyclopedie() {
           })()}
 
           <div style={{ display:'flex', gap:'8px', marginBottom:'12px', flexWrap:'wrap' }}>
-            <div style={{ position:'relative', flex:1, minWidth:'200px', zIndex:20 }}>
+            <div style={{ position:'relative', flex:1, minWidth:'200px', zIndex:40 }}>
               <span style={{ position:'absolute', left:'11px', top:'50%', transform:'translateY(-50%)', color:'#CCC', fontSize:'15px', pointerEvents:'none' }}>{String.fromCharCode(8981)}</span>
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 onFocus={()=>setSearchFocus(true)} onBlur={()=>setTimeout(()=>setSearchFocus(false),200)}

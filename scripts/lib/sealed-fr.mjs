@@ -204,6 +204,17 @@ export function parseSealedTitle(title, opts = {}) {
   if (opts.condition != null) {
     const c = normalize(opts.condition);
     if (/non[\s-]*scelle|occasion/.test(c)) { res.sealed = false; if (!res.excluded) { res.excluded = true; res.excludeReason = 'non_scelle'; } }
+    // LISTE BLANCHE. La liste noire ne suffit pas : un display ouvert vendu 2300 EUR
+    // portait 'Non gradee' — une condition de CARTE, choisie par un vendeur dont la
+    // description disait "plu sceller". Ni 'non-scelle' ni 'occasion', donc retenu.
+    // On n'accepte desormais que les conditions qui AFFIRMENT le scellage. Les
+    // categories vagues (Ungraded, Unspecified, Non gradee, Neuf, New) representent
+    // ~4% des annonces retenues et sont exactement la ou se cachent les ouverts.
+    // 'New/Factory Sealed' et 'Neuf/Scelle' couvrent 95% du volume : le cout est faible.
+    else if (!/\bscelle\b|factory[\s-]*sealed|\bsealed\b|sigillato|fabrikversiegelt|precintado|verzegeld/.test(c)) {
+      res.sealed = false;
+      if (!res.excluded) { res.excluded = true; res.excludeReason = 'scellage_non_atteste'; }
+    }
     else if (/scelle|neuf/.test(c)) res.sealed = true;
   }
 

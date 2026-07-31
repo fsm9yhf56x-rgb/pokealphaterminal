@@ -259,6 +259,18 @@ export function Scelles() {
 
   const pageItems = filtered.slice(0, visible)
   const selected = selId ? items.find((i) => i.id === selId) || null : null
+  // LE PRIX AFFICHE VIENT DES ANNONCES EN COURS, pas de sealed_prices.
+  // sealed_prices conserve la derniere cote calculee — utile pour valoriser un
+  // portefeuille (sinon la valeur clignote des qu'un vendeur retire son
+  // annonce), FAUX pour une fiche produit : Eclipse Cosmique affichait 1848 EUR
+  // releve le 30/07 au-dessus d'une liste dont la seule annonce etait a 5490.
+  // Ce qui est affiche en grand doit etre cliquable dans la liste juste dessous.
+  const prixLive = asks.length > 0
+    ? Math.min(...asks.map((a) => a.price))
+    : (selected?.price?.value ?? null)
+  const parBoosterLive = prixLive != null && selected?.boosters
+    ? prixLive / selected.boosters
+    : null
   const cotes = filtered.filter((i) => i.price).length
   const hasFilters = filSku !== 'all' || filSet !== 'all' || search !== ''
 
@@ -572,7 +584,7 @@ export function Scelles() {
                   <>
                     <div style={{ fontSize: '26px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)', letterSpacing: '-.5px' }}>
                       {selected.price.isAsking ? <span style={{ fontSize: '14px', fontWeight: 500, color: '#888', marginRight: '5px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
-                      {eur(selected.price.value)}
+                      {eur(prixLive ?? selected.price.value)}
                     </div>
                     {/* D'ou vient le nombre. Sans cette phrase, la cote tombe du ciel
                         et la decote ressemble a du jargon au lieu d'un gage de serieux. */}
@@ -581,7 +593,8 @@ export function Scelles() {
                         <>
                           {(selected.price.sampleSize || 0) >= 3 ? (<>
                             La <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>moins chère</strong> des{' '}
-                            {selected.price.sampleSize} annonces en cours en France. C&apos;est un prix demandé, pas une vente conclue.
+                          
+                            {selected.price.sampleSize}&nbsp;annonces en cours en France. C&apos;est un prix demandé, pas une vente conclue.
                           </>) : (<>
                             Dernier relevé fiable : le marché n&apos;a plus assez d&apos;annonces distinctes aujourd&apos;hui pour recalculer.
                           </>)}
@@ -596,9 +609,9 @@ export function Scelles() {
                     <div style={{ fontSize: '11px', color: '#AEAEB2', marginTop: '3px' }}>
                       {ageLabel(selected.price.updatedAt) ? 'Relevé ' + ageLabel(selected.price.updatedAt) : ''}
                     </div>
-                    {selected.price.perBooster ? (
+                    {(parBoosterLive ?? selected.price.perBooster) ? (
                       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>{eur(selected.price.perBooster)}</span>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>{eur((parBoosterLive ?? selected.price.perBooster) as number)}</span>
                         <span style={{ fontSize: '11.5px', color: '#86868B' }}>par booster · {selected.boosters} au total</span>
                       </div>
                     ) : null}
@@ -619,50 +632,6 @@ export function Scelles() {
 
               )}
 
-              {isInvestor && selected.price && selected.price.value > 0 ? (
-                <div style={{ marginBottom: '14px' }}>
-                  <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
-                    Lecture de marché
-                  </div>
-                  {usableLow(selected.price) ? (
-                    <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Médiane du marché</span>
-                      <span style={{ fontSize: '12.5px', color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>
-                        {eur((selected.price.raw ?? usableLow(selected.price)) as number)}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', animationDelay: '.05s' }}>
-                    <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Liquidité</span>
-                    <span style={{ fontSize: '12.5px', color: selected.price.sellers ? '#1D1D1F' : '#AAA' }}>
-                      {selected.price.sellers ? (
-                        <>
-                          {selected.price.sellers >= 15 ? 'Élevée' : selected.price.sellers >= 6 ? 'Moyenne' : 'Faible'}
-                          <span style={{ color: '#AAA', fontFamily: 'var(--font-data)', marginLeft: 5 }}>{selected.price.sellers}</span>
-                        </>
-                      ) : 'Non renseignée'}
-                    </span>
-                  </div>
-                  <div className="sc-mrow" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', animationDelay: '.1s' }}>
-                    <span style={{ fontSize: '12.5px', color: '#6E6E73' }}>Nature du prix</span>
-                    <span style={{ fontSize: '12.5px', color: '#1D1D1F', textAlign: 'right' as const }}>
-                      {selected.price.basis === 'window'
-                        ? 'Annonces, décotées · fenêtre ' + (selected.price.windowDays || 90) + ' j'
-                        : selected.price.isAsking ? 'Annonce la moins chère, France' : 'Agrégat fournisseur'}
-                    </span>
-                  </div>
-                  {!selected.price.isAsking ? (
-                    <div style={{ fontSize: '11px', color: '#AAA', marginTop: '6px', lineHeight: 1.45 }}>
-                      Le fournisseur publie un prix unique sans détailler le nombre de ventes
-                      ni leur période. Nous l&apos;affichons tel quel, sans lui prêter une
-                      précision qu&apos;il ne donne pas.
-                    </div>
-                  ) : null}
-                  <div style={{ fontSize: '11px', color: '#AAA', marginTop: '8px', lineHeight: 1.45 }}>
-                    Pas encore assez d&apos;historique pour une variation. Les écarts s&apos;afficheront à mesure que les relevés s&apos;accumulent.
-                  </div>
-                </div>
-              ) : null}
 
               {asks.length > 0 ? (
                 <div style={{ marginBottom: '14px' }}>

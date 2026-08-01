@@ -200,9 +200,67 @@ let sets = [];
 for (const r of setRows) {
   if (!sealable(r.id, r.series)) continue;
   const norm = normalize(r.name);
+  // NAME_AMBIGUOUS est une liste FRANCAISE (tempete, emeraude, energie) : elle
+  // ne mord jamais sur un titre anglais. Le vrai garde cote EN est derive.
   if (norm.length < 5 || NAME_AMBIGUOUS.has(norm)) continue;
   sets.push({ id: r.id, name: r.name, norm, rank: rank(r.id) });
 }
+
+// NOMS DE BLOC. "Black & White" est le nom du SET bw1 *et* le prefixe de
+// "Black & White Dark Explorers" (bw5) : l'ancrage n.includes(set.norm) rangeait
+// donc un Dark Explorers a 31 499 USD sous bw1. Meme piege pour Diamond & Pearl
+// (Stormfront, Mysterious Treasures, Secret Wonders...), Sun & Moon, Scarlet &
+// Violet, HeartGold & SoulSilver.
+//
+// Regle DERIVEE du catalogue, pas une liste a maintenir : un nom qui est prefixe
+// strict d'un autre nom du catalogue est ambigu. Un titre ne peut alors etre
+// apparie au set court que s'il ne nomme AUCUN des sets longs qui l'etendent.
+// Le catalogue ne nomme PAS les extensions avec leur bloc : bw1 = "Black & White",
+// bw5 = "Dark Explorers" (pas "Black & White Dark Explorers"). Un garde par
+// prefixe ne voit donc rien. Mais le VENDEUR, lui, ecrit le bloc ET l'extension :
+// "Pokemon Black & White Dark Explorers Booster Box" nomme DEUX sets du
+// catalogue. Regle : quand un titre nomme plusieurs sets, le plus SPECIFIQUE
+// gagne ; les autres l'ecartent. Sans ca, un Dark Explorers a 31 499 USD etait
+// cote sous bw1, et un Stormfront a 34 747 sous dp1.
+// NOMS DE BLOC. Le catalogue ne nomme pas les extensions avec leur bloc :
+// bw1 = "Black & White", bw5 = "Dark Explorers". Mais le VENDEUR ecrit les deux :
+// "Pokemon Black & White Dark Explorers Booster Box" nomme bw1 ET bw5. L'ancrage
+// n.includes(set.norm) rangeait donc un Dark Explorers a 31 499 USD sous bw1, et
+// un Stormfront a 34 747 sous dp1.
+//
+// Regle : si le titre nomme un AUTRE set du catalogue, il parle de celui-la.
+// La longueur n'est pas un critere de specificite ("stormfront" est plus court
+// que "diamond & pearl" et pourtant bien plus discriminant).
+//
+// RIVAL_MUET : pendant anglais de NAME_AMBIGUOUS. Un vendeur ecrit "Base Set"
+// pour dire "le set de base de ce bloc" ("Scarlet & Violet Base Set"), pas pour
+// designer base1 de 1999 — ces noms-la ne sont pas un signal.
+const RIVAL_MUET = new Set(['base set', 'promo', 'promos', 'energy', 'expedition',
+  'dragon', 'jungle', 'fossil', 'team rocket', 'generations', 'celebrations',
+  'legendary collection', 'shining legends']);
+// ASYMETRIE. "Pokemon Sword & Shield Evolving Skies Booster Box" nomme swsh1
+// ET swsh7 — mais c'est un Evolving Skies. Le nom du set EPONYME d'un bloc
+// (celui du plus petit numero : bw1, dp1, swsh1, sv01) est un prefixe commercial
+// que les vendeurs collent sur toutes les annonces du bloc : il ne peut JAMAIS
+// servir de rival. En revanche ce set-la rejette toute annonce nommant une de
+// ses extensions — sinon swsh1 recuperait les Evolving Skies a 1 718 EUR, et
+// bw1 les Dark Explorers a 31 499 USD.
+const eponymes = new Map();
+for (const s of sets) {
+  const m = /^([a-z]+)(\d{1,2}(?:\.\d)?)$/.exec(s.id);
+  if (!m) continue;
+  const pre = m[1], n = Number(m[2]);
+  if (!eponymes.has(pre) || n < eponymes.get(pre).n) eponymes.set(pre, { norm: s.norm, n });
+}
+const NOMS_DE_BLOC = new Set([...eponymes.values()].map((v) => v.norm));
+for (const s of sets) {
+  s.rivaux = sets
+    .filter((o) => o !== s && !RIVAL_MUET.has(o.norm) && !NOMS_DE_BLOC.has(o.norm)
+      && !s.norm.includes(o.norm) && !o.norm.includes(s.norm))
+    .map((o) => o.norm);
+}
+console.log(NOMS_DE_BLOC.size + ' noms de bloc neutralises | '
+  + sets.filter((s) => s.rivaux.length).length + ' series avec noms rivaux\n');
 sets.sort((a, b) => b.rank - a.rank || a.id.localeCompare(b.id));
 if (ONLY.length) sets = sets.filter((s) => ONLY.includes(s.id));
 else if (LIMIT > 0) sets = sets.slice(0, LIMIT);
@@ -274,6 +332,11 @@ for (const set of sets) {
 
     // la serie doit etre NOMMEE dans le titre : c'est notre seul ancrage
     if (!n.includes(set.norm)) { j.excluded = true; j.reason = 'serie_absente'; rejet('serie_absente'); continue; }
+    // Le titre nomme une extension PLUS PRECISE du meme bloc -> il ne parle pas
+    // de ce set-ci. Mieux vaut pas de donnee qu'une cote fausse.
+    if (set.rivaux && set.rivaux.some((rv) => n.includes(rv))) {
+      j.excluded = true; j.reason = 'autre_extension_du_bloc'; rejet('autre_extension_du_bloc'); continue;
+    }
 
     const sku = detectSku(n);
     if (!sku) { j.excluded = true; j.reason = 'sku_inconnu'; rejet('sku_inconnu'); continue; }

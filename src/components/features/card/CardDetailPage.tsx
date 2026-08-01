@@ -157,7 +157,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const lang = langFromId(cardId)
   const { data, loading, error } = useSpotlightData(cardId, lang)
   const { cards, addCard } = usePortfolio()
-  const { show, isInvestor } = usePersona()
+  const { show, isInvestor, loading: personaLoading } = usePersona()
   const { isFree } = usePlan()
   const { wishlist, addWishItem, deleteWishItem } = useGoals()
   const { user } = useAuth()
@@ -166,7 +166,16 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const [siblings, setSiblings] = useState<Array<{ lang: "EN" | "FR" | "JP"; id: string; priceEur: number | null }>>([])
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [gradedCompany, setGradedCompany] = useState<string>("PSA")
-  const [activeTab, setActiveTab] = useState<TabKey>(isInvestor ? "prix" : "collection")
+  // useState ne lit son argument qu'au PREMIER rendu : a ce moment le profil
+  // charge encore, isInvestor vaut false, et l'onglet se figeait sur "collection"
+  // — un onglet qui n'existe meme pas en mode investisseur (voir la liste plus
+  // bas). D'ou une fiche investisseur affichant la vue Collectionneur.
+  const [activeTab, setActiveTab] = useState<TabKey | null>(null)
+  const [tabTouched, setTabTouched] = useState(false)
+  useEffect(() => {
+    if (personaLoading || tabTouched) return
+    setActiveTab(isInvestor ? "prix" : "collection")
+  }, [personaLoading, isInvestor, tabTouched])
   const [authOpen, setAuthOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
@@ -481,7 +490,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
   const TabPrix = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
       {hasEngine ? (
-        <div><SpotlightEngine kodo={kodo} onEvDetail={() => setActiveTab("grade")} /></div>
+        <div><SpotlightEngine kodo={kodo} onEvDetail={() => { setTabTouched(true); setActiveTab("grade") }} /></div>
       ) : null}
       <div>
         {isFrCard ? (
@@ -858,7 +867,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
             {TABS.map(t => {
               const on = activeTab === t.key
               return (
-                <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ flex: "1 1 auto", padding: "9px 6px", borderRadius: 11, fontSize: 12.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap", transition: `all .18s ${EASE.apple}`, background: on ? "rgba(224,48,32,0.08)" : "transparent", color: on ? "#E03020" : SNOW.muted, border: on ? "1px solid rgba(224,48,32,0.22)" : `1px solid ${SNOW.border}` }}>
+                <button key={t.key} onClick={() => { setTabTouched(true); setActiveTab(t.key) }} style={{ flex: "1 1 auto", padding: "9px 6px", borderRadius: 11, fontSize: 12.5, fontWeight: 700, fontFamily: FONT.display, cursor: "pointer", whiteSpace: "nowrap", transition: `all .18s ${EASE.apple}`, background: on ? "rgba(224,48,32,0.08)" : "transparent", color: on ? "#E03020" : SNOW.muted, border: on ? "1px solid rgba(224,48,32,0.22)" : `1px solid ${SNOW.border}` }}>
                   {t.label}
                 </button>
               )
@@ -866,7 +875,7 @@ export function CardDetailPage({ cardId }: { cardId: string }) {
           </div>
 
           <div className="kc-rise" style={{ ...GLASS.card, animationDelay: ".24s", marginTop: 14, padding: "24px 26px", borderRadius: RADIUS.lg, minHeight: 300 }}>
-            <div key={activeTab} className="kc-tab-anim">{renderTab(activeTab)}</div>
+            <div key={activeTab ?? "init"} className="kc-tab-anim">{activeTab ? renderTab(activeTab) : null}</div>
           </div>
         </div>
       </div>

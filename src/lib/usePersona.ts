@@ -93,6 +93,9 @@ export function usePersona() {
     isCollector,
     isInvestor,
     onboarded,
+    // Tant que c'est true, persona vaut 'collector' par DEFAUT et non par choix :
+    // un composant qui fige un etat initial sur isInvestor doit attendre, sinon
+    // il reste en mode collectionneur pour toute la session.
     loading: auth.loading,
     labels,
     show,

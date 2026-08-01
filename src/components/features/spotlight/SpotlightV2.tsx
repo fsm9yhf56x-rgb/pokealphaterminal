@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSpotlightData } from './useSpotlightData'
 import { SpotlightHero } from './sections/SpotlightHero'
 import { SpotlightChart } from './sections/SpotlightChart'
 import { SpotlightEngine } from './sections/SpotlightEngine'
 import { SpotlightStates } from './sections/SpotlightStates'
+import { SpotlightGraded } from './sections/SpotlightGraded'
 import { SpotlightPopExpandable } from './sections/SpotlightPopExpandable'
 import { SNOW, FONT } from './snowTokens'
 
@@ -75,6 +76,22 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
   const prices = data?.prices
   const kodo = data?.kodo ?? null
   const isJp = (lang || card?.lang || '').toString().toUpperCase().startsWith('J')
+
+  // Lignes gradees servies a SpotlightGraded. La route remplit bySource.ppt_graded
+  // avec du FR (cardmarket_fr/ebay_fr, EUR) pour une carte FR, du US sinon :
+  // la devise et la nature (ask vs vente) viennent donc de la DONNEE.
+  const gradedRows = useMemo(() => (
+    ((prices?.bySource as any)?.ppt_graded || [])
+      .map((e: any) => ({
+        variant: e.variant,
+        price: Number(e.price_avg),
+        currency: e.currency,
+        sales: e.nb_sales,
+        isAsk: e.is_ask === true,
+      }))
+      .filter((r: any) => Number.isFinite(r.price) && r.price > 0)
+  ), [prices])
+
 
   return (
     <div className="spotv2-root" style={{
@@ -148,7 +165,14 @@ export function SpotlightV2({ cardId, lang, portfolio }: SpotlightV2Props) {
 
         <div className={`spot-sec ${tab === 'marche' ? 'on' : ''}`}>
         {prices ? (
-          <SpotlightStates prices={prices} portfolio={portfolio} kodo={kodo} lang={card?.lang} />
+          <>
+            <SpotlightStates prices={prices} portfolio={portfolio} kodo={kodo} lang={card?.lang} />
+            <SpotlightGraded
+              rows={gradedRows}
+              locked={(prices.bySource as any).__gradedLocked === true}
+              hiddenCount={Number((prices.bySource as any).__gradedHiddenCount || 0)}
+            />
+          </>
         ) : (
           <SkeletonBox height={140} />
         )}

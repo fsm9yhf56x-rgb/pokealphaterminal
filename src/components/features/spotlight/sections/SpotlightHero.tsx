@@ -223,20 +223,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
-          {showGradedFallback ? (
-            <div style={{ textAlign: 'right' as const, maxWidth: 230 }}>
-              <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 3 }}>Marché gradé</div>
-              {gradedMarket.map((g, i) => (
-                <div key={i} style={{ fontSize: 12.5, fontFamily: FONT.display, color: SNOW.ink, fontWeight: 500, lineHeight: 1.5 }}>
-                  <span style={{ color: SNOW.muted, fontWeight: 600 }}>{g.lab}</span>{' · '}{Math.round(g.price).toLocaleString('fr-FR')}{gradedCur}
-                </div>
-              ))}
-              {gradedLocked && gradedHidden > 0 ? (
-                <div style={{ fontSize: 10.5, color: SNOW.red, fontWeight: 600, fontFamily: FONT.display, marginTop: 3 }}>+ {gradedHidden} notes · Premium</div>
-              ) : null}
-              <div style={{ fontSize: 9.5, color: SNOW.mutedLight, fontStyle: 'italic' as const, marginTop: 4, whiteSpace: 'normal' as const, lineHeight: 1.3 }}>Ventes gradées — ton exemplaire non gradé peut valoir nettement moins</div>
-            </div>
-          ) : insufficient ? (
+          {insufficient ? (
             <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>{isFr ? 'Données insuffisantes' : 'Pas de cote occidentale'}</div>
           ) : (
           <div>

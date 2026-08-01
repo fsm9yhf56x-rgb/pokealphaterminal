@@ -106,11 +106,14 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
   const seg = (on: boolean) => ({
     flex: 1, padding: "10px 8px", borderRadius: 10,
     border: "1px solid rgba(255,255,255,0.6)",
-    background: on ? "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)" : "rgba(255,255,255,0.45)",
+    // Blanc sur blanc : l'ancien actif ne se distinguait pas (0.95 contre 0.45
+    // d'opacite sur fond deja blanc). Meme vocabulaire que les pastilles de
+    // filtre juste en dessous — encre pleine pour l'actif.
+    background: on ? "#1D1D1F" : "rgba(255,255,255,0.55)",
     backdropFilter: "blur(12px) saturate(180%)", WebkitBackdropFilter: "blur(12px) saturate(180%)",
-    color: on ? "#1D1D1F" : "#48484A", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+    color: on ? "#FFFFFF" : "#48484A", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
     fontFamily: "var(--font-display)", transition: "all .2s cubic-bezier(.2,.85,.3,1)",
-    boxShadow: on ? "0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)" : "inset 0 1px 0 rgba(255,255,255,0.7)",
+    boxShadow: on ? "0 2px 10px rgba(0,0,0,0.16)" : "inset 0 0 0 .5px rgba(0,0,0,.07)",
   } as const)
 
   return createPortal(

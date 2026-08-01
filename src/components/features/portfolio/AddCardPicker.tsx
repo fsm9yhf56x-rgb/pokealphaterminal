@@ -27,6 +27,9 @@ const LANGS: Array<{ k: 'FR' | 'EN' | 'JP'; label: string; flag: string }> = [
   { k: 'JP', label: "\u65E5\u672C\u8A9E", flag: "\u{1F1EF}\u{1F1F5}" },
 ]
 
+// Cache module : survit au demontage du modal, indexe par langue.
+const ALIAS_CACHE = new Map<string, Map<string, string>>()
+
 export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, defaultLang = 'FR' }: {
   open: boolean
   onClose: () => void
@@ -38,6 +41,7 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
   const [q, setQ] = useState("")
   const [cards, setCards] = useState<FlatCard[]>([])
   const [setNames, setSetNames] = useState<Record<string, string>>({})
+  const [setLogos, setSetLogos] = useState<Record<string, string>>({})
   const [setList, setSetList] = useState<Array<{ id: string; name: string; n: number }>>([])
   const [setFilter, setSetFilter] = useState("")
   const [loading, setLoading] = useState(false)
@@ -59,12 +63,15 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
       .then(([flat, sets]) => {
         if (!alive) return
         const noms: Record<string, string> = {}
+        const logos: Record<string, string> = {}
         for (const s of sets as any[]) {
           const id = String(s.id ?? '')
           const nom = String(s.name ?? s.n ?? '')
           if (id && nom) noms[id] = nom
+          if (id && s.logo) logos[id] = String(s.logo)
         }
         setSetNames(noms)
+        setSetLogos(logos)
         setCards(flat)
         // Parcourir reste possible : la liste deroulante d'avant MONTRAIT ce qui
         // existe. Sans elle l'ecran demande de se souvenir au lieu de reconnaitre.
@@ -79,7 +86,13 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
   }, [lang, open])
 
   // Sac d'alias : UNE fois par carte et par langue, jamais dans la boucle de frappe.
+  // Construit PARESSEUSEMENT : 22 500 appels a aliasBag (plusieurs regex chacun)
+  // a chaque changement de langue rendaient la bascule poussive, meme quand
+  // l'utilisateur ne cherchait rien. Cache module -> FR->EN->FR est gratuit.
   const index = useMemo(() => {
+    if (!q.trim() || q.trim().length < 2) return new Map<string, string>()
+    const hit = ALIAS_CACHE.get(lang)
+    if (hit && hit.size === cards.length) return hit
     const totaux = new Map<string, number>()
     for (const c of cards) totaux.set(c.setId, (totaux.get(c.setId) || 0) + 1)
     const m = new Map<string, string>()
@@ -90,8 +103,9 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
         extra: [c.rarity],
       }))
     }
+    ALIAS_CACHE.set(lang, m)
     return m
-  }, [cards, setNames])
+  }, [cards, setNames, lang, q])
 
   const compiled = useMemo(() => compileQuery(q), [q])
   const numOf = (c: FlatCard) => {
@@ -126,11 +140,14 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
   const seg = (on: boolean) => ({
     flex: 1, padding: "10px 8px", borderRadius: 10,
     border: "1px solid rgba(255,255,255,0.6)",
-    background: on ? "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 100%)" : "rgba(255,255,255,0.45)",
+    // Blanc sur blanc : l'ancien actif ne se distinguait pas (0.95 contre 0.45
+    // d'opacite sur fond deja blanc). Meme vocabulaire que les pastilles de
+    // filtre juste en dessous — encre pleine pour l'actif.
+    background: on ? "#1D1D1F" : "rgba(255,255,255,0.55)",
     backdropFilter: "blur(12px) saturate(180%)", WebkitBackdropFilter: "blur(12px) saturate(180%)",
-    color: on ? "#1D1D1F" : "#48484A", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+    color: on ? "#FFFFFF" : "#48484A", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
     fontFamily: "var(--font-display)", transition: "all .2s cubic-bezier(.2,.85,.3,1)",
-    boxShadow: on ? "0 2px 8px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)" : "inset 0 1px 0 rgba(255,255,255,0.7)",
+    boxShadow: on ? "0 2px 10px rgba(0,0,0,0.16)" : "inset 0 0 0 .5px rgba(0,0,0,.07)",
   } as const)
 
   return createPortal(
@@ -199,7 +216,16 @@ export function AddCardPicker({ open, onClose, onSwitchToSealed, onPick, default
                     background: "rgba(255,255,255,0.55)", textAlign: "left", boxShadow: "inset 0 0 0 .5px rgba(0,0,0,.055)" }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.95)" }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.55)" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+                  <span style={{ width: 34, height: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {setLogos[st.id] ? (
+                      <img src={setLogos[st.id]} alt="" loading="lazy"
+                        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                    ) : null}
+                  </span>
                   <span style={{ fontSize: 12.5, fontWeight: 600, color: "#1D1D1F", fontFamily: "var(--font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{st.name}</span>
+                </span>
                   <span style={{ fontSize: 11, color: "#AEAEB2", fontFamily: "var(--font-data)", flexShrink: 0 }}>{st.n}</span>
                 </button>
               ))}

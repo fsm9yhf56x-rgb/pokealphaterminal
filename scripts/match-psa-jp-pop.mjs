@@ -60,7 +60,7 @@ async function main() {
   console.log('Cartes JP non mappees:', unmapped.length)
   if (unmapped.length === 0) { console.log('Rien a faire.'); return }
 
-  const ourSets = await sql`SELECT id FROM k_sets WHERE 'jp'=ANY(langs)`
+  const ourSets = await sql`SELECT id FROM k_sets WHERE 'jp'=ANY(langs) AND NOT hidden`
   const setIds = ourSets.map(s => s.id)
 
   // PASSE 1 : set+numero (code PSA = prefixe du slug)

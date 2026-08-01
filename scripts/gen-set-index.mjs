@@ -5,7 +5,8 @@ const sql = neon(process.env.DATABASE_URL)
 const sets = await sql`
   SELECT s.id, s.name, s.name_fr, s.name_jp, s.series, s.release_date,
          s.langs, s.total_cards, s.logo_url
-  FROM k_sets s`
+  FROM k_sets s
+  WHERE NOT s.hidden`
 
 const printedTotals = await sql`
   SELECT set_id,

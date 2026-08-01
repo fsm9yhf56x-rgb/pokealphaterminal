@@ -194,7 +194,7 @@ async function fxUsdEur() {
 
 const setRows = await sql.query(
   `SELECT id, name, series FROM k_sets
-    WHERE langs::text ILIKE '%en%' AND name IS NOT NULL ORDER BY id`
+    WHERE langs::text ILIKE '%en%' AND name IS NOT NULL AND NOT hidden ORDER BY id`
 );
 let sets = [];
 for (const r of setRows) {

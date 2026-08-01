@@ -87,7 +87,7 @@ async function loadSets() {
   const rows = await sql.query(
     `SELECT id, name, name_fr, series, release_date
        FROM k_sets
-      WHERE langs::text ILIKE '%fr%' AND name IS NOT NULL
+      WHERE langs::text ILIKE '%fr%' AND name IS NOT NULL AND NOT hidden
       ORDER BY id`
   );
   const byCode = new Map();

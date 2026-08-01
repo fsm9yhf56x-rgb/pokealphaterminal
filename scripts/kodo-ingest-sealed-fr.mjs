@@ -309,7 +309,7 @@ async function upsertPrices(rows) {
 
 const setRows = await sql.query(
   `SELECT id, name, name_fr, series, logo_url FROM k_sets
-    WHERE langs::text ILIKE '%fr%' AND name IS NOT NULL ORDER BY id`
+    WHERE langs::text ILIKE '%fr%' AND name IS NOT NULL AND NOT hidden ORDER BY id`
 );
 const byCode = new Map();
 const byName = [];

@@ -75,6 +75,11 @@ const TC: Record<string,string> = {
 }
 
 /**
+ * CEINTURE DE SECURITE. La source de verite est desormais k_sets.hidden, dont
+ * heritent les vues k_sets_export / k_cards_export (donc le static, le picker
+ * d'ajout et les crons). Cette liste ne sert qu'a couvrir un static pas encore
+ * regenere ; ne rien y ajouter sans le poser AUSSI en base.
+ *
  * Sets ecartes de l Index : Energies de base vendues comme "set" par TCGdex.
  * Aucune image, aucun interet de collection, elles encombrent le selecteur.
  */
@@ -83,6 +88,17 @@ const HIDDEN_SETS = new Set([
   'xya',          // 6 cartes sans cote, 3 sans image, 2 avec la MAUVAISE image
                   // (24a et 55a servent le meme Garchomp sur R2), nom mal traduit.
                   // On ne sait rien en dire de juste -> mieux vaut ne rien montrer.
+  // Galeries de Dresseurs / Galarienne : DOUBLONS INTEGRAUX. Chaque serie mere
+  // contient deja ses cartes TG/GG (swsh10 = 246 cartes, de 001 a TG30), et ces
+  // sets les repetent a l'identique. Pire : leurs print_id sont DISTINCTS et ne
+  // portent AUCUNE cote (swsh10-TG22 = 23 lignes de prix, swsh10.5tg-TG22 = 0)
+  // -> un catalogue mort qui doublait chaque carte dans le selecteur.
+  // Les cartes restent accessibles via leur serie mere ; on masque le set, pas
+  // les cartes, donc aucun portfolio ne devient orphelin.
+  'swsh9.5tg',    // Stars Etincelantes Galerie de Dresseurs (30, deja dans swsh9)
+  'swsh10.5tg',   // Astres Radieux — l'id ment, il pointe swsh10.5 (Pokemon GO)
+  'swsh12.5tg',   // Tempete Argentee Galerie de Dresseurs (30, deja dans swsh12)
+  'swsh12.5gg',   // Zenith Supreme Galerie Galarienne (70, deja dans swsh12.5)
 ])
 
 const ERA_ORDER = ['Original (WotC)','EX','Diamant & Perle / Platine','Noir & Blanc','XY','Soleil & Lune','Épée & Bouclier','Écarlate & Violet','Méga-Évolution','Pokémon Pocket','Promos & Coffrets']

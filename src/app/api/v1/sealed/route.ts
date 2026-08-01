@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
          FROM k_sealed_products p
          LEFT JOIN sealed_prices sp ON sp.sealed_id = p.id
          LEFT JOIN k_sets ks ON ks.id = p.kodo_set_id
-         LEFT JOIN sealed_ask_window w ON w.sealed_id = p.id
+         LEFT JOIN sealed_ask_window w ON w.sealed_id = p.id AND w.lang = p.lang
         WHERE ${where.join(' AND ')}
         ORDER BY ${order}
         LIMIT ${pLimit} OFFSET ${pOffset}`,

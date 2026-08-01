@@ -38,6 +38,10 @@ const SKU_TABS: Array<{ k: string; label: string }> = [
 const eur = (n?: number | null) =>
   n == null ? "\u2014" : new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n) + " \u20AC"
 
+// Catalogue deja charge, par (langue, sku). Le modal se demonte a chaque
+// fermeture : sans cache module, revenir sur une langue relance une requete.
+const CATALOGUE_CACHE = new Map<string, Item[]>()
+
 export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
   open: boolean
   onClose: () => void
@@ -46,6 +50,7 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
 }) {
   const [q, setQ] = useState("")
   const [sku, setSku] = useState("")
+  const [lang, setLang] = useState<"fr" | "en">("fr")
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
   const box = useRef<HTMLInputElement>(null)
@@ -60,18 +65,54 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
   useEffect(() => {
     if (!open) return
     let alive = true
+    // VIDER AVANT DE CHARGER. Sans ca, la liste de l'ancienne langue restait
+    // affichee pendant le vol de la nouvelle requete : on voyait deux "Neo
+    // Discovery" anglais en tete d'une liste francaise. 'alive' protege contre
+    // une reponse tardive, pas contre l'affichage de l'etat precedent.
+    const cle = lang
+    const enCache = CATALOGUE_CACHE.get(cle)
+    if (enCache) { setItems(enCache); setLoading(false); return }
+    setItems([])
     setLoading(true)
     const t = setTimeout(() => {
-      fetch("/api/v1/sealed?limit=1000&sort=price"
-        + (sku ? "&sku=" + encodeURIComponent(sku) : ""),
+      fetch("/api/v1/sealed?limit=1000&sort=price&lang=" + lang,
         { credentials: "same-origin", cache: "no-store" })
         .then((r) => r.json())
-        .then((d) => { if (alive) setItems(Array.isArray(d.items) ? d.items : []) })
+        .then((d) => {
+          if (!alive) return
+          const recus: Item[] = Array.isArray(d.items) ? d.items : []
+          // Double garde : on n'affiche que ce qui correspond a la langue
+          // demandee, quoi que la route ait renvoye.
+          const propres = recus.filter((x) => String(x.lang || '').toLowerCase() === lang.toLowerCase())
+          CATALOGUE_CACHE.set(cle, propres)
+          setItems(propres)
+        })
         .catch(() => { if (alive) setItems([]) })
         .finally(() => { if (alive) setLoading(false) })
     }, 0)
     return () => { alive = false; clearTimeout(t) }
-  }, [sku, open])
+  }, [lang, open])
+
+  // PRECHARGEMENT. Mieux qu'une animation qui masque l'attente : on la supprime.
+  // Pendant que l'utilisateur lit la liste courante, l'autre langue arrive en
+  // cache — la bascule devient instantanee, sans "Recherche...".
+  useEffect(() => {
+    if (!open) return
+    const autre = lang === 'fr' ? 'en' : 'fr'
+    if (CATALOGUE_CACHE.has(autre)) return
+    const t = setTimeout(() => {
+      fetch("/api/v1/sealed?limit=1000&sort=price&lang=" + autre,
+        { credentials: "same-origin", cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => {
+          const recus: Item[] = Array.isArray(d.items) ? d.items : []
+          CATALOGUE_CACHE.set(autre, recus.filter(
+            (x) => String(x.lang || '').toLowerCase() === autre))
+        })
+        .catch(() => {})
+    }, 600)   // laisse la requete visible passer devant
+    return () => clearTimeout(t)
+  }, [lang, open])
 
   // Sac d'alias : nom, serie, SKU, et surtout le CODE de serie (sm12 -> SL12,
   // swsh7 -> EB07) que le q= SQL ne savait pas comparer.
@@ -88,18 +129,19 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
 
   const compiled = useMemo(() => compileQuery(q), [q])
   const visibles = useMemo(() => {
-    if (!q.trim()) return items
-    const out = items.filter((it) => matchCompiled(index.get(it.id) || '', compiled))
+    const base = sku ? items.filter((it) => sku.split(',').includes(String(it.sku || ''))) : items
+    if (!q.trim()) return base
+    const out = base.filter((it) => matchCompiled(index.get(it.id) || '', compiled))
     if (out.length || queryTokenCount(compiled) < 2) return out
     // Degradation : un jeton fautif n'efface pas un jeton juste.
     let best = 0
     const sc = new Map<string, number>()
-    for (const it of items) {
+    for (const it of base) {
       const n = scoreCompiled(index.get(it.id) || '', compiled)
       if (n > 0) { sc.set(it.id, n); if (n > best) best = n }
     }
-    return best > 0 ? items.filter((it) => sc.get(it.id) === best) : []
-  }, [items, index, compiled, q])
+    return best > 0 ? base.filter((it) => sc.get(it.id) === best) : []
+  }, [items, index, compiled, q, sku])
 
   if (!open) return null
 
@@ -132,6 +174,15 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
           <button style={seg(true)}>Scell&eacute;</button>
         </div>
 
+        <div style={{ display: "flex", gap: 6, marginBottom: 12, flexShrink: 0 }}>
+          {([["fr", "Fran\u00E7ais", "\u{1F1EB}\u{1F1F7}"], ["en", "English", "\u{1F1FA}\u{1F1F8}"]] as const).map(([k, lbl, flag]) => (
+            <button key={k} onClick={() => setLang(k)}
+              style={{ ...seg(lang === k), display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}>
+              <span style={{ fontSize: 15 }}>{flag}</span>{lbl}
+            </button>
+          ))}
+        </div>
+
         <input ref={box} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={'Série, code (EB07), display, ETB…'}
           style={{ width: "100%", padding: "12px 13px", borderRadius: 12, border: "1px solid rgba(229,229,234,0.8)", background: "rgba(255,255,255,0.92)", color: "#1D1D1F", fontSize: 13.5, fontFamily: "var(--font-display)", boxSizing: "border-box", outline: "none", marginBottom: 12, flexShrink: 0 }} />
@@ -162,7 +213,7 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
           background: "linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0))" }} />
         <div style={{ overflowY: "auto", flex: 1, margin: "0 -6px", padding: "0 6px" }}>
           {loading && items.length === 0 ? (
-            <div style={{ padding: "34px 0", textAlign: "center", fontSize: 12.5, color: "#86868B", fontFamily: "var(--font-display)" }}>Recherche\u2026</div>
+            <div style={{ padding: "34px 0", textAlign: "center", fontSize: 12.5, color: "#86868B", fontFamily: "var(--font-display)" }}>{'Recherche\u2026'}</div>
           ) : visibles.length === 0 ? (
             <div style={{ padding: "34px 0", textAlign: "center", fontSize: 12.5, color: "#86868B", fontFamily: "var(--font-display)" }}>
               {sku || q.trim()

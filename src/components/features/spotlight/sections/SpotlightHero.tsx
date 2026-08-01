@@ -113,7 +113,11 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
     if (!m) return null
     return { lab: m[1].toUpperCase() + ' ' + m[2].replace('_', '.') }
   }
-  const gradedMarket = (prices.bySource.ppt_graded || prices.bySource.ebay || [])
+  const gradedSrc = (prices.bySource.ppt_graded || prices.bySource.ebay || []) as any[]
+  // La devise vient de la DONNEE, jamais d'un litteral : pour une carte FR la
+  // route sert du cardmarket_fr/ebay_fr en EUR, pour les autres du sold US en USD.
+  const gradedCur = ' ' + (gradedSrc.find((e: any) => e?.currency)?.currency === 'USD' ? '$' : '\u20AC')
+  const gradedMarket = gradedSrc
     .map((e: any) => {
       const g = gradeFromVar(e.variant)
       return g && e.price_avg > 0 ? { lab: g.lab, price: e.price_avg, sales: e.nb_sales || 0 } : null
@@ -224,7 +228,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
               <div style={{ fontSize: 9.5, color: SNOW.muted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', fontWeight: 700, fontFamily: FONT.display, marginBottom: 3 }}>Marché gradé</div>
               {gradedMarket.map((g, i) => (
                 <div key={i} style={{ fontSize: 12.5, fontFamily: FONT.display, color: SNOW.ink, fontWeight: 500, lineHeight: 1.5 }}>
-                  <span style={{ color: SNOW.muted, fontWeight: 600 }}>{g.lab}</span>{' · '}{Math.round(g.price).toLocaleString('fr-FR')} $
+                  <span style={{ color: SNOW.muted, fontWeight: 600 }}>{g.lab}</span>{' · '}{Math.round(g.price).toLocaleString('fr-FR')}{gradedCur}
                 </div>
               ))}
               {gradedLocked && gradedHidden > 0 ? (
@@ -239,7 +243,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
             <span style={{ fontFamily: FONT.display, fontSize: 30, fontWeight: 600, letterSpacing: '-0.028em', lineHeight: 1, color: SNOW.ink }}>{priceMain}</span>
             <span style={{ fontSize: 18, color: SNOW.mutedLight, fontWeight: 400, fontFamily: FONT.display }}>{priceCents}</span>
             {!isFr && !showPortfolio && heroPrice != null && (prices as any).fxUsdEur > 0 ? (
-              <span style={{ display: 'block', fontSize: 12, color: SNOW.mutedLight, fontWeight: 600, fontFamily: FONT.data, letterSpacing: '-0.01em', marginTop: 2 }}>~${(heroPrice / (prices as any).fxUsdEur).toFixed(2)}</span>
+              <span style={{ display: 'block', fontSize: 12, color: SNOW.mutedLight, fontWeight: 600, fontFamily: FONT.data, letterSpacing: '-0.01em', marginTop: 2 }}>{'~$' + (heroPrice / (prices as any).fxUsdEur).toFixed(2)}</span>
             ) : null}
           </div>
           )}

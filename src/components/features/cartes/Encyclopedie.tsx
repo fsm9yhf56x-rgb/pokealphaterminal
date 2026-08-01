@@ -451,7 +451,7 @@ export function Encyclopedie() {
   // Encyclopedie affiche toutes les cartes → setIds=null charge tous les prix
   const { priceDetails, priceMap, setMapping } = useCardPrices(null, { byName: false })
   // ── Kodo Engine: prix par lot pour les cartes visibles (fallback legacy si absent) ──
-  const [kodoPrices, setKodoPrices] = useState<Record<string, { displayEur: number|null; coteFrEur: number|null; liquidity: number|null }>>({})
+  const [kodoPrices, setKodoPrices] = useState<Record<string, { displayEur: number|null; coteFrEur: number|null; liquidity: number|null; basis?: string|null }>>({})
   const kodoRequested = useRef<Set<string>>(new Set())
   const kodoIdOf = useCallback((c: any): string => {
     // L'id reel de la carte est deja l'id Kodo (fr-ecard1-1, jp-603707, en-base1-4).
@@ -507,6 +507,15 @@ export function Encyclopedie() {
     if(priceMap[nameKey]?.top) return Math.round(priceMap[nameKey].top! * USD_TO_EUR * 100) / 100
     return null
   }
+  // Le prix vient-il d'une COTE de la langue affichee, ou d'un repli sur la
+  // reference EU ? kodo_state vit par print_id, sans langue : la valeur est
+  // partagee avec la carte anglaise. On l'affiche donc en gris precede d'un '~',
+  // jamais comme une cote FR.
+  const isEuRef = (card: { name: string; setName?: string; localId?: string; setId?: string }): boolean => {
+    const kid = kodoIdOf(card)
+    return (kid ? kodoPrices[kid]?.basis : null) === 'eu_ref'
+  }
+
   const getPriceDetail = (card: { name: string; setName?: string; localId?: string; setId?: string }): { ebay: number|null; tcg: number|null; cardmarket: number|null; poketrace: number|null; estimated: number|null } | null => {
     const sid = (card as any).setId || ''
     const slug = setMapping[sid] || setMapping[sid.replace(/-shadowless(-ns)?|-1st/g,'')] || ''
@@ -1733,7 +1742,19 @@ export function Encyclopedie() {
                             {card.setId?.includes('-shadowless')?<span style={{ fontSize:'7px', fontWeight:700, padding:'1px 4px', borderRadius:'3px', background:'linear-gradient(135deg,#e8eeff,#dde4ff)', color:'#4338ca', fontFamily:'var(--font-data)', letterSpacing:'.03em' }}>SHADOWLESS</span>:null}
                           </div>
                         )}
-                        {(()=>{ const gp = isInvestor ? getPrice(card) : null; return gp ? <div style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>{formatEUR(gp, 'small')}</div> : null })()}
+                        {(()=>{
+                          const gp = isInvestor ? getPrice(card) : null
+                          if (!gp) return null
+                          // Le '~' marque un repli sur la reference EU (kodo_state, partagee
+                          // avec la carte anglaise via print_id) : un ordre de grandeur,
+                          // pas une cote de la langue affichee. Meme couleur, le tilde
+                          // et l'infobulle portent la nuance.
+                          const ref = isEuRef(card)
+                          return <div title={ref ? 'Reference europeenne (toutes langues) — pas une cote de cette langue' : undefined}
+                            style={{ fontSize:'11px', fontWeight:600, color:'#2E9E6A', fontFamily:'var(--font-data)', marginTop:'3px' }}>
+                            {(ref ? '~ ' : '') + formatEUR(gp, 'small')}
+                          </div>
+                        })()}
                         {lang==='JP' && jpToNames(card.name,jpEnDict) && cardSize!=='S' && (()=>{
                           const t = jpToNames(card.name,jpEnDict)!
                           return (

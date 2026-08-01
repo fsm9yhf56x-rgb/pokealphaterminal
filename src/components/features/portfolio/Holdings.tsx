@@ -358,8 +358,13 @@ export function Holdings() {
   }>({name:'',set:'',setId:'',type:'fire',lang:'FR',condition:'Near Mint',graded:false,gradeCompany:'PSA',gradeValue:'',buyPrice:'',qty:1,year:new Date().getFullYear(),image:'',setTotal:0,number:'',rarity:'',edition:'Unlimited',variant:'Normal'})
   const [toast, setToast] = useState<{msg:string;undo?:()=>void}|null>(null)
   const [importOpen,   setImportOpen]   = useState(false)
-  const [cardPickOpen,   setCardPickOpen]   = useState(false)
-  const [sealedPickOpen, setSealedPickOpen] = useState(false)
+  // Un seul etat : deux booleens autorisaient les deux pickers ouverts ensemble,
+  // au meme zIndex, et l'ordre du DOM decidait lequel s'affichait.
+  const [pickMode, setPickMode] = useState<'card' | 'sealed' | null>(null)
+  const cardPickOpen = pickMode === 'card'
+  const sealedPickOpen = pickMode === 'sealed'
+  const setCardPickOpen = (v: boolean) => setPickMode(v ? 'card' : null)
+  const setSealedPickOpen = (v: boolean) => setPickMode(v ? 'sealed' : null)
   const [sealedSeed,     setSealedSeed]     = useState<SealedSeed | null>(null)
   const [addSetOpen,   setAddSetOpen]   = useState(false)
   const [addSetLang,   setAddSetLang]   = useState<'FR'|'EN'|'JP'>('FR')
@@ -4351,11 +4356,11 @@ export function Holdings() {
         brevoListId={null}
       />
       <AddCardPicker open={cardPickOpen} onClose={()=>setCardPickOpen(false)}
-        onSwitchToSealed={()=>{ setCardPickOpen(false); setSealedPickOpen(true) }}
+        onSwitchToSealed={()=>setPickMode('sealed')}
         onPick={applyCardSeed} defaultLang={addForm.lang} />
       <AddSealedPicker open={sealedPickOpen} onClose={()=>setSealedPickOpen(false)}
-        onSwitchToCard={()=>{ setSealedPickOpen(false); setCardPickOpen(true) }}
-        onPick={(seed)=>{ setSealedPickOpen(false); setSealedSeed(seed) }} />
+        onSwitchToCard={()=>setPickMode('card')}
+        onPick={(seed)=>{ setPickMode(null); setSealedSeed(seed) }} />
       <AddSealedModal open={!!sealedSeed} onClose={()=>setSealedSeed(null)}
         product={sealedSeed} onAdd={handleSealedAdd} />
       <ImportPortfolioModal

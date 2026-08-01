@@ -234,23 +234,31 @@ export async function GET(req: NextRequest) {
     if (history.length === 0) {
       // UNE seule serie coherente: priorite NM tcgplayer > NM ppt > Trend cardmarket.
       // Jamais melanger les tiers (variation fictive sinon).
+      // CHAQUE MARCHE SUR SA CARTE, l'historique compris. price_history vit par
+      // print_id SANS langue : une carte FR sans donnee EU recevait la serie
+      // NEAR_MINT/tcgplayer/USD convertie en euros — une courbe du marche US
+      // sous drapeau francais, avec un "+10,6% sur 90j" qui decrit une tendance
+      // americaine. Pas de donnee FR -> pas de courbe.
+      const frOnly = String((card as any)?.lang || '').toUpperCase() === 'FR'
       const khRows = await sql`
         WITH series AS (
-          SELECT ph.tier, ph.source, count(*) AS pts,
+          SELECT ph.tier, ph.source, ph.market, count(*) AS pts,
             CASE WHEN ph.tier='NEAR_MINT' AND ph.source='tcgplayer' THEN 0
                  WHEN ph.tier='NEAR_MINT' AND ph.source='ppt_tcgplayer' THEN 1
                  WHEN ph.tier='AGGREGATED' AND ph.source='cardmarket' THEN 2
                  ELSE 9 END AS prio
           FROM k_cards kc JOIN price_history ph ON ph.print_id = kc.print_id
           WHERE kc.id = ${cardId} AND ph.price > 0
-          GROUP BY ph.tier, ph.source
+          GROUP BY ph.tier, ph.source, ph.market
         ), best AS (
-          SELECT tier, source FROM series WHERE prio < 9 ORDER BY prio, pts DESC LIMIT 1
+          SELECT tier, source, market FROM series
+           WHERE prio < 9 AND (${frOnly} = false OR market = 'EU')
+           ORDER BY prio, pts DESC LIMIT 1
         )
         SELECT ph.day, ph.price, ph.currency
         FROM k_cards kc
         JOIN price_history ph ON ph.print_id = kc.print_id
-        JOIN best b ON b.tier = ph.tier AND b.source = ph.source
+        JOIN best b ON b.tier = ph.tier AND b.source = ph.source AND b.market = ph.market
         WHERE kc.id = ${cardId} AND ph.price > 0
         ORDER BY ph.day ASC LIMIT 365
       ` as Array<any>

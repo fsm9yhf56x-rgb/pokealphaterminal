@@ -6,10 +6,11 @@
 // La langue n'est PAS saisissable ici : c'est une propriete du produit trouve.
 // La rendre modifiable laisserait fabriquer une cle absente de sealed_prices,
 // donc une ligne jamais revalorisee.
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import type { SealedSeed } from "@/components/features/card/AddSealedModal"
 import { kthumbFit } from "@/lib/sealed-fit"
+import { aliasBag, compileQuery, matchCompiled, scoreCompiled, queryTokenCount } from "@/lib/search-alias"
 
 type Item = {
   id: string; name: string; shortName?: string | null; lang: string
@@ -61,19 +62,44 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
     let alive = true
     setLoading(true)
     const t = setTimeout(() => {
-      const cible = q.trim() || sku
-      fetch("/api/v1/sealed?limit=" + (cible ? 120 : 40)
-        + "&sort=" + (cible ? "name" : "price")
-        + (q.trim() ? "&q=" + encodeURIComponent(q.trim()) : "")
+      fetch("/api/v1/sealed?limit=1000&sort=price"
         + (sku ? "&sku=" + encodeURIComponent(sku) : ""),
         { credentials: "same-origin", cache: "no-store" })
         .then((r) => r.json())
         .then((d) => { if (alive) setItems(Array.isArray(d.items) ? d.items : []) })
         .catch(() => { if (alive) setItems([]) })
         .finally(() => { if (alive) setLoading(false) })
-    }, q.trim() ? 260 : 0)
+    }, 0)
     return () => { alive = false; clearTimeout(t) }
-  }, [q, sku, open])
+  }, [sku, open])
+
+  // Sac d'alias : nom, serie, SKU, et surtout le CODE de serie (sm12 -> SL12,
+  // swsh7 -> EB07) que le q= SQL ne savait pas comparer.
+  const index = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const it of items) {
+      m.set(it.id, aliasBag({
+        name: it.name, setId: it.setId, setName: it.setName,
+        extra: [it.shortName, it.sku, it.lang],
+      }))
+    }
+    return m
+  }, [items])
+
+  const compiled = useMemo(() => compileQuery(q), [q])
+  const visibles = useMemo(() => {
+    if (!q.trim()) return items
+    const out = items.filter((it) => matchCompiled(index.get(it.id) || '', compiled))
+    if (out.length || queryTokenCount(compiled) < 2) return out
+    // Degradation : un jeton fautif n'efface pas un jeton juste.
+    let best = 0
+    const sc = new Map<string, number>()
+    for (const it of items) {
+      const n = scoreCompiled(index.get(it.id) || '', compiled)
+      if (n > 0) { sc.set(it.id, n); if (n > best) best = n }
+    }
+    return best > 0 ? items.filter((it) => sc.get(it.id) === best) : []
+  }, [items, index, compiled, q])
 
   if (!open) return null
 
@@ -104,7 +130,7 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
         </div>
 
         <input ref={box} value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder={'Rechercher une série, un display, un ETB…'}
+          placeholder={'Série, code (EB07), display, ETB…'}
           style={{ width: "100%", padding: "12px 13px", borderRadius: 12, border: "1px solid rgba(229,229,234,0.8)", background: "rgba(255,255,255,0.92)", color: "#1D1D1F", fontSize: 13.5, fontFamily: "var(--font-display)", boxSizing: "border-box", outline: "none", marginBottom: 12, flexShrink: 0 }} />
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingBottom: 10, marginBottom: 2, flexShrink: 0 }}>
@@ -134,13 +160,13 @@ export function AddSealedPicker({ open, onClose, onSwitchToCard, onPick }: {
         <div style={{ overflowY: "auto", flex: 1, margin: "0 -6px", padding: "0 6px" }}>
           {loading && items.length === 0 ? (
             <div style={{ padding: "34px 0", textAlign: "center", fontSize: 12.5, color: "#86868B", fontFamily: "var(--font-display)" }}>Recherche\u2026</div>
-          ) : items.length === 0 ? (
+          ) : visibles.length === 0 ? (
             <div style={{ padding: "34px 0", textAlign: "center", fontSize: 12.5, color: "#86868B", fontFamily: "var(--font-display)" }}>
               {sku || q.trim()
                 ? "Aucun produit ne correspond."
                 : "Le catalogue ne contient que les produits r\u00E9ellement en vente."}
             </div>
-          ) : items.map((it) => (
+          ) : visibles.map((it) => (
             <button key={it.id}
               onClick={() => onPick({
                 name: it.name, set_name: it.setName ?? null, set_id: it.setId ?? null,

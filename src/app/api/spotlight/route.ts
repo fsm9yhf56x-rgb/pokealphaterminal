@@ -177,8 +177,9 @@ export async function GET(req: NextRequest) {
     let history: Array<{ date: string; price: number }> = []
 
     // Detecte si condition = grade (ex: "PSA 9", "CGC 10")
+    const histFr = String(card.lang || '').toUpperCase() === 'FR'
     const gradeMatch = conditionRaw.match(/^([A-Za-z]+)\s+(\d+(?:\.\d+)?)$/)
-    const isGraded = !!gradeMatch
+    const isGraded = !!gradeMatch && !histFr
 
     if (isGraded) {
       // Convert "PSA 9" -> "psa9", "CGC 9.5" -> "cgc9_5" (format key dans grades_history)
@@ -207,7 +208,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Fallback raw : raw_history TCGplayer NM (dense) sinon Cardmarket (clairseme mais existant)
-    if (history.length === 0) {
+    // histFr : meme raison qu'au-dessus, raw_history est du TCGplayer US.
+    if (history.length === 0 && !histFr) {
       // 1. Tente raw_history TCGplayer Near Mint (depuis graded_prices_ppt.raw_history)
       const rawHistRows = await sql`
         SELECT raw_history->'conditions'->'Near Mint'->'history' AS nm_hist

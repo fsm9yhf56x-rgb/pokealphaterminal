@@ -72,7 +72,6 @@ export async function listPortfolio(userId: string): Promise<PortfolioCardRow[]>
     LEFT JOIN price_signals ps
       ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
     WHERE pc.user_id = ${userId}
-      AND pc.card_number IS DISTINCT FROM 'SEALED'
     ORDER BY COALESCE(pc.showcase_position, 999999) ASC, pc.created_at DESC
   `
   return (rows as any[]).map((r) => ({

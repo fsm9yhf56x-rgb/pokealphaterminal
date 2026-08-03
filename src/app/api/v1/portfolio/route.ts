@@ -9,6 +9,8 @@ import { getCurrentUser } from '@/lib/auth/helpers'
 import {
   listPortfolio, addPortfolioCard, updatePortfolioCard, deletePortfolioCard,
 } from '@/lib/portfolio/service'
+import { sql } from '@/lib/db/sql'
+import { priceCards } from '@/lib/portfolio-pricing'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
   }
   const created = await addPortfolioCard(user.id, body)
+  // Kodo Engine : la carte est cotée immédiatement, comme un ajout web
+  try { await priceCards(sql, { ids: [created.id] }) } catch {}
   return NextResponse.json({ ok: true, id: created.id }, { status: 201 })
 }
 

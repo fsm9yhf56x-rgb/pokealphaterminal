@@ -76,6 +76,9 @@ const TIER_BG: Record<string,string> = {
   A:'linear-gradient(135deg,#C855D4,#9C27B0)',
   B:'linear-gradient(135deg,#2E9E6A,#1A7A4A)',
 }
+const EDIT_STATES = ['NM','EX','GD','LP','PL','PO'] as const
+const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', GD:'Good', LP:'Lightly Played', PL:'Moderately Played', PO:'Damaged' }
+const EDIT_GRADE_COS = ['PSA','BGS','CGC','CCC','PCA','SGC']
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
 
@@ -341,6 +344,12 @@ export function Holdings() {
     }
   }, [spotCard])
   const [editQty,     setEditQty]     = useState<number|null>(null)
+  const [editOpen,    setEditOpen]    = useState(false)
+  const [fGraded,     setFGraded]     = useState(false)
+  const [fCo,         setFCo]         = useState('PSA')
+  const [fNote,       setFNote]       = useState('')
+  const [fCond,       setFCond]       = useState('NM')
+  const [fBuy,        setFBuy]        = useState('')
   const [cardZoom,    setCardZoom]    = useState(false)
   const favs = new Set(portfolio.filter(c=>c.favorite).map(c=>c.id))
   const [shareOpen,   setShareOpen]   = useState(false)
@@ -2060,10 +2069,70 @@ export function Holdings() {
                       <span style={{ fontSize:14, fontWeight:600, color:'#1D1D1F', minWidth:20, textAlign:'center', fontFamily:'var(--font-display)' }}>{curQty}</span>
                       <button onClick={()=>setEditQty(Math.min(99,curQty+1))} style={{ width:28, height:28, borderRadius:9, background:'#fff', border:'1px solid var(--border)', color:'#48484A', fontSize:14, fontWeight:600, cursor:'pointer' }}>+</button>
                       {editQty!==null && editQty!==spotCard.qty && (
-                        <button onClick={()=>{ setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:editQty!}:c)); setSpotCard({...spotCard,qty:editQty!}); setEditQty(null); showToast('Quantité mise à jour') }} style={{ padding:'6px 14px', borderRadius:10, background:'#1D1D1F', color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' }}>OK</button>
+                        <button onClick={async()=>{ const q=editQty!; setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,qty:q}:c)); setSpotCard({...spotCard,qty:q}); setEditQty(null); showToast('Quantité mise à jour'); try{ await fetch('/api/v1/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:spotCard.id,qty:q})}) }catch{ showToast('Hors ligne — réessaie') } }} style={{ padding:'6px 14px', borderRadius:10, background:'#1D1D1F', color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', whiteSpace:'nowrap' }}>OK</button>
                       )}
                     </div>
                   </div>
+
+                  {/* Gestion : MODIFIER (état, gradation, prix d'achat) — PATCH serveur */}
+                  <button onClick={()=>{
+                      if(!editOpen){ setFGraded(!!spotCard.graded); setFCo(spotCard.gradeCompany||'PSA'); setFNote(spotCard.gradeValue||''); const nc=normalizeCondition(spotCard.condition); setFCond(EDIT_STATES.includes(nc as any)?nc:'NM'); setFBuy(spotCard.buyPrice>0?String(spotCard.buyPrice):'') }
+                      setEditOpen(o=>!o)
+                    }}
+                    style={{ width:'100%', marginTop:8, padding:12, borderRadius:12, background:editOpen?'rgba(224,48,32,0.08)':'rgba(255,255,255,0.7)', border:`1px solid ${editOpen?'rgba(224,48,32,.25)':'var(--border)'}`, color:'#1D1D1F', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                    {editOpen ? 'Fermer la modification' : 'Modifier la carte'}
+                  </button>
+
+                  {editOpen && (
+                    <div style={{ marginTop:8, padding:'14px 14px 16px', borderRadius:14, background:'rgba(0,0,0,0.025)', border:'1px solid var(--border)' }}>
+                      <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Gradée</div>
+                      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+                        {[false,true].map(g=>(
+                          <button key={String(g)} onClick={()=>setFGraded(g)}
+                            style={{ padding:'7px 16px', borderRadius:18, border:'1px solid var(--border)', background:fGraded===g?'#1D1D1F':'#fff', color:fGraded===g?'#fff':'#48484A', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{g?'Oui':'Non'}</button>
+                        ))}
+                      </div>
+                      {fGraded ? (
+                        <>
+                          <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Société · Note</div>
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
+                            {EDIT_GRADE_COS.map(co=>(
+                              <button key={co} onClick={()=>setFCo(co)}
+                                style={{ padding:'6px 12px', borderRadius:16, border:'1px solid var(--border)', background:fCo===co?'#1D1D1F':'#fff', color:fCo===co?'#fff':'#48484A', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{co}</button>
+                            ))}
+                          </div>
+                          <input value={fNote} onChange={e=>setFNote(e.target.value)} placeholder="9.5" inputMode="decimal"
+                            style={{ width:90, padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:13, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:12 }} />
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>État</div>
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:12 }}>
+                            {EDIT_STATES.map(st=>(
+                              <button key={st} onClick={()=>setFCond(st)}
+                                style={{ padding:'6px 13px', borderRadius:16, border:'1px solid var(--border)', background:fCond===st?'#1D1D1F':'#fff', color:fCond===st?'#fff':'#48484A', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{st}</button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                      <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Prix d'achat (€)</div>
+                      <input value={fBuy} onChange={e=>setFBuy(e.target.value)} placeholder="—" inputMode="decimal"
+                        style={{ width:120, padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:13, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }} />
+                      <button onClick={async()=>{
+                          const note=fNote.replace(',','.').trim()
+                          const buyN=fBuy.trim()===''?null:Number(fBuy.replace(',','.'))
+                          const body={ id:spotCard.id, graded:fGraded, grade_company:fGraded?fCo:null, grade_value:fGraded?note:null, condition:fGraded?`${fCo} ${note}`:(STATE_TO_API[fCond]||fCond), buy_price:buyN }
+                          const patch={ graded:fGraded, gradeCompany:fGraded?fCo:undefined, gradeValue:fGraded?note:undefined, condition:body.condition, buyPrice:buyN??0 }
+                          setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,...patch}:c))
+                          setSpotCard({...spotCard,...patch})
+                          setEditOpen(false)
+                          showToast('Carte mise à jour ✓')
+                          try{ await fetch('/api/v1/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}) }catch{ showToast('Hors ligne — modification non enregistrée') }
+                        }}
+                        style={{ display:'block', width:'100%', marginTop:14, padding:12, borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'var(--font-display)' }}>Enregistrer</button>
+                    </div>
+                  )}
 
                   {/* Gestion : partager + favori */}
                   <div style={{ display:'flex', gap:8, marginTop:8 }}>

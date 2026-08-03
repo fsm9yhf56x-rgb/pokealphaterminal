@@ -1,16 +1,19 @@
 /**
- * Service domaine Cards — recherche encyclopédie (k_cards).
- * Utilisé par /api/v1/cards/search (mobile + web demain).
- * Trigramme dispo (idx_kcards_name_trgm) → tri par similarité.
+ * Service domaine Cards — recherche encyclopédie (k_cards). v2
+ * Renvoie l'image officielle (kc.image_url) et la rareté normalisée.
+ * Les résultats avec image remontent en premier.
  */
 
 import { sql } from '@/lib/db/sql'
 
 export interface CardSearchHit {
-  id: string          // {lang}-{set}-{num} (EN/FR) ou jp-{tcgPlayerId}
-  print_id: string    // {set}-{num}
+  id: string
+  print_id: string
   lang: string
-  name: string        // name_localized
+  name: string
+  rarity: string | null
+  image_url: string | null
+  has_image: boolean | null
   current_price: number | null
 }
 
@@ -18,6 +21,7 @@ export async function searchCards(q: string, lang?: string): Promise<CardSearchH
   const like = `%${q}%`
   const rows = await sql`
     SELECT kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
+           kc.rarity_normalized AS rarity, kc.image_url, kc.has_image,
            CASE
              WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
              WHEN lower(kc.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
@@ -28,8 +32,9 @@ export async function searchCards(q: string, lang?: string): Promise<CardSearchH
       ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
     WHERE (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
       AND (lower(kc.name_localized) LIKE lower(${like}) OR kc.print_id ILIKE ${like})
-    ORDER BY similarity(lower(kc.name_localized), lower(${q})) DESC
-    LIMIT 25
+    ORDER BY (kc.has_image IS TRUE) DESC,
+             similarity(lower(kc.name_localized), lower(${q})) DESC
+    LIMIT 30
   `
   return (rows as any[]).map((r) => ({
     ...r,

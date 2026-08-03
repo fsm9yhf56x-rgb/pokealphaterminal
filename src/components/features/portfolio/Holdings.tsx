@@ -2074,51 +2074,64 @@ export function Holdings() {
                     </div>
                   </div>
 
-                  {/* Gestion : MODIFIER (état, gradation, prix d'achat) — PATCH serveur */}
+                  {/* Gestion : MODIFIER — v2 (état, gradation, prix) → PATCH serveur */}
                   <button onClick={()=>{
                       if(!editOpen){ setFGraded(!!spotCard.graded); setFCo(spotCard.gradeCompany||'PSA'); setFNote(spotCard.gradeValue||''); const nc=normalizeCondition(spotCard.condition); setFCond(EDIT_STATES.includes(nc as any)?nc:'NM'); setFBuy(spotCard.buyPrice>0?String(spotCard.buyPrice):'') }
                       setEditOpen(o=>!o)
                     }}
-                    style={{ width:'100%', marginTop:8, padding:12, borderRadius:12, background:editOpen?'rgba(224,48,32,0.08)':'rgba(255,255,255,0.7)', border:`1px solid ${editOpen?'rgba(224,48,32,.25)':'var(--border)'}`, color:'#1D1D1F', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-                    {editOpen ? 'Fermer la modification' : 'Modifier la carte'}
+                    style={{ width:'100%', marginTop:8, padding:'12px 14px', borderRadius:12, background:'rgba(255,255,255,0.7)', border:'1px solid var(--border)', color:'#1D1D1F', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                      Modifier la carte
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: editOpen?'rotate(180deg)':'none', transition:'transform .18s ease' }}><path d="M6 9l6 6 6-6"/></svg>
                   </button>
 
                   {editOpen && (
-                    <div style={{ marginTop:8, padding:'14px 14px 16px', borderRadius:14, background:'rgba(0,0,0,0.025)', border:'1px solid var(--border)' }}>
-                      <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Gradée</div>
-                      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
-                        {[false,true].map(g=>(
-                          <button key={String(g)} onClick={()=>setFGraded(g)}
-                            style={{ padding:'7px 16px', borderRadius:18, border:'1px solid var(--border)', background:fGraded===g?'#1D1D1F':'#fff', color:fGraded===g?'#fff':'#48484A', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{g?'Oui':'Non'}</button>
-                        ))}
+                    <div style={{ marginTop:8, padding:16, borderRadius:14, background:'#FAFAFC', border:'1px solid var(--border)', animation:'kcFadeIn .15s ease' }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                        <span style={{ fontSize:9.5, color:'#86868B', fontWeight:700, letterSpacing:'.09em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>Gradée</span>
+                        <div style={{ display:'flex', gap:5 }}>
+                          {[false,true].map(g=>(
+                            <button key={String(g)} onClick={()=>setFGraded(g)}
+                              style={{ padding:'6px 16px', borderRadius:16, border:'1px solid '+(fGraded===g?'#1D1D1F':'var(--border)'), background:fGraded===g?'#1D1D1F':'#fff', color:fGraded===g?'#fff':'#48484A', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', transition:'all .12s ease' }}>{g?'Oui':'Non'}</button>
+                          ))}
+                        </div>
                       </div>
+
                       {fGraded ? (
-                        <>
-                          <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Société · Note</div>
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
+                        <div style={{ marginBottom:14 }}>
+                          <div style={{ fontSize:9.5, color:'#86868B', fontWeight:700, letterSpacing:'.09em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:7 }}>Société · Note</div>
+                          <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
                             {EDIT_GRADE_COS.map(co=>(
                               <button key={co} onClick={()=>setFCo(co)}
-                                style={{ padding:'6px 12px', borderRadius:16, border:'1px solid var(--border)', background:fCo===co?'#1D1D1F':'#fff', color:fCo===co?'#fff':'#48484A', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{co}</button>
+                                style={{ padding:'6px 11px', borderRadius:15, border:'1px solid '+(fCo===co?'#1D1D1F':'var(--border)'), background:fCo===co?'#1D1D1F':'#fff', color:fCo===co?'#fff':'#48484A', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{co}</button>
                             ))}
+                            <input value={fNote} onChange={e=>setFNote(e.target.value)} placeholder="9.5" inputMode="decimal"
+                              style={{ width:64, padding:'7px 10px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:12.5, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', textAlign:'center' }} />
                           </div>
-                          <input value={fNote} onChange={e=>setFNote(e.target.value)} placeholder="9.5" inputMode="decimal"
-                            style={{ width:90, padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:13, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', marginBottom:12 }} />
-                        </>
+                        </div>
                       ) : (
-                        <>
-                          <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>État</div>
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:12 }}>
+                        <div style={{ marginBottom:14 }}>
+                          <div style={{ fontSize:9.5, color:'#86868B', fontWeight:700, letterSpacing:'.09em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:7 }}>État</div>
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
                             {EDIT_STATES.map(st=>(
                               <button key={st} onClick={()=>setFCond(st)}
-                                style={{ padding:'6px 13px', borderRadius:16, border:'1px solid var(--border)', background:fCond===st?'#1D1D1F':'#fff', color:fCond===st?'#fff':'#48484A', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{st}</button>
+                                style={{ padding:'6px 12px', borderRadius:15, border:'1px solid '+(fCond===st?'#1D1D1F':'var(--border)'), background:fCond===st?'#1D1D1F':'#fff', color:fCond===st?'#fff':'#48484A', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)' }}>{st}</button>
                             ))}
                           </div>
-                        </>
+                        </div>
                       )}
-                      <div style={{ fontSize:10, color:'#86868B', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:8 }}>Prix d'achat (€)</div>
-                      <input value={fBuy} onChange={e=>setFBuy(e.target.value)} placeholder="—" inputMode="decimal"
-                        style={{ width:120, padding:'9px 12px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:13, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)' }} />
+
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+                        <span style={{ fontSize:9.5, color:'#86868B', fontWeight:700, letterSpacing:'.09em', textTransform:'uppercase', fontFamily:'var(--font-display)' }}>Prix d'achat</span>
+                        <div style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+                          <input value={fBuy} onChange={e=>setFBuy(e.target.value)} placeholder="—" inputMode="decimal"
+                            style={{ width:88, padding:'7px 10px', borderRadius:10, border:'1px solid var(--border)', background:'#fff', fontSize:12.5, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', textAlign:'right' }} />
+                          <span style={{ fontSize:12, color:'#86868B', fontWeight:700, fontFamily:'var(--font-display)' }}>€</span>
+                        </div>
+                      </div>
+
                       <button onClick={async()=>{
                           const note=fNote.replace(',','.').trim()
                           const buyN=fBuy.trim()===''?null:Number(fBuy.replace(',','.'))
@@ -2130,7 +2143,7 @@ export function Holdings() {
                           showToast('Carte mise à jour ✓')
                           try{ await fetch('/api/v1/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}) }catch{ showToast('Hors ligne — modification non enregistrée') }
                         }}
-                        style={{ display:'block', width:'100%', marginTop:14, padding:12, borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'var(--font-display)' }}>Enregistrer</button>
+                        style={{ display:'block', width:'100%', padding:12, borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'var(--font-display)' }}>Enregistrer</button>
                     </div>
                   )}
 

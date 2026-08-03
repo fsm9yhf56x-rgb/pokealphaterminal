@@ -42,6 +42,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'invalid_id' }, { status: 400 })
   }
   await updatePortfolioCard(user.id, body.id, body)
+  // L'exemplaire a changé (état, gradation…) → sa cote suit immédiatement
+  try { await priceCards(sql, { ids: [body.id] }) } catch {}
   return NextResponse.json({ ok: true })
 }
 

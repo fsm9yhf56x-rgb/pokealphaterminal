@@ -15,6 +15,6 @@ export async function GET(req: Request) {
   const q = (searchParams.get('q') ?? '').trim()
   const lang = searchParams.get('lang') ?? undefined
   if (q.length < 2) return NextResponse.json({ cards: [] })
-  const cards = await searchCards(q, lang)
-  return NextResponse.json({ cards })
+  const { cards, total } = await searchCards(q, lang)
+  return NextResponse.json({ cards, total })
 }

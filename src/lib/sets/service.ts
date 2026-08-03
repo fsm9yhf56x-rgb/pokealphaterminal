@@ -4,6 +4,7 @@
  */
 
 import { sql } from '@/lib/db/sql'
+import { getCardImageUrl } from '@/lib/images'
 
 export async function listSets() {
   const rows = await sql`
@@ -35,6 +36,10 @@ export async function listSetCards(setId: string, lang: string) {
   `
   return (rows as any[]).map((r) => ({
     ...r,
+    image_url:
+      r.image_url ??
+      getCardImageUrl({ lang: r.lang, setId, localId: r.card_number }) ??
+      null,
     current_price: r.current_price == null ? null : Number(r.current_price),
   }))
 }

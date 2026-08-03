@@ -6,6 +6,7 @@
  */
 
 import { sql } from '@/lib/db/sql'
+import { getCardImageUrl } from '@/lib/images'
 
 export interface CardSearchHit {
   id: string
@@ -61,10 +62,17 @@ export async function searchCards(
   `
   const total = rows.length ? Number((rows[0] as any).total) : 0
   return {
-    cards: (rows as any[]).map(({ total: _t, ...r }) => ({
-      ...r,
-      current_price: r.current_price == null ? null : Number(r.current_price),
-    })) as CardSearchHit[],
+    cards: (rows as any[]).map(({ total: _t, ...r }) => {
+      const localId = String(r.print_id).slice(String(r.print_id).lastIndexOf('-') + 1)
+      return {
+        ...r,
+        image_url:
+          r.image_url ??
+          getCardImageUrl({ lang: r.lang, setId: r.set_id, localId }) ??
+          null,
+        current_price: r.current_price == null ? null : Number(r.current_price),
+      }
+    }) as CardSearchHit[],
     total,
   }
 }

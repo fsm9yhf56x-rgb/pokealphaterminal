@@ -43,7 +43,11 @@ export async function searchCards(
              ELSE ps.fair_value_eur
            END AS current_price,
            count(*) OVER() AS total
-    FROM k_cards kc
+    FROM (
+      SELECT DISTINCT ON (print_id, lang) *
+      FROM k_cards
+      ORDER BY print_id, lang, (has_image IS TRUE) DESC
+    ) kc
     LEFT JOIN k_sets ks
       ON ks.id = regexp_replace(kc.print_id, '-[^-]+$', '')
     LEFT JOIN price_signals ps

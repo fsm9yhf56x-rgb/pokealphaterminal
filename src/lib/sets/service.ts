@@ -26,11 +26,15 @@ export async function listSetCards(setId: string, lang: string) {
              WHEN lower(kc.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
              ELSE ps.fair_value_eur
            END AS current_price
-    FROM k_cards kc
+    FROM (
+      SELECT DISTINCT ON (print_id) *
+      FROM k_cards
+      WHERE regexp_replace(print_id, '-[^-]+$', '') = ${setId}
+        AND lang = lower(${lang})
+      ORDER BY print_id, (has_image IS TRUE) DESC
+    ) kc
     LEFT JOIN price_signals ps
       ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
-    WHERE regexp_replace(kc.print_id, '-[^-]+$', '') = ${setId}
-      AND kc.lang = lower(${lang})
     ORDER BY length(regexp_replace(kc.print_id, '^.*-', '')),
              regexp_replace(kc.print_id, '^.*-', '')
   `

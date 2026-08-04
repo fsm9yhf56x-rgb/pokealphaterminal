@@ -58,6 +58,29 @@ export function resolveDisplayPrice(
     }
   }
 
+  // HEADLINE EN/JP = NEAR_MINT brut, source au plus gros volume — la même
+  // ligne que le bloc "Prix par état" affiche en tête. Un seul prix de référence.
+  if (!isFr) {
+    const bySource = (prices as any)?.bySource || {}
+    let best: { price: number; sales: number } | null = null
+    for (const src of Object.keys(bySource)) {
+      if (src === 'ppt_graded' || !Array.isArray(bySource[src])) continue
+      for (const e of bySource[src]) {
+        if (e?.variant !== 'raw' || e?.condition !== 'NEAR_MINT') continue
+        const price = Number(e.price_avg)
+        if (!(price > 0)) continue
+        const sales = Number(e.nb_sales ?? 0)
+        if (!best || sales > best.sales) best = { price, sales }
+      }
+    }
+    if (best) {
+      return {
+        price: Math.round(best.price * 100) / 100,
+        source: { label: 'Ventes confirmées · Near Mint', sub: null },
+      }
+    }
+  }
+
   // Engine d'abord (FR -> cote FR), puis marketEst (déjà filtré par langue côté API).
   const engineVal = isFr
     ? (kodo?.coteFrEur ?? kodo?.fairValueEur ?? null)

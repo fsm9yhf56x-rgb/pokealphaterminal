@@ -46,15 +46,11 @@ export async function listPortfolio(userId: string): Promise<PortfolioCardRow[]>
            pc.variant, pc.edition,
            pc.qty, pc.buy_price, pc.buy_date, pc.notes,
            pc.is_favorite, pc.showcase_position,
-           pc.image_url, pc.created_at,
-           COALESCE(
-             CASE
-               WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
-               WHEN lower(pc.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
-               ELSE ps.fair_value_eur
-             END,
-             pc.current_price
-           ) AS current_price
+           pc.k_card_id, pc.price_basis, pc.image_url, pc.created_at,
+           -- RÈGLE 5 : la lecture SERT la colonne écrite par le Kodo Engine
+           -- (priceCards à l'ajout/modif + cron). AUCUN recalcul à la lecture :
+           -- c'est lui qui écrasait le prix par exemplaire (LP 90,38 → 114 NM).
+           pc.current_price
     FROM portfolio_cards pc
     LEFT JOIN LATERAL (
       SELECT kc.print_id, kc.lang

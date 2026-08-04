@@ -2141,7 +2141,17 @@ export function Holdings() {
                           setSpotCard({...spotCard,...patch})
                           setEditOpen(false)
                           showToast('Carte mise à jour ✓')
-                          try{ await fetch('/api/v1/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}) }catch{ showToast('Hors ligne — modification non enregistrée') }
+                          try{
+                            const r = await fetch('/api/v1/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+                            const j = await r.json().catch(()=>null)
+                            const srv = j?.card
+                            if (srv?.__pricing_error) { showToast('Moteur de prix : ' + srv.__pricing_error) }
+                            else if (srv && srv.current_price !== undefined) {
+                              const cp = srv.current_price == null ? 0 : Number(srv.current_price)
+                              setPortfolio(prev=>prev.map(c=>c.id===spotCard.id?{...c,curPrice:cp,serverPriced:true}:c))
+                              setSpotCard(sc => sc && sc.id===spotCard.id ? {...sc, ...patch, curPrice:cp} : sc)
+                            }
+                          }catch{ showToast('Hors ligne — modification non enregistrée') }
                         }}
                         style={{ display:'block', width:'100%', padding:12, borderRadius:12, background:'#1D1D1F', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'var(--font-display)' }}>Enregistrer</button>
                     </div>

@@ -43,3 +43,18 @@ export function rawTierFromCondition(condition: string | null | undefined): stri
   if (['DMG','PO','POOR','DAMAGED'].includes(c)) return 'DAMAGED'
   return 'NEAR_MINT'
 }
+
+/** EN/JP : NEAR_MINT vendu (is_asking=false), source au plus gros volume.
+ *  Même règle que le headline de la fiche. */
+export function pickNearMintNonFr(matrixRows: any[], fxUsdEur: number): number | null {
+  let best: { price: number; sales: number } | null = null
+  for (const m of matrixRows) {
+    if (m.tier !== 'NEAR_MINT' || m.is_asking) continue
+    const raw = Number(m.spot)
+    if (!(raw > 0)) continue
+    const price = String(m.currency).toUpperCase() === 'USD' ? raw * fxUsdEur : raw
+    const sales = Number(m.sale_count ?? 0)
+    if (!best || sales > best.sales) best = { price, sales }
+  }
+  return best ? Math.round(best.price * 100) / 100 : null
+}

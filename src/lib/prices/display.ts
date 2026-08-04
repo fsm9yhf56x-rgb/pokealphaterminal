@@ -31,7 +31,7 @@ export async function getDisplayPrices(
          FROM k_cards kc
          JOIN price_matrix pm ON pm.print_id = kc.print_id
         WHERE kc.id = ANY($1) AND pm.market = 'EU'
-          AND pm.tier = 'EXCELLENT' AND pm.source = 'kodo_state'`, [muets])
+          AND pm.tier = 'NEAR_MINT' AND pm.source = 'kodo_state'`, [muets])
     for (const r of rf as any[]) {
       if (r.spot != null) repli[String(r.id).toLowerCase()] = Number(r.spot)
     }

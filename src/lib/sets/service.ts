@@ -5,6 +5,7 @@
 
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl } from '@/lib/images'
+import { getDisplayPrices } from '@/lib/prices/display'
 
 export async function listSets() {
   const rows = await sql`
@@ -38,12 +39,14 @@ export async function listSetCards(setId: string, lang: string) {
     ORDER BY length(regexp_replace(kc.print_id, '^.*-', '')),
              regexp_replace(kc.print_id, '^.*-', '')
   `
+  const dp = await getDisplayPrices(sql, (rows as any[]).map((r) => String(r.id)))
   return (rows as any[]).map((r) => ({
     ...r,
     image_url:
       r.image_url ??
       getCardImageUrl({ lang: r.lang, setId, localId: r.card_number }) ??
       null,
-    current_price: r.current_price == null ? null : Number(r.current_price),
+    current_price: dp[String(r.id).toLowerCase()]?.displayEur ?? null,
+    price_basis: dp[String(r.id).toLowerCase()]?.basis ?? null,
   }))
 }

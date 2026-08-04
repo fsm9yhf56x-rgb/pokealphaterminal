@@ -7,6 +7,7 @@
 
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl } from '@/lib/images'
+import { getDisplayPrices } from '@/lib/prices/display'
 
 export interface CardSearchHit {
   id: string
@@ -65,6 +66,7 @@ export async function searchCards(
     LIMIT 60
   `
   const total = rows.length ? Number((rows[0] as any).total) : 0
+  const dp = await getDisplayPrices(sql, (rows as any[]).map((r) => String(r.id)))
   return {
     cards: (rows as any[]).map(({ total: _t, ...r }) => {
       const localId = String(r.print_id).slice(String(r.print_id).lastIndexOf('-') + 1)
@@ -74,7 +76,8 @@ export async function searchCards(
           r.image_url ??
           getCardImageUrl({ lang: r.lang, setId: r.set_id, localId }) ??
           null,
-        current_price: r.current_price == null ? null : Number(r.current_price),
+        current_price: dp[String(r.id).toLowerCase()]?.displayEur ?? null,
+        price_basis: dp[String(r.id).toLowerCase()]?.basis ?? null,
       }
     }) as CardSearchHit[],
     total,

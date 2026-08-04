@@ -33,6 +33,8 @@
  * Le CTE est IDENTIQUE dans les deux cas (meme regle partout). Seul le filtre de scope change.
  */
 
+import { buildFrByCondition, rawTierFromCondition } from '@/lib/prices/fr-by-condition'
+
 type SqlTag = (strings: TemplateStringsArray, ...values: any[]) => Promise<any[]>
 
 export interface PricedRow {
@@ -233,6 +235,41 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
            OR pc.price_basis IS DISTINCT FROM 'sealed:' || sp.method)
     RETURNING pc.id, pc.current_price, pc.price_basis
   `
+
+  // ── PASSE FR PAR ÉTAT : parité stricte avec la fiche (MÊME lib) ──
+  const frTargets = await sql`
+    SELECT pc.id, pc.k_card_id, pc.condition, ps.cote_fr_eur, ps.fair_value_eur
+    FROM portfolio_cards pc
+    JOIN k_cards kc ON kc.id = pc.k_card_id
+    LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
+    WHERE lower(kc.lang) = 'fr' AND coalesce(pc.graded, false) = false
+      AND (${scopeAll} OR pc.id = ANY(${ids as any}))
+  ` as any[]
+  if (frTargets.length) {
+    const cardIds = [...new Set(frTargets.map((t) => t.k_card_id).filter(Boolean))]
+    const mrows = await sql`
+      SELECT kodo_card_id, tier, source, spot, sale_count, country_breakdown
+      FROM price_matrix
+      WHERE kodo_card_id = ANY(${cardIds as any}) AND spot IS NOT NULL AND spot > 0
+    ` as any[]
+    const byCard = new Map<string, any[]>()
+    for (const m of mrows) {
+      const k = String(m.kodo_card_id)
+      if (!byCard.has(k)) byCard.set(k, [])
+      byCard.get(k)!.push(m)
+    }
+    for (const t of frTargets) {
+      const rowsForCard = byCard.get(String(t.k_card_id)) ?? []
+      if (!rowsForCard.length) continue
+      const coteRef = t.cote_fr_eur != null ? Number(t.cote_fr_eur)
+        : (t.fair_value_eur != null ? Number(t.fair_value_eur) : null)
+      const tier = rawTierFromCondition(t.condition)
+      const hit = buildFrByCondition(rowsForCard, coteRef)[tier]
+      if (!hit) continue
+      const basis = 'fr_cond:' + tier + (hit.derived ? '~' : '')
+      await sql`UPDATE portfolio_cards SET current_price = ${hit.price}, price_basis = ${basis}, updated_at = now() WHERE id = ${t.id}`
+    }
+  }
 
   return ([...(rows as any[]), ...(sealedRows as any[])]).map((r) => ({
     id: r.id,

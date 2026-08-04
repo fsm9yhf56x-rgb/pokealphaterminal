@@ -170,7 +170,8 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
       SELECT r.pc_id,
         CASE
           WHEN r.wanted_tier IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
-            AND r.fair_value_method = 'insufficient_data' THEN NULL
+            AND r.fair_value_method = 'insufficient_data'
+            AND r.spot IS NULL THEN NULL
           WHEN r.wanted_tier NOT IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.spot IS NULL THEN NULL
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL

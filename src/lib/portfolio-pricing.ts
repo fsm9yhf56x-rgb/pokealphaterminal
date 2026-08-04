@@ -271,6 +271,22 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
     }
   }
 
+  // Les lignes renvoyées doivent refléter la passe FR (sinon un appelant qui fait
+  // confiance au retour verrait le prix d'avant).
+  if (frTargets.length) {
+    const touched = frTargets.map((t) => t.id)
+    const fresh = await sql`
+      SELECT id, current_price, price_basis FROM portfolio_cards WHERE id = ANY(${touched as any})
+    ` as any[]
+    const fmap = new Map(fresh.map((f) => [String(f.id), f]))
+    for (const r of rows as any[]) {
+      const f = fmap.get(String(r.id))
+      if (!f) continue
+      r.current_price = f.current_price == null ? null : Number(f.current_price)
+      r.price_basis = f.price_basis
+    }
+  }
+
   return ([...(rows as any[]), ...(sealedRows as any[])]).map((r) => ({
     id: r.id,
     current_price: r.current_price != null ? Number(r.current_price) : null,

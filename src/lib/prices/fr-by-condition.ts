@@ -4,6 +4,13 @@
  *  garde-fou outlier x5), sinon repli kodo_state marqué derived. */
 export const FR_RAW_TIERS = ['NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED'] as const
 export const FR_MIN_ASKING = 3
+
+/** Échelle de décote, ancrée sur EXCELLENT = 1.00 (identique à kodo_state,
+ *  vérifiée sur les prints qui possèdent déjà l'échelle complète). */
+export const DECAY: Record<string, number> = {
+  NEAR_MINT: 1.38, EXCELLENT: 1.00, LIGHTLY_PLAYED: 0.79,
+  MODERATELY_PLAYED: 0.65, HEAVILY_PLAYED: 0.53, DAMAGED: 0.42,
+}
 export interface FrCond { price: number; saleCount: number; isAsking: boolean; derived?: boolean }
 
 export function buildFrByCondition(matrixRows: any[], coteRef: number | null): Record<string, FrCond> {
@@ -28,6 +35,34 @@ export function buildFrByCondition(matrixRows: any[], coteRef: number | null): R
     const k = Number(r.spot)
     if (!(k > 0)) continue
     out[r.tier] = { price: Math.round(k * 100) / 100, saleCount: 0, isAsking: true, derived: true }
+  }
+  // ÉTAGE 3 — Dès qu'UN prix raw valide existe (vente conclue ou annonce en
+  // cours, quel que soit l'état), on ancre dessus et on extrapole les états
+  // manquants avec la même échelle que kodo_state. Marqué derived (~).
+  const missing = (FR_RAW_TIERS as readonly string[]).filter((t) => !out[t])
+  if (missing.length) {
+    let anchor: { price: number; tier: string; sold: boolean; sales: number } | null = null
+    for (const r of matrixRows) {
+      const tier = String(r.tier)
+      if (!DECAY[tier]) continue
+      if (r.source === 'kodo_state') continue
+      const fr = r.country_breakdown?.FR?.language?.FR
+      const price = Number(fr?.avg ?? r.spot)
+      if (!(price > 0) || price > outlierMax) continue
+      const sold = r.is_asking === false
+      const sales = Number(fr?.saleCount ?? r.sale_count ?? 0)
+      const better = !anchor
+        || (sold && !anchor.sold)
+        || (sold === anchor.sold && sales > anchor.sales)
+      if (better) anchor = { price, tier, sold, sales }
+    }
+    if (anchor) {
+      const base = anchor.price / DECAY[anchor.tier]
+      for (const t of missing) {
+        const v = Math.round(base * DECAY[t] * 100) / 100
+        if (v > 0) out[t] = { price: v, saleCount: 0, isAsking: !anchor.sold, derived: true }
+      }
+    }
   }
   return out
 }

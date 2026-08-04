@@ -271,6 +271,32 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
     }
   }
 
+  // ── PLANCHER GRADÉ : aucune vente à CETTE note, mais une note INFÉRIEURE de
+  // la MÊME société existe. Un PSA 10 vaut au moins un PSA 8 → plancher honnête
+  // (ask ×0.88 comme partout), basis 'graded_floor:{tier}' → l'UI affiche "≥".
+  // Jamais de cross-société (un CCC 9 n'est pas un PSA 9).
+  await sql`
+    UPDATE portfolio_cards pc
+    SET current_price = ROUND((f.spot * 0.88)::numeric, 2),
+        price_basis = 'graded_floor:' || f.tier,
+        updated_at = now()
+    FROM LATERAL (
+      SELECT pm.tier, pm.spot
+      FROM price_matrix pm
+      WHERE pm.kodo_card_id = pc.k_card_id
+        AND pm.spot > 0
+        AND pm.tier ~ '^(PSA|BGS|CGC|SGC|CCC|PCA)_[0-9]+(_[0-9])?$'
+        AND split_part(pm.tier, '_', 1) = upper(coalesce(pc.grade_company, split_part(pc.condition, ' ', 1)))
+        AND pm.source IN ('ebay_fr', 'cardmarket_fr')
+      ORDER BY replace(substring(pm.tier from position('_' in pm.tier) + 1), '_', '.')::numeric DESC,
+               pm.as_of DESC
+      LIMIT 1
+    ) f
+    WHERE pc.graded = true
+      AND pc.current_price IS NULL
+      AND (${scopeAll} OR pc.id = ANY(${ids as any}))
+  `
+
   // Les lignes renvoyées doivent refléter la passe FR (sinon un appelant qui fait
   // confiance au retour verrait le prix d'avant).
   if (frTargets.length) {

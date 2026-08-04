@@ -49,6 +49,8 @@ export function buildFrByCondition(matrixRows: any[], coteRef: number | null): R
       const fr = r.country_breakdown?.FR?.language?.FR
       const price = Number(fr?.avg ?? r.spot)
       if (!(price > 0) || price > outlierMax) continue
+      // L'ancre doit elle-même être fiable : seuil FR_MIN_ASKING respecté.
+      if (Number(fr?.saleCount ?? r.sale_count ?? 0) < FR_MIN_ASKING && r.is_asking !== false) continue
       const sold = r.is_asking === false
       const sales = Number(fr?.saleCount ?? r.sale_count ?? 0)
       const better = !anchor

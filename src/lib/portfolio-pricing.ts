@@ -67,7 +67,11 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
              COALESCE(best.spot, best_ask.spot * 0.88) AS spot,
              COALESCE(best.currency, best_ask.currency) AS currency,
              -- Trace la provenance du spot retenu (pour un basis honnete).
-             CASE WHEN best.spot IS NOT NULL THEN best.best_tier ELSE 'EBAY_FR_ASK' END AS spot_tier,
+             CASE
+               WHEN best.spot IS NOT NULL AND best.best_tier = 'EXCELLENT' AND t.tier = 'GOOD' THEN 'GOOD~EX'
+               WHEN best.spot IS NOT NULL THEN best.best_tier
+               ELSE 'EBAY_FR_ASK'
+             END AS spot_tier,
              kc.lang,
              ps.cote_fr_eur, ps.fair_value_eur, ps.fair_value_method
       FROM portfolio_cards pc
@@ -90,6 +94,8 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)[ _]'
             THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
           WHEN upper(coalesce(pc.condition,'')) IN ('NM','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'
+          WHEN upper(coalesce(pc.condition,'')) IN ('EX','EXCELLENT') THEN 'EXCELLENT'
+          WHEN upper(coalesce(pc.condition,'')) IN ('GD','GOOD') THEN 'GOOD'
           WHEN upper(coalesce(pc.condition,'')) IN ('LP','LIGHTLY PLAYED','LIGHTLY_PLAYED') THEN 'LIGHTLY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('MP','MODERATELY PLAYED','MODERATELY_PLAYED') THEN 'MODERATELY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('HP','HEAVILY PLAYED','HEAVILY_PLAYED') THEN 'HEAVILY_PLAYED'
@@ -109,7 +115,8 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         -- par print_id (partagé entre langues -> fuite d'un prix US sur une carte FR).
         -- Etage Cardmarket EU : pour une carte raw FR en NEAR_MINT, on accepte aussi
         -- le tier AGGREGATED (prix agrégé Cardmarket, is_asking=false) comme prix EU.
-        SELECT pm.spot, pm.currency, pm.tier AS best_tier, pm.source AS best_source
+        SELECT pm.spot * (CASE WHEN t.tier = 'GOOD' AND pm.tier = 'EXCELLENT' THEN 0.90 ELSE 1 END) AS spot,
+               pm.currency, pm.tier AS best_tier, pm.source AS best_source
         FROM price_matrix pm
         WHERE (
             pm.kodo_card_id = kc.id
@@ -120,6 +127,7 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           AND (
             pm.tier = t.tier
             OR (kc.lang = 'fr' AND t.tier = 'NEAR_MINT' AND pm.tier = 'AGGREGATED')
+            OR (t.tier = 'GOOD' AND pm.tier = 'EXCELLENT' AND pm.source = 'kodo_state')
           )
           AND pm.is_asking = false
           AND pm.spot IS NOT NULL

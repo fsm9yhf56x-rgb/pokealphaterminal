@@ -111,7 +111,12 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         -- le tier AGGREGATED (prix agrégé Cardmarket, is_asking=false) comme prix EU.
         SELECT pm.spot, pm.currency, pm.tier AS best_tier, pm.source AS best_source
         FROM price_matrix pm
-        WHERE pm.kodo_card_id = kc.id
+        WHERE (
+            pm.kodo_card_id = kc.id
+            -- Échelle par état (kodo_state) : écrite par print, sans langue.
+            -- Référence EU partagée FR/EN — priorité inférieure aux ventes exactes.
+            OR (pm.source = 'kodo_state' AND pm.market = 'EU' AND pm.print_id = kc.print_id)
+          )
           AND (
             pm.tier = t.tier
             OR (kc.lang = 'fr' AND t.tier = 'NEAR_MINT' AND pm.tier = 'AGGREGATED')
@@ -119,6 +124,7 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           AND pm.is_asking = false
           AND pm.spot IS NOT NULL
         ORDER BY
+          CASE WHEN pm.kodo_card_id = kc.id THEN 0 ELSE 1 END,
           CASE WHEN pm.tier = t.tier THEN 0 ELSE 1 END,
           CASE WHEN pm.variant = t.vmatch THEN 0 ELSE 1 END,
           CASE

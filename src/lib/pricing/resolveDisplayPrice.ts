@@ -14,6 +14,7 @@ export type DisplayKodo = {
 } | null | undefined
 
 export type DisplayPrices = {
+  frByCondition?: Record<string, { price: number; saleCount: number; isAsking: boolean; derived?: boolean }> | null
   marketEst?: number | null
 } | null | undefined
 
@@ -41,6 +42,21 @@ export function resolveDisplayPrice(
 
   // Donnée explicitement insuffisante -> rien (honnête).
   if (method === 'insufficient_data') return { price: null, source: null }
+
+  // HEADLINE FR = NEAR_MINT de la table par état (même source que le bloc
+  // "Prix par état" et que le moteur portfolio) : un seul prix de référence.
+  if (isFr) {
+    const nm = (prices as any)?.frByCondition?.NEAR_MINT
+    if (nm && Number(nm.price) > 0) {
+      return {
+        price: Number(nm.price),
+        source: {
+          label: nm.derived ? 'Référence par état (indicative)' : 'Annonces France · Near Mint',
+          sub: null,
+        },
+      }
+    }
+  }
 
   // Engine d'abord (FR -> cote FR), puis marketEst (déjà filtré par langue côté API).
   const engineVal = isFr

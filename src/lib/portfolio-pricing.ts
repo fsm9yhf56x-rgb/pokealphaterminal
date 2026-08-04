@@ -97,7 +97,7 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
             THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
           WHEN upper(coalesce(pc.condition,'')) IN ('NM','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'
           WHEN upper(coalesce(pc.condition,'')) IN ('EX','EXCELLENT') THEN 'EXCELLENT'
-          WHEN upper(coalesce(pc.condition,'')) IN ('GD','GOOD') THEN 'GOOD'
+          WHEN upper(coalesce(pc.condition,'')) IN ('GD','GOOD') THEN 'EXCELLENT'
           WHEN upper(coalesce(pc.condition,'')) IN ('LP','LIGHTLY PLAYED','LIGHTLY_PLAYED') THEN 'LIGHTLY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('MP','MODERATELY PLAYED','MODERATELY_PLAYED') THEN 'MODERATELY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('HP','HEAVILY PLAYED','HEAVILY_PLAYED') THEN 'HEAVILY_PLAYED'

@@ -513,37 +513,9 @@ export async function GET(req: NextRequest) {
     // retire) -> le cran manquait dans le tableau alors que le moteur le calcule,
     // et c'est justement lui qui porte le prix de marche headline (Nostenfer Ed1 :
     // 175,99 EXCELLENT affiche en tete, invisible dans le tableau = fiche inexplicable).
-    const FR_RAW_TIERS = ['NEAR_MINT', 'EXCELLENT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
-    const FR_MIN_ASKING = 3
-    const frByCondition: Record<string, { price: number; saleCount: number; isAsking: boolean }> = {}
+    // RÈGLE 5 : le calcul vit dans src/lib/prices/fr-by-condition.ts
     const coteRef = (kodo?.coteFrEur ?? kodo?.fairValueEur ?? marketEst ?? null)
-    const outlierMax = coteRef != null ? coteRef * 5 : Infinity
-    for (const r of matrixRows) {
-      if (!FR_RAW_TIERS.includes(r.tier)) continue
-      if (r.source !== 'cardmarket_unsold') continue  // asking-only
-      const fr = r.country_breakdown?.FR?.language?.FR
-      if (!fr || fr.avg == null) continue
-      const price = Number(fr.avg)
-      const sc = Number(fr.saleCount ?? 0)
-      if (!(price > 0) || price > outlierMax) continue
-      if (sc < FR_MIN_ASKING) continue
-      const prev = frByCondition[r.tier]
-      if (!prev || sc > prev.saleCount) {
-        frByCondition[r.tier] = { price: Math.round(price * 100) / 100, saleCount: sc, isAsking: true }
-      }
-    }
-
-    // Fallback kodo_state : prix par etat derives (percentiles reels vintage OU
-    // ratios de decote FR calibres). Affiches avec le marqueur ~ (indicatif).
-    // On ne remplit QUE les etats absents du breakdown Cardmarket reel.
-    for (const r of matrixRows) {
-      if (r.source !== 'kodo_state') continue
-      if (!FR_RAW_TIERS.includes(r.tier)) continue
-      if (frByCondition[r.tier]) continue
-      const kprice = Number(r.spot)
-      if (!(kprice > 0)) continue
-      frByCondition[r.tier] = { price: Math.round(kprice * 100) / 100, saleCount: 0, isAsking: true, derived: true } as any
-    }
+    const frByCondition = buildFrByCondition(matrixRows, coteRef)
     // ── FILTRE MARCHE FR : une carte FR ne montre QUE le grade FR (CCC/PCA) ──────
     // Les tiers gradés US (PSA/CGC/BGS/eBay US) sont collectés dans bySource mais
     // n'ont aucun sens sur une fiche FR (PSA ne grade quasi pas de FR). On les retire

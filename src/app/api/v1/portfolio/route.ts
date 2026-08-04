@@ -30,8 +30,16 @@ export async function POST(req: Request) {
   }
   const created = await addPortfolioCard(user.id, body)
   // Kodo Engine : la carte est cotée immédiatement, comme un ajout web
-  try { await priceCards(sql, { ids: [created.id] }) } catch {}
-  return NextResponse.json({ ok: true, id: created.id }, { status: 201 })
+  let priced: any = null
+  try {
+    await priceCards(sql, { ids: [created.id] })
+    const rows = await sql`
+      SELECT current_price, price_basis FROM portfolio_cards WHERE id = ${created.id}`
+    priced = rows[0] ?? null
+  } catch (e) {
+    console.error('[portfolio POST pricing]', (e as any)?.message)
+  }
+  return NextResponse.json({ ok: true, id: created.id, card: priced }, { status: 201 })
 }
 
 export async function PATCH(req: Request) {
@@ -42,9 +50,19 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'invalid_id' }, { status: 400 })
   }
   await updatePortfolioCard(user.id, body.id, body)
-  // L'exemplaire a changé (état, gradation…) → sa cote suit immédiatement
-  try { await priceCards(sql, { ids: [body.id] }) } catch {}
-  return NextResponse.json({ ok: true })
+  // L'exemplaire a changé (état, gradation…) → sa cote suit immédiatement,
+  // et la réponse PORTE la vérité re-pricée : le client l'applique sans course.
+  let priced: any = null
+  try {
+    await priceCards(sql, { ids: [body.id] })
+    const rows = await sql`
+      SELECT current_price, price_basis, condition, graded, grade_company, grade_value, buy_price, qty
+      FROM portfolio_cards WHERE id = ${body.id} AND user_id = ${user.id}`
+    priced = rows[0] ?? null
+  } catch (e) {
+    console.error('[portfolio PATCH pricing]', (e as any)?.message)
+  }
+  return NextResponse.json({ ok: true, card: priced })
 }
 
 export async function DELETE(req: Request) {

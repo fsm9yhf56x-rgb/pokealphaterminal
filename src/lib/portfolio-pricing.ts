@@ -179,10 +179,10 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
     FROM (
       SELECT r.pc_id,
         CASE
-          WHEN r.wanted_tier IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+          WHEN r.wanted_tier IN ('NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.fair_value_method = 'insufficient_data'
             AND r.spot IS NULL THEN NULL
-          WHEN r.wanted_tier NOT IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+          WHEN r.wanted_tier NOT IN ('NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.spot IS NULL THEN NULL
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL
             THEN ROUND(r.cote_fr_eur::numeric, 2)
@@ -192,9 +192,9 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           ELSE ROUND(r.fair_value_eur::numeric, 2)
         END AS price_eur,
         CASE
-          WHEN r.wanted_tier IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+          WHEN r.wanted_tier IN ('NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.fair_value_method = 'insufficient_data' THEN 'insufficient_data'
-          WHEN r.wanted_tier NOT IN ('NEAR_MINT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
+          WHEN r.wanted_tier NOT IN ('NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.spot IS NULL THEN 'graded_no_data'
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL THEN 'cote_fr'
           -- Prix issu de l'agrégat Cardmarket EU (carte raw FR) : basis dédié, honnête.

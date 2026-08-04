@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUserWithProfile } from '@/lib/auth/helpers'
 import { neon } from '@neondatabase/serverless'
+import { buildFrByCondition } from '@/lib/prices/fr-by-condition'
 
 export const dynamic = 'force-dynamic'
 

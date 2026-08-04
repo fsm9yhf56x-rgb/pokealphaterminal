@@ -309,7 +309,18 @@ export function Encyclopedie() {
   // La frappe reste prioritaire ; le filtrage des 22 529 cartes s'execute en
   // arriere-plan sur la valeur differee. L'input ne bloque plus.
   const searchDefer = useDeferredValue(search)
+  const [frEnDict, setFrEnDict] = useState<Record<string,string>>({})
   const compiled = useMemo(() => compileQuery(searchDefer), [searchDefer])
+  // PONT FR : "dracaufeu" cherche aussi "charizard" — donc l'anglais ET le
+  // japonais (dont les noms sont en anglais en base). Même vérité que l'API
+  // (dictionnaire dérivé du print_id partagé).
+  const frQuery = useMemo(() => {
+    if (!searchDefer || !Object.keys(frEnDict).length) return ''
+    const parts = searchDefer.toLowerCase().split(/\s+/).filter(Boolean)
+    const out = parts.map(t => frEnDict[t] ? String(frEnDict[t]).toLowerCase() : t)
+    return out.join(' ') === parts.join(' ') ? '' : out.join(' ')
+  }, [searchDefer, frEnDict])
+  const compiledFr = useMemo(() => frQuery ? compileQuery(frQuery) : null, [frQuery])
   const searchSuggs = useMemo(() => {
     if (search.length < 2) return []
     const q = search.toLowerCase()
@@ -584,6 +595,7 @@ export function Encyclopedie() {
     // Load JP→EN Pokédex dictionary
     if (lang === 'JP') {
       fetch('/data/pokedex-jp-en.json').then(r => r.json()).then(d => setJpEnDict(d)).catch(() => {})
+      fetch('/data/pokedex-fr-en.json').then(r => r.json()).then(d => setFrEnDict(d)).catch(() => {})
     }
   }, [lang])
 
@@ -881,6 +893,7 @@ export function Encyclopedie() {
       const strict = r.filter(c => {
         // Les alias d'abord (code de serie, numero sur total, nom EN).
         if (matchCompiled(aliasIndex.get(c.id) || '', compiled)) return true
+        if (compiledFr && matchCompiled(aliasIndex.get(c.id) || '', compiledFr)) return true
         // Puis la translitteration JP, que les alias ne savent pas deriver.
         const jp = jpSearchIndex?.get(c.id)
         return jp ? jp.includes(q) : false

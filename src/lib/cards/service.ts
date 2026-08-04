@@ -57,6 +57,15 @@ export async function searchCards(
     matched AS (
       SELECT DISTINCT print_id FROM hay
       WHERE set_hidden IS NOT TRUE AND h LIKE ALL (${tokens})
+    ),
+    -- Les cartes JP portent le nom ANGLAIS : on dérive FR -> EN par le print
+    -- partagé, puis on ratisse toutes les langues qui portent ce nom.
+    en_names AS (
+      SELECT DISTINCT lower(b.name_localized) AS n
+      FROM hay b
+      JOIN matched m ON m.print_id = b.print_id
+      WHERE b.lang = 'en'
+      LIMIT 40
     )
     SELECT kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
            regexp_replace(kc.print_id, '-[^-]+$', '') AS set_id,
@@ -64,8 +73,15 @@ export async function searchCards(
            kc.rarity_normalized AS rarity, kc.image_url, kc.has_image,
            count(*) OVER() AS total
     FROM hay kc
-    JOIN matched m ON m.print_id = kc.print_id
-    WHERE (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
+    WHERE (
+        kc.print_id IN (SELECT print_id FROM matched)
+        OR EXISTS (
+          SELECT 1 FROM en_names en
+          WHERE lower(kc.name_localized) = en.n
+             OR lower(kc.name_localized) LIKE en.n || ' (%'
+        )
+      )
+      AND (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
       AND kc.set_hidden IS NOT TRUE
     ORDER BY (kc.h LIKE ALL (${tokens})) DESC,
              (kc.has_image IS TRUE) DESC,

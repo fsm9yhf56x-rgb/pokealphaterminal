@@ -61,6 +61,7 @@ export async function PATCH(req: Request) {
     priced = rows[0] ?? null
   } catch (e) {
     console.error('[portfolio PATCH pricing]', (e as any)?.message)
+    priced = { __pricing_error: String((e as any)?.message ?? e) }
   }
   return NextResponse.json({ ok: true, card: priced })
 }

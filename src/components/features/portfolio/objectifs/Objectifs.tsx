@@ -206,7 +206,11 @@ function computeAggregates(
     .filter(w => !w.acquired)
     .map(w => {
       const cur = w.current_price ?? null
-      const alertActive = cur != null && w.target_price != null && cur <= w.target_price
+      // Sens de l'alerte : 'below' = acheter (défaut), 'above' = vendre.
+      // MÊME règle que generate-notifications.mjs et que le mobile.
+      const up = (w as any).direction === 'above'
+      const alertActive =
+        cur != null && w.target_price != null && (up ? cur >= w.target_price : cur <= w.target_price)
       return { ...w, alertActive }
     })
 

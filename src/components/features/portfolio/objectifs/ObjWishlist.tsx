@@ -341,7 +341,9 @@ function WishRow({
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >{wish.target_price != null ? formatEUR(wish.target_price) : '—'}</div>
+            >{wish.target_price != null
+              ? ((wish as any).direction === 'above' ? '\u2191 ' : '') + formatEUR(wish.target_price)
+              : (isCollector ? 'suivie' : '\u2014')}</div>
           )}
 
           {/* Current price (cote actuelle Kodo) */}

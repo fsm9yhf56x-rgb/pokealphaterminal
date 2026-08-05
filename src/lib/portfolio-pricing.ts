@@ -95,13 +95,17 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           -- Condition prefixee societe (carte non marquee graded mais condition "PSA 10")
           WHEN pc.condition ~* '^(PSA|BGS|CGC|SGC|ACE|TAG|CCC|PCA)[ _]'
             THEN upper(replace(replace(trim(pc.condition), ' ', '_'), '.', '_'))
-          WHEN upper(coalesce(pc.condition,'')) IN ('NM','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'
+          -- Échelle Cardmarket FR (NM>EX>GD>LP>PL>PO) sur les 6 tiers kodo_state.
+          WHEN upper(coalesce(pc.condition,'')) IN ('NM','MT','MINT','NEAR MINT','NEAR_MINT') THEN 'NEAR_MINT'
           WHEN upper(coalesce(pc.condition,'')) IN ('EX','EXCELLENT') THEN 'EXCELLENT'
-          WHEN upper(coalesce(pc.condition,'')) IN ('GD','GOOD') THEN 'EXCELLENT'
-          WHEN upper(coalesce(pc.condition,'')) IN ('LP','LIGHTLY PLAYED','LIGHTLY_PLAYED') THEN 'LIGHTLY_PLAYED'
+          WHEN upper(coalesce(pc.condition,'')) IN ('GD','GOOD') THEN 'LIGHTLY_PLAYED'
+          WHEN upper(coalesce(pc.condition,'')) IN ('LP','LIGHT PLAYED','LIGHT_PLAYED') THEN 'MODERATELY_PLAYED'
+          WHEN upper(coalesce(pc.condition,'')) IN ('PL','PLAYED') THEN 'HEAVILY_PLAYED'
+          WHEN upper(coalesce(pc.condition,'')) IN ('PO','POOR','DMG','DAMAGED') THEN 'DAMAGED'
+          -- Alias US (EN/JP)
+          WHEN upper(coalesce(pc.condition,'')) IN ('LIGHTLY PLAYED','LIGHTLY_PLAYED') THEN 'LIGHTLY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('MP','MODERATELY PLAYED','MODERATELY_PLAYED') THEN 'MODERATELY_PLAYED'
           WHEN upper(coalesce(pc.condition,'')) IN ('HP','HEAVILY PLAYED','HEAVILY_PLAYED') THEN 'HEAVILY_PLAYED'
-          WHEN upper(coalesce(pc.condition,'')) IN ('DMG','DAMAGED') THEN 'DAMAGED'
           ELSE 'NEAR_MINT'
         END AS tier,
         CASE

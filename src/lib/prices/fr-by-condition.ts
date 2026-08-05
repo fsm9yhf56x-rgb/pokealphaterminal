@@ -72,14 +72,22 @@ export function buildFrByCondition(matrixRows: any[], coteRef: number | null): R
 /** condition portfolio -> tier FR (même échelle que la fiche). */
 export function rawTierFromCondition(condition: string | null | undefined): string {
   const c = String(condition ?? '').trim().toUpperCase()
+  // Échelle Cardmarket FR (6 rangs) posée sur les 6 tiers kodo_state.
+  // NM > EX > GD > LP > PL > PO  ⇄  NEAR_MINT > EXCELLENT > LIGHTLY_PLAYED
+  //                                 > MODERATELY_PLAYED > HEAVILY_PLAYED > DAMAGED
   if (['NM','MT','MINT','NEAR MINT','NEAR_MINT'].includes(c)) return 'NEAR_MINT'
-  if (['EX','GD','GOOD','EXCELLENT'].includes(c)) return 'EXCELLENT'
-  if (['LP','LIGHTLY PLAYED','LIGHTLY_PLAYED'].includes(c)) return 'LIGHTLY_PLAYED'
-  if (['MP','PL','PLAYED','MODERATELY PLAYED','MODERATELY_PLAYED'].includes(c)) return 'MODERATELY_PLAYED'
+  if (['EX','EXCELLENT'].includes(c)) return 'EXCELLENT'
+  if (['GD','GOOD'].includes(c)) return 'LIGHTLY_PLAYED'
+  if (['LP','LIGHT PLAYED','LIGHT_PLAYED'].includes(c)) return 'MODERATELY_PLAYED'
+  if (['PL','PLAYED'].includes(c)) return 'HEAVILY_PLAYED'
+  if (['PO','POOR','DMG','DAMAGED'].includes(c)) return 'DAMAGED'
+  // Alias US (cartes EN/JP saisies avec la nomenclature TCGplayer)
+  if (['LIGHTLY PLAYED','LIGHTLY_PLAYED'].includes(c)) return 'LIGHTLY_PLAYED'
+  if (['MP','MODERATELY PLAYED','MODERATELY_PLAYED'].includes(c)) return 'MODERATELY_PLAYED'
   if (['HP','HEAVILY PLAYED','HEAVILY_PLAYED'].includes(c)) return 'HEAVILY_PLAYED'
-  if (['DMG','PO','POOR','DAMAGED'].includes(c)) return 'DAMAGED'
   return 'NEAR_MINT'
 }
+
 
 /** EN/JP : NEAR_MINT vendu (is_asking=false), source au plus gros volume.
  *  Même règle que le headline de la fiche. */

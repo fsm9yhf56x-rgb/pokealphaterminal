@@ -76,8 +76,9 @@ const TIER_BG: Record<string,string> = {
   A:'linear-gradient(135deg,#C855D4,#9C27B0)',
   B:'linear-gradient(135deg,#2E9E6A,#1A7A4A)',
 }
-const EDIT_STATES = ['NM','EX','GD','LP','PL','PO'] as const
-const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', GD:'Good', LP:'Lightly Played', PL:'Moderately Played', PO:'Damaged' }
+// Échelle IDENTIQUE au mobile et à FR_RAW_TIERS (fr-by-condition.ts)
+const EDIT_STATES = ['NM','EX','LP','MP','HP','DMG'] as const
+const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', LP:'Lightly Played', MP:'Moderately Played', HP:'Heavily Played', DMG:'Damaged' }
 const EDIT_GRADE_COS = ['PSA','BGS','CGC','CCC','PCA','SGC']
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'
@@ -2045,7 +2046,7 @@ export function Holdings() {
                       {hasPrice ? (
                         <div>
                           <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'.06em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:2 }}>{isInvestor ? 'Prix de marché' : (spotCard.rarity ? 'Rareté' : 'Dans ta collection')}</div>
-                          <div style={{ fontSize:isInvestor?24:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.15 }}>{isInvestor ? formatEUR(spotCard.curPrice) : (spotCard.rarity || spotCard.set || '\u2014')}</div>
+                          <div style={{ fontSize:isInvestor?24:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.15 }}>{isInvestor ? ((String((spotCard as any).priceBasis ?? '').startsWith('graded_floor:') ? '\u2265 ' : '') + formatEUR(spotCard.curPrice)) : (spotCard.rarity || spotCard.set || '\u2014')}</div>
                           {spotCard.qty > 1 ? (
                             <div style={{ fontSize:12, color:'#6E6E73', fontFamily:'var(--font-display)', marginTop:3 }}>{'\u00D7'}{spotCard.qty}{isInvestor ? <> {'\u00B7'} {formatEUR(spotCard.curPrice * spotCard.qty)} au total</> : ' exemplaires'}</div>
                           ) : null}

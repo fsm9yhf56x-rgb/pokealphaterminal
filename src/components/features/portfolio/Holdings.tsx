@@ -76,9 +76,9 @@ const TIER_BG: Record<string,string> = {
   A:'linear-gradient(135deg,#C855D4,#9C27B0)',
   B:'linear-gradient(135deg,#2E9E6A,#1A7A4A)',
 }
-// Échelle IDENTIQUE au mobile et à FR_RAW_TIERS (fr-by-condition.ts)
-const EDIT_STATES = ['NM','EX','LP','MP','HP','DMG'] as const
-const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', LP:'Lightly Played', MP:'Moderately Played', HP:'Heavily Played', DMG:'Damaged' }
+// Échelle Cardmarket FR (identique au mobile) : NM > EX > GD > LP > PL > PO
+const EDIT_STATES = ['NM','EX','GD','LP','PL','PO'] as const
+const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', GD:'Good', LP:'Light Played', PL:'Played', PO:'Poor' }
 const EDIT_GRADE_COS = ['PSA','BGS','CGC','CCC','PCA','SGC']
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
 type ViewMode = 'binder'|'showcase'|'wrapped'

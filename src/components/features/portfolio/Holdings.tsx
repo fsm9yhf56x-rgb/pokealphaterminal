@@ -250,9 +250,14 @@ export function Holdings() {
             buyPrice: Number(c.buy_price) || 0, curPrice: Number(c.current_price) || 0,
             serverPriced: Number(c.current_price) > 0, priceBasis: c.price_basis || undefined,
             qty: c.qty || 1,
-            image: (String(c.card_number ?? '') === 'SEALED'
-              ? (c.image_url || undefined)
-              : (c.set_id && c.card_number ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number }) : c.image_url || undefined)),
+            // RÈGLE 5 (images) : l'URL EN BASE fait foi — elle est vérifiée.
+            // getCardImageUrl n'est qu'un SECOURS : sur les sets aux ids atypiques
+            // (Pokémon GO, swsh10.5, Puissance Génétique) il forge une URL 404.
+            image: (c.image_url
+              || (String(c.card_number ?? '') !== 'SEALED' && c.set_id && c.card_number
+                    ? getCardImageUrl({ lang: c.lang || 'FR', setId: c.set_id, localId: c.card_number })
+                    : undefined)
+              || undefined),
             setId: c.set_id || undefined, favorite: c.is_favorite || false,
             showcasePos: c.showcase_position ?? undefined,
             notes: c.notes || undefined,

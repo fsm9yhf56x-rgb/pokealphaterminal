@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     rarity: body.rarity ?? null,
     priority: (Number(body.priority) as 1 | 2 | 3) || 2,
     target_price: body.target_price == null ? null : Number(body.target_price),
+    direction: body.direction === 'above' ? 'above' : 'below',
     notes: body.notes ?? null,
   }
 

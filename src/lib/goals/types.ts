@@ -29,6 +29,8 @@ export interface WishlistItem {
   rarity?: string | null
   priority: 1 | 2 | 3
   target_price?: number | null
+  /** 'below' = préviens-moi quand ça descend (acheter) ; 'above' = quand ça monte (vendre). */
+  direction?: 'below' | 'above'
   notes?: string | null
   acquired?: boolean
   /** Cote actuelle (calculée serveur via price_signals, règle Kodo). Absente à la création. */

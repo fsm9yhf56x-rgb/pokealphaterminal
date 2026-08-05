@@ -29,7 +29,7 @@ const METRIC_LABEL = {
 // ─────────────────────────────────────────────────────────────
 async function wishlistPriceAlerts() {
   const rows = await sql`
-    SELECT gw.user_id, gw.id AS wid, gw.card_name, gw.target_price,
+    SELECT gw.user_id, gw.id AS wid, gw.card_name, gw.target_price, gw.direction,
            CASE
              WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
              WHEN lower(gw.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
@@ -57,15 +57,16 @@ async function wishlistPriceAlerts() {
   `
   let created = 0, rearmed = 0
   for (const r of rows) {
-    const dedup = `wishlist_price:${r.wid}`
+    const dedup = `wishlist_price:${r.wid}:${r.direction ?? 'below'}`
     const cur = r.current_price == null ? null : Number(r.current_price)
     const target = Number(r.target_price)
-    const hit = cur != null && cur <= target
+    const up = r.direction === 'above'
+    const hit = cur != null && (up ? cur >= target : cur <= target)
     if (hit) {
       const ins = await sql`
         INSERT INTO notifications (user_id, type, title, body, data, dedup_key)
-        VALUES (${r.user_id}, 'wishlist_price', ${'Prix atteint : ' + r.card_name},
-                ${r.card_name + ' est à ' + eur(cur) + ' — ta cible était ' + eur(target) + '.'},
+        VALUES (${r.user_id}, 'wishlist_price', ${(r.direction === 'above' ? 'Seuil franchi : ' : 'Prix atteint : ') + r.card_name},
+                ${r.card_name + ' est à ' + eur(cur) + (r.direction === 'above' ? ' — au-dessus de ton seuil de ' : ' — ta cible était ') + eur(target) + '.'},
                 ${JSON.stringify({ wid: r.wid, card_name: r.card_name, current_price: cur, target_price: target, url: '/portfolio/objectifs' })}::jsonb,
                 ${dedup})
         ON CONFLICT (user_id, dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING

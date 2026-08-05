@@ -32,7 +32,7 @@ export async function listGoals(userId: string): Promise<{ targets: GoalTarget[]
         ORDER BY created_at DESC`,
     sql`
       SELECT gw.id, gw.card_name, gw.set_id, gw.set_name, gw.card_number, gw.lang, gw.rarity,
-             gw.priority, gw.target_price, gw.notes, gw.acquired, gw.created_at, gw.updated_at,
+             gw.priority, gw.target_price, gw.notes, gw.acquired, gw.direction, gw.created_at, gw.updated_at,
              CASE
                WHEN ps.fair_value_method = 'insufficient_data' THEN NULL
                WHEN lower(gw.lang) = 'fr' THEN COALESCE(ps.cote_fr_eur, ps.fair_value_eur)
@@ -118,13 +118,14 @@ export async function createWishItem(
 
   const rows = (await sql`
     INSERT INTO goal_wishlist
-      (user_id, card_name, set_id, set_name, card_number, lang, rarity, priority, target_price, notes)
+      (user_id, card_name, set_id, set_name, card_number, lang, rarity, priority, target_price, notes, direction)
     VALUES
       (${userId}, ${input.card_name}, ${input.set_id ?? null}, ${input.set_name ?? null},
        ${input.card_number ?? null}, ${input.lang ?? null}, ${input.rarity ?? null},
-       ${input.priority}, ${input.target_price ?? null}, ${input.notes ?? null})
+       ${input.priority}, ${input.target_price ?? null}, ${input.notes ?? null},
+       ${input.direction === 'above' ? 'above' : 'below'})
     RETURNING id, card_name, set_id, set_name, card_number, lang, rarity, priority,
-              target_price, notes, acquired, created_at, updated_at
+              target_price, notes, acquired, direction, created_at, updated_at
   `) as any[]
   const item = normalizeWish(rows[0])
   // Cote calculée à l'insert aussi (pas seulement au GET) → affichage immédiat, cohérent avec le modal.
@@ -219,6 +220,7 @@ function normalizeWish(r: any): WishlistItem {
     rarity: r.rarity ?? null,
     priority: (Number(r.priority) as 1 | 2 | 3) || 2,
     target_price: r.target_price == null ? null : Number(r.target_price),
+    direction: r.direction === 'above' ? 'above' : 'below',
     notes: r.notes ?? null,
     acquired: r.acquired ?? false,
     current_price: r.current_price == null ? null : Number(r.current_price),

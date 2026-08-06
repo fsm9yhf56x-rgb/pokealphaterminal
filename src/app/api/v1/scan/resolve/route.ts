@@ -41,6 +41,14 @@ const SET_INDEX = setIndexRaw as SetIndexEntry[]
 const TOTAL_BY_SET: Record<string, number> = Object.fromEntries(
   SET_INDEX.map((e) => [e.id, e.printedTotal]),
 )
+// Les setId du catalogue et de l'index divergent par la forme ("swsh3.5" vs
+// "swsh35") : lookup NORMALISÉ, sinon le filtre total ne matche jamais.
+const normSetId = (x: string): string => String(x).toLowerCase().replace(/[^a-z0-9]/g, '')
+const TOTAL_BY_SET_N: Record<string, number> = Object.fromEntries(
+  SET_INDEX.map((e) => [normSetId(e.id), e.printedTotal]),
+)
+const totalForSet = (setId: string): number | undefined =>
+  TOTAL_BY_SET[setId] ?? TOTAL_BY_SET_N[normSetId(setId)]
 
 const LANGS = ['en', 'fr', 'jp'] as const
 
@@ -158,6 +166,10 @@ export async function GET(req: NextRequest) {
         return { ...c, setName: setName || c.setId, setLogo: e?.logo || null } as any
       })
 
+      if (total && Number.isFinite(total) && cands.length > 1) {
+        const m = cands.filter((c) => totalForSet(c.setId) === total)
+        if (m.length >= 1 && m.length < cands.length) cands = m
+      }
       const qC = { name: null, number, lang: (lang as any) || null, total: total ?? null }
       if (cands.length === 0) return NextResponse.json({ status: 'not_found', query: qC, candidates: [] })
       if (cands.length === 1) return NextResponse.json({ status: 'match', query: qC, card: cands[0], candidates: cands })
@@ -175,7 +187,7 @@ export async function GET(req: NextRequest) {
     // Filtre total imprimé : si fourni et discriminant, on restreint aux sets
     // dont le total correspond — SANS jamais vider la liste (best-effort).
     if (total && Number.isFinite(total) && result.candidates.length > 1) {
-      const matching = result.candidates.filter((c) => TOTAL_BY_SET[c.setId] === total)
+      const matching = result.candidates.filter((c) => totalForSet(c.setId) === total)
       if (matching.length >= 1 && matching.length < result.candidates.length) {
         result.candidates = matching
         if (matching.length === 1) {

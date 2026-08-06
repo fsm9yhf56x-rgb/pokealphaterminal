@@ -111,6 +111,7 @@ export async function resolveFromLines(
     const al = (await sql`
       SELECT k_card_id, confirmations FROM scan_aliases
       WHERE read_key = ANY(${keys})
+        AND (read_key LIKE 'nt:%' OR confirmations >= 2)
       ORDER BY confirmations DESC, last_seen DESC LIMIT 1`) as Array<{ k_card_id: string; confirmations: number }>
     if (al.length) {
       const c = await candidateById(al[0].k_card_id)

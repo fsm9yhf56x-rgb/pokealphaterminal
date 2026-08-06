@@ -139,7 +139,20 @@ export async function resolveFromLines(
       (lang && res.card.lang?.toLowerCase() === String(lang).toLowerCase() ? 0.2 : 0)
     if (!best || score > best.score) best = { score, res }
   }
-  if (best) return { ...best.res, via: 'name' }
+  if (best) {
+    // AUTO-APPRENTISSAGE : un match exact (nom+numéro+total concordants) est
+    // une certitude — le serveur s'enseigne lui-même, sans humain. Les cas
+    // ambigus restent les seuls à exiger une confirmation.
+    if (best.res.card && best.res.card.matchKind === 'exact' && best.res.query.total) {
+      const c = best.res.card
+      for (const k of aliasKeys(names, nums).slice(0, 4)) {
+        sql`INSERT INTO scan_aliases (read_key, k_card_id) VALUES (${k}, ${c.kCardId})
+            ON CONFLICT (read_key, k_card_id)
+            DO UPDATE SET confirmations = scan_aliases.confirmations + 1, last_seen = now()`.catch(() => {})
+      }
+    }
+    return { ...best.res, via: 'name' }
+  }
   for (const res of results) {
     if (res?.status === 'ambiguous' && res.candidates.length) return { ...res, via: 'ambiguous' }
   }

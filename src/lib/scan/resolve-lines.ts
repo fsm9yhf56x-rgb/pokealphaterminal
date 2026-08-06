@@ -1,6 +1,9 @@
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
 import { resolveScan, type ScanCandidate, type ResolveResult } from './resolve-query'
+import setIndexRaw from './set-index.json'
+const _norm = (x: string) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '')
+const _totalOf = new Map((setIndexRaw as any[]).map((e) => [_norm(e.id), e.printedTotal]))
 
 /**
  * Résolution depuis les LIGNES OCR BRUTES. Le client ne devine plus rien :
@@ -146,7 +149,14 @@ export async function resolveFromLines(
     // ambigus restent les seuls à exiger une confirmation.
     if (best.res.card && best.res.card.matchKind === 'exact' && best.res.query.total) {
       const c = best.res.card
-      for (const k of aliasKeys(names, nums).slice(0, 4)) {
+      // GARDE ANTI-POISON : un alias nt:{n}/{t} n'est écrit que si le total
+      // du set du candidat vaut t — un nom voisin dans le champ ne peut plus
+      // empoisonner le couple numéro/total d'une autre carte.
+      const okKeys = aliasKeys(names, nums).slice(0, 4).filter((k) => {
+        const m = k.match(/^nt:\d+\/(\d+)$/)
+        return !m || _totalOf.get(_norm(c.setId)) === Number(m[1])
+      })
+      for (const k of okKeys) {
         sql`INSERT INTO scan_aliases (read_key, k_card_id) VALUES (${k}, ${c.kCardId})
             ON CONFLICT (read_key, k_card_id)
             DO UPDATE SET confirmations = scan_aliases.confirmations + 1, last_seen = now()`.catch(() => {})

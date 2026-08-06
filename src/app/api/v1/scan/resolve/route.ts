@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
         const setName =
           c.lang === 'FR' ? (e?.nameFr || e?.nameEn) :
           c.lang === 'JP' ? (e?.nameJp || e?.nameEn) : (e?.nameEn)
-        return { ...c, setName: setName || c.setId, setLogo: e?.logo || null } as any
+        return { ...c, setName: setName || c.setId, setLogo: e?.logo || null, printedTotal: e?.printedTotal ?? null } as any
       })
 
       if (total && Number.isFinite(total) && cands.length > 1) {

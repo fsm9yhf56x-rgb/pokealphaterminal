@@ -49,6 +49,8 @@ jobs:
           BETA_MODE: 'on'
           BETA_ENDS_AT: '2026-08-31T22:00:00Z'
         run: node scripts/generate-notifications.mjs
+      - name: Pré-entraînement scan (autonome)
+        run: node scripts/kodo-scan-pretrain.mjs
       # RGPD : la politique de confidentialite annonce 25 mois (CNIL).
       - name: Purge analytics > 25 mois
         if: always()

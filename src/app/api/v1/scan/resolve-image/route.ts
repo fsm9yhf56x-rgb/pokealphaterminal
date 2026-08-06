@@ -16,7 +16,7 @@ async function dhash256(buf: Buffer): Promise<bigint[]> {
 }
 
 export async function POST(req: NextRequest) {
-  const _rl = await checkPublicRateLimit(req, 'costly')
+  const _rl = await checkPublicRateLimit(req, 'scan')
   if (_rl) return _rl
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_json' }, { status: 400 }) }

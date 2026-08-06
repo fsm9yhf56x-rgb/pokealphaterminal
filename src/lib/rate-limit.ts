@@ -179,11 +179,13 @@ export async function checkAuthRateLimit(req: Request): Promise<NextResponse | n
 // API publique : checkPublicRateLimit (routes ouvertes)
 // ─────────────────────────────────────────────────────────────────────────
 
-export type PublicTier = 'costly' | 'write' | 'data' | 'waitlist'
+export type PublicTier = 'costly' | 'scan' | 'write' | 'data' | 'waitlist'
 
 const PUBLIC_TIERS: Record<PublicTier, { requests: number; window: `${number} s` | `${number} m` | `${number} h`; message: string }> = {
   // Génération d'images (sharp + Satori) et OCR/pg_trgm : coût CPU réel.
   costly:   { requests: 30, window: '1 m', message: 'Trop de requêtes. Réessaie dans un instant.' },
+  // Le scan temps réel tire 1-2 req/s en rafale : classe dédiée, large.
+  scan:     { requests: 300, window: '1 m', message: 'Scan trop rapide. Une seconde…' },
   // Écriture en base sans compte (analytics).
   write:    { requests: 30, window: '1 m', message: 'Trop de requêtes.' },
   // Prix Kodo = notre donnée propriétaire : anti-aspiration en boucle.

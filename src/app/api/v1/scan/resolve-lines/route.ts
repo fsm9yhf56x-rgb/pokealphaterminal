@@ -12,7 +12,7 @@ const BY_ID = new Map(SET_INDEX.map((e) => [normSetId(e.id), e]))
 /** POST /api/v1/scan/resolve-lines — le client envoie les lignes OCR brutes,
  *  le serveur matche contre le catalogue entier. */
 export async function POST(req: NextRequest) {
-  const _rl = await checkPublicRateLimit(req, 'costly')
+  const _rl = await checkPublicRateLimit(req, 'scan')
   if (_rl) return _rl
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_json' }, { status: 400 }) }

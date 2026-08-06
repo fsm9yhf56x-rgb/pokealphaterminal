@@ -137,9 +137,13 @@ export async function resolveFromLines(
   for (const res of results) {
     if (!res || res.status !== 'match' || !res.card) continue
     const sim = res.card.similarity ?? 1
+    // Le bonus TOTAL n'est accordé que si le total du SET du candidat le
+    // confirme ; un total contredit PÉNALISE — un nom de voisine (Scyther,
+    // total 165) ne peut plus battre la vraie carte (Durant, 163).
+    const tOk = res.query.total ? _totalOf.get(_norm(res.card.setId)) === res.query.total : null
     const score =
       (res.card.matchKind === 'exact' ? 1.3 : sim) +
-      (res.query.total ? 0.4 : 0) +
+      (tOk === true ? 0.5 : tOk === false ? -0.6 : 0) +
       (lang && res.card.lang?.toLowerCase() === String(lang).toLowerCase() ? 0.2 : 0)
     if (!best || score > best.score) best = { score, res }
   }

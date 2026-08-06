@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic'
 /** POST /api/v1/scan/resolve-image — matching VISUEL (dHash 256 bits). */
 async function dhash256(buf: Buffer): Promise<bigint[]> {
   const { data } = await sharp(buf).grayscale().resize(17, 16, { fit: 'fill' }).raw().toBuffer({ resolveWithObject: true })
-  const h = [0n, 0n, 0n, 0n]
+  const h = [BigInt(0), BigInt(0), BigInt(0), BigInt(0)]
   for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-    const bit = data[y * 17 + x] > data[y * 17 + x + 1] ? 1n : 0n
-    h[y >> 2] = (h[y >> 2] << 1n) | bit
+    const bit = data[y * 17 + x] > data[y * 17 + x + 1] ? BigInt(1) : BigInt(0)
+    h[y >> 2] = (h[y >> 2] << BigInt(1)) | bit
   }
   return h.map((v) => BigInt.asIntN(64, v))
 }

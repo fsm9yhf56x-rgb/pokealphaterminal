@@ -51,6 +51,10 @@ jobs:
         run: node scripts/generate-notifications.mjs
       - name: Pré-entraînement scan (autonome)
         run: node scripts/kodo-scan-pretrain.mjs
+      - name: Indexation visuelle (autonome, lot nocturne)
+        run: BATCH=4000 node scripts/kodo-phash-index.mjs
+      - name: Replay des échecs (les ratés deviennent des alias)
+        run: node scripts/kodo-scan-replay.mjs
       # RGPD : la politique de confidentialite annonce 25 mois (CNIL).
       - name: Purge analytics > 25 mois
         if: always()

@@ -11,6 +11,7 @@ export const SITE = 'https://kodocards.com'
 
 export interface CardSeo {
   id: string
+  printId: string
   name: string
   lang: 'fr' | 'en' | 'jp'
   number: string | null
@@ -41,7 +42,7 @@ export async function getCardSeo(id: string): Promise<CardSeo | null> {
   // Le join price_signals porte sur print_id ET lang : sans lang, une fiche FR
   // sans cote heriterait du prix EN.
   const rows = await sql.query(
-    `SELECT c.id, c.name_localized, c.lang, c.image_url, c.has_image,
+    `SELECT c.id, c.print_id, c.name_localized, c.lang, c.image_url, c.has_image,
             p.number, p.set_id, p.rarity AS print_rarity, c.rarity AS card_rarity,
             s.fair_value_eur, s.grade_ev_psa10_eur, s.computed_at,
             ks.name AS set_name, ks.name_fr AS set_name_fr
@@ -63,6 +64,7 @@ export async function getCardSeo(id: string): Promise<CardSeo | null> {
 
   return {
     id: String(r.id),
+    printId: String(r.print_id),
     name: String(r.name_localized || ''),
     lang,
     number: r.number == null ? null : String(r.number),
@@ -74,6 +76,56 @@ export async function getCardSeo(id: string): Promise<CardSeo | null> {
     gradeEvPsa10: r.grade_ev_psa10_eur == null ? null : Number(r.grade_ev_psa10_eur),
     computedAt: (r.computed_at as string) ?? null,
   }
+}
+
+/**
+ * Versions d'une meme carte dans une autre langue, POUR hreflang.
+ *
+ * Deux regles strictes :
+ *  1. On ne declare qu'une alternative reellement indexable — has_image ET une
+ *     cote. Annoncer une equivalence vers une page que le sitemap n'inclut pas
+ *     envoie un signal contradictoire : le site dit a Google "voici la version
+ *     anglaise" tout en refusant de la lister.
+ *  2. Le code de langue japonais est 'ja', pas 'jp'. 'jp' est un code de PAYS.
+ *     Google ignore silencieusement une balise mal formee — l'erreur ne se voit
+ *     jamais, elle coute juste tout le benefice.
+ *
+ * Mesure au 07/08 : 22 372 prints existent en deux langues, mais seules 6 062
+ * paires ont leurs DEUX faces cotees. Les autres n'ont pas de balise, et c'est
+ * un etat valide.
+ */
+export async function getCardAlternates(printId: string, selfLang: string): Promise<Record<string, string>> {
+  const { neon } = await import('@neondatabase/serverless')
+  const sql = neon(process.env.DATABASE_URL as string)
+
+  const rows = await sql.query(
+    `SELECT c.id, c.lang
+       FROM k_cards c
+       JOIN price_signals s ON s.print_id = c.print_id AND s.lang = c.lang
+      WHERE c.print_id = $1
+        AND c.has_image = true
+        AND s.fair_value_eur IS NOT NULL`,
+    [printId]
+  )
+  // Une seule face indexable = pas de paire. Une balise hreflang solitaire ne
+  // veut rien dire : elle doit toujours designer un ensemble.
+  if (rows.length < 2) return {}
+
+  const out: Record<string, string> = {}
+  for (const r of rows as Record<string, unknown>[]) {
+    const l = String(r.lang).toLowerCase()
+    const tag = l === 'jp' ? 'ja' : l
+    out[tag] = `${SITE}/cartes/${encodeURIComponent(String(r.id))}`
+  }
+  // x-default : la version servie a un visiteur dont la langue ne correspond a
+  // aucune des notres. Le francais, coherent avec le positionnement.
+  if (out['fr']) out['x-default'] = out['fr']
+  else if (out['en']) out['x-default'] = out['en']
+
+  // La page doit se declarer elle-meme : un ensemble hreflang qui s'ignore est
+  // rejete par Google.
+  void selfLang
+  return out
 }
 
 const LANG_LABEL: Record<string, string> = { fr: 'française', en: 'anglaise', jp: 'japonaise' }

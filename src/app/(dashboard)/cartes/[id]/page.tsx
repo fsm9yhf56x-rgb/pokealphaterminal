@@ -13,7 +13,7 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getCardSeo, cardTitle, cardDescription, SITE } from '@/lib/cards/card-seo'
+import { getCardSeo, getCardAlternates, cardTitle, cardDescription, SITE } from '@/lib/cards/card-seo'
 import CardDetailClient from './CardDetailClient'
 
 // Les cotes sont recalculees chaque nuit : une heure de cache suffit.
@@ -31,11 +31,17 @@ export async function generateMetadata({
 
   const title = cardTitle(card)
   const description = cardDescription(card)
+  const languages = await getCardAlternates(card.printId, card.lang)
 
   return {
     title: `${title} — prix et cote`,
     description,
-    alternates: { canonical: `${SITE}/cartes/${encodeURIComponent(card.id)}` },
+    alternates: {
+      canonical: `${SITE}/cartes/${encodeURIComponent(card.id)}`,
+      // Vide quand la carte n'a pas de jumelle indexable : Next n'emet alors
+      // aucune balise, ce qui est l'etat correct.
+      ...(Object.keys(languages).length ? { languages } : {}),
+    },
     openGraph: {
       type: 'website',
       url: `${SITE}/cartes/${encodeURIComponent(card.id)}`,

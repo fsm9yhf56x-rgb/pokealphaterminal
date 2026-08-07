@@ -33,7 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   const item = await getSealedById(id)
-  if (!item) return { title: 'Produit introuvable — Kodo Cards' }
+  if (!item) return { title: 'Produit introuvable' }
 
   const nom = item.shortName || item.name
   const serie = item.setName ? ' — ' + item.setName : ''
@@ -46,7 +46,7 @@ export async function generateMetadata({
     : `${nom}${serie} en ${langue}. Suivez sa cote et les annonces en cours sur Kodo Cards.`
 
   return {
-    title: `${nom}${serie} — prix et cote | Kodo Cards`,
+    title: `${nom}${serie} — prix et cote`,
     description: desc,
     alternates: { canonical: `${SITE}/cartes/scelles/${item.id}` },
     openGraph: {

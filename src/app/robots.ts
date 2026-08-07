@@ -32,6 +32,15 @@ export default function robots(): MetadataRoute.Robots {
           '/portfolio',
         ],
       },
+      // Robots de RECHERCHE des assistants IA. Ils sont deja couverts par la
+      // regle * ci-dessus ; on les nomme pour que la decision soit lisible et
+      // qu'un blocage large ajoute plus tard ne les emporte pas par accident.
+      // Bloquer OAI-SearchBot retire le site des reponses ChatGPT — c'est le
+      // seul de la liste dont l'absence coute une visibilite.
+      { userAgent: 'OAI-SearchBot', allow: '/' },
+      { userAgent: 'ChatGPT-User', allow: '/' },
+      { userAgent: 'Claude-SearchBot', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
     ],
     sitemap: `${SITE}/sitemap.xml`,
     host: SITE,

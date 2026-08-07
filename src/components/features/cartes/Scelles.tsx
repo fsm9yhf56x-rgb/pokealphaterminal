@@ -25,30 +25,11 @@ import { buildSealedDbRow, buildSealedLocalRow } from '@/lib/sealed-portfolio'
 import AuthModal from '@/components/layout/AuthModal'
 import { SetSelect } from '@/components/features/cartes/SetSelect'
 import { PillSelect } from '@/components/features/cartes/PillSelect'
+import SealedDetail from '@/components/features/cartes/SealedDetail'
+import { useIsMobile } from '@/lib/useIsMobile'
+import type { SealedItem, SealedPrice } from '@/lib/sealed/catalog'
 
 type Lang = 'FR' | 'EN'
-
-interface SealedPrice {
-  value: number; currency: string; isAsking: boolean
-  basis?: 'spot' | 'window'; windowDays?: number
-  low: number | null; perBooster: number | null; raw: number | null
-  method: string | null; market: string | null
-  sellers: number | null; sampleSize: number | null; updatedAt: string | null
-}
-
-interface SealedItem {
-  id: string; name: string; shortName: string; lang: string
-  sku: string | null; skuLabel: string
-  content: { qty: number; unit: string; label: string } | null
-  setId: string | null; setName: string | null; series: string | null
-  setLogo: string | null; image: string | null
-  boosters: number | null; skuTrusted?: boolean
-  // Fourchette des annonces vues sur 90 jours quand aucune cote n'est possible :
-  // pour le scelle vintage c'est le seul affichage honnete — le collectionneur voit
-  // ce qui passe au lieu d'un "Donnees insuffisantes" muet.
-  range?: { low: number; high: number; sellers: number | null; days: number } | null
-  price: SealedPrice | null
-}
 
 interface Facet { sku: string; label: string; total: number; priced: number }
 
@@ -130,9 +111,10 @@ export function Scelles() {
   // adressable, donc partageable et atteignable depuis le classeur. La langue
   // se deduit du prefixe de la cle, sinon on ouvrirait la page en FR sur un
   // produit EN et l'item ne serait pas dans la liste chargee.
-  const urlProduct = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('p')
-    : null
+  const urlProductRef = useRef<string | null>(
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('p') : null
+  )
+  const urlProduct = urlProductRef.current
   const [lang, setLang] = useState<Lang>(
     urlProduct && urlProduct.startsWith('en-') ? 'EN' : 'FR'
   )
@@ -149,16 +131,22 @@ export function Scelles() {
   const [searchFocus, setSearchFocus] = useState(false)
   const [visible, setVisible] = useState(CHUNK)
   const [selId, setSelId] = useState<string | null>(urlProduct)
+  // Les liens ?p=xxx sont deja dans la nature (eBay, partages). On les envoie
+  // vers la vraie page produit : maintenir deux adresses pour un meme contenu
+  // fait perdre les deux, et la version a parametre est celle que Google
+  // n'explore pas.
+  useEffect(() => {
+    if (!urlProduct) return
+    window.location.replace('/cartes/scelles/' + encodeURIComponent(urlProduct))
+  }, [urlProduct])
   // Un state par rendu ne suffit pas : l'effet de reinitialisation ci-dessous
   // tourne AU MONTAGE et effacerait la selection venue de l'URL.
   const firstRun = useRef(true)
+  const narrow = useIsMobile(1200)
   const selectProduct = useCallback((id: string | null) => {
+    if (narrow && id) { window.location.href = '/cartes/scelles/' + id; return }
     setSelId(id)
-    if (typeof window === 'undefined') return
-    const u = new URL(window.location.href)
-    if (id) u.searchParams.set('p', id); else u.searchParams.delete('p')
-    window.history.replaceState(null, '', u.toString())
-  }, [])
+  }, [narrow])
   const [sealedSeed, setSealedSeed] = useState<SealedSeed | null>(null)
   const [authOpen, setAuthOpen] = useState(false)
   // Annonces reelles du produit selectionne. Distinctes de la cote : la cote est
@@ -509,7 +497,7 @@ export function Scelles() {
                     <div style={{ fontSize: '10px', color: '#86868B', marginBottom: '7px', overflow: 'hidden' as const, textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                       {it.setName || it.skuLabel}{it.content ? ' · ' + it.content.label : ''}
                     </div>
-                    {isCollector ? null : it.price && it.price.value > 0 ? (
+                    {it.price && it.price.value > 0 ? (
                       <>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', flexWrap: 'wrap' as const }}>
                           <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)' }}>
@@ -547,134 +535,22 @@ export function Scelles() {
             })}
           </div>
           <div ref={sentinelRef} style={{ height: 1 }} />
+          {/* Chemin de decouverte pour les robots. Le clic sur une carte ouvre
+              le panneau (plus rapide, et c'est le comportement voulu), mais un
+              onClick ne se suit pas : sans ces <a> reels, aucun moteur ne
+              trouve les fiches produit. Hors du flux visuel et hors de portee
+              du curseur — la version precedente, glissee DANS la carte, volait
+              le clic. */}
+          <nav aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+            {filtered.map((it) => (
+              <a key={'seo-' + it.id} href={'/cartes/scelles/' + it.id} tabIndex={-1}>{it.name}</a>
+            ))}
+          </nav>
         </div>
 
         {/* Drawer lateral */}
-        {selected ? (
-          <aside className="sc-panel" style={{ width: '420px', flexShrink: 0, position: 'sticky' as const, top: '16px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '14px', boxShadow: '0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)', overflow: 'hidden' as const, animation: 'scFadeIn .2s ease-out' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-              <span style={{ fontSize: '10px', color: '#AAA', textTransform: 'uppercase' as const, letterSpacing: '.1em', fontFamily: 'var(--font-display)' }}>Aperçu</span>
-              <button onClick={() => selectProduct(null)} style={{ background: 'none', border: 'none', color: '#AAA', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: 0 }}>{String.fromCharCode(215)}</button>
-            </div>
-
-            <div style={{ padding: '16px' }}>
-              <div style={{ borderRadius: '10px', overflow: 'hidden' as const, border: '1px solid rgba(0,0,0,0.05)', marginBottom: '14px' }}>
-                <Visual item={selected} h="220px" />
-              </div>
-
-              <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '3px' }}>
-                {flag(selected.lang === 'EN' ? 'EN' : 'FR')} {selected.setName || ''}
-              </div>
-              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-display)', margin: '0 0 6px', lineHeight: 1.25 }}>
-                {selected.shortName || selected.name}
-              </h2>
-              <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '12px' }}>
-                {selected.skuLabel}{selected.content ? ' · ' + selected.content.label : ''}
-              </div>
-
-              {isCollector ? null : (
-              <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: '10px', padding: '13px 14px', marginBottom: '14px' }}>
-                <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
-                  {selected.price?.basis === 'window' ? 'Annonces sur 90 jours'
-                    : selected.price?.isAsking ? 'Annonces en cours' : 'Prix de marché'}
-                </div>
-                {selected.price && selected.price.value > 0 ? (
-                  <>
-                    <div style={{ fontSize: '26px', fontWeight: 600, color: '#111', fontFamily: 'var(--font-data)', letterSpacing: '-.5px' }}>
-                      {selected.price.isAsking ? <span style={{ fontSize: '14px', fontWeight: 500, color: '#888', marginRight: '5px', fontFamily: 'var(--font-display)' }}>dès</span> : null}
-                      {eur(prixLive ?? selected.price.value)}
-                    </div>
-                    {/* D'ou vient le nombre. Sans cette phrase, la cote tombe du ciel
-                        et la decote ressemble a du jargon au lieu d'un gage de serieux. */}
-                    <div style={{ fontSize: '11.5px', color: '#6E6E73', marginTop: '6px', lineHeight: 1.5 }}>
-                      {selected.price.isAsking ? (
-                        <>
-                          {(selected.price.sampleSize || 0) >= 3 ? (<>
-                            La <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>moins chère</strong> des{' '}
-                          
-                            {selected.price.sampleSize}&nbsp;annonces en cours en France. C&apos;est un prix demandé, pas une vente conclue.
-                          </>) : (<>
-                            Dernier relevé fiable : le marché n&apos;a plus assez d&apos;annonces distinctes aujourd&apos;hui pour recalculer.
-                          </>)}
-                        </>
-                      ) : (
-                        <>
-                          {selected.price.sellers ? selected.price.sellers + ' vendeur' + ((selected.price.sellers || 0) > 1 ? 's' : '') + ' · ' : ''}
-                          {selected.price.market === 'US' ? 'marché américain converti' : 'annonces France'}
-                        </>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#AEAEB2', marginTop: '3px' }}>
-                      {ageLabel(selected.price.updatedAt) ? 'Relevé ' + ageLabel(selected.price.updatedAt) : ''}
-                    </div>
-                    {(parBoosterLive ?? selected.price.perBooster) ? (
-                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)' }}>{eur((parBoosterLive ?? selected.price.perBooster) as number)}</span>
-                        <span style={{ fontSize: '11.5px', color: '#86868B' }}>par booster · {selected.boosters} au total</span>
-                      </div>
-                    ) : null}
-                  </>
-                ) : selected.range ? (
-                  <>
-                    <div style={{ fontSize: '20px', fontWeight: 600, color: '#1D1D1F', fontFamily: 'var(--font-data)', letterSpacing: '-.3px' }}>
-                      {eur(selected.range.low)} — {eur(selected.range.high)}
-                    </div>
-                    <div style={{ fontSize: '11.5px', color: '#86868B', marginTop: '4px', lineHeight: 1.4 }}>
-                      {selected.range.sellers || 0} annonce{(selected.range.sellers || 0) > 1 ? 's' : ''} relevée{(selected.range.sellers || 0) > 1 ? 's' : ''} sur {selected.range.days} jours · pas assez de vendeurs distincts pour une cote
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ fontSize: '14px', color: '#AAA' }}>Données insuffisantes</div>
-                )}
-              </div>
-
-              )}
-
-
-              {asks.length > 0 ? (
-                <div style={{ marginBottom: '14px' }}>
-                  <div style={{ fontSize: '10px', color: '#86868B', textTransform: 'uppercase' as const, letterSpacing: '.08em', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
-                    En vente maintenant
-                  </div>
-                  {asks.map((a, i) => (
-                    <a key={a.url} href={a.url} target="_blank" rel="sponsored noopener noreferrer"
-                      className="sc-ask"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = i === 0 ? 'rgba(224,48,32,0.09)' : 'rgba(0,0,0,0.04)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = i === 0 ? 'rgba(224,48,32,0.05)' : 'transparent' }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', textDecoration: 'none', background: i === 0 ? 'rgba(224,48,32,0.05)' : 'transparent', marginBottom: '3px', transition: 'background .16s ease' }}>
-                      <span style={{ fontSize: '14.5px', fontWeight: 700, color: '#1D1D1F', fontFamily: 'var(--font-data)', minWidth: '74px' }}>{eur(a.price)}</span>
-                      {/* La condition eBay n'est PAS affichee : depuis la liste blanche
-                          toute annonce retenue est scellee — et 'Non gradee' est une
-                          condition de CARTE, absurde sur un display. */}
-                      <span style={{ flex: 1, minWidth: 0, fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {i === 0 ? <span style={{ color: '#E03020', fontWeight: 600 }}>Le moins cher</span> : (a.seller || '')}
-                      </span>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                        <path d="M7 17L17 7M8 7h9v9" />
-                      </svg>
-                    </a>
-                  ))}
-                  <div style={{ fontSize: '10.5px', color: '#AEAEB2', marginTop: '8px', paddingTop: '7px', borderTop: '1px solid rgba(0,0,0,0.045)' }}>
-                    Relevé {ageLabel(asks[0]?.seenAt) || 'récemment'} sur eBay · peut avoir été vendu depuis
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginTop: '7px', padding: '7px 9px', borderRadius: '8px', background: 'rgba(0,0,0,0.025)' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: '1px' }}>
-                      <circle cx="12" cy="12" r="9" /><path d="M12 16v-4M12 8h.01" />
-                    </svg>
-                    <span style={{ fontSize: '10.5px', color: '#86868B', lineHeight: 1.45 }}>
-                      <strong style={{ color: '#6E6E73', fontWeight: 600 }}>Liens partenaires.</strong>{' '}
-                      Une commission nous est versée sur les achats. Elle n’influence ni la cote, ni l’ordre d’affichage — les annonces sont triées du prix le plus bas.
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-
-              <button onClick={openModal} className="sc-cta"
-                style={{ width: '100%', height: '44px', borderRadius: '10px', background: '#1D1D1F', color: '#fff', border: 'none', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
-                <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> {user ? 'Ajouter au portfolio' : 'Suivre ce produit'}
-              </button>
-            </div>
-          </aside>
+        {selected && !narrow ? (
+          <SealedDetail item={selected} onClose={() => setSelId(null)} />
         ) : null}
       </div>
 

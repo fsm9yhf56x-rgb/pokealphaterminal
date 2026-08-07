@@ -23,6 +23,12 @@ export function extractNumbers(lines: RawLine[]): Array<{ n: string; t: number |
   const seen = new Set<string>()
   for (const l of lines) {
     const t = fixDigits(l.text).replace(/\s+/g, '')
+    // Promos japonaises "013/S-P", "123/SM-P" : numéro seul, sans total.
+    const pj = t.match(/(\d{1,3})[/⁄∕\\]([A-Z]{1,2}-?P)\b/i)
+    if (pj) {
+      const n = Number(pj[1])
+      if (n > 0 && !seen.has(`${n}/-`)) { seen.add(`${n}/-`); out.push({ n: String(n), t: null }) }
+    }
     for (const m of t.matchAll(/(\d{1,3})[/⁄∕\\](\d{1,3})/g)) {
       const n = Number(m[1]); const tot = Number(m[2])
       if (n > 0 && tot > 0 && tot < 1000 && n <= tot + 60) {

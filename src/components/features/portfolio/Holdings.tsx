@@ -2555,7 +2555,7 @@ export function Holdings() {
                 {/* Etat de conservation (raw uniquement) — alimente la valo par etat kodo_state */}
                 {!addForm.graded && addForm.condition !== 'Scelle' && (
                   <div style={{ display:'flex', gap:'5px', flexWrap:'wrap', marginBottom:'4px' }}>
-                    {['Near Mint','Excellent','Lightly Played','Moderately Played','Heavily Played','Damaged'].map(st=>{
+                    {['Near Mint','Excellent','Good','Light Played','Played','Poor'].map(st=>{
                       const sel = addForm.condition === st || (st === 'Near Mint' && addForm.condition === 'Raw')
                       return (
                         <button key={st} onClick={()=>handleConditionChange(st)}

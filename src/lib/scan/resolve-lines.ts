@@ -121,7 +121,7 @@ export async function resolveFromLines(
       SELECT k_card_id, read_key, confirmations FROM scan_aliases
       WHERE read_key = ANY(${keys})
         AND (read_key LIKE 'nt:%' OR confirmations >= 2)
-      ORDER BY (read_key LIKE 'nt:%') DESC, confirmations DESC, last_seen DESC LIMIT 1`) as Array<{ k_card_id: string; confirmations: number }>
+      ORDER BY (read_key LIKE 'nt:%') DESC, confirmations DESC, last_seen DESC LIMIT 1`) as Array<{ k_card_id: string; read_key: string; confirmations: number }>
     if (al.length) {
       const c = await candidateById(al[0].k_card_id)
       if (c) {

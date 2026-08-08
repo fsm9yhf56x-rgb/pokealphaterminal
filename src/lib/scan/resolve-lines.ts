@@ -118,13 +118,27 @@ export async function resolveFromLines(
   const keys = aliasKeys(names, nums)
   if (keys.length) {
     const al = (await sql`
-      SELECT k_card_id, confirmations FROM scan_aliases
+      SELECT k_card_id, read_key, confirmations FROM scan_aliases
       WHERE read_key = ANY(${keys})
         AND (read_key LIKE 'nt:%' OR confirmations >= 2)
       ORDER BY (read_key LIKE 'nt:%') DESC, confirmations DESC, last_seen DESC LIMIT 1`) as Array<{ k_card_id: string; confirmations: number }>
     if (al.length) {
       const c = await candidateById(al[0].k_card_id)
-      if (c) return { status: 'match', query, card: c, candidates: [c], via: 'alias' }
+      if (c) {
+        // Une clé name:xxx#N couvrant PLUSIEURS impressions (dp vs swsh…)
+        // ne peut pas trancher : on laisse le picker apprendre le bon.
+        let unique = true
+        if (String(al[0].read_key ?? '').startsWith('name:')) {
+          const dup = (await sql`
+            SELECT count(DISTINCT kc.id)::int AS n
+            FROM k_cards kc JOIN k_prints kp ON kp.id = kc.print_id
+            WHERE lower(unaccent(coalesce(kc.name_localized, kp.name_en, ''))) =
+                  lower(unaccent(coalesce(${c.name}, ${c.nameEn}, '')))
+              AND regexp_replace(kp.number, '^0+', '') = regexp_replace(${c.number}, '^0+', '')`) as any[]
+          unique = Number(dup[0]?.n ?? 1) <= 1
+        }
+        if (unique) return { status: 'match', query, card: c, candidates: [c], via: 'alias' }
+      }
     }
   }
 

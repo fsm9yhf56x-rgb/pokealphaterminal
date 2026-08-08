@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
       SELECT cp.k_card_id,
              (bit_count(cp.h0 # ${h[0]}) + bit_count(cp.h1 # ${h[1]})
             + bit_count(cp.h2 # ${h[2]}) + bit_count(cp.h3 # ${h[3]})) AS dist
-      FROM card_phash cp ORDER BY dist ASC LIMIT 5`) as Array<{ k_card_id: string; dist: number }>
+      FROM card_phash cp WHERE NOT (cp.h0 = 0 AND cp.h1 = 0 AND cp.h2 = 0 AND cp.h3 = 0)
+      ORDER BY dist ASC LIMIT 5`) as Array<{ k_card_id: string; dist: number }>
     const best = rows[0]
     if (!best || Number(best.dist) > 64) return NextResponse.json({ status: 'not_found', candidates: [] })
     const ids = rows.filter((r) => Number(r.dist) <= Number(best.dist) + 10).map((r) => r.k_card_id)

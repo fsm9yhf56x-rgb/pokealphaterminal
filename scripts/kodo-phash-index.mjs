@@ -35,6 +35,16 @@ for (const r of rows) {
               VALUES (${r.id}, ${h[0]}, ${h[1]}, ${h[2]}, ${h[3]})
               ON CONFLICT (k_card_id) DO NOTHING`
     if (++ok % 200 === 0) console.log(`  ${ok}/${rows.length}`)
-  } catch { ko++ }
+  } catch {
+    ko++
+    // SENTINELLE : l'échec est MARQUÉ (0,0,0,0) pour ne plus jamais être
+    // re-tenté — les URLs cassées ne bouchent plus la fenêtre.
+    await sql`INSERT INTO card_phash (k_card_id, h0, h1, h2, h3)
+              VALUES (${r.id}, 0, 0, 0, 0) ON CONFLICT (k_card_id) DO NOTHING`
+  }
 }
-console.log(`indexé: ${ok} · échecs: ${ko} · relance le script pour le lot suivant`)
+const rest = await sql`
+  SELECT count(*)::int AS n FROM k_cards kc
+  LEFT JOIN card_phash cp ON cp.k_card_id = kc.id
+  WHERE kc.has_image = true AND kc.image_url IS NOT NULL AND cp.k_card_id IS NULL`
+console.log(`indexé: ${ok} · échecs marqués: ${ko} · RESTANT: ${rest[0].n}`)

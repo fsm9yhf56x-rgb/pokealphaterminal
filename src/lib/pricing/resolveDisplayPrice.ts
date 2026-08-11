@@ -38,6 +38,13 @@ export type DisplaySource = { label: string; sub: string | null } | null
 const METHOD_LABEL: Record<string, string> = {
   cardmarket_trend: 'Tendance Cardmarket',
   us_nm_fx: 'Marché US',
+  // Repli assume sur l'agregat Cardmarket EU pour les communes / peu communes
+  // FR sans aucune cote (decision 07/08). Libelle distinct : ce n'est pas une
+  // cote francaise, et l'utilisateur doit pouvoir faire la difference.
+  eu_aggregate: 'Repli Cardmarket EU',
+  fr_sale: 'Ventes France',
+  ebay_fr_state: 'Annonces France',
+  ebay_fr_edition: 'Annonces France · édition',
   insufficient_data: '',
 }
 

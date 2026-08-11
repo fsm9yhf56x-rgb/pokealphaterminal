@@ -184,6 +184,82 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     RETURNING 1
     ) SELECT count(*)::int AS n FROM upd`
   console.log('orphelins nulles (print absent de price_matrix):', ro[0].n)
+
+  // ── REPLI AGREGAT EU SUR LES COMMUNES / PEU COMMUNES FR ────────────────
+  // DECISION ALON 07/08. Contexte : 9 452 communes et peu communes francaises
+  // n'ont AUCUNE cote (ni vente eBay FR, ni annonce FR/FR n>=3) et affichent
+  // "—" dans le portfolio. C'etait le point bloquant avant les invitations en
+  // masse : Johan ouvrait sa collection et voyait des tirets.
+  //
+  // Ce n'est PAS une entorse a "chaque prix sur son marche" : on ne melange
+  // rien, on declare un REPLI ASSUME ET SIGNALE la ou il n'y a rien du tout.
+  // L'agregat Cardmarket est un prix europeen toutes langues, donc methode
+  // DISTINCTE ('eu_aggregate') pour qu'aucune requete ne le confonde avec
+  // fr_sale ou ebay_fr_edition, et un '~' a l'affichage.
+  //
+  // CINQ GARDES, toutes nees d'un dry-run qui a montre 17 060 lignes au lieu
+  // de 8 539 et un maximum a 784 EUR sur une "commune".
+  //
+  //   G1 uniquement si cote_fr_eur EST DEJA NULLE. Jamais d'ecrasement.
+  //   G2 uniquement common / uncommon.
+  //   G3 PAS de vintage. Frontiere = passage WOTC -> Nintendo (Skyridge le
+  //      12/05/2003, EX Rubis & Saphir le 18/06). Un set sans release_date
+  //      est MODERNE par construction.
+  //   G4 PAS DE PROMO. Le symbole de rarete ne dit pas la valeur sur ce
+  //      segment : les Tropical Wind (Raz-de-maree tropical) et les promos
+  //      de championnat sont estampillees 'common' et valent 300 a 800 EUR.
+  //      Filtre sur ks.series = 'promo' ET sur les suffixes d'identifiant
+  //      (np, bwp, dpp, hgssp, smp, xyp, basep, mep) — la colonne series
+  //      n'est pas remplie partout.
+  //   G5 PLAFOND 20 EUR. Le repli est un pis-aller pour des cartes sans
+  //      enjeu. Des qu'un montant devient significatif (Metamorph EX Especes
+  //      Delta, commune holo a 570 EUR), l'utilisateur merite un vrai prix ou
+  //      un tiret honnete, pas une approximation europeenne.
+  //
+  // VARIANTE : un print porte plusieurs lignes AGGREGATED (Normal, Holofoil,
+  // Reverse). Sans choix explicite, Postgres en prenait une AU HASARD et le
+  // prix changeait d'une nuit a l'autre. On retient la MOINS CHERE — meme
+  // logique que le scelle, ou l'annonce la moins chere fait foi.
+  const rEu = await sql`
+    WITH agg AS (
+      SELECT c.print_id, min(pm.spot) AS p
+        FROM k_cards c
+        JOIN k_prints kp ON kp.id = c.print_id
+        LEFT JOIN k_sets ks ON ks.id = kp.set_id
+        JOIN price_matrix pm ON pm.print_id = c.print_id
+                            AND pm.tier = 'AGGREGATED'
+                            AND pm.source = 'cardmarket'
+                            AND pm.is_asking = false
+                            -- LANGUE OBLIGATOIRE : cardmarket/AGGREGATED existe en
+                            -- une ligne PAR LANGUE sur le meme print (2011bw-1 :
+                            -- 0,32 EUR en fr, 1,19 EUR en en). Sans ce filtre le
+                            -- min() prend la moins chere des deux, donc l'anglaise
+                            -- la plupart du temps, et sert un prix EN sur une
+                            -- fiche FR. Le repli reste europeen, mais il est au
+                            -- moins celui de la carte francaise.
+                            AND split_part(pm.kodo_card_id, '-', 1) = 'fr'
+       WHERE c.lang = 'fr'
+         AND lower(c.rarity_normalized) IN ('common','uncommon')
+         AND (ks.release_date IS NULL OR ks.release_date >= '2003-06-01')
+         AND COALESCE(ks.series, '') <> 'promo'
+         AND kp.set_id !~ '(^|-)(np|bwp|dpp|hgssp|smp|xyp|basep|mep|dpp)$'
+         AND pm.spot >= 0.02
+       GROUP BY c.print_id
+      HAVING min(pm.spot) <= 20
+    ), upd AS (
+    UPDATE price_signals ps
+       SET cote_fr_eur = agg.p,
+           fair_value_eur = agg.p,
+           fair_value_method = 'eu_aggregate',
+           computed_at = now()
+      FROM agg
+     WHERE ps.print_id = agg.print_id
+       AND ps.lang = 'fr'
+       AND (ps.cote_fr_eur IS NULL OR ps.cote_fr_eur = 0)
+    RETURNING 1
+    ) SELECT count(*)::int AS n FROM upd`
+  console.log('communes FR replies sur agregat EU (~):', rEu[0].n)
+
   console.log('\n=== SNAPSHOT price_history ===')
   // RETURNING print_id faisait remonter ~480 000 lignes au driver HTTP Neon pour
   // le seul besoin d'un compteur -> 'fetch failed' apres 23 min (echecs des 29-30/07).

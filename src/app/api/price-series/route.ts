@@ -112,25 +112,33 @@ export async function GET(req: NextRequest) {
     if (isFrCard && printId) {
       const RAW_TIERS_FR = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
       // Sources FR pertinentes (priorite a la cote Cardmarket = reference FR sur ce marche) :
-      //  - NEAR_MINT raw  <- market='EU' AGGREGATED cardmarket (la courbe du drawer, dense)
-      //                      + market='FR' cardmarket_fr (snapshot FR pur, s'accumule)
-      //  - autres tiers raw + grade <- market='FR' (FR pur ; souvent sparse, normal)
-      // On normalise AGGREGATED -> NEAR_MINT pour que la serie raw par defaut soit tracable.
+      //  - NEAR_MINT raw  <- kodo_state (prix par etat FR, source du prix affiche)
+      //                      puis cardmarket_fr (snapshot FR pur)
+      //  - autres tiers raw + grade <- sources FR pures uniquement
       // NEAR_MINT raw : UNE seule source, jamais melangee (sinon fausse variation).
-      //   priorite cardmarket_fr SI dense (>=SPARSE_THRESHOLD), sinon cote Cardmarket EU.
+      // Le fallback AGGREGATED/cardmarket a ete retire le 11/08 : trend toutes
+      // langues (banni du FR) ET agregat toutes conditions normalise en NM.
+      // Sur bw4-102 il affichait une courbe 62->46 EUR sous un prix de 333,96 EUR.
+      const stateNm = await sql`
+        SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
+        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier='NEAR_MINT' AND source='kodo_state' AND price>0
+        ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
       const frNm = await sql`
         SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
         FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier='NEAR_MINT' AND source='cardmarket_fr' AND price>0
         ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
-      const euNm = await sql`
-        SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier='AGGREGATED' AND source='cardmarket' AND price>0
-        ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
-      const nmRows = (frNm.length >= SPARSE_THRESHOLD ? frNm : euNm).map(r => ({ ...r, tier: 'NEAR_MINT', source: frNm.length >= SPARSE_THRESHOLD ? 'cardmarket_fr' : 'cardmarket' }))
-      // Autres tiers raw + grade : uniquement FR pur (souvent sparse, normal).
+      const nmSource = stateNm.length >= SPARSE_THRESHOLD ? 'kodo_state'
+        : (frNm.length >= SPARSE_THRESHOLD ? 'cardmarket_fr' : null)
+      const nmRows = (nmSource === 'kodo_state' ? stateNm : nmSource === 'cardmarket_fr' ? frNm : [])
+        .map(r => ({ ...r, tier: 'NEAR_MINT', source: nmSource as string }))
+      // Autres tiers raw + grade : uniquement les sources FR PURES.
+      // cardmarket (trend toutes langues) et cardmarket_unsold (annonces non
+      // vendues, pas des ventes) sont exclus : ni l'un ni l'autre ne decrit le
+      // marche francais reel. Pas de source FR pure -> pas de serie.
       const otherRows = await sql`
         SELECT day::text AS date, tier, source, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier <> 'NEAR_MINT' AND price>0
+        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier <> 'NEAR_MINT'
+          AND source IN ('kodo_state','cardmarket_fr','ebay_fr') AND price>0
         ORDER BY day ASC` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
       const rows = [...nmRows, ...otherRows] as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
 

@@ -40,8 +40,16 @@ export function resolveDisplayPrice(
   const isFr = String(lang || '').toUpperCase() === 'FR'
   const method = kodo?.fairValueMethod || ''
 
-  // Donnée explicitement insuffisante -> rien (honnête).
-  if (method === 'insufficient_data') return { price: null, source: null }
+  // Donnée Engine insuffisante : on ne coupe PLUS avant d'avoir regardé la table
+  // par état. Décision Alon 11/08 — la grille (display.ts, repli kodo_state)
+  // affichait déjà ~4 002 EUR sur la vignette pendant que la fiche disait
+  // "Données insuffisantes" : deux modules, deux règles, un seul produit.
+  // Une échelle derived reste affichée, marquée "(indicative)" par le libellé
+  // ci-dessous. Sans échelle du tout -> null, comme avant.
+  const frNmFallback = isFr ? (prices as any)?.frByCondition?.NEAR_MINT : null
+  if (method === 'insufficient_data' && !(frNmFallback && Number(frNmFallback.price) > 0)) {
+    return { price: null, source: null }
+  }
 
   // HEADLINE FR = NEAR_MINT de la table par état (même source que le bloc
   // "Prix par état" et que le moteur portfolio) : un seul prix de référence.
@@ -51,7 +59,7 @@ export function resolveDisplayPrice(
       return {
         price: Number(nm.price),
         source: {
-          label: nm.derived ? 'Référence par état (indicative)' : 'Annonces France · Near Mint',
+          label: nm.derived ? 'Référence par état' : 'Annonces France · Near Mint',
           sub: null,
         },
       }

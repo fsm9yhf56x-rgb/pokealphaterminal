@@ -69,6 +69,24 @@ export function buildFrByCondition(matrixRows: any[], coteRef: number | null): R
   return out
 }
 
+/** RÈGLE 5b — Cote FR affichée = l'état LE MIEUX DOCUMENTÉ, pas un tier fixe.
+ *  Décision Alon 11/08 : la cote suit le volume réel (annonces/ventes), sinon
+ *  on affiche un NEAR_MINT extrapolé pendant que le moteur de signaux dit
+ *  insufficient_data — deux chiffres contradictoires sur la même fiche.
+ *  Un état `derived` (saleCount 0, extrapolé par l'échelle DECAY) n'est JAMAIS
+ *  une cote : s'il n'existe que des états derived, il n'y a pas de cote. */
+export interface FrCote { tier: string; price: number; saleCount: number }
+export function pickCoteFr(byCondition: Record<string, FrCond>): FrCote | null {
+  let best: FrCote | null = null
+  for (const tier of FR_RAW_TIERS) {
+    const c = byCondition[tier]
+    if (!c || c.derived) continue
+    if (!(c.price > 0) || c.saleCount < FR_MIN_ASKING) continue
+    if (!best || c.saleCount > best.saleCount) best = { tier, price: c.price, saleCount: c.saleCount }
+  }
+  return best
+}
+
 /** condition portfolio -> tier FR (même échelle que la fiche). */
 export function rawTierFromCondition(condition: string | null | undefined): string {
   const c = String(condition ?? '').trim().toUpperCase()

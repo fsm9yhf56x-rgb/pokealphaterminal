@@ -14,10 +14,10 @@ const LANG: Record<string, string> = { EN: 'Anglais', FR: 'Français', JP: 'Japo
 const COND_LABEL: Record<string, string> = {
   NEAR_MINT: 'Near Mint',
   EXCELLENT: 'Excellent',
-  LIGHTLY_PLAYED: 'Lightly Played',
-  MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played',
-  DAMAGED: 'Damaged',
+  LIGHTLY_PLAYED: 'Good',
+  MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played',
+  DAMAGED: 'Poor',
   MINT: 'Mint',
 }
 
@@ -137,7 +137,11 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
     // curPrice fige de l'exemplaire ici : ce n'est pas un prix de marche, et il
     // divergeait du tableau "Prix par etat". Coherence par construction.
     const resolvedPf = resolveDisplayPrice(card.lang, prices, kodo)
-    heroPrice = insufficient ? null : resolvedPf.price
+    // resolveDisplayPrice tranche deja le cas insufficient_data (il sert une
+    // reference par etat quand elle existe, null sinon). Re-filtrer ici sur la
+    // methode Engine faisait diverger le mode portfolio du mode marche sur la
+    // MEME carte : blanc d'un cote, 4 002 EUR de l'autre.
+    heroPrice = resolvedPf.price
   } else {
     const resolved = resolveDisplayPrice(card.lang, prices, kodo)
     heroPrice = resolved.price
@@ -160,7 +164,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
     if (v == null) return { main: '—', cents: '' }
     const rounded = Math.floor(v)
     const cents = Math.round((v - rounded) * 100)
-    return { main: rounded.toLocaleString('fr-FR'), cents: cents > 0 ? `,${cents.toString().padStart(2, '0')} €` : ' €' }
+    return { main: rounded.toLocaleString('fr-FR'), cents: `,${cents.toString().padStart(2, '0')} €` }
   }
   const { main: priceMain, cents: priceCents } = formatPrice(heroPrice)
 
@@ -223,7 +227,7 @@ export function SpotlightHero({ card, prices, portfolio, hideTitle, hidePrice, k
           </div>
         </div>
         <div style={{ textAlign: 'right' as const, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
-          {insufficient ? (
+          {heroPrice == null ? (
             <div style={{ fontFamily: FONT.display, fontSize: 13, fontWeight: 500, color: SNOW.mutedLight, fontStyle: 'italic' as const, maxWidth: 180, whiteSpace: 'normal' as const, textAlign: 'right' as const, lineHeight: 1.3 }}>{isFr ? 'Données insuffisantes' : 'Pas de cote occidentale'}</div>
           ) : (
           <div>

@@ -14,9 +14,24 @@ export type DisplayKodo = {
 } | null | undefined
 
 export type DisplayPrices = {
-  frByCondition?: Record<string, { price: number; saleCount: number; isAsking: boolean; derived?: boolean }> | null
+  frByCondition?: Record<string, { price: number; saleCount: number; isAsking: boolean; derived?: boolean; asOf?: string | null }> | null
   marketEst?: number | null
 } | null | undefined
+
+/** Date d'un prix estime, affichee AU-DELA de 3 jours seulement : un prix frais
+ *  n'a pas besoin d'etre date, un prix de trois semaines si. Decision 11/08 —
+ *  la mesure a montre que 78% des cartes FR en portefeuille n'ont pas de cote
+ *  reelle (Rayquaza 344 EUR, Mew-EX 337 EUR...). Les masquer viderait le
+ *  produit ; les afficher sans date laisserait croire qu'ils sont d'aujourd'hui.
+ *  On affiche, et on dit de quand ca date. */
+function ageLabel(asOf: string | null | undefined): string | null {
+  if (!asOf) return null
+  const d = new Date(asOf)
+  if (isNaN(d.getTime())) return null
+  const jours = (Date.now() - d.getTime()) / 86400000
+  if (jours < 3) return null
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
 
 export type DisplaySource = { label: string; sub: string | null } | null
 
@@ -59,8 +74,8 @@ export function resolveDisplayPrice(
       return {
         price: Number(nm.price),
         source: {
-          label: nm.derived ? 'Référence par état' : 'Annonces France · Near Mint',
-          sub: null,
+          label: nm.derived ? 'Estimation' : 'Annonces France · Near Mint',
+          sub: nm.derived ? ageLabel((nm as any).asOf) : null,
         },
       }
     }

@@ -11,7 +11,7 @@ export const DECAY: Record<string, number> = {
   NEAR_MINT: 1.38, EXCELLENT: 1.00, LIGHTLY_PLAYED: 0.79,
   MODERATELY_PLAYED: 0.65, HEAVILY_PLAYED: 0.53, DAMAGED: 0.42,
 }
-export interface FrCond { price: number; saleCount: number; isAsking: boolean; derived?: boolean }
+export interface FrCond { price: number; saleCount: number; isAsking: boolean; derived?: boolean; asOf?: string | null }
 
 export function buildFrByCondition(matrixRows: any[], coteRef: number | null): Record<string, FrCond> {
   const out: Record<string, FrCond> = {}
@@ -34,7 +34,7 @@ export function buildFrByCondition(matrixRows: any[], coteRef: number | null): R
     if (out[r.tier]) continue
     const k = Number(r.spot)
     if (!(k > 0)) continue
-    out[r.tier] = { price: Math.round(k * 100) / 100, saleCount: 0, isAsking: true, derived: true }
+    out[r.tier] = { price: Math.round(k * 100) / 100, saleCount: 0, isAsking: true, derived: true, asOf: r.as_of ?? null }
   }
   // ÉTAGE 3 — Dès qu'UN prix raw valide existe (vente conclue ou annonce en
   // cours, quel que soit l'état), on ancre dessus et on extrapole les états

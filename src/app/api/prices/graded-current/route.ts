@@ -16,10 +16,13 @@ const USD_TO_EUR = 0.92
 
 const CONDITION_ORDER: { key: string; label: string }[] = [
   { key: 'NM', label: 'Near Mint' },
-  { key: 'LP', label: 'Lightly Played' },
-  { key: 'MP', label: 'Moderately Played' },
-  { key: 'HP', label: 'Heavily Played' },
-  { key: 'DMG', label: 'Damaged' },
+  // key = cle de lecture du JSON prices_by_condition (nomenclature TCGplayer,
+  // NE PAS TOUCHER). label = ce que voit l'utilisateur -> nomenclature
+  // Cardmarket, avec le decalage reel : LP americain = Good europeen.
+  { key: 'LP', label: 'Good' },
+  { key: 'MP', label: 'Light Played' },
+  { key: 'HP', label: 'Played' },
+  { key: 'DMG', label: 'Poor' },
 ]
 
 const COMPANY_PREFIXES = ['psa', 'bgs', 'cgc', 'sgc', 'ace', 'tag', 'cca', 'pca', 'ccc'] as const

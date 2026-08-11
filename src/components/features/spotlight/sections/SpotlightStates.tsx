@@ -8,10 +8,10 @@ import { SNOW, FONT, fmtPrice } from '../snowTokens'
 const COND_LABEL: Record<string, string> = {
   NEAR_MINT: 'Near Mint',
   EXCELLENT: 'Excellent',
-  LIGHTLY_PLAYED: 'Lightly Played',
-  MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played',
-  DAMAGED: 'Damaged',
+  LIGHTLY_PLAYED: 'Good',
+  MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played',
+  DAMAGED: 'Poor',
 }
 const COND_SUB: Record<string, string> = {
   NEAR_MINT: 'comme neuf',
@@ -21,7 +21,7 @@ const COND_SUB: Record<string, string> = {
   HEAVILY_PLAYED: 'usure marquée',
   DAMAGED: 'abîmée',
 }
-const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', EXCELLENT: 'EX', LIGHTLY_PLAYED: 'LP', MODERATELY_PLAYED: 'MP', HEAVILY_PLAYED: 'HP', DAMAGED: 'DMG' }
+const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', EXCELLENT: 'EX', LIGHTLY_PLAYED: 'GD', MODERATELY_PLAYED: 'LP', HEAVILY_PLAYED: 'PL', DAMAGED: 'PO' }
 const SRC_LABEL: Record<string, string> = { ebay: 'eBay', tcgplayer: 'TCGplayer', cardmarket: 'Cardmarket' }
 
 function gradeFromVariant(v: string): { tier: string; n: string; lab: string } | null {

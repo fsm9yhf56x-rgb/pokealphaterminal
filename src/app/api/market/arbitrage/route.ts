@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic'
 
 const RAW_TIERS = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED', 'MINT']
 const COND_LABEL: Record<string, string> = {
-  NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Lightly Played', MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played', DAMAGED: 'Damaged', MINT: 'Mint',
+  NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Good', MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played', DAMAGED: 'Poor', MINT: 'Mint',
 }
 
 type Side = { priceEur: number; source: string; basis: string; sales: number | null; date: string | null } | null

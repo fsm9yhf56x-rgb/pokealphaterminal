@@ -23,8 +23,8 @@ function gradedLabel(variant: string): string {
 
 const COND_ORDER = ['NEAR_MINT', 'EXCELLENT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
 const COND_FR: Record<string, string> = {
-  NEAR_MINT: 'Near Mint', EXCELLENT: 'Excellent', LIGHTLY_PLAYED: 'Lightly Played', MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played', DAMAGED: 'Damaged',
+  NEAR_MINT: 'Near Mint', EXCELLENT: 'Excellent', LIGHTLY_PLAYED: 'Good', MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played', DAMAGED: 'Poor',
 }
 
 function fmtEur(v: number | null | undefined): string {

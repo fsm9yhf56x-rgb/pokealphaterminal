@@ -4,8 +4,8 @@ import type { PriceEntry } from '../useSpotlightData'
 import { SNOW, FONT, fmtPrice } from '../snowTokens'
 
 const COND_ORDER = ['NEAR_MINT', 'EXCELLENT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
-const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', EXCELLENT: 'EX', LIGHTLY_PLAYED: 'LP', MODERATELY_PLAYED: 'MP', HEAVILY_PLAYED: 'HP', DAMAGED: 'DMG' }
-const COND_LABEL: Record<string, string> = { NEAR_MINT: 'Near Mint', EXCELLENT: 'Excellent', LIGHTLY_PLAYED: 'Lightly Played', MODERATELY_PLAYED: 'Moderately Played', HEAVILY_PLAYED: 'Heavily Played', DAMAGED: 'Damaged' }
+const COND_SHORT: Record<string, string> = { NEAR_MINT: 'NM', EXCELLENT: 'EX', LIGHTLY_PLAYED: 'GD', MODERATELY_PLAYED: 'LP', HEAVILY_PLAYED: 'PL', DAMAGED: 'PO' }
+const COND_LABEL: Record<string, string> = { NEAR_MINT: 'Near Mint', EXCELLENT: 'Excellent', LIGHTLY_PLAYED: 'Good', MODERATELY_PLAYED: 'Light Played', HEAVILY_PLAYED: 'Played', DAMAGED: 'Poor' }
 
 export function SpotlightRawConditions({ ebayRows }: { ebayRows: PriceEntry[] }) {
   const byCond: Record<string, PriceEntry> = {}

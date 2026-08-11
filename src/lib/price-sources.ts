@@ -72,9 +72,9 @@ const RAW_TIERS = new Set([
 ]);
 
 const RAW_LABELS: Record<string,string> = {
-  MINT: 'Mint', NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Lightly Played',
-  MODERATELY_PLAYED: 'Moderately Played', HEAVILY_PLAYED: 'Heavily Played',
-  DAMAGED: 'Damaged', AGGREGATED: 'Tendance',
+  MINT: 'Mint', NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Good',
+  MODERATELY_PLAYED: 'Light Played', HEAVILY_PLAYED: 'Played',
+  DAMAGED: 'Poor', AGGREGATED: 'Tendance',
 };
 
 export interface TierMeta {

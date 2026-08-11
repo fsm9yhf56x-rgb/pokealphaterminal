@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCardImageUrl, cleanLegacyUrl as cleanImageUrl } from '@/lib/images'
 import { usePersona } from '@/lib/usePersona'
+import { tierFromLabel, CONDITION_SHORT } from '@/lib/conditions-labels'
 import { HeaderSparkline } from './HeaderSparkline'
 import { getCardsForSet, staticToTCGCards } from '@/lib/cardDb'
 import { LiquidProgress } from '@/components/ui/LiquidProgress'
@@ -78,6 +79,14 @@ const TIER_BG: Record<string,string> = {
 }
 // Échelle Cardmarket FR (identique au mobile) : NM > EX > GD > LP > PL > PO
 const EDIT_STATES = ['NM','EX','GD','LP','PL','PO'] as const
+// Libelle stocke en base -> code court du selecteur. normalizeCondition ne
+// convertit RIEN (elle ne gere que le cas Sealed) : elle renvoyait 'Poor', qui
+// n'est pas dans EDIT_STATES -> repli sur 'NM' -> l'enregistrement ECRASAIT
+// l'etat reel. Invisible tant que 512 cartes sur 559 etaient en Near Mint.
+const conditionToCode = (c?: string | null): string => {
+  const tier = tierFromLabel(c)
+  return tier ? (CONDITION_SHORT[tier] || 'NM') : 'NM'
+}
 const STATE_TO_API: Record<string,string> = { NM:'Near Mint', EX:'Excellent', GD:'Good', LP:'Light Played', PL:'Played', PO:'Poor' }
 const EDIT_GRADE_COS = ['PSA','BGS','CGC','CCC','PCA','SGC']
 const HOLO_RARITIES = ['Alt Art','Secret Rare','Gold Star','Promo']
@@ -89,13 +98,11 @@ type ViewMode = 'binder'|'showcase'|'wrapped'
 function rawStateLabel(condition?: string): string {
   const c = (condition || '').toLowerCase()
   if (c.includes('sealed') || c.includes('scell')) return 'SCELLÉ'
-  if (c.includes('near') || c === 'nm' || c === 'mint')       return 'NM'
-  if (c.includes('excellent') || c === 'ex')                  return 'EX'
-  if (c.includes('lightly') || c === 'lp')                    return 'LP'
-  if (c.includes('moderately') || c === 'mp')                 return 'MP'
-  if (c.includes('heavily') || c === 'hp')                    return 'HP'
-  if (c.includes('damaged') || c === 'dmg' || c === 'dm')     return 'DMG'
-  return 'RAW'
+  // tierFromLabel accepte les libelles Cardmarket ET les anciens libelles US
+  // des lignes historiques. La table locale precedente ignorait Good / Light
+  // Played / Played / Poor -> tout retombait sur 'RAW'.
+  const tier = tierFromLabel(condition)
+  return tier ? (CONDITION_SHORT[tier] || 'RAW') : 'RAW'
 }
 
 const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
@@ -2082,7 +2089,7 @@ export function Holdings() {
 
                   {/* Gestion : MODIFIER — v2 (état, gradation, prix) → PATCH serveur */}
                   <button onClick={()=>{
-                      if(!editOpen){ setFGraded(!!spotCard.graded); setFCo(spotCard.gradeCompany||'PSA'); setFNote(spotCard.gradeValue||''); const nc=normalizeCondition(spotCard.condition); setFCond(EDIT_STATES.includes(nc as any)?nc:'NM'); setFBuy(spotCard.buyPrice>0?String(spotCard.buyPrice):'') }
+                      if(!editOpen){ setFGraded(!!spotCard.graded); setFCo(spotCard.gradeCompany||'PSA'); setFNote(spotCard.gradeValue||''); const nc=conditionToCode(spotCard.condition); setFCond(EDIT_STATES.includes(nc as any)?nc:'NM'); setFBuy(spotCard.buyPrice>0?String(spotCard.buyPrice):'') }
                       setEditOpen(o=>!o)
                     }}
                     style={{ width:'100%', marginTop:8, padding:'12px 14px', borderRadius:12, background:'rgba(255,255,255,0.7)', border:'1px solid var(--border)', color:'#1D1D1F', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-display)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>

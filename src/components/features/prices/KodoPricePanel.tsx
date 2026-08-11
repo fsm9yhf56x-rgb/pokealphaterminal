@@ -8,8 +8,8 @@ const MONO = 'var(--font-data)', DISP = 'var(--font-display)'
 
 const RAW_ORDER = ['NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED']
 const RAW_LABEL: Record<string,string> = {
-  NEAR_MINT:'Near Mint', EXCELLENT:'Excellent', LIGHTLY_PLAYED:'Lightly Played', MODERATELY_PLAYED:'Moderately Played',
-  HEAVILY_PLAYED:'Heavily Played', DAMAGED:'Damaged',
+  NEAR_MINT:'Near Mint', EXCELLENT:'Excellent', LIGHTLY_PLAYED:'Good', MODERATELY_PLAYED:'Light Played',
+  HEAVILY_PLAYED:'Played', DAMAGED:'Poor',
 }
 const SRC_PRIORITY: Record<string,number> = { tcgplayer:0, ebay:1, ppt_tcgplayer:2, ppt_ebay:3, cardmarket:4, cardmarket_unsold:9 }
 const METHOD_LABEL: Record<string,string> = {

@@ -197,51 +197,55 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   // hebdomadaire evite qu'une serie stable depuis deux mois s'arrete net.
   const r5 = await sql`
     WITH ambigu AS (
-      SELECT print_id, tier, source
+      SELECT print_id, tier, source, split_part(kodo_card_id,'-',1) AS lang
         FROM price_matrix
        WHERE print_id IS NOT NULL AND spot IS NOT NULL
-       GROUP BY print_id, tier, source
+       GROUP BY print_id, tier, source, split_part(kodo_card_id,'-',1)
       HAVING count(*) > 1
     ), candidat AS (
-      SELECT pm.print_id, pm.tier, pm.source, pm.market, pm.spot, pm.sale_count, pm.currency
+      SELECT pm.print_id, pm.tier, pm.source,
+             split_part(pm.kodo_card_id,'-',1) AS lang,
+             pm.market, pm.spot, pm.sale_count, pm.currency
         FROM price_matrix pm
         LEFT JOIN ambigu a
           ON a.print_id = pm.print_id AND a.tier = pm.tier AND a.source = pm.source
+         AND a.lang = split_part(pm.kodo_card_id,'-',1)
        WHERE pm.print_id IS NOT NULL AND pm.spot IS NOT NULL
          AND a.print_id IS NULL
     ), dernier AS (
-      SELECT DISTINCT ON (ph.print_id, ph.tier, ph.source)
-             ph.print_id, ph.tier, ph.source, ph.price, ph.day
-        FROM price_history ph
-        JOIN candidat c ON c.print_id = ph.print_id AND c.tier = ph.tier AND c.source = ph.source
-       ORDER BY ph.print_id, ph.tier, ph.source, ph.day DESC
+      SELECT DISTINCT ON (ph.print_id, ph.tier, ph.source, ph.lang)
+             ph.print_id, ph.tier, ph.source, ph.lang, ph.price, ph.day
+        FROM price_history_v2 ph
+        JOIN candidat c ON c.print_id = ph.print_id AND c.tier = ph.tier
+         AND c.source = ph.source AND c.lang = ph.lang
+       ORDER BY ph.print_id, ph.tier, ph.source, ph.lang, ph.day DESC
     ), ins AS (
-      INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
-      SELECT c.print_id, CURRENT_DATE, c.tier, c.source, c.market, c.spot, c.sale_count, c.currency
+      INSERT INTO price_history_v2 (print_id, day, tier, source, lang, market, price, sale_count, currency)
+      SELECT c.print_id, CURRENT_DATE, c.tier, c.source, c.lang, c.market, c.spot, c.sale_count, c.currency
         FROM candidat c
         LEFT JOIN dernier d
-          ON d.print_id = c.print_id AND d.tier = c.tier AND d.source = c.source
+          ON d.print_id = c.print_id AND d.tier = c.tier AND d.source = c.source AND d.lang = c.lang
        WHERE d.print_id IS NULL
           OR d.price IS DISTINCT FROM c.spot
           OR d.day <= CURRENT_DATE - 7
-      ON CONFLICT (print_id, day, tier, source) DO UPDATE
+      ON CONFLICT (print_id, day, tier, source, lang) DO UPDATE
         SET price = EXCLUDED.price, sale_count = EXCLUDED.sale_count,
             market = EXCLUDED.market, currency = EXCLUDED.currency
       RETURNING 1
     ) SELECT count(*)::int AS n FROM ins`
   console.log('rows history (changements + controle hebdo):', r5[0].n)
-  const rAmb = await sql`SELECT count(*)::int AS n FROM (SELECT 1 FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL GROUP BY print_id, tier, source HAVING count(*) > 1) z`
-  console.log('groupes ambigus NON snapshotes (multi-langue / multi-variant):', rAmb[0].n)
+  const rAmb = await sql`SELECT count(*)::int AS n FROM (SELECT 1 FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL GROUP BY print_id, tier, source, split_part(kodo_card_id,'-',1) HAVING count(*) > 1) z`
+  console.log('groupes ambigus NON snapshotes (multi-variant meme langue):', rAmb[0].n)
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
-  // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
-  //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).
+  // (PK price_history_v2 = print_id,day,tier,source,lang -> la langue est dans la cle
+  //  depuis 11/08 ; market reste descriptif et vaut toujours 'FR' pour cette source).
   // Garde-fous: prix dans ]0, 100000] (rejette les annonces sentinelles type 999999),
   // dedoublonnage par (print,tier) en gardant le prix median pondere par saleCount.
   // ACCUMULE jour par jour -> densite future pour afficher les grades FR honnetement.
   const r6 = await sql`
     WITH ins AS (
-    INSERT INTO price_history (print_id, day, tier, source, market, price, sale_count, currency)
-    SELECT t.print_id, CURRENT_DATE, t.tier, 'cardmarket_fr', 'FR', t.price, t.sale_count, 'EUR'
+    INSERT INTO price_history_v2 (print_id, day, tier, source, lang, market, price, sale_count, currency)
+    SELECT t.print_id, CURRENT_DATE, t.tier, 'cardmarket_fr', 'fr', 'FR', t.price, t.sale_count, 'EUR'
     FROM (
       SELECT pm.print_id, pm.tier,
              ROUND(AVG((country_breakdown->'FR'->'language'->'FR'->>'avg')::numeric), 2) AS price,
@@ -255,14 +259,15 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       GROUP BY pm.print_id, pm.tier
     ) t
     LEFT JOIN LATERAL (
-      SELECT ph.price AS last_price, ph.day AS last_day FROM price_history ph
+      SELECT ph.price AS last_price, ph.day AS last_day FROM price_history_v2 ph
        WHERE ph.print_id = t.print_id AND ph.tier = t.tier AND ph.source = 'cardmarket_fr'
+         AND ph.lang = 'fr'
        ORDER BY ph.day DESC LIMIT 1
     ) d ON true
     WHERE d.last_price IS NULL
        OR d.last_price IS DISTINCT FROM t.price
        OR d.last_day <= CURRENT_DATE - 7
-    ON CONFLICT (print_id, day, tier, source) DO UPDATE
+    ON CONFLICT (print_id, day, tier, source, lang) DO UPDATE
       SET price = EXCLUDED.price, sale_count = EXCLUDED.sale_count
     RETURNING 1
     ) SELECT count(*)::int AS n FROM ins`

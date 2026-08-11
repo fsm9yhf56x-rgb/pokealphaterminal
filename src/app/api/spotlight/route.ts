@@ -237,12 +237,11 @@ export async function GET(req: NextRequest) {
     if (history.length === 0) {
       // UNE seule serie coherente: priorite NM tcgplayer > NM ppt > Trend cardmarket.
       // Jamais melanger les tiers (variation fictive sinon).
-      // CHAQUE MARCHE SUR SA CARTE, l'historique compris. price_history vit par
-      // print_id SANS langue : une carte FR sans donnee EU recevait la serie
-      // NEAR_MINT/tcgplayer/USD convertie en euros — une courbe du marche US
-      // sous drapeau francais, avec un "+10,6% sur 90j" qui decrit une tendance
-      // americaine. Pas de donnee FR -> pas de courbe.
-      const frOnly = String((card as any)?.lang || '').toUpperCase() === 'FR'
+      // CHAQUE MARCHE SUR SA CARTE, l'historique compris. Depuis le 11/08
+      // price_history porte une colonne lang : on joint dessus, la serie servie
+      // est donc toujours celle de la langue de la carte. Avant, le filtre
+      // market='EU' servait de proxy et laissait passer des courbes US sous
+      // drapeau francais. Pas de donnee dans la langue -> pas de courbe.
       const khRows = await sql`
         WITH series AS (
           SELECT ph.tier, ph.source, ph.market, count(*) AS pts,
@@ -250,17 +249,18 @@ export async function GET(req: NextRequest) {
                  WHEN ph.tier='NEAR_MINT' AND ph.source='ppt_tcgplayer' THEN 1
                  WHEN ph.tier='AGGREGATED' AND ph.source='cardmarket' THEN 2
                  ELSE 9 END AS prio
-          FROM k_cards kc JOIN price_history ph ON ph.print_id = kc.print_id
+          FROM k_cards kc JOIN price_history ph
+            ON ph.print_id = kc.print_id AND ph.lang = kc.lang
           WHERE kc.id = ${cardId} AND ph.price > 0
           GROUP BY ph.tier, ph.source, ph.market
         ), best AS (
           SELECT tier, source, market FROM series
-           WHERE prio < 9 AND (${frOnly} = false OR market = 'EU')
+           WHERE prio < 9
            ORDER BY prio, pts DESC LIMIT 1
         )
         SELECT ph.day, ph.price, ph.currency
         FROM k_cards kc
-        JOIN price_history ph ON ph.print_id = kc.print_id
+        JOIN price_history ph ON ph.print_id = kc.print_id AND ph.lang = kc.lang
         JOIN best b ON b.tier = ph.tier AND b.source = ph.source AND b.market = ph.market
         WHERE kc.id = ${cardId} AND ph.price > 0
         ORDER BY ph.day ASC LIMIT 365

@@ -33,6 +33,7 @@ const REPORT_ONLY = process.argv.includes('--report');
 const FRAICHEUR = [
   { nom: 'cotes cartes',        table: 'price_signals',   col: 'computed_at',     seuilH: 30,      note: 'kodo-consolidate' },
   { nom: 'matrice prix',        table: 'price_matrix',    col: 'updated_at',      seuilH: 30,      note: 'ingests nocturnes' },
+  { nom: 'historique prix',     table: 'price_history',   col: 'day',             seuilH: 30,      note: 'snapshot kodo-consolidate' },
   { nom: 'catalogue',           table: 'tcg_sets',        col: 'updated_at',      seuilH: 8 * 24,  note: 'sync-catalog lundi' },
   { nom: 'graded PPT',          table: 'graded_prices_ppt', col: 'fetched_at',    seuilH: 8 * 24,  note: 'rotation par lots' },
   { nom: 'scelle (cotes)',      table: 'sealed_prices',   col: 'last_priced_at',  seuilH: 30,      note: 'kodo-sealed 07:30' },

@@ -52,11 +52,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Events récents depuis price_history (Kodo), résolu via k_cards.print_id
+    // Events récents depuis price_history (Kodo), résolu via k_cards.print_id + lang
+    // (jointure sur la langue depuis le 11/08 : sans elle une carte FR remontait
+    //  aussi les evenements de ses homologues EN/JP au meme print_id).
     const rows = await sql`
       SELECT ph.tier, ph.source, ph.market, ph.price, ph.sale_count, ph.currency, ph.day
       FROM k_cards kc
-      JOIN price_history ph ON ph.print_id = kc.print_id
+      JOIN price_history ph ON ph.print_id = kc.print_id AND ph.lang = kc.lang
       WHERE kc.id = ${cardId}
         AND ph.price IS NOT NULL
         AND ph.price > 0

@@ -29,15 +29,15 @@ const SPARSE_THRESHOLD = 10
 // Labels exacts des conditions raw dans raw_history->'conditions'
 const RAW_LABEL: Record<string, string> = {
   NEAR_MINT: 'Near Mint',
-  LIGHTLY_PLAYED: 'Lightly Played',
-  MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played',
-  DAMAGED: 'Damaged',
+  LIGHTLY_PLAYED: 'Good',
+  MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played',
+  DAMAGED: 'Poor',
 }
 const RAW_ORDER = ['NEAR_MINT', 'LIGHTLY_PLAYED', 'MODERATELY_PLAYED', 'HEAVILY_PLAYED', 'DAMAGED']
 const RAW_FR: Record<string, string> = {
-  NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Lightly Played', MODERATELY_PLAYED: 'Moderately Played',
-  HEAVILY_PLAYED: 'Heavily Played', DAMAGED: 'Damaged',
+  NEAR_MINT: 'Near Mint', LIGHTLY_PLAYED: 'Good', MODERATELY_PLAYED: 'Light Played',
+  HEAVILY_PLAYED: 'Played', DAMAGED: 'Poor',
 }
 
 // Ordre d'affichage des slabs gradés
@@ -103,8 +103,9 @@ export async function GET(req: NextRequest) {
     const localId = cardRows[0].local_id
     const numberPrefix = String(localId ?? '').padStart(3, '0') + '/%'
 
-    // ── CHEMIN FR : l'historique FR vit dans price_history (source='cardmarket_fr'
-    //    = snapshot FR pur quotidien, sinon market='EU' Cardmarket). graded_prices_ppt
+    // ── CHEMIN FR : l'historique FR vit dans price_history, filtre sur lang='fr'
+    //    (colonne ajoutee le 11/08 : avant, market='FR'/'EU' servait de proxy de langue
+    //    et 99k lignes cardmarket_fr etiquetees 'EU' etaient invisibles). graded_prices_ppt
     //    est EN/JP only -> aveugle au FR. On sert donc l'Engine, format identique.
     const printId = (cardRows[0] as any).print_id as string
     const isFrCard = ((cardRows[0] as any).card_lang || '').toLowerCase() === 'fr' || lang === 'FR'
@@ -119,17 +120,17 @@ export async function GET(req: NextRequest) {
       //   priorite cardmarket_fr SI dense (>=SPARSE_THRESHOLD), sinon cote Cardmarket EU.
       const frNm = await sql`
         SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history WHERE print_id=${printId} AND market='FR' AND tier='NEAR_MINT' AND source='cardmarket_fr' AND price>0
+        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier='NEAR_MINT' AND source='cardmarket_fr' AND price>0
         ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
       const euNm = await sql`
         SELECT day::text AS date, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history WHERE print_id=${printId} AND market='EU' AND tier='AGGREGATED' AND source='cardmarket' AND price>0
+        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier='AGGREGATED' AND source='cardmarket' AND price>0
         ORDER BY day ASC` as Array<{ date: string; price: number; volume: number }>
       const nmRows = (frNm.length >= SPARSE_THRESHOLD ? frNm : euNm).map(r => ({ ...r, tier: 'NEAR_MINT', source: frNm.length >= SPARSE_THRESHOLD ? 'cardmarket_fr' : 'cardmarket' }))
       // Autres tiers raw + grade : uniquement FR pur (souvent sparse, normal).
       const otherRows = await sql`
         SELECT day::text AS date, tier, source, price::float AS price, COALESCE(sale_count,0)::int AS volume
-        FROM price_history WHERE print_id=${printId} AND market='FR' AND tier <> 'NEAR_MINT' AND price>0
+        FROM price_history WHERE print_id=${printId} AND lang='fr' AND tier <> 'NEAR_MINT' AND price>0
         ORDER BY day ASC` as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
       const rows = [...nmRows, ...otherRows] as Array<{ date: string; tier: string; source: string; price: number; volume: number }>
 

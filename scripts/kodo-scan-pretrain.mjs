@@ -1,8 +1,15 @@
 // PRÉ-ENTRAÎNEMENT AUTONOME v2 — batch unnest : ~30 s au lieu de 30 min.
 import { neon } from '@neondatabase/serverless'
 import fs from 'node:fs'
-const env = fs.readFileSync('.env.local','utf8')
-const sql = neon(env.match(/^DATABASE_URL=(.+)$/m)[1].trim().replace(/^["']|["']$/g,''))
+// DATABASE_URL depuis l'environnement d'abord : sur un runner GitHub il n'y a
+// PAS de .env.local (les secrets arrivent en variables), donc le readFileSync
+// en dur faisait echouer ce step a chaque run depuis toujours -- et comme il
+// n'a pas de `if: always()`, il bloquait aussi les deux steps suivants
+// (indexation visuelle, replay des echecs) qui n'ont jamais tourne en CI.
+// Repli sur le fichier pour l'usage local, ou la variable n'est pas exportee.
+const dbUrl = process.env.DATABASE_URL
+  || fs.readFileSync('.env.local','utf8').match(/^DATABASE_URL=(.+)$/m)[1].trim().replace(/^["']|["']$/g,'')
+const sql = neon(dbUrl)
 const idx = JSON.parse(fs.readFileSync('src/lib/scan/set-index.json','utf8'))
 const totalOf = new Map(idx.map(e => [String(e.id).toLowerCase().replace(/[^a-z0-9]/g,''), e.printedTotal]))
 const rows = await sql`

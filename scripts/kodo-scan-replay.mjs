@@ -5,8 +5,11 @@
 // résolveur, relancer ; le cron peut aussi le faire.
 import { neon } from '@neondatabase/serverless'
 import fs from 'node:fs'
-const env = fs.readFileSync('.env.local','utf8')
-const sql = neon(env.match(/^DATABASE_URL=(.+)$/m)[1].trim().replace(/^["']|["']$/g,''))
+// DATABASE_URL depuis l'environnement d'abord (runner GitHub : pas de
+// .env.local, les secrets arrivent en variables). Repli fichier en local.
+const dbUrl = process.env.DATABASE_URL
+  || fs.readFileSync('.env.local','utf8').match(/^DATABASE_URL=(.+)$/m)[1].trim().replace(/^["']|["']$/g,'')
+const sql = neon(dbUrl)
 const BASE = process.env.KODO_BASE || 'https://kodocards.com'
 const misses = await sql`SELECT id, raw_read FROM scan_misses ORDER BY id ASC LIMIT 200`
 let hit = 0, amb = 0, still = 0

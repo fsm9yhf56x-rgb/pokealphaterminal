@@ -45,11 +45,25 @@ await sql`
   )`;
 
 // ── Classificateurs chirurgicaux (validés au test) ──
-const isEd2 = t => /(\b[ée]d(ition)?\.?\s*2\b|\bed2\b|wizards?\s*2|base\s*set\s*2|\bbs2\b|unlimited|illimit)/i.test(t);
-const isEd1 = t => /(\b[ée]d(ition)?\.?\s*1\b|\bed1\b|1[èe]re?\s*[ée]d|1st\s*ed|premi[èe]re\s*[ée]d)/i.test(t);
+// \b est defini sur [A-Za-z0-9_] : devant un "e" accentue il n'y a PAS de
+// frontiere de mot (espace et "e" sont tous deux non-mot), donc "\b[ee]d" ne
+// matchait jamais "edition 1" accentue. Mesure du 11/08 : 1 490 annonces sur
+// 28 666 portaient "Edition 1" en clair et partaient dans le bucket Unlimited
+// (contre 6 453 correctement classees) -> medianes Unl gonflees par des prix
+// Ed1, et Ed1 privees du volume qui leur donne une cote.
+// Remplace par (?:^|[^a-z0-9]) en entree et (?![0-9]) en sortie (evite 105, 12...).
+const isEd2 = t => /((?:^|[^a-z0-9])[ée]d(?:ition)?\.?\s*2(?![0-9])|(?:^|[^a-z0-9])ed2(?![0-9])|wizards?\s*2|base\s*set\s*2|(?:^|[^a-z0-9])bs2(?![0-9])|unlimited|illimit)/i.test(t);
+const isEd1 = t => /((?:^|[^a-z0-9])[ée]d(?:ition)?\.?\s*1(?![0-9])|(?:^|[^a-z0-9])ed1(?![0-9])|1[èe]re?\s*[ée]d|1st\s*ed|premi[èe]re\s*[ée]d)/i.test(t);
 const isGraded = t => /\b(psa|cgc|bgs|sgc|ccc|pca|arkeo|grad(é|ée|ed)|slab)\b/i.test(t);
 const isJunk = t => /(booster|display|coffret|scell[ée]|sealed|empty|vide|wrapper|lot|playset|bundle|\d+\s*cartes|complet|full\s*set|100%|proxy|fake|custom|orica|jumbo|topps)/i.test(t);
 const isJP = t => /\b(jp|jpn|japon|japanese|japonais)\b/i.test(t);
+// Cartes ANGLAISES vendues sur eBay FR : meme carte, autre marche, autre prix.
+// Il n'existait aucun filtre EN (seul isJP existait) -> 284 annonces anglaises
+// dans le staging FR au 11/08, dont une Lugia Ed1 anglaise a 3 800 EUR entree
+// dans la mediane de la Lugia FR (n=3). "Chaque prix sur son marche".
+// "anglaise(s)" couvre "Carte Pokemon Anglaise", "english"/"eng" les titres
+// bilingues. Frontiere en (?:^|[^a-z0-9]) : \b echoue devant un accent.
+const isEN = t => /((?:^|[^a-z0-9])(english|anglais|anglaise|anglaises)(?![a-z]))/i.test(t);
 const isHolo = t => /(holo|brillant|reverse)/i.test(t);
 const hasNum = (t, num, total) => new RegExp(`\\b0*${num}\\s*/\\s*0*${total}\\b`).test(t);
 // Version souple : le bon numero (avec un / suivi de chiffres, total quelconque).
@@ -105,6 +119,7 @@ for (const c of cards) {
     const t = it.title||'', p = it.price ? Number(it.price.value) : 0;
     if (!p || seen.has(it.itemId)) continue;
     if (isGraded(t) || isJunk(t) || isJP(t) || !hasNum(t, num, total)) continue;
+    if (isEN(t)) continue;                // carte anglaise = autre marche
     if (isEd1(t) && !isEd2(t)) { ed1.push({it,p}); seen.add(it.itemId); }
   }
   await new Promise(r=>setTimeout(r,250));
@@ -117,7 +132,8 @@ for (const c of cards) {
       const t = it.title||'', p = it.price ? Number(it.price.value) : 0;
       if (!p || seen.has(it.itemId)) continue;
       if (isGraded(t) || isJunk(t) || isJP(t) || !hasNumLoose(t, num)) continue;
-      if (isEd1(t) && !isEd2(t)) { ed1.push({it,p}); seen.add(it.itemId); }
+      if (isEN(t)) continue;                // carte anglaise = autre marche
+    if (isEd1(t) && !isEd2(t)) { ed1.push({it,p}); seen.add(it.itemId); }
     }
     await new Promise(r=>setTimeout(r,250));
   }
@@ -129,6 +145,7 @@ for (const c of cards) {
       const t = it.title||'', p = it.price ? Number(it.price.value) : 0;
       if (!p || seen.has(it.itemId)) continue;
       if (isGraded(t) || isJunk(t) || isJP(t) || !hasNum(t, num, total)) continue;
+      if (isEN(t)) continue;                // carte anglaise = autre marche
       if (isEd1(t)) continue;               // pas d'Éd1 dans le bucket Unlimited
       // Unlimited = Éd2 explicite OU aucune mention d'édition (version par défaut)
       unl.push({it,p}); seen.add(it.itemId);

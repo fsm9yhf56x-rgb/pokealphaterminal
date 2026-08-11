@@ -215,12 +215,12 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
     ), dernier AS (
       SELECT DISTINCT ON (ph.print_id, ph.tier, ph.source, ph.lang)
              ph.print_id, ph.tier, ph.source, ph.lang, ph.price, ph.day
-        FROM price_history_v2 ph
+        FROM price_history ph
         JOIN candidat c ON c.print_id = ph.print_id AND c.tier = ph.tier
          AND c.source = ph.source AND c.lang = ph.lang
        ORDER BY ph.print_id, ph.tier, ph.source, ph.lang, ph.day DESC
     ), ins AS (
-      INSERT INTO price_history_v2 (print_id, day, tier, source, lang, market, price, sale_count, currency)
+      INSERT INTO price_history (print_id, day, tier, source, lang, market, price, sale_count, currency)
       SELECT c.print_id, CURRENT_DATE, c.tier, c.source, c.lang, c.market, c.spot, c.sale_count, c.currency
         FROM candidat c
         LEFT JOIN dernier d
@@ -237,14 +237,14 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   const rAmb = await sql`SELECT count(*)::int AS n FROM (SELECT 1 FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL GROUP BY print_id, tier, source, split_part(kodo_card_id,'-',1) HAVING count(*) > 1) z`
   console.log('groupes ambigus NON snapshotes (multi-variant meme langue):', rAmb[0].n)
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
-  // (PK price_history_v2 = print_id,day,tier,source,lang -> la langue est dans la cle
+  // (PK price_history = print_id,day,tier,source,lang -> la langue est dans la cle
   //  depuis 11/08 ; market reste descriptif et vaut toujours 'FR' pour cette source).
   // Garde-fous: prix dans ]0, 100000] (rejette les annonces sentinelles type 999999),
   // dedoublonnage par (print,tier) en gardant le prix median pondere par saleCount.
   // ACCUMULE jour par jour -> densite future pour afficher les grades FR honnetement.
   const r6 = await sql`
     WITH ins AS (
-    INSERT INTO price_history_v2 (print_id, day, tier, source, lang, market, price, sale_count, currency)
+    INSERT INTO price_history (print_id, day, tier, source, lang, market, price, sale_count, currency)
     SELECT t.print_id, CURRENT_DATE, t.tier, 'cardmarket_fr', 'fr', 'FR', t.price, t.sale_count, 'EUR'
     FROM (
       SELECT pm.print_id, pm.tier,
@@ -259,7 +259,7 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       GROUP BY pm.print_id, pm.tier
     ) t
     LEFT JOIN LATERAL (
-      SELECT ph.price AS last_price, ph.day AS last_day FROM price_history_v2 ph
+      SELECT ph.price AS last_price, ph.day AS last_day FROM price_history ph
        WHERE ph.print_id = t.print_id AND ph.tier = t.tier AND ph.source = 'cardmarket_fr'
          AND ph.lang = 'fr'
        ORDER BY ph.day DESC LIMIT 1

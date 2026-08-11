@@ -82,7 +82,12 @@ export async function getDisplayPrices(
       displayEur: nmByCard[key]?.price ?? (direct != null ? direct : ref),
       coteFrEur: coteFr,
       method: r.fair_value_method ?? null,
-      basis: nmByCard[key] ? (nmByCard[key].derived ? 'eu_ref' : 'cote')
+      // eu_aggregate = repli assume sur l'agregat Cardmarket EU (communes et
+      // peu communes FR sans cote francaise). C'est un prix EUROPEEN toutes
+      // langues : il doit porter le meme '~' que le repli kodo_state, sinon
+      // 8 226 cartes s'affichent comme des cotes FR sans en etre.
+      basis: r.fair_value_method === 'eu_aggregate' ? 'eu_ref'
+        : nmByCard[key] ? (nmByCard[key].derived ? 'eu_ref' : 'cote')
         : (direct != null ? 'cote' : (ref != null ? 'eu_ref' : null)),
       liquidity: r.liquidity_score ?? null,
     }

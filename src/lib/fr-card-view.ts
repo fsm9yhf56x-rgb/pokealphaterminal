@@ -94,8 +94,13 @@ export function buildFrCardView(
 
   // ---------- HEADLINE : raw FR (tendance Cardmarket de la ligne FR) ----------
   const headlineVal = sig?.cote_fr_eur ?? sig?.fair_value_eur ?? null;
+  // eu_aggregate = agregat Cardmarket EU (repli des communes/peu communes FR
+  // sans vente francaise). C'est une moyenne de marche, pas une annonce en
+  // cours : meme nature que cardmarket_trend. Le classer 'listed' laissait
+  // croire a une offre reelle qu'on pourrait aller cliquer.
   const headlineKind =
     sig?.fair_value_method === 'cardmarket_trend' ? 'trend' :
+    sig?.fair_value_method === 'eu_aggregate'     ? 'trend' :
     sig?.fair_value_method === 'eu_asking_decote' ? 'listed' :
     sig?.fair_value_method === 'us_nm_fx'         ? 'sold'   : 'listed';
   // Echantillon FR pour la confiance : ventes FR reelles si dispo

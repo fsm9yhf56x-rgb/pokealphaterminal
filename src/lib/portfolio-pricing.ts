@@ -200,6 +200,12 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
             AND r.fair_value_method = 'insufficient_data' THEN 'insufficient_data'
           WHEN r.wanted_tier NOT IN ('NEAR_MINT','EXCELLENT','LIGHTLY_PLAYED','MODERATELY_PLAYED','HEAVILY_PLAYED','DAMAGED')
             AND r.spot IS NULL THEN 'graded_no_data'
+          -- AVANT cote_fr : une cote issue du repli eu_aggregate n'est PAS une
+          -- cote francaise. C'est l'agregat Cardmarket EU, toutes langues,
+          -- servi aux communes/peu communes FR qui n'ont aucune vente FR.
+          -- La ranger en 'cote_fr' reviendrait a presenter un prix europeen
+          -- comme un prix francais sur 8 226 cartes.
+          WHEN r.fair_value_method = 'eu_aggregate' THEN 'cardmarket_eu'
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL THEN 'cote_fr'
           -- Prix issu de l'agrégat Cardmarket EU (carte raw FR) : basis dédié, honnête.
           WHEN r.spot IS NOT NULL AND r.spot_tier = 'AGGREGATED' THEN 'cardmarket_eu'
@@ -242,7 +248,7 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
 
   // ── PASSE FR PAR ÉTAT : parité stricte avec la fiche (MÊME lib) ──
   const frTargets = await sql`
-    SELECT pc.id, pc.k_card_id, pc.condition, ps.cote_fr_eur, ps.fair_value_eur
+    SELECT pc.id, pc.k_card_id, pc.condition, ps.cote_fr_eur, ps.fair_value_eur, ps.fair_value_method
     FROM portfolio_cards pc
     JOIN k_cards kc ON kc.id = pc.k_card_id
     LEFT JOIN price_signals ps ON ps.print_id = kc.print_id AND lower(ps.lang) = lower(kc.lang)
@@ -270,7 +276,13 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
       const tier = rawTierFromCondition(t.condition)
       const hit = buildFrByCondition(rowsForCard, coteRef)[tier]
       if (!hit) continue
-      const basis = 'fr_cond:' + tier + (hit.derived ? '~' : '')
+      // Le '~' marque un prix qui n'est pas une observation directe. DEUX
+      // causes, cumulables : l'etat est derive de l'echelle (hit.derived), ou
+      // la cote de reference elle-meme est un repli sur l'agregat Cardmarket
+      // EU (eu_aggregate). Dans ce second cas le prix est a DEUX degres du
+      // marche francais — une echelle par etat posee sur un prix europeen.
+      const derivedRef = t.fair_value_method === 'eu_aggregate'
+      const basis = 'fr_cond:' + tier + (hit.derived || derivedRef ? '~' : '')
       await sql`UPDATE portfolio_cards SET current_price = ${hit.price}, price_basis = ${basis}, updated_at = now() WHERE id = ${t.id}`
     }
   }

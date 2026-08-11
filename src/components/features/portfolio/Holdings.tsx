@@ -105,6 +105,23 @@ function rawStateLabel(condition?: string): string {
   return tier ? (CONDITION_SHORT[tier] || 'RAW') : 'RAW'
 }
 
+// Prefixe du prix selon sa provenance.
+//   '~' = repli sur l'agregat Cardmarket EU (cardmarket_eu) : prix EUROPEEN
+//         toutes langues, servi aux communes/peu communes FR sans vente
+//         francaise. 8 226 cartes au 07/08, soit la methode MAJORITAIRE cote
+//         FR -> sans ce signe, on presenterait un prix europeen comme une
+//         cote francaise sur la majorite du catalogue.
+//   '>=' = plancher grade (note inferieure de la meme societe).
+const priceBasisPrefix = (basis?: string | null): string => {
+  const b = String(basis ?? '')
+  if (b.startsWith('graded_floor:')) return '\u2265 '
+  // Convention PREEXISTANTE : buildFrByCondition suffixe d'un '~' les etats
+  // derives de l'echelle plutot qu'observes (fr_cond:NEAR_MINT~). Le marqueur
+  // etait ecrit en base mais aucun ecran ne le lisait.
+  if (b.endsWith('~')) return '~ '
+  if (b === 'cardmarket_eu') return '~ '
+  return ''
+}
 const tiltCard = (e:React.MouseEvent<HTMLDivElement>) => {
   const el=e.currentTarget, r=el.getBoundingClientRect()
   const x=((e.clientX-r.left)/r.width-.5)*16, y=((e.clientY-r.top)/r.height-.5)*-16
@@ -2053,7 +2070,7 @@ export function Holdings() {
                       {hasPrice ? (
                         <div>
                           <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'.06em', textTransform:'uppercase', fontFamily:'var(--font-display)', marginBottom:2 }}>{isInvestor ? 'Prix de marché' : (spotCard.rarity ? 'Rareté' : 'Dans ta collection')}</div>
-                          <div style={{ fontSize:isInvestor?24:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.15 }}>{isInvestor ? ((String((spotCard as any).priceBasis ?? '').startsWith('graded_floor:') ? '\u2265 ' : '') + formatEUR(spotCard.curPrice)) : (spotCard.rarity || spotCard.set || '\u2014')}</div>
+                          <div style={{ fontSize:isInvestor?24:19, fontWeight:700, color:'#1D1D1F', fontFamily:'var(--font-display)', lineHeight:1.15 }}>{isInvestor ? (priceBasisPrefix((spotCard as any).priceBasis) + formatEUR(spotCard.curPrice)) : (spotCard.rarity || spotCard.set || '\u2014')}</div>
                           {spotCard.qty > 1 ? (
                             <div style={{ fontSize:12, color:'#6E6E73', fontFamily:'var(--font-display)', marginTop:3 }}>{'\u00D7'}{spotCard.qty}{isInvestor ? <> {'\u00B7'} {formatEUR(spotCard.curPrice * spotCard.qty)} au total</> : ' exemplaires'}</div>
                           ) : null}
@@ -3903,7 +3920,7 @@ export function Holdings() {
                               ce que la carte EST pour le collectionneur. */}
                           {isInvestor ? (
                             <div style={{ fontSize:'22px', fontWeight:700, color:'#fff', fontFamily:'var(--font-data)', letterSpacing:'-.02em', lineHeight:1, marginBottom:'8px' }}>
-                              {formatEUR(card.curPrice, 'small')}
+                              {priceBasisPrefix(card.priceBasis) + formatEUR(card.curPrice, 'small')}
                             </div>
                           ) : (
                             <div style={{ marginBottom:'8px' }}>

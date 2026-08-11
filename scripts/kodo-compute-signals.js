@@ -196,10 +196,19 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
   // relie les points, donc un prix stable donne une ligne plate). Le point
   // hebdomadaire evite qu'une serie stable depuis deux mois s'arrete net.
   const r5 = await sql`
-    WITH candidat AS (
+    WITH ambigu AS (
+      SELECT print_id, tier, source
+        FROM price_matrix
+       WHERE print_id IS NOT NULL AND spot IS NOT NULL
+       GROUP BY print_id, tier, source
+      HAVING count(*) > 1
+    ), candidat AS (
       SELECT pm.print_id, pm.tier, pm.source, pm.market, pm.spot, pm.sale_count, pm.currency
         FROM price_matrix pm
+        LEFT JOIN ambigu a
+          ON a.print_id = pm.print_id AND a.tier = pm.tier AND a.source = pm.source
        WHERE pm.print_id IS NOT NULL AND pm.spot IS NOT NULL
+         AND a.print_id IS NULL
     ), dernier AS (
       SELECT DISTINCT ON (ph.print_id, ph.tier, ph.source)
              ph.print_id, ph.tier, ph.source, ph.price, ph.day
@@ -221,6 +230,8 @@ console.log('\n=== CALCUL DES SIGNAUX PAR LANGUE ===')
       RETURNING 1
     ) SELECT count(*)::int AS n FROM ins`
   console.log('rows history (changements + controle hebdo):', r5[0].n)
+  const rAmb = await sql`SELECT count(*)::int AS n FROM (SELECT 1 FROM price_matrix WHERE print_id IS NOT NULL AND spot IS NOT NULL GROUP BY print_id, tier, source HAVING count(*) > 1) z`
+  console.log('groupes ambigus NON snapshotes (multi-langue / multi-variant):', rAmb[0].n)
   // SNAPSHOT FR PUR : archive la tranche country.FR.language.FR sous source='cardmarket_fr'
   // (PK price_history = print_id,day,tier,source SANS market -> on distingue par source,
   //  sinon clash avec la ligne EU meme print/tier/source du snapshot principal).

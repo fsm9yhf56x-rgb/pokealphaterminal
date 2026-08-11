@@ -110,8 +110,19 @@ for (const c of distribCards) {
 // n>=3 x0,88) -> la regle vit a UN endroit, et comme DECAY.EXCELLENT = 1.00,
 // la ligne EXCELLENT vaut EXACTEMENT le prix affiche en tete. Par construction.
 // Pas de cote FR = pas de tableau d'etats (coherent : on n'invente pas).
+// ANCRE SELON LA METHODE (11/08). Une cote FR reelle (ventes eBay FR, annonces
+// FR/FR) decrit une carte en bon etat -> elle vaut EXCELLENT, et DECAY.EXCELLENT
+// = 1.00 fait que la ligne EXCELLENT egale le prix affiche. Inchange.
+// L'agregat Cardmarket EU ('eu_aggregate') est en revanche un prix MOYEN toutes
+// conditions : le poser en EXCELLENT puis multiplier par DECAY.NEAR_MINT = 1.38
+// gonflait de 38% une valeur deja approximative, et faisait sortir le headline
+// AU-DESSUS du plafond de 20 EUR du repli (Galifeu : cote 20,00 -> affiche
+// 27,60). On l'ancre donc en NEAR_MINT : l'echelle ne descend plus qu'en
+// dessous. Convention conservatrice assumee — pour un repli signale, mieux vaut
+// sous-estimer que gonfler.
 const anchorCards = await sql`
-  SELECT kc.id AS kodo_card_id, ps.print_id, ps.cote_fr_eur AS anchor
+  SELECT kc.id AS kodo_card_id, ps.print_id, ps.cote_fr_eur AS anchor,
+         ps.fair_value_method AS method
   FROM price_signals ps
   JOIN k_cards kc ON kc.print_id = ps.print_id AND kc.lang = 'fr'
   WHERE ps.lang = 'fr' AND ps.cote_fr_eur IS NOT NULL AND ps.cote_fr_eur > 0`;
@@ -123,7 +134,10 @@ for (const c of anchorCards) {
   // Etat reel declare -> l'ancre typee remplace le spot arbitrairement suppose
   // EXCELLENT (c'est CE mecanisme qui projetait un NM au-dessus des annonces).
   const typed = typedAnchors.get(c.kodo_card_id);
-  const anchor = typed ? typed.anchor : Number(c.anchor);
+  let anchor = typed ? typed.anchor : Number(c.anchor);
+  // eu_aggregate : l'ancre vaut NEAR_MINT, pas EXCELLENT (voir plus haut).
+  // On la ramene sur la base EXCELLENT pour que la boucle DECAY reste unique.
+  if (!typed && c.method === 'eu_aggregate') anchor = anchor / DECAY.NEAR_MINT;
   if (!(anchor > 0)) continue;
   for (const st of STATES) {
     const price = anchor * DECAY[st];   // ancre = EXCELLENT (×1.0)

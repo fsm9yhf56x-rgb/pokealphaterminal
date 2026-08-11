@@ -121,19 +121,34 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
         -- par print_id (partagé entre langues -> fuite d'un prix US sur une carte FR).
         -- Etage Cardmarket EU : pour une carte raw FR en NEAR_MINT, on accepte aussi
         -- le tier AGGREGATED (prix agrégé Cardmarket, is_asking=false) comme prix EU.
-        SELECT pm.spot * (CASE WHEN t.tier = 'GOOD' AND pm.tier = 'EXCELLENT' THEN 0.90 ELSE 1 END) AS spot,
+        SELECT pm.spot * (CASE
+                 WHEN t.tier = 'GOOD' AND pm.tier = 'EXCELLENT' THEN 0.90
+                 -- EXCELLENT sur une carte EN/JP : ce rang N EXISTE PAS chez
+                 -- TCGplayer. Mais il a un EQUIVALENT : un Excellent europeen
+                 -- correspond a un Lightly Played americain. Pas de decote
+                 -- inventee, pas d interpolation : c est une vente REELLE dans
+                 -- cet etat (17 564 ventes sur le Pikachu Celebrations).
+                 -- Meme equivalence que rawTierFromCondition, qui mappe deja
+                 -- GD -> LIGHTLY_PLAYED.
+                 ELSE 1 END) AS spot,
                pm.currency, pm.tier AS best_tier, pm.source AS best_source
         FROM price_matrix pm
         WHERE (
             pm.kodo_card_id = kc.id
             -- Échelle par état (kodo_state) : écrite par print, sans langue.
             -- Référence EU partagée FR/EN — priorité inférieure aux ventes exactes.
-            OR (pm.source = 'kodo_state' AND pm.market = 'EU' AND pm.print_id = kc.print_id)
+            -- RESERVE AUX CARTES FR : kodo_state n est ecrit QUE pour le
+            -- francais (kodo-price-by-state.mjs, kc.lang = 'fr'). Sans ce
+            -- filtre, une carte anglaise heritait de l echelle francaise du
+            -- meme print : la Pikachu Celebrations EN affichait 8,80 EUR
+            -- quand son Near Mint americain valait 4,80.
+            OR (kc.lang = 'fr' AND pm.source = 'kodo_state' AND pm.market = 'EU' AND pm.print_id = kc.print_id)
           )
           AND (
             pm.tier = t.tier
             OR (kc.lang = 'fr' AND t.tier = 'NEAR_MINT' AND pm.tier = 'AGGREGATED')
             OR (t.tier = 'GOOD' AND pm.tier = 'EXCELLENT' AND pm.source = 'kodo_state')
+            OR (kc.lang <> 'fr' AND t.tier = 'EXCELLENT' AND pm.tier = 'LIGHTLY_PLAYED')
           )
           AND pm.is_asking = false
           AND pm.spot IS NOT NULL
@@ -209,6 +224,9 @@ export async function priceCards(sql: SqlTag, scope: { ids?: string[] } = {}): P
           WHEN r.lang = 'fr' AND r.wanted_tier = 'NEAR_MINT' AND r.cote_fr_eur IS NOT NULL THEN 'cote_fr'
           -- Prix issu de l'agrégat Cardmarket EU (carte raw FR) : basis dédié, honnête.
           WHEN r.spot IS NOT NULL AND r.spot_tier = 'AGGREGATED' THEN 'cardmarket_eu'
+          -- Excellent derive du Near Mint : marque du tilde, ce n est pas une
+          -- observation directe.
+          WHEN r.spot IS NOT NULL AND r.wanted_tier = 'EXCELLENT' AND r.spot_tier = 'LIGHTLY_PLAYED' THEN 'tier:LIGHTLY_PLAYED'
           WHEN r.spot IS NOT NULL THEN 'tier:' || r.wanted_tier
           WHEN r.fair_value_eur IS NOT NULL THEN 'fair_value_fallback'
           ELSE NULL

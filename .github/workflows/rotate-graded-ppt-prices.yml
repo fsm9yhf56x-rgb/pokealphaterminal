@@ -1,14 +1,11 @@
 name: Rotate Graded PPT prices (maintenance)
-# ENTRETIEN CONTINU des prix gradels EN + JP.
-# Retraite les sets au fetched_at le plus ancien (rotation perpetuelle).
-# Budget: ~35k cartes total (EN 19k + JP 16k) x2 = ~70k cr -> cycle complet ~3.5j.
-# IMPORTANT: activer SEULEMENT quand le job initial graded_ppt_jp_full est 'completed'
-# (sinon rotation + remplissage initial se battent pour le budget 20k/j).
-# Throttle reactif (minute-remaining) deja dans le script -> pas de 429.
+# Entretien continu EN + JP. Deux rotations/jour + concurrence unique.
+# IMPORTANT : une ligne sync_progress absente n'est plus interpretee comme
+# 'autorisee' silencieusement : on lance la rotation, qui est resumable.
 on:
   schedule:
-    - cron: '0 2 * * *'    # 02:00 UTC
-    - cron: '0 14 * * *'   # 14:00 UTC
+    - cron: '0 2 * * *'
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       batch_size:
@@ -19,37 +16,18 @@ jobs:
   rotate:
     name: Rotate graded prices (oldest first)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     concurrency:
       group: rotate-graded-ppt-prices
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: 'npm'
       - run: npm install --no-audit --no-fund --prefer-offline
-      - name: Guard - ne pas tourner si job initial JP pas fini
-        id: guard
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          node -e "
-            const { neon } = require('@neondatabase/serverless');
-            const sql = neon(process.env.DATABASE_URL);
-            (async () => {
-              const r = await sql\`SELECT status FROM sync_progress WHERE job_id='graded_ppt_jp_full'\`;
-              if (r[0] && r[0].status !== 'completed') {
-                console.log('Job JP initial pas encore completed (' + r[0].status + '). Rotation reportee.');
-                require('fs').appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', 'skip=true\n');
-                process.exit(0); // skip neutre = succes pour GitHub (pas un echec)
-              }
-              console.log('Job JP completed (ou absent), rotation autorisee.');
-            })();
-          "
       - name: Run rotation batch
-        if: steps.guard.outputs.skip != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKEMON_PRICE_TRACKER_API_KEY: ${{ secrets.POKEMON_PRICE_TRACKER_API_KEY }}

@@ -122,13 +122,13 @@ export async function updatePortfolioCard(
     UPDATE portfolio_cards SET
       condition         = COALESCE(${patch.condition ?? null}, condition),
       qty               = COALESCE(${patch.qty ?? null}, qty),
-      buy_price         = COALESCE(${patch.buy_price ?? null}, buy_price),
+      buy_price         = CASE WHEN ${patch.buy_price !== undefined} THEN ${patch.buy_price ?? null} ELSE buy_price END,
       graded            = COALESCE(${patch.graded ?? null}, graded),
-      grade_company     = COALESCE(${patch.grade_company ?? null}, grade_company),
-      grade_value       = COALESCE(${patch.grade_value ?? null}, grade_value),
-      notes             = COALESCE(${patch.notes ?? null}, notes),
+      grade_company     = CASE WHEN ${patch.grade_company !== undefined} THEN ${patch.grade_company ?? null} ELSE grade_company END,
+      grade_value       = CASE WHEN ${patch.grade_value !== undefined} THEN ${patch.grade_value ?? null} ELSE grade_value END,
+      notes             = CASE WHEN ${patch.notes !== undefined} THEN ${patch.notes ?? null} ELSE notes END,
       is_favorite       = COALESCE(${patch.is_favorite ?? null}, is_favorite),
-      showcase_position = COALESCE(${patch.showcase_position ?? null}, showcase_position),
+      showcase_position = CASE WHEN ${patch.showcase_position !== undefined} THEN ${patch.showcase_position ?? null} ELSE showcase_position END,
       updated_at        = now()
     WHERE id = ${id} AND user_id = ${userId}
   `

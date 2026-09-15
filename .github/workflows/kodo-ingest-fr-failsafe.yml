@@ -1,0 +1,31 @@
+name: Kodo Engine - Ingest FR failsafe
+
+# Filet de securite independant de workflow_run : evite qu'un retard ou une
+# limite de profondeur GitHub laisse l'ingestion FR inactive plusieurs jours.
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  ingest-fr-failsafe:
+    name: Ingest FR failsafe
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: kodo-ingest-fr
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm install --no-audit --no-fund --prefer-offline
+      - name: Ingest FR batch (Cardmarket EUR)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
+          KODO_MAX_REQ: '5500'
+          KODO_MAINT_REQ: '2500'
+        run: node scripts/kodo-ingest-eu-lang.js fr

@@ -33,7 +33,9 @@ export async function searchCards(
     .map((t) => `%${t}%`)
   if (tokens.length === 0) return { cards: [], total: 0 }
 
-  const rows = await sql`
+  let rows: any[]
+  try {
+    rows = await sql`
     WITH base AS (
       SELECT DISTINCT ON (print_id, lang) *
       FROM k_cards
@@ -88,8 +90,36 @@ export async function searchCards(
              similarity(lower(kc.name_localized), lower(${q})) DESC
     LIMIT 60
   `
+  } catch (error) {
+    // Le chemin simple reste disponible si la recherche avancée (ex. pg_trgm)
+    // rencontre une panne. Les résultats sont toujours issus du catalogue.
+    console.error('[cards search] primary query failed, using fallback', error)
+    rows = await sql`
+      WITH base AS (
+        SELECT DISTINCT ON (kc.print_id, kc.lang)
+          kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
+          regexp_replace(kc.print_id, '-[^-]+$', '') AS set_id,
+          COALESCE(ks.name_fr, ks.name) AS set_name,
+          kc.rarity_normalized AS rarity, kc.image_url, kc.has_image
+        FROM k_cards kc
+        LEFT JOIN k_sets ks ON ks.id = regexp_replace(kc.print_id, '-[^-]+$', '')
+        WHERE ks.hidden IS NOT TRUE
+          AND (lower(kc.name_localized) LIKE ${tokens[0]}
+            OR lower(kc.print_id) LIKE ${tokens[0]}
+            OR lower(COALESCE(ks.name_fr, ks.name, '')) LIKE ${tokens[0]})
+          AND (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
+        ORDER BY kc.print_id, kc.lang, (kc.has_image IS TRUE) DESC
+      )
+      SELECT *, count(*) OVER() AS total FROM base
+      ORDER BY (has_image IS TRUE) DESC, name ASC
+      LIMIT 60
+    `
+  }
   const total = rows.length ? Number((rows[0] as any).total) : 0
-  const dp = await getDisplayPrices(sql, (rows as any[]).map((r) => String(r.id)))
+  const dp = await getDisplayPrices(sql, (rows as any[]).map((r) => String(r.id))).catch((error) => {
+    console.error('[cards search] prices unavailable, returning catalogue without prices', error)
+    return {} as Awaited<ReturnType<typeof getDisplayPrices>>
+  })
   return {
     cards: (rows as any[]).map(({ total: _t, h: _h, set_hidden: _sh, ...r }) => {
       const localId = String(r.print_id).slice(String(r.print_id).lastIndexOf('-') + 1)

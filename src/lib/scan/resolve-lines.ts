@@ -150,7 +150,28 @@ export async function resolveFromLines(
     }
     if (!nums.length) jobs.push(resolveScan({ name: nm, number: null, lang: lang ?? null, total: null }).catch(() => null))
   }
-  const results = jobs.length ? await Promise.all(jobs) : []
+  const rawResults = jobs.length ? await Promise.all(jobs) : []
+
+  // Le total imprime est un identifiant de set tres puissant. Le resolveur de
+  // nom savait le transporter mais ne l'appliquait pas aux resultats ambigus.
+  // On reduit donc la liste ici ; si un seul candidat porte ce total, le scan
+  // devient un match certain. Si l'index est incomplet, on conserve la liste
+  // initiale afin de ne jamais eliminer une vraie carte.
+  const results = rawResults.map((res) => {
+    if (!res || !res.query.total || res.candidates.length < 2) return res
+    const sameTotal = res.candidates.filter(
+      (candidate) => _totalOf.get(_norm(candidate.setId)) === res.query.total,
+    )
+    if (sameTotal.length === 1) {
+      return {
+        ...res,
+        status: 'match' as const,
+        card: sameTotal[0],
+        candidates: sameTotal,
+      }
+    }
+    return sameTotal.length > 1 ? { ...res, candidates: sameTotal } : res
+  })
 
   // 3) SCORE : exactitude du nom > similarité, bonus total et langue.
   let best: { score: number; res: ResolveResult } | null = null

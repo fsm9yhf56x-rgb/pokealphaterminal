@@ -34,7 +34,17 @@ export async function GET(req: Request) {
         timeout = setTimeout(() => reject(new Error('search_timeout')), 8_000)
       }),
     ])
-    return NextResponse.json(result)
+    const response = NextResponse.json(result)
+    // Recherche publique et deterministe : le CDN absorbe les requetes
+    // identiques. Le catalogue sans prix peut rester chaud plus longtemps ;
+    // les prix gardent une fraicheur d'une minute.
+    response.headers.set(
+      'Cache-Control',
+      searchParams.get('prices') === '0'
+        ? 'public, s-maxage=600, stale-while-revalidate=3600'
+        : 'public, s-maxage=60, stale-while-revalidate=300',
+    )
+    return response
   } catch (error) {
     console.error('[cards search] unavailable', error)
     return NextResponse.json(

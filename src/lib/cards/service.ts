@@ -1,8 +1,10 @@
 /**
- * Service Cards — recherche encyclopédie. v4 MULTI-CRITÈRES
- * Chaque mot de la requête doit matcher : nom OU série OU numéro OU rareté.
- * "pikachu impulsion", "dracaufeu rare", "pika 48" → tous compris.
- * Renvoie aussi le TOTAL réel (au-delà de la limite).
+ * Service Cards — recherche encyclopédie mobile.
+ *
+ * La recherche précédente construisait un DISTINCT de tout k_cards avant de
+ * filtrer. Sur le catalogue de production, ce plan dépassait 30 secondes.
+ * Ici, on sélectionne d'abord un petit ensemble de candidats indexables
+ * (nom trigramme, numéro ou set), puis seulement on applique tous les mots.
  */
 
 import { sql } from '@/lib/db/sql'
@@ -22,115 +24,116 @@ export interface CardSearchHit {
   current_price: number | null
 }
 
+const normalize = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
 export async function searchCards(
   q: string,
   lang?: string,
 ): Promise<{ cards: CardSearchHit[]; total: number }> {
-  const tokens = q
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((t) => `%${t}%`)
+  const tokens = normalize(q).split(/\s+/).filter(Boolean).slice(0, 6)
   if (tokens.length === 0) return { cards: [], total: 0 }
 
-  let rows: any[]
-  try {
-    rows = await sql`
-    WITH base AS (
-      SELECT DISTINCT ON (print_id, lang) *
-      FROM k_cards
-      ORDER BY print_id, lang, (has_image IS TRUE) DESC
-    ),
-    hay AS (
-      SELECT b.*,
-             lower(
-               b.name_localized || ' ' ||
-               COALESCE(ks.name_fr, '') || ' ' || COALESCE(ks.name, '') || ' ' ||
-               b.print_id || ' ' ||
-               COALESCE(b.rarity_normalized, '')
-             ) AS h,
-             ks.hidden AS set_hidden,
-             COALESCE(ks.name_fr, ks.name) AS set_name
-      FROM base b
-      LEFT JOIN k_sets ks ON ks.id = regexp_replace(b.print_id, '-[^-]+$', '')
-    ),
-    -- PONT DE LANGUE : les prints trouvés (nom FR compris) ouvrent TOUTES
-    -- leurs langues — print_id est partagé (fr-base1-4 / en-base1-4).
-    matched AS (
-      SELECT DISTINCT print_id FROM hay
-      WHERE set_hidden IS NOT TRUE AND h LIKE ALL (${tokens})
-    ),
-    -- Les cartes JP portent le nom ANGLAIS : on dérive FR -> EN par le print
-    -- partagé, puis on ratisse toutes les langues qui portent ce nom.
-    en_names AS (
-      SELECT DISTINCT lower(b.name_localized) AS n
-      FROM hay b
-      JOIN matched m ON m.print_id = b.print_id
-      WHERE b.lang = 'en'
-      LIMIT 40
-    )
-    SELECT kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
-           regexp_replace(kc.print_id, '-[^-]+$', '') AS set_id,
-           kc.set_name,
-           kc.rarity_normalized AS rarity, kc.image_url, kc.has_image,
-           count(*) OVER() AS total
-    FROM hay kc
-    WHERE (
-        kc.print_id IN (SELECT print_id FROM matched)
-        OR EXISTS (
-          SELECT 1 FROM en_names en
-          WHERE lower(kc.name_localized) = en.n
-             OR lower(kc.name_localized) LIKE en.n || ' (%'
-        )
-      )
-      AND (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
-      AND kc.set_hidden IS NOT TRUE
-    ORDER BY (kc.h LIKE ALL (${tokens})) DESC,
-             (kc.has_image IS TRUE) DESC,
-             similarity(lower(kc.name_localized), lower(${q})) DESC
-    LIMIT 60
-  `
-  } catch (error) {
-    // Le chemin simple reste disponible si la recherche avancée (ex. pg_trgm)
-    // rencontre une panne. Les résultats sont toujours issus du catalogue.
-    console.error('[cards search] primary query failed, using fallback', error)
-    rows = await sql`
-      WITH base AS (
-        SELECT DISTINCT ON (kc.print_id, kc.lang)
-          kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
-          regexp_replace(kc.print_id, '-[^-]+$', '') AS set_id,
-          COALESCE(ks.name_fr, ks.name) AS set_name,
-          kc.rarity_normalized AS rarity, kc.image_url, kc.has_image
-        FROM k_cards kc
-        LEFT JOIN k_sets ks ON ks.id = regexp_replace(kc.print_id, '-[^-]+$', '')
-        WHERE ks.hidden IS NOT TRUE
-          AND (lower(kc.name_localized) LIKE ${tokens[0]}
-            OR lower(kc.print_id) LIKE ${tokens[0]}
-            OR lower(COALESCE(ks.name_fr, ks.name, '')) LIKE ${tokens[0]})
-          AND (${lang ?? null}::text IS NULL OR kc.lang = lower(${lang ?? null}))
-        ORDER BY kc.print_id, kc.lang, (kc.has_image IS TRUE) DESC
-      )
-      SELECT *, count(*) OVER() AS total FROM base
-      ORDER BY (has_image IS TRUE) DESC, name ASC
-      LIMIT 60
-    `
-  }
+  const first = tokens[0]
+  const tokenPatterns = tokens.map((token) => `%${token}%`)
+  const params: any[] = [first, tokenPatterns[0], ...tokenPatterns, lang?.toLowerCase() ?? null]
+  const langIndex = 3 + tokenPatterns.length
+  const allTokens = tokenPatterns.map((_, index) => `e.h LIKE $${index + 3}`).join(' AND ')
+
+  const rows = await sql.query(
+    `WITH name_hits AS (
+       SELECT kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
+              kp.set_id, COALESCE(ks.name_fr, ks.name) AS set_name,
+              kc.rarity_normalized AS rarity, kc.image_url, kc.has_image,
+              similarity(lower(kc.name_localized), $1) AS sim
+       FROM k_cards kc
+       JOIN k_prints kp ON kp.id = kc.print_id
+       LEFT JOIN k_sets ks ON ks.id = kp.set_id
+       WHERE ks.hidden IS NOT TRUE
+         AND (lower(kc.name_localized) % $1
+              OR lower(unaccent(kc.name_localized)) LIKE $2)
+         AND ($${langIndex}::text IS NULL OR lower(kc.lang) = $${langIndex})
+       ORDER BY similarity(lower(kc.name_localized), $1) DESC,
+                (kc.has_image IS TRUE) DESC
+       LIMIT 180
+     ),
+     meta_hits AS (
+       SELECT kc.id, kc.print_id, kc.lang, kc.name_localized AS name,
+              kp.set_id, COALESCE(ks.name_fr, ks.name) AS set_name,
+              kc.rarity_normalized AS rarity, kc.image_url, kc.has_image,
+              similarity(lower(kc.name_localized), $1) AS sim
+       FROM k_cards kc
+       JOIN k_prints kp ON kp.id = kc.print_id
+       LEFT JOIN k_sets ks ON ks.id = kp.set_id
+       WHERE ks.hidden IS NOT TRUE
+         AND (lower(kp.number) = $1
+              OR lower(kp.set_id) LIKE $2
+              OR lower(COALESCE(ks.name_fr, ks.name, '')) LIKE $2)
+         AND ($${langIndex}::text IS NULL OR lower(kc.lang) = $${langIndex})
+       ORDER BY (kc.has_image IS TRUE) DESC
+       LIMIT 180
+     ),
+     candidates AS (
+       SELECT * FROM name_hits
+       UNION ALL
+       SELECT * FROM meta_hits
+     ),
+     enriched AS (
+       SELECT c.*,
+              lower(unaccent(concat_ws(' ', c.name, c.set_name, c.print_id, c.rarity))) AS h,
+              row_number() OVER (
+                PARTITION BY c.print_id, c.lang
+                ORDER BY (c.has_image IS TRUE) DESC, c.sim DESC
+              ) AS duplicate_rank
+       FROM candidates c
+     ),
+     matched AS (
+       SELECT * FROM enriched e
+       WHERE e.duplicate_rank = 1 AND ${allTokens}
+     )
+     SELECT id, print_id, lang, name, set_id, set_name, rarity,
+            image_url, has_image, count(*) OVER() AS total
+     FROM matched
+     ORDER BY (lower(unaccent(name)) = $1) DESC,
+              (lower(unaccent(name)) LIKE $2) DESC,
+              (has_image IS TRUE) DESC,
+              sim DESC,
+              name ASC
+     LIMIT 60`,
+    params,
+  )
+
   const total = rows.length ? Number((rows[0] as any).total) : 0
-  const dp = await getDisplayPrices(sql, (rows as any[]).map((r) => String(r.id))).catch((error) => {
-    console.error('[cards search] prices unavailable, returning catalogue without prices', error)
-    return {} as Awaited<ReturnType<typeof getDisplayPrices>>
-  })
+
+  // Les prix enrichissent les résultats, mais ne doivent jamais bloquer la
+  // fonction principale. Après 1,2 s on rend le catalogue sans prix.
+  const pricePromise = getDisplayPrices(sql, (rows as any[]).map((row) => String(row.id)))
+    .catch((error) => {
+      console.error('[cards search] prices unavailable', error)
+      return {} as Awaited<ReturnType<typeof getDisplayPrices>>
+    })
+  const dp = await Promise.race([
+    pricePromise,
+    new Promise<Awaited<ReturnType<typeof getDisplayPrices>>>((resolve) =>
+      setTimeout(() => resolve({}), 1_200),
+    ),
+  ])
+
   return {
-    cards: (rows as any[]).map(({ total: _t, h: _h, set_hidden: _sh, ...r }) => {
-      const localId = String(r.print_id).slice(String(r.print_id).lastIndexOf('-') + 1)
+    cards: (rows as any[]).map(({ total: _total, ...row }) => {
+      const localId = String(row.print_id).slice(String(row.print_id).lastIndexOf('-') + 1)
       return {
-        ...r,
+        ...row,
         image_url:
-          r.image_url ??
-          getCardImageUrl({ lang: r.lang, setId: r.set_id, localId }) ??
+          row.image_url ??
+          getCardImageUrl({ lang: row.lang, setId: row.set_id, localId }) ??
           null,
-        current_price: dp[String(r.id).toLowerCase()]?.displayEur ?? null,
-        price_basis: dp[String(r.id).toLowerCase()]?.basis ?? null,
+        current_price: dp[String(row.id).toLowerCase()]?.displayEur ?? null,
+        price_basis: dp[String(row.id).toLowerCase()]?.basis ?? null,
       }
     }) as CardSearchHit[],
     total,

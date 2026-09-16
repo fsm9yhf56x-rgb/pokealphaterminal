@@ -1,0 +1,48 @@
+name: Diagnostic API mobile production
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/api-production-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  mobile-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Encyclopédie — Pikachu
+        shell: bash
+        run: |
+          set -u
+          body="$(mktemp)"
+          meta="$(curl --silent --show-error --location --max-time 30             --output "$body"             --write-out 'http=%{http_code} total=%{time_total} connect=%{time_connect}\n'             'https://kodocards.com/api/v1/cards/search?q=Pikachu')" || {
+              status=$?
+              echo "curl_status=$status"
+              test -s "$body" && head -c 3000 "$body"
+              exit "$status"
+            }
+          echo "$meta"
+          head -c 3000 "$body"
+          echo
+          HTTP_CODE="$(printf '%s' "$meta" | sed -n 's/.*http=\([0-9][0-9][0-9]\).*/\1/p')"
+          test "$HTTP_CODE" = "200"
+          BODY_PATH="$body" node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync(process.env.BODY_PATH,'utf8')); if(!Array.isArray(d.cards)) throw new Error('cards_absent'); console.log('cards='+d.cards.length,'total='+d.total); if(d.cards.length===0) throw new Error('encyclopedie_vide')"
+
+      - name: Scanner — lignes OCR simulées
+        shell: bash
+        run: |
+          set -u
+          body="$(mktemp)"
+          payload='{"lines":[{"text":"Pikachu","y":0.10,"h":0.06},{"text":"60 PV","y":0.15,"h":0.04},{"text":"10/102","y":0.92,"h":0.03},{"text":"Faiblesse","y":0.80,"h":0.025},{"text":"Retraite","y":0.86,"h":0.025}],"lang":"fr"}'
+          meta="$(curl --silent --show-error --location --max-time 30             --request POST             --header 'Content-Type: application/json'             --data "$payload"             --output "$body"             --write-out 'http=%{http_code} total=%{time_total} connect=%{time_connect}\n'             'https://kodocards.com/api/v1/scan/resolve-lines')" || {
+              status=$?
+              echo "curl_status=$status"
+              test -s "$body" && head -c 3000 "$body"
+              exit "$status"
+            }
+          echo "$meta"
+          head -c 3000 "$body"
+          echo
+          HTTP_CODE="$(printf '%s' "$meta" | sed -n 's/.*http=\([0-9][0-9][0-9]\).*/\1/p')"
+          test "$HTTP_CODE" = "200"
+          BODY_PATH="$body" node -e "const fs=require('fs'); const d=JSON.parse(fs.readFileSync(process.env.BODY_PATH,'utf8')); if(!d.status) throw new Error('status_absent'); console.log('scan_status='+d.status,'candidates='+(d.candidates?.length??0))"

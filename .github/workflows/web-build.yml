@@ -21,3 +21,5 @@ jobs:
       - run: npm run build
         env:
           SKIP_ENV_VALIDATION: "1"
+          NEXT_PUBLIC_SANITY_PROJECT_ID: "test1234"
+          NEXT_PUBLIC_SANITY_DATASET: "production"

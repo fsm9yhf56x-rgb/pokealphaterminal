@@ -24,7 +24,24 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const q = (searchParams.get('q') ?? '').trim()
   const lang = searchParams.get('lang') ?? undefined
-  if (q.length < 2) return NextResponse.json({ cards: [] })
-  const { cards, total } = await searchCards(q, lang)
-  return NextResponse.json({ cards, total })
+  if (q.length < 2) return NextResponse.json({ cards: [], total: 0 })
+
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    const result = await Promise.race([
+      searchCards(q, lang),
+      new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => reject(new Error('search_timeout')), 8_000)
+      }),
+    ])
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('[cards search] unavailable', error)
+    return NextResponse.json(
+      { error: 'search_unavailable', cards: [], total: 0 },
+      { status: 503 },
+    )
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
 }

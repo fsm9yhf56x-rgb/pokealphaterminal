@@ -16,7 +16,7 @@ jobs:
         run: |
           set -u
           body="$(mktemp)"
-          meta="$(curl --silent --show-error --location --max-time 30             --output "$body"             --write-out 'http=%{http_code} total=%{time_total} connect=%{time_connect}\n'             'https://kodocards.com/api/v1/cards/search?q=Pikachu')" || {
+          meta="$(curl --silent --show-error --location --max-time 30             --output "$body"             --write-out 'http=%{http_code} total=%{time_total} connect=%{time_connect}\n'             'https://kodocards.com/api/v1/cards/search?q=Pikachu&prices=0')" || {
               status=$?
               echo "curl_status=$status"
               test -s "$body" && head -c 3000 "$body"

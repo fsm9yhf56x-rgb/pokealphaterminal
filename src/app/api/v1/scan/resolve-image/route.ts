@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     const h = await dhash256(Buffer.from(b64, 'base64'))
     const rows = (await sql`
       SELECT cp.k_card_id,
-             (bit_count(cp.h0 # ${h[0]}) + bit_count(cp.h1 # ${h[1]})
-            + bit_count(cp.h2 # ${h[2]}) + bit_count(cp.h3 # ${h[3]})) AS dist
+             (bit_count((cp.h0 # ${h[0]})::bit(64)) + bit_count((cp.h1 # ${h[1]})::bit(64))
+            + bit_count((cp.h2 # ${h[2]})::bit(64)) + bit_count((cp.h3 # ${h[3]})::bit(64))) AS dist
       FROM card_phash cp WHERE NOT (cp.h0 = 0 AND cp.h1 = 0 AND cp.h2 = 0 AND cp.h3 = 0)
       ORDER BY dist ASC LIMIT 5`) as Array<{ k_card_id: string; dist: number }>
     const best = rows[0]

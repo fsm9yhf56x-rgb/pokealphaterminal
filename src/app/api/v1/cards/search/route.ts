@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     const result = await Promise.race([
-      searchCards(q, lang),
+      searchCards(q, lang, searchParams.get('prices') !== '0'),
       new Promise<never>((_resolve, reject) => {
         timeout = setTimeout(() => reject(new Error('search_timeout')), 8_000)
       }),

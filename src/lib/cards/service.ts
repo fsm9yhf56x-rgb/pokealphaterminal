@@ -34,6 +34,7 @@ const normalize = (value: string) =>
 export async function searchCards(
   q: string,
   lang?: string,
+  includePrices = true,
 ): Promise<{ cards: CardSearchHit[]; total: number }> {
   const tokens = normalize(q).split(/\s+/).filter(Boolean).slice(0, 6)
   if (tokens.length === 0) return { cards: [], total: 0 }
@@ -108,6 +109,24 @@ export async function searchCards(
   )
 
   const total = rows.length ? Number((rows[0] as any).total) : 0
+
+  if (!includePrices) {
+    return {
+      cards: (rows as any[]).map(({ total: _total, ...row }) => {
+        const localId = String(row.print_id).slice(String(row.print_id).lastIndexOf('-') + 1)
+        return {
+          ...row,
+          image_url:
+            row.image_url ??
+            getCardImageUrl({ lang: row.lang, setId: row.set_id, localId }) ??
+            null,
+          current_price: null,
+          price_basis: null,
+        }
+      }) as CardSearchHit[],
+      total,
+    }
+  }
 
   // Les prix enrichissent les résultats, mais ne doivent jamais bloquer la
   // fonction principale. Après 1,2 s on rend le catalogue sans prix.

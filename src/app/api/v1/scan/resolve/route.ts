@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
 import { resolveScan, resolveByNumber, resolveByNameTokens, type ScanCandidate } from '@/lib/scan/resolve-query'
+import { normalizedCardNumberSql } from '@/lib/scan/number'
 import setIndexRaw from '@/lib/scan/set-index.json'
 import { checkPublicRateLimit } from '@/lib/rate-limit'
 

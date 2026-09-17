@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
+import { normalizeCardNumber, normalizedCardNumberSql } from '@/lib/scan/number'
 
 /**
  * Moteur de résolution scan — pivot NOM + NUMÉRO (validé 92% unique sur le
@@ -63,7 +64,7 @@ function normalizeAccents(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 function cleanNumber(s: string): string {
-  return s.split('/')[0].trim()
+  return normalizeCardNumber(s)
 }
 function normLang(l?: string | null): ScanLang | null {
   if (!l) return null
@@ -151,7 +152,7 @@ async function runExact(name: string, number: string, lang: ScanLang | null): Pr
      FROM k_cards kc
      JOIN k_prints kp ON kp.id = kc.print_id
      LEFT JOIN k_sets ks ON ks.id = kp.set_id
-     WHERE lower(unaccent(kc.name_localized)) = $1 AND kp.number = $2 ${langClause}`,
+     WHERE lower(unaccent(kc.name_localized)) = $1 AND ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$2::text')} ${langClause}`,
     params,
   )
   return rows as Row[]
@@ -168,7 +169,7 @@ async function runFuzzy(name: string, number: string, lang: ScanLang | null, thr
      FROM k_cards kc
      JOIN k_prints kp ON kp.id = kc.print_id
      LEFT JOIN k_sets ks ON ks.id = kp.set_id
-     WHERE lower(kc.name_localized) % $1 AND kp.number = $2
+     WHERE lower(kc.name_localized) % $1 AND ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$2::text')}
        AND similarity(lower(kc.name_localized), $1) >= $3 ${langClause}
      ORDER BY sim DESC
      LIMIT 50`,
@@ -210,7 +211,7 @@ export async function resolveByNumber(input: ResolveByNumberInput): Promise<Reso
      FROM k_cards kc
      JOIN k_prints kp ON kp.id = kc.print_id
      LEFT JOIN k_sets ks ON ks.id = kp.set_id
-     WHERE kp.number = $1 ${langClause}`,
+     WHERE ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$1::text')} ${langClause}`,
     params,
   )) as Row[]
 
@@ -261,7 +262,7 @@ export async function resolveByNameTokens(input: ResolveByTokensInput): Promise<
      FROM k_cards kc
      JOIN k_prints kp ON kp.id = kc.print_id
      LEFT JOIN k_sets ks ON ks.id = kp.set_id
-     WHERE kp.number = $1 AND (${likeClauses}) ${langClause}`,
+     WHERE ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$1::text')} AND (${likeClauses}) ${langClause}`,
     params,
   )) as Row[]
 

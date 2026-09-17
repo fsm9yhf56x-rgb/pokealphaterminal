@@ -90,14 +90,14 @@ async function resolveBySet(rawSet: string, rawNumber: string, rawLang: string) 
         `SELECT kc.id, kc.print_id, kc.lang, kc.name_localized, kc.rarity, kc.has_image,
                 kp.set_id, kp.number, kp.variant, kp.name_en
          FROM k_cards kc JOIN k_prints kp ON kp.id = kc.print_id
-         WHERE kp.set_id = $1 AND kp.number = $2 AND lower(kc.lang) = $3
+         WHERE kp.set_id = $1 AND ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$2::text')} AND lower(kc.lang) = $3
          ORDER BY kp.variant NULLS FIRST, kc.id`,
         [setId, number, langFilter])
     : await sql.query(
         `SELECT kc.id, kc.print_id, kc.lang, kc.name_localized, kc.rarity, kc.has_image,
                 kp.set_id, kp.number, kp.variant, kp.name_en
          FROM k_cards kc JOIN k_prints kp ON kp.id = kc.print_id
-         WHERE kp.set_id = $1 AND kp.number = $2
+         WHERE kp.set_id = $1 AND ${normalizedCardNumberSql('kp.number')} = ${normalizedCardNumberSql('$2::text')}
          ORDER BY
            CASE lower(kc.lang) WHEN 'fr' THEN 0 WHEN 'en' THEN 1 WHEN 'jp' THEN 2 ELSE 3 END,
            kp.variant NULLS FIRST, kc.id`,
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
       let cands = byNum.candidates
 
       if (total && Number.isFinite(total)) {
-        const matching = cands.filter((c) => TOTAL_BY_SET[c.setId] === total)
+        const matching = cands.filter((c) => totalForSet(c.setId) === total)
         if (matching.length >= 1) cands = matching
       } else if (cands.length > NEED_TOTAL_THRESHOLD) {
         return NextResponse.json({

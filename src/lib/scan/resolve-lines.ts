@@ -1,6 +1,6 @@
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
-import { resolveScan, type ScanCandidate, type ResolveResult } from './resolve-query'
+import { resolveByNumber, resolveScan, type ScanCandidate, type ResolveResult } from './resolve-query'
 import setIndexRaw from './set-index.json'
 const _norm = (x: string) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '')
 const _totalOf = new Map((setIndexRaw as any[]).map((e) => [_norm(e.id), e.printedTotal]))
@@ -209,8 +209,36 @@ export async function resolveFromLines(
     }
     return { ...best.res, via: 'name' }
   }
-  for (const res of results) {
-    if (res?.status === 'ambiguous' && res.candidates.length) return { ...res, via: 'ambiguous' }
+  // 4) RAPPEL LARGE — ne jamais laisser un nom OCR bruité éliminer la bonne
+  // carte. On fusionne tous les résultats ambigus avec une recherche indépendante
+  // par numéro/langue, puis le mobile tranche visuellement. Le total imprimé
+  // réduit le vivier lorsqu'il est connu, sans jamais vider la liste.
+  const ambiguous = results
+    .filter((res): res is ResolveResult => !!res && res.status === 'ambiguous')
+    .flatMap((res) => res.candidates)
+  let broad: ScanCandidate[] = []
+  const primaryNumber = nums[0]
+  if (primaryNumber) {
+    const byNumber = await resolveByNumber({ number: primaryNumber.n, lang: lang ?? null }).catch(() => null)
+    if (byNumber?.candidates.length) {
+      broad = byNumber.candidates
+      if (primaryNumber.t) {
+        const sameTotal = broad.filter(
+          (candidate) => _totalOf.get(_norm(candidate.setId)) === primaryNumber.t,
+        )
+        if (sameTotal.length) broad = sameTotal
+      }
+    }
+  }
+
+  const merged = [...ambiguous, ...broad].filter(
+    (candidate, index, all) => all.findIndex((item) => item.kCardId === candidate.kCardId) === index,
+  )
+  if (merged.length === 1) {
+    return { status: 'match', query, card: merged[0], candidates: merged, via: 'number_total' }
+  }
+  if (merged.length) {
+    return { status: 'ambiguous', query, candidates: merged, via: 'candidate_union' }
   }
   return { status: 'not_found', query, candidates: [], via: 'none' }
 }

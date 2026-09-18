@@ -29,10 +29,16 @@ export async function POST(req: NextRequest) {
              (bit_count((cp.h0 # ${h[0]})::bit(64)) + bit_count((cp.h1 # ${h[1]})::bit(64))
             + bit_count((cp.h2 # ${h[2]})::bit(64)) + bit_count((cp.h3 # ${h[3]})::bit(64))) AS dist
       FROM card_phash cp WHERE NOT (cp.h0 = 0 AND cp.h1 = 0 AND cp.h2 = 0 AND cp.h3 = 0)
-      ORDER BY dist ASC LIMIT 5`) as Array<{ k_card_id: string; dist: number }>
+      ORDER BY dist ASC LIMIT 12`) as Array<{ k_card_id: string; dist: number }>
     const best = rows[0]
-    if (!best || Number(best.dist) > 64) return NextResponse.json({ status: 'not_found', candidates: [] })
-    const ids = rows.filter((r) => Number(r.dist) <= Number(best.dist) + 10).map((r) => r.k_card_id)
+    const bestDistance = Number(best?.dist ?? 256)
+    const secondDistance = Number(rows[1]?.dist ?? 256)
+    const margin = secondDistance - bestDistance
+    const visual = { bestDistance, secondDistance, margin, strong: bestDistance <= 40 && margin >= 10 }
+    if (!best || bestDistance > 80) return NextResponse.json({ status: 'not_found', candidates: [], visual })
+    // Un rappel volontairement large est ensuite rerangé sur l'iPhone par
+    // l'empreinte Apple Vision. Le serveur ne décide plus à lui seul.
+    const ids = rows.filter((r) => Number(r.dist) <= Math.min(96, bestDistance + 24)).map((r) => r.k_card_id)
     const cards = (await sql`
       SELECT kc.id, kc.print_id, kc.lang, kc.name_localized, kc.rarity, kc.has_image, kc.image_url,
              kp.set_id, kp.number, kp.name_en
@@ -45,9 +51,9 @@ export async function POST(req: NextRequest) {
       image: c.image_url, imageCandidates: [c.image_url].filter(Boolean),
       matchKind: 'visual', similarity: null, variant: null, year: null, series: null,
     }))
-    if (cands.length === 1 && Number(best.dist) <= 40)
-      return NextResponse.json({ status: 'match', card: cands[0], candidates: cands, via: 'visual' })
-    return NextResponse.json({ status: cands.length ? 'ambiguous' : 'not_found', candidates: cands, via: 'visual' })
+    if (cands.length && visual.strong)
+      return NextResponse.json({ status: 'match', card: cands[0], candidates: cands, via: 'visual', visual })
+    return NextResponse.json({ status: cands.length ? 'ambiguous' : 'not_found', candidates: cands, via: 'visual', visual })
   } catch (e) {
     console.error('[scan/resolve-image]', e)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })

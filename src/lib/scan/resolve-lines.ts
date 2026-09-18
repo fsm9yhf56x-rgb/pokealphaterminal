@@ -1,6 +1,6 @@
 import { sql } from '@/lib/db/sql'
 import { getCardImageUrl, cardImageCandidates, type Lang } from '@/lib/images'
-import { resolveByNumber, resolveScan, type ScanCandidate, type ResolveResult } from './resolve-query'
+import { resolveScan, type ScanCandidate, type ResolveResult } from './resolve-query'
 import setIndexRaw from './set-index.json'
 const _norm = (x: string) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '')
 const _totalOf = new Map((setIndexRaw as any[]).map((e) => [_norm(e.id), e.printedTotal]))
@@ -150,16 +150,7 @@ export async function resolveFromLines(
     }
     if (!nums.length) jobs.push(resolveScan({ name: nm, number: null, lang: lang ?? null, total: null }).catch(() => null))
   }
-  // La recherche large part au même instant que les recherches par nom :
-  // plus de rappel, sans ajouter un aller-retour à la latence perçue.
-  const primaryNumber = nums[0]
-  const broadJob = primaryNumber
-    ? resolveByNumber({ number: primaryNumber.n, lang: lang ?? null }).catch(() => null)
-    : Promise.resolve(null)
-  const [rawResults, byNumber] = await Promise.all([
-    jobs.length ? Promise.all(jobs) : Promise.resolve([]),
-    broadJob,
-  ])
+  const rawResults = jobs.length ? await Promise.all(jobs) : []
 
   // Le total imprime est un identifiant de set tres puissant. Le resolveur de
   // nom savait le transporter mais ne l'appliquait pas aux resultats ambigus.
@@ -218,29 +209,8 @@ export async function resolveFromLines(
     }
     return { ...best.res, via: 'name' }
   }
-  // 4) RAPPEL LARGE — ne jamais laisser un nom OCR bruité éliminer la bonne
-  // carte. On fusionne tous les résultats ambigus avec une recherche indépendante
-  // par numéro/langue, puis le mobile tranche visuellement. Le total imprimé
-  // réduit le vivier lorsqu'il est connu, sans jamais vider la liste.
-  const ambiguous = results
-    .filter((res): res is ResolveResult => !!res && res.status === 'ambiguous')
-    .flatMap((res) => res.candidates)
-  let broad: ScanCandidate[] = byNumber?.candidates ?? []
-  if (primaryNumber?.t && broad.length) {
-    const sameTotal = broad.filter(
-      (candidate) => _totalOf.get(_norm(candidate.setId)) === primaryNumber.t,
-    )
-    if (sameTotal.length) broad = sameTotal
-  }
-
-  const merged = [...ambiguous, ...broad].filter(
-    (candidate, index, all) => all.findIndex((item) => item.kCardId === candidate.kCardId) === index,
-  )
-  if (merged.length === 1) {
-    return { status: 'match', query, card: merged[0], candidates: merged, via: 'number_total' }
-  }
-  if (merged.length) {
-    return { status: 'ambiguous', query, candidates: merged, via: 'candidate_union' }
+  for (const res of results) {
+    if (res?.status === 'ambiguous' && res.candidates.length) return { ...res, via: 'ambiguous' }
   }
   return { status: 'not_found', query, candidates: [], via: 'none' }
 }

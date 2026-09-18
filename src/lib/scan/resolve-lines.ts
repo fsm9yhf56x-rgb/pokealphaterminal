@@ -150,7 +150,16 @@ export async function resolveFromLines(
     }
     if (!nums.length) jobs.push(resolveScan({ name: nm, number: null, lang: lang ?? null, total: null }).catch(() => null))
   }
-  const rawResults = jobs.length ? await Promise.all(jobs) : []
+  // La recherche large part au même instant que les recherches par nom :
+  // plus de rappel, sans ajouter un aller-retour à la latence perçue.
+  const primaryNumber = nums[0]
+  const broadJob = primaryNumber
+    ? resolveByNumber({ number: primaryNumber.n, lang: lang ?? null }).catch(() => null)
+    : Promise.resolve(null)
+  const [rawResults, byNumber] = await Promise.all([
+    jobs.length ? Promise.all(jobs) : Promise.resolve([]),
+    broadJob,
+  ])
 
   // Le total imprime est un identifiant de set tres puissant. Le resolveur de
   // nom savait le transporter mais ne l'appliquait pas aux resultats ambigus.
@@ -216,19 +225,12 @@ export async function resolveFromLines(
   const ambiguous = results
     .filter((res): res is ResolveResult => !!res && res.status === 'ambiguous')
     .flatMap((res) => res.candidates)
-  let broad: ScanCandidate[] = []
-  const primaryNumber = nums[0]
-  if (primaryNumber) {
-    const byNumber = await resolveByNumber({ number: primaryNumber.n, lang: lang ?? null }).catch(() => null)
-    if (byNumber?.candidates.length) {
-      broad = byNumber.candidates
-      if (primaryNumber.t) {
-        const sameTotal = broad.filter(
-          (candidate) => _totalOf.get(_norm(candidate.setId)) === primaryNumber.t,
-        )
-        if (sameTotal.length) broad = sameTotal
-      }
-    }
+  let broad: ScanCandidate[] = byNumber?.candidates ?? []
+  if (primaryNumber?.t && broad.length) {
+    const sameTotal = broad.filter(
+      (candidate) => _totalOf.get(_norm(candidate.setId)) === primaryNumber.t,
+    )
+    if (sameTotal.length) broad = sameTotal
   }
 
   const merged = [...ambiguous, ...broad].filter(

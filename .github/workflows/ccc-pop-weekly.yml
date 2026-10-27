@@ -10,7 +10,7 @@ jobs:
   ccc-pop:
     name: CCC pop full + map + match
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 105
     concurrency:
       group: ccc-pop-weekly
       cancel-in-progress: false

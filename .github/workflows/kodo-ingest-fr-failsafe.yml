@@ -11,7 +11,7 @@ jobs:
   ingest-fr-failsafe:
     name: Ingest FR failsafe
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     concurrency:
       group: kodo-ingest-fr
       cancel-in-progress: false
@@ -27,5 +27,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           POKETRACE_API_KEY: ${{ secrets.POKETRACE_API_KEY }}
           KODO_MAX_REQ: '5500'
+          KODO_MAX_MINUTES: '52'
           KODO_MAINT_REQ: '2500'
         run: node scripts/kodo-ingest-eu-lang.js fr

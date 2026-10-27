@@ -25,7 +25,6 @@ jobs:
           cache: 'npm'
       - run: npm install --no-audit --no-fund --prefer-offline
       - name: Sync upcoming_sets depuis Bulbapedia
-        continue-on-error: true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/sync-upcoming.mjs --commit

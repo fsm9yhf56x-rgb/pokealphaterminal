@@ -143,7 +143,7 @@ async function ingestOne(kodoCardId, printId, ptId) {
       .map(id => refById[id])
       .filter(Boolean)
       .map(r => ({ id: r.kodo_card_id, print: r.print_id, eu: r.eu_id }))
-    let mDone = 0, mRows = 0
+    let mDone = 0, mRows = 0, mSuccess = 0
     console.log('Maintenance ' + LANG.toUpperCase() + ':', mPending.length, 'cartes |', tierSummary(selection))
     let attempts = []
     while (mPending.length && budget()) {
@@ -151,6 +151,7 @@ async function ingestOne(kodoCardId, printId, ptId) {
       let got = 0
       if (item.eu) got = await ingestOne(item.id, item.print, item.eu)
       mRows += got
+      if (got > 0) mSuccess++
       attempts.push({ id: item.id, ok: got > 0 })
       mPending = mPending.slice(1)
       mDone++
@@ -158,7 +159,7 @@ async function ingestOne(kodoCardId, printId, ptId) {
     }
     if (attempts.length) await markAttempts(sql, attempts)
     // Ne jamais rafraichir artificiellement le curseur si aucune donnee n'a ete mise a jour.
-    if (mRows === 0) throw new Error('Maintenance ' + LANG.toUpperCase() + ': aucune ligne prix rafraichie')
+    if (mSuccess < 50) throw new Error('Maintenance ' + LANG.toUpperCase() + ': seulement ' + mSuccess + ' cartes rafraichies, curseur inchange')
     await sql`UPDATE kodo_sync_state SET last_run_at = now(),
       notes = ${'maintenance ' + LANG + ': ' + new Date().toISOString()} WHERE job_id = ${JOB}`
     console.log('=== FIN MAINTENANCE ' + LANG.toUpperCase() + ' === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)

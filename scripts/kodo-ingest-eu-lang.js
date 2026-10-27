@@ -11,7 +11,7 @@ const BASE = 'https://api.poketrace.com/v1'
 const LANG = (process.argv[2] || 'fr').toLowerCase()
 const JOB = 'kodo_ingest_eu_' + LANG
 const START = Date.now()
-const MAX_MS = 22 * 60 * 1000  // le job coupe a 25 min (timeout-minutes)
+const MAX_MS = Math.max(1, Number(process.env.KODO_MAX_MINUTES) || 22) * 60 * 1000  // budget interne, inferieur au timeout GitHub
 const MAX_REQ = Number(process.env.KODO_MAX_REQ) || 5500
 let reqCount = 0
 const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
@@ -19,13 +19,19 @@ const budget = () => reqCount < MAX_REQ && (Date.now() - START) < MAX_MS
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 async function get(p, tries = 4) {
   for (let i = 1; i <= tries; i++) {
+    if (!budget()) return null
     reqCount++
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 15000)
     try {
       const r = await fetch(BASE + p, { headers: { 'X-API-Key': KEY }, signal: ctrl.signal })
       clearTimeout(timer)
-      if (r.status === 429) { await sleep(12000); i--; continue }
+      if (r.status === 429) {
+        // Les 429 comptent comme des tentatives : jamais de boucle infinie.
+        if (i === tries || !budget()) return null
+        await sleep(12000)
+        continue
+      }
       if (r.status === 200) return r.json()
     } catch (e) {
       clearTimeout(timer)
@@ -151,6 +157,8 @@ async function ingestOne(kodoCardId, printId, ptId) {
       if (attempts.length >= 50) { await markAttempts(sql, attempts); attempts = [] }
     }
     if (attempts.length) await markAttempts(sql, attempts)
+    // Ne jamais rafraichir artificiellement le curseur si aucune donnee n'a ete mise a jour.
+    if (mRows === 0) throw new Error('Maintenance ' + LANG.toUpperCase() + ': aucune ligne prix rafraichie')
     await sql`UPDATE kodo_sync_state SET last_run_at = now(),
       notes = ${'maintenance ' + LANG + ': ' + new Date().toISOString()} WHERE job_id = ${JOB}`
     console.log('=== FIN MAINTENANCE ' + LANG.toUpperCase() + ' === cartes:', mDone, '| rows:', mRows, '| req:', reqCount)

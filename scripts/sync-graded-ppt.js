@@ -368,6 +368,12 @@ async function upsertCard(pool, pptCard, lang) {
           console.log('   429 rate-limit minute, attente 70s puis pause batch...')
           progress.errors.push({ set, language, status: 429, retry_later: true })
           if (!useJobMode) saveJson(PROGRESS, progress)
+          // En rotation, un 429 persistant ne doit pas provoquer 20 attentes de 70 s.
+          // Le set reste ancien et sera repris au prochain cron.
+          if (rotateMode) {
+            console.error('Rotation PPT bloquee par HTTP 429 : arret du batch, aucune erreur masquee.')
+            break
+          }
           await sleep(70000)
           // En job mode: on stop le batch maintenant, le set reste dans items_pending
           if (useJobMode) {
@@ -463,6 +469,10 @@ async function upsertCard(pool, pptCard, lang) {
     console.log(`Credits restants    : ${lastRemaining}`)
     console.log(`Erreurs             : ${progress.errors.length}`)
     if (progress.errors.length && !useJobMode) console.log(`  → voir ${PROGRESS}`)
+    // Une rotation sans aucun set rafraichi n'est PAS un succes.
+    if (rotateMode && SETS.length > 0 && done.size === 0) {
+      throw new Error('Rotation graded PPT : 0 set actualise, verifier les erreurs API (dont HTTP 429)')
+    }
 
     // Job mode finalization
     if (useJobMode && job) {

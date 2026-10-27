@@ -470,8 +470,8 @@ async function upsertCard(pool, pptCard, lang) {
     console.log(`Erreurs             : ${progress.errors.length}`)
     if (progress.errors.length && !useJobMode) console.log(`  → voir ${PROGRESS}`)
     // Une rotation sans aucun set rafraichi n'est PAS un succes.
-    if (rotateMode && SETS.length > 0 && done.size === 0) {
-      throw new Error('Rotation graded PPT : 0 set actualise, verifier les erreurs API (dont HTTP 429)')
+    if (rotateMode && SETS.length > 0 && (done.size === 0 || progress.errors.length > 0)) {
+      throw new Error('Rotation graded PPT incomplete : ' + done.size + ' sets actualises, ' + progress.errors.length + ' erreurs API')
     }
 
     // Job mode finalization

@@ -24,7 +24,7 @@ jobs:
   graded-fr:
     name: Graded FR (eBay FR + Cardmarket)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     concurrency:
       group: kodo-graded-fr
       cancel-in-progress: false

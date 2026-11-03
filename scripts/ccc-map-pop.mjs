@@ -93,17 +93,37 @@ console.log(`skips -> set non mappe: ${skip.noSet} | variante non geree: ${skip.
 if (noCardSample.length) { console.log(`\n  echantillon cartes introuvables :`); for (const s of noCardSample) console.log(`   - ${s}`); }
 
 if (COMMIT) {
+  // A single HTTP SQL request per population row would require hundreds of
+  // thousands of round trips. Keep the last value for each conflict key, as
+  // the original sequential upserts did, then write in bounded SQL batches.
+  const byKey = new Map();
+  for (const u of upserts) byKey.set(JSON.stringify(u.slice(0, 3)), u);
+  const unique = [...byKey.values()];
+  const BATCH_SIZE = 200; // 8 bind parameters/row, comfortably under PG limits.
   let done = 0;
-  for (const u of upserts) {
+
+  for (let offset = 0; offset < unique.length; offset += BATCH_SIZE) {
+    const batch = unique.slice(offset, offset + BATCH_SIZE);
+    const params = batch.flat();
+    const values = batch.map((_, i) => {
+      const p = Array.from({ length: 8 }, (_, j) => '$' + (i * 8 + j + 1));
+      return `('CCC',${p[0]},'fr',${p[1]},${p[2]},${p[3]},${p[4]},${p[5]},${p[6]},'ccc_pop',${p[7]},now())`;
+    }).join(',\n');
+
     await sql.query(
       `INSERT INTO grading_pop (company, card_ref, lang, variety, tier, grade_num, label, count, pop_total, source, source_url, fetched_at)
-       VALUES ('CCC',$1,'fr',$2,$3,$4,$5,$6,$7,'ccc_pop',$8, now())
+       VALUES ${values}
        ON CONFLICT (company, card_ref, lang, variety, tier) DO UPDATE SET
          grade_num=EXCLUDED.grade_num, label=EXCLUDED.label, count=EXCLUDED.count,
-         pop_total=EXCLUDED.pop_total, source_url=EXCLUDED.source_url, fetched_at=now()`, u);
-    done++;
+         pop_total=EXCLUDED.pop_total, source_url=EXCLUDED.source_url, fetched_at=now()`,
+      params,
+    );
+    done += batch.length;
+    if (done % 10000 < batch.length || done === unique.length) {
+      console.log(`grading_pop: ${done}/${unique.length} lignes uniques upsertees`);
+    }
   }
-  console.log(`\ngrading_pop : ${done} lignes upsertees (CCC/fr).`);
+  console.log(`\ngrading_pop : ${done} lignes uniques upsertees (CCC/fr), ${upserts.length - done} doublons consolides.`);
 } else {
   console.log(`\n(DRY-RUN — rien ecrit. Relance avec --commit quand le set map te convient.)`);
 }
